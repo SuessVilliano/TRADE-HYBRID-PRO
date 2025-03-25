@@ -158,29 +158,57 @@ export default function MobileControls() {
         />
       </div>
       
-      {/* Mobile action button */}
-      <div 
-        className="fixed bottom-10 right-10 w-20 h-20 rounded-full bg-blue-500 flex items-center justify-center text-white text-xl font-bold"
-        onTouchStart={() => {
-          const event = new KeyboardEvent('keydown', {
-            code: 'KeyE',
-            key: 'e',
-            bubbles: true,
-            cancelable: true,
-          });
-          document.dispatchEvent(event);
-        }}
-        onTouchEnd={() => {
-          const event = new KeyboardEvent('keyup', {
-            code: 'KeyE',
-            key: 'e',
-            bubbles: true,
-            cancelable: true,
-          });
-          document.dispatchEvent(event);
-        }}
-      >
-        Action
+      {/* Action buttons container */}
+      <div className="fixed bottom-10 right-10 flex flex-col gap-4">
+        {/* Jump button */}
+        <div 
+          className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center text-white text-xl font-bold"
+          onTouchStart={() => {
+            const event = new KeyboardEvent('keydown', {
+              code: 'Space',
+              key: ' ',
+              bubbles: true,
+              cancelable: true,
+            });
+            document.dispatchEvent(event);
+          }}
+          onTouchEnd={() => {
+            const event = new KeyboardEvent('keyup', {
+              code: 'Space',
+              key: ' ',
+              bubbles: true,
+              cancelable: true,
+            });
+            document.dispatchEvent(event);
+          }}
+        >
+          Jump
+        </div>
+        
+        {/* Action button */}
+        <div 
+          className="w-20 h-20 rounded-full bg-blue-500 flex items-center justify-center text-white text-xl font-bold"
+          onTouchStart={() => {
+            const event = new KeyboardEvent('keydown', {
+              code: 'KeyE',
+              key: 'e',
+              bubbles: true,
+              cancelable: true,
+            });
+            document.dispatchEvent(event);
+          }}
+          onTouchEnd={() => {
+            const event = new KeyboardEvent('keyup', {
+              code: 'KeyE',
+              key: 'e',
+              bubbles: true,
+              cancelable: true,
+            });
+            document.dispatchEvent(event);
+          }}
+        >
+          Action
+        </div>
       </div>
     </div>
   );

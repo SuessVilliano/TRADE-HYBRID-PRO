@@ -83,28 +83,7 @@ export default function Player() {
     };
   }, [gamePhase]);
   
-  // Handle jumping with space bar
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (gamePhase !== "playing") return;
-      
-      // Jump with space bar
-      if (e.code === "Space" && isGrounded.current) {
-        yVelocity.current = 10; // Initial jump velocity
-        isJumping.current = true;
-        isGrounded.current = false;
-        console.log("Jumping!");
-        playSuccessSound();
-      }
-    };
-    
-    // Add listener
-    window.addEventListener("keydown", handleKeyDown);
-    
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [gamePhase, playSuccessSound]);
+  // We'll handle jumping through the controls system instead of direct keyboard events
   
   // Check for double tap to sprint
   const checkDoubleTap = (key: 'forward' | 'backward' | 'left' | 'right') => {
@@ -138,7 +117,7 @@ export default function Player() {
     if (!playerRef.current || gamePhase !== "playing") return;
 
     // Get current control states
-    const { forward, backward, left, right, interact } = getKeys();
+    const { forward, backward, left, right, interact, jump } = getKeys();
     
     // Reset direction
     direction.current.set(0, 0, 0);
@@ -232,6 +211,15 @@ export default function Player() {
     if (interact) {
       console.log("Interact pressed at position:", playerRef.current.position);
       playHitSound();
+    }
+    
+    // Handle jump button through the controls system
+    if (jump && isGrounded.current) {
+      yVelocity.current = 10; // Initial jump velocity
+      isJumping.current = true;
+      isGrounded.current = false;
+      console.log("Jumping!");
+      playSuccessSound();
     }
     
     // Update camera position to follow player

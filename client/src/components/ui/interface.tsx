@@ -1,15 +1,17 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useGame } from "@/lib/stores/useGame";
 import { useAudio } from "@/lib/stores/useAudio";
 import { Button } from "./button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
-import { Confetti } from "../game/Confetti";
-import { VolumeX, Volume2, RotateCw, Trophy } from "lucide-react";
+//import { Confetti } from "../game/Confetti"; // Uncomment if this component exists
+import { VolumeX, Volume2, RotateCw, Trophy, Palette, X } from "lucide-react";
+import { PlayerCustomizer } from "./player-customizer";
 
 export function Interface() {
   const restart = useGame((state) => state.restart);
   const phase = useGame((state) => state.phase);
   const { isMuted, toggleMute } = useAudio();
+  const [showCustomizer, setShowCustomizer] = useState(false);
 
   // Handle clicks on the interface in the ready phase to start the game
   useEffect(() => {
