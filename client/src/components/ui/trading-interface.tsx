@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, TrendingDown, DollarSign, PercentIcon, Wallet } from "lucide-react";
 import { useTrader } from "@/lib/stores/useTrader";
 import { useMarketData } from "@/lib/stores/useMarketData";
+import { IronBeamService } from "@/lib/services/ironbeam-service";
+import { AlpacaService } from "@/lib/services/alpaca-service";
 import { cn, formatCurrency } from "@/lib/utils";
 import { BotCreator } from "./bot-creator";
 
