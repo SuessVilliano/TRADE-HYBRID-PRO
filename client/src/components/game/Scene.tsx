@@ -1,5 +1,5 @@
-import { Canvas } from "@react-three/fiber";
-import { Stats, Sky, PerspectiveCamera, OrbitControls, Stars, PointerLockControls, useFrame } from "@react-three/drei";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { Stats, Sky, PerspectiveCamera, OrbitControls, Stars, PointerLockControls } from "@react-three/drei";
 import { Suspense, useEffect, useRef } from "react";
 import Lights from "./Lights";
 import Floor from "./Floor";
