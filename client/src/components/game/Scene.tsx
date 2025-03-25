@@ -21,10 +21,12 @@ const frontVector = new Vector3();
 const sideVector = new Vector3();
 
 function SceneContent() {
-  const controls = useRef();
+  const controls = useRef<any>();
 
   useFrame((state, delta) => {
-    // Frame updates here if needed
+    if (controls.current) {
+      // Frame updates here if needed
+    }
   });
 
   return (
