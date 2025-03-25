@@ -269,6 +269,21 @@ export function AIAssistant({ className }: AIAssistantProps) {
                 ))}
                 
                 <div className="py-3">
+                  <h4 className="text-sm font-semibold mb-2">Market Sentiment Analysis</h4>
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    <div className="bg-green-100 dark:bg-green-900/20 p-2 rounded">
+                      <p className="text-xs font-medium">Bullish Signals</p>
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {Math.floor(Math.random() * 30) + 40}%
+                      </div>
+                    </div>
+                    <div className="bg-red-100 dark:bg-red-900/20 p-2 rounded">
+                      <p className="text-xs font-medium">Bearish Signals</p>
+                      <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                        {Math.floor(Math.random() * 30) + 30}%
+                      </div>
+                    </div>
+                  </div>
                   <h4 className="text-sm font-semibold mb-2">Market Recommendation</h4>
                   <p className="text-xs text-muted-foreground">
                     Based on current market analysis, a {insights[0]?.type === "bullish" ? "cautious bullish" : "defensive"} approach is recommended for {symbol}. Consider {insights[0]?.type === "bullish" ? "smaller position sizes with clear take-profit levels" : "waiting for a clear reversal signal before entering long positions"}.

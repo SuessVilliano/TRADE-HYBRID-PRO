@@ -116,4 +116,17 @@ export class IronBeamService implements BrokerService {
   unsubscribeFromMarketData(symbol: string): void {
     this.subscriptions.delete(symbol);
   }
+
+  async getOrderHistory(): Promise<OrderHistory[]> {
+    const data = await this.request(`/account/${this.username}/orders?status=all`);
+    return data.orders.map((order: any) => ({
+      orderId: order.orderId,
+      symbol: order.symbol,
+      side: order.side,
+      quantity: Number(order.quantity),
+      price: Number(order.price),
+      status: order.status,
+      timestamp: Date.parse(order.timestamp)
+    }));
+  }
 }

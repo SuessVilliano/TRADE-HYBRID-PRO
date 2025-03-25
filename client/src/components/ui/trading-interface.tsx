@@ -11,19 +11,21 @@ import { IronBeamService } from "@/lib/services/ironbeam-service";
 import { AlpacaService } from "@/lib/services/alpaca-service";
 import { cn, formatCurrency } from "@/lib/utils";
 import { BotCreator } from "./bot-creator";
+import { OrderHistoryView } from "./order-history";
+
 
 interface TradingInterfaceProps {
   className?: string;
 }
 
 export function TradingInterface({ className }: TradingInterfaceProps) {
-  const { placeTrade, accountBalance } = useTrader();
+  const { placeTrade, accountBalance, orderHistory } = useTrader();
   const { currentPrice, symbol } = useMarketData();
   const [quantity, setQuantity] = useState("0.01");
   const [leverage, setLeverage] = useState(1);
   const [orderType, setOrderType] = useState("market");
   const [limitPrice, setLimitPrice] = useState("");
-  
+
   const handleTrade = (side: "buy" | "sell") => {
     placeTrade({
       symbol,
@@ -34,19 +36,19 @@ export function TradingInterface({ className }: TradingInterfaceProps) {
       limitPrice: orderType === "limit" ? parseFloat(limitPrice) : undefined,
     });
   };
-  
+
   const calculateMargin = () => {
     return (parseFloat(quantity) * currentPrice) / leverage;
   };
-  
+
   const calculatePotentialProfit = (side: "buy" | "sell") => {
     const price = currentPrice;
-    const potentialChange = price * 0.05; // Assume 5% price change for calculation
+    const potentialChange = price * 0.05; 
     const leveragedChange = potentialChange * leverage;
     const totalPosition = parseFloat(quantity) * price;
     return side === "buy" ? leveragedChange : -leveragedChange;
   };
-  
+
   return (
     <Card className={cn("w-full", className)}>
       <CardHeader className="pb-2">
@@ -67,8 +69,9 @@ export function TradingInterface({ className }: TradingInterfaceProps) {
             <TabsTrigger value="spot">Spot</TabsTrigger>
             <TabsTrigger value="futures">Futures</TabsTrigger>
             <TabsTrigger value="bots">Bots</TabsTrigger>
+            <TabsTrigger value="history">Order History</TabsTrigger> 
           </TabsList>
-          
+
           <TabsContent value="spot">
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -81,7 +84,7 @@ export function TradingInterface({ className }: TradingInterfaceProps) {
                   <span className="text-lg font-medium">{formatCurrency(currentPrice)}</span>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <label className="text-sm">Quantity</label>
                 <div className="flex gap-2">
@@ -97,7 +100,7 @@ export function TradingInterface({ className }: TradingInterfaceProps) {
                   <Button variant="outline" onClick={() => setQuantity("1")}>100%</Button>
                 </div>
               </div>
-              
+
               <div className="flex gap-2 mt-6">
                 <Button 
                   className="flex-1 h-14" 
@@ -117,7 +120,7 @@ export function TradingInterface({ className }: TradingInterfaceProps) {
               </div>
             </div>
           </TabsContent>
-          
+
           <TabsContent value="futures">
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -130,7 +133,7 @@ export function TradingInterface({ className }: TradingInterfaceProps) {
                   <span className="text-lg font-medium">{formatCurrency(currentPrice)}</span>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <label className="text-sm">Quantity</label>
                 <Input
@@ -141,7 +144,7 @@ export function TradingInterface({ className }: TradingInterfaceProps) {
                   onChange={(e) => setQuantity(e.target.value)}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <label className="text-sm">Leverage: {leverage}x</label>
@@ -158,7 +161,7 @@ export function TradingInterface({ className }: TradingInterfaceProps) {
                   onValueChange={(value) => setLeverage(value[0])}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <label className="text-sm">Order Type</label>
                 <div className="flex gap-2">
@@ -178,7 +181,7 @@ export function TradingInterface({ className }: TradingInterfaceProps) {
                   </Button>
                 </div>
               </div>
-              
+
               {orderType === "limit" && (
                 <div className="space-y-2">
                   <label className="text-sm">Limit Price</label>
@@ -190,7 +193,7 @@ export function TradingInterface({ className }: TradingInterfaceProps) {
                   />
                 </div>
               )}
-              
+
               <div className="grid grid-cols-2 gap-4 p-3 border rounded-md mb-4">
                 <div>
                   <p className="text-xs text-muted-foreground">Potential Profit (Long)</p>
@@ -211,7 +214,7 @@ export function TradingInterface({ className }: TradingInterfaceProps) {
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex gap-2">
                 <Button 
                   className="flex-1 h-14" 
@@ -231,9 +234,13 @@ export function TradingInterface({ className }: TradingInterfaceProps) {
               </div>
             </div>
           </TabsContent>
-          
+
           <TabsContent value="bots">
             <BotCreator />
+          </TabsContent>
+
+          <TabsContent value="history"> 
+            <OrderHistoryView orders={orderHistory} /> 
           </TabsContent>
         </Tabs>
       </CardContent>

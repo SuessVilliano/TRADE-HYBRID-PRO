@@ -24,8 +24,19 @@ export interface BrokerPosition {
   pnl: number;
 }
 
+export interface OrderHistory {
+  orderId: string;
+  symbol: string;
+  side: 'buy' | 'sell';
+  quantity: number;
+  price: number;
+  status: 'filled' | 'pending' | 'cancelled';
+  timestamp: number;
+}
+
 export interface BrokerService {
   connect(): Promise<void>;
+  getOrderHistory(): Promise<OrderHistory[]>;
   getBalance(): Promise<AccountBalance>;
   getPositions(): Promise<BrokerPosition[]>;
   placeOrder(order: {
