@@ -1,0 +1,15 @@
+Unexpected Application Error!
+Can't find variable: useFrame
+Scene@https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/src/components/game/Scene.tsx:59:11
+renderWithHooks@https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js:11548:35
+mountIndeterminateComponent@https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js:14926:36
+beginWork$1@https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js:19753:31
+performUnitOfWork@https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js:19198:31
+workLoopSync@https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js:19137:30
+renderRootSync@https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js:19116:27
+recoverFromConcurrentError@https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js:18736:42
+performSyncWorkOnRoot@https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js:18879:54
+flushSyncCallbacks@https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js:9119:38
+@https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WERSD76P.js:18627:39
+💿 Hey developer 👋
+You can provide a way better UX than this when your app throws errors by providing your own ErrorBoundary or errorElement prop on your route.
