@@ -17,7 +17,10 @@ export function Interface() {
   useEffect(() => {
     if (phase === "ready") {
       const handleClick = () => {
-        document.activeElement?.blur(); // Remove focus from any button
+        // Remove focus from any button
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
         const event = new KeyboardEvent("keydown", { code: "Space" });
         window.dispatchEvent(event);
       };
@@ -28,11 +31,18 @@ export function Interface() {
   }, [phase]);
 
   return (
-    <>
-      <Confetti />
-      
+    <div>
       {/* Top-right corner UI controls */}
       <div className="fixed top-4 right-4 flex gap-2 z-10">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setShowCustomizer(!showCustomizer)}
+          title="Customize Character"
+        >
+          <Palette size={18} />
+        </Button>
+        
         <Button
           variant="outline"
           size="icon"
@@ -51,6 +61,23 @@ export function Interface() {
           <RotateCw size={18} />
         </Button>
       </div>
+      
+      {/* Player Customizer Panel */}
+      {showCustomizer && (
+        <div className="fixed top-16 right-4 z-20">
+          <div className="relative">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="absolute -top-2 -right-2 z-10 rounded-full bg-background shadow-md"
+              onClick={() => setShowCustomizer(false)}
+            >
+              <X size={16} />
+            </Button>
+            <PlayerCustomizer />
+          </div>
+        </div>
+      )}
       
       {/* Game completion overlay */}
       {phase === "ended" && (
@@ -84,14 +111,16 @@ export function Interface() {
           <CardContent className="p-4">
             <h3 className="font-medium mb-2">Controls:</h3>
             <ul className="text-sm space-y-1 text-muted-foreground">
-              <li>WASD or Arrow Keys: Move the ball</li>
+              <li>WASD or Arrow Keys: Move character</li>
               <li>Space: Jump</li>
-              <li>R: Restart game</li>
+              <li>Double-tap movement key: Sprint</li>
+              <li>Right mouse button: Rotate camera</li>
+              <li>E: Interact</li>
               <li>M: Toggle sound</li>
             </ul>
           </CardContent>
         </Card>
       </div>
-    </>
+    </div>
   );
 }
