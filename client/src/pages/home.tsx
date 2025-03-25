@@ -1,0 +1,210 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ArrowRightCircle, BarChart2, Bot, Building, CandlestickChart, Globe, Trophy, Wallet } from "lucide-react";
+import { TRADING_SYMBOLS } from "@/lib/constants";
+import { useAudio } from "@/lib/stores/useAudio";
+
+export default function Home() {
+  const [username, setUsername] = useState("Trader1");
+  const { isMuted, toggleMute } = useAudio();
+  
+  const handleEnterMetaverse = () => {
+    // Play success sound when entering the metaverse
+    if (!isMuted) {
+      useAudio.getState().playSuccess();
+    }
+  };
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background to-background/90">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden pb-20">
+        <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/20 via-background to-background"></div>
+        
+        <div className="container relative z-10 mx-auto px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <Badge className="mb-4 px-3 py-1 text-sm" variant="outline">
+              Beta Version 0.1
+            </Badge>
+            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl">
+              <span className="block">Trade Hybrid</span>
+              <span className="block text-primary">AI-Driven Trading Metaverse</span>
+            </h1>
+            <p className="mt-6 text-base text-muted-foreground sm:text-lg md:text-xl">
+              An immersive 3D trading environment where real-time market data meets gamified trading experiences.
+            </p>
+            
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link to="/trading-space" onClick={handleEnterMetaverse}>
+                <Button size="lg" className="gap-2">
+                  Enter Metaverse <ArrowRightCircle className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Button variant="outline" size="lg" onClick={toggleMute}>
+                {isMuted ? "Enable Audio" : "Disable Audio"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Features Grid */}
+      <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold tracking-tight">Key Features</h2>
+          <p className="mt-4 text-lg text-muted-foreground">
+            Experience the future of trading with our innovative platform
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Feature: Real-Time Trading */}
+          <Card>
+            <CardHeader>
+              <CandlestickChart className="h-8 w-8 text-primary mb-2" />
+              <CardTitle>Real-Time Trading</CardTitle>
+              <CardDescription>
+                Trade with live market data from major platforms
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Experience market moves in real-time with direct API integrations to major trading platforms. React to price movements and news as they happen.
+              </p>
+            </CardContent>
+            <CardFooter className="text-xs text-muted-foreground">
+              {TRADING_SYMBOLS.CRYPTO.slice(0, 3).join(" • ")} and more
+            </CardFooter>
+          </Card>
+          
+          {/* Feature: AI Market Insights */}
+          <Card>
+            <CardHeader>
+              <Bot className="h-8 w-8 text-primary mb-2" />
+              <CardTitle>AI-Powered Insights</CardTitle>
+              <CardDescription>
+                Get intelligent market analysis
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Our AI interprets market news and events, providing real-time insights and trading suggestions based on sophisticated market analysis.
+              </p>
+            </CardContent>
+            <CardFooter className="text-xs text-muted-foreground">
+              Risk management • Trade suggestions • Market sentiment
+            </CardFooter>
+          </Card>
+          
+          {/* Feature: Trading Bots */}
+          <Card>
+            <CardHeader>
+              <BarChart2 className="h-8 w-8 text-primary mb-2" />
+              <CardTitle>Custom Trading Bots</CardTitle>
+              <CardDescription>
+                Build and deploy automated strategies
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Create, test, and deploy your own trading bots. Build strategies, backtest with historical data, and let your bots trade for you.
+              </p>
+            </CardContent>
+            <CardFooter className="text-xs text-muted-foreground">
+              Strategy builder • Automated trading • Performance tracking
+            </CardFooter>
+          </Card>
+          
+          {/* Feature: Leaderboards */}
+          <Card>
+            <CardHeader>
+              <Trophy className="h-8 w-8 text-primary mb-2" />
+              <CardTitle>Global Leaderboards</CardTitle>
+              <CardDescription>
+                Compete with traders worldwide
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Rise through the ranks on our global leaderboards. Compete based on profitability, win rate, strategy efficiency, and more.
+              </p>
+            </CardContent>
+            <CardFooter className="text-xs text-muted-foreground">
+              Monthly tournaments • Prizes • Trader recognition
+            </CardFooter>
+          </Card>
+          
+          {/* Feature: Market News */}
+          <Card>
+            <CardHeader>
+              <Globe className="h-8 w-8 text-primary mb-2" />
+              <CardTitle>Real-Time News Feed</CardTitle>
+              <CardDescription>
+                Stay updated with financial news
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Access real-time news from top financial sources. Our AI categorizes and highlights important events that could impact your trades.
+              </p>
+            </CardContent>
+            <CardFooter className="text-xs text-muted-foreground">
+              Bloomberg • Reuters • Financial Times • Investing.com
+            </CardFooter>
+          </Card>
+          
+          {/* Feature: Trade House */}
+          <Card>
+            <CardHeader>
+              <Building className="h-8 w-8 text-primary mb-2" />
+              <CardTitle>Custom Trade House</CardTitle>
+              <CardDescription>
+                Create your personal trading space
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Customize your Trade House with trading tools, screens, and resources. Invite others to visit or collaborate in your personalized trading space.
+              </p>
+            </CardContent>
+            <CardFooter className="text-xs text-muted-foreground">
+              Customizable space • Trading tools • Collaboration
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+      
+      {/* CTA Section */}
+      <div className="bg-primary/5 py-16">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold tracking-tight">Ready to Trade in the Metaverse?</h2>
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
+            Join traders from around the world in our immersive 3D trading environment
+          </p>
+          <div className="mt-8">
+            <Link to="/trading-space" onClick={handleEnterMetaverse}>
+              <Button size="lg">
+                Enter Trade Hybrid
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+      
+      {/* Footer */}
+      <footer className="bg-background py-12">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            © 2023 Trade Hybrid. All rights reserved.
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Trading involves significant risk. Past performance is not indicative of future results.
+          </p>
+        </div>
+      </footer>
+    </div>
+  );
+}
