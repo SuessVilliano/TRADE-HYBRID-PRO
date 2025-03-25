@@ -1,5 +1,5 @@
 import { Canvas } from "@react-three/fiber";
-import { Stats, Sky, PerspectiveCamera, OrbitControls, Stars, PointerLockControls } from "@react-three/drei";
+import { Stats, Sky, PerspectiveCamera, OrbitControls, Stars, PointerLockControls, useFrame } from "@react-three/drei";
 import { Suspense, useEffect, useRef } from "react";
 import Lights from "./Lights";
 import Floor from "./Floor";
@@ -19,6 +19,44 @@ const MOVEMENT_SPEED = 0.15;
 const direction = new Vector3();
 const frontVector = new Vector3();
 const sideVector = new Vector3();
+
+function SceneContent() {
+  const controls = useRef();
+
+  useFrame((state, delta) => {
+    // Frame updates here if needed
+  });
+
+  return (
+    <>
+      <Stats />
+      <ambientLight intensity={0.5} />
+      <pointLight position={[10, 10, 10]} intensity={1} castShadow />
+      <OrbitControls />
+      <Stars />
+      <Suspense fallback={null}>
+        <Sky sunPosition={[100, 20, 100]} />
+        <Lights />
+        <Floor />
+        <Player />
+        <PerspectiveCamera makeDefault position={[0, 2, 5]} />
+        <PointerLockControls ref={controls} />
+
+        <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[100, 100]} />
+          <meshStandardMaterial color="#4a4a4a" />
+        </mesh>
+
+        <TradeHouse position={[8, 0, -10]} rotation={[0, -Math.PI / 4, 0]} />
+        <TradingStation position={[-6, 0, -8]} rotation={[0, Math.PI / 6, 0]} type="crypto" />
+        <TradingStation position={[3, 0, -5]} rotation={[0, -Math.PI / 8, 0]} type="stocks" />
+        <TradingStation position={[-3, 0, 2]} rotation={[0, Math.PI / 3, 0]} type="forex" />
+        <SignalBoard position={[0, 2, -15]} rotation={[0, 0, 0]} />
+        <WebAppTrigger position={[-5, 0, -12]} rotation={[0, 30, 0]} scale={[1.2, 1.2, 1.2]} url="https://app.tradehybrid.co" />
+      </Suspense>
+    </>
+  );
+}
 
 export default function Scene({ showStats = false }: SceneProps) {
   const controls = useRef<any>(null);
@@ -88,51 +126,7 @@ export default function Scene({ showStats = false }: SceneProps) {
           powerPreference: "default"
         }}
       >
-        {showStats && <Stats />}
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} castShadow />
-        <OrbitControls />
-        <Stars />
-        <Suspense fallback={null}>
-          <Sky sunPosition={[100, 20, 100]} />
-          <Lights />
-          <Floor />
-          <Player />
-          <PerspectiveCamera makeDefault position={[0, 2, 5]} />
-          <PointerLockControls ref={controls} />
-
-          <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-            <planeGeometry args={[100, 100]} />
-            <meshStandardMaterial color="#4a4a4a" />
-          </mesh>
-
-          <TradeHouse position={[8, 0, -10]} rotation={[0, -Math.PI / 4, 0]} />
-          <TradingStation
-            position={[-6, 0, -8]}
-            rotation={[0, Math.PI / 6, 0]}
-            type="crypto"
-          />
-          <TradingStation
-            position={[3, 0, -5]}
-            rotation={[0, -Math.PI / 8, 0]}
-            type="stocks"
-          />
-          <TradingStation
-            position={[-3, 0, 2]}
-            rotation={[0, Math.PI / 3, 0]}
-            type="forex"
-          />
-          <SignalBoard
-            position={[0, 2, -15]}
-            rotation={[0, 0, 0]}
-          />
-          <WebAppTrigger
-            position={[-5, 0, -12]}
-            rotation={[0, 30, 0]}
-            scale={[1.2, 1.2, 1.2]}
-            url="https://app.tradehybrid.co"
-          />
-        </Suspense>
+        <SceneContent />
       </Canvas>
     </div>
   );
