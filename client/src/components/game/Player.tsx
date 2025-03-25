@@ -5,7 +5,7 @@ import * as THREE from "three";
 import { useGame } from "@/lib/stores/useGame";
 import { useAudio } from "@/lib/stores/useAudio";
 
-// Define our control keys for the game
+// Define our control keys for the game - must match Controls.tsx
 enum Controls {
   forward = 'forward',
   backward = 'backward',

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { KeyboardControls } from "@react-three/drei";
 import { useGame } from "@/lib/stores/useGame";
 import { useAudio } from "@/lib/stores/useAudio";
@@ -57,10 +57,11 @@ const keyMap = [
   { name: Controls.interact, keys: ['KeyE', 'Space'] },
 ];
 
-export default function GameControls() {
+export default function GameControls({ children }: { children?: React.ReactNode }) {
   return (
     <KeyboardControls map={keyMap}>
       <KeyboardControlsImplementation />
+      {children}
     </KeyboardControls>
   );
 }
