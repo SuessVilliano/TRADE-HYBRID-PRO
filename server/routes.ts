@@ -5,6 +5,7 @@ import { getMarketData, getCurrentPrice, getSymbols } from "./api/market";
 import { getNews, getTopicNews } from "./api/news";
 import { getLeaderboard, getTrader } from "./api/leaderboard";
 import { getBots, getBot, createBot, updateBot, deleteBot, runBot, stopBot } from "./api/bots";
+import { getSignals, receiveWebhook } from "./api/signals";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Market data routes
@@ -28,6 +29,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/bots/:id", deleteBot);
   app.post("/api/bots/:id/run", runBot);
   app.post("/api/bots/:id/stop", stopBot);
+  
+  // Signals routes
+  app.get("/api/signals", getSignals);
+  app.post("/api/webhooks/tradingview", receiveWebhook);
   
   // Trader routes - Mock trading functionality
   app.get("/api/trader/trades", (_req, res) => {

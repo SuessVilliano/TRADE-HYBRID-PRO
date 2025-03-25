@@ -7,6 +7,7 @@ import Player from "./Player";
 import GameControls from "./Controls";
 import TradeHouse from "./TradeHouse";
 import TradingStation from "./TradingStation";
+import SignalBoard from "./SignalBoard";
 
 interface SceneProps {
   showStats?: boolean;
@@ -61,6 +62,12 @@ export default function Scene({ showStats = false }: SceneProps) {
             position={[-3, 0, 2]} 
             rotation={[0, Math.PI / 3, 0]} 
             type="forex" 
+          />
+          
+          {/* Signals Board */}
+          <SignalBoard 
+            position={[0, 2, -15]} 
+            rotation={[0, 0, 0]} 
           />
         </Suspense>
       </Canvas>
