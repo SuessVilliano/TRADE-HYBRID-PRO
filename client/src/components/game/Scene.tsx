@@ -8,6 +8,7 @@ import GameControls from "./Controls";
 import TradeHouse from "./TradeHouse";
 import TradingStation from "./TradingStation";
 import SignalBoard from "./SignalBoard";
+import WebAppTrigger from "./WebAppTrigger";
 
 interface SceneProps {
   showStats?: boolean;
@@ -68,6 +69,14 @@ export default function Scene({ showStats = false }: SceneProps) {
           <SignalBoard 
             position={[0, 2, -15]} 
             rotation={[0, 0, 0]} 
+          />
+          
+          {/* Web App Trigger */}
+          <WebAppTrigger
+            position={[-5, 0, -12]}
+            rotation={[0, 30, 0]}
+            scale={[1.2, 1.2, 1.2]}
+            url="https://app.tradehybrid.co"
           />
         </Suspense>
       </Canvas>

@@ -7,6 +7,7 @@ import Home from "./pages/home";
 import TradingSpace from "./pages/trading-space";
 import NotFound from "./pages/not-found";
 import { useAudio } from "./lib/stores/useAudio";
+import { WebApp } from "./components/ui/web-app";
 import "@fontsource/inter";
 
 // Main App component
@@ -49,6 +50,7 @@ function App() {
         </Suspense>
       </Router>
       <Toaster position="top-right" />
+      <WebApp />
     </QueryClientProvider>
   );
 }
