@@ -1,5 +1,5 @@
 import { Canvas } from "@react-three/fiber";
-import { Stats, Sky, PerspectiveCamera, PointerLockControls } from "@react-three/drei";
+import { Stats, Sky, PerspectiveCamera, OrbitControls, Stars, PointerLockControls } from "@react-three/drei";
 import { Suspense, useEffect, useRef } from "react";
 import Lights from "./Lights";
 import Floor from "./Floor";
@@ -67,7 +67,7 @@ export default function Scene({ showStats = false }: SceneProps) {
   });
 
   return (
-    <GameControls>
+    <div style={{ width: '100%', height: '100vh' }}>
       <Canvas
         onContextLost={(event) => {
           event.preventDefault();
@@ -78,8 +78,8 @@ export default function Scene({ showStats = false }: SceneProps) {
         }}
         shadows
         camera={{
-          position: [0, 8, 15],
-          fov: 70,
+          position: [0, 5, 15],
+          fov: 75,
           near: 0.1,
           far: 1000
         }}
@@ -89,26 +89,24 @@ export default function Scene({ showStats = false }: SceneProps) {
         }}
       >
         {showStats && <Stats />}
-
-        <Sky sunPosition={[100, 20, 100]} />
-
-        <Lights />
+        <ambientLight intensity={0.5} />
+        <pointLight position={[10, 10, 10]} intensity={1} castShadow />
+        <OrbitControls />
+        <Stars />
         <Suspense fallback={null}>
+          <Sky sunPosition={[100, 20, 100]} />
+          <Lights />
           <Floor />
           <Player />
           <PerspectiveCamera makeDefault position={[0, 2, 5]} />
           <PointerLockControls ref={controls} />
-          <ambientLight intensity={0.5} />
-          <pointLight position={[10, 10, 10]} />
 
           <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
             <planeGeometry args={[100, 100]} />
             <meshStandardMaterial color="#4a4a4a" />
           </mesh>
 
-
           <TradeHouse position={[8, 0, -10]} rotation={[0, -Math.PI / 4, 0]} />
-
           <TradingStation
             position={[-6, 0, -8]}
             rotation={[0, Math.PI / 6, 0]}
@@ -124,12 +122,10 @@ export default function Scene({ showStats = false }: SceneProps) {
             rotation={[0, Math.PI / 3, 0]}
             type="forex"
           />
-
           <SignalBoard
             position={[0, 2, -15]}
             rotation={[0, 0, 0]}
           />
-
           <WebAppTrigger
             position={[-5, 0, -12]}
             rotation={[0, 30, 0]}
@@ -138,6 +134,6 @@ export default function Scene({ showStats = false }: SceneProps) {
           />
         </Suspense>
       </Canvas>
-    </GameControls>
+    </div>
   );
 }

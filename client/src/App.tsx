@@ -8,6 +8,7 @@ import Home from "./pages/home";
 import TradingSpace from "./pages/trading-space";
 import NotFound from "./pages/not-found";
 import Scene from "./components/game/Scene";
+import { Suspense } from "react";
 
 const router = createBrowserRouter([
   {
