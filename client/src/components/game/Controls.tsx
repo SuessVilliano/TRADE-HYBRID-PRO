@@ -11,6 +11,7 @@ enum Controls {
   left = 'left',
   right = 'right',
   interact = 'interact',
+  jump = 'jump',
 }
 
 function KeyboardControlsImplementation() {
@@ -55,7 +56,8 @@ const keyMap = [
   { name: Controls.backward, keys: ['ArrowDown', 'KeyS'] },
   { name: Controls.left, keys: ['ArrowLeft', 'KeyA'] },
   { name: Controls.right, keys: ['ArrowRight', 'KeyD'] },
-  { name: Controls.interact, keys: ['KeyE', 'Space'] },
+  { name: Controls.interact, keys: ['KeyE'] },
+  { name: Controls.jump, keys: ['Space'] },
 ];
 
 export default function GameControls({ children }: { children?: React.ReactNode }) {
