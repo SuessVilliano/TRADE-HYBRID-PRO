@@ -20,7 +20,12 @@ const router = createBrowserRouter([
     path: "*",
     element: <NotFound />,
   }
-]);
+], {
+  future: {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true
+  }
+});
 
 export default function App() {
   return (
