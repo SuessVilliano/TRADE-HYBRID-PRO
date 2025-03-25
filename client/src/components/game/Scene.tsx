@@ -1,6 +1,6 @@
 import { Canvas } from "@react-three/fiber";
-import { Stats, Sky } from "@react-three/drei";
-import { Suspense } from "react";
+import { Stats, Sky, PerspectiveCamera, PointerLockControls } from "@react-three/drei";
+import { Suspense, useEffect, useRef } from "react";
 import Lights from "./Lights";
 import Floor from "./Floor";
 import Player from "./Player";
@@ -9,18 +9,68 @@ import TradeHouse from "./TradeHouse";
 import TradingStation from "./TradingStation";
 import SignalBoard from "./SignalBoard";
 import WebAppTrigger from "./WebAppTrigger";
+import { Vector3 } from 'three';
 
 interface SceneProps {
   showStats?: boolean;
 }
 
+const MOVEMENT_SPEED = 0.15;
+const direction = new Vector3();
+const frontVector = new Vector3();
+const sideVector = new Vector3();
+
 export default function Scene({ showStats = false }: SceneProps) {
+  const controls = useRef<any>(null);
+  const movement = useRef({ forward: false, backward: false, left: false, right: false, sprint: false });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'KeyW') movement.current.forward = true;
+      if (e.code === 'KeyS') movement.current.backward = true;
+      if (e.code === 'KeyA') movement.current.left = true;
+      if (e.code === 'KeyD') movement.current.right = true;
+      if (e.shiftKey) movement.current.sprint = true;
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'KeyW') movement.current.forward = false;
+      if (e.code === 'KeyS') movement.current.backward = false;
+      if (e.code === 'KeyA') movement.current.left = false;
+      if (e.code === 'KeyD') movement.current.right = false;
+      if (!e.shiftKey) movement.current.sprint = false;
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  useFrame((state) => {
+    if (controls.current) {
+      const speedMultiplier = movement.current.sprint ? 2 : 1;
+
+      frontVector.set(0, 0, Number(movement.current.backward) - Number(movement.current.forward));
+      sideVector.set(Number(movement.current.left) - Number(movement.current.right), 0, 0);
+
+      direction
+        .subVectors(frontVector, sideVector)
+        .normalize()
+        .multiplyScalar(MOVEMENT_SPEED * speedMultiplier);
+
+      controls.current.moveRight(-direction.x);
+      controls.current.moveForward(-direction.z);
+    }
+  });
+
   return (
     <GameControls>
       <Canvas
         onContextLost={(event) => {
           event.preventDefault();
-          // Force refresh when context is lost
           window.location.reload();
         }}
         onContextRestored={() => {
@@ -40,23 +90,25 @@ export default function Scene({ showStats = false }: SceneProps) {
       >
         {showStats && <Stats />}
 
-        {/* Sky provides a nice background */}
         <Sky sunPosition={[100, 20, 100]} />
 
-        {/* Environment lighting */}
         <Lights />
-
         <Suspense fallback={null}>
-          {/* Ground plane */}
           <Floor />
-
-          {/* Player character */}
           <Player />
+          <PerspectiveCamera makeDefault position={[0, 2, 5]} />
+          <PointerLockControls ref={controls} />
+          <ambientLight intensity={0.5} />
+          <pointLight position={[10, 10, 10]} />
 
-          {/* Trading House */}
+          <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[100, 100]} />
+            <meshStandardMaterial color="#4a4a4a" />
+          </mesh>
+
+
           <TradeHouse position={[8, 0, -10]} rotation={[0, -Math.PI / 4, 0]} />
 
-          {/* Trading Stations */}
           <TradingStation
             position={[-6, 0, -8]}
             rotation={[0, Math.PI / 6, 0]}
@@ -73,13 +125,11 @@ export default function Scene({ showStats = false }: SceneProps) {
             type="forex"
           />
 
-          {/* Signals Board */}
           <SignalBoard
             position={[0, 2, -15]}
             rotation={[0, 0, 0]}
           />
 
-          {/* Web App Trigger */}
           <WebAppTrigger
             position={[-5, 0, -12]}
             rotation={[0, 30, 0]}
