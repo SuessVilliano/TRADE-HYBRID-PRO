@@ -18,8 +18,8 @@ export default function Scene({ showStats = false }: SceneProps) {
       <Canvas
         shadows
         camera={{
-          position: [0, 5, 10],
-          fov: 60,
+          position: [0, 8, 15],
+          fov: 70,
           near: 0.1,
           far: 1000
         }}

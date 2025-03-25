@@ -43,9 +43,11 @@ export default function Player() {
     // Calculate forward/backward direction relative to camera
     if (forward) {
       direction.current.add(cameraDirection);
+      console.log("Moving forward");
     }
     if (backward) {
       direction.current.sub(cameraDirection);
+      console.log("Moving backward");
     }
     
     // Calculate left/right direction relative to camera
@@ -57,9 +59,11 @@ export default function Player() {
     
     if (right) {
       direction.current.add(rightVector);
+      console.log("Moving right");
     }
     if (left) {
       direction.current.sub(rightVector);
+      console.log("Moving left");
     }
     
     // Normalize direction if we're moving in multiple directions
@@ -117,14 +121,14 @@ export default function Player() {
   
   return (
     <mesh ref={playerRef} position={[0, 0.5, 0]} castShadow receiveShadow>
-      {/* Player body */}
-      <boxGeometry args={[0.6, 1, 0.6]} />
-      <meshStandardMaterial color="#4285F4" />
+      {/* Player body - made larger and brighter for visibility */}
+      <boxGeometry args={[1, 1.5, 1]} />
+      <meshStandardMaterial color="#4285F4" emissive="#1a53ff" emissiveIntensity={0.5} />
       
       {/* Player head */}
-      <mesh position={[0, 0.8, 0]} castShadow>
-        <sphereGeometry args={[0.25, 16, 16]} />
-        <meshStandardMaterial color="#34A853" />
+      <mesh position={[0, 1.1, 0]} castShadow>
+        <sphereGeometry args={[0.4, 16, 16]} />
+        <meshStandardMaterial color="#34A853" emissive="#34A853" emissiveIntensity={0.3} />
       </mesh>
     </mesh>
   );

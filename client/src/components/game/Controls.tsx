@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { KeyboardControls } from "@react-three/drei";
 import { useGame } from "@/lib/stores/useGame";
 import { useAudio } from "@/lib/stores/useAudio";
+import MobileControls from "./MobileControls";
 
 // Define our control keys for the game
 enum Controls {
@@ -62,6 +63,8 @@ export default function GameControls({ children }: { children?: React.ReactNode 
     <KeyboardControls map={keyMap}>
       <KeyboardControlsImplementation />
       {children}
+      {/* Add MobileControls component for touch devices */}
+      <MobileControls />
     </KeyboardControls>
   );
 }
