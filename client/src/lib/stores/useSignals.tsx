@@ -11,7 +11,13 @@ export interface TradingSignal {
   message: string;
   confidence: number; // 0-100%
   timeframe: string;
+  entryPrice?: number;
+  stopLoss?: number;
+  takeProfit1?: number;
+  takeProfit2?: number;
+  takeProfit3?: number;
   indicators?: Record<string, number | string>;
+  read?: boolean;
 }
 
 interface SignalsState {
