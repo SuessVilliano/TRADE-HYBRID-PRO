@@ -14,14 +14,28 @@ const injected = new InjectedConnector({
   supportedChainIds: [1, 3, 4, 5, 42, 137, 80001, 56, 97, 43114]  // Supported networks
 });
 
+const coinbaseWallet = new InjectedConnector({
+  supportedChainIds: [1, 3, 4, 5, 42, 137, 80001, 56, 97, 43114]  // Supported networks
+});
+
 const walletconnect = new WalletConnectConnector({
   rpc: { 
-    1: 'https://mainnet.infura.io/v3/fallback_key',
-    137: 'https://polygon-rpc.com',
-    56: 'https://bsc-dataseed.binance.org/'
+    1: 'https://eth-mainnet.g.alchemy.com/v2/7lsgJ9YQf-YuNJPb5xaypAeBN-0FSJwu',
+    137: 'https://polygon-mainnet.g.alchemy.com/v2/7lsgJ9YQf-YuNJPb5xaypAeBN-0FSJwu',
+    56: 'https://bsc-dataseed.binance.org/',
+    43114: 'https://api.avax.network/ext/bc/C/rpc'
   },
   bridge: 'https://bridge.walletconnect.org',
   qrcode: true,
+  qrcodeModalOptions: {
+    mobileLinks: [
+      'rainbow',
+      'metamask',
+      'trust',
+      'argent',
+      'coinbase'
+    ]
+  },
   // @ts-ignore - The WalletConnect types are outdated
   pollingInterval: 12000,
 });
@@ -218,19 +232,19 @@ function WalletConnectInner() {
 
       {/* Wallet options dialog */}
       {showWalletOptions && !active && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <Card className="w-full max-w-md animate-in fade-in-50 zoom-in-95 duration-300">
-            <CardHeader>
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <Card className="w-full max-w-md animate-in fade-in-50 zoom-in-95 duration-300 bg-background/95">
+            <CardHeader className="bg-background">
               <CardTitle className="text-lg">Connect Wallet</CardTitle>
               <CardDescription>
                 Connect your wallet to interact with the platform
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="bg-background/95">
               <Tabs defaultValue="popular" className="w-full">
-                <TabsList className="w-full">
-                  <TabsTrigger value="popular" className="flex-1">Popular</TabsTrigger>
-                  <TabsTrigger value="more" className="flex-1">More Options</TabsTrigger>
+                <TabsList className="w-full bg-muted/90">
+                  <TabsTrigger value="popular" className="flex-1 font-medium text-foreground data-[state=active]:bg-background/90">Popular</TabsTrigger>
+                  <TabsTrigger value="more" className="flex-1 font-medium text-foreground data-[state=active]:bg-background/90">More Options</TabsTrigger>
                 </TabsList>
                 <TabsContent value="popular" className="mt-4 space-y-3">
                   <Button
@@ -275,12 +289,12 @@ function WalletConnectInner() {
                   <Button
                     variant="outline"
                     className="w-full justify-start h-auto py-3 px-4"
-                    onClick={() => connectWallet(injected)}
+                    onClick={() => connectWallet(coinbaseWallet)}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <svg className="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M3 10H21M7 15H9M12 15H14M6.2 19H17.8C18.9201 19 19.4802 19 19.908 18.782C20.2843 18.5903 20.5903 18.2843 20.782 17.908C21 17.4802 21 16.9201 21 15.8V8.2C21 7.0799 21 6.51984 20.782 6.09202C20.5903 5.7157 20.2843 5.40974 19.908 5.21799C19.4802 5 18.9201 5 17.8 5H6.2C5.07989 5 4.51984 5 4.09202 5.21799C3.7157 5.40973 3.40973 5.71569 3.21799 6.09202C3 6.51984 3 7.07989 3 8.2V15.8C3 16.9201 3 17.4802 3.21799 17.908C3.40973 18.2843 3.7157 18.5903 4.09202 18.782C4.51984 19 5.07989 19 6.2 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                        <svg className="h-5 w-5 text-blue-500" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path fillRule="evenodd" clipRule="evenodd" d="M512 1024C794.77 1024 1024 794.77 1024 512C1024 229.23 794.77 0 512 0C229.23 0 0 229.23 0 512C0 794.77 229.23 1024 512 1024ZM516.9 188.42C674.26 188.42 802.1 316.26 802.1 473.62C802.1 631 674.26 758.83 516.9 758.83C359.54 758.83 231.7 631 231.7 473.62C231.7 316.26 359.54 188.42 516.9 188.42ZM517.04 295.15C420.12 295.15 341.41 373.85 341.41 470.77C341.41 567.7 420.12 646.41 517.04 646.41C613.96 646.41 692.67 567.7 692.67 470.77C692.67 373.85 613.96 295.15 517.04 295.15Z" fill="currentColor" />
                         </svg>
                       </div>
                       <div className="flex-1">
@@ -346,15 +360,15 @@ function WalletConnectInner() {
       {/* Disconnect confirmation dialog */}
       {showDisconnectConfirm && active && (
         <div className="absolute top-full left-0 right-0 mt-2 z-50">
-          <Card className="animate-in slide-in-from-top-2 fade-in duration-300">
-            <CardHeader className="py-3">
-              <CardTitle className="text-sm">Account</CardTitle>
+          <Card className="animate-in slide-in-from-top-2 fade-in duration-300 bg-background/95 backdrop-blur-sm border-2 border-muted shadow-lg">
+            <CardHeader className="py-3 bg-background">
+              <CardTitle className="text-sm font-bold">Account</CardTitle>
             </CardHeader>
-            <CardContent className="py-0">
+            <CardContent className="py-0 bg-background/95">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs text-muted-foreground">Connected with {getNetworkName(chainId)}</div>
-                  <div className="px-2 py-1 bg-green-100 dark:bg-green-900 rounded-md text-green-800 dark:text-green-100 text-xs font-medium">Connected</div>
+                  <div className="text-xs font-medium text-foreground/80">Connected with {getNetworkName(chainId)}</div>
+                  <div className="px-2 py-1 bg-green-100 dark:bg-green-900 rounded-md text-green-800 dark:text-green-100 text-xs font-medium shadow-sm">Connected</div>
                 </div>
                 
                 <div className="flex items-center gap-2">

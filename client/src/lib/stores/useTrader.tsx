@@ -1,15 +1,18 @@
 import { create } from "zustand";
 import { Trade, TradeStats, TradeRequest } from "@/lib/types";
 import { apiRequest } from "@/lib/queryClient";
+import { OrderHistory } from "@/lib/services/broker-service";
 
 interface TraderState {
   trades: Trade[];
   tradeStats: TradeStats;
   accountBalance: number;
   loading: boolean;
+  orderHistory: OrderHistory[];
   
   fetchTrades: () => Promise<void>;
   placeTrade: (tradeRequest: TradeRequest) => Promise<void>;
+  updateOrderHistory: (orders: OrderHistory[]) => void;
 }
 
 export const useTrader = create<TraderState>((set, get) => ({
@@ -27,6 +30,11 @@ export const useTrader = create<TraderState>((set, get) => ({
   },
   accountBalance: 10000, // Default starting balance
   loading: false,
+  orderHistory: [],
+  
+  updateOrderHistory: (orders: OrderHistory[]) => {
+    set({ orderHistory: orders });
+  },
   
   fetchTrades: async () => {
     set({ loading: true });

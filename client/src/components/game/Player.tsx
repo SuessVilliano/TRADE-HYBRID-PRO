@@ -127,7 +127,7 @@ export default function Player() {
   const { actions, mixer } = useAnimations(animations, modelRef);
   
   // Audio
-  const { playHit } = useAudio();
+  const { playHit, enableVoiceChat, voiceChatEnabled, getMicrophoneStream, updateAudioPosition } = useAudio();
   
   // Get the camera
   const { camera } = useThree();
@@ -317,6 +317,36 @@ export default function Player() {
     };
   }, [actions]);
   
+  // Handle voice chat functionality
+  useEffect(() => {
+    // Set up keyboard listener for voice chat toggle
+    const handleVoiceChatToggle = (e: KeyboardEvent) => {
+      // Toggle voice chat with 'T' key
+      if (e.code === 'KeyT') {
+        if (!voiceChatEnabled) {
+          console.log('Enabling voice chat...');
+          enableVoiceChat().then(success => {
+            if (success) {
+              console.log('Voice chat enabled successfully');
+            } else {
+              console.error('Failed to enable voice chat');
+            }
+          });
+        } else {
+          console.log('Voice chat already enabled');
+        }
+      }
+    };
+    
+    // Add event listener
+    window.addEventListener('keydown', handleVoiceChatToggle);
+    
+    // Cleanup on unmount
+    return () => {
+      window.removeEventListener('keydown', handleVoiceChatToggle);
+    };
+  }, [voiceChatEnabled, enableVoiceChat]);
+  
   // Game loop for player movement and animation
   useFrame((state, delta) => {
     // Update animation mixer on each frame
@@ -468,11 +498,33 @@ export default function Player() {
       }
       
       // Send position, rotation and animation to multiplayer service
+      const currentPosition: [number, number, number] = 
+        [playerPosition.current.x, playerPosition.current.y, playerPosition.current.z];
+      
       updatePlayerPosition(
-        [playerPosition.current.x, playerPosition.current.y, playerPosition.current.z],
+        currentPosition,
         playerRotation.current,
         currentAnimation
       );
+      
+      // Update spatial audio positions for proximity voice chat
+      if (voiceChatEnabled) {
+        // Get all players from the multiplayer service and update their audio positions
+        const { getAllPlayers, getClientId } = useMultiplayer.getState();
+        const players = getAllPlayers();
+        const clientId = getClientId();
+        
+        players.forEach(player => {
+          if (player.id !== clientId) {
+            updateAudioPosition(
+              player.id,
+              player.position,
+              currentPosition,
+              playerRotation.current
+            );
+          }
+        });
+      }
     }
   });
   
@@ -614,6 +666,25 @@ export default function Player() {
             opacity={0.5} 
           />
         </mesh>
+      )}
+      
+      {/* Voice chat indicator */}
+      {voiceChatEnabled && (
+        <group position={[0, 3.2, 0]}>
+          <mesh>
+            <sphereGeometry args={[0.15, 16, 16]} />
+            <meshBasicMaterial color="#22c55e" />
+          </mesh>
+          {/* Microphone icon */}
+          <mesh position={[0, 0, 0.1]}>
+            <boxGeometry args={[0.05, 0.15, 0.05]} />
+            <meshBasicMaterial color="#000000" />
+          </mesh>
+          <mesh position={[0, -0.1, 0.1]}>
+            <boxGeometry args={[0.1, 0.05, 0.05]} />
+            <meshBasicMaterial color="#000000" />
+          </mesh>
+        </group>
       )}
       
       {/* Point light to make the player glow */}

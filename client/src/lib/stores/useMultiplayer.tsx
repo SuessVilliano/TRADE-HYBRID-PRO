@@ -25,6 +25,7 @@ interface MultiplayerState {
   tradeOffers: TradeOffer[];
   friendRequests: FriendRequest[];
   friends: Friend[];
+  mutedPlayers: string[]; // IDs of muted players
   
   // Actions
   connect: (username: string, customization: PlayerCustomization) => void;
@@ -35,6 +36,10 @@ interface MultiplayerState {
   sendFriendRequest: (targetId: string) => void;
   acceptFriendRequest: (requestId: string) => void;
   removeFriend: (friendId: string) => void;
+  mutePlayer: (playerId: string) => void;
+  unmutePlayer: (playerId: string) => void;
+  isPlayerMuted: (playerId: string) => boolean;
+  isPlayerFriend: (playerId: string) => boolean;
 }
 
 export const useMultiplayer = create<MultiplayerState>((set, get) => {
@@ -101,6 +106,7 @@ export const useMultiplayer = create<MultiplayerState>((set, get) => {
     tradeOffers: [],
     friendRequests: [],
     friends: [],
+    mutedPlayers: [],
     
     // Actions
     connect: (username, customization) => {
@@ -161,6 +167,32 @@ export const useMultiplayer = create<MultiplayerState>((set, get) => {
       set(state => ({
         friends: state.friends.filter(friend => friend.id !== friendId)
       }));
+    },
+    
+    mutePlayer: (playerId) => {
+      set(state => {
+        // Only add to muted list if not already there
+        if (state.mutedPlayers.includes(playerId)) {
+          return state;
+        }
+        return {
+          mutedPlayers: [...state.mutedPlayers, playerId]
+        };
+      });
+    },
+    
+    unmutePlayer: (playerId) => {
+      set(state => ({
+        mutedPlayers: state.mutedPlayers.filter(id => id !== playerId)
+      }));
+    },
+    
+    isPlayerMuted: (playerId) => {
+      return get().mutedPlayers.includes(playerId);
+    },
+    
+    isPlayerFriend: (playerId) => {
+      return get().friends.some(friend => friend.id === playerId);
     }
   };
 });
