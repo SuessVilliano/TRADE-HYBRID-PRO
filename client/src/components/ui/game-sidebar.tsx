@@ -6,8 +6,8 @@ import { useSignals } from '@/lib/stores/useSignals';
 import { useLeaderboard } from '@/lib/stores/useLeaderboard';
 import { useWebApp } from '@/lib/stores/useWebApp';
 import { Button } from './button';
-import { WalletConnect } from './wallet-connect';
-import { AffiliateSystem } from './affiliate-system';
+import { SimpleWalletButton } from './simple-wallet-button';
+import { SimpleAffiliateSystem } from './simple-affiliate-system';
 import { TradeRunner } from './trade-runner';
 import { 
   PanelLeft, 
@@ -265,12 +265,18 @@ export function GameSidebar() {
               <TradeRunner className="w-full h-full" />
             </div>
           )}
+          
+          {isExpanded && activeTab === 'affiliate' && (
+            <div className="mt-2 p-1 border-t">
+              <SimpleAffiliateSystem />
+            </div>
+          )}
 
           {/* Footer with affiliate and settings */}
           <div className="p-3 border-t">
             {isExpanded ? (
               <div className="space-y-3">
-                <AffiliateSystem />
+                <SimpleAffiliateSystem />
                 <Button
                   variant="ghost"
                   size="default"
