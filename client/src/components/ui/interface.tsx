@@ -6,6 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
 //import { Confetti } from "../game/Confetti"; // Uncomment if this component exists
 import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map } from "lucide-react";
 import { PlayerCustomizer } from "./player-customizer";
+import { GameSidebar } from "./game-sidebar";
 
 interface InterfaceProps {
   showMapOverride?: boolean;
@@ -62,6 +63,8 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
 
   return (
     <div>
+      {/* Game Sidebar */}
+      <GameSidebar />
       {/* Top-right corner UI controls */}
       <div className="fixed top-4 right-4 flex gap-2 z-10">
         <Button
