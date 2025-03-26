@@ -110,7 +110,7 @@ export const useMarketData = create<MarketDataState>((set, get) => ({
     console.log(`Subscribing to real-time data for ${symbol}...`);
     ironBeamService.subscribeToMarketData(symbol, (brokerData: BrokerMarketData) => {
       // Convert broker market data to our application's market data format
-      const appData = {
+      const appData: BrokerDataPoint = {
         symbol: brokerData.symbol,
         price: brokerData.price,
         timestamp: brokerData.timestamp,
@@ -130,16 +130,7 @@ export const useMarketData = create<MarketDataState>((set, get) => ({
     ironBeamService.unsubscribeFromMarketData(symbol);
   },
   
-  addMarketDataPoint: (data: { 
-    symbol: string;
-    price: number;
-    timestamp: number;
-    volume?: number;
-    high?: number;
-    low?: number;
-    open?: number;
-    close?: number;
-  }) => {
+  addMarketDataPoint: (data: BrokerDataPoint) => {
     if (data.symbol !== mapSymbolToIronBeam(get().symbol)) return;
     
     console.log(`Received real-time data point for ${data.symbol}:`, data);

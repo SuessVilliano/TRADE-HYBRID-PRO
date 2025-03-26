@@ -1,9 +1,10 @@
-import React, { useEffect, useRef } from 'react';
-import { createChart, ColorType, IChartApi } from 'lightweight-charts';
+import React, { useEffect, useRef, useState } from 'react';
+import { createChart, ColorType, IChartApi, SeriesType } from 'lightweight-charts';
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMarketData } from "@/lib/stores/useMarketData";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatCurrency } from "@/lib/utils";
 
 interface MarketChartProps {
   className?: string;
@@ -16,7 +17,19 @@ export function MarketChart({
 }: MarketChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chart = useRef<IChartApi | null>(null);
-  const { marketData, fetchMarketData, loading } = useMarketData();
+  const candleSeries = useRef<any>(null);
+  const { 
+    marketData, 
+    fetchMarketData, 
+    subscribeToRealTimeData,
+    unsubscribeFromRealTimeData,
+    currentPrice,
+    loading,
+    connected
+  } = useMarketData();
+  
+  // Track if the chart is already initialized with data
+  const [isChartInitialized, setIsChartInitialized] = useState(false);
   
   // Initialize chart
   useEffect(() => {
@@ -65,33 +78,84 @@ export function MarketChart({
   // Update data when marketData changes
   useEffect(() => {
     if (chart.current && marketData.length > 0) {
-      // Create a new series for the price data
-      const mainSeries = chart.current.addCandlestickSeries({
-        upColor: '#26a69a',
-        downColor: '#ef5350',
-        borderVisible: false,
-        wickUpColor: '#26a69a',
-        wickDownColor: '#ef5350',
-      });
-      
-      // Add the data
-      mainSeries.setData(marketData);
-      
-      // Fit content to ensure all data is visible
-      chart.current.timeScale().fitContent();
+      // If we haven't initialized the chart with data yet
+      if (!isChartInitialized) {
+        // Create a new series for the price data
+        // Workaround for TypeScript type issue with lightweight-charts
+        const mainSeries = (chart.current as any).addCandlestickSeries({
+          upColor: '#26a69a',
+          downColor: '#ef5350',
+          borderVisible: false,
+          wickUpColor: '#26a69a',
+          wickDownColor: '#ef5350',
+        });
+        
+        // Store the series reference for later updates
+        candleSeries.current = mainSeries;
+        
+        // Add the initial data
+        mainSeries.setData(marketData);
+        
+        // Fit content to ensure all data is visible
+        chart.current.timeScale().fitContent();
+        
+        // Mark chart as initialized
+        setIsChartInitialized(true);
+      } 
+      // If we already have a chart with data, just update the last candle
+      else if (candleSeries.current) {
+        // Get the latest data point
+        const latestPoint = marketData[marketData.length - 1];
+        
+        // Update the last candle with the latest data
+        candleSeries.current.update(latestPoint);
+      }
     }
-  }, [marketData]);
+  }, [marketData, isChartInitialized]);
   
-  // Fetch data for the selected symbol
+  // Fetch data for the selected symbol and manage real-time subscriptions
   useEffect(() => {
+    console.log(`Setting up data for symbol: ${symbol}`);
+    
+    // Initial fetch of historical data
     fetchMarketData(symbol);
-  }, [symbol, fetchMarketData]);
+    
+    // When the component unmounts or symbol changes, unsubscribe from updates
+    return () => {
+      if (connected) {
+        console.log(`Unsubscribing from ${symbol} updates`);
+        unsubscribeFromRealTimeData(mapSymbolToIronBeam(symbol));
+      }
+    };
+  }, [symbol, fetchMarketData, unsubscribeFromRealTimeData, connected]);
+  
+  // Helper function to map symbols to IronBeam format
+  function mapSymbolToIronBeam(symbol: string): string {
+    switch (symbol) {
+      case "BTCUSD": return "BTC/USD";
+      case "ETHUSD": return "ETH/USD";
+      case "EURUSD": return "EUR/USD";
+      default: return symbol;
+    }
+  }
   
   return (
     <Card className={cn("w-full", className)}>
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-medium flex justify-between items-center">
-          <span>Market Data - {symbol}</span>
+          <div className="flex flex-col">
+            <span>Market Data - {symbol}</span>
+            {currentPrice > 0 && (
+              <span className="text-xl font-bold mt-1">
+                {formatCurrency(currentPrice)}
+                {connected && (
+                  <span className="ml-2 text-xs px-2 py-1 bg-green-500/20 text-green-500 rounded-full">
+                    Live
+                  </span>
+                )}
+              </span>
+            )}
+          </div>
           {loading && <span className="text-sm text-muted-foreground">Loading...</span>}
         </CardTitle>
         <Tabs defaultValue="1d">
