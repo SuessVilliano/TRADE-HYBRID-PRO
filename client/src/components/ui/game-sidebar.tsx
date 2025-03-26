@@ -422,7 +422,18 @@ export function GameSidebar() {
               
               {activeTab === 'chat' && (
                 <div className="space-y-2 p-2 text-sm">
-                  <h3 className="font-medium">Community Chat</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">Community Chat</h3>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-7 px-2 flex items-center gap-1" 
+                      onClick={() => openFullscreen('chat')}
+                    >
+                      <Maximize2 className="h-3 w-3" />
+                      <span className="text-xs">Fullscreen</span>
+                    </Button>
+                  </div>
                   <div className="border rounded-md p-3 text-muted-foreground min-h-[150px] flex flex-col">
                     <div className="flex-1">
                       <p className="text-center text-xs pt-4">Connect wallet to join the chat.</p>
@@ -441,8 +452,14 @@ export function GameSidebar() {
                 <div className="space-y-2 p-2 text-sm">
                   <div className="flex items-center justify-between">
                     <h3 className="font-medium">Trade Runner</h3>
-                    <Button size="sm" variant="outline" onClick={() => window.open('/game', '_blank')}>
-                      Open Fullscreen
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-7 px-2 flex items-center gap-1" 
+                      onClick={() => window.open('/game', '_blank')}
+                    >
+                      <Maximize2 className="h-3 w-3" />
+                      <span className="text-xs">Fullscreen</span>
                     </Button>
                   </div>
                   <div className="h-[200px] overflow-hidden rounded-md border">
@@ -453,21 +470,54 @@ export function GameSidebar() {
               
               {activeTab === 'affiliate' && (
                 <div className="space-y-2 p-2 text-sm">
-                  <h3 className="font-medium">Affiliate Program</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">Affiliate Program</h3>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-7 px-2 flex items-center gap-1" 
+                      onClick={() => openFullscreen('affiliate')}
+                    >
+                      <Maximize2 className="h-3 w-3" />
+                      <span className="text-xs">Fullscreen</span>
+                    </Button>
+                  </div>
                   <SimpleAffiliateSystem />
                 </div>
               )}
               
               {activeTab === 'wallet' && (
                 <div className="space-y-2 p-2 text-sm">
-                  <h3 className="font-medium">Connect Wallet</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">Connect Wallet</h3>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-7 px-2 flex items-center gap-1" 
+                      onClick={() => openFullscreen('wallet')}
+                    >
+                      <Maximize2 className="h-3 w-3" />
+                      <span className="text-xs">Fullscreen</span>
+                    </Button>
+                  </div>
                   <SimpleWalletButton />
                 </div>
               )}
               
               {activeTab === 'settings' && (
                 <div className="space-y-2 p-2 text-sm">
-                  <h3 className="font-medium">Settings</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">Settings</h3>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-7 px-2 flex items-center gap-1" 
+                      onClick={() => openFullscreen('settings')}
+                    >
+                      <Maximize2 className="h-3 w-3" />
+                      <span className="text-xs">Fullscreen</span>
+                    </Button>
+                  </div>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="darkMode">Dark Mode</Label>
