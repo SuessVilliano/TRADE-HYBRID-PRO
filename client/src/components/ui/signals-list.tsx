@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useSignals, TradingSignal } from "@/lib/stores/useSignals";
+import { useBrokerAggregator } from "@/lib/stores/useBrokerAggregator";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "./card";
 import { Badge } from "./badge";
 import { Button } from "./button";
-import { Bell, BellOff, RefreshCw, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { Bell, BellOff, RefreshCw, ChevronDown, ChevronUp, ExternalLink, CheckCircle2, BarChart2 } from "lucide-react";
 import { formatDate, formatTime, truncate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface SignalsListProps {
   className?: string;
@@ -14,13 +16,31 @@ interface SignalsListProps {
 
 export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
   const { signals, loading, fetchSignals } = useSignals();
+  const { 
+    initializeAggregator, 
+    executeTrade, 
+    selectBroker, 
+    toggleABATEV, 
+    useABATEV, 
+    selectedBroker,
+    isLoading: isAggregatorLoading,
+    isConnected
+  } = useBrokerAggregator();
+  
   const [expanded, setExpanded] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [selectedSignal, setSelectedSignal] = useState<TradingSignal | null>(null);
+  const [showingBrokerComparison, setShowingBrokerComparison] = useState(false);
   
   useEffect(() => {
-    // Initial fetch
+    // Initial fetch for signals
     fetchSignals();
+    
+    // Initialize the broker aggregator
+    initializeAggregator().catch(error => {
+      console.error('Failed to initialize broker aggregator:', error);
+      toast.error('Failed to connect to brokers');
+    });
     
     // Poll for new signals every 30 seconds
     const interval = setInterval(() => {
@@ -28,7 +48,7 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
     }, 30000);
     
     return () => clearInterval(interval);
-  }, [fetchSignals]);
+  }, [fetchSignals, initializeAggregator]);
   
   // Display a limited number of signals unless expanded
   const displayedSignals = expanded ? signals : signals.slice(0, maxSignals);
@@ -259,29 +279,115 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
           
           <CardFooter className="px-3 py-2 border-t space-y-2">
             <div className="flex justify-between items-center w-full">
-              <span className="text-xs text-muted-foreground">Trade with best execution</span>
+              <div className="flex items-center gap-1">
+                <Button 
+                  variant={useABATEV ? "default" : "outline"}
+                  size="sm"
+                  className="text-xs h-7 px-2"
+                  onClick={toggleABATEV}
+                  title="Toggle ABATEV (AI-driven Broker Aggregator and Trade Execution Validator)"
+                >
+                  <CheckCircle2 
+                    size={14} 
+                    className={cn("mr-1", useABATEV ? "opacity-100" : "opacity-50")} 
+                  />
+                  ABATEV
+                </Button>
+                <Button 
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  onClick={() => setShowingBrokerComparison(!showingBrokerComparison)}
+                >
+                  <BarChart2 size={14} />
+                </Button>
+              </div>
+              
               <Button 
-                className="w-1/2" 
+                className="flex-1 max-w-[120px]" 
                 size="sm"
                 variant="default"
+                onClick={() => {
+                  if (!isConnected) {
+                    toast.error("Not connected to brokers");
+                    return;
+                  }
+                  
+                  // Create a trade from the signal
+                  const tradeDetails = {
+                    symbol: selectedSignal.symbol,
+                    quantity: 1, // Default quantity
+                    action: selectedSignal.action === 'neutral' ? 'buy' : selectedSignal.action,
+                    orderType: 'market',
+                    stopLoss: selectedSignal.stopLoss,
+                    takeProfit1: selectedSignal.takeProfit1,
+                    takeProfit2: selectedSignal.takeProfit2,
+                    takeProfit3: selectedSignal.takeProfit3
+                  };
+                  
+                  toast.promise(executeTrade(tradeDetails), {
+                    loading: 'Executing trade...',
+                    success: (result) => {
+                      if (result.success) {
+                        return `Trade executed through ${result.broker}`;
+                      }
+                      throw new Error(result.error);
+                    },
+                    error: 'Failed to execute trade'
+                  });
+                }}
+                disabled={isAggregatorLoading || !isConnected}
               >
-                <span className="mr-1">ABATEV</span> 
-                {selectedSignal.action === 'buy' ? 'Buy' : 
-                 selectedSignal.action === 'sell' ? 'Sell' : 
+                {selectedSignal.action === 'buy' ? 'Buy Now' : 
+                 selectedSignal.action === 'sell' ? 'Sell Now' : 
                  'Execute'}
               </Button>
             </div>
-            <div className="flex flex-wrap gap-2 w-full">
-              <Button className="flex-1" size="sm" variant="outline">
-                IronBeam
-              </Button>
-              <Button className="flex-1" size="sm" variant="outline">
-                Alpaca
-              </Button>
-              <Button className="flex-1" size="sm" variant="outline">
-                Oanda
-              </Button>
-            </div>
+            
+            {!useABATEV && (
+              <div className="flex flex-wrap gap-2 w-full">
+                {['ironbeam', 'alpaca', 'oanda'].map(broker => (
+                  <Button 
+                    key={broker}
+                    className="flex-1" 
+                    size="sm" 
+                    variant={selectedBroker === broker ? "default" : "outline"}
+                    onClick={() => selectBroker(broker)}
+                  >
+                    {broker.charAt(0).toUpperCase() + broker.slice(1)}
+                  </Button>
+                ))}
+              </div>
+            )}
+            
+            {showingBrokerComparison && (
+              <div className="w-full mt-2 pt-2 border-t">
+                <div className="text-xs font-medium mb-1">ABATEV Broker Comparison</div>
+                <div className="space-y-1 text-xs">
+                  <div className="flex items-center justify-between text-muted-foreground bg-muted/30 px-2 py-1 rounded">
+                    <div className="w-1/4">Broker</div>
+                    <div className="w-1/4 text-right">Price</div>
+                    <div className="w-1/4 text-right">Spread</div>
+                    <div className="w-1/4 text-right">Latency</div>
+                  </div>
+                  
+                  {['ironbeam', 'alpaca'].map((broker, index) => (
+                    <div 
+                      key={broker}
+                      className={cn(
+                        "flex items-center justify-between px-2 py-1 rounded", 
+                        index === 0 ? "bg-green-500/10 border border-green-500/30" : ""
+                      )}
+                    >
+                      <div className="w-1/4 font-medium">{broker.charAt(0).toUpperCase() + broker.slice(1)}</div>
+                      <div className="w-1/4 text-right">${(Math.random() * 1000 + 30000).toFixed(2)}</div>
+                      <div className="w-1/4 text-right">{(Math.random() * 0.5).toFixed(2)}%</div>
+                      <div className="w-1/4 text-right">{Math.floor(Math.random() * 100)}ms</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardFooter>
         </Card>
       )}
@@ -310,9 +416,10 @@ function SignalCard({
       <div className="flex justify-between items-start mb-1">
         <div className="flex items-center">
           <Badge 
-            variant={signal.action === 'buy' ? 'success' : 
+            variant={signal.action === 'buy' ? 'default' : 
                     signal.action === 'sell' ? 'destructive' : 'outline'}
-            className="mr-2 uppercase text-xs"
+            className={cn("mr-2 uppercase text-xs", 
+              signal.action === 'buy' ? 'bg-green-500 hover:bg-green-600' : '')}
           >
             {signal.action}
           </Badge>
