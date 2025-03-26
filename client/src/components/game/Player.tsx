@@ -124,6 +124,7 @@ export default function Player() {
   const lastJumpTime = useRef(0);
   const doubleJumpAvailable = useRef(false);
   const jumpCooldown = 500; // milliseconds
+  const initialJumpPrevented = useRef(false);
   
   // Use a randomly selected customization
   const [customizationIndex, setCustomizationIndex] = useState(() => {
@@ -209,6 +210,13 @@ export default function Player() {
     if (keys.jump) {
       const now = Date.now();
       
+      // Ensure we prevent auto-jump at game start
+      if (!initialJumpPrevented.current) {
+        initialJumpPrevented.current = true;
+        console.log('Key pressed: Space');
+        return;
+      }
+      
       if (playerOnGround.current) {
         // First jump
         playerVelocity.current.y = jumpHeight;
@@ -216,12 +224,14 @@ export default function Player() {
         doubleJumpAvailable.current = true;
         lastJumpTime.current = now;
         playHit?.(); // Play jump sound
+        console.log('Player jumped');
       } else if (doubleJumpAvailable.current && (now - lastJumpTime.current > jumpCooldown)) {
         // Double jump if available and cooldown has passed
         playerVelocity.current.y = jumpHeight * 0.8;
         doubleJumpAvailable.current = false;
         lastJumpTime.current = now;
         playHit?.(); // Play jump sound
+        console.log('Player double jumped');
       }
     }
     
@@ -288,13 +298,37 @@ export default function Player() {
   // Get current customization
   const customization = TRADER_CUSTOMIZATIONS[customizationIndex];
   
-  // Change character on click
-  const changeCharacter = () => {
-    setCustomizationIndex((prevIndex) => (prevIndex + 1) % TRADER_CUSTOMIZATIONS.length);
+  // Player rank system based on score/trades
+  const [playerScore, setPlayerScore] = useState(0);
+  const [playerRank, setPlayerRank] = useState('Novice Trader');
+  
+  // Determine rank based on score
+  useEffect(() => {
+    if (playerScore >= 1000) {
+      setPlayerRank('Elite Trader');
+    } else if (playerScore >= 500) {
+      setPlayerRank('Pro Trader');
+    } else if (playerScore >= 200) {
+      setPlayerRank('Expert Trader');
+    } else if (playerScore >= 100) {
+      setPlayerRank('Advanced Trader');
+    } else if (playerScore >= 50) {
+      setPlayerRank('Intermediate Trader');
+    } else {
+      setPlayerRank('Novice Trader');
+    }
+  }, [playerScore]);
+  
+  // Open player info panel instead of changing character on click
+  const openPlayerInfo = () => {
+    console.log('Player info panel opened');
+    // Here we would normally open a UI panel with player stats
+    // For now, just increment score for testing
+    setPlayerScore(prev => prev + 10);
   };
   
   return (
-    <group ref={playerGroup} position={[0, 1, 0]} onClick={changeCharacter}>
+    <group ref={playerGroup} position={[0, 1, 0]} onClick={openPlayerInfo}>
       {/* Username display */}
       <Text
         position={[0, 3, 0]}
@@ -318,7 +352,7 @@ export default function Player() {
         outlineWidth={0.03}
         outlineColor="#000000"
       >
-        {customization.role}
+        {playerRank}
       </Text>
       
       {/* Trail effect for running */}
