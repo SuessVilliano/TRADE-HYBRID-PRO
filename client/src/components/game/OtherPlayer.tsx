@@ -32,13 +32,8 @@ export default function OtherPlayer({ player, onInteract }: OtherPlayerProps) {
     scene: THREE.Group
   };
   
-  // Simple physics collider for the player
-  const [ref] = useSphere(() => ({
-    mass: 0, // Static body
-    position: player.position,
-    args: [0.5], // Radius of the sphere
-    type: "Static",
-  }));
+  // Reference for the player group
+  const ref = useRef<THREE.Group>(null);
   
   // Update target position and rotation when player state changes
   useEffect(() => {
@@ -107,7 +102,8 @@ export default function OtherPlayer({ player, onInteract }: OtherPlayerProps) {
   
   return (
     <group 
-      ref={ref as React.RefObject<THREE.Group>}
+      ref={ref}
+      position={player.position}
       onPointerOver={() => setInteractable(true)}
       onPointerOut={() => setInteractable(false)}
       onClick={() => interactable && onInteract && onInteract()}
