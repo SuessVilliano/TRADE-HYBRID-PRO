@@ -16,13 +16,13 @@ import { Interface } from '../ui/interface';
 import { Map, Sun, Moon } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useLocation } from 'react-router-dom';
+import { GamePhase, useGame } from '@/lib/stores/useGame';
+import { useMultiplayer } from '@/lib/stores/useMultiplayer';
 import Floor from './Floor';
 import Lights from './Lights';
-import { GamePhase, useGame } from '@/lib/stores/useGame';
 import GameControls from './Controls';
 import Player from './Player';
 import OtherPlayer from './OtherPlayer';
-import { useMultiplayer } from '@/lib/stores/useMultiplayer';
 
 interface SceneProps {
   showStats?: boolean;
@@ -591,34 +591,90 @@ function SceneCamera() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const locationParam = searchParams.get('location') || 'tradehouse';
+  const [isFirstPerson, setIsFirstPerson] = useState(false);
+  const [lastThirdPersonPosition, setLastThirdPersonPosition] = useState<[number, number, number]>([10, 5, 10]);
+  const players = useMultiplayer((state) => state.players);
+  const clientId = useMultiplayer((state) => state.clientId);
+  const playerRef = useRef<THREE.Group | null>(null);
+  
+  // Handle keyboard events for toggling views
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.code === 'KeyV') {
+        setIsFirstPerson(prev => !prev);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
   
   useEffect(() => {
-    // Set camera position based on location
-    let cameraPos: [number, number, number];
-    
-    switch(locationParam) {
-      case 'crypto':
-        cameraPos = [-10, 5, 10];
-        break;
-      case 'forex':
-        cameraPos = [10, 5, 10];
-        break;
-      case 'stocks':
-        cameraPos = [0, 5, 20];
-        break;
-      case 'signals':
-        cameraPos = [0, 5, -10];
-        break;
-      case 'tradehouse':
-      default:
-        cameraPos = [10, 5, 10];
+    // Set camera position based on location when in third-person view
+    if (!isFirstPerson) {
+      let cameraPos: [number, number, number];
+      
+      switch(locationParam) {
+        case 'crypto':
+          cameraPos = [-10, 5, 10];
+          break;
+        case 'forex':
+          cameraPos = [10, 5, 10];
+          break;
+        case 'stocks':
+          cameraPos = [0, 5, 20];
+          break;
+        case 'signals':
+          cameraPos = [0, 5, -10];
+          break;
+        case 'tradehouse':
+        default:
+          cameraPos = [10, 5, 10];
+      }
+      
+      camera.position.set(...cameraPos);
+      camera.lookAt(0, 0, 0);
+      setLastThirdPersonPosition(cameraPos);
     }
-    
-    camera.position.set(...cameraPos);
-    camera.lookAt(0, 0, 0);
-  }, [camera, locationParam]);
+  }, [camera, locationParam, isFirstPerson]);
   
-  return null;
+  // For first-person view, follow player position
+  useFrame(() => {
+    if (isFirstPerson && clientId) {
+      // Find the current player
+      const player = players.find(p => p.id === clientId);
+      if (player) {
+        // Position the camera at player position but add height for eye level
+        camera.position.set(
+          player.position[0],
+          player.position[1] + 1.6, // Eye height
+          player.position[2]
+        );
+        
+        // Determine forward direction based on player rotation
+        const angle = player.rotation;
+        const lookAtX = player.position[0] + Math.sin(angle) * 5;
+        const lookAtZ = player.position[2] + Math.cos(angle) * 5;
+        
+        camera.lookAt(lookAtX, player.position[1] + 1.6, lookAtZ);
+      }
+    }
+  });
+  
+  // Add UI information about first-person toggle
+  return (
+    <Html position={[0, -5, 0]} center>
+      <div 
+        className="text-xs px-2 py-1 bg-black/70 text-white rounded pointer-events-none"
+        style={{ 
+          opacity: 0.7,
+          visibility: isFirstPerson ? 'visible' : 'hidden'
+        }}
+      >
+        First-person view enabled (Press V to toggle)
+      </div>
+    </Html>
+  );
 }
 
 export default function Scene({ showStats = false }: SceneProps) {
@@ -680,10 +736,14 @@ export default function Scene({ showStats = false }: SceneProps) {
               <Sky sunPosition={[100, 10, 100]} />
             )}
             
-            <ambientLight intensity={0.3} />
+            <ambientLight intensity={0.1} />
             <Lights />
             <SceneCamera />
-            <OrbitControls target={[0, 0, 0]} maxPolarAngle={Math.PI/2 - 0.1} />
+            <OrbitControls 
+              target={[0, 0, 0]} 
+              maxPolarAngle={Math.PI/2 - 0.1}
+              makeDefault
+            />
             
             <TradingEnvironment />
             <Floor />

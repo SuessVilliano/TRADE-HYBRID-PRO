@@ -25,8 +25,11 @@ import {
   ChevronLeft, 
   ChevronRight,
   Gamepad2,
-  Maximize2
+  Maximize2,
+  Share2,
+  Copy
 } from 'lucide-react';
+import TradingViewWidget from './TradingViewWidget';
 import { ContextualTooltip } from './contextual-tooltip';
 
 export function GameSidebar() {
@@ -252,6 +255,24 @@ export function GameSidebar() {
               </Button>
             </ContextualTooltip>
 
+            {/* Chart Share */}
+            <ContextualTooltip
+              id="chart-share-tooltip"
+              title="Share Chart"
+              content="Share your trading chart with others"
+              position="right"
+            >
+              <Button
+                variant={activeTab === 'chart' ? 'default' : 'ghost'}
+                size={isExpanded ? 'default' : 'icon'}
+                className={`w-full justify-start ${isExpanded ? '' : 'flex justify-center'}`}
+                onClick={() => handleTabClick('chart')}
+              >
+                <Share2 className="h-4 w-4 mr-2 flex-shrink-0" />
+                {isExpanded && <span>Share Chart</span>}
+              </Button>
+            </ContextualTooltip>
+
             {/* Web App */}
             <ContextualTooltip
               id="webapp-tooltip"
@@ -418,6 +439,42 @@ export function GameSidebar() {
                 </div>
               )}
               
+              {activeTab === 'chart' && (
+                <div className="space-y-2 p-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">Chart Sharing</h3>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-7 px-2 flex items-center gap-1" 
+                      onClick={() => window.open('/trading-space?share=true', '_blank')}
+                    >
+                      <Maximize2 className="h-3 w-3" />
+                      <span className="text-xs">Fullscreen</span>
+                    </Button>
+                  </div>
+                  <div className="border rounded-md overflow-hidden">
+                    <div className="h-[200px] bg-muted/50 border-b relative">
+                      <TradingViewWidget symbol="BTCUSD" />
+                    </div>
+                    <div className="p-2 flex flex-col gap-2">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-xs">BTC/USD</span>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" className="h-6 w-6">
+                            <Share2 className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6">
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                      <Button size="sm" className="w-full">Share Chart</Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {activeTab === 'webapp' && (
                 <div className="space-y-2 p-2 text-sm">
                   <div className="flex items-center justify-between">
