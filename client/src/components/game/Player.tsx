@@ -1,10 +1,24 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, Suspense } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useKeyboardControls, Trail, useGLTF, Text } from '@react-three/drei';
+import { useKeyboardControls, Trail, useGLTF, Text, useAnimations } from '@react-three/drei';
 import * as THREE from 'three';
 import { useGame } from '@/lib/stores/useGame';
 import { useAudio } from '@/lib/stores/useAudio';
 import { useGuest } from '@/lib/stores/useGuest';
+import { GLTF } from 'three-stdlib';
+
+// Define model interfaces
+type GLTFResult = GLTF & {
+  nodes: {
+    [key: string]: THREE.Mesh
+  }
+  materials: {
+    [key: string]: THREE.Material | THREE.MeshStandardMaterial
+  }
+};
+
+// Preload the model
+useGLTF.preload('/models/trader_character.glb');
 
 enum Controls {
   forward = 'forward',
@@ -104,6 +118,12 @@ export default function Player() {
   const headRef = useRef<THREE.Mesh>(null);
   const playerGroup = useRef<THREE.Group>(null);
   const trailRef = useRef<any>(null);
+  const modelRef = useRef<THREE.Group>(null);
+  
+  // Load the 3D character model
+  const [modelLoaded, setModelLoaded] = useState(false);
+  const { scene: characterModel, animations } = useGLTF('/models/trader_character.glb') as GLTFResult;
+  const { actions, mixer } = useAnimations(animations, modelRef);
   
   // Audio
   const { playHit } = useAudio();
