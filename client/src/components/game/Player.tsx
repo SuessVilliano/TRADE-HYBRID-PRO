@@ -271,10 +271,8 @@ export default function Player() {
       }
     }
     
-    // Update trail visibility based on movement
-    if (trailRef.current) {
-      trailRef.current.visible = isSprinting && (moveX !== 0 || moveZ !== 0);
-    }
+    // We're now controlling trail visibility with conditional rendering
+    // so we don't need this code anymore
     
     // Make camera follow player with some smoothing
     const targetCameraPos = new THREE.Vector3(
@@ -324,19 +322,20 @@ export default function Player() {
       </Text>
       
       {/* Trail effect for running */}
-      <Trail
-        ref={trailRef}
-        width={1}
-        length={5}
-        color={customization.trailColor}
-        attenuation={(width) => width / 5}
-        visible={false}
-      >
-        <mesh position={[0, 0.3, 0]}>
-          <sphereGeometry args={[0.1, 8, 8]} />
-          <meshBasicMaterial color={customization.trailColor} />
-        </mesh>
-      </Trail>
+      {(isSprinting && (getKeys().forward || getKeys().backward || getKeys().left || getKeys().right)) ? (
+        <Trail
+          ref={trailRef}
+          width={1}
+          length={5}
+          color={customization.trailColor}
+          attenuation={(width) => width / 5}
+        >
+          <mesh position={[0, 0.3, 0]}>
+            <sphereGeometry args={[0.1, 8, 8]} />
+            <meshBasicMaterial color={customization.trailColor} />
+          </mesh>
+        </Trail>
+      ) : null}
       
       {/* Player body */}
       <mesh 

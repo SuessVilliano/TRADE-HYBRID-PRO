@@ -8,6 +8,7 @@ enum Controls {
   right = 'right',
   interact = 'interact',
   jump = 'jump',
+  sprint = 'sprint',
 }
 
 function KeyboardControlsImplementation() {
@@ -35,6 +36,7 @@ export default function GameControls({ children }: { children?: React.ReactNode 
     { name: Controls.right, keys: ['ArrowRight', 'KeyD'] },
     { name: Controls.interact, keys: ['KeyE'] },
     { name: Controls.jump, keys: ['Space'] },
+    { name: Controls.sprint, keys: ['ShiftLeft', 'ShiftRight'] },
   ];
   
   return (
