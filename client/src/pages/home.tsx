@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRightCircle, BarChart2, Bot, Building, CandlestickChart, Globe, Trophy, Wallet } from "lucide-react";
+import { ArrowRightCircle, BarChart2, Bot, Building, CandlestickChart, Globe, Trophy, Wallet, Gamepad2 } from "lucide-react";
 import { TRADING_SYMBOLS } from "@/lib/constants";
 import { useAudio } from "@/lib/stores/useAudio";
 
@@ -41,6 +41,11 @@ export default function Home() {
               <Link to="/trading-space" onClick={handleEnterMetaverse}>
                 <Button size="lg" className="gap-2">
                   Enter Metaverse <ArrowRightCircle className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link to="/game">
+                <Button variant="secondary" size="lg" className="gap-2">
+                  Play Trade Runner <Gamepad2 className="h-4 w-4" />
                 </Button>
               </Link>
               <Button variant="outline" size="lg" onClick={toggleMute}>
@@ -184,10 +189,15 @@ export default function Home() {
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
             Join traders from around the world in our immersive 3D trading environment
           </p>
-          <div className="mt-8">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/trading-space" onClick={handleEnterMetaverse}>
               <Button size="lg">
                 Enter Trade Hybrid
+              </Button>
+            </Link>
+            <Link to="/game">
+              <Button size="lg" variant="secondary">
+                Play Trade Runner Game
               </Button>
             </Link>
           </div>

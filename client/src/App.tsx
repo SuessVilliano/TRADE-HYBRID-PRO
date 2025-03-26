@@ -8,6 +8,7 @@ import Home from "./pages/home";
 import TradingSpace from "./pages/trading-space";
 import NotFound from "./pages/not-found";
 import Scene from "./components/game/Scene";
+import GamePage from "./pages/game";
 import { Suspense } from "react";
 
 const router = createBrowserRouter([
@@ -18,6 +19,10 @@ const router = createBrowserRouter([
   {
     path: "/trading-space",
     element: <Scene />,
+  },
+  {
+    path: "/game",
+    element: <GamePage />
   },
   {
     path: "*",
