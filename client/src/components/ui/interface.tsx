@@ -4,7 +4,8 @@ import { useAudio } from "@/lib/stores/useAudio";
 import { Button } from "./button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
 //import { Confetti } from "../game/Confetti"; // Uncomment if this component exists
-import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map, Mic, MicOff, MessageSquare } from "lucide-react";
+import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map, Mic, MicOff, MessageSquare, Smartphone } from "lucide-react";
+import { AugmentedReality } from "./augmented-reality";
 import { PlayerCustomizer } from "./player-customizer";
 import { GameSidebar } from "./game-sidebar";
 import { Chat } from "./chat";
@@ -23,6 +24,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
   const [micEnabled, setMicEnabled] = useState(false);
   const [chatMinimized, setChatMinimized] = useState(true);
   const [showChat, setShowChat] = useState(false);
+  const [showAR, setShowAR] = useState(false);
 
   // Use either the internal state or the external override prop
   const showMap = showMapOverride !== undefined ? showMapOverride : showMapState;
@@ -165,6 +167,15 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
           ) : (
             <MicOff size={18} />
           )}
+        </Button>
+        
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setShowAR(true)}
+          title="Augmented Reality View"
+        >
+          <Smartphone size={18} />
         </Button>
         
         <Button
@@ -347,6 +358,15 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
         </div>
       )}
       
+      {/* AR Mode */}
+      {showAR && (
+        <AugmentedReality 
+          isOpen={showAR} 
+          onClose={() => setShowAR(false)} 
+          modelPath="/models/trading_floor.glb" 
+        />
+      )}
+      
       {/* Game completion overlay */}
       {phase === "ended" && (
         <div className="fixed inset-0 flex items-center justify-center z-20 bg-black/30">
@@ -397,6 +417,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
               <li>M: Toggle map</li>
               <li>T: Toggle microphone</li>
               <li>C: Toggle chat</li>
+              <li>AR Button: View in augmented reality</li>
             </ul>
           </CardContent>
         </Card>

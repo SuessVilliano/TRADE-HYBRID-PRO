@@ -165,14 +165,213 @@ function TradeHouseModel({
 // Preload the model
 useGLTF.preload('/models/tradehouse.glb');
 
+// New Trading Desk Component
+function TradingDesk({ 
+  position = [0, 0, 0], 
+  rotation = [0, 0, 0], 
+  scale = [1, 1, 1],
+  active = false 
+}: { 
+  position?: [number, number, number], 
+  rotation?: [number, number, number], 
+  scale?: [number, number, number],
+  active?: boolean
+}) {
+  const { scene: deskModel } = useGLTF('/models/trading_desk.glb') as unknown as { scene: THREE.Group };
+  const clonedDesk = useMemo(() => deskModel.clone(), [deskModel]);
+  const deskRef = useRef<THREE.Group>(null);
+  
+  // Add some visual effects for active desks
+  useEffect(() => {
+    if (deskRef.current) {
+      clonedDesk.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          
+          if (child.material) {
+            if (active) {
+              child.material.emissive = new THREE.Color('#2244FF');
+              child.material.emissiveIntensity = 0.3;
+            } else {
+              child.material.emissive = new THREE.Color('#000000');
+              child.material.emissiveIntensity = 0;
+            }
+          }
+        }
+      });
+    }
+  }, [active, clonedDesk]);
+  
+  return (
+    <group 
+      position={new THREE.Vector3(...position)} 
+      rotation={[rotation[0], rotation[1], rotation[2]]}
+      ref={deskRef}
+    >
+      <primitive object={clonedDesk} scale={scale} />
+      
+      {active && (
+        <spotLight
+          position={[0, 3, 0]}
+          angle={0.3}
+          penumbra={0.5}
+          intensity={1}
+          color="#4466FF"
+          castShadow
+          distance={6}
+        />
+      )}
+    </group>
+  );
+}
+
+// New Market Display Component
+function MarketDisplay({ 
+  position = [0, 0, 0], 
+  rotation = [0, 0, 0], 
+  scale = [1, 1, 1]
+}: { 
+  position?: [number, number, number], 
+  rotation?: [number, number, number], 
+  scale?: [number, number, number]
+}) {
+  const { scene: displayModel } = useGLTF('/models/market_display.glb') as unknown as { scene: THREE.Group };
+  const clonedDisplay = useMemo(() => displayModel.clone(), [displayModel]);
+  const displayRef = useRef<THREE.Group>(null);
+  
+  // Animate the display
+  useFrame((state) => {
+    if (displayRef.current) {
+      // Subtle float animation
+      displayRef.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
+      
+      // Subtle pulse effect for screens
+      clonedDisplay.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.name.includes('screen')) {
+          const material = child.material as THREE.MeshStandardMaterial;
+          if (material) {
+            material.emissiveIntensity = 0.5 + Math.sin(state.clock.elapsedTime * 2) * 0.2;
+          }
+        }
+      });
+    }
+  });
+  
+  // Setup emissive materials for screens
+  useEffect(() => {
+    clonedDisplay.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+        
+        if (child.material) {
+          // Make screens emit light
+          if (child.name.includes('screen')) {
+            child.material.emissive = new THREE.Color('#00AAFF');
+            child.material.emissiveIntensity = 0.5;
+          }
+        }
+      }
+    });
+  }, [clonedDisplay]);
+  
+  return (
+    <group 
+      position={new THREE.Vector3(...position)} 
+      rotation={[rotation[0], rotation[1], rotation[2]]}
+      ref={displayRef}
+    >
+      <primitive object={clonedDisplay} scale={scale} />
+      
+      <pointLight
+        position={[0, 3, 0]}
+        intensity={1}
+        color="#00AAFF"
+        distance={10}
+      />
+    </group>
+  );
+}
+
+// New Trading Floor Component
+function TradingFloor({ 
+  position = [0, 0, 0], 
+  rotation = [0, 0, 0], 
+  scale = [1, 1, 1]
+}: { 
+  position?: [number, number, number], 
+  rotation?: [number, number, number], 
+  scale?: [number, number, number]
+}) {
+  const { scene: floorModel } = useGLTF('/models/trading_floor.glb') as unknown as { scene: THREE.Group };
+  const clonedFloor = useMemo(() => floorModel.clone(), [floorModel]);
+  
+  // Setup materials and shadows
+  useEffect(() => {
+    clonedFloor.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+        
+        // Add emissive to screens and lights
+        if (child.material && (child.name.includes('screen') || child.name.includes('light'))) {
+          child.material.emissive = new THREE.Color('#88CCFF');
+          child.material.emissiveIntensity = 0.5;
+        }
+      }
+    });
+  }, [clonedFloor]);
+  
+  return (
+    <group 
+      position={new THREE.Vector3(...position)} 
+      rotation={[rotation[0], rotation[1], rotation[2]]}
+    >
+      <primitive object={clonedFloor} scale={scale} />
+      
+      {/* Ambient lighting for the trading floor */}
+      <ambientLight intensity={0.2} color="#88AAFF" />
+      
+      {/* Add some area lights to simulate screens */}
+      <rectAreaLight
+        position={[0, 2, 0]}
+        width={10}
+        height={5}
+        intensity={0.5}
+        color="#00AAFF"
+      />
+    </group>
+  );
+}
+
 // Create different trading locations in the 3D space
 function TradingEnvironment() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const locationParam = searchParams.get('location') || 'tradehouse';
   
+  // Preload models
+  useGLTF.preload('/models/trading_desk.glb');
+  useGLTF.preload('/models/market_display.glb');
+  useGLTF.preload('/models/trading_floor.glb');
+  
   return (
     <group>
+      {/* Central Trading Floor Environment */}
+      <TradingFloor 
+        position={[0, 0, 0]}
+        scale={[2.5, 2.5, 2.5]}
+        rotation={[0, Math.PI / 4, 0]}
+      />
+      
+      {/* Central Market Display */}
+      <MarketDisplay
+        position={[0, 2, 0]}
+        scale={[2, 2, 2]}
+        rotation={[0, 0, 0]}
+      />
+      
       {/* Trade House - Central Building (3D Model) */}
       <TradeHouseModel 
         position={[0, 0, 0]}
@@ -182,66 +381,174 @@ function TradingEnvironment() {
       />
       
       {/* Crypto Trading Center */}
-      <Building 
-        position={[-15, 1, 0]} 
-        size={[8, 2, 6]} 
-        color={locationParam === 'crypto' ? '#22c55e' : '#15803d'} 
-        name="Crypto Trading"
-      />
+      <group position={[-15, 0, 0]}>
+        <Building 
+          position={[0, 1, 0]} 
+          size={[8, 2, 6]} 
+          color={locationParam === 'crypto' ? '#22c55e' : '#15803d'} 
+          name="Crypto Trading"
+        />
+        <TradingDesk 
+          position={[0, 0, -4]} 
+          scale={[1.5, 1.5, 1.5]} 
+          rotation={[0, Math.PI, 0]}
+          active={locationParam === 'crypto'}
+        />
+        <MarketDisplay
+          position={[0, 1, 4]}
+          scale={[1, 1, 1]}
+          rotation={[0, 0, 0]}
+        />
+      </group>
       
       {/* Forex Trading Floor */}
-      <Building 
-        position={[15, 1, 0]} 
-        size={[8, 2, 6]} 
-        color={locationParam === 'forex' ? '#ef4444' : '#b91c1c'} 
-        name="Forex Trading"
-      />
+      <group position={[15, 0, 0]}>
+        <Building 
+          position={[0, 1, 0]} 
+          size={[8, 2, 6]} 
+          color={locationParam === 'forex' ? '#ef4444' : '#b91c1c'} 
+          name="Forex Trading"
+        />
+        <TradingDesk 
+          position={[0, 0, -4]} 
+          scale={[1.5, 1.5, 1.5]} 
+          rotation={[0, Math.PI, 0]}
+          active={locationParam === 'forex'}
+        />
+        <MarketDisplay
+          position={[0, 1, 4]}
+          scale={[1, 1, 1]}
+          rotation={[0, 0, 0]}
+        />
+      </group>
       
       {/* Stock Market Exchange */}
-      <Building 
-        position={[0, 1, 15]} 
-        size={[8, 2, 6]} 
-        color={locationParam === 'stocks' ? '#a855f7' : '#7e22ce'} 
-        name="Stock Market"
-      />
+      <group position={[0, 0, 15]}>
+        <Building 
+          position={[0, 1, 0]} 
+          size={[8, 2, 6]} 
+          color={locationParam === 'stocks' ? '#a855f7' : '#7e22ce'} 
+          name="Stock Market"
+        />
+        <TradingDesk 
+          position={[-3, 0, 0]} 
+          scale={[1.5, 1.5, 1.5]} 
+          rotation={[0, Math.PI / 2, 0]}
+          active={locationParam === 'stocks'}
+        />
+        <TradingDesk 
+          position={[3, 0, 0]} 
+          scale={[1.5, 1.5, 1.5]} 
+          rotation={[0, -Math.PI / 2, 0]}
+          active={locationParam === 'stocks'}
+        />
+        <MarketDisplay
+          position={[0, 1, -4]}
+          scale={[1, 1, 1]}
+          rotation={[0, Math.PI, 0]}
+        />
+      </group>
       
       {/* Signal Towers */}
-      <Building 
-        position={[0, 1, -15]} 
-        size={[6, 4, 6]} 
-        color={locationParam === 'signals' ? '#3b82f6' : '#1d4ed8'} 
-        name="Signal Towers"
-      />
+      <group position={[0, 0, -15]}>
+        <Building 
+          position={[0, 1, 0]} 
+          size={[6, 4, 6]} 
+          color={locationParam === 'signals' ? '#3b82f6' : '#1d4ed8'} 
+          name="Signal Towers"
+        />
+        <MarketDisplay
+          position={[0, 3, 0]}
+          scale={[1.2, 1.2, 1.2]}
+          rotation={[0, 0, 0]}
+        />
+        <TradingDesk 
+          position={[-4, 0, -4]} 
+          scale={[1.2, 1.2, 1.2]} 
+          rotation={[0, Math.PI / 4, 0]}
+          active={locationParam === 'signals'}
+        />
+        <TradingDesk 
+          position={[4, 0, -4]} 
+          scale={[1.2, 1.2, 1.2]} 
+          rotation={[0, -Math.PI / 4, 0]}
+          active={locationParam === 'signals'}
+        />
+      </group>
       
-      {/* Roads connecting buildings */}
+      {/* Enhanced floor with more visual interest */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} receiveShadow>
-        <planeGeometry args={[50, 50]} />
-        <meshStandardMaterial color="#333333" />
+        <planeGeometry args={[80, 80]} />
+        <meshStandardMaterial 
+          color="#111122" 
+          metalness={0.7}
+          roughness={0.3}
+        />
       </mesh>
       
-      {/* Path to Crypto */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-7.5, 0.02, 0]} receiveShadow>
-        <planeGeometry args={[15, 2]} />
-        <meshStandardMaterial color="#444444" />
-      </mesh>
+      {/* Glowing paths connecting buildings */}
+      <group>
+        {/* Path to Crypto */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-7.5, 0.02, 0]} receiveShadow>
+          <planeGeometry args={[15, 3]} />
+          <meshStandardMaterial 
+            color="#001100" 
+            emissive="#00FF00"
+            emissiveIntensity={0.2}
+          />
+        </mesh>
+        
+        {/* Path to Forex */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[7.5, 0.02, 0]} receiveShadow>
+          <planeGeometry args={[15, 3]} />
+          <meshStandardMaterial 
+            color="#110000" 
+            emissive="#FF0000"
+            emissiveIntensity={0.2}
+          />
+        </mesh>
+        
+        {/* Path to Stock Market */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 7.5]} receiveShadow>
+          <planeGeometry args={[3, 15]} />
+          <meshStandardMaterial 
+            color="#110022" 
+            emissive="#AA00FF"
+            emissiveIntensity={0.2}
+          />
+        </mesh>
+        
+        {/* Path to Signal Towers */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, -7.5]} receiveShadow>
+          <planeGeometry args={[3, 15]} />
+          <meshStandardMaterial 
+            color="#001133" 
+            emissive="#0044FF"
+            emissiveIntensity={0.2}
+          />
+        </mesh>
+      </group>
       
-      {/* Path to Forex */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[7.5, 0.02, 0]} receiveShadow>
-        <planeGeometry args={[15, 2]} />
-        <meshStandardMaterial color="#444444" />
-      </mesh>
-      
-      {/* Path to Stock Market */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 7.5]} receiveShadow>
-        <planeGeometry args={[2, 15]} />
-        <meshStandardMaterial color="#444444" />
-      </mesh>
-      
-      {/* Path to Signal Towers */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, -7.5]} receiveShadow>
-        <planeGeometry args={[2, 15]} />
-        <meshStandardMaterial color="#444444" />
-      </mesh>
+      {/* Add ambient particles for atmosphere */}
+      <group position={[0, 10, 0]}>
+        <mesh>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              array={new Float32Array(Array(3000).fill(0).map(() => (Math.random() - 0.5) * 50))}
+              count={1000}
+              itemSize={3}
+            />
+          </bufferGeometry>
+          <pointsMaterial
+            size={0.1}
+            color="#FFFFFF"
+            transparent
+            opacity={0.3}
+            sizeAttenuation
+          />
+        </mesh>
+      </group>
     </group>
   );
 }
