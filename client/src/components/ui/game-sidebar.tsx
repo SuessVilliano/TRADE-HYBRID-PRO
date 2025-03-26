@@ -9,6 +9,9 @@ import { Button } from './button';
 import { SimpleWalletButton } from './simple-wallet-button';
 import { SimpleAffiliateSystem } from './simple-affiliate-system';
 import { TradeRunner } from './trade-runner';
+import { Label } from './label';
+import { Slider } from './slider';
+import { Input } from './input';
 import { 
   PanelLeft, 
   BarChart2, 
@@ -260,21 +263,155 @@ export function GameSidebar() {
           </div>
 
           {/* Content panel for expanded tabs */}
-          {isExpanded && activeTab === 'game' && (
+          {isExpanded && activeTab && (
             <div className="mt-2 p-1 border-t">
-              <TradeRunner className="w-full h-full" />
-            </div>
-          )}
-          
-          {isExpanded && activeTab === 'affiliate' && (
-            <div className="mt-2 p-1 border-t">
-              <SimpleAffiliateSystem />
-            </div>
-          )}
-          
-          {isExpanded && activeTab === 'wallet' && (
-            <div className="mt-2 p-1 border-t">
-              <SimpleWalletButton />
+              {activeTab === 'journal' && (
+                <div className="space-y-2 p-2 text-sm">
+                  <h3 className="font-medium">Trade Journal</h3>
+                  <div className="border rounded-md p-3 text-muted-foreground">
+                    <p>Your recent trade history will appear here.</p>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <div className="text-xs">Win Rate: <span className="font-medium">68%</span></div>
+                      <div className="text-xs">PnL: <span className="font-medium text-green-500">+12.4%</span></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === 'bots' && (
+                <div className="space-y-2 p-2 text-sm">
+                  <h3 className="font-medium">Trading Bots</h3>
+                  <div className="border rounded-md p-3 text-muted-foreground">
+                    <div className="flex items-center justify-between">
+                      <p>BTC Trend Follower</p>
+                      <div className="bg-green-100 text-green-800 text-xs py-0.5 px-2 rounded-full">Active</div>
+                    </div>
+                    <div className="mt-2 text-xs">Daily performance: <span className="text-green-500">+0.8%</span></div>
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === 'signals' && (
+                <div className="space-y-2 p-2 text-sm">
+                  <h3 className="font-medium">Trading Signals</h3>
+                  <div className="border rounded-md p-3 text-muted-foreground">
+                    <p>No active trading signals.</p>
+                    <p className="text-xs mt-1">Check back soon for trading opportunities.</p>
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === 'leaderboard' && (
+                <div className="space-y-2 p-2 text-sm">
+                  <h3 className="font-medium">Leaderboard</h3>
+                  <div className="border rounded-md p-3">
+                    <div className="flex items-center justify-between text-xs font-medium mb-2">
+                      <span>Trader</span>
+                      <span>PnL</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center text-[10px] text-white">1</div>
+                          <span>CryptoWolf</span>
+                        </div>
+                        <span className="text-green-500">+24.8%</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center text-[10px] text-white">2</div>
+                          <span>TradeMaster</span>
+                        </div>
+                        <span className="text-green-500">+18.3%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === 'webapp' && (
+                <div className="space-y-2 p-2 text-sm">
+                  <h3 className="font-medium">Trade Hybrid Web App</h3>
+                  <Button className="w-full" onClick={() => window.open('/trading-space', '_blank')}>
+                    Open in New Tab
+                  </Button>
+                </div>
+              )}
+              
+              {activeTab === 'chat' && (
+                <div className="space-y-2 p-2 text-sm">
+                  <h3 className="font-medium">Community Chat</h3>
+                  <div className="border rounded-md p-3 text-muted-foreground min-h-[150px] flex flex-col">
+                    <div className="flex-1">
+                      <p className="text-center text-xs pt-4">Connect wallet to join the chat.</p>
+                    </div>
+                    <div className="border-t pt-2 mt-2">
+                      <div className="flex gap-2">
+                        <Input placeholder="Message..." disabled className="text-xs" />
+                        <Button variant="ghost" size="sm" disabled>Send</Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === 'game' && (
+                <div className="space-y-2 p-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">Trade Runner</h3>
+                    <Button size="sm" variant="outline" onClick={() => window.open('/game', '_blank')}>
+                      Open Fullscreen
+                    </Button>
+                  </div>
+                  <div className="h-[200px] overflow-hidden rounded-md border">
+                    <TradeRunner className="w-full h-full" />
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === 'affiliate' && (
+                <div className="space-y-2 p-2 text-sm">
+                  <h3 className="font-medium">Affiliate Program</h3>
+                  <SimpleAffiliateSystem />
+                </div>
+              )}
+              
+              {activeTab === 'wallet' && (
+                <div className="space-y-2 p-2 text-sm">
+                  <h3 className="font-medium">Connect Wallet</h3>
+                  <SimpleWalletButton />
+                </div>
+              )}
+              
+              {activeTab === 'settings' && (
+                <div className="space-y-2 p-2 text-sm">
+                  <h3 className="font-medium">Settings</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="darkMode">Dark Mode</Label>
+                      <div className="flex h-5 items-center space-x-2">
+                        <input type="checkbox" id="darkMode" className="h-4 w-4 rounded border-gray-300" />
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="sfxVolume">Sound Effects</Label>
+                      <div className="w-[80px]">
+                        <Slider id="sfxVolume" defaultValue={[80]} max={100} step={1} />
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="musicVolume">Music</Label>
+                      <div className="w-[80px]">
+                        <Slider id="musicVolume" defaultValue={[60]} max={100} step={1} />
+                      </div>
+                    </div>
+                    
+                    <Button size="sm" className="w-full">Apply Settings</Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
