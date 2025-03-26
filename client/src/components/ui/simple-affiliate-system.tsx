@@ -80,7 +80,7 @@ export function SimpleAffiliateSystem() {
       </ContextualTooltip>
 
       {showPanel && (
-        <Card className="absolute right-0 mt-2 z-50 w-full max-w-md shadow-lg animate-in fade-in slide-in-from-top-2 duration-300">
+        <Card className="absolute right-0 bottom-12 z-50 w-full max-w-md shadow-lg animate-in fade-in slide-in-from-top-2 duration-300">
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle className="flex items-center gap-2">

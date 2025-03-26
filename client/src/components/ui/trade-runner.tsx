@@ -352,8 +352,14 @@ export function TradeRunner({ className }: TradeRunnerProps) {
     const resizeCanvas = () => {
       const canvas = canvasRef.current;
       if (canvas) {
-        canvas.width = Math.min(canvas.clientWidth, 800);
-        canvas.height = Math.min(canvas.clientHeight, 400);
+        const container = canvas.parentElement;
+        if (container) {
+          canvas.width = container.clientWidth;
+          canvas.height = Math.min(container.clientHeight, 500);
+        } else {
+          canvas.width = Math.min(canvas.clientWidth, 800);
+          canvas.height = Math.min(canvas.clientHeight, 500);
+        }
       }
     };
     
@@ -367,14 +373,15 @@ export function TradeRunner({ className }: TradeRunnerProps) {
   }, []);
   
   return (
-    <Card className={`${className} overflow-hidden`}>
-      <CardHeader className="p-4">
+    <Card className={`${className} overflow-hidden h-full flex flex-col`}>
+      <CardHeader className="p-4 flex-shrink-0">
         <CardTitle className="text-center">Trade Runner</CardTitle>
       </CardHeader>
-      <CardContent className="p-0 relative">
+      <CardContent className="p-0 relative flex-grow">
         <canvas 
           ref={canvasRef} 
           className="w-full h-[300px] block bg-gradient-to-b from-blue-950 to-black border-2 border-cyan-500" 
+          style={{height: '100%', minHeight: '300px'}} 
         />
         
         {showWelcome && (

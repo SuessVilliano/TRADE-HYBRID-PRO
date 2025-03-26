@@ -480,7 +480,7 @@ export function GameSidebar() {
                       <span className="text-xs">Fullscreen</span>
                     </Button>
                   </div>
-                  <div className="h-[200px] overflow-hidden rounded-md border">
+                  <div className="h-[350px] overflow-hidden rounded-md border">
                     <TradeRunner className="w-full h-full" />
                   </div>
                 </div>
