@@ -4,9 +4,10 @@ import { useAudio } from "@/lib/stores/useAudio";
 import { Button } from "./button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
 //import { Confetti } from "../game/Confetti"; // Uncomment if this component exists
-import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map, Mic, MicOff } from "lucide-react";
+import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map, Mic, MicOff, MessageSquare } from "lucide-react";
 import { PlayerCustomizer } from "./player-customizer";
 import { GameSidebar } from "./game-sidebar";
+import { Chat } from "./chat";
 
 interface InterfaceProps {
   showMapOverride?: boolean;
@@ -20,6 +21,8 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [showMapState, setShowMapState] = useState(false);
   const [micEnabled, setMicEnabled] = useState(false);
+  const [chatMinimized, setChatMinimized] = useState(true);
+  const [showChat, setShowChat] = useState(false);
 
   // Use either the internal state or the external override prop
   const showMap = showMapOverride !== undefined ? showMapOverride : showMapState;
@@ -50,19 +53,22 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
     }
   }, [phase]);
   
-  // Handle M key press to toggle map and T to toggle microphone
+  // Handle keyboard shortcuts: M for map, T for microphone, C for chat
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === 'm') {
         toggleMap();
       } else if (e.key.toLowerCase() === 't') {
         setMicEnabled(prev => !prev);
+      } else if (e.key.toLowerCase() === 'c') {
+        setShowChat(prev => !prev);
+        if (!showChat) setChatMinimized(false);
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [showChat]);
   
   // Set up microphone when enabled
   useEffect(() => {
@@ -120,6 +126,19 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
           title="Customize Character"
         >
           <Palette size={18} />
+        </Button>
+        
+        <Button
+          variant={showChat ? "default" : "outline"}
+          size="icon"
+          onClick={() => {
+            setShowChat(!showChat);
+            if (!showChat) setChatMinimized(false);
+          }}
+          title="Toggle Chat"
+          className={showChat ? "bg-blue-600 hover:bg-blue-700" : ""}
+        >
+          <MessageSquare size={18} />
         </Button>
         
         <Button
@@ -354,6 +373,16 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
         </div>
       )}
       
+      {/* Chat Panel */}
+      {showChat && (
+        <div className="fixed bottom-4 right-4 z-10">
+          <Chat 
+            minimized={chatMinimized} 
+            onToggleMinimize={() => setChatMinimized(!chatMinimized)} 
+          />
+        </div>
+      )}
+      
       {/* Instructions panel */}
       <div className="fixed bottom-4 left-4 z-10 hidden md:block">
         <Card className="w-auto max-w-xs bg-background/80 backdrop-blur-sm">
@@ -367,6 +396,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
               <li>E: Interact</li>
               <li>M: Toggle map</li>
               <li>T: Toggle microphone</li>
+              <li>C: Toggle chat</li>
             </ul>
           </CardContent>
         </Card>

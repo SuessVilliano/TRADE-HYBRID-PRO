@@ -211,6 +211,26 @@ export default function Player() {
   // Get game state
   const { phase, start } = useGame();
   
+  // Get multiplayer state and functions
+  const { connect, disconnect, updatePlayerPosition, connected } = useMultiplayer();
+  
+  // Connect to multiplayer when player is created
+  useEffect(() => {
+    if (!connected && currentCustomization) {
+      // Connect to multiplayer with current customization
+      connect(currentCustomization.username, currentCustomization);
+      console.log('Connected to multiplayer as', currentCustomization.username);
+    }
+    
+    // Disconnect on unmount
+    return () => {
+      if (connected) {
+        disconnect();
+        console.log('Disconnected from multiplayer');
+      }
+    };
+  }, [connect, disconnect, connected, currentCustomization]);
+  
   // Reset jump prevention when game phase changes to "ready" (restart)
   useEffect(() => {
     if (phase === 'ready') {
@@ -435,6 +455,25 @@ export default function Player() {
     
     camera.position.lerp(targetCameraPos, 0.05);
     camera.lookAt(playerPosition.current);
+    
+    // Send player position updates to multiplayer service
+    if (connected) {
+      // Determine current animation
+      let currentAnimation = 'idle';
+      if (moveX !== 0 || moveZ !== 0) {
+        currentAnimation = isSprinting ? 'run' : 'walk';
+      }
+      if (!playerOnGround.current) {
+        currentAnimation = 'jump';
+      }
+      
+      // Send position, rotation and animation to multiplayer service
+      updatePlayerPosition(
+        [playerPosition.current.x, playerPosition.current.y, playerPosition.current.z],
+        playerRotation.current,
+        currentAnimation
+      );
+    }
   });
   
   // Player rank system based on score/trades
