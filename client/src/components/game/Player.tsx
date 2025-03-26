@@ -132,17 +132,50 @@ export default function Player() {
     return Math.floor(Math.random() * TRADER_CUSTOMIZATIONS.length);
   });
   
+  // Get guest state
+  const { guestUsername, isGuest } = useGuest();
+  
   // Active customization state
-  const [currentCustomization, setCurrentCustomization] = useState<PlayerCustomization>(
-    TRADER_CUSTOMIZATIONS[customizationIndex]
-  );
+  const [currentCustomization, setCurrentCustomization] = useState<PlayerCustomization>(() => {
+    // Start with a randomly selected customization
+    const baseCustomization = TRADER_CUSTOMIZATIONS[customizationIndex];
+    
+    // If we're a guest, use guest username
+    if (isGuest) {
+      return {
+        ...baseCustomization,
+        username: guestUsername
+      };
+    }
+    
+    return baseCustomization;
+  });
+  
+  // Update customization when guest username changes
+  useEffect(() => {
+    if (isGuest) {
+      setCurrentCustomization(prev => ({
+        ...prev,
+        username: guestUsername
+      }));
+    }
+  }, [guestUsername, isGuest]);
   
   // Expose the update function to the window object so it can be called from outside
   useEffect(() => {
     // Function to update player customization from external components
     const updatePlayerCustomization = (newCustomization: PlayerCustomization) => {
       console.log("Updating player customization:", newCustomization);
-      setCurrentCustomization(newCustomization);
+      
+      // If we're a guest, preserve the guest username
+      if (isGuest) {
+        setCurrentCustomization({
+          ...newCustomization,
+          username: guestUsername
+        });
+      } else {
+        setCurrentCustomization(newCustomization);
+      }
     };
     
     // Expose the function globally
@@ -152,7 +185,7 @@ export default function Player() {
     return () => {
       delete (window as any).updatePlayerCustomization;
     };
-  }, []);
+  }, [guestUsername, isGuest]);
   
   // Get game state
   const { phase, start } = useGame();

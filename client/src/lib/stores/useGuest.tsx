@@ -19,6 +19,9 @@ interface GuestState {
   login: () => void;
   logout: () => void;
   grantAccess: (area: keyof GuestState['hasAccess']) => void;
+  
+  // Helpers
+  canAccess: (area: keyof GuestState['hasAccess']) => boolean;
 }
 
 // List of adjectives for generating guest names
@@ -50,7 +53,7 @@ const generateGuestId = (): string => {
 // Create the guest store with persistence
 export const useGuest = create<GuestState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       isGuest: true,
       isLoggedIn: false,
       guestId: generateGuestId(),
@@ -64,10 +67,19 @@ export const useGuest = create<GuestState>()(
         fullTrading: false,      // Cannot access full trading features
       },
       
-      // Login as registered user
-      login: () => set({ isGuest: false, isLoggedIn: true }),
+      // Login as registered user - this grants access to all areas
+      login: () => set({ 
+        isGuest: false, 
+        isLoggedIn: true,
+        hasAccess: {
+          tradingSpace: true,
+          signalTowers: true,
+          tradeHouse: true,
+          fullTrading: true,
+        }
+      }),
       
-      // Logout back to guest
+      // Logout back to guest with restricted access
       logout: () => set({
         isGuest: true,
         isLoggedIn: false,
@@ -87,7 +99,22 @@ export const useGuest = create<GuestState>()(
           ...state.hasAccess,
           [area]: true
         }
-      }))
+      })),
+      
+      // Helper to check if user can access an area
+      // This handles both guest access restrictions and logged-in permissions
+      canAccess: (area) => {
+        const state = get();
+        
+        // Logged-in users always have access to the trading space
+        if (area === 'tradingSpace') return true;
+        
+        // Non-guests (logged in users) have access to everything
+        if (!state.isGuest) return true;
+        
+        // Otherwise check the specific permission
+        return state.hasAccess[area];
+      }
     }),
     {
       name: 'trade-hybrid-guest',

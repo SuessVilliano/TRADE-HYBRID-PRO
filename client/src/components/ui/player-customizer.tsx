@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Card, 
   CardContent, 
@@ -13,6 +13,7 @@ import { Slider } from "./slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
 import { PlayerCustomization } from "../game/Player";
 import { ContextualTooltip } from "./contextual-tooltip";
+import { useGuest } from "@/lib/stores/useGuest";
 
 export function PlayerCustomizer() {
   const [bodyColor, setBodyColor] = useState("#4285F4");
@@ -27,9 +28,22 @@ export function PlayerCustomizer() {
   const [username, setUsername] = useState("Trader");
   const [role, setRole] = useState("Pro Trader");
   
+  // Get guest state
+  const { guestUsername, isGuest, isLoggedIn } = useGuest();
+  
+  // Set username from guest state on initial load
+  useEffect(() => {
+    if (isGuest) {
+      setUsername(guestUsername);
+    }
+  }, [guestUsername, isGuest]);
+  
   const applyCustomization = () => {
     // Use the global function we exposed in Player.tsx
     if (typeof window !== "undefined" && (window as any).updatePlayerCustomization) {
+      // If we're a guest, force the guest username
+      const effectiveUsername = isGuest ? guestUsername : username;
+      
       const customization: PlayerCustomization = {
         bodyColor,
         headColor,
@@ -38,8 +52,8 @@ export function PlayerCustomizer() {
         bodyScale: [bodyScaleX, bodyScaleY, bodyScaleZ],
         headScale: [headScale, headScale, headScale],
         trailColor,
-        username,
-        role
+        username: effectiveUsername,
+        role: isLoggedIn ? role : 'Guest'
       };
       
       (window as any).updatePlayerCustomization(customization);
@@ -218,6 +232,71 @@ export function PlayerCustomizer() {
                 {headScale.toFixed(2)}
               </div>
             </div>
+          </TabsContent>
+          
+          <TabsContent value="identity" className="space-y-4">
+            {isGuest ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="guestUsername">Guest Username</Label>
+                  <Input 
+                    id="guestUsername" 
+                    value={guestUsername}
+                    disabled
+                    className="bg-muted"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    You're currently using a guest account with limited access. 
+                    Connect a wallet to unlock full features.
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Account Status</Label>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted">
+                    <div className="h-2 w-2 rounded-full bg-amber-500"></div>
+                    <span>Guest Mode</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    As a guest, you can only access the main trading space.
+                  </p>
+                </div>
+                
+                <div className="space-y-2 pt-2">
+                  <Button className="w-full" variant="default">
+                    Connect Wallet
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input 
+                    id="username" 
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="role">Display Role</Label>
+                  <Input 
+                    id="role" 
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Account Status</Label>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted">
+                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                    <span>Connected</span>
+                  </div>
+                </div>
+              </>
+            )}
           </TabsContent>
         </Tabs>
         
