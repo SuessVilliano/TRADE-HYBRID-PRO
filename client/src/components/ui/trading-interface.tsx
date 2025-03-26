@@ -8,7 +8,7 @@ import {
   TrendingUp, TrendingDown, DollarSign, 
   Wallet, BarChart2, RefreshCw, Check, 
   BarChart, Settings, ChevronUp, ChevronDown,
-  Shield, Zap, Target, Shuffle
+  Shield, Zap, Target, Shuffle, BrainCircuit
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useTrader } from "@/lib/stores/useTrader";
@@ -17,6 +17,7 @@ import { useBrokerAggregator } from "@/lib/stores/useBrokerAggregator";
 import { cn, formatCurrency, formatPercentage } from "@/lib/utils";
 import { BotCreator } from "./bot-creator";
 import { OrderHistoryView } from "./order-history";
+import { AIMarketAnalysis } from "./ai-market-analysis";
 import { toast } from "sonner";
 import { Badge } from "./badge";
 import { BrokerComparison } from "@/lib/services/broker-aggregator-service";
@@ -131,11 +132,15 @@ export function TradingInterface({ className }: TradingInterfaceProps) {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="spot">
-          <TabsList className="grid w-full grid-cols-3 h-8 mb-4">
+          <TabsList className="grid w-full grid-cols-5 h-8 mb-4">
             <TabsTrigger value="spot">Spot</TabsTrigger>
             <TabsTrigger value="futures">Futures</TabsTrigger>
+            <TabsTrigger value="ai">
+              <BrainCircuit className="mr-2 h-3 w-3" />
+              AI Analysis
+            </TabsTrigger>
             <TabsTrigger value="bots">Bots</TabsTrigger>
-            <TabsTrigger value="history">Order History</TabsTrigger> 
+            <TabsTrigger value="history">History</TabsTrigger> 
           </TabsList>
 
           <TabsContent value="spot">
@@ -496,6 +501,10 @@ export function TradingInterface({ className }: TradingInterfaceProps) {
                 </div>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="ai">
+            <AIMarketAnalysis />
           </TabsContent>
 
           <TabsContent value="bots">
