@@ -17,13 +17,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/trading-space",
-    element: (
-      <Canvas>
-        <Suspense fallback={null}>
-          <Scene />
-        </Suspense>
-      </Canvas>
-    ),
+    element: <Scene />,
   },
   {
     path: "*",

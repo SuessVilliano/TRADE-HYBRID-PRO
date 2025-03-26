@@ -1,129 +1,34 @@
-import * as THREE from 'three';
-import { Suspense, useEffect, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Stats, Sky, PerspectiveCamera, OrbitControls, Stars, PointerLockControls } from "@react-three/drei";
-import Lights from "./Lights";
-import Floor from "./Floor";
-import Player from "./Player";
-import GameControls from "./Controls";
-import TradeHouse from "./TradeHouse";
-import TradingStation from "./TradingStation";
-import SignalBoard from "./SignalBoard";
-import WebAppTrigger from "./WebAppTrigger";
+import React from 'react';
+import { Interface } from '../ui/interface';
 
-interface SceneProps {
-  showStats?: boolean;
-}
-
-const MOVEMENT_SPEED = 0.15;
-// Create THREE.Vector3 instances for movement calculations
-const direction = new THREE.Vector3();
-const frontVector = new THREE.Vector3();
-const sideVector = new THREE.Vector3();
-
-function SceneContent() {
-  const controls = useRef<any>();
-
-  useFrame((state, delta) => {
-    if (controls.current) {
-      // Frame updates here if needed
-    }
-  });
-
+export default function Scene({ showStats = false }) {
   return (
-    <>
-      <Stats />
-      <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} intensity={1} castShadow />
-      <OrbitControls />
-      <Stars />
-      <Suspense fallback={null}>
-        <Sky sunPosition={[100, 20, 100]} />
-        <Lights />
-        <Floor />
-        <Player />
-        <PerspectiveCamera makeDefault position={[0, 2, 5]} />
-        <PointerLockControls ref={controls} />
-
-        <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[100, 100]} />
-          <meshStandardMaterial color="#4a4a4a" />
-        </mesh>
-
-        <TradeHouse position={[8, 0, -10]} rotation={[0, -Math.PI / 4, 0]} />
-        <TradingStation position={[-6, 0, -8]} rotation={[0, Math.PI / 6, 0]} type="crypto" />
-        <TradingStation position={[3, 0, -5]} rotation={[0, -Math.PI / 8, 0]} type="stocks" />
-        <TradingStation position={[-3, 0, 2]} rotation={[0, Math.PI / 3, 0]} type="forex" />
-        <SignalBoard position={[0, 2, -15]} rotation={[0, 0, 0]} />
-        <WebAppTrigger position={[-5, 0, -12]} rotation={[0, 30, 0]} scale={[1.2, 1.2, 1.2]} url="https://app.tradehybrid.co" />
-      </Suspense>
-    </>
-  );
-}
-
-export default function Scene({ showStats = false }: SceneProps) {
-  const controls = useRef<any>(null);
-  const movement = useRef({ forward: false, backward: false, left: false, right: false, sprint: false });
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'KeyW') movement.current.forward = true;
-      if (e.code === 'KeyS') movement.current.backward = true;
-      if (e.code === 'KeyA') movement.current.left = true;
-      if (e.code === 'KeyD') movement.current.right = true;
-      if (e.shiftKey) movement.current.sprint = true;
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === 'KeyW') movement.current.forward = false;
-      if (e.code === 'KeyS') movement.current.backward = false;
-      if (e.code === 'KeyA') movement.current.left = false;
-      if (e.code === 'KeyD') movement.current.right = false;
-      if (!e.shiftKey) movement.current.sprint = false;
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('keyup', handleKeyUp);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('keyup', handleKeyUp);
-    };
-  }, []);
-
-  useFrame((state) => {
-    if (controls.current) {
-      const speedMultiplier = movement.current.sprint ? 2 : 1;
-
-      frontVector.set(0, 0, Number(movement.current.backward) - Number(movement.current.forward));
-      sideVector.set(Number(movement.current.left) - Number(movement.current.right), 0, 0);
-
-      direction
-        .subVectors(frontVector, sideVector)
-        .normalize()
-        .multiplyScalar(MOVEMENT_SPEED * speedMultiplier);
-
-      controls.current.moveRight(-direction.x);
-      controls.current.moveForward(-direction.z);
-    }
-  });
-
-  return (
-    <div style={{ width: '100%', height: '100vh' }}>
-      <Canvas
-        shadows
-        camera={{
-          position: [0, 5, 15],
-          fov: 75,
-          near: 0.1,
-          far: 1000
-        }}
-        gl={{
-          antialias: true,
-          powerPreference: "default"
-        }}
-      >
-        <SceneContent />
-      </Canvas>
+    <div className="relative w-full h-full">
+      <div className="flex items-center justify-center h-screen w-full bg-gradient-to-b from-gray-900 to-black text-white p-4">
+        <div className="text-center max-w-lg mx-auto">
+          <h1 className="text-3xl font-bold mb-4">Welcome to Trade Hybrid</h1>
+          <p className="mb-6">
+            The 3D environment is currently being updated. In the meantime, you can explore the map by pressing the M key.
+          </p>
+          <div className="bg-gray-800 p-4 rounded-lg mb-6">
+            <h2 className="text-xl font-semibold mb-2">Controls:</h2>
+            <ul className="text-left list-disc pl-6 space-y-1">
+              <li>WASD or Arrow Keys: Move character</li>
+              <li>Space: Jump</li>
+              <li>Double-tap movement key: Sprint</li>
+              <li>Right mouse button: Rotate camera</li>
+              <li>E: Interact</li>
+              <li>M: Toggle map</li>
+            </ul>
+          </div>
+          <div className="text-sm text-gray-400">
+            Pressing M will show you the trading metaverse map with all available locations.
+          </div>
+        </div>
+      </div>
+      
+      {/* Interface overlay that includes the map toggle functionality */}
+      <Interface />
     </div>
   );
 }
