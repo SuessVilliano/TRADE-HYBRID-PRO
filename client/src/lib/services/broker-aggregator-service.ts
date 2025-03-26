@@ -1,11 +1,9 @@
 import { BrokerService, MarketData, AccountBalance, BrokerPosition, OrderHistory } from './broker-service';
 import { IronBeamService } from './ironbeam-service';
 import { AlpacaService } from './alpaca-service';
-
-// Define OANDA service interface
-interface OandaService extends BrokerService {
-  // OANDA-specific methods could go here
-}
+import { OandaService } from './oanda-service';
+import { TradeStationService } from './tradestation-service';
+import { IBKRService } from './ibkr-service';
 
 // Define the broker comparison result
 export interface BrokerComparison {
@@ -59,7 +57,9 @@ export class BrokerAggregatorService {
 
   async connect(): Promise<void> {
     console.log("Connecting to all brokers...");
-    const connectionPromises = Array.from(this.brokers.entries()).map(async ([id, broker]) => {
+    const connectionPromises = Array.from(this.brokers.entries()).map(async (entry) => {
+      const id = entry[0];
+      const broker = entry[1];
       try {
         const startTime = Date.now();
         await broker.connect();
@@ -88,8 +88,10 @@ export class BrokerAggregatorService {
       throw new Error("Not connected to any broker");
     }
 
-    for (const [id, broker] of this.brokers.entries()) {
-      broker.subscribeToMarketData(symbol, (data) => {
+    Array.from(this.brokers.entries()).forEach((entry) => {
+      const id = entry[0];
+      const broker = entry[1];
+      broker.subscribeToMarketData(symbol, (data: MarketData) => {
         // Store the market data for comparison
         const symbolMap = this.latestMarketData.get(symbol);
         if (symbolMap) {
@@ -99,13 +101,15 @@ export class BrokerAggregatorService {
         // Log the first few price updates
         console.log(`Received ${symbol} price from ${id}: ${data.price}`);
       });
-    }
+    });
   }
 
   async unsubscribeFromMarketData(symbol: string): Promise<void> {
-    for (const [id, broker] of this.brokers.entries()) {
+    Array.from(this.brokers.entries()).forEach((entry) => {
+      const id = entry[0];
+      const broker = entry[1];
       broker.unsubscribeFromMarketData(symbol);
-    }
+    });
   }
 
   // Get a specific broker by ID
@@ -133,10 +137,13 @@ export class BrokerAggregatorService {
 
     const comparisons: BrokerComparison[] = [];
 
-    for (const [brokerId, data] of symbolMap.entries()) {
+    Array.from(symbolMap.entries()).forEach((entry) => {
+      const brokerId = entry[0];
+      const data = entry[1];
+      
       // Get broker details
       const broker = this.brokers.get(brokerId);
-      if (!broker) continue;
+      if (!broker) return;
 
       // Get latency data
       const latency = this.latencyData.get(brokerId) || 100; // Default to 100ms if unknown
@@ -177,7 +184,7 @@ export class BrokerAggregatorService {
         availableVolume: 100, // Simulated value
         fees: fees * 100 // Convert to percentage
       });
-    }
+    });
 
     // Sort by score (lowest is best)
     comparisons.sort((a, b) => a.score - b.score);
@@ -241,6 +248,21 @@ export class BrokerAggregatorService {
     // Add Alpaca broker
     const alpaca = new AlpacaService('CKZEJOQW6JBDL1X8ISEH', 'CK9MIT1E1KNQ0MPTT3EF', true);
     await aggregator.addBroker('alpaca', alpaca);
+    
+    // Add OANDA broker
+    // Note: Actual API token would be needed in production
+    const oanda = new OandaService('70ae8130c7ee5daa27aa6b8ccaacbe7e-03b707a7a88079144d12d5e93c1a626e', true);
+    await aggregator.addBroker('oanda', oanda);
+    
+    // Add TradeStation broker
+    // Note: Actual client credentials would be needed in production
+    const tradeStation = new TradeStationService('client_id', 'client_secret');
+    await aggregator.addBroker('tradestation', tradeStation);
+    
+    // Add Interactive Brokers (IBKR) broker
+    // Note: Actual credentials would be needed in production
+    const ibkr = new IBKRService('username', 'password', true);
+    await aggregator.addBroker('ibkr', ibkr);
     
     // Connect to all brokers
     await aggregator.connect();

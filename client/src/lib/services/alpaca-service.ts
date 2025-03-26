@@ -1,5 +1,5 @@
 
-import { BrokerService, MarketData, AccountBalance, BrokerPosition } from './broker-service';
+import { BrokerService, MarketData, AccountBalance, BrokerPosition, OrderHistory } from './broker-service';
 
 export class AlpacaService implements BrokerService {
   private baseUrl = 'https://broker-api.sandbox.alpaca.markets/v1';
@@ -109,5 +109,31 @@ export class AlpacaService implements BrokerService {
 
   unsubscribeFromMarketData(symbol: string): void {
     // Implementation depends on WebSocket connection management
+  }
+
+  async getOrderHistory(): Promise<OrderHistory[]> {
+    const orders = await this.request('/orders?status=all');
+    return orders.map((order: any) => ({
+      orderId: order.id,
+      symbol: order.symbol,
+      side: order.side,
+      quantity: Number(order.qty),
+      price: Number(order.filled_avg_price || order.limit_price || 0),
+      status: this.mapOrderStatus(order.status),
+      timestamp: new Date(order.created_at).getTime()
+    }));
+  }
+
+  private mapOrderStatus(alpacaStatus: string): 'filled' | 'pending' | 'cancelled' {
+    switch (alpacaStatus) {
+      case 'filled':
+        return 'filled';
+      case 'canceled':
+      case 'expired':
+      case 'rejected':
+        return 'cancelled';
+      default:
+        return 'pending';
+    }
   }
 }
