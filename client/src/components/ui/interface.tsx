@@ -4,7 +4,7 @@ import { useAudio } from "@/lib/stores/useAudio";
 import { Button } from "./button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
 //import { Confetti } from "../game/Confetti"; // Uncomment if this component exists
-import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map } from "lucide-react";
+import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map, Mic, MicOff } from "lucide-react";
 import { PlayerCustomizer } from "./player-customizer";
 import { GameSidebar } from "./game-sidebar";
 
@@ -19,6 +19,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
   const { isMuted, toggleMute } = useAudio();
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [showMapState, setShowMapState] = useState(false);
+  const [micEnabled, setMicEnabled] = useState(false);
 
   // Use either the internal state or the external override prop
   const showMap = showMapOverride !== undefined ? showMapOverride : showMapState;
@@ -49,17 +50,53 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
     }
   }, [phase]);
   
-  // Handle M key press to toggle map
+  // Handle M key press to toggle map and T to toggle microphone
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === 'm') {
         toggleMap();
+      } else if (e.key.toLowerCase() === 't') {
+        setMicEnabled(prev => !prev);
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+  
+  // Set up microphone when enabled
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    
+    const setupMicrophone = async () => {
+      try {
+        if (micEnabled) {
+          console.log("Enabling microphone...");
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          console.log("Microphone enabled successfully");
+          // Here you would connect the stream to your voice chat system
+        } else if (stream) {
+          // Stop all audio tracks
+          stream.getAudioTracks().forEach(track => track.stop());
+          stream = null;
+          console.log("Microphone disabled");
+        }
+      } catch (error) {
+        console.error("Error accessing microphone:", error);
+        setMicEnabled(false);
+      }
+    };
+    
+    setupMicrophone();
+    
+    // Cleanup function
+    return () => {
+      if (stream) {
+        stream.getAudioTracks().forEach(track => track.stop());
+        console.log("Microphone disabled on cleanup");
+      }
+    };
+  }, [micEnabled]);
 
   return (
     <div>
@@ -92,6 +129,15 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
           title={isMuted ? "Unmute" : "Mute"}
         >
           {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+        </Button>
+        
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setMicEnabled(!micEnabled)}
+          title={micEnabled ? "Disable Microphone" : "Enable Microphone"}
+        >
+          {micEnabled ? <Mic size={18} /> : <MicOff size={18} />}
         </Button>
         
         <Button
