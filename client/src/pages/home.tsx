@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRightCircle, BarChart2, Bot, Building, CandlestickChart, Globe, Trophy, Wallet, Gamepad2 } from "lucide-react";
 import { TRADING_SYMBOLS } from "@/lib/constants";
 import { useAudio } from "@/lib/stores/useAudio";
+import { AudioInitializer, AudioPermissionDialog } from "@/components/ui/audio-initializer";
 
 export default function Home() {
   const [username, setUsername] = useState("Trader1");
