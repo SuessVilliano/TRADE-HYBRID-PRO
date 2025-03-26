@@ -101,6 +101,77 @@ export function Interface() {
         </div>
       )}
       
+      {/* Map Panel */}
+      {showMap && (
+        <div className="fixed inset-0 flex items-center justify-center z-20 bg-black/50 backdrop-blur-sm">
+          <div className="relative bg-background rounded-lg shadow-lg w-4/5 h-4/5 max-w-5xl max-h-[80vh] overflow-hidden">
+            <div className="p-4 flex justify-between items-center border-b">
+              <h2 className="text-xl font-semibold">Trading Metaverse Map</h2>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setShowMap(false)}
+              >
+                <X size={20} />
+              </Button>
+            </div>
+            <div className="p-6 h-[calc(100%-64px)] overflow-auto">
+              <div className="bg-muted/30 rounded-lg p-4 h-full flex flex-col lg:flex-row gap-6">
+                {/* Map visualization */}
+                <div className="flex-1 bg-black/10 rounded-lg p-4 min-h-[300px] flex items-center justify-center relative">
+                  <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-1 p-4">
+                    <div className="col-start-2 col-end-3 row-start-1 row-end-2 bg-blue-500/20 rounded flex items-center justify-center">
+                      Signal Towers
+                    </div>
+                    <div className="col-start-1 col-end-2 row-start-2 row-end-3 bg-green-500/20 rounded flex items-center justify-center">
+                      Crypto Trading
+                    </div>
+                    <div className="col-start-2 col-end-3 row-start-2 row-end-3 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                      <div className="w-3 h-3 bg-yellow-500 rounded-full animate-ping absolute"></div>
+                      <div className="w-3 h-3 bg-yellow-500 rounded-full absolute"></div>
+                      You Are Here
+                    </div>
+                    <div className="col-start-3 col-end-4 row-start-2 row-end-3 bg-red-500/20 rounded flex items-center justify-center">
+                      Forex Trading
+                    </div>
+                    <div className="col-start-2 col-end-3 row-start-3 row-end-4 bg-yellow-500/20 rounded flex items-center justify-center">
+                      Trade House
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Locations list */}
+                <div className="lg:w-1/3 bg-muted/30 rounded-lg p-4">
+                  <h3 className="font-medium mb-4">Trading Locations</h3>
+                  <ul className="space-y-3">
+                    <li className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                      <span>Trade House - Center hub for all traders</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      <span>Crypto Trading - Bitcoin, Ethereum, Alt coins</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                      <span>Forex Trading - Currency pairs trading</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                      <span>Signal Towers - Trading signals and alerts</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                      <span>Stock Market - Equities and indices</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Game completion overlay */}
       {phase === "ended" && (
         <div className="fixed inset-0 flex items-center justify-center z-20 bg-black/30">
@@ -138,7 +209,7 @@ export function Interface() {
               <li>Double-tap movement key: Sprint</li>
               <li>Right mouse button: Rotate camera</li>
               <li>E: Interact</li>
-              <li>M: Toggle sound</li>
+              <li>M: Toggle map</li>
             </ul>
           </CardContent>
         </Card>
