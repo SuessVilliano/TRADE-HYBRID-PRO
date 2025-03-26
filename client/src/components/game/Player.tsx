@@ -132,6 +132,43 @@ export default function Player() {
   // Get the camera
   const { camera } = useThree();
   
+  // Multiplayer voice chat integration
+  const { toggleVoiceChat } = useMultiplayer();
+  
+  // Handle voice chat toggle with T key
+  useEffect(() => {
+    const handleVoiceChatToggle = (e: KeyboardEvent) => {
+      if (e.key === 't' || e.key === 'T') {
+        // Toggle the voice chat in the audio store
+        const newState = !voiceChatEnabled;
+        
+        if (newState) {
+          // Enable voice chat
+          enableVoiceChat().then(success => {
+            if (success) {
+              console.log('Voice chat enabled');
+              toggleVoiceChat(true);
+            } else {
+              console.log('Failed to enable voice chat');
+            }
+          });
+        } else {
+          // Disable voice chat
+          console.log('Voice chat disabled');
+          toggleVoiceChat(false);
+        }
+      }
+    };
+    
+    // Add event listener
+    window.addEventListener('keydown', handleVoiceChatToggle);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('keydown', handleVoiceChatToggle);
+    };
+  }, [enableVoiceChat, voiceChatEnabled, toggleVoiceChat]);
+  
   // Player state
   const [isSprinting, setIsSprinting] = useState(false);
   const baseSpeed = 0.15;
@@ -317,35 +354,7 @@ export default function Player() {
     };
   }, [actions]);
   
-  // Handle voice chat functionality
-  useEffect(() => {
-    // Set up keyboard listener for voice chat toggle
-    const handleVoiceChatToggle = (e: KeyboardEvent) => {
-      // Toggle voice chat with 'T' key
-      if (e.code === 'KeyT') {
-        if (!voiceChatEnabled) {
-          console.log('Enabling voice chat...');
-          enableVoiceChat().then(success => {
-            if (success) {
-              console.log('Voice chat enabled successfully');
-            } else {
-              console.error('Failed to enable voice chat');
-            }
-          });
-        } else {
-          console.log('Voice chat already enabled');
-        }
-      }
-    };
-    
-    // Add event listener
-    window.addEventListener('keydown', handleVoiceChatToggle);
-    
-    // Cleanup on unmount
-    return () => {
-      window.removeEventListener('keydown', handleVoiceChatToggle);
-    };
-  }, [voiceChatEnabled, enableVoiceChat]);
+
   
   // Game loop for player movement and animation
   useFrame((state, delta) => {

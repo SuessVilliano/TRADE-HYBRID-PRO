@@ -6,6 +6,7 @@ import { PlayerState } from "../../lib/services/multiplayer-service";
 import { GLTF } from "three-stdlib";
 import { useMultiplayer } from "../../lib/stores/useMultiplayer";
 import { Button } from "../ui/button";
+import { useAudio } from "../../lib/stores/useAudio";
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -27,6 +28,7 @@ export default function OtherPlayer({ player, onInteract }: OtherPlayerProps) {
   const [smoothRotation, setSmoothRotation] = useState<number>(player.rotation);
   const [interactable, setInteractable] = useState(false);
   const [nameplateHovered, setNameplateHovered] = useState(false);
+  const [voiceWaveScale, setVoiceWaveScale] = useState(1);
   const targetPosition = useRef<THREE.Vector3>(new THREE.Vector3(...player.position));
   const targetRotation = useRef<number>(player.rotation);
   
@@ -37,8 +39,12 @@ export default function OtherPlayer({ player, onInteract }: OtherPlayerProps) {
     unmutePlayer, 
     isPlayerMuted, 
     isPlayerFriend,
-    clientId
+    clientId,
+    activeSpeakers
   } = useMultiplayer();
+  
+  // Check if this player is currently speaking
+  const isSpeaking = activeSpeakers.includes(player.id);
   
   // Preload the character model
   const { scene: characterModel } = useGLTF('/models/trader_character.glb') as GLTFResult & {
@@ -74,6 +80,18 @@ export default function OtherPlayer({ player, onInteract }: OtherPlayerProps) {
     // Set model position and rotation
     modelRef.current.position.set(newX, newY, newZ);
     modelRef.current.rotation.y = newRotation;
+    
+    // Animate voice indicator when speaking
+    if (isSpeaking && !isPlayerMuted(player.id)) {
+      // Pulse effect for voice indicator
+      const pulseSpeed = 2; // Speed of the pulse
+      const pulseMin = 0.9; // Minimum scale
+      const pulseMax = 1.1; // Maximum scale
+      
+      // Calculate new scale using sine wave for smooth transition
+      const newScale = pulseMin + (Math.sin(Date.now() * 0.005 * pulseSpeed) * 0.5 + 0.5) * (pulseMax - pulseMin);
+      setVoiceWaveScale(newScale);
+    }
   });
   
   // Apply customization to the model
@@ -145,10 +163,13 @@ export default function OtherPlayer({ player, onInteract }: OtherPlayerProps) {
         >
           <div className="flex flex-col items-center gap-1">
             <div className="flex items-center justify-between w-full">
-              <span className="text-white">
+              <span className={`${isSpeaking && !isPlayerMuted(player.id) ? "text-green-400" : "text-white"}`}>
                 {player.username}
                 {isPlayerMuted(player.id) && (
                   <span className="ml-1 text-red-400">🔇</span>
+                )}
+                {isSpeaking && !isPlayerMuted(player.id) && (
+                  <span className="ml-1 text-green-400" style={{ animation: 'pulse 1.5s infinite' }}>🎤</span>
                 )}
               </span>
               
@@ -234,6 +255,36 @@ export default function OtherPlayer({ player, onInteract }: OtherPlayerProps) {
           <sphereGeometry args={[0.1, 16, 16]} />
           <meshStandardMaterial color="#44EEFF" emissive="#44EEFF" emissiveIntensity={0.5} />
         </mesh>
+      )}
+      
+      {/* Voice chat indicator (visible when speaking) */}
+      {isSpeaking && !isPlayerMuted(player.id) && (
+        <group position={[0, 3.2, 0]}>
+          <mesh>
+            <sphereGeometry args={[0.15, 16, 16]} />
+            <meshBasicMaterial color="#22c55e" />
+          </mesh>
+          {/* Microphone icon */}
+          <mesh position={[0, 0, 0.1]}>
+            <boxGeometry args={[0.05, 0.15, 0.05]} />
+            <meshBasicMaterial color="#000000" />
+          </mesh>
+          <mesh position={[0, -0.1, 0.1]}>
+            <boxGeometry args={[0.1, 0.05, 0.05]} />
+            <meshBasicMaterial color="#000000" />
+          </mesh>
+          {/* Sound waves animation */}
+          <group scale={[voiceWaveScale, voiceWaveScale, voiceWaveScale]}>
+            <mesh position={[-0.2, 0, 0]} rotation={[0, 0, Math.PI/2]}>
+              <ringGeometry args={[0.1, 0.12, 8]} />
+              <meshBasicMaterial color="#22c55e" transparent opacity={0.7} />
+            </mesh>
+            <mesh position={[0.2, 0, 0]} rotation={[0, 0, Math.PI/2]}>
+              <ringGeometry args={[0.1, 0.12, 8]} />
+              <meshBasicMaterial color="#22c55e" transparent opacity={0.7} />
+            </mesh>
+          </group>
+        </group>
       )}
     </group>
   );

@@ -229,6 +229,68 @@ export class MultiplayerService {
     this.socket.send(JSON.stringify(friendRequest));
   }
   
+  /**
+   * Broadcast voice chat status to other players
+   * @param enabled Whether voice chat is enabled for this player
+   */
+  public updateVoiceChatStatus(enabled: boolean): void {
+    if (!this.connected || !this.socket) {
+      return;
+    }
+    
+    const voiceStatus: WSMessage = {
+      type: 'voice_status',
+      data: {
+        id: this.clientId,
+        enabled,
+        timestamp: Date.now()
+      }
+    };
+    
+    this.socket.send(JSON.stringify(voiceStatus));
+    console.log(`Voice chat status updated: ${enabled ? 'enabled' : 'disabled'}`);
+  }
+  
+  /**
+   * Send voice data to nearby players for spatial audio
+   * @param audioChunk Binary audio data from microphone
+   * @param targetIds Optional list of specific player IDs to send to (for private voice)
+   */
+  public sendVoiceData(audioChunk: ArrayBuffer, targetIds?: string[]): void {
+    if (!this.connected || !this.socket) {
+      return;
+    }
+    
+    // Convert ArrayBuffer to Base64 for websocket transmission
+    const base64Audio = this.arrayBufferToBase64(audioChunk);
+    
+    const voiceData: WSMessage = {
+      type: 'voice_data',
+      data: {
+        id: this.clientId,
+        audio: base64Audio,
+        timestamp: Date.now(),
+        targetIds // If undefined, server will send to all nearby players
+      }
+    };
+    
+    this.socket.send(JSON.stringify(voiceData));
+  }
+  
+  /**
+   * Utility method to convert ArrayBuffer to Base64 string
+   */
+  private arrayBufferToBase64(buffer: ArrayBuffer): string {
+    const binary = new Uint8Array(buffer);
+    const bytes: string[] = [];
+    
+    binary.forEach(byte => {
+      bytes.push(String.fromCharCode(byte));
+    });
+    
+    return btoa(bytes.join(''));
+  }
+  
   private handleOpen(): void {
     console.log('Connected to multiplayer server');
     this.connected = true;
@@ -280,10 +342,20 @@ export class MultiplayerService {
           this.handleFriendRequest(message.data);
           break;
         case 'voice_status':
-          // Forward to event listeners - indicates when a player enables/disables voice
+          // Notify subscribers about voice status change
+          this.notifyEventListeners('voice_status', {
+            id: message.data.id || 'unknown',
+            enabled: message.data.enabled,
+            timestamp: message.data.timestamp
+          });
           break;
         case 'voice_data':
-          // Forward to event listeners - contains voice audio data
+          // Forward voice data to event listeners for audio processing
+          this.notifyEventListeners('voice_data', {
+            id: message.data.id,
+            audioData: message.data.audio, // Field comes in as 'audio' but we use 'audioData' in the handler
+            timestamp: message.data.timestamp
+          });
           break;
         case 'ping':
           // Just a heartbeat, no need to handle

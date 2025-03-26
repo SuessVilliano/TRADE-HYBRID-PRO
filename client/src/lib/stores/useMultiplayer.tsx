@@ -27,6 +27,10 @@ interface MultiplayerState {
   friends: Friend[];
   mutedPlayers: string[]; // IDs of muted players
   
+  // Voice chat
+  voiceChatEnabled: boolean;
+  activeSpeakers: string[]; // IDs of players currently speaking
+  
   // Actions
   connect: (username: string, customization: PlayerCustomization) => void;
   disconnect: () => void;
@@ -40,6 +44,15 @@ interface MultiplayerState {
   unmutePlayer: (playerId: string) => void;
   isPlayerMuted: (playerId: string) => boolean;
   isPlayerFriend: (playerId: string) => boolean;
+  
+  // Voice chat methods
+  toggleVoiceChat: (enabled: boolean) => void;
+  sendVoiceData: (audioChunk: ArrayBuffer, targetIds?: string[]) => void;
+  
+  // Helper methods
+  getAllPlayers: () => PlayerState[];
+  getPlayer: (id: string) => PlayerState | undefined;
+  getClientId: () => string | null;
 }
 
 export const useMultiplayer = create<MultiplayerState>((set, get) => {
@@ -94,6 +107,34 @@ export const useMultiplayer = create<MultiplayerState>((set, get) => {
     }));
   });
   
+  service.addEventListener('voice_status', (data: { id: string, enabled: boolean }) => {
+    // When a player enables/disables voice chat, we want to update our list of active speakers
+    if (!data.enabled) {
+      set(state => ({
+        activeSpeakers: state.activeSpeakers.filter(id => id !== data.id)
+      }));
+    }
+  });
+  
+  service.addEventListener('voice_data', (data: { id: string, audio: string }) => {
+    // When we receive voice data, add the player to active speakers if not already there
+    set(state => {
+      if (state.activeSpeakers.includes(data.id)) {
+        return state; // Already in active speakers
+      }
+      return {
+        activeSpeakers: [...state.activeSpeakers, data.id]
+      };
+    });
+    
+    // After a short delay, remove the player from active speakers if no more voice data received
+    setTimeout(() => {
+      set(state => ({
+        activeSpeakers: state.activeSpeakers.filter(id => id !== data.id)
+      }));
+    }, 500); // 500ms of silence to consider someone stopped talking
+  });
+  
   return {
     // Initial state
     service,
@@ -107,6 +148,8 @@ export const useMultiplayer = create<MultiplayerState>((set, get) => {
     friendRequests: [],
     friends: [],
     mutedPlayers: [],
+    voiceChatEnabled: false,
+    activeSpeakers: [],
     
     // Actions
     connect: (username, customization) => {
@@ -193,6 +236,29 @@ export const useMultiplayer = create<MultiplayerState>((set, get) => {
     
     isPlayerFriend: (playerId) => {
       return get().friends.some(friend => friend.id === playerId);
+    },
+    
+    // Voice chat methods
+    toggleVoiceChat: (enabled) => {
+      service.updateVoiceChatStatus(enabled);
+      set({ voiceChatEnabled: enabled });
+    },
+    
+    sendVoiceData: (audioChunk, targetIds) => {
+      service.sendVoiceData(audioChunk, targetIds);
+    },
+    
+    // Helper methods
+    getAllPlayers: () => {
+      return get().players;
+    },
+    
+    getPlayer: (id) => {
+      return get().players.find(player => player.id === id);
+    },
+    
+    getClientId: () => {
+      return get().clientId;
     }
   };
 });
