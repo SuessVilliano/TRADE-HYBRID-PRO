@@ -8,6 +8,7 @@ import { useWebApp } from '@/lib/stores/useWebApp';
 import { Button } from './button';
 import { WalletConnect } from './wallet-connect';
 import { AffiliateSystem } from './affiliate-system';
+import { TradeRunner } from './trade-runner';
 import { 
   PanelLeft, 
   BarChart2, 
@@ -19,7 +20,8 @@ import {
   Settings, 
   Globe, 
   ChevronLeft, 
-  ChevronRight
+  ChevronRight,
+  Gamepad2
 } from 'lucide-react';
 import { ContextualTooltip } from './contextual-tooltip';
 
@@ -237,7 +239,32 @@ export function GameSidebar() {
                 {isExpanded && <span>Community</span>}
               </Button>
             </ContextualTooltip>
+            
+            {/* Trade Runner Game */}
+            <ContextualTooltip
+              id="game-tooltip"
+              title="Trade Runner"
+              content="Play the Trade Runner game and climb the leaderboard"
+              position="right"
+            >
+              <Button
+                variant={activeTab === 'game' ? 'default' : 'ghost'}
+                size={isExpanded ? 'default' : 'icon'}
+                className={`w-full justify-start ${isExpanded ? '' : 'flex justify-center'}`}
+                onClick={() => handleTabClick('game')}
+              >
+                <Gamepad2 className="h-4 w-4 mr-2 flex-shrink-0" />
+                {isExpanded && <span>Trade Runner</span>}
+              </Button>
+            </ContextualTooltip>
           </div>
+
+          {/* Content panel for expanded tabs */}
+          {isExpanded && activeTab === 'game' && (
+            <div className="mt-2 p-1 border-t">
+              <TradeRunner className="w-full h-full" />
+            </div>
+          )}
 
           {/* Footer with affiliate and settings */}
           <div className="p-3 border-t">
