@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { 
   Sky, 
@@ -51,6 +51,117 @@ function Building({ position, size, color, name }: {
   )
 }
 
+// Load the Trade House 3D model
+function TradeHouseModel({ 
+  position = [0, 0, 0], 
+  scale = [1, 1, 1], 
+  rotation = [0, 0, 0],
+  active = false
+}: { 
+  position?: [number, number, number], 
+  scale?: [number, number, number],
+  rotation?: [number, number, number],
+  active?: boolean
+}) {
+  // Load model
+  const modelPath = '/models/tradehouse.glb';
+  const { scene } = useGLTF(modelPath);
+  const model = useRef<THREE.Group>(null);
+  
+  // Clone the scene - we need to do this to avoid modifying the original
+  const clonedScene = scene.clone();
+  
+  // Add some animation
+  useFrame((state) => {
+    if (model.current && active) {
+      // Subtle floating animation
+      model.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
+      
+      // Subtle rotation
+      model.current.rotation.y = rotation[1] + Math.sin(state.clock.elapsedTime * 0.2) * 0.05;
+    }
+  });
+  
+  // Create a spotlight effect for the active building
+  const spotlightIntensity = active ? 1 : 0.2;
+  const spotlightColor = active ? '#FFD700' : '#FFFFFF';
+  
+  useEffect(() => {
+    if (model.current) {
+      // Make sure materials are receiving shadows
+      model.current.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          
+          // Add some emissive to materials when active
+          if (child.material) {
+            if (active) {
+              child.material.emissive = new THREE.Color('#444444');
+              child.material.emissiveIntensity = 0.2;
+            } else {
+              child.material.emissive = new THREE.Color('#000000');
+              child.material.emissiveIntensity = 0;
+            }
+          }
+        }
+      });
+    }
+  }, [active]);
+  
+  return (
+    <group position={new THREE.Vector3(...position)}>
+      {/* The model */}
+      <group 
+        ref={model} 
+        scale={scale}
+        rotation={[rotation[0], rotation[1], rotation[2]]}
+      >
+        <primitive object={clonedScene} />
+      </group>
+      
+      {/* Spotlight effect */}
+      <spotLight
+        position={[0, 10, 0]}
+        angle={0.4}
+        penumbra={0.4}
+        intensity={spotlightIntensity}
+        color={spotlightColor}
+        castShadow
+        distance={20}
+      />
+      
+      {/* Text label */}
+      <Text
+        position={[0, 6, 0]}
+        color="white"
+        anchorX="center"
+        anchorY="middle"
+        fontSize={1}
+        outlineWidth={0.05}
+        outlineColor="#000000"
+      >
+        Trade House
+      </Text>
+      
+      {/* Interactive trigger area */}
+      <mesh 
+        position={[0, 1, 0]} 
+        visible={false}
+        onClick={() => {
+          window.location.href = '/trading-space?location=tradehouse';
+        }}
+      >
+        <sphereGeometry args={[10, 32, 32]} />
+        <meshBasicMaterial color="#ffffff" opacity={0} transparent />
+      </mesh>
+    </group>
+  );
+}
+
+// Preload the model
+useGLTF.preload('/models/tradehouse.glb');
+
 // Create different trading locations in the 3D space
 function TradingEnvironment() {
   const location = useLocation();
@@ -59,12 +170,12 @@ function TradingEnvironment() {
   
   return (
     <group>
-      {/* Trade House - Central Building */}
-      <Building 
-        position={[0, 1, 0]} 
-        size={[10, 2, 10]} 
-        color={locationParam === 'tradehouse' ? '#FFD700' : '#D4AF37'} 
-        name="Trade House"
+      {/* Trade House - Central Building (3D Model) */}
+      <TradeHouseModel 
+        position={[0, 0, 0]}
+        scale={[2.5, 2.5, 2.5]}
+        rotation={[0, Math.PI / 4, 0]}
+        active={locationParam === 'tradehouse'}
       />
       
       {/* Crypto Trading Center */}

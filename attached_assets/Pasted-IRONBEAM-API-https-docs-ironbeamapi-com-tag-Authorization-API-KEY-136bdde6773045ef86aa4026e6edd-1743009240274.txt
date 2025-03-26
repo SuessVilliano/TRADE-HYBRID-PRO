@@ -1,0 +1,200 @@
+IRONBEAM API
+https://docs.ironbeamapi.com/#tag/Authorization
+
+API KEY: 136bdde6773045ef86aa4026e6edddb4
+live
+Username: 51364396  
+Password: 271264  
+
+
+Welcome to Ironbeam! We're delighted you're here to explore our cutting-edge trading platform. Here are your Lifetime demo credentials to get started:
+ demo
+Username: 51364392
+Password: 854911
+
+
+ 
+import requests
+
+account_id = "account
+url = "https://demo.ironbeamapi.com/v1/auth"
+
+payload = {
+  "username": account_id,
+  "password": "API key"
+}
+
+headers = {"Content-Type": "application/json"}
+
+response = requests.post(url, json=payload, headers=headers)
+
+data = response.json()
+print(data)
+token = data['token']
+print(token)
+
+The response will contain a token that will be used in the Authorization header for all other requests. For example in Python:
+headers = {
+  "Authorization": "Bearer " + token
+}
+
+Example call to get the account ballance in Python (without generated client library):
+import requests
+
+account_id = "account
+url = "https://demo.ironbeamapi.com/v1/account/" + account_id + "/balance"
+query = {
+  "balanceType": "CURRENT_OPEN"
+}
+headers = {"Authorization": "Bearer "+your_Bearer_token_here}
+
+response = requests.get(url, headers=headers, params=query)
+
+data = response.json()
+print(data)
+
+
+
+
+
+
+
+https://docs.anychat.one/
+
+
+
+Oanda - 
+https://developer.oanda.com/rest-live-v20/introduction/
+
+Svtok- 70ae8130c7ee5daa27aa6b8ccaacbe7e-03b707a7a88079144d12d5e93c1a626e
+
+
+API URLs
+REST API
+Environment
+URL
+Authentication
+Description
+fxTrade Practice
+https://api-fxpractice.oanda.com
+Required. Details Here
+A stable environment; recommended for testing with your fxTrade Practice account and your personal access token.
+fxTrade
+https://api-fxtrade.oanda.com
+Required. Details Here
+A stable environment; recommended for production-ready code to execute with your fxTrade account and your personal access token.
+
+Streaming API
+Environment
+URL
+Authentication
+Description
+fxTrade Practice
+https://stream-fxpractice.oanda.com/
+Required. Details Here
+A stable environment; recommended for testing with your fxTrade Practice account and your personal access token.
+fxTrade
+https://stream-fxtrade.oanda.com/
+Required. Details Here
+A stable environment; recommended for production-ready code to execute with your fxTrade account and your personal access token.
+
+Our documentation uses the fxtrade URL for all examples. To use a different environment simply replace the base of the url with the appropriate one listed above and follow any necessary authentication.
+
+Request and Response Details
+All requests with a body require Content-Type: application/json unless specified otherwise.
+All responses will have Content-Type: application/json unless specified otherwise.
+
+
+
+
+
+
+Alpaca- 
+https://broker-api.sandbox.alpaca.markets
+
+Api key - CK9MIT1E1KNQ0MPTT3EF
+Api secret - A5ge9mB9eugJejr3gfHQvZPQukTbXk7g44qefWJ9
+
+Api - CKZEJOQW6JBDL1X8ISEH
+Api -CK9MIT1E1KNQ0MPTT3EF
+
+
+
+
+
+
+
+
+
+https://docs.alpaca.markets/docs/about-broker-api
+
+https://docs.alpaca.markets/docs/trading-api
+
+https://docs.alpaca.markets/docs/about-market-data-api
+
+https://docs.alpaca.markets/docs/options-trading
+
+https://docs.alpaca.markets/docs/sdks-and-tools
+
+
+
+
+Moralis - api key - eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6ImI5NzljZmQ5LTY0NjAtNDMyYS05MDYxLTY0ZTgwZWEyNDdkNCIsIm9yZ0lkIjoiMzQ0NzYiLCJ1c2VySWQiOiIzNDQ4NCIsInR5cGVJZCI6Ijc0NjFmN2UyLWUwNzAtNDZlMy1hMWI3LTdiZDdmNmYwMWZmMyIsInR5cGUiOiJQUk9KRUNUIiwiaWF0IjoxNzA3MTU4MzI2LCJleHAiOjQ4NjI5MTgzMjZ9.megwx3zUApJ0zWzRvYa_8FYszBKnovd8v3fCxfbIcFo
+
+https://docs.moralis.io/market-insights-api
+
+
+Alchemy-\https://docs.alchemy.com/reference/token-api
+
+
+
+
+
+Alpaca broker api - 
+
+Key - CKWD5X3KEMU9SFE470ZL
+
+Secret - mkV6u1FUPbEp3cHFD6ospIX44FZ0KgC42wO37RzL
+
+
+{
+	"id": "81635d0b-5fdf-47a4-b1cb-1bb73e940dec",
+	"client_order_id": "47a8cdeb-cf14-4ecb-876a-272ec1a6bf76",
+	"created_at": "2024-09-30T13:28:17.943379594Z",
+	"updated_at": "2024-09-30T13:28:17.943894674Z",
+	"submitted_at": "2024-09-30T13:28:17.943379594Z",
+	"filled_at": null,
+	"expired_at": null,
+	"canceled_at": null,
+	"failed_at": null,
+	"replaced_at": null,
+	"replaced_by": null,
+	"replaces": null,
+	"asset_id": "b0b6dd9d-8b9b-48a9-ba46-b9d54906e415",
+	"symbol": "AAPL",
+	"asset_class": "us_equity",
+	"notional": null,
+	"qty": "1",
+	"filled_qty": "0",
+	"filled_avg_price": null,
+	"order_class": "",
+	"order_type": "market",
+	"type": "market",
+	"side": "buy",
+	"position_intent": "buy_to_open",
+	"time_in_force": "day",
+	"limit_price": null,
+	"stop_price": null,
+	"status": "pending_new",
+	"extended_hours": false,
+	"legs": null,
+	"trail_percent": null,
+	"trail_price": null,
+	"hwm": null,
+	"commission": "0",
+	"subtag": null,
+	"source": null
+}
+
+
+
