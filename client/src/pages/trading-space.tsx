@@ -156,7 +156,7 @@ export default function TradingSpace() {
                 
                 <div className="border border-green-200 dark:border-green-800 rounded-lg p-3 bg-green-50 dark:bg-green-900/20">
                   <h3 className="font-medium flex items-center gap-2">
-                    <Robot size={16} className="text-green-500" />
+                    <Bot size={16} className="text-green-500" />
                     <span>Bot Management</span>
                   </h3>
                   <p className="text-xs mt-1 text-gray-600 dark:text-gray-300">Monitor and control your active trading bots</p>
@@ -279,7 +279,7 @@ export default function TradingSpace() {
                 className="w-full justify-start text-left flex items-center gap-2"
                 onClick={() => setActivePanel("bots")}
               >
-                <Robot size={14} className="text-green-600 dark:text-green-400 flex-shrink-0" />
+                <Bot size={14} className="text-green-600 dark:text-green-400 flex-shrink-0" />
                 <div className="truncate">
                   <span className="block font-medium">Trading Bots</span>
                   <span className="text-xs text-gray-500 dark:text-gray-400 block">Create and manage AI bots</span>
