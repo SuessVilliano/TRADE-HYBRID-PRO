@@ -58,15 +58,28 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
       <Card className="bg-background/90 backdrop-blur-sm">
         <CardHeader className="py-3 flex flex-row items-center justify-between">
           <CardTitle className="text-sm flex items-center">
-            <span className="flex items-center">
-              <span className="relative mr-2">
-                <Bell size={16} />
-                {signals.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
-                )}
+            <ContextualTooltip
+              id="trading-signals-intro"
+              title="Trading Signals"
+              content={
+                <>
+                  <p>These are real-time trading signals from various sources including TradingView, AI algorithms, and professional traders.</p>
+                  <p className="mt-2">Click on any signal to see complete details and execute trades through the best available broker.</p>
+                </>
+              }
+              delay={1500}
+              position="bottom"
+            >
+              <span className="flex items-center">
+                <span className="relative mr-2">
+                  <Bell size={16} />
+                  {signals.length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
+                  )}
+                </span>
+                Trading Signals
               </span>
-              Trading Signals
-            </span>
+            </ContextualTooltip>
             
             <Badge variant="outline" className="ml-2 text-xs">
               {signals.length} available
@@ -74,15 +87,25 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
           </CardTitle>
           
           <div className="flex gap-1">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-6 w-6"
-              onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-              title={notificationsEnabled ? "Disable notifications" : "Enable notifications"}
+            <ContextualTooltip
+              id="signal-notifications"
+              title="Signal Notifications"
+              content={
+                <p>Enable notifications to receive alerts when new trading signals arrive. You'll never miss an opportunity!</p>
+              }
+              position="left"
+              delay={3000}
             >
-              {notificationsEnabled ? <Bell size={14} /> : <BellOff size={14} />}
-            </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-6 w-6"
+                onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+                title={notificationsEnabled ? "Disable notifications" : "Enable notifications"}
+              >
+                {notificationsEnabled ? <Bell size={14} /> : <BellOff size={14} />}
+              </Button>
+            </ContextualTooltip>
             
             <Button 
               variant="ghost" 
@@ -280,34 +303,78 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
           <CardFooter className="px-3 py-2 border-t space-y-2">
             <div className="flex justify-between items-center w-full">
               <div className="flex items-center gap-1">
-                <Button 
-                  variant={useABATEV ? "default" : "outline"}
-                  size="sm"
-                  className="text-xs h-7 px-2"
-                  onClick={toggleABATEV}
-                  title="Toggle ABATEV (AI-driven Broker Aggregator and Trade Execution Validator)"
+                <ContextualTooltip
+                  id="abatev-intro"
+                  title="ABATEV System"
+                  content={
+                    <>
+                      <p>ABATEV (AI-driven Broker Aggregator and Trade Execution Validator) automatically selects the optimal broker for each trade based on:</p>
+                      <ul className="list-disc pl-4 mt-1 space-y-1">
+                        <li>Price execution</li>
+                        <li>Spread costs</li>
+                        <li>Latency (speed)</li>
+                        <li>Available liquidity</li>
+                      </ul>
+                      <p className="mt-2">This ensures you always get the best possible trade execution.</p>
+                    </>
+                  }
+                  position="bottom"
+                  delay={2000}
                 >
-                  <CheckCircle2 
-                    size={14} 
-                    className={cn("mr-1", useABATEV ? "opacity-100" : "opacity-50")} 
-                  />
-                  ABATEV
-                </Button>
-                <Button 
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 w-7 p-0"
-                  onClick={() => setShowingBrokerComparison(!showingBrokerComparison)}
+                  <Button 
+                    variant={useABATEV ? "default" : "outline"}
+                    size="sm"
+                    className="text-xs h-7 px-2"
+                    onClick={toggleABATEV}
+                    title="Toggle ABATEV (AI-driven Broker Aggregator and Trade Execution Validator)"
+                  >
+                    <CheckCircle2 
+                      size={14} 
+                      className={cn("mr-1", useABATEV ? "opacity-100" : "opacity-50")} 
+                    />
+                    ABATEV
+                  </Button>
+                </ContextualTooltip>
+                
+                <ContextualTooltip
+                  id="broker-comparison"
+                  title="Broker Comparison"
+                  content={
+                    <p>View real-time comparison of prices, spreads, and latency across different brokers to understand why ABATEV selected a particular broker for your trade.</p>
+                  }
+                  position="bottom"
+                  delay={4000}
                 >
-                  <BarChart2 size={14} />
-                </Button>
+                  <Button 
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0"
+                    onClick={() => setShowingBrokerComparison(!showingBrokerComparison)}
+                  >
+                    <BarChart2 size={14} />
+                  </Button>
+                </ContextualTooltip>
               </div>
               
-              <Button 
-                className="flex-1 max-w-[120px]" 
-                size="sm"
-                variant="default"
-                onClick={() => {
+              <ContextualTooltip
+                id="execute-trade"
+                title="Execute Trade"
+                content={
+                  <>
+                    <p>Click this button to execute the trade with the parameters shown.</p>
+                    <p className="mt-2">With ABATEV enabled, the system will automatically select the best broker for execution.</p>
+                    <p className="mt-2">Your trade will include the specified stop loss and take profit levels for risk management.</p>
+                  </>
+                }
+                position="top"
+                delay={6000}
+                highlight={true}
+              >
+                <Button 
+                  className="flex-1 max-w-[120px]" 
+                  size="sm"
+                  variant="default"
+                  onClick={() => {
                   if (!isConnected) {
                     toast.error("Not connected to brokers");
                     return;
@@ -342,6 +409,7 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
                  selectedSignal.action === 'sell' ? 'Sell Now' : 
                  'Execute'}
               </Button>
+              </ContextualTooltip>
             </div>
             
             {!useABATEV && (
