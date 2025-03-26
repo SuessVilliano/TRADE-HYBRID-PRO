@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useScreenShare, ScreenShareData } from "@/lib/stores/useScreenShare";
 import { useMarketData } from "@/lib/stores/useMarketData";
 import { useTrader } from "@/lib/stores/useTrader";
 import { useMultiplayer } from "@/lib/stores/useMultiplayer";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import { Button } from "./button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "./card";
 import { Share2, Eye, X, ChevronUp, ChevronDown, Copy, Users, CheckCircle2, ExternalLink, Coins } from "lucide-react";
@@ -33,11 +34,16 @@ export function ScreenShare({ className }: ScreenShareProps) {
   const { marketData, symbol, currentPrice } = useMarketData();
   const { placeTrade } = useTrader();
   const { clientId, sendChatMessage } = useMultiplayer();
+  const isMobile = useIsMobile();
   const [showShareList, setShowShareList] = useState(false);
   const [selectedSymbol, setSelectedSymbol] = useState(symbol);
   const [isCapturing, setIsCapturing] = useState(false);
   const [activeTab, setActiveTab] = useState<'share' | 'view'>('share');
   const chartRef = useRef<HTMLDivElement>(null);
+  
+  // Create unique container IDs for TradingView widgets
+  // This prevents flickering by ensuring each widget has a unique ID
+  const myChartId = useMemo(() => `my_chart_${Math.random().toString(36).substring(2, 9)}`, []);
   
   // Load available shares on component mount
   useEffect(() => {
@@ -98,6 +104,122 @@ export function ScreenShare({ className }: ScreenShareProps) {
     ? activeShares.find(share => share.id === selectedShareId) 
     : null;
   
+  // Render different layouts for mobile and desktop
+  if (isMobile) {
+    // Mobile layout - simpler to avoid flashing
+    return (
+      <div className={cn("space-y-4", className)}>
+        <Card className="bg-background/90 backdrop-blur-sm">
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm flex items-center justify-between">
+              <div className="flex items-center">
+                <Share2 className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span>Trading View</span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-6 w-6"
+                onClick={() => setActiveTab(activeTab === 'share' ? 'view' : 'share')}
+              >
+                {activeTab === 'share' ? <Users size={14} /> : <Share2 size={14} />}
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          
+          <CardContent className="py-2 space-y-3">
+            {activeTab === 'share' ? (
+              // My Trading Chart (Mobile)
+              <div className="space-y-3">
+                <div ref={chartRef} className="w-full h-[250px] border rounded-md overflow-hidden relative">
+                  <TradingViewWidget 
+                    symbol={selectedSymbol}
+                    theme="dark"
+                    container_id={myChartId}
+                    height="100%"
+                    interval="60"
+                    style="1"
+                    allow_symbol_change={false}
+                  />
+                </div>
+                
+                <div className="flex gap-2">
+                  <div className="flex space-x-1 flex-1">
+                    <Button variant="outline" size="sm" onClick={() => setSelectedSymbol("NASDAQ:AAPL")} className="text-[10px] h-7 px-2">AAPL</Button>
+                    <Button variant="outline" size="sm" onClick={() => setSelectedSymbol("BINANCE:BTCUSDT")} className="text-[10px] h-7 px-2">BTC</Button>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={isSharing ? "destructive" : "outline"}
+                    onClick={handleStartSharing}
+                    disabled={isCapturing}
+                    className="h-7 text-xs"
+                  >
+                    {isSharing ? "Stop" : "Share"}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              // View Shared Charts (Mobile)
+              <div className="space-y-3">
+                {activeShares.length === 0 ? (
+                  <div className="py-4 text-center">
+                    <Users className="h-8 w-8 mx-auto text-muted-foreground mb-1" />
+                    <p className="text-muted-foreground text-xs">No shared charts</p>
+                  </div>
+                ) : (
+                  <>
+                    {selectedShare ? (
+                      // Selected shared chart
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <h4 className="text-xs">
+                            {selectedShare.username}'s Chart • {selectedShare.symbol}
+                          </h4>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6"
+                            onClick={() => selectShare(null)}
+                          >
+                            <X size={12} />
+                          </Button>
+                        </div>
+                        <SharedChart shareData={selectedShare} />
+                      </div>
+                    ) : (
+                      // List of available shares
+                      <div className="grid grid-cols-1 gap-2 max-h-[250px] overflow-y-auto">
+                        {activeShares.map(share => (
+                          <div 
+                            key={share.id}
+                            onClick={() => selectShare(share.id)}
+                            className="relative cursor-pointer rounded-lg border p-2"
+                          >
+                            <div className="flex items-center">
+                              <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Users className="h-3 w-3" />
+                              </div>
+                              <div className="ml-2">
+                                <p className="text-xs font-medium">{share.username}</p>
+                                <p className="text-[10px] text-muted-foreground">{share.symbol}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
+  // Desktop layout - more complete UI
   return (
     <div className={cn("space-y-4", className)}>
       <Card className="bg-background/90 backdrop-blur-sm">
@@ -107,7 +229,7 @@ export function ScreenShare({ className }: ScreenShareProps) {
               <Share2 className="h-4 w-4 mr-2 text-muted-foreground" />
               <span>Trading View & Screen Sharing</span>
             </div>
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'share' | 'view')} className="hidden md:block">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'share' | 'view')}>
               <TabsList className="h-8">
                 <TabsTrigger value="share" className="text-xs px-3 py-1">My Chart</TabsTrigger>
                 <TabsTrigger value="view" className="text-xs px-3 py-1">
@@ -118,16 +240,6 @@ export function ScreenShare({ className }: ScreenShareProps) {
                 </TabsTrigger>
               </TabsList>
             </Tabs>
-            <div className="md:hidden">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-6 w-6"
-                onClick={() => setActiveTab(activeTab === 'share' ? 'view' : 'share')}
-              >
-                {activeTab === 'share' ? <Users size={14} /> : <Share2 size={14} />}
-              </Button>
-            </div>
           </CardTitle>
         </CardHeader>
         
@@ -139,7 +251,11 @@ export function ScreenShare({ className }: ScreenShareProps) {
                 <TradingViewWidget 
                   symbol={selectedSymbol}
                   theme="dark"
-                  container_id="my_tradingview_chart"
+                  container_id={myChartId}
+                  height={isMobile ? "280px" : "100%"}
+                  interval={isMobile ? "60" : "D"}
+                  style="1"
+                  allow_symbol_change={false}
                 />
                 
                 {isCapturing && (
@@ -323,9 +439,13 @@ function SharedChart({ shareData }: { shareData: ScreenShareData }) {
   const { placeTrade } = useTrader();
   const { clientId, sendChatMessage } = useMultiplayer();
   const { currentPrice } = useMarketData();
+  const isMobile = useIsMobile();
   const [quantity, setQuantity] = useState("1");
   const [copyTrades, setCopyTrades] = useState<CopyTrade[]>([]);
   const [copyingTrade, setCopyingTrade] = useState(false);
+  
+  // Generate a unique ID for the chart container to prevent conflicts
+  const chartId = useMemo(() => `shared_chart_${shareData.id}_${Math.random().toString(36).substring(2, 7)}`, [shareData.id]);
   
   // Handle copy trade functionality
   const handleCopyTrade = async (operation: 'buy' | 'sell') => {
@@ -382,6 +502,52 @@ function SharedChart({ shareData }: { shareData: ScreenShareData }) {
     }
   };
   
+  // Render a simpler version for mobile
+  if (isMobile) {
+    return (
+      <div className="space-y-3">
+        {/* Chart using TradingView - Mobile */}
+        <div className="h-[220px] w-full rounded-md overflow-hidden border">
+          <TradingViewWidget 
+            symbol={shareData.symbol}
+            theme="dark" 
+            height="100%"
+            container_id={chartId}
+            interval="60"
+            style="1"
+            enable_publishing={false}
+            allow_symbol_change={false}
+          />
+        </div>
+        
+        {/* Simplified copy trading controls */}
+        {shareData.userId !== clientId && (
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant="default" 
+              size="sm"
+              className="flex-1 bg-green-600 hover:bg-green-700 h-8"
+              onClick={() => handleCopyTrade('buy')}
+              disabled={copyingTrade}
+            >
+              Copy Buy
+            </Button>
+            <Button 
+              variant="default" 
+              size="sm"
+              className="flex-1 bg-red-600 hover:bg-red-700 h-8"
+              onClick={() => handleCopyTrade('sell')}
+              disabled={copyingTrade}
+            >
+              Copy Sell
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  }
+  
+  // Desktop version
   return (
     <div className="space-y-4">
       {/* Chart using TradingView */}
@@ -390,7 +556,9 @@ function SharedChart({ shareData }: { shareData: ScreenShareData }) {
           symbol={shareData.symbol}
           theme="dark" 
           height="100%"
-          container_id={`tv_shared_${shareData.id}`}
+          container_id={chartId}
+          interval="D"
+          style="1"
           enable_publishing={false}
           allow_symbol_change={false}
         />
