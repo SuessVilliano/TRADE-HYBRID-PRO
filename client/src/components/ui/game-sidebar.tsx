@@ -113,7 +113,7 @@ export function GameSidebar() {
           {/* Wallet connection */}
           <div className={`p-3 border-b ${isExpanded ? '' : 'flex justify-center'}`}>
             {isExpanded ? (
-              <WalletConnect />
+              <SimpleWalletButton />
             ) : (
               <ContextualTooltip
                 id="wallet-tooltip"
@@ -269,6 +269,12 @@ export function GameSidebar() {
           {isExpanded && activeTab === 'affiliate' && (
             <div className="mt-2 p-1 border-t">
               <SimpleAffiliateSystem />
+            </div>
+          )}
+          
+          {isExpanded && activeTab === 'wallet' && (
+            <div className="mt-2 p-1 border-t">
+              <SimpleWalletButton />
             </div>
           )}
 
