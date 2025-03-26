@@ -11,11 +11,63 @@ import { AudioInitializer, AudioPermissionDialog } from "@/components/ui/audio-i
 export default function Home() {
   const [username, setUsername] = useState("Trader1");
   const { isMuted, toggleMute } = useAudio();
+  const [showAudioPermission, setShowAudioPermission] = useState(false);
+  
+  // Initialize audio assets
+  useEffect(() => {
+    // Initialize audio assets on component mount
+    const backgroundMusic = new Audio('/sounds/background.mp3');
+    backgroundMusic.loop = true;
+    backgroundMusic.volume = 0.3;
+    
+    const hitSound = new Audio('/sounds/hit.mp3');
+    hitSound.volume = 0.4;
+    
+    const successSound = new Audio('/sounds/success.mp3');
+    successSound.volume = 0.5;
+    
+    // Store audio elements in global state
+    useAudio.getState().setBackgroundMusic(backgroundMusic);
+    useAudio.getState().setHitSound(hitSound);
+    useAudio.getState().setSuccessSound(successSound);
+    
+    // Check if it's the first visit and show audio permission dialog
+    const audioPermissionSeen = localStorage.getItem('audio_permission_seen');
+    if (!audioPermissionSeen) {
+      // Show permission dialog after a short delay
+      setTimeout(() => {
+        setShowAudioPermission(true);
+      }, 1000);
+    }
+  }, []);
   
   const handleEnterMetaverse = () => {
     // Play success sound when entering the metaverse
     if (!isMuted) {
       useAudio.getState().playSuccess();
+    }
+  };
+  
+  const handleAudioPermission = async () => {
+    try {
+      // Request audio context to trigger browser permission dialog
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContext.resume().then(() => {
+        console.log('Audio context started successfully');
+        
+        // Enable sound
+        if (isMuted) {
+          toggleMute();
+        }
+        
+        // Play a test sound to confirm permissions
+        useAudio.getState().playSuccess();
+      });
+      
+      // Mark that user has seen the permission dialog
+      localStorage.setItem('audio_permission_seen', 'true');
+    } catch (error) {
+      console.error('Error requesting audio permission:', error);
     }
   };
   
@@ -216,6 +268,16 @@ export default function Home() {
           </p>
         </div>
       </footer>
+      
+      {/* Audio Permission Dialog */}
+      <AudioPermissionDialog 
+        isOpen={showAudioPermission}
+        onRequestPermission={handleAudioPermission}
+        onClose={() => {
+          setShowAudioPermission(false);
+          localStorage.setItem('audio_permission_seen', 'true');
+        }}
+      />
     </div>
   );
 }
