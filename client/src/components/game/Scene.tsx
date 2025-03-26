@@ -1,6 +1,7 @@
+import * as THREE from 'three';
+import { Suspense, useEffect, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Stats, Sky, PerspectiveCamera, OrbitControls, Stars, PointerLockControls } from "@react-three/drei";
-import { Suspense, useEffect, useRef } from "react";
 import Lights from "./Lights";
 import Floor from "./Floor";
 import Player from "./Player";
@@ -9,16 +10,16 @@ import TradeHouse from "./TradeHouse";
 import TradingStation from "./TradingStation";
 import SignalBoard from "./SignalBoard";
 import WebAppTrigger from "./WebAppTrigger";
-import { Vector3 } from 'three';
 
 interface SceneProps {
   showStats?: boolean;
 }
 
 const MOVEMENT_SPEED = 0.15;
-const direction = new Vector3();
-const frontVector = new Vector3();
-const sideVector = new Vector3();
+// Create THREE.Vector3 instances for movement calculations
+const direction = new THREE.Vector3();
+const frontVector = new THREE.Vector3();
+const sideVector = new THREE.Vector3();
 
 function SceneContent() {
   const controls = useRef<any>();
@@ -109,13 +110,6 @@ export default function Scene({ showStats = false }: SceneProps) {
   return (
     <div style={{ width: '100%', height: '100vh' }}>
       <Canvas
-        onContextLost={(event) => {
-          event.preventDefault();
-          window.location.reload();
-        }}
-        onContextRestored={() => {
-          console.log("WebGL context restored");
-        }}
         shadows
         camera={{
           position: [0, 5, 15],
