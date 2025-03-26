@@ -190,6 +190,14 @@ export default function Player() {
   // Get game state
   const { phase, start } = useGame();
   
+  // Reset jump prevention when game phase changes to "ready" (restart)
+  useEffect(() => {
+    if (phase === 'ready') {
+      initialJumpPrevented.current = false;
+      console.log('Game restarted, reset jump prevention flag');
+    }
+  }, [phase]);
+  
   // Get keyboard controls
   const [, getKeys] = useKeyboardControls<Controls>();
   
