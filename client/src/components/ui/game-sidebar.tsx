@@ -40,27 +40,45 @@ export function GameSidebar() {
   
   // Function to open a feature in fullscreen via WebApp
   const openFullscreen = (tabId: string) => {
-    switch (tabId) {
-      case 'journal':
-        openWebApp('/journal');
-        break;
-      case 'bots':
-        openWebApp('/trading-bots');
-        break;
-      case 'signals':
-        openWebApp('/signals');
-        break;
-      case 'leaderboard':
-        openWebApp('/leaderboard');
-        break;
-      case 'chat':
-        openWebApp('/community');
-        break;
-      case 'game':
-        window.open('/game', '_blank');
-        break;
-      default:
-        openWebApp('https://app.tradehybrid.co');
+    try {
+      // For safety, ensure we have a base URL
+      const baseUrl = 'https://app.tradehybrid.co';
+      
+      switch (tabId) {
+        case 'journal':
+          window.open(`${baseUrl}/journal`, '_blank');
+          break;
+        case 'bots':
+          window.open(`${baseUrl}/trading-bots`, '_blank');
+          break;
+        case 'signals':
+          window.open(`${baseUrl}/signals`, '_blank');
+          break;
+        case 'leaderboard':
+          window.open(`${baseUrl}/leaderboard`, '_blank');
+          break;
+        case 'chat':
+          window.open(`${baseUrl}/community`, '_blank');
+          break;
+        case 'affiliate':
+          window.open(`${baseUrl}/affiliate`, '_blank');
+          break;
+        case 'wallet':
+          window.open(`${baseUrl}/wallet`, '_blank');
+          break;
+        case 'settings':
+          window.open(`${baseUrl}/settings`, '_blank');
+          break;
+        case 'game':
+          window.open('/game', '_blank');
+          break;
+        default:
+          window.open(baseUrl, '_blank');
+      }
+    } catch (error) {
+      console.error("Error opening fullscreen:", error);
+      // Fallback to just opening the base URL if there's an error
+      window.open('https://app.tradehybrid.co', '_blank');
     }
   };
 
