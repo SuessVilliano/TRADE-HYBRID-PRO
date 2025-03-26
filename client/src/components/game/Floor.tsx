@@ -1,13 +1,8 @@
-import { useTexture } from "@react-three/drei";
-import * as THREE from "three";
+import React from 'react';
+import * as THREE from 'three';
+import { useTexture } from '@react-three/drei';
 
 export default function Floor() {
-  const texture = useTexture("/textures/grass.png");
-  
-  // Make the texture repeat many times over the floor
-  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(20, 20);
-  
   return (
     <mesh 
       rotation={[-Math.PI / 2, 0, 0]} 
@@ -16,9 +11,9 @@ export default function Floor() {
     >
       <planeGeometry args={[100, 100]} />
       <meshStandardMaterial 
-        map={texture} 
-        color="#477A3E" 
+        color="#777777" 
         roughness={0.8}
+        metalness={0.2}
       />
     </mesh>
   );

@@ -1,10 +1,171 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { 
+  Sky, 
+  Environment, 
+  PerspectiveCamera, 
+  OrbitControls,
+  Grid,
+  Text,
+  useGLTF,
+  Stars
+} from '@react-three/drei';
+import * as THREE from 'three';
 import { Interface } from '../ui/interface';
 import { Map, Sun, Moon } from 'lucide-react';
 import { Button } from '../ui/button';
+import { useLocation } from 'react-router-dom';
+import Floor from './Floor';
+import Lights from './Lights';
+import { GamePhase, useGame } from '@/lib/stores/useGame';
+import GameControls from './Controls';
+import Player from './Player';
 
 interface SceneProps {
   showStats?: boolean;
+}
+
+// Represents a simple building model
+function Building({ position, size, color, name }: { 
+  position: [number, number, number], 
+  size: [number, number, number], 
+  color: string,
+  name: string
+}) {
+  return (
+    <group position={new THREE.Vector3(...position)}>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={size} />
+        <meshStandardMaterial color={color} />
+      </mesh>
+      <Text
+        position={[0, size[1] / 2 + 0.5, 0]}
+        color="white"
+        anchorX="center"
+        anchorY="middle"
+        fontSize={0.5}
+      >
+        {name}
+      </Text>
+    </group>
+  )
+}
+
+// Create different trading locations in the 3D space
+function TradingEnvironment() {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const locationParam = searchParams.get('location') || 'tradehouse';
+  
+  return (
+    <group>
+      {/* Trade House - Central Building */}
+      <Building 
+        position={[0, 1, 0]} 
+        size={[10, 2, 10]} 
+        color={locationParam === 'tradehouse' ? '#FFD700' : '#D4AF37'} 
+        name="Trade House"
+      />
+      
+      {/* Crypto Trading Center */}
+      <Building 
+        position={[-15, 1, 0]} 
+        size={[8, 2, 6]} 
+        color={locationParam === 'crypto' ? '#22c55e' : '#15803d'} 
+        name="Crypto Trading"
+      />
+      
+      {/* Forex Trading Floor */}
+      <Building 
+        position={[15, 1, 0]} 
+        size={[8, 2, 6]} 
+        color={locationParam === 'forex' ? '#ef4444' : '#b91c1c'} 
+        name="Forex Trading"
+      />
+      
+      {/* Stock Market Exchange */}
+      <Building 
+        position={[0, 1, 15]} 
+        size={[8, 2, 6]} 
+        color={locationParam === 'stocks' ? '#a855f7' : '#7e22ce'} 
+        name="Stock Market"
+      />
+      
+      {/* Signal Towers */}
+      <Building 
+        position={[0, 1, -15]} 
+        size={[6, 4, 6]} 
+        color={locationParam === 'signals' ? '#3b82f6' : '#1d4ed8'} 
+        name="Signal Towers"
+      />
+      
+      {/* Roads connecting buildings */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} receiveShadow>
+        <planeGeometry args={[50, 50]} />
+        <meshStandardMaterial color="#333333" />
+      </mesh>
+      
+      {/* Path to Crypto */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-7.5, 0.02, 0]} receiveShadow>
+        <planeGeometry args={[15, 2]} />
+        <meshStandardMaterial color="#444444" />
+      </mesh>
+      
+      {/* Path to Forex */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[7.5, 0.02, 0]} receiveShadow>
+        <planeGeometry args={[15, 2]} />
+        <meshStandardMaterial color="#444444" />
+      </mesh>
+      
+      {/* Path to Stock Market */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 7.5]} receiveShadow>
+        <planeGeometry args={[2, 15]} />
+        <meshStandardMaterial color="#444444" />
+      </mesh>
+      
+      {/* Path to Signal Towers */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, -7.5]} receiveShadow>
+        <planeGeometry args={[2, 15]} />
+        <meshStandardMaterial color="#444444" />
+      </mesh>
+    </group>
+  );
+}
+
+// Scene Camera
+function SceneCamera() {
+  const { camera } = useThree();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const locationParam = searchParams.get('location') || 'tradehouse';
+  
+  useEffect(() => {
+    // Set camera position based on location
+    let cameraPos: [number, number, number];
+    
+    switch(locationParam) {
+      case 'crypto':
+        cameraPos = [-10, 5, 10];
+        break;
+      case 'forex':
+        cameraPos = [10, 5, 10];
+        break;
+      case 'stocks':
+        cameraPos = [0, 5, 20];
+        break;
+      case 'signals':
+        cameraPos = [0, 5, -10];
+        break;
+      case 'tradehouse':
+      default:
+        cameraPos = [10, 5, 10];
+    }
+    
+    camera.position.set(...cameraPos);
+    camera.lookAt(0, 0, 0);
+  }, [camera, locationParam]);
+  
+  return null;
 }
 
 export default function Scene({ showStats = false }: SceneProps) {
@@ -16,6 +177,7 @@ export default function Scene({ showStats = false }: SceneProps) {
     }
     return false;
   });
+  const { phase } = useGame();
 
   // Function to toggle map for mobile users
   const toggleMobileMap = () => {
@@ -50,55 +212,34 @@ export default function Scene({ showStats = false }: SceneProps) {
     }
     setIsDarkMode(!isDarkMode);
   };
-
+  
   return (
     <div className="relative w-full h-full">
-      <div className="flex items-center justify-center h-screen w-full bg-gradient-to-b from-gray-100 to-white dark:from-gray-900 dark:to-black text-gray-900 dark:text-white p-4 transition-colors duration-300">
-        <div className="text-center max-w-lg mx-auto">
-          <div className="absolute top-4 right-4">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={toggleDarkMode}
-              className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
-            >
-              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-            </Button>
-          </div>
-          
-          <h1 className="text-3xl font-bold mb-4">Welcome to Trade Hybrid</h1>
-          <p className="mb-6">
-            The 3D environment is currently being updated. In the meantime, you can explore the map by pressing the M key or using the map button below.
-          </p>
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg mb-6 shadow border border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-semibold mb-2">Controls:</h2>
-            <ul className="text-left list-disc pl-6 space-y-1">
-              <li>WASD or Arrow Keys: Move character</li>
-              <li>Space: Jump</li>
-              <li>Double-tap movement key: Sprint</li>
-              <li>Right mouse button: Rotate camera</li>
-              <li>E: Interact</li>
-              <li>M: Toggle map</li>
-            </ul>
-          </div>
-          
-          {/* Mobile map button */}
-          <div className="flex justify-center mb-6">
-            <Button 
-              onClick={toggleMobileMap}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-              size="lg"
-            >
-              <Map size={18} />
-              {showMobileMap ? "Close Map" : "Open Trading Map"}
-            </Button>
-          </div>
-          
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            On mobile? Use the map button above to view all trading locations.
-          </div>
-        </div>
-      </div>
+      {/* 3D Canvas */}
+      <GameControls>
+        <Canvas shadows>
+          <Suspense fallback={null}>
+            <color attach="background" args={[isDarkMode ? '#0f172a' : '#e0f2fe']} />
+            
+            {isDarkMode ? (
+              <Stars radius={100} depth={50} count={1000} factor={4} />
+            ) : (
+              <Sky sunPosition={[100, 10, 100]} />
+            )}
+            
+            <ambientLight intensity={0.3} />
+            <Lights />
+            <SceneCamera />
+            <OrbitControls target={[0, 0, 0]} maxPolarAngle={Math.PI/2 - 0.1} />
+            
+            <TradingEnvironment />
+            <Floor />
+            
+            {/* Add the player character */}
+            <Player />
+          </Suspense>
+        </Canvas>
+      </GameControls>
       
       {/* Interface overlay that includes the map toggle functionality */}
       <Interface 
@@ -106,16 +247,24 @@ export default function Scene({ showStats = false }: SceneProps) {
         onToggleMap={toggleMobileMap} 
       />
       
-      {/* Mobile bottom navigation */}
+      {/* Mobile controls */}
       <div className="md:hidden fixed bottom-4 left-0 right-0 flex justify-center z-50">
-        <div className="bg-white dark:bg-gray-800 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-4 shadow-lg border border-gray-200 dark:border-gray-700">
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-4 shadow-lg border border-gray-200 dark:border-gray-700">
           <Button 
             variant="ghost" 
             size="icon" 
-            className="text-gray-900 dark:text-white h-12 w-12 rounded-full"
+            className="text-gray-900 dark:text-white h-12 w-12 rounded-full flex items-center justify-center"
             onClick={toggleMobileMap}
           >
             <Map size={24} />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-gray-900 dark:text-white h-12 w-12 rounded-full flex items-center justify-center"
+            onClick={toggleDarkMode}
+          >
+            {isDarkMode ? <Sun size={24} /> : <Moon size={24} />}
           </Button>
         </div>
       </div>

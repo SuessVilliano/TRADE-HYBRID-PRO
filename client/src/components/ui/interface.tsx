@@ -158,10 +158,16 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
                 {/* Map visualization */}
                 <div className="flex-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 min-h-[300px] flex items-center justify-center relative shadow-md">
                   <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-2 p-4">
-                    <div className="col-start-2 col-end-3 row-start-1 row-end-2 bg-blue-500/20 dark:bg-blue-900/50 rounded-lg flex items-center justify-center text-center p-2 cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:scale-105 border border-blue-200 dark:border-blue-800">
+                    <div 
+                      onClick={() => window.location.href = '/trading-space?location=signals'}
+                      className="col-start-2 col-end-3 row-start-1 row-end-2 bg-blue-500/20 dark:bg-blue-900/50 rounded-lg flex items-center justify-center text-center p-2 cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:scale-105 border border-blue-200 dark:border-blue-800"
+                    >
                       <div className="text-blue-900 dark:text-blue-100 font-semibold">Signal Towers</div>
                     </div>
-                    <div className="col-start-1 col-end-2 row-start-2 row-end-3 bg-green-500/20 dark:bg-green-900/50 rounded-lg flex items-center justify-center text-center p-2 cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:scale-105 border border-green-200 dark:border-green-800">
+                    <div 
+                      onClick={() => window.location.href = '/trading-space?location=crypto'}
+                      className="col-start-1 col-end-2 row-start-2 row-end-3 bg-green-500/20 dark:bg-green-900/50 rounded-lg flex items-center justify-center text-center p-2 cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:scale-105 border border-green-200 dark:border-green-800"
+                    >
                       <div className="text-green-900 dark:text-green-100 font-semibold">Crypto Trading</div>
                     </div>
                     <div className="col-start-2 col-end-3 row-start-2 row-end-3 bg-purple-500/20 dark:bg-purple-900/50 rounded-lg flex items-center justify-center text-center p-2 relative border border-purple-200 dark:border-purple-800">
@@ -169,10 +175,16 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
                       <div className="w-3 h-3 bg-yellow-500 rounded-full absolute"></div>
                       <div className="text-purple-900 dark:text-purple-100 font-semibold z-10">You Are Here</div>
                     </div>
-                    <div className="col-start-3 col-end-4 row-start-2 row-end-3 bg-red-500/20 dark:bg-red-900/50 rounded-lg flex items-center justify-center text-center p-2 cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:scale-105 border border-red-200 dark:border-red-800">
+                    <div 
+                      onClick={() => window.location.href = '/trading-space?location=forex'}
+                      className="col-start-3 col-end-4 row-start-2 row-end-3 bg-red-500/20 dark:bg-red-900/50 rounded-lg flex items-center justify-center text-center p-2 cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:scale-105 border border-red-200 dark:border-red-800"
+                    >
                       <div className="text-red-900 dark:text-red-100 font-semibold">Forex Trading</div>
                     </div>
-                    <div className="col-start-2 col-end-3 row-start-3 row-end-4 bg-yellow-500/20 dark:bg-yellow-900/50 rounded-lg flex items-center justify-center text-center p-2 cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:scale-105 border border-yellow-200 dark:border-yellow-800">
+                    <div 
+                      onClick={() => window.location.href = '/trading-space?location=tradehouse'}
+                      className="col-start-2 col-end-3 row-start-3 row-end-4 bg-yellow-500/20 dark:bg-yellow-900/50 rounded-lg flex items-center justify-center text-center p-2 cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:scale-105 border border-yellow-200 dark:border-yellow-800"
+                    >
                       <div className="text-yellow-900 dark:text-yellow-100 font-semibold">Trade House</div>
                     </div>
                   </div>
@@ -182,44 +194,74 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
                 <div className="lg:w-1/3 bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 shadow-md">
                   <h3 className="font-medium mb-4 text-gray-900 dark:text-white">Trading Locations</h3>
                   <div className="space-y-4">
-                    <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors">
+                    <div 
+                      onClick={() => window.location.href = '/trading-space?location=tradehouse'}
+                      className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors"
+                    >
                       <div className="flex items-center gap-2 mb-1">
                         <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                         <span className="font-semibold text-gray-900 dark:text-white">Trade House</span>
                       </div>
                       <p className="text-gray-600 dark:text-gray-300 text-sm ml-5">Center hub for all traders with meeting areas and social spaces</p>
+                      <div className="mt-2 flex justify-end">
+                        <span className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-100 px-2 py-0.5 rounded-full">Enter Location</span>
+                      </div>
                     </div>
                     
-                    <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors">
+                    <div 
+                      onClick={() => window.location.href = '/trading-space?location=crypto'}
+                      className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors"
+                    >
                       <div className="flex items-center gap-2 mb-1">
                         <div className="w-3 h-3 rounded-full bg-green-500"></div>
                         <span className="font-semibold text-gray-900 dark:text-white">Crypto Trading</span>
                       </div>
                       <p className="text-gray-600 dark:text-gray-300 text-sm ml-5">Bitcoin, Ethereum, Alt coins trading with real-time charts</p>
+                      <div className="mt-2 flex justify-end">
+                        <span className="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 px-2 py-0.5 rounded-full">Enter Location</span>
+                      </div>
                     </div>
                     
-                    <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors">
+                    <div 
+                      onClick={() => window.location.href = '/trading-space?location=forex'}
+                      className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors"
+                    >
                       <div className="flex items-center gap-2 mb-1">
                         <div className="w-3 h-3 rounded-full bg-red-500"></div>
                         <span className="font-semibold text-gray-900 dark:text-white">Forex Trading</span>
                       </div>
                       <p className="text-gray-600 dark:text-gray-300 text-sm ml-5">Currency pairs trading with advanced order types</p>
+                      <div className="mt-2 flex justify-end">
+                        <span className="text-xs bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 px-2 py-0.5 rounded-full">Enter Location</span>
+                      </div>
                     </div>
                     
-                    <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors">
+                    <div 
+                      onClick={() => window.location.href = '/trading-space?location=signals'}
+                      className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors"
+                    >
                       <div className="flex items-center gap-2 mb-1">
                         <div className="w-3 h-3 rounded-full bg-blue-500"></div>
                         <span className="font-semibold text-gray-900 dark:text-white">Signal Towers</span>
                       </div>
                       <p className="text-gray-600 dark:text-gray-300 text-sm ml-5">Trading signals and alerts from AI and other traders</p>
+                      <div className="mt-2 flex justify-end">
+                        <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 px-2 py-0.5 rounded-full">Enter Location</span>
+                      </div>
                     </div>
                     
-                    <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors">
+                    <div 
+                      onClick={() => window.location.href = '/trading-space?location=stocks'}
+                      className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors"
+                    >
                       <div className="flex items-center gap-2 mb-1">
                         <div className="w-3 h-3 rounded-full bg-purple-500"></div>
                         <span className="font-semibold text-gray-900 dark:text-white">Stock Market</span>
                       </div>
                       <p className="text-gray-600 dark:text-gray-300 text-sm ml-5">Equities and indices trading with portfolio management</p>
+                      <div className="mt-2 flex justify-end">
+                        <span className="text-xs bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-100 px-2 py-0.5 rounded-full">Enter Location</span>
+                      </div>
                     </div>
                   </div>
                 </div>

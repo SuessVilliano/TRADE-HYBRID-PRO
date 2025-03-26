@@ -1,20 +1,13 @@
-import { useRef } from "react";
-import * as THREE from "three";
+import React from 'react';
+import * as THREE from 'three';
 
 export default function Lights() {
-  const lightRef = useRef<THREE.DirectionalLight>(null);
-  
   return (
     <>
-      {/* Increased ambient light for better visibility */}
-      <ambientLight intensity={0.6} color="#ffffff" />
-      
-      {/* Main directional light with shadows */}
+      {/* Main directional light (sun) */}
       <directionalLight
-        ref={lightRef}
-        position={[10, 10, 5]}
-        intensity={1.2}
-        color="#ffffff"
+        position={[10, 20, 10]}
+        intensity={1}
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
@@ -25,25 +18,59 @@ export default function Lights() {
         shadow-camera-bottom={-20}
       />
       
-      {/* Secondary fill light */}
+      {/* Fill light */}
       <directionalLight
-        position={[-5, 8, -10]}
+        position={[-10, 10, -10]}
+        intensity={0.3}
+      />
+      
+      {/* Spotlight for each building */}
+      <spotLight
+        position={[0, 15, 0]}
+        angle={0.3}
+        penumbra={0.2}
+        intensity={0.8}
+        castShadow
+      />
+      
+      {/* Spotlight for crypto area */}
+      <spotLight
+        position={[-15, 10, 0]}
+        angle={0.3}
+        penumbra={0.2}
         intensity={0.5}
-        color="#b0c4de"
+        castShadow
+        color="#22c55e"
       />
       
-      {/* Ground fill light */}
-      <hemisphereLight
-        args={["#d9e8ff", "#004400", 0.5]}
+      {/* Spotlight for forex area */}
+      <spotLight
+        position={[15, 10, 0]}
+        angle={0.3}
+        penumbra={0.2}
+        intensity={0.5}
+        castShadow
+        color="#ef4444"
       />
       
-      {/* Add a spotlight to follow the player and highlight them */}
-      <pointLight 
-        position={[0, 8, 0]} 
-        intensity={0.8} 
-        color="#ffffff"
-        distance={15}
-        decay={2}
+      {/* Spotlight for stocks area */}
+      <spotLight
+        position={[0, 10, 15]}
+        angle={0.3}
+        penumbra={0.2}
+        intensity={0.5}
+        castShadow
+        color="#a855f7"
+      />
+      
+      {/* Spotlight for signals area */}
+      <spotLight
+        position={[0, 10, -15]}
+        angle={0.3}
+        penumbra={0.2}
+        intensity={0.5}
+        castShadow
+        color="#3b82f6"
       />
     </>
   );
