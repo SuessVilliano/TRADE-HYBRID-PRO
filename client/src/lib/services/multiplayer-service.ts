@@ -45,7 +45,9 @@ type WSMessageType =
   | 'initial_state' 
   | 'trade_offer' 
   | 'friend_request' 
-  | 'ping';
+  | 'ping'
+  | 'voice_status'
+  | 'voice_data';
 
 interface WSMessage {
   type: WSMessageType;
@@ -71,7 +73,8 @@ export class MultiplayerService {
     // Private constructor to enforce singleton pattern
     for (const type of [
       'player_update', 'chat_message', 'join', 'leave', 
-      'initial_state', 'trade_offer', 'friend_request', 'ping'
+      'initial_state', 'trade_offer', 'friend_request', 'ping',
+      'voice_status', 'voice_data'
     ] as WSMessageType[]) {
       this.eventListeners.set(type, []);
     }
@@ -275,6 +278,12 @@ export class MultiplayerService {
           break;
         case 'friend_request':
           this.handleFriendRequest(message.data);
+          break;
+        case 'voice_status':
+          // Forward to event listeners - indicates when a player enables/disables voice
+          break;
+        case 'voice_data':
+          // Forward to event listeners - contains voice audio data
           break;
         case 'ping':
           // Just a heartbeat, no need to handle
