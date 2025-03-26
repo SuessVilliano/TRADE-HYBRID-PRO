@@ -233,18 +233,75 @@ export default function Player() {
   // Double tap detection threshold (milliseconds)
   const doubleTapThreshold = 300;
   
+  // Initialize 3D model
+  useEffect(() => {
+    if (characterModel) {
+      console.log('3D Character model loaded');
+      
+      // Apply customizations to the model materials
+      characterModel.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.material) {
+          // Apply colors based on customization
+          if (child.material.name.includes('body') || child.material.name.includes('Body')) {
+            child.material.color = new THREE.Color(currentCustomization.bodyColor);
+            child.material.emissive = new THREE.Color(currentCustomization.bodyEmissive);
+            child.material.emissiveIntensity = 0.3;
+          } else if (child.material.name.includes('head') || child.material.name.includes('Head')) {
+            child.material.color = new THREE.Color(currentCustomization.headColor);
+            child.material.emissive = new THREE.Color(currentCustomization.headEmissive);
+            child.material.emissiveIntensity = 0.3;
+          }
+          
+          // Ensure shadows are set up
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+      
+      setModelLoaded(true);
+    }
+  }, [characterModel, currentCustomization]);
+  
+  // Update animations based on movement
+  useEffect(() => {
+    if (mixer) {
+      // If we have animations, we'd play them here
+      console.log('Animation mixer initialized');
+      
+      // If there's an "idle" animation, play it by default
+      if (actions.idle) {
+        actions.idle.play();
+      }
+      
+      // If there's a "walk" animation, we'd trigger it during movement
+      if (actions.walk) {
+        console.log('Walk animation available');
+      }
+      
+      // If there's a "run" animation, we'd trigger it during sprinting
+      if (actions.run) {
+        console.log('Run animation available');
+      }
+    }
+  }, [actions, mixer]);
+  
   // Debugging logs
   useEffect(() => {
     console.log('Player component mounted');
     console.log('Default position:', playerPosition.current);
+    console.log('Available animations:', Object.keys(actions));
     
     return () => {
       console.log('Player component unmounted');
     };
-  }, []);
+  }, [actions]);
   
-  // Game loop for player movement
-  useFrame(() => {
+  // Game loop for player movement and animation
+  useFrame((state, delta) => {
+    // Update animation mixer on each frame
+    if (mixer) {
+      mixer.update(delta);
+    }
     if (phase !== 'playing') {
       // Start the game if not already playing
       if (phase === 'ready') {
@@ -526,6 +583,20 @@ export default function Player() {
         color={currentCustomization.bodyColor}
         distance={3}
       />
+      
+      {/* 3D Character Model */}
+      <Suspense fallback={null}>
+        {modelLoaded && (
+          <group 
+            ref={modelRef}
+            position={[0, 0, 0]}
+            scale={[2.5, 2.5, 2.5]}
+            rotation={[0, Math.PI, 0]}
+          >
+            <primitive object={characterModel.clone()} castShadow receiveShadow />
+          </group>
+        )}
+      </Suspense>
     </group>
   );
 }
