@@ -162,16 +162,37 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
               <div className="flex justify-between">
                 <span className="text-sm font-medium">Action</span>
                 <Badge 
-                  variant={selectedSignal.action === 'buy' ? 'success' : 
+                  variant={selectedSignal.action === 'buy' ? 'default' : 
                           selectedSignal.action === 'sell' ? 'destructive' : 'outline'}
+                  className={selectedSignal.action === 'buy' ? 'bg-green-500 hover:bg-green-600' : ''}
                 >
                   {selectedSignal.action.toUpperCase()}
                 </Badge>
               </div>
               
               <div className="flex justify-between">
-                <span className="text-sm font-medium">Price</span>
-                <span className="text-sm">${selectedSignal.price.toLocaleString()}</span>
+                <span className="text-sm font-medium">Entry Price</span>
+                <span className="text-sm">${selectedSignal.entryPrice?.toLocaleString() || selectedSignal.price.toLocaleString()}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Stop Loss</span>
+                <span className="text-sm text-red-500">${selectedSignal.stopLoss?.toLocaleString() || 'Not Set'}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Take Profit 1</span>
+                <span className="text-sm text-green-500">${selectedSignal.takeProfit1?.toLocaleString() || 'Not Set'}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Take Profit 2</span>
+                <span className="text-sm text-green-500">${selectedSignal.takeProfit2?.toLocaleString() || 'Not Set'}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Take Profit 3</span>
+                <span className="text-sm text-green-500">${selectedSignal.takeProfit3?.toLocaleString() || 'Not Set'}</span>
               </div>
               
               <div className="flex justify-between">
@@ -236,12 +257,31 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
             </div>
           </CardContent>
           
-          <CardFooter className="px-3 py-2 border-t">
-            <Button className="w-full" size="sm">
-              {selectedSignal.action === 'buy' ? 'Place Buy Order' : 
-               selectedSignal.action === 'sell' ? 'Place Sell Order' : 
-               'Review Signal'}
-            </Button>
+          <CardFooter className="px-3 py-2 border-t space-y-2">
+            <div className="flex justify-between items-center w-full">
+              <span className="text-xs text-muted-foreground">Trade with best execution</span>
+              <Button 
+                className="w-1/2" 
+                size="sm"
+                variant="default"
+              >
+                <span className="mr-1">ABATEV</span> 
+                {selectedSignal.action === 'buy' ? 'Buy' : 
+                 selectedSignal.action === 'sell' ? 'Sell' : 
+                 'Execute'}
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2 w-full">
+              <Button className="flex-1" size="sm" variant="outline">
+                IronBeam
+              </Button>
+              <Button className="flex-1" size="sm" variant="outline">
+                Alpaca
+              </Button>
+              <Button className="flex-1" size="sm" variant="outline">
+                Oanda
+              </Button>
+            </div>
           </CardFooter>
         </Card>
       )}
