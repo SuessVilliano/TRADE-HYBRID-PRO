@@ -39,7 +39,18 @@ export function ScreenShare({ className }: ScreenShareProps) {
   const [selectedSymbol, setSelectedSymbol] = useState(symbol);
   const [isCapturing, setIsCapturing] = useState(false);
   const [activeTab, setActiveTab] = useState<'share' | 'view'>('share');
+  const [isComponentMounted, setIsComponentMounted] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
+  
+  // Only load heavy components after mount to improve initial render
+  useEffect(() => {
+    // Small delay for better perceived performance
+    const timer = setTimeout(() => {
+      setIsComponentMounted(true);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   // Create unique container IDs for TradingView widgets
   // This prevents flickering by ensuring each widget has a unique ID
@@ -132,15 +143,21 @@ export function ScreenShare({ className }: ScreenShareProps) {
               // My Trading Chart (Mobile)
               <div className="space-y-3">
                 <div ref={chartRef} className="w-full h-[250px] border rounded-md overflow-hidden relative">
-                  <TradingViewWidget 
-                    symbol={selectedSymbol}
-                    theme="dark"
-                    container_id={myChartId}
-                    height="100%"
-                    interval="60"
-                    style="1"
-                    allow_symbol_change={false}
-                  />
+                  {!isComponentMounted ? (
+                    <div className="w-full h-full flex items-center justify-center bg-muted/30">
+                      <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
+                    </div>
+                  ) : (
+                    <TradingViewWidget 
+                      symbol={selectedSymbol}
+                      theme="dark"
+                      container_id={myChartId}
+                      height="100%"
+                      interval="60"
+                      style="1"
+                      allow_symbol_change={false}
+                    />
+                  )}
                 </div>
                 
                 <div className="flex gap-2">
@@ -248,15 +265,24 @@ export function ScreenShare({ className }: ScreenShareProps) {
             <div className="space-y-4">
               {/* My Trading Chart */}
               <div ref={chartRef} className="w-full h-[300px] border rounded-md overflow-hidden relative">
-                <TradingViewWidget 
-                  symbol={selectedSymbol}
-                  theme="dark"
-                  container_id={myChartId}
-                  height={isMobile ? "280px" : "100%"}
-                  interval={isMobile ? "60" : "D"}
-                  style="1"
-                  allow_symbol_change={false}
-                />
+                {!isComponentMounted ? (
+                  <div className="w-full h-full flex items-center justify-center bg-muted/30">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-2"></div>
+                      <p className="text-sm text-muted-foreground">Loading chart...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <TradingViewWidget 
+                    symbol={selectedSymbol}
+                    theme="dark"
+                    container_id={myChartId}
+                    height="100%"
+                    interval="D"
+                    style="1"
+                    allow_symbol_change={false}
+                  />
+                )}
                 
                 {isCapturing && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -443,9 +469,19 @@ function SharedChart({ shareData }: { shareData: ScreenShareData }) {
   const [quantity, setQuantity] = useState("1");
   const [copyTrades, setCopyTrades] = useState<CopyTrade[]>([]);
   const [copyingTrade, setCopyingTrade] = useState(false);
+  const [isChartLoaded, setIsChartLoaded] = useState(false);
   
   // Generate a unique ID for the chart container to prevent conflicts
   const chartId = useMemo(() => `shared_chart_${shareData.id}_${Math.random().toString(36).substring(2, 7)}`, [shareData.id]);
+  
+  // Set chart loaded after a short delay (for performance)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsChartLoaded(true);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   // Handle copy trade functionality
   const handleCopyTrade = async (operation: 'buy' | 'sell') => {
@@ -508,16 +544,22 @@ function SharedChart({ shareData }: { shareData: ScreenShareData }) {
       <div className="space-y-3">
         {/* Chart using TradingView - Mobile */}
         <div className="h-[220px] w-full rounded-md overflow-hidden border">
-          <TradingViewWidget 
-            symbol={shareData.symbol}
-            theme="dark" 
-            height="100%"
-            container_id={chartId}
-            interval="60"
-            style="1"
-            enable_publishing={false}
-            allow_symbol_change={false}
-          />
+          {!isChartLoaded ? (
+            <div className="w-full h-full flex items-center justify-center bg-muted/30">
+              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <TradingViewWidget 
+              symbol={shareData.symbol}
+              theme="dark" 
+              height="100%"
+              container_id={chartId}
+              interval="60"
+              style="1"
+              enable_publishing={false}
+              allow_symbol_change={false}
+            />
+          )}
         </div>
         
         {/* Simplified copy trading controls */}
@@ -552,16 +594,25 @@ function SharedChart({ shareData }: { shareData: ScreenShareData }) {
     <div className="space-y-4">
       {/* Chart using TradingView */}
       <div className="h-[300px] w-full rounded-md overflow-hidden border">
-        <TradingViewWidget 
-          symbol={shareData.symbol}
-          theme="dark" 
-          height="100%"
-          container_id={chartId}
-          interval="D"
-          style="1"
-          enable_publishing={false}
-          allow_symbol_change={false}
-        />
+        {!isChartLoaded ? (
+          <div className="w-full h-full flex items-center justify-center bg-muted/30">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-2"></div>
+              <p className="text-sm text-muted-foreground">Loading chart...</p>
+            </div>
+          </div>
+        ) : (
+          <TradingViewWidget 
+            symbol={shareData.symbol}
+            theme="dark" 
+            height="100%"
+            container_id={chartId}
+            interval="D"
+            style="1"
+            enable_publishing={false}
+            allow_symbol_change={false}
+          />
+        )}
       </div>
       
       {/* Copy Trading Controls */}
