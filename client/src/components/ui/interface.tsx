@@ -132,12 +132,20 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
         </Button>
         
         <Button
-          variant="outline"
+          variant={micEnabled ? "default" : "outline"}
           size="icon"
           onClick={() => setMicEnabled(!micEnabled)}
           title={micEnabled ? "Disable Microphone" : "Enable Microphone"}
+          className={micEnabled ? "bg-green-600 hover:bg-green-700 relative" : ""}
         >
-          {micEnabled ? <Mic size={18} /> : <MicOff size={18} />}
+          {micEnabled ? (
+            <>
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+              <Mic size={18} />
+            </>
+          ) : (
+            <MicOff size={18} />
+          )}
         </Button>
         
         <Button
@@ -358,6 +366,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
               <li>Right mouse button: Rotate camera</li>
               <li>E: Interact</li>
               <li>M: Toggle map</li>
+              <li>T: Toggle microphone</li>
             </ul>
           </CardContent>
         </Card>
