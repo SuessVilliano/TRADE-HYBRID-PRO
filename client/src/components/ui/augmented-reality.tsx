@@ -11,11 +11,20 @@ interface AugmentedRealityProps {
 
 export function AugmentedReality({ isOpen, onClose, modelPath = '/models/trading_floor.glb' }: AugmentedRealityProps) {
   const [isARSupported, setIsARSupported] = useState(false);
-  const [arStatus, setARStatus] = useState<'inactive' | 'starting' | 'active' | 'failed'>('inactive');
+  const [arStatus, setARStatus] = useState<'inactive' | 'starting' | 'active' | 'placed' | 'failed'>('inactive');
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
+  const [modelPosition, setModelPosition] = useState({ x: 0, y: 0, scale: 1 });
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Touch gesture handling state
+  const [touchState, setTouchState] = useState({
+    lastDistance: 0,
+    touchStart: { x: 0, y: 0 },
+    isDragging: false
+  });
 
   // Check if WebXR is supported
   useEffect(() => {
@@ -37,6 +46,83 @@ export function AugmentedReality({ isOpen, onClose, modelPath = '/models/trading
 
     checkARSupport();
   }, []);
+  
+  // Handle pinch to zoom gesture
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (arStatus !== 'placed') return;
+    
+    // Handle pinch to zoom with two fingers
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      
+      // Calculate the distance between the two touches
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const dx = touch1.clientX - touch2.clientX;
+      const dy = touch1.clientY - touch2.clientY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // If we have a previous distance to compare to
+      if (touchState.lastDistance > 0) {
+        // Calculate the scale change
+        const scaleFactor = distance / touchState.lastDistance;
+        // Apply the scale change (limit min/max scale)
+        setModelPosition(prev => ({
+          ...prev,
+          scale: Math.max(0.5, Math.min(2.0, prev.scale * scaleFactor))
+        }));
+      }
+      
+      // Update the last distance
+      setTouchState(prev => ({ ...prev, lastDistance: distance }));
+    } 
+    // Handle panning with one finger
+    else if (e.touches.length === 1 && touchState.isDragging) {
+      const touch = e.touches[0];
+      const deltaX = touch.clientX - touchState.touchStart.x;
+      const deltaY = touch.clientY - touchState.touchStart.y;
+      
+      // Move the model based on drag distance
+      setModelPosition(prev => ({
+        ...prev,
+        x: prev.x + deltaX,
+        y: prev.y + deltaY
+      }));
+      
+      // Update touch start position for next move
+      setTouchState(prev => ({
+        ...prev,
+        touchStart: {
+          x: touch.clientX,
+          y: touch.clientY
+        }
+      }));
+    }
+  };
+  
+  // Handle touch start for dragging
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (arStatus === 'placed' && e.touches.length === 1) {
+      const touch = e.touches[0];
+      setTouchState(prev => ({
+        ...prev,
+        touchStart: {
+          x: touch.clientX,
+          y: touch.clientY
+        },
+        isDragging: true
+      }));
+    }
+  };
+  
+  // Reset touch state on touch end
+  const handleTouchEnd = () => {
+    setTouchState({
+      lastDistance: 0,
+      touchStart: { x: 0, y: 0 },
+      isDragging: false
+    });
+  };
 
   // Initialize AR view when component becomes visible
   useEffect(() => {
@@ -214,14 +300,81 @@ export function AugmentedReality({ isOpen, onClose, modelPath = '/models/trading
 
         {/* AR model overlay - This would be replaced with actual WebXR in a production app */}
         {isCameraReady && (
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute left-1/2 bottom-1/4 transform -translate-x-1/2">
-              <img
-                src="/models/trading_floor_preview.png"
-                alt="Trading Floor AR Preview"
-                className="w-64 h-64 object-contain opacity-80"
-              />
-            </div>
+          <div 
+            ref={containerRef}
+            className="absolute inset-0"
+            onClick={(e) => {
+              if (arStatus === 'active') {
+                // Get click position for model placement
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                setModelPosition({ x, y, scale: 1 });
+                setARStatus('placed');
+                
+                toast("Model Placed", {
+                  description: "Trading floor model placed in your environment",
+                });
+              }
+            }}
+            onTouchStart={(e) => {
+              if (arStatus === 'active' && e.touches.length === 1) {
+                // Handle touch for model placement
+                const touch = e.touches[0];
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+                
+                setModelPosition({ x, y, scale: 1 });
+                setARStatus('placed');
+                
+                toast("Model Placed", {
+                  description: "Trading floor model placed in your environment",
+                });
+              } else if (arStatus === 'placed') {
+                // Handle other gestures like pinch/zoom and pan
+                handleTouchStart(e);
+              }
+            }}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            {arStatus === 'active' ? (
+              <div className="absolute left-1/2 bottom-1/4 transform -translate-x-1/2 pointer-events-none">
+                <div className="relative">
+                  <div className="absolute inset-0 animate-ping bg-blue-500/20 rounded-full" />
+                  <div className="absolute inset-0 bg-blue-600/30 rounded-full animate-pulse" />
+                  <img
+                    src="/models/trading_floor_preview.png"
+                    alt="Trading Floor AR Preview"
+                    className="w-64 h-64 object-contain opacity-90 relative z-10 animate-pulse"
+                  />
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white text-xs bg-black/50 px-2 py-1 rounded z-20">
+                    Tap to place
+                  </div>
+                </div>
+              </div>
+            ) : arStatus === 'placed' ? (
+              <div 
+                className="absolute pointer-events-none"
+                style={{
+                  left: `${modelPosition.x}px`,
+                  top: `${modelPosition.y}px`,
+                  transform: `translate(-50%, -50%) scale(${modelPosition.scale})`,
+                  transition: 'all 0.3s ease-out'
+                }}
+              >
+                <img
+                  src="/models/trading_floor_preview.png"
+                  alt="Trading Floor AR Preview"
+                  className="w-64 h-64 object-contain"
+                />
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full bg-green-500 text-white text-xs px-2 py-1 rounded-full mt-2">
+                  Successfully placed
+                </div>
+              </div>
+            ) : null}
           </div>
         )}
 

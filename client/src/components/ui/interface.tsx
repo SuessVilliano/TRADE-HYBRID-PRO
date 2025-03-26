@@ -9,6 +9,7 @@ import { AugmentedReality } from "./augmented-reality";
 import { PlayerCustomizer } from "./player-customizer";
 import { GameSidebar } from "./game-sidebar";
 import { Chat } from "./chat";
+import { toast } from "sonner";
 
 interface InterfaceProps {
   showMapOverride?: boolean;
@@ -172,10 +173,16 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
         <Button
           variant="outline"
           size="icon"
-          onClick={() => setShowAR(true)}
+          onClick={() => {
+            setShowAR(true);
+            toast("Augmented Reality Mode", {
+              description: "Entering AR view. Allow camera access to experience the trading world in your space.",
+            });
+          }}
           title="Augmented Reality View"
+          className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 border-purple-300 dark:border-purple-700"
         >
-          <Smartphone size={18} />
+          <Smartphone size={18} className="text-purple-600 dark:text-purple-400" />
         </Button>
         
         <Button
