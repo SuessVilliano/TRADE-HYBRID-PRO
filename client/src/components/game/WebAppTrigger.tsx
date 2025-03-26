@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Text, Box, useGLTF, useCursor } from '@react-three/drei';
+import { Text, Box, useCursor } from '@react-three/drei';
 import * as THREE from 'three';
 import { useWebApp } from '@/lib/stores/useWebApp';
 
@@ -44,9 +44,6 @@ export default function WebAppTrigger({
     // Reset clicked state after animation
     setTimeout(() => setClicked(false), 200);
   };
-  
-  // Convert degree rotation to radians
-  const radRotation = rotation.map(r => THREE.MathUtils.degToRad(r)) as [number, number, number];
   
   return (
     <group 
@@ -112,6 +109,7 @@ export default function WebAppTrigger({
           fontSize={0.08}
           font="/fonts/inter.woff"
           anchorX="center"
+          anchorY="top"
         >
           Click to open
         </Text>

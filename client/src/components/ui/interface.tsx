@@ -4,7 +4,7 @@ import { useAudio } from "@/lib/stores/useAudio";
 import { Button } from "./button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
 //import { Confetti } from "../game/Confetti"; // Uncomment if this component exists
-import { VolumeX, Volume2, RotateCw, Trophy, Palette, X } from "lucide-react";
+import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map } from "lucide-react";
 import { PlayerCustomizer } from "./player-customizer";
 
 export function Interface() {
@@ -12,6 +12,7 @@ export function Interface() {
   const phase = useGame((state) => state.phase);
   const { isMuted, toggleMute } = useAudio();
   const [showCustomizer, setShowCustomizer] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   // Handle clicks on the interface in the ready phase to start the game
   useEffect(() => {
@@ -29,11 +30,32 @@ export function Interface() {
       return () => window.removeEventListener("click", handleClick);
     }
   }, [phase]);
+  
+  // Handle M key press to toggle map
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'm') {
+        setShowMap(prev => !prev);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <div>
       {/* Top-right corner UI controls */}
       <div className="fixed top-4 right-4 flex gap-2 z-10">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setShowMap(!showMap)}
+          title="Toggle Map"
+        >
+          <Map size={18} />
+        </Button>
+        
         <Button
           variant="outline"
           size="icon"
