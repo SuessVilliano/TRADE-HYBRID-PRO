@@ -13,6 +13,14 @@ export default function Home() {
   const { isMuted, toggleMute } = useAudio();
   const [showAudioPermission, setShowAudioPermission] = useState(false);
   
+  // Get state setters and actions from audio store
+  const { 
+    setBackgroundMusic, 
+    setHitSound, 
+    setSuccessSound,
+    playSuccess 
+  } = useAudio();
+  
   // Initialize audio assets
   useEffect(() => {
     // Initialize audio assets on component mount
@@ -27,9 +35,9 @@ export default function Home() {
     successSound.volume = 0.5;
     
     // Store audio elements in global state
-    useAudio.getState().setBackgroundMusic(backgroundMusic);
-    useAudio.getState().setHitSound(hitSound);
-    useAudio.getState().setSuccessSound(successSound);
+    setBackgroundMusic(backgroundMusic);
+    setHitSound(hitSound);
+    setSuccessSound(successSound);
     
     // Check if it's the first visit and show audio permission dialog
     const audioPermissionSeen = localStorage.getItem('audio_permission_seen');
@@ -39,12 +47,12 @@ export default function Home() {
         setShowAudioPermission(true);
       }, 1000);
     }
-  }, []);
+  }, [setBackgroundMusic, setHitSound, setSuccessSound]);
   
   const handleEnterMetaverse = () => {
     // Play success sound when entering the metaverse
     if (!isMuted) {
-      useAudio.getState().playSuccess();
+      playSuccess();
     }
   };
   
@@ -61,7 +69,7 @@ export default function Home() {
         }
         
         // Play a test sound to confirm permissions
-        useAudio.getState().playSuccess();
+        playSuccess();
       });
       
       // Mark that user has seen the permission dialog
