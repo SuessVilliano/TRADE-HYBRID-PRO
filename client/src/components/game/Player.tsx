@@ -4,6 +4,7 @@ import { useKeyboardControls, Trail, useGLTF, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { useGame } from '@/lib/stores/useGame';
 import { useAudio } from '@/lib/stores/useAudio';
+import { useGuest } from '@/lib/stores/useGuest';
 
 enum Controls {
   forward = 'forward',
@@ -130,6 +131,28 @@ export default function Player() {
   const [customizationIndex, setCustomizationIndex] = useState(() => {
     return Math.floor(Math.random() * TRADER_CUSTOMIZATIONS.length);
   });
+  
+  // Active customization state
+  const [currentCustomization, setCurrentCustomization] = useState<PlayerCustomization>(
+    TRADER_CUSTOMIZATIONS[customizationIndex]
+  );
+  
+  // Expose the update function to the window object so it can be called from outside
+  useEffect(() => {
+    // Function to update player customization from external components
+    const updatePlayerCustomization = (newCustomization: PlayerCustomization) => {
+      console.log("Updating player customization:", newCustomization);
+      setCurrentCustomization(newCustomization);
+    };
+    
+    // Expose the function globally
+    (window as any).updatePlayerCustomization = updatePlayerCustomization;
+    
+    // Cleanup on unmount
+    return () => {
+      delete (window as any).updatePlayerCustomization;
+    };
+  }, []);
   
   // Get game state
   const { phase, start } = useGame();
@@ -295,9 +318,6 @@ export default function Player() {
     camera.lookAt(playerPosition.current);
   });
   
-  // Get current customization
-  const customization = TRADER_CUSTOMIZATIONS[customizationIndex];
-  
   // Player rank system based on score/trades
   const [playerScore, setPlayerScore] = useState(0);
   const [playerRank, setPlayerRank] = useState('Novice Trader');
@@ -339,13 +359,13 @@ export default function Player() {
         outlineWidth={0.05}
         outlineColor="#000000"
       >
-        {customization.username}
+        {currentCustomization.username}
       </Text>
       
       {/* Role display */}
       <Text
         position={[0, 2.5, 0]}
-        color={customization.bodyColor}
+        color={currentCustomization.bodyColor}
         anchorX="center"
         anchorY="middle"
         fontSize={0.25}
@@ -361,12 +381,12 @@ export default function Player() {
           ref={trailRef}
           width={1}
           length={5}
-          color={customization.trailColor}
+          color={currentCustomization.trailColor}
           attenuation={(width) => width / 5}
         >
           <mesh position={[0, 0.3, 0]}>
             <sphereGeometry args={[0.1, 8, 8]} />
-            <meshBasicMaterial color={customization.trailColor} />
+            <meshBasicMaterial color={currentCustomization.trailColor} />
           </mesh>
         </Trail>
       ) : null}
@@ -377,10 +397,10 @@ export default function Player() {
         position={[0, 0.75, 0]}
         castShadow
       >
-        <boxGeometry args={customization.bodyScale} />
+        <boxGeometry args={currentCustomization.bodyScale} />
         <meshStandardMaterial 
-          color={customization.bodyColor} 
-          emissive={customization.bodyEmissive}
+          color={currentCustomization.bodyColor} 
+          emissive={currentCustomization.bodyEmissive}
           emissiveIntensity={0.3}
           metalness={0.4}
           roughness={0.5}
@@ -393,10 +413,10 @@ export default function Player() {
         position={[0, 1.85, 0]}
         castShadow
       >
-        <sphereGeometry args={customization.headScale} />
+        <sphereGeometry args={currentCustomization.headScale} />
         <meshStandardMaterial 
-          color={customization.headColor} 
-          emissive={customization.headEmissive}
+          color={currentCustomization.headColor} 
+          emissive={currentCustomization.headEmissive}
           emissiveIntensity={0.3}
           metalness={0.3}
           roughness={0.4}
@@ -431,7 +451,7 @@ export default function Player() {
         <mesh position={[0, 0.1, 0]}>
           <ringGeometry args={[0.8, 1, 32]} />
           <meshBasicMaterial 
-            color={customization.trailColor} 
+            color={currentCustomization.trailColor} 
             transparent 
             opacity={0.5} 
           />
@@ -442,7 +462,7 @@ export default function Player() {
       <pointLight
         position={[0, 1, 0]}
         intensity={0.5}
-        color={customization.bodyColor}
+        color={currentCustomization.bodyColor}
         distance={3}
       />
     </group>
