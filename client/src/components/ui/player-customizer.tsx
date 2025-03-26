@@ -12,6 +12,7 @@ import { Label } from "./label";
 import { Slider } from "./slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
 import { PlayerCustomization } from "../game/Player";
+import { ContextualTooltip } from "./contextual-tooltip";
 
 export function PlayerCustomizer() {
   const [bodyColor, setBodyColor] = useState("#4285F4");
@@ -22,6 +23,9 @@ export function PlayerCustomizer() {
   const [bodyScaleY, setBodyScaleY] = useState(1.5);
   const [bodyScaleZ, setBodyScaleZ] = useState(1);
   const [headScale, setHeadScale] = useState(0.4);
+  const [trailColor, setTrailColor] = useState("#93c5fd");
+  const [username, setUsername] = useState("Trader");
+  const [role, setRole] = useState("Pro Trader");
   
   const applyCustomization = () => {
     // Use the global function we exposed in Player.tsx
@@ -32,7 +36,10 @@ export function PlayerCustomizer() {
         bodyEmissive,
         headEmissive,
         bodyScale: [bodyScaleX, bodyScaleY, bodyScaleZ],
-        headScale: [headScale, headScale, headScale]
+        headScale: [headScale, headScale, headScale],
+        trailColor,
+        username,
+        role
       };
       
       (window as any).updatePlayerCustomization(customization);
@@ -66,6 +73,7 @@ export function PlayerCustomizer() {
           <TabsList className="w-full mb-4">
             <TabsTrigger value="colors" className="flex-1">Colors</TabsTrigger>
             <TabsTrigger value="shape" className="flex-1">Shape</TabsTrigger>
+            <TabsTrigger value="identity" className="flex-1">Identity</TabsTrigger>
           </TabsList>
           
           <TabsContent value="colors" className="space-y-4">
