@@ -24,7 +24,8 @@ import {
   Globe, 
   ChevronLeft, 
   ChevronRight,
-  Gamepad2
+  Gamepad2,
+  Maximize2
 } from 'lucide-react';
 import { ContextualTooltip } from './contextual-tooltip';
 
@@ -36,6 +37,32 @@ export function GameSidebar() {
   const { fetchBots } = useBots();
   const { fetchSignals } = useSignals();
   const { fetchLeaderboard } = useLeaderboard();
+  
+  // Function to open a feature in fullscreen via WebApp
+  const openFullscreen = (tabId: string) => {
+    switch (tabId) {
+      case 'journal':
+        openWebApp('/journal');
+        break;
+      case 'bots':
+        openWebApp('/trading-bots');
+        break;
+      case 'signals':
+        openWebApp('/signals');
+        break;
+      case 'leaderboard':
+        openWebApp('/leaderboard');
+        break;
+      case 'chat':
+        openWebApp('/community');
+        break;
+      case 'game':
+        window.open('/game', '_blank');
+        break;
+      default:
+        openWebApp('https://app.tradehybrid.co');
+    }
+  };
 
   // Toggle sidebar expanded state
   const toggleSidebar = () => {
@@ -267,7 +294,18 @@ export function GameSidebar() {
             <div className="mt-2 p-1 border-t">
               {activeTab === 'journal' && (
                 <div className="space-y-2 p-2 text-sm">
-                  <h3 className="font-medium">Trade Journal</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">Trade Journal</h3>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-7 px-2 flex items-center gap-1" 
+                      onClick={() => openFullscreen('journal')}
+                    >
+                      <Maximize2 className="h-3 w-3" />
+                      <span className="text-xs">Fullscreen</span>
+                    </Button>
+                  </div>
                   <div className="border rounded-md p-3 text-muted-foreground">
                     <p>Your recent trade history will appear here.</p>
                     <div className="mt-2 grid grid-cols-2 gap-2">
@@ -280,7 +318,18 @@ export function GameSidebar() {
               
               {activeTab === 'bots' && (
                 <div className="space-y-2 p-2 text-sm">
-                  <h3 className="font-medium">Trading Bots</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">Trading Bots</h3>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-7 px-2 flex items-center gap-1" 
+                      onClick={() => openFullscreen('bots')}
+                    >
+                      <Maximize2 className="h-3 w-3" />
+                      <span className="text-xs">Fullscreen</span>
+                    </Button>
+                  </div>
                   <div className="border rounded-md p-3 text-muted-foreground">
                     <div className="flex items-center justify-between">
                       <p>BTC Trend Follower</p>
@@ -293,7 +342,18 @@ export function GameSidebar() {
               
               {activeTab === 'signals' && (
                 <div className="space-y-2 p-2 text-sm">
-                  <h3 className="font-medium">Trading Signals</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">Trading Signals</h3>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-7 px-2 flex items-center gap-1" 
+                      onClick={() => openFullscreen('signals')}
+                    >
+                      <Maximize2 className="h-3 w-3" />
+                      <span className="text-xs">Fullscreen</span>
+                    </Button>
+                  </div>
                   <div className="border rounded-md p-3 text-muted-foreground">
                     <p>No active trading signals.</p>
                     <p className="text-xs mt-1">Check back soon for trading opportunities.</p>
@@ -303,7 +363,18 @@ export function GameSidebar() {
               
               {activeTab === 'leaderboard' && (
                 <div className="space-y-2 p-2 text-sm">
-                  <h3 className="font-medium">Leaderboard</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">Leaderboard</h3>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-7 px-2 flex items-center gap-1" 
+                      onClick={() => openFullscreen('leaderboard')}
+                    >
+                      <Maximize2 className="h-3 w-3" />
+                      <span className="text-xs">Fullscreen</span>
+                    </Button>
+                  </div>
                   <div className="border rounded-md p-3">
                     <div className="flex items-center justify-between text-xs font-medium mb-2">
                       <span>Trader</span>
@@ -331,9 +402,20 @@ export function GameSidebar() {
               
               {activeTab === 'webapp' && (
                 <div className="space-y-2 p-2 text-sm">
-                  <h3 className="font-medium">Trade Hybrid Web App</h3>
-                  <Button className="w-full" onClick={() => window.open('/trading-space', '_blank')}>
-                    Open in New Tab
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">Trade Hybrid Web App</h3>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-7 px-2 flex items-center gap-1" 
+                      onClick={() => window.open('/trading-space', '_blank')}
+                    >
+                      <Maximize2 className="h-3 w-3" />
+                      <span className="text-xs">New Tab</span>
+                    </Button>
+                  </div>
+                  <Button className="w-full" onClick={() => openFullscreen('webapp')}>
+                    Open in Sidebar
                   </Button>
                 </div>
               )}
