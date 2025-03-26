@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { useSignals, TradingSignal } from "@/lib/stores/useSignals";
-import { useBrokerAggregator } from "@/lib/stores/useBrokerAggregator";
+import { useSignals, TradingSignal } from "../../lib/stores/useSignals";
+import { useBrokerAggregator } from "../../lib/stores/useBrokerAggregator";
+import { ContextualTooltip, TooltipTrigger } from "./contextual-tooltip";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "./card";
 import { Badge } from "./badge";
 import { Button } from "./button";
 import { Bell, BellOff, RefreshCw, ChevronDown, ChevronUp, ExternalLink, CheckCircle2, BarChart2 } from "lucide-react";
-import { formatDate, formatTime, truncate } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { formatDate, formatTime, truncate, cn } from "../../lib/utils";
 import { toast } from "sonner";
 
 interface SignalsListProps {
@@ -318,7 +318,7 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
                     symbol: selectedSignal.symbol,
                     quantity: 1, // Default quantity
                     action: selectedSignal.action === 'neutral' ? 'buy' : selectedSignal.action,
-                    orderType: 'market',
+                    orderType: 'market' as const, // Type assertion to fix type error
                     stopLoss: selectedSignal.stopLoss,
                     takeProfit1: selectedSignal.takeProfit1,
                     takeProfit2: selectedSignal.takeProfit2,
