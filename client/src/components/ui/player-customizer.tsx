@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
 import { PlayerCustomization } from "../game/Player";
 import { ContextualTooltip } from "./contextual-tooltip";
 import { useGuest } from "@/lib/stores/useGuest";
+import { WalletConnect } from "./wallet-connect";
 
 export function PlayerCustomizer() {
   const [bodyColor, setBodyColor] = useState("#4285F4");
@@ -263,9 +264,7 @@ export function PlayerCustomizer() {
                 </div>
                 
                 <div className="space-y-2 pt-2">
-                  <Button className="w-full" variant="default">
-                    Connect Wallet
-                  </Button>
+                  <WalletConnect />
                 </div>
               </>
             ) : (
