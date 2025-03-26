@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { Button } from './button';
-import { useGuest } from '@/lib/stores/useGuest';
 
 interface TradeRunnerProps {
   className?: string;
@@ -16,8 +15,8 @@ export function TradeRunner({ className }: TradeRunnerProps) {
   const [difficulty, setDifficulty] = useState('easy');
   const [leaderboard, setLeaderboard] = useState<{name: string, score: number}[]>([]);
   
-  // Get guest username for leaderboard
-  const { guestUsername } = useGuest();
+  // Generate random username for leaderboard entries
+  const [randomUsername] = useState(`Trader${Math.floor(Math.random() * 10000)}`);
   
   // Game variables stored in refs to persist between renders
   const gameRef = useRef({
@@ -283,7 +282,7 @@ export function TradeRunner({ className }: TradeRunnerProps) {
   
   // Submit score to leaderboard
   const submitScore = (playerName: string = '') => {
-    const name = playerName || guestUsername || 'Anonymous';
+    const name = playerName || randomUsername || 'Anonymous';
     const newLeaderboard = [...leaderboard, {name, score}];
     newLeaderboard.sort((a, b) => b.score - a.score);
     setLeaderboard(newLeaderboard.slice(0, 5));
