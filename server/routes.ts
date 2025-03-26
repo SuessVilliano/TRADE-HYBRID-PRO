@@ -6,6 +6,7 @@ import { getNews, getTopicNews } from "./api/news";
 import { getLeaderboard, getTrader } from "./api/leaderboard";
 import { getBots, getBot, createBot, updateBot, deleteBot, runBot, stopBot } from "./api/bots";
 import { getSignals, receiveWebhook } from "./api/signals";
+import { MultiplayerServer } from "./multiplayer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Market data routes
@@ -131,6 +132,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  
+  // Initialize the multiplayer server with our HTTP server
+  new MultiplayerServer(httpServer);
 
   return httpServer;
 }

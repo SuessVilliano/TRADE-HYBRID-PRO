@@ -8,7 +8,8 @@ import {
   Grid,
   Text,
   useGLTF,
-  Stars
+  Stars,
+  Html
 } from '@react-three/drei';
 import * as THREE from 'three';
 import { Interface } from '../ui/interface';
@@ -20,6 +21,8 @@ import Lights from './Lights';
 import { GamePhase, useGame } from '@/lib/stores/useGame';
 import GameControls from './Controls';
 import Player from './Player';
+import OtherPlayer from './OtherPlayer';
+import { useMultiplayer } from '@/lib/stores/useMultiplayer';
 
 interface SceneProps {
   showStats?: boolean;
@@ -243,6 +246,38 @@ function TradingEnvironment() {
   );
 }
 
+// Component for rendering other players
+function OtherPlayers() {
+  // Get multiplayer state
+  const { players, clientId, connected, sendTradeOffer } = useMultiplayer();
+
+  // Handle interactions with other players
+  const handleInteractWithPlayer = (playerId: string) => {
+    // Show trade dialog or other interaction UI
+    console.log(`Interacting with player ${playerId}`);
+    // Example: Open trade offer dialog
+    const tradeDialog = document.getElementById('trade-offer-dialog');
+    if (tradeDialog) {
+      (tradeDialog as HTMLDialogElement).showModal();
+    }
+  };
+
+  // Only show other players, not ourselves
+  const otherPlayers = players.filter(player => player.id !== clientId);
+
+  return (
+    <>
+      {otherPlayers.map(player => (
+        <OtherPlayer 
+          key={player.id} 
+          player={player} 
+          onInteract={() => handleInteractWithPlayer(player.id)}
+        />
+      ))}
+    </>
+  );
+}
+
 // Scene Camera
 function SceneCamera() {
   const { camera } = useThree();
@@ -348,6 +383,9 @@ export default function Scene({ showStats = false }: SceneProps) {
             
             {/* Add the player character */}
             <Player />
+            
+            {/* Render other players from multiplayer state */}
+            <OtherPlayers />
           </Suspense>
         </Canvas>
       </GameControls>

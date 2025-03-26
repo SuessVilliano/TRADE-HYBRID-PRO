@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { useGame } from '@/lib/stores/useGame';
 import { useAudio } from '@/lib/stores/useAudio';
 import { useGuest } from '@/lib/stores/useGuest';
+import { useMultiplayer } from '@/lib/stores/useMultiplayer';
 import { GLTF } from 'three-stdlib';
 
 // Define model interfaces
