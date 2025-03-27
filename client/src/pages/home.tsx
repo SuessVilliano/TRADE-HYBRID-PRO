@@ -69,10 +69,10 @@ function HomeContent() {
     successSound.volume = 0.5;
     
     // Store audio elements in global state
-    // Use dummy implementation to avoid errors
-    if (typeof setBackgroundMusic === 'function') setBackgroundMusic(backgroundMusic);
-    if (typeof setHitSound === 'function') setHitSound(hitSound);
-    if (typeof setSuccessSound === 'function') setSuccessSound(successSound);
+    // Use our dummy functions safely
+    setBackgroundMusic();
+    setHitSound();
+    setSuccessSound();
     
     // Check if it's the first visit and show audio permission dialog
     const audioPermissionSeen = localStorage.getItem('audio_permission_seen');
@@ -165,9 +165,9 @@ function HomeContent() {
       </div>
       
       {/* Features Grid */}
-      <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
+      <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8 bg-gradient-to-b from-background/80 to-background rounded-lg shadow-inner">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold tracking-tight">Key Features</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-primary">Key Features</h2>
           <p className="mt-4 text-lg text-muted-foreground">
             Experience the future of trading with our innovative platform
           </p>

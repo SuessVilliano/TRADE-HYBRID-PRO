@@ -44,7 +44,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showEducation, setShowEducation] = useState(false);
   const [showHubPopup, setShowHubPopup] = useState(false);
-  const [controlsMinimized, setControlsMinimized] = useState(isMobile ? true : false);
+  const [controlsMinimized, setControlsMinimized] = useState(false); // Always show controls by default on all devices
 
   // Use either the internal state or the external override prop
   const showMap = showMapOverride !== undefined ? showMapOverride : showMapState;
@@ -137,19 +137,11 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showChat, voiceChatEnabled, toggleVoiceChat, controlsMinimized, showAIAssistant, showTip, showHubPopup]);
   
-  // Auto-hide controls after initial display
+  // We're no longer auto-hiding controls as per user request
+  // Controls will stay visible until manually hidden by the user
   useEffect(() => {
-    if (!controlsMinimized) {
-      const hideControlsTimer = setTimeout(() => {
-        setControlsMinimized(true);
-        toast.info("Controls hidden", {
-          description: "Press H to show controls again",
-          duration: 2000,
-        });
-      }, 15000); // Hide after 15 seconds
-      
-      return () => clearTimeout(hideControlsTimer);
-    }
+    // This effect intentionally left empty to preserve the structure
+    // but disable the auto-hide functionality
   }, [controlsMinimized]);
   
   // Voice chat status will be handled by the multiplayer service

@@ -552,6 +552,15 @@ export default function TradeHouse() {
               />
               {/* Only activate pointer lock when we're in navigation mode and not on mobile */}
               {!mobileControls && controlsEnabled && <PointerLockControls />}
+              
+              {/* Show initial instruction tooltip when not on mobile */}
+              {!mobileControls && !controlsEnabled && (
+                <Billboard position={[0, 2, -5]} follow={true}>
+                  <Text fontSize={0.5} color="#ffffff" maxWidth={20} textAlign="center">
+                    Click the "Move Character" button in the top-right corner to navigate
+                  </Text>
+                </Billboard>
+              )}
             </Suspense>
           </Physics>
         </Canvas>

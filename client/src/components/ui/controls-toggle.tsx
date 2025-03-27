@@ -55,12 +55,12 @@ export function ControlsToggle() {
         {controlsEnabled ? (
           <>
             <MousePointer size={16} />
-            <span className="text-xs">UI Mode</span>
+            <span className="text-xs">Use Mouse (Click UI)</span>
           </>
         ) : (
           <>
             <Gamepad2 size={16} />
-            <span className="text-xs">Nav Mode</span>
+            <span className="text-xs">Move Character (WASD+Arrow)</span>
           </>
         )}
       </Button>

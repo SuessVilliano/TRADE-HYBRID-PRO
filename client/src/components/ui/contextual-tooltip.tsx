@@ -151,9 +151,12 @@ export function ContextualTooltip({
       guideStep !== undefined && 
       guideTour.currentStep === guideStep
     ) {
-      setOpen(true);
+      // Only update if not already open to prevent infinite updates
+      if (!open) {
+        setOpen(true);
+      }
     }
-  }, [guideTour.isTourActive, guideTour.currentStep, guideStep]);
+  }, [guideTour.isTourActive, guideTour.currentStep, guideStep, open]);
   
   // Auto-show tooltip after delay
   useEffect(() => {
