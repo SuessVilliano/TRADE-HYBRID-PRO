@@ -19,6 +19,7 @@ export function BrokerConfig() {
     
     // List all possible brokers
     const allBrokers = [
+      'tradelocker', // Add TradeLocker as first option - it's our unified trading API
       'ironbeam', 
       'alpaca', 
       'oanda', 
@@ -50,6 +51,13 @@ export function BrokerConfig() {
   // Get broker details
   const getBrokerDetails = (brokerId: string) => {
     const details = {
+      tradelocker: {
+        name: 'TradeLocker',
+        description: 'Unified trading gateway with multi-broker access',
+        features: ['Multi-Broker API', 'Universal Access', 'Copy Trading', 'Best Execution'],
+        fee: 'Variable',
+        reliability: '99.95%'
+      },
       ironbeam: {
         name: 'IronBeam',
         description: 'Specialized in commodities and futures',
@@ -154,7 +162,7 @@ export function BrokerConfig() {
               <Accordion type="multiple" defaultValue={['bitfinex', 'etrade']} className="w-full">
                 {Object.keys(brokerStates).map(brokerId => {
                   const details = getBrokerDetails(brokerId);
-                  const isNew = brokerId === 'bitfinex' || brokerId === 'etrade';
+                  const isNew = brokerId === 'tradelocker' || brokerId === 'bitfinex' || brokerId === 'etrade';
                   
                   return (
                     <AccordionItem key={brokerId} value={brokerId} className="border-b">
@@ -169,6 +177,11 @@ export function BrokerConfig() {
                           {isNew && (
                             <Badge variant="default" className="bg-blue-500 text-[10px] h-4">
                               NEW
+                            </Badge>
+                          )}
+                          {brokerId === 'tradelocker' && (
+                            <Badge variant="default" className="bg-green-500 text-[10px] h-4 ml-1">
+                              COPY TRADE
                             </Badge>
                           )}
                         </div>

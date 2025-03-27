@@ -15,6 +15,15 @@ export const SUPPORTED_BROKERS = [
     url: 'https://alpaca.markets'
   },
   {
+    id: 'tradelocker',
+    name: 'TradeLocker',
+    description: 'Unified trading execution across multiple brokers',
+    logo: '/images/brokers/tradelocker.svg',
+    supportedMarkets: ['stocks', 'forex', 'futures', 'crypto'],
+    demoSupported: true,
+    url: 'https://tradelocker.com'
+  },
+  {
     id: 'oanda',
     name: 'OANDA',
     description: 'Global forex and CFD trading platform',
@@ -62,6 +71,21 @@ const ABATEV_ENDPOINTS = {
   POSITIONS: `${ABATEV_API_BASE}/positions`,
   ORDERS: `${ABATEV_API_BASE}/orders`,
   HISTORICAL_DATA: `${ABATEV_API_BASE}/history`
+};
+
+// TradeLocker API endpoints
+const TRADELOCKER_API_BASE = 'https://api.tradelocker.com/v1';
+const TRADELOCKER_ENDPOINTS = {
+  AUTHENTICATE: `${TRADELOCKER_API_BASE}/auth`,
+  ACCOUNT_INFO: `${TRADELOCKER_API_BASE}/account`,
+  MARKET_DATA: `${TRADELOCKER_API_BASE}/market`,
+  QUOTES: `${TRADELOCKER_API_BASE}/quotes`,
+  PLACE_ORDER: `${TRADELOCKER_API_BASE}/orders`,
+  POSITIONS: `${TRADELOCKER_API_BASE}/positions`,
+  ORDERS: `${TRADELOCKER_API_BASE}/orders`,
+  HISTORICAL_DATA: `${TRADELOCKER_API_BASE}/history`,
+  BROKER_LIST: `${TRADELOCKER_API_BASE}/brokers`,
+  COPY_TRADE: `${TRADELOCKER_API_BASE}/copy-trade`
 };
 
 // Interface for broker credentials
@@ -180,12 +204,16 @@ export class BrokerAggregatorService {
     message?: string;
   }> {
     try {
-      // Simulate API call to authenticate
-      // In production, this would be a real API call to the broker
       console.log(`Authenticating with broker: ${credentials.brokerId}`, 
                  credentials.demoMode ? 'Demo Mode' : 'Live Mode');
       
-      // Simulated successful authentication
+      // Handle TradeLocker authentication specifically
+      if (credentials.brokerId === 'tradelocker') {
+        return this.authenticateWithTradeLocker(credentials);
+      }
+      
+      // Handle regular broker authentication
+      // In production, this would be a real API call to the broker
       const expiresAt = Date.now() + 3600000; // 1 hour token expiry
       
       return {
@@ -199,6 +227,49 @@ export class BrokerAggregatorService {
       return {
         success: false,
         message: 'Authentication failed'
+      };
+    }
+  }
+  
+  /**
+   * Authenticate specifically with TradeLocker
+   * TradeLocker requires special authentication handling as it connects to multiple brokers
+   */
+  private async authenticateWithTradeLocker(credentials: BrokerCredentials): Promise<{
+    success: boolean;
+    token?: string;
+    expiresAt?: number;
+    message?: string;
+    connectedBrokers?: string[];
+  }> {
+    try {
+      // In production, this would make a real API call to TradeLocker's auth endpoint
+      console.log('Authenticating with TradeLocker service');
+      
+      // Check if we have API key and secret
+      if (!credentials.apiKey || !credentials.apiSecret) {
+        return {
+          success: false,
+          message: 'TradeLocker API key and secret are required'
+        };
+      }
+      
+      // Simulate successful authentication with TradeLocker
+      // In a real implementation, we would connect to TradeLocker's API
+      const expiresAt = Date.now() + 86400000; // 24 hour token expiry for TradeLocker
+      
+      return {
+        success: true,
+        token: 'tradelocker-jwt-token',
+        expiresAt,
+        message: 'TradeLocker authentication successful',
+        connectedBrokers: ['alpaca', 'oanda'] // These brokers are already connected to the user's TradeLocker account
+      };
+    } catch (error) {
+      console.error('TradeLocker authentication error:', error);
+      return {
+        success: false,
+        message: 'TradeLocker authentication failed'
       };
     }
   }
@@ -538,6 +609,140 @@ export class BrokerAggregatorService {
     this.authenticated = false;
     this.authToken = '';
     this.tokenExpiry = 0;
+  }
+
+  /**
+   * TradeLocker specific API methods
+   */
+
+  /**
+   * Get available brokers through TradeLocker
+   * TradeLocker acts as a single API for multiple brokers
+   */
+  public async getTradeLockerBrokers(): Promise<any[]> {
+    if (!this.authenticated || !this.credentials || this.credentials.brokerId !== 'tradelocker') {
+      console.error('Not authenticated with TradeLocker');
+      return [];
+    }
+
+    try {
+      // In a real implementation, this would fetch the list of supported brokers from TradeLocker API
+      // For now, we'll return a simulated list
+      return [
+        {
+          id: 'alpaca',
+          name: 'Alpaca',
+          markets: ['stocks', 'crypto'],
+          features: ['commission-free', 'fractional-shares'],
+          status: 'connected'
+        },
+        {
+          id: 'interactive_brokers',
+          name: 'Interactive Brokers',
+          markets: ['stocks', 'options', 'futures', 'forex'],
+          features: ['global-markets', 'low-commissions'],
+          status: 'available'
+        },
+        {
+          id: 'oanda',
+          name: 'OANDA',
+          markets: ['forex', 'commodities'],
+          features: ['competitive-spreads', 'advanced-charting'],
+          status: 'connected'
+        },
+        {
+          id: 'binance',
+          name: 'Binance',
+          markets: ['crypto'],
+          features: ['high-liquidity', 'low-fees'],
+          status: 'available'
+        }
+      ];
+    } catch (error) {
+      console.error('Failed to get TradeLocker brokers:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Execute a copy trade through TradeLocker
+   */
+  public async executeCopyTrade(traderId: string, settings: any): Promise<boolean> {
+    if (!this.authenticated || !this.credentials || this.credentials.brokerId !== 'tradelocker') {
+      console.error('Not authenticated with TradeLocker');
+      return false;
+    }
+
+    try {
+      // In a real implementation, this would make an API call to start copy trading
+      console.log(`Starting copy trading for trader ${traderId} with settings:`, settings);
+      
+      // Simulate successful copy trade setup
+      return true;
+    } catch (error) {
+      console.error('Failed to setup copy trading:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get top traders from TradeLocker's network
+   */
+  public async getTopTraders(filters?: {
+    market?: string,
+    timeframe?: string,
+    minProfitability?: number,
+    maxDrawdown?: number
+  }): Promise<any[]> {
+    try {
+      // In a real implementation, this would fetch top traders based on filters
+      // For now, we'll return simulated data
+      return [
+        {
+          id: 'trader1',
+          name: 'AlphaTrader',
+          profitability: 28.5,
+          drawdown: 12.3,
+          winRate: 68,
+          markets: ['crypto', 'forex'],
+          followers: 1243,
+          avgTradeTime: '3.5 days'
+        },
+        {
+          id: 'trader2',
+          name: 'CryptoMaster',
+          profitability: 42.7,
+          drawdown: 24.8,
+          winRate: 62,
+          markets: ['crypto'],
+          followers: 3521,
+          avgTradeTime: '1.2 days'
+        },
+        {
+          id: 'trader3',
+          name: 'ForexPro',
+          profitability: 18.2,
+          drawdown: 8.1,
+          winRate: 72,
+          markets: ['forex'],
+          followers: 852,
+          avgTradeTime: '5.3 days'
+        },
+        {
+          id: 'trader4',
+          name: 'StockGuru',
+          profitability: 15.9,
+          drawdown: 7.5,
+          winRate: 75,
+          markets: ['stocks'],
+          followers: 1105,
+          avgTradeTime: '12.7 days'
+        }
+      ];
+    } catch (error) {
+      console.error('Failed to get top traders:', error);
+      return [];
+    }
   }
 }
 
