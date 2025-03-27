@@ -35,6 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Signals routes
   app.get("/api/signals", getSignals);
   app.post("/api/webhooks/tradingview", receiveWebhook);
+  app.post("/api/webhooks/signals", receiveWebhook);
   
   // Game leaderboard routes
   app.get("/api/games/:gameId/leaderboard", getGameLeaderboard);

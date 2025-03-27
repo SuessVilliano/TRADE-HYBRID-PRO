@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSignals, TradingSignal } from "../../lib/stores/useSignals";
 import { useBrokerAggregator } from "../../lib/stores/useBrokerAggregator";
-import { ContextualTooltip, TooltipTrigger } from "./contextual-tooltip";
+import { ContextualTooltip } from "./contextual-tooltip";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "./card";
 import { Badge } from "./badge";
 import { Button } from "./button";
@@ -154,10 +154,10 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
           )}
         </CardContent>
         
-        {/* Connect to TradingView footer */}
+        {/* Connect to Hybrid AI footer */}
         <CardFooter className="px-3 py-2 border-t text-xs text-muted-foreground">
           <div className="flex justify-between w-full items-center">
-            <span>TradingView Webhook URL:</span>
+            <span>Hybrid AI Signal Provider:</span>
             <Button 
               variant="link" 
               size="sm" 
@@ -165,12 +165,12 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
               asChild
             >
               <a 
-                href="https://apps.taskmagic.com/api/v1/webhooks/Ec3lDNCfkpQtHNbWk16mA" 
+                href="https://app.tradehybrid.co/api/webhooks/signals" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center"
               >
-                <span className="truncate max-w-32">Ec3lDNCfkpQtHNbWk16mA</span>
+                <span className="truncate max-w-32">Hybrid AI</span>
                 <ExternalLink size={10} className="ml-1" />
               </a>
             </Button>
