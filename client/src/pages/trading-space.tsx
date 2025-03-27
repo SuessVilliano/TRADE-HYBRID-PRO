@@ -10,8 +10,9 @@ import { TradingInterface } from "@/components/ui/trading-interface";
 import { TradeJournal } from "@/components/ui/trade-journal";
 import { Leaderboard } from "@/components/ui/leaderboard";
 import { AIAssistant } from "@/components/ui/ai-assistant";
+import { AIMarketAnalysis } from "@/components/ui/ai-market-analysis";
 import { SignalsList } from "@/components/ui/signals-list";
-import { ArrowLeft, LayoutGrid, Maximize2, Minimize2, X, Info, Sparkles, Bot, BookOpen, BarChart2, Activity } from "lucide-react";
+import { ArrowLeft, LayoutGrid, Maximize2, Minimize2, X, Info, Sparkles, Bot, BookOpen, BarChart2, Activity, BrainCircuit } from "lucide-react";
 import { useMarketData } from "@/lib/stores/useMarketData";
 import { useNews } from "@/lib/stores/useNews";
 import { useTrader } from "@/lib/stores/useTrader";
@@ -187,6 +188,8 @@ export default function TradingSpace() {
         return <Leaderboard className="h-full" />;
       case "assistant":
         return <AIAssistant className="h-full" />;
+      case "ai-analysis":
+        return <AIMarketAnalysis />;
       case "signals":
         return <SignalsList className="h-full" />;
       case "bots":
@@ -400,6 +403,24 @@ export default function TradingSpace() {
                     size="lg" 
                     className="w-full justify-start text-left flex items-center gap-3 h-auto py-3"
                     onClick={() => {
+                      setActivePanel("ai-analysis");
+                      setShowAITools(false);
+                    }}
+                  >
+                    <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-full">
+                      <BrainCircuit size={18} className="text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                      <span className="block font-medium">Market Analysis</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 block mt-0.5">Advanced AI trading signals and technical analysis</span>
+                    </div>
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="w-full justify-start text-left flex items-center gap-3 h-auto py-3"
+                    onClick={() => {
                       setActivePanel("signals");
                       setShowAITools(false);
                     }}
@@ -527,6 +548,19 @@ export default function TradingSpace() {
                 <div className="truncate">
                   <span className="block font-medium">Trading Assistant</span>
                   <span className="text-xs text-gray-500 dark:text-gray-400 block">Get AI trading advice</span>
+                </div>
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full justify-start text-left flex items-center gap-2"
+                onClick={() => setActivePanel("ai-analysis")}
+              >
+                <BrainCircuit size={14} className="text-purple-600 dark:text-purple-400 flex-shrink-0" />
+                <div className="truncate">
+                  <span className="block font-medium">Market Analysis</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 block">AI trading signals & analysis</span>
                 </div>
               </Button>
               
