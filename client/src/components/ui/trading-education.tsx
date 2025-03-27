@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ArrowRight, GraduationCap, Award, CheckCircle2, LucideIcon, Book, BarChart, Globe, Bitcoin, Lightbulb, Clock, Star, Rocket, AlertTriangle, TrendingUp } from 'lucide-react';
+import { X, ArrowRight, GraduationCap, Award, CheckCircle2, LucideIcon, Book, BarChart, Globe, Bitcoin, Lightbulb, Clock, Star, Rocket, AlertTriangle, TrendingUp, Briefcase, Brain } from 'lucide-react';
 import { Button } from './button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
 import { Separator } from './separator';
@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './accordion';
 
 // Education category types
-type MarketType = 'futures' | 'forex' | 'crypto' | 'stocks';
+type MarketType = 'futures' | 'forex' | 'crypto' | 'stocks' | 'prop_firms' | 'trader_mindset';
 type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced' | 'expert';
 
 // Course structure types
@@ -66,7 +66,9 @@ const courseIcons: Record<MarketType, React.ReactNode> = {
   futures: <TrendingUp className="h-5 w-5 text-amber-500" />,
   forex: <Globe className="h-5 w-5 text-blue-500" />,
   crypto: <Bitcoin className="h-5 w-5 text-purple-500" />,
-  stocks: <BarChart className="h-5 w-5 text-green-500" />
+  stocks: <BarChart className="h-5 w-5 text-green-500" />,
+  prop_firms: <Briefcase className="h-5 w-5 text-red-500" />,
+  trader_mindset: <Brain className="h-5 w-5 text-indigo-500" />
 };
 
 // Badge icons for different experience levels
@@ -79,6 +81,287 @@ const badgeIcons: Record<ExperienceLevel, React.ReactNode> = {
 
 // Sample courses data
 const sampleCourses: Course[] = [
+  // Prop Firm Trading Course
+  {
+    id: 'prop-firms-beginner',
+    title: 'Introduction to Prop Trading Firms',
+    description: 'Learn how to leverage proprietary trading firms like Apex Trader Funding and Topstep to trade with other people\'s money (OPM).',
+    marketType: 'prop_firms',
+    level: 'beginner',
+    modules: [
+      {
+        id: 'prop-basics',
+        title: 'Understanding Proprietary Trading',
+        description: 'Learn what prop firms are and how they enable traders to access significant capital.',
+        lessons: [
+          {
+            id: 'prop-lesson-1',
+            title: 'Prop Firms Explained',
+            description: 'An introduction to proprietary trading firms and their business models.',
+            duration: 20,
+            resources: [
+              {
+                id: 'prop-resource-1',
+                title: 'Prop Trading Fundamentals',
+                type: 'video',
+                duration: 15,
+                description: 'An overview of how prop firms work and their requirements.'
+              },
+              {
+                id: 'prop-resource-2',
+                title: 'Prop Firm Quiz',
+                type: 'quiz',
+                description: 'Test your knowledge of prop firm basics.'
+              }
+            ],
+            completed: false,
+            quizPassed: false
+          },
+          {
+            id: 'prop-lesson-2',
+            title: 'Apex Trader Funding Overview',
+            description: 'Learn about Apex Trader Funding\'s evaluation process and trading parameters.',
+            duration: 25,
+            resources: [
+              {
+                id: 'prop-resource-3',
+                title: 'Apex Trader Funding Guide',
+                type: 'article',
+                description: 'Detailed explanation of Apex\'s rules and requirements.'
+              },
+              {
+                id: 'prop-resource-4',
+                title: 'Apex Trader Exercise',
+                type: 'exercise',
+                description: 'Practice trading within Apex parameters.'
+              }
+            ],
+            completed: false,
+            quizPassed: false
+          }
+        ],
+        badge: {
+          name: 'Prop Trader',
+          icon: 'briefcase',
+          description: 'Completed the basics of prop firm trading'
+        }
+      },
+      {
+        id: 'topstep-basics',
+        title: 'Mastering Topstep Trading',
+        description: 'Learn how to pass Topstep\'s Trading Combine and earn a funded account.',
+        lessons: [
+          {
+            id: 'topstep-lesson-1',
+            title: 'Topstep Trading Combine',
+            description: 'Understanding the rules and strategies to pass the Trading Combine.',
+            duration: 30,
+            resources: [
+              {
+                id: 'topstep-resource-1',
+                title: 'Trading Combine Strategy',
+                type: 'video',
+                duration: 20,
+                description: 'Strategic approaches to pass the Trading Combine.'
+              }
+            ],
+            completed: false,
+            quizPassed: false
+          }
+        ],
+        badge: {
+          name: 'Topstep Expert',
+          icon: 'award',
+          description: 'Mastered Topstep Trading Combine strategies'
+        }
+      }
+    ],
+    points: 150,
+    thyCoinReward: 75,
+    icon: courseIcons.prop_firms,
+    modules_completed: 0,
+    totalModules: 2,
+    badgeIcon: badgeIcons.beginner,
+    completed: false
+  },
+  
+  // Trader Mindset Course
+  {
+    id: 'mindset-beginner',
+    title: 'Trader Psychology and Mindset',
+    description: 'Develop the mental skills and emotional discipline required for successful trading.',
+    marketType: 'trader_mindset',
+    level: 'beginner',
+    modules: [
+      {
+        id: 'trading-psychology',
+        title: 'Trading Psychology Fundamentals',
+        description: 'Understanding the psychological aspects of trading and how to master your emotions.',
+        lessons: [
+          {
+            id: 'mindset-lesson-1',
+            title: 'Emotional Discipline in Trading',
+            description: 'Learn how to control emotions during volatile market conditions.',
+            duration: 25,
+            resources: [
+              {
+                id: 'mindset-resource-1',
+                title: 'Trading Psychology Fundamentals',
+                type: 'video',
+                duration: 20,
+                description: 'An introduction to the mental aspects of trading.'
+              },
+              {
+                id: 'mindset-resource-2',
+                title: 'Emotional Trading Quiz',
+                type: 'quiz',
+                description: 'Test your understanding of emotional control in trading.'
+              }
+            ],
+            completed: false,
+            quizPassed: false
+          },
+          {
+            id: 'mindset-lesson-2',
+            title: 'Developing a Trading Plan',
+            description: 'Creating and sticking to a personalized trading plan.',
+            duration: 30,
+            resources: [
+              {
+                id: 'mindset-resource-3',
+                title: 'Trading Plan Template',
+                type: 'article',
+                description: 'Step-by-step guide to creating your trading plan.'
+              },
+              {
+                id: 'mindset-resource-4',
+                title: 'Trading Plan Exercise',
+                type: 'exercise',
+                description: 'Create your own trading plan using the provided template.'
+              }
+            ],
+            completed: false,
+            quizPassed: false
+          }
+        ],
+        badge: {
+          name: 'Mind Master',
+          icon: 'brain',
+          description: 'Mastered the basics of trading psychology'
+        }
+      }
+    ],
+    points: 120,
+    thyCoinReward: 60,
+    icon: courseIcons.trader_mindset,
+    modules_completed: 0,
+    totalModules: 1,
+    badgeIcon: badgeIcons.beginner,
+    completed: false
+  },
+  
+  // Advanced Trader Mindset Course
+  {
+    id: 'mindset-advanced',
+    title: 'Elite Trader Psychology',
+    description: 'Advanced techniques for developing professional trader mindset and becoming eligible to trade Hybrid Holdings funds.',
+    marketType: 'trader_mindset',
+    level: 'advanced',
+    modules: [
+      {
+        id: 'performance-psychology',
+        title: 'Peak Performance Psychology',
+        description: 'Advanced techniques used by professional traders to maintain peak mental performance.',
+        lessons: [
+          {
+            id: 'peak-lesson-1',
+            title: 'Flow State Trading',
+            description: 'Learn how to achieve and maintain flow state for optimal trading performance.',
+            duration: 35,
+            resources: [
+              {
+                id: 'peak-resource-1',
+                title: 'Flow State Techniques',
+                type: 'video',
+                duration: 25,
+                description: 'Advanced techniques to reach flow state during trading.'
+              }
+            ],
+            completed: false,
+            quizPassed: false
+          },
+          {
+            id: 'peak-lesson-2',
+            title: 'Trading Journal Mastery',
+            description: 'Advanced journaling techniques for continuous improvement.',
+            duration: 30,
+            resources: [
+              {
+                id: 'peak-resource-2',
+                title: 'Advanced Trading Journal',
+                type: 'article',
+                description: 'Comprehensive guide to effective trading journals.'
+              },
+              {
+                id: 'peak-resource-3',
+                title: 'Journal Analysis Exercise',
+                type: 'exercise',
+                description: 'Analyze trading patterns using journal data.'
+              }
+            ],
+            completed: false,
+            quizPassed: false
+          }
+        ],
+        badge: {
+          name: 'Elite Mindset',
+          icon: 'brain',
+          description: 'Mastered advanced trading psychology'
+        }
+      },
+      {
+        id: 'hybrid-holdings-prep',
+        title: 'Hybrid Holdings Trader Preparation',
+        description: 'Prepare for the opportunity to trade with Hybrid Holdings funds as a top-performing trader.',
+        lessons: [
+          {
+            id: 'hybrid-lesson-1',
+            title: 'Hybrid Holdings Trading Requirements',
+            description: 'Understanding the performance metrics and requirements to qualify for trading Hybrid funds.',
+            duration: 25,
+            resources: [
+              {
+                id: 'hybrid-resource-1',
+                title: 'Qualification Requirements',
+                type: 'article',
+                description: 'Detailed overview of the qualification process for Hybrid Holdings traders.'
+              },
+              {
+                id: 'hybrid-resource-2',
+                title: 'Performance Metrics Quiz',
+                type: 'quiz',
+                description: 'Test your understanding of required performance metrics.'
+              }
+            ],
+            completed: false,
+            quizPassed: false
+          }
+        ],
+        badge: {
+          name: 'Hybrid Ready',
+          icon: 'rocket',
+          description: 'Prepared to apply for Hybrid Holdings trading opportunities'
+        }
+      }
+    ],
+    points: 300,
+    thyCoinReward: 150,
+    icon: courseIcons.trader_mindset,
+    modules_completed: 0,
+    totalModules: 2,
+    badgeIcon: badgeIcons.advanced,
+    completed: false
+  },
   {
     id: 'futures-beginner',
     title: 'Futures Trading Fundamentals',
