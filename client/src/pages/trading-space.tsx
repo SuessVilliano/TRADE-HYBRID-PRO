@@ -42,6 +42,10 @@ export default function TradingSpace() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const locationParam = searchParams.get('location') || 'tradehouse';
+  const viewParam = searchParams.get('view');
+  const symbolParam = searchParams.get('symbol');
+  const actionParam = searchParams.get('action');
+  const screenParam = searchParams.get('screen');
 
   // The additional panels we offer
   const [activePanel, setActivePanel] = useState<string>(
@@ -78,10 +82,32 @@ export default function TradingSpace() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
   
+  // Process URL parameters
+  useEffect(() => {
+    // Handle the view=mobile parameter
+    if (viewParam === 'mobile') {
+      setIsMobile(true);
+      setIsPanelExpanded(true);
+    }
+    
+    // Handle the action parameter
+    if (actionParam === 'trade') {
+      setActivePanel('trade');
+    }
+    
+    // Handle the screen parameter
+    if (screenParam === 'share') {
+      setActivePanel('market');
+      // Additional functionality for screen sharing would go here
+    }
+  }, [viewParam, actionParam, screenParam]);
+
   // Load initial data
   useEffect(() => {
-    // Get the appropriate symbol for this location
-    const symbol = LOCATION_TO_SYMBOL[locationParam as keyof typeof LOCATION_TO_SYMBOL] || "BTCUSD";
+    // Determine which symbol to use (URL param or default for this location)
+    const symbol = symbolParam || 
+      LOCATION_TO_SYMBOL[locationParam as keyof typeof LOCATION_TO_SYMBOL] || 
+      "BTCUSD";
     
     fetchMarketData(symbol);
     fetchNews();
@@ -139,13 +165,17 @@ export default function TradingSpace() {
   };
   
   const renderActivePanel = () => {
+    const effectiveSymbol = symbolParam || 
+      LOCATION_TO_SYMBOL[locationParam as keyof typeof LOCATION_TO_SYMBOL] || 
+      "BTCUSD";
+      
     switch (activePanel) {
       case "market":
-        return <MarketChart className="h-full" symbol={LOCATION_TO_SYMBOL[locationParam as keyof typeof LOCATION_TO_SYMBOL]} />;
+        return <MarketChart className="h-full" symbol={effectiveSymbol} />;
       case "news":
         return <NewsFeed className="h-full" />;
       case "trade":
-        return <TradingInterface className="h-full" />;
+        return <TradingInterface className="h-full" symbol={effectiveSymbol} />;
       case "journal":
         return <TradeJournal className="h-full" />;
       case "leaderboard":

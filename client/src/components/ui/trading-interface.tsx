@@ -25,11 +25,12 @@ import { BrokerComparison } from "@/lib/services/broker-aggregator-service";
 
 interface TradingInterfaceProps {
   className?: string;
+  symbol?: string;
 }
 
-export function TradingInterface({ className }: TradingInterfaceProps) {
+export function TradingInterface({ className, symbol = "BTCUSD" }: TradingInterfaceProps) {
   const { placeTrade, accountBalance, orderHistory } = useTrader();
-  const { currentPrice, symbol } = useMarketData();
+  const { currentPrice, fetchMarketData, subscribeToRealTimeData } = useMarketData();
   const { 
     initializeAggregator,
     executeTrade,
@@ -59,6 +60,22 @@ export function TradingInterface({ className }: TradingInterfaceProps) {
       initializeAggregator();
     }
   }, [isConnected, initializeAggregator]);
+  
+  // Fetch market data for the current symbol
+  useEffect(() => {
+    fetchMarketData(symbol);
+    subscribeToRealTimeData(symbol);
+    
+    return () => {
+      // Clean up subscription when component unmounts or symbol changes
+      try {
+        const { unsubscribeFromRealTimeData } = useMarketData.getState();
+        unsubscribeFromRealTimeData(symbol);
+      } catch (error) {
+        console.error("Error unsubscribing from market data:", error);
+      }
+    };
+  }, [symbol, fetchMarketData, subscribeToRealTimeData]);
   
   // Update comparison data when symbol changes
   useEffect(() => {

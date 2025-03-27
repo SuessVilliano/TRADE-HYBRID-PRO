@@ -13,7 +13,7 @@ import {
 } from '@react-three/drei';
 import * as THREE from 'three';
 import { Interface } from '../ui/interface';
-import { Map, Sun, Moon, LineChart, Bitcoin, DollarSign, BarChart, Share } from 'lucide-react';
+import { Map, Sun, Moon, LineChart, Bitcoin, DollarSign, BarChart, Share, Bell } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useLocation } from 'react-router-dom';
 import { GamePhase, useGame } from '@/lib/stores/useGame';
@@ -954,7 +954,7 @@ export default function Scene({ showStats = false }: SceneProps) {
             variant="default" 
             size="icon" 
             className="bg-blue-500 text-white h-12 w-auto px-3 rounded-full flex items-center justify-center gap-2"
-            onClick={() => window.location.href = '/trading-space'}
+            onClick={() => window.location.href = '/trading-space?view=mobile&action=trade'}
           >
             <LineChart size={20} />
             <span className="text-sm font-medium">Trade</span>
@@ -967,40 +967,50 @@ export default function Scene({ showStats = false }: SceneProps) {
         <div className="fixed top-8 right-0 bottom-0 z-40 w-14 flex flex-col items-center gap-3 pt-4 bg-gray-800/30 backdrop-blur-sm">
           <div 
             className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center cursor-pointer shadow-lg"
-            onClick={() => window.location.href = '/trading-space?location=crypto'}
+            onClick={() => window.location.href = '/trading-space?view=mobile&location=crypto&symbol=BTC/USD'}
           >
             <Bitcoin size={18} className="text-white" />
           </div>
           <div 
             className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center cursor-pointer shadow-lg"
-            onClick={() => window.location.href = '/trading-space?location=forex'}
+            onClick={() => window.location.href = '/trading-space?view=mobile&location=forex&symbol=EUR/USD'}
           >
             <DollarSign size={18} className="text-white" />
           </div>
           <div 
             className="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center cursor-pointer shadow-lg"
-            onClick={() => window.location.href = '/trading-space?location=stocks'}
+            onClick={() => window.location.href = '/trading-space?view=mobile&location=stocks&symbol=AAPL'}
           >
             <BarChart size={18} className="text-white" />
           </div>
           <div 
             className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center cursor-pointer shadow-lg"
-            onClick={() => window.location.href = '/trading-space?screen=share'}
+            onClick={() => window.location.href = '/trading-space?view=mobile&screen=share'}
           >
             <Share size={18} className="text-white" />
+          </div>
+          <div 
+            className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center cursor-pointer shadow-lg mt-3"
+            onClick={() => window.location.href = '/trading-space?view=mobile&location=signals'}
+          >
+            <Bell size={18} className="text-white" />
           </div>
         </div>
       )}
       
-      {/* Mobile loading indicator */}
+      {/* Mobile header with trading view shortcut */}
       {isMobile && (
         <div className="fixed top-0 left-0 right-0 text-center bg-black/70 text-white text-sm py-1 z-50 flex items-center justify-center">
           <span>Mobile mode enabled</span>
           <button 
-            className="ml-2 bg-blue-500 text-xs px-2 py-0.5 rounded"
-            onClick={() => window.location.href = '/trading-space'}
+            className="ml-2 bg-blue-500 text-xs px-2 py-0.5 rounded flex items-center"
+            onClick={() => {
+              // Navigate to trading-space with explicit params for mobile view
+              window.location.href = '/trading-space?view=mobile&location=signals';
+            }}
           >
-            Open Trading View
+            <LineChart className="mr-1" size={12} />
+            Trading View
           </button>
         </div>
       )}

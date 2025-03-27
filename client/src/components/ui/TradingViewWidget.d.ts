@@ -1,5 +1,5 @@
 declare module './TradingViewWidget' {
-  interface TradingViewWidgetProps {
+  export interface TradingViewWidgetProps {
     symbol?: string;
     theme?: 'light' | 'dark';
     width?: string | number;
@@ -14,6 +14,5 @@ declare module './TradingViewWidget' {
     container_id?: string;
   }
 
-  const TradingViewWidget: React.FC<TradingViewWidgetProps>;
-  export default TradingViewWidget;
+  export default function TradingViewWidget(props: TradingViewWidgetProps): JSX.Element;
 }
