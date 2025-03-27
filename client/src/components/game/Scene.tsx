@@ -350,12 +350,96 @@ function TradingEnvironment() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const locationParam = searchParams.get('location') || 'tradehouse';
+  const [isMobile, setIsMobile] = useState(false);
   
-  // Preload models
-  useGLTF.preload('/models/trading_desk.glb');
-  useGLTF.preload('/models/market_display.glb');
-  useGLTF.preload('/models/trading_floor.glb');
+  // Detect if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+      setIsMobile(mobileRegex.test(userAgent));
+    };
+    
+    checkMobile();
+  }, []);
   
+  // Preload models - skip on mobile
+  useEffect(() => {
+    if (!isMobile) {
+      useGLTF.preload('/models/trading_desk.glb');
+      useGLTF.preload('/models/market_display.glb');
+      useGLTF.preload('/models/trading_floor.glb');
+    }
+  }, [isMobile]);
+  
+  // Simplified mobile trading environment
+  if (isMobile) {
+    return (
+      <group>
+        {/* Central building - simplified for mobile */}
+        <group position={[0, 0, 0]}>
+          <Building 
+            position={[0, 1, 0]} 
+            size={[10, 3, 10]} 
+            color="#3d4e60" 
+            name="Trade Hub"
+          />
+        </group>
+        
+        {/* Crypto Trading Center - simplified */}
+        <group position={[-15, 0, 0]}>
+          <Building 
+            position={[0, 1, 0]} 
+            size={[8, 2, 6]} 
+            color={locationParam === 'crypto' ? '#22c55e' : '#15803d'} 
+            name="Crypto Trading"
+          />
+        </group>
+        
+        {/* Forex Trading Floor - simplified */}
+        <group position={[15, 0, 0]}>
+          <Building 
+            position={[0, 1, 0]} 
+            size={[8, 2, 6]} 
+            color={locationParam === 'forex' ? '#ef4444' : '#b91c1c'} 
+            name="Forex Trading"
+          />
+        </group>
+        
+        {/* Stock Market Exchange - simplified */}
+        <group position={[0, 0, 15]}>
+          <Building 
+            position={[0, 1, 0]} 
+            size={[8, 2, 6]} 
+            color={locationParam === 'stocks' ? '#a855f7' : '#7e22ce'} 
+            name="Stock Market"
+          />
+        </group>
+        
+        {/* Signal Towers - simplified */}
+        <group position={[0, 0, -15]}>
+          <Building 
+            position={[0, 1, 0]} 
+            size={[6, 4, 6]} 
+            color={locationParam === 'signals' ? '#3b82f6' : '#1d4ed8'} 
+            name="Signal Towers"
+          />
+        </group>
+        
+        {/* Basic floor - simplified for mobile */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+          <planeGeometry args={[80, 80]} />
+          <meshStandardMaterial 
+            color="#111122" 
+            metalness={0.5}
+            roughness={0.5}
+          />
+        </mesh>
+      </group>
+    );
+  }
+  
+  // Desktop full trading environment
   return (
     <group>
       {/* Central Trading Floor Environment */}
@@ -557,6 +641,18 @@ function TradingEnvironment() {
 function OtherPlayers() {
   // Get multiplayer state
   const { players, clientId, connected, sendTradeOffer } = useMultiplayer();
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+      setIsMobile(mobileRegex.test(userAgent));
+    };
+    
+    checkMobile();
+  }, []);
 
   // Handle interactions with other players
   const handleInteractWithPlayer = (playerId: string) => {
@@ -570,8 +666,13 @@ function OtherPlayers() {
   };
 
   // Only show other players, not ourselves
-  const otherPlayers = players.filter(player => player.id !== clientId);
-
+  // Limit number of visible players on mobile to improve performance
+  const maxPlayersToShow = isMobile ? 3 : 20;
+  
+  const otherPlayers = players
+    .filter(player => player.id !== clientId)
+    .slice(0, maxPlayersToShow); // Limit number of players rendered on mobile
+  
   return (
     <>
       {otherPlayers.map(player => (
@@ -581,6 +682,15 @@ function OtherPlayers() {
           onInteract={() => handleInteractWithPlayer(player.id)}
         />
       ))}
+      
+      {/* Show count of additional players if we're limiting them */}
+      {isMobile && players.length > maxPlayersToShow + 1 && (
+        <Html position={[0, 3, 0]} center>
+          <div className="bg-black/70 px-2 py-1 rounded text-white text-xs">
+            +{players.length - maxPlayersToShow - 1} more players
+          </div>
+        </Html>
+      )}
     </>
   );
 }
@@ -596,22 +706,40 @@ function SceneCamera() {
   const players = useMultiplayer((state) => state.players);
   const clientId = useMultiplayer((state) => state.clientId);
   const playerRef = useRef<THREE.Group | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   
-  // Handle keyboard events for toggling views
+  // Detect if device is mobile
   useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+      setIsMobile(mobileRegex.test(userAgent));
+      console.log("Device detected as:", mobileRegex.test(userAgent) ? "mobile" : "desktop");
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  // Handle keyboard events for toggling views - only on desktop
+  useEffect(() => {
+    if (isMobile) return; // Skip on mobile devices
+    
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.code === 'KeyV') {
+        console.log("Toggling first-person view");
         setIsFirstPerson(prev => !prev);
       }
     };
     
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
+  }, [isMobile]);
   
   useEffect(() => {
     // Set camera position based on location when in third-person view
-    if (!isFirstPerson) {
+    if (!isFirstPerson || isMobile) {
       let cameraPos: [number, number, number];
       
       switch(locationParam) {
@@ -636,33 +764,41 @@ function SceneCamera() {
       camera.lookAt(0, 0, 0);
       setLastThirdPersonPosition(cameraPos);
     }
-  }, [camera, locationParam, isFirstPerson]);
+  }, [camera, locationParam, isFirstPerson, isMobile]);
   
-  // For first-person view, follow player position
+  // For first-person view, follow player position - only on desktop
   useFrame(() => {
+    if (isMobile) return; // Skip on mobile devices
+    
     if (isFirstPerson && clientId) {
-      // Find the current player
-      const player = players.find(p => p.id === clientId);
-      if (player) {
-        // Position the camera at player position but add height for eye level
-        camera.position.set(
-          player.position[0],
-          player.position[1] + 1.6, // Eye height
-          player.position[2]
-        );
-        
-        // Determine forward direction based on player rotation
-        const angle = player.rotation;
-        const lookAtX = player.position[0] + Math.sin(angle) * 5;
-        const lookAtZ = player.position[2] + Math.cos(angle) * 5;
-        
-        camera.lookAt(lookAtX, player.position[1] + 1.6, lookAtZ);
+      try {
+        // Find the current player
+        const player = players.find(p => p.id === clientId);
+        if (player) {
+          // Position the camera at player position but add height for eye level
+          camera.position.set(
+            player.position[0],
+            player.position[1] + 1.6, // Eye height
+            player.position[2]
+          );
+          
+          // Determine forward direction based on player rotation
+          const angle = player.rotation;
+          const lookAtX = player.position[0] + Math.sin(angle) * 5;
+          const lookAtZ = player.position[2] + Math.cos(angle) * 5;
+          
+          camera.lookAt(lookAtX, player.position[1] + 1.6, lookAtZ);
+        }
+      } catch (error) {
+        console.error("Error in first-person camera update:", error);
+        // Fallback to third-person view on error
+        setIsFirstPerson(false);
       }
     }
   });
   
-  // Add UI information about first-person toggle
-  return (
+  // Add UI information about first-person toggle - only show on desktop
+  return !isMobile ? (
     <Html position={[0, -5, 0]} center>
       <div 
         className="text-xs px-2 py-1 bg-black/70 text-white rounded pointer-events-none"
@@ -674,7 +810,7 @@ function SceneCamera() {
         First-person view enabled (Press V to toggle)
       </div>
     </Html>
-  );
+  ) : null;
 }
 
 export default function Scene({ showStats = false }: SceneProps) {
@@ -687,6 +823,20 @@ export default function Scene({ showStats = false }: SceneProps) {
     return false;
   });
   const { phase } = useGame();
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+      setIsMobile(mobileRegex.test(userAgent));
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Function to toggle map for mobile users
   const toggleMobileMap = () => {
@@ -726,14 +876,28 @@ export default function Scene({ showStats = false }: SceneProps) {
     <div className="relative w-full h-full">
       {/* 3D Canvas */}
       <GameControls>
-        <Canvas shadows>
+        <Canvas 
+          shadows={!isMobile} // Disable shadows on mobile for performance
+          camera={{ position: [10, 5, 10], fov: 50 }}
+          dpr={[1, isMobile ? 1.5 : 2]} // Lower resolution on mobile
+          performance={{ min: 0.5 }} // Allow lower framerates on mobile
+        >
           <Suspense fallback={null}>
             <color attach="background" args={[isDarkMode ? '#0f172a' : '#e0f2fe']} />
             
+            {/* Simplified sky for mobile */}
             {isDarkMode ? (
-              <Stars radius={100} depth={50} count={1000} factor={4} />
+              isMobile ? (
+                <ambientLight intensity={0.5} color="#1a1a2e" />
+              ) : (
+                <Stars radius={100} depth={50} count={1000} factor={4} />
+              )
             ) : (
-              <Sky sunPosition={[100, 10, 100]} />
+              isMobile ? (
+                <ambientLight intensity={0.8} color="#e0f2fe" />
+              ) : (
+                <Sky sunPosition={[100, 10, 100]} />
+              )
             )}
             
             <ambientLight intensity={0.1} />
@@ -742,6 +906,8 @@ export default function Scene({ showStats = false }: SceneProps) {
             <OrbitControls 
               target={[0, 0, 0]} 
               maxPolarAngle={Math.PI/2 - 0.1}
+              enableDamping={!isMobile} // Disable damping on mobile for performance
+              enableZoom={true}
               makeDefault
             />
             
@@ -784,6 +950,13 @@ export default function Scene({ showStats = false }: SceneProps) {
           </Button>
         </div>
       </div>
+      
+      {/* Mobile loading indicator */}
+      {isMobile && (
+        <div className="fixed top-0 left-0 right-0 text-center bg-black/50 text-white text-sm py-1 z-50">
+          Mobile mode enabled - Optimized performance
+        </div>
+      )}
     </div>
   );
 }
