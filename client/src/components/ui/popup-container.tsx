@@ -40,10 +40,19 @@ export function PopupContainer({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 overflow-hidden">
+      {/* Overlay that can be clicked to close */}
+      {onClose && (
+        <div 
+          className="absolute inset-0 -z-10" 
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+      
       <div 
         className={cn(
-          "w-[90%] max-w-4xl max-h-[90vh] overflow-auto rounded-lg bg-gray-800 border border-gray-600 shadow-xl text-white",
+          "w-[90%] max-w-4xl max-h-[90vh] overflow-y-auto rounded-lg bg-gray-800 border border-gray-600 shadow-xl text-white",
           className
         )}
       >
@@ -53,15 +62,25 @@ export function PopupContainer({
             {showCloseButton && onClose && (
               <button 
                 type="button" 
-                onClick={() => onClose()} 
+                onClick={onClose} 
                 className="rounded-full p-1 hover:bg-gray-700 focus:outline-none"
+                aria-label="Close"
               >
                 <X className="h-5 w-5 text-gray-300" />
               </button>
             )}
           </div>
         )}
-        <div className="p-4">
+        
+        {/* 
+          Enable touch scrolling for mobile devices by setting
+          -webkit-overflow-scrolling: touch, and ensure content is 
+          positioned correctly with relative positioning
+        */}
+        <div 
+          className="p-4 relative overflow-y-auto" 
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
           {children}
         </div>
       </div>

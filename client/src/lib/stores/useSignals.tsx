@@ -33,7 +33,7 @@ interface SignalsState {
   markSignalRead: (id: string) => void;
 }
 
-// Webhook URL: https://apps.taskmagic.com/api/v1/webhooks/Ec3lDNCfkpQtHNbWk16mA
+// Webhook URL: https://app.tradehybrid.co/api/webhooks/signals
 
 export const useSignals = create<SignalsState>((set, get) => ({
   signals: [],
@@ -45,26 +45,39 @@ export const useSignals = create<SignalsState>((set, get) => ({
     try {
       set({ loading: true, error: null });
       
-      // In a real implementation, this would be a fetch request to your API
-      // that retrieves signals from your database
-      // For now, we'll simulate some data
-      
-      // Simulated API response delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      // Fetch signals from the API
       const response = await fetch('/api/signals');
       
       if (!response.ok) {
         throw new Error('Failed to fetch signals');
       }
       
-      const data = await response.json();
+      let data = await response.json();
+      
+      // Convert string timestamps to Date objects
+      data = data.map((signal: any) => ({
+        ...signal,
+        timestamp: new Date(signal.timestamp)
+      }));
       
       set({ 
         signals: data, 
         loading: false,
         lastFetched: new Date()
       });
+      
+      // Add notification if enabled
+      if (data.length > 0 && window.Notification && Notification.permission === 'granted') {
+        try {
+          const latestSignal = data[0];
+          new Notification('New Trading Signal', {
+            body: `${latestSignal.action.toUpperCase()} ${latestSignal.symbol} at $${latestSignal.price}`,
+            icon: '/logo.png'
+          });
+        } catch (e) {
+          console.error('Notification error:', e);
+        }
+      }
       
     } catch (error) {
       console.error('Error fetching signals:', error);

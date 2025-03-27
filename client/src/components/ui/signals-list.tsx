@@ -157,7 +157,7 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
         {/* Connect to Hybrid AI footer */}
         <CardFooter className="px-3 py-2 border-t text-xs text-muted-foreground">
           <div className="flex justify-between w-full items-center">
-            <span>Hybrid AI Signal Provider:</span>
+            <span>Trade Hybrid Signal Provider:</span>
             <Button 
               variant="link" 
               size="sm" 
@@ -170,7 +170,7 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
                 rel="noopener noreferrer"
                 className="flex items-center"
               >
-                <span className="truncate max-w-32">Hybrid AI</span>
+                <span className="truncate max-w-32">Trade Hybrid</span>
                 <ExternalLink size={10} className="ml-1" />
               </a>
             </Button>
@@ -414,7 +414,7 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
             
             {!useABATEV && (
               <div className="flex flex-wrap gap-2 w-full">
-                {['ironbeam', 'alpaca', 'oanda'].map(broker => (
+                {['ironbeam', 'alpaca', 'oanda', 'bitfinex', 'etrade'].map(broker => (
                   <Button 
                     key={broker}
                     className="flex-1" 
@@ -439,7 +439,7 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
                     <div className="w-1/4 text-right">Latency</div>
                   </div>
                   
-                  {['ironbeam', 'alpaca'].map((broker, index) => (
+                  {['ironbeam', 'alpaca', 'oanda', 'bitfinex', 'etrade'].map((broker, index) => (
                     <div 
                       key={broker}
                       className={cn(

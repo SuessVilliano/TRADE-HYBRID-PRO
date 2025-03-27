@@ -361,14 +361,14 @@ export function SignalsPopup({
                       <div className="flex items-center justify-between mb-2">
                         <p className="font-medium">Signal Information</p>
                         <Badge variant="outline" className="text-xs">
-                          {selectedSignal.strategy}
+                          {selectedSignal.strategy || 'Trade Hybrid Strategy'}
                         </Badge>
                       </div>
                       
                       <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                         <div>
                           <p className="text-xs text-muted-foreground">Source</p>
-                          <p>{selectedSignal.source}</p>
+                          <p>{selectedSignal.source || 'Trade Hybrid'}</p>
                         </div>
                         <div>
                           <p className="text-xs text-muted-foreground">Timeframe</p>
