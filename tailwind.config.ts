@@ -80,12 +80,17 @@ export default {
           },
         },
         "pulse-slow": {
-          '0%, 100%': { opacity: 1 },
-          '50%': { opacity: 0.7 },
+          '0%, 100%': { opacity: "1" },
+          '50%': { opacity: "0.7" },
         },
         "bounce-subtle": {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-4px)' },
+        },
+        "fade-in-out": {
+          '0%': { opacity: '0' },
+          '10%, 90%': { opacity: '1' },
+          '100%': { opacity: '0' },
         },
       },
       animation: {
@@ -94,6 +99,7 @@ export default {
         "pulse-slow": "pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "bounce-slow": "bounce-subtle 3s ease-in-out infinite",
         "bounce-subtle": "bounce-subtle 2s ease-in-out infinite",
+        "fade-in-out": "fade-in-out 10s ease-in-out forwards",
       },
     },
   },

@@ -108,6 +108,21 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showChat, voiceChatEnabled, toggleVoiceChat, controlsMinimized]);
   
+  // Auto-hide controls after initial display
+  useEffect(() => {
+    if (!controlsMinimized) {
+      const hideControlsTimer = setTimeout(() => {
+        setControlsMinimized(true);
+        toast.info("Controls hidden", {
+          description: "Press H to show controls again",
+          duration: 2000,
+        });
+      }, 15000); // Hide after 15 seconds
+      
+      return () => clearTimeout(hideControlsTimer);
+    }
+  }, [controlsMinimized]);
+  
   // Voice chat status will be handled by the multiplayer service
 
   return (
@@ -508,7 +523,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
       
       {/* Instructions panel */}
       <div className={`fixed bottom-4 left-4 z-10 hidden md:${controlsMinimized ? 'hidden' : 'block'}`}>
-        <Card className="w-auto max-w-xs bg-background/80 backdrop-blur-sm relative">
+        <Card className="w-auto max-w-xs bg-background/90 backdrop-blur-sm relative animate-fade-in-out shadow-xl border-gray-700">
           <Button
             variant="ghost"
             size="icon"
@@ -519,8 +534,8 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
             <X size={14} />
           </Button>
           <CardContent className="p-4">
-            <h3 className="font-medium mb-2">Controls:</h3>
-            <ul className="text-sm space-y-1 text-muted-foreground">
+            <h3 className="font-medium mb-2 text-primary">Controls:</h3>
+            <ul className="text-sm space-y-1 text-primary/80">
               <li>WASD or Arrow Keys: Move character</li>
               <li>Space: Jump</li>
               <li>Double-tap movement key: Sprint</li>
@@ -533,6 +548,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
               <li>A: Toggle AI Assistant</li>
               <li>AR Button: View in augmented reality</li>
             </ul>
+            <div className="text-[10px] text-gray-400 mt-2 italic">This controls help will disappear shortly...</div>
           </CardContent>
         </Card>
       </div>

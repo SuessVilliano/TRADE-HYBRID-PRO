@@ -62,11 +62,12 @@ export default function Scene() {
       {/* UI Overlay */}
       <Interface />
       
-      {/* Debug Info */}
-      <div className="absolute bottom-0 left-0 m-2 p-2 bg-black/50 text-white text-xs rounded">
+      {/* Debug Info - initially shown but fades out after 10 seconds */}
+      <div className="absolute bottom-0 left-0 m-2 p-2 bg-black/80 text-white text-xs rounded animate-fade-in-out">
         <div>Trading Metaverse v0.1</div>
         <div>THREE.js {THREE.REVISION}</div>
-        <div>Use WASD or Arrow Keys to move, Spacebar to jump</div>
+        <div className="font-bold">Use WASD or Arrow Keys to move, Spacebar to jump</div>
+        <div className="text-gray-300 mt-1 text-[10px]">This help box will disappear shortly</div>
       </div>
     </div>
   );

@@ -355,7 +355,7 @@ export function GuideTourLauncher({ title = "Tour Guide" }: { title?: string }) 
   const guideTour = useGuideTour();
   
   return (
-    <div className="fixed right-4 top-24 z-50">
+    <div className="fixed right-6 bottom-20 z-50">
       <div className={cn(
         "relative p-1 rounded-xl bg-gradient-to-r from-blue-300/20 to-purple-300/20 backdrop-blur-sm shadow-xl",
         "animate-pulse-slow" // Always animate to attract attention
