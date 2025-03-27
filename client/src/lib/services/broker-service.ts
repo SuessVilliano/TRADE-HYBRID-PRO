@@ -32,6 +32,7 @@ export interface OrderHistory {
   price: number;
   status: 'filled' | 'pending' | 'cancelled';
   timestamp: number;
+  broker?: string; // Added broker property to track which broker executed the trade
 }
 
 export interface BrokerService {

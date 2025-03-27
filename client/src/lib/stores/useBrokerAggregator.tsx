@@ -43,7 +43,7 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
       set({ 
         aggregator, 
         isConnected: true,
-        activeBrokers: ['ironbeam', 'alpaca'], // Default brokers
+        activeBrokers: ['ironbeam', 'alpaca', 'bitfinex', 'etrade'], // Default brokers including new integrations
         isLoading: false 
       });
       

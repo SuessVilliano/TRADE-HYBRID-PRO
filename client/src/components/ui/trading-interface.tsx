@@ -21,6 +21,7 @@ import { AIMarketAnalysis } from "./ai-market-analysis";
 import { toast } from "sonner";
 import { Badge } from "./badge";
 import { BrokerComparison } from "@/lib/services/broker-aggregator-service";
+import { BrokerConfig } from "./broker-config";
 
 
 interface TradingInterfaceProps {
@@ -149,7 +150,7 @@ export function TradingInterface({ className, symbol = "BTCUSD" }: TradingInterf
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="spot">
-          <TabsList className="grid w-full grid-cols-5 h-8 mb-4">
+          <TabsList className="grid w-full grid-cols-6 h-8 mb-4">
             <TabsTrigger value="spot">Spot</TabsTrigger>
             <TabsTrigger value="futures">Futures</TabsTrigger>
             <TabsTrigger value="ai">
@@ -157,7 +158,11 @@ export function TradingInterface({ className, symbol = "BTCUSD" }: TradingInterf
               AI Analysis
             </TabsTrigger>
             <TabsTrigger value="bots">Bots</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger> 
+            <TabsTrigger value="history">History</TabsTrigger>
+            <TabsTrigger value="brokers">
+              <Settings className="mr-2 h-3 w-3" />
+              Brokers
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="spot">
@@ -530,6 +535,10 @@ export function TradingInterface({ className, symbol = "BTCUSD" }: TradingInterf
 
           <TabsContent value="history"> 
             <OrderHistoryView orders={orderHistory} /> 
+          </TabsContent>
+          
+          <TabsContent value="brokers">
+            <BrokerConfig />
           </TabsContent>
         </Tabs>
       </CardContent>

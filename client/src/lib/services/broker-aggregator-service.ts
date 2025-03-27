@@ -4,6 +4,8 @@ import { AlpacaService } from './alpaca-service';
 import { OandaService } from './oanda-service';
 import { TradeStationService } from './tradestation-service';
 import { IBKRService } from './ibkr-service';
+import { BitfinexService } from './bitfinex-service';
+import { ETradeService } from './etrade-service';
 
 // Define the broker comparison result
 export interface BrokerComparison {
@@ -151,8 +153,13 @@ export class BrokerAggregatorService {
       // Calculate spread (simplified)
       const spread = 0.0002 * data.price; // Simulated spread as 0.02% of price
 
-      // Simulate fees based on broker
-      const fees = brokerId === 'ironbeam' ? 0.001 : brokerId === 'alpaca' ? 0.0008 : 0.0015; // % of trade value
+      // Simulate fees based on broker (adjusted to include new brokers)
+      const fees = 
+        brokerId === 'ironbeam' ? 0.001 : 
+        brokerId === 'alpaca' ? 0.0008 : 
+        brokerId === 'bitfinex' ? 0.002 :  // Higher fees for crypto exchange
+        brokerId === 'etrade' ? 0.0005 :   // Competitive fees for retail broker
+        0.0015; // Default fee for other brokers
 
       // Calculate combined score (lower is better)
       // This is a simplified version of what would be a more complex ML model in production
@@ -263,6 +270,22 @@ export class BrokerAggregatorService {
     // Note: Actual credentials would be needed in production
     const ibkr = new IBKRService('username', 'password', true);
     await aggregator.addBroker('ibkr', ibkr);
+    
+    // Add Bitfinex broker (new!)
+    // Note: Actual API key and secret would be needed in production
+    const bitfinex = new BitfinexService('bitfinex_api_key', 'bitfinex_api_secret', true);
+    await aggregator.addBroker('bitfinex', bitfinex);
+    
+    // Add E*TRADE broker (new!)
+    // Note: E*TRADE requires OAuth tokens which would be provided in production
+    const etrade = new ETradeService(
+      'etrade_consumer_key',
+      'etrade_consumer_secret',
+      'etrade_access_token',
+      'etrade_token_secret',
+      true
+    );
+    await aggregator.addBroker('etrade', etrade);
     
     // Connect to all brokers
     await aggregator.connect();

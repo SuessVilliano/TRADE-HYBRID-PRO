@@ -71,7 +71,7 @@ export function OrderHistoryView({ orders: providedOrders }: OrderHistoryProps) 
           price: 37650.50,
           status: 'filled',
           timestamp: Date.now() - 1000 * 60 * 15, // 15 minutes ago
-          broker: 'alpaca'
+          broker: 'bitfinex' // Updated to use new crypto broker
         },
         {
           orderId: 'mock-2',
@@ -92,6 +92,16 @@ export function OrderHistoryView({ orders: providedOrders }: OrderHistoryProps) 
           status: 'pending',
           timestamp: Date.now() - 1000 * 60 * 5, // 5 minutes ago
           broker: 'oanda'
+        },
+        {
+          orderId: 'mock-4',
+          symbol: 'AAPL',
+          side: 'buy',
+          quantity: 10,
+          price: 188.65,
+          status: 'filled',
+          timestamp: Date.now() - 1000 * 60 * 120, // 2 hours ago
+          broker: 'etrade' // Added new etrade broker order
         }
       ];
       setOrders(mockOrders);
@@ -102,7 +112,7 @@ export function OrderHistoryView({ orders: providedOrders }: OrderHistoryProps) 
   const getStatusBadge = (status: string) => {
     switch(status) {
       case 'filled':
-        return <Badge variant="success" className="flex items-center gap-1">
+        return <Badge variant="default" className="flex items-center gap-1 bg-green-500">
           <CircleCheck className="h-3 w-3" />
           <span>Filled</span>
         </Badge>;
