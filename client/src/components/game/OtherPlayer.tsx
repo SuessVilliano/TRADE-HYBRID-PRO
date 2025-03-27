@@ -7,6 +7,7 @@ import { GLTF } from "three-stdlib";
 import { useMultiplayer } from "../../lib/stores/useMultiplayer";
 import { Button } from "../ui/button";
 import { useAudio } from "../../lib/stores/useAudio";
+import UserStatusIndicator from "./UserStatusIndicator";
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -247,6 +248,9 @@ export default function OtherPlayer({ player, onInteract }: OtherPlayerProps) {
       {/* Player model */}
       <group ref={modelRef} position={smoothPosition} rotation={[0, smoothRotation, 0]}>
         <primitive object={characterModel.clone()} scale={[1, 1, 1]} />
+        
+        {/* User status indicator */}
+        <UserStatusIndicator userId={player.id} position={[0, 0, 0]} />
       </group>
       
       {/* Interaction indicator (visible when hovering) */}

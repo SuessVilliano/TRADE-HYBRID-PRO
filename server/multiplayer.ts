@@ -22,7 +22,7 @@ interface ChatMessage {
 }
 
 interface WSMessage {
-  type: 'player_update' | 'chat_message' | 'join' | 'leave' | 'trade_offer' | 'friend_request' | 'ping';
+  type: 'player_update' | 'chat_message' | 'join' | 'leave' | 'trade_offer' | 'friend_request' | 'friend_response' | 'voice_status' | 'voice_data' | 'ping' | 'user_status' | 'social_activity';
   data: any;
 }
 
@@ -121,6 +121,21 @@ export class MultiplayerServer {
         break;
       case 'friend_request':
         this.handleFriendRequest(clientId, message.data);
+        break;
+      case 'friend_response':
+        this.handleFriendResponse(clientId, message.data);
+        break;
+      case 'voice_status':
+        this.handleVoiceStatus(clientId, message.data);
+        break;
+      case 'voice_data':
+        this.handleVoiceData(clientId, message.data);
+        break;
+      case 'user_status':
+        this.handleUserStatus(clientId, message.data);
+        break;
+      case 'social_activity':
+        this.handleSocialActivity(clientId, message.data);
         break;
       default:
         // Ignore unknown message types
@@ -298,6 +313,129 @@ export class MultiplayerServer {
     const client = this.clients.get(clientId);
     if (client && client.readyState === client.OPEN) {
       client.send(JSON.stringify(message));
+    }
+  }
+  
+  private handleFriendResponse(clientId: string, data: any) {
+    // Forward the friend response to the target user
+    if (data.targetId) {
+      this.sendToClient(data.targetId, {
+        type: 'friend_response',
+        data: {
+          ...data,
+          senderId: clientId,
+          senderUsername: this.playerStates.get(clientId)?.username || 'Unknown',
+          timestamp: Date.now()
+        }
+      });
+      
+      // If accepted, notify both users with a system message
+      if (data.accepted) {
+        const systemMessage: ChatMessage = {
+          id: this.generateId(),
+          sender: 'System',
+          message: `${this.playerStates.get(clientId)?.username || 'Unknown'} and ${this.playerStates.get(data.targetId)?.username || 'Unknown'} are now friends!`,
+          timestamp: Date.now(),
+          type: 'global'
+        };
+        
+        // Send to both users
+        this.sendToClient(clientId, {
+          type: 'chat_message',
+          data: systemMessage
+        });
+        
+        this.sendToClient(data.targetId, {
+          type: 'chat_message',
+          data: systemMessage
+        });
+      }
+    }
+  }
+  
+  private handleVoiceStatus(clientId: string, data: any) {
+    // Broadcast the voice status update to other clients
+    this.broadcast({
+      type: 'voice_status',
+      data: {
+        id: clientId,
+        enabled: data.enabled
+      }
+    }, clientId);
+  }
+  
+  private handleVoiceData(clientId: string, data: any) {
+    // If target IDs are specified, send only to those targets
+    if (data.targetIds && Array.isArray(data.targetIds)) {
+      data.targetIds.forEach((targetId: string) => {
+        this.sendToClient(targetId, {
+          type: 'voice_data',
+          data: {
+            id: clientId,
+            audio: data.audio
+          }
+        });
+      });
+    } else {
+      // Broadcast to all nearby players (proximity-based voice chat)
+      // For now, we'll just broadcast to everyone except the sender
+      // In a more advanced implementation, we'd filter by proximity
+      this.broadcast({
+        type: 'voice_data',
+        data: {
+          id: clientId,
+          audio: data.audio
+        }
+      }, clientId);
+    }
+  }
+  
+  private handleUserStatus(clientId: string, data: any) {
+    // Update the user's online status and broadcast to friends
+    // For now, we'll just broadcast to everyone
+    this.broadcast({
+      type: 'user_status',
+      data: {
+        id: clientId,
+        username: this.playerStates.get(clientId)?.username || 'Unknown',
+        status: data.status, // 'online', 'away', 'busy', etc.
+        timestamp: Date.now()
+      }
+    }, clientId);
+  }
+  
+  private handleSocialActivity(clientId: string, data: any) {
+    // Broadcast social activities like achievements, trade completions, etc.
+    const activityMessage = {
+      id: this.generateId(),
+      userId: clientId,
+      username: this.playerStates.get(clientId)?.username || 'Unknown',
+      type: data.type, // 'achievement', 'trade', 'level_up', etc.
+      details: data.details,
+      timestamp: Date.now()
+    };
+    
+    this.broadcast({
+      type: 'social_activity',
+      data: activityMessage
+    });
+    
+    // If it's a significant achievement, also send as a chat message
+    if (data.type === 'achievement' || data.type === 'level_up') {
+      const chatMessage: ChatMessage = {
+        id: this.generateId(),
+        sender: 'System',
+        message: `${this.playerStates.get(clientId)?.username || 'Unknown'} ${data.details}`,
+        timestamp: Date.now(),
+        type: 'global'
+      };
+      
+      this.chatMessages.push(chatMessage);
+      
+      this.broadcast({
+        type: 'chat_message',
+        data: chatMessage
+      });
     }
   }
   

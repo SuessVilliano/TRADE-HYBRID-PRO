@@ -1,5 +1,14 @@
 import { create } from 'zustand';
-import { MultiplayerService, PlayerState, ChatMessage, TradeOffer, FriendRequest } from '../services/multiplayer-service';
+import { 
+  MultiplayerService, 
+  PlayerState, 
+  ChatMessage, 
+  TradeOffer, 
+  FriendRequest,
+  FriendResponse,
+  UserStatus,
+  SocialActivity
+} from '../services/multiplayer-service';
 import type { PlayerCustomization } from '../../components/game/Player';
 
 export interface Friend {
@@ -26,6 +35,8 @@ interface MultiplayerState {
   friendRequests: FriendRequest[];
   friends: Friend[];
   mutedPlayers: string[]; // IDs of muted players
+  socialActivities: SocialActivity[];
+  userStatuses: Map<string, UserStatus>;
   
   // Voice chat
   voiceChatEnabled: boolean;
@@ -39,6 +50,7 @@ interface MultiplayerState {
   sendTradeOffer: (targetId: string, symbol: string, price: number, quantity: number, side: 'buy' | 'sell') => void;
   sendFriendRequest: (targetId: string) => void;
   acceptFriendRequest: (requestId: string) => void;
+  rejectFriendRequest: (requestId: string) => void;
   removeFriend: (friendId: string) => void;
   mutePlayer: (playerId: string) => void;
   unmutePlayer: (playerId: string) => void;
@@ -48,6 +60,13 @@ interface MultiplayerState {
   // Voice chat methods
   toggleVoiceChat: (enabled: boolean) => void;
   sendVoiceData: (audioChunk: ArrayBuffer, targetIds?: string[]) => void;
+  
+  // User status
+  updateUserStatus: (status: 'online' | 'away' | 'busy' | 'offline') => void;
+  getUserStatus: (userId: string) => UserStatus | undefined;
+  
+  // Social activity
+  shareSocialActivity: (type: 'achievement' | 'trade' | 'level_up' | 'signal_shared', details: string) => void;
   
   // Helper methods
   getAllPlayers: () => PlayerState[];
@@ -135,6 +154,54 @@ export const useMultiplayer = create<MultiplayerState>((set, get) => {
     }, 500); // 500ms of silence to consider someone stopped talking
   });
   
+  service.addEventListener('friend_response', (data: FriendResponse) => {
+    // If we received an acceptance, add to friends list
+    if (data.accepted) {
+      set(state => ({
+        friends: [
+          ...state.friends, 
+          {
+            id: data.senderId,
+            username: data.senderUsername,
+            online: true
+          }
+        ]
+      }));
+    }
+  });
+  
+  service.addEventListener('user_status', (data: UserStatus) => {
+    // Update user status in the map
+    set(state => {
+      const newUserStatuses = new Map(state.userStatuses);
+      newUserStatuses.set(data.id, data);
+      
+      // Also update online status in friends list
+      const friends = state.friends.map(friend => {
+        if (friend.id === data.id) {
+          return {
+            ...friend,
+            online: data.status === 'online',
+            lastSeen: data.status !== 'online' ? new Date(data.timestamp) : undefined
+          };
+        }
+        return friend;
+      });
+      
+      return {
+        userStatuses: newUserStatuses,
+        friends
+      };
+    });
+  });
+  
+  service.addEventListener('social_activity', (data: SocialActivity) => {
+    // Add to social activities list
+    set(state => ({
+      socialActivities: [...state.socialActivities, data].slice(-20) // Keep only most recent 20
+    }));
+  });
+  
   return {
     // Initial state
     service,
@@ -148,6 +215,8 @@ export const useMultiplayer = create<MultiplayerState>((set, get) => {
     friendRequests: [],
     friends: [],
     mutedPlayers: [],
+    socialActivities: [],
+    userStatuses: new Map<string, UserStatus>(),
     voiceChatEnabled: false,
     activeSpeakers: [],
     
@@ -190,6 +259,11 @@ export const useMultiplayer = create<MultiplayerState>((set, get) => {
       // Find the request
       const request = get().friendRequests.find(req => req.id === requestId);
       if (!request) return;
+      
+      // Send acceptance message to the server
+      if (request.senderId) {
+        service.sendFriendResponse(request.senderId, true);
+      }
       
       // Add to friends list
       set(state => ({
@@ -259,6 +333,37 @@ export const useMultiplayer = create<MultiplayerState>((set, get) => {
     
     getClientId: () => {
       return get().clientId;
+    },
+    
+    // Reject a friend request
+    rejectFriendRequest: (requestId) => {
+      // Find the request
+      const request = get().friendRequests.find(req => req.id === requestId);
+      if (!request) return;
+      
+      // Send rejection message and remove request from list
+      if (request.senderId) {
+        service.sendFriendResponse(request.senderId, false);
+      }
+      
+      set(state => ({
+        friendRequests: state.friendRequests.filter(req => req.id !== requestId)
+      }));
+    },
+    
+    // Update user status
+    updateUserStatus: (status) => {
+      service.updateUserStatus(status);
+    },
+    
+    // Get user's status
+    getUserStatus: (userId) => {
+      return get().userStatuses.get(userId);
+    },
+    
+    // Share social activity
+    shareSocialActivity: (type, details) => {
+      service.shareSocialActivity(type, details);
     }
   };
 });

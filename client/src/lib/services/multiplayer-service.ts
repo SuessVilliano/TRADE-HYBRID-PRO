@@ -37,6 +37,31 @@ export interface FriendRequest {
   timestamp: number;
 }
 
+export interface FriendResponse {
+  id: string;
+  senderId: string;
+  senderUsername: string;
+  targetId: string;
+  accepted: boolean;
+  timestamp: number;
+}
+
+export interface UserStatus {
+  id: string;
+  username: string;
+  status: 'online' | 'away' | 'busy' | 'offline';
+  timestamp: number;
+}
+
+export interface SocialActivity {
+  id: string;
+  userId: string;
+  username: string;
+  type: 'achievement' | 'trade' | 'level_up' | 'signal_shared';
+  details: string;
+  timestamp: number;
+}
+
 type WSMessageType = 
   | 'player_update' 
   | 'chat_message' 
@@ -45,9 +70,12 @@ type WSMessageType =
   | 'initial_state' 
   | 'trade_offer' 
   | 'friend_request' 
-  | 'ping'
+  | 'friend_response'
   | 'voice_status'
-  | 'voice_data';
+  | 'voice_data'
+  | 'ping'
+  | 'user_status' 
+  | 'social_activity';
 
 interface WSMessage {
   type: WSMessageType;
@@ -73,8 +101,8 @@ export class MultiplayerService {
     // Private constructor to enforce singleton pattern
     for (const type of [
       'player_update', 'chat_message', 'join', 'leave', 
-      'initial_state', 'trade_offer', 'friend_request', 'ping',
-      'voice_status', 'voice_data'
+      'initial_state', 'trade_offer', 'friend_request', 'friend_response',
+      'voice_status', 'voice_data', 'ping', 'user_status', 'social_activity'
     ] as WSMessageType[]) {
       this.eventListeners.set(type, []);
     }
@@ -341,6 +369,15 @@ export class MultiplayerService {
         case 'friend_request':
           this.handleFriendRequest(message.data);
           break;
+        case 'friend_response':
+          this.handleFriendResponse(message.data);
+          break;
+        case 'user_status':
+          this.handleUserStatus(message.data);
+          break;
+        case 'social_activity':
+          this.handleSocialActivity(message.data);
+          break;
         case 'voice_status':
           // Notify subscribers about voice status change
           this.notifyEventListeners('voice_status', {
@@ -431,6 +468,90 @@ export class MultiplayerService {
   
   private handleFriendRequest(data: FriendRequest): void {
     // Just forward to event listeners
+  }
+  
+  private handleFriendResponse(data: FriendResponse): void {
+    // Just forward to event listeners
+    console.log(`Friend response received from ${data.senderUsername}: ${data.accepted ? 'accepted' : 'declined'}`);
+  }
+  
+  private handleUserStatus(data: UserStatus): void {
+    // Update player status in UI
+    console.log(`User status update: ${data.username} is now ${data.status}`);
+  }
+  
+  private handleSocialActivity(data: SocialActivity): void {
+    // Display social activity notification
+    console.log(`Social activity: ${data.username} - ${data.type}: ${data.details}`);
+    
+    // For significant achievements, we could show a toast notification
+    if (data.type === 'achievement' || data.type === 'level_up') {
+      // In a real implementation, we would show a toast notification here
+    }
+  }
+  
+  /**
+   * Response to a friend request
+   * @param targetId The ID of the friend request sender
+   * @param accepted Whether the request was accepted
+   */
+  public sendFriendResponse(targetId: string, accepted: boolean): void {
+    if (!this.connected || !this.socket) {
+      return;
+    }
+    
+    const friendResponse: WSMessage = {
+      type: 'friend_response',
+      data: {
+        targetId,
+        accepted,
+        timestamp: Date.now()
+      }
+    };
+    
+    this.socket.send(JSON.stringify(friendResponse));
+  }
+  
+  /**
+   * Update the user's status
+   * @param status The new status ('online', 'away', 'busy', 'offline')
+   */
+  public updateUserStatus(status: 'online' | 'away' | 'busy' | 'offline'): void {
+    if (!this.connected || !this.socket) {
+      return;
+    }
+    
+    const userStatus: WSMessage = {
+      type: 'user_status',
+      data: {
+        status,
+        timestamp: Date.now()
+      }
+    };
+    
+    this.socket.send(JSON.stringify(userStatus));
+  }
+  
+  /**
+   * Share a social activity
+   * @param type The type of activity
+   * @param details Details of the activity
+   */
+  public shareSocialActivity(type: 'achievement' | 'trade' | 'level_up' | 'signal_shared', details: string): void {
+    if (!this.connected || !this.socket) {
+      return;
+    }
+    
+    const socialActivity: WSMessage = {
+      type: 'social_activity',
+      data: {
+        type,
+        details,
+        timestamp: Date.now()
+      }
+    };
+    
+    this.socket.send(JSON.stringify(socialActivity));
   }
   
   private notifyEventListeners(type: WSMessageType, data: any): void {

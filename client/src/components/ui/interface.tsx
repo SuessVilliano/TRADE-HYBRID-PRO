@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useGame } from "@/lib/stores/useGame";
 import { useAudio } from "@/lib/stores/useAudio";
+import { useMultiplayer } from "@/lib/stores/useMultiplayer";
 import { Button } from "./button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
 //import { Confetti } from "../game/Confetti"; // Uncomment if this component exists
@@ -9,6 +10,7 @@ import { AugmentedReality } from "./augmented-reality";
 import { PlayerCustomizer } from "./player-customizer";
 import { GameSidebar } from "./game-sidebar";
 import { Chat } from "./chat";
+import { UserStatusManager } from "./user-status-manager";
 import { toast } from "sonner";
 
 interface InterfaceProps {
@@ -20,9 +22,9 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
   const restart = useGame((state) => state.restart);
   const phase = useGame((state) => state.phase);
   const { isMuted, toggleMute } = useAudio();
+  const { toggleVoiceChat, voiceChatEnabled } = useMultiplayer();
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [showMapState, setShowMapState] = useState(false);
-  const [micEnabled, setMicEnabled] = useState(false);
   const [chatMinimized, setChatMinimized] = useState(true);
   const [showChat, setShowChat] = useState(false);
   const [showAR, setShowAR] = useState(false);
@@ -113,6 +115,8 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
       <GameSidebar />
       {/* Top-right corner UI controls */}
       <div className="fixed top-4 right-4 flex gap-2 z-10">
+        <UserStatusManager className="mr-1" />
+        
         <Button
           variant="outline"
           size="icon"
