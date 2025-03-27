@@ -19,6 +19,7 @@ import { ShowTradingTipButton, useTradingTips } from "./trading-tips";
 import { ShowTradingEducationButton, TradingEducation } from "./trading-education";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-is-mobile";
+import { FixedMobileExit } from "./fixed-mobile-exit";
 
 interface InterfaceProps {
   showMapOverride?: boolean;
@@ -152,6 +153,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
 
   return (
     <>
+    <FixedMobileExit />
     <div>
       {/* Guide Tour Launcher */}
       <GuideTourLauncher title="Tour Guide" />
