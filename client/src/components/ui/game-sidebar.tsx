@@ -3,6 +3,8 @@ import { Button } from './button';
 import { SimpleWalletButton } from './simple-wallet-button';
 import { SimpleAffiliateSystem } from './simple-affiliate-system';
 import { TradeRunner } from './trade-runner';
+import { LivestreamTV } from './livestream-tv';
+import { CryptoSwap } from './crypto-swap';
 import { Label } from './label';
 import { Slider } from './slider';
 import { Input } from './input';
@@ -45,7 +47,9 @@ import {
   Gamepad2,
   Maximize2,
   Share2,
-  Copy
+  Copy,
+  Tv,
+  Coins
 } from 'lucide-react';
 import TradingViewWidget from './TradingViewWidget';
 import { ContextualTooltip } from './contextual-tooltip';
@@ -100,6 +104,14 @@ export function GameSidebar() {
           // For the game, we'll still open it in a new tab
           window.open('/game', '_blank');
           break;
+        case 'tv':
+          // Open Livestream TV in a new tab
+          window.open('https://tv.tradehybrid.club', '_blank');
+          break;
+        case 'crypto':
+          // Open Crypto Swap in a new tab
+          window.open('https://raydium.io/swap/?inputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&outputMint=5GedhKVXeyEM7Tun4rTu8mF56PSF9brdbD3t2LEUQxTL', '_blank');
+          break;
         default:
           openWebApp();
       }
@@ -146,6 +158,12 @@ export function GameSidebar() {
           break;
         case 'webapp':
           openWebApp('https://app.tradehybrid.co');
+          break;
+        case 'tv':
+          console.log("Opening LivestreamTV component");
+          break;
+        case 'crypto':
+          console.log("Opening CryptoSwap component");
           break;
       }
     }
@@ -349,6 +367,42 @@ export function GameSidebar() {
               >
                 <Gamepad2 className="h-4 w-4 mr-2 flex-shrink-0" />
                 {isExpanded && <span>Trade Runner</span>}
+              </Button>
+            </ContextualTooltip>
+            
+            {/* Livestream TV */}
+            <ContextualTooltip
+              id="tv-tooltip"
+              title="Livestream TV"
+              content="Watch the latest trading livestreams and educational content"
+              position="right"
+            >
+              <Button
+                variant={activeTab === 'tv' ? 'default' : 'ghost'}
+                size={isExpanded ? 'default' : 'icon'}
+                className={`w-full justify-start ${isExpanded ? '' : 'flex justify-center'}`}
+                onClick={() => handleTabClick('tv')}
+              >
+                <Tv className="h-4 w-4 mr-2 flex-shrink-0" />
+                {isExpanded && <span>Livestream TV</span>}
+              </Button>
+            </ContextualTooltip>
+            
+            {/* Crypto Swap */}
+            <ContextualTooltip
+              id="crypto-tooltip"
+              title="Crypto Swap"
+              content="Swap cryptocurrencies directly within the platform"
+              position="right"
+            >
+              <Button
+                variant={activeTab === 'crypto' ? 'default' : 'ghost'}
+                size={isExpanded ? 'default' : 'icon'}
+                className={`w-full justify-start ${isExpanded ? '' : 'flex justify-center'}`}
+                onClick={() => handleTabClick('crypto')}
+              >
+                <Coins className="h-4 w-4 mr-2 flex-shrink-0" />
+                {isExpanded && <span>Crypto Swap</span>}
               </Button>
             </ContextualTooltip>
           </div>
@@ -601,6 +655,46 @@ export function GameSidebar() {
                     </Button>
                   </div>
                   <SimpleWalletButton />
+                </div>
+              )}
+              
+              {activeTab === 'tv' && (
+                <div className="space-y-2 p-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">Livestream TV</h3>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-7 px-2 flex items-center gap-1" 
+                      onClick={() => window.open('https://tv.tradehybrid.club', '_blank')}
+                    >
+                      <Maximize2 className="h-3 w-3" />
+                      <span className="text-xs">Open TV</span>
+                    </Button>
+                  </div>
+                  <div className="border rounded-md overflow-hidden">
+                    <LivestreamTV className="w-full h-[200px]" />
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === 'crypto' && (
+                <div className="space-y-2 p-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">Crypto Swap</h3>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-7 px-2 flex items-center gap-1" 
+                      onClick={() => window.open('https://raydium.io/swap/?inputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&outputMint=5GedhKVXeyEM7Tun4rTu8mF56PSF9brdbD3t2LEUQxTL', '_blank')}
+                    >
+                      <Maximize2 className="h-3 w-3" />
+                      <span className="text-xs">Raydium</span>
+                    </Button>
+                  </div>
+                  <div className="border rounded-md overflow-hidden p-2">
+                    <CryptoSwap className="w-full" />
+                  </div>
                 </div>
               )}
               

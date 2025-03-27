@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from './button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
+import { Separator } from './separator';
 import { toast } from 'sonner';
 import { ContextualTooltip } from './contextual-tooltip';
 
@@ -234,13 +235,58 @@ export function WalletConnect() {
                 </TabsContent>
               </Tabs>
               
-              <div className="flex justify-end mt-4 gap-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => setShowWalletOptions(false)}
-                >
-                  Cancel
-                </Button>
+              <div className="flex flex-col mt-4 gap-4">
+                <Separator />
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm font-medium">Quick Wallet Options</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex items-center justify-center gap-2"
+                      onClick={() => window.open('https://dial.to/?action=solana-action:https://dial.to/?action=solana-action:https://blink.hel.io/v1/blink/66ee6ff95a1168cdc294adcb', '_blank')}
+                    >
+                      <svg 
+                        width="18" 
+                        height="18" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="text-blue-500"
+                        style={{ fill: 'currentColor' }}
+                      >
+                        <path d="M21.64,10.33c-0.59-2.29-2.03-4.2-4.05-5.46C15.57,3.61,13.07,3.07,10.7,3.37 c-2.38,0.3-4.51,1.45-6,3.21C3.22,8.34,2.48,10.63,2.62,13c0.11,1.97,0.84,3.8,2.06,5.26c1.22,1.46,2.86,2.49,4.73,2.9 c0.68,0.16,1.4,0.24,2.15,0.24c1.93,0,3.76-0.55,5.3-1.52c1.54-0.97,2.77-2.37,3.53-4.02C21.15,14.22,21.41,12.25,21.64,10.33z M19.45,15.08c-0.53,1.61-1.68,2.96-3.18,3.82c-1.49,0.86-3.28,1.18-5.02,0.9c-1.74-0.28-3.33-1.13-4.49-2.39 c-1.16-1.26-1.86-2.92-1.97-4.74c-0.18-2.9,1.35-5.65,3.95-7.16c1.32-0.77,2.85-1.17,4.43-1.17c0.28,0,0.56,0.01,0.84,0.04 c2.37,0.23,4.5,1.54,5.84,3.56c0.01,0.01,0.02,0.02,0.02,0.03L13.37,10.45c-0.47,0.24-0.95,0.47-1.43,0.71 c0.38,0.75,0.76,1.5,1.14,2.26c0.75-0.38,1.5-0.75,2.25-1.13l4.1,0.85C19.44,13.1,19.47,14.09,19.45,15.08z" />
+                      </svg>
+                      <span>Google Wallet</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex items-center justify-center gap-2"
+                      onClick={() => window.open('https://raydium.io/swap/?inputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&outputMint=5GedhKVXeyEM7Tun4rTu8mF56PSF9brdbD3t2LEUQxTL', '_blank')}
+                    >
+                      <svg 
+                        width="18" 
+                        height="18" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M9.5 14.5L12.5 8.5L15.5 14.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M7 17.5L17 17.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span>Trade $THY</span>
+                    </Button>
+                  </div>
+                </div>
+                <Separator />
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setShowWalletOptions(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
