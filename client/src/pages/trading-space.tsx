@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Scene from "@/components/game/Scene";
 import { HUD } from "@/components/ui/hud";
+import ErrorBoundary from "@/components/ui/error-boundary";
 import { Button } from "@/components/ui/button";
 import { MarketChart } from "@/components/ui/market-chart";
 import { NewsFeed } from "@/components/ui/news-feed";
@@ -171,7 +172,11 @@ export default function TradingSpace() {
       
     switch (activePanel) {
       case "market":
-        return <MarketChart className="h-full" symbol={effectiveSymbol} />;
+        return (
+          <ErrorBoundary>
+            <MarketChart className="h-full" symbol={effectiveSymbol} />
+          </ErrorBoundary>
+        );
       case "news":
         return <NewsFeed className="h-full" />;
       case "trade":
@@ -254,7 +259,11 @@ export default function TradingSpace() {
           </div>
         );
       default:
-        return <MarketChart className="h-full" />;
+        return (
+          <ErrorBoundary>
+            <MarketChart className="h-full" />
+          </ErrorBoundary>
+        );
     }
   };
   

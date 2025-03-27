@@ -1,5 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createChart, ColorType, IChartApi, SeriesType } from 'lightweight-charts';
+// Using type assertion to work around the TypeScript definition limitations in the library
+type ExtendedChartApi = IChartApi & {
+  addCandlestickSeries: (options?: any) => any;
+};
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMarketData } from "@/lib/stores/useMarketData";
@@ -16,7 +20,7 @@ export function MarketChart({
   symbol = "BTCUSD" 
 }: MarketChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
-  const chart = useRef<IChartApi | null>(null);
+  const chart = useRef<any>(null);
   const candleSeries = useRef<any>(null);
   const { 
     marketData, 
@@ -51,6 +55,10 @@ export function MarketChart({
         },
         width: chartContainerRef.current.clientWidth,
         height: 300,
+        timeScale: {
+          timeVisible: true,
+          secondsVisible: false,
+        }
       });
       
       // Adjust chart size on window resize
@@ -78,37 +86,82 @@ export function MarketChart({
   // Update data when marketData changes
   useEffect(() => {
     if (chart.current && marketData.length > 0) {
-      // If we haven't initialized the chart with data yet
-      if (!isChartInitialized) {
-        // Create a new series for the price data
-        // Workaround for TypeScript type issue with lightweight-charts
-        const mainSeries = (chart.current as any).addCandlestickSeries({
-          upColor: '#26a69a',
-          downColor: '#ef5350',
-          borderVisible: false,
-          wickUpColor: '#26a69a',
-          wickDownColor: '#ef5350',
-        });
+      try {
+        // If we haven't initialized the chart with data yet
+        if (!isChartInitialized) {
+          // Create a new series for the price data
+          // Use type assertion to cast to our extended interface type
+          const mainSeries = (chart.current as any).addCandlestickSeries({
+            upColor: '#26a69a',
+            downColor: '#ef5350',
+            borderVisible: false,
+            wickUpColor: '#26a69a',
+            wickDownColor: '#ef5350',
+          });
+          
+          // Store the series reference for later updates
+          candleSeries.current = mainSeries;
+          
+          // Format the market data for the chart
+          const formattedData = marketData.map(candle => ({
+            time: candle.time,
+            open: candle.open,
+            high: candle.high,
+            low: candle.low,
+            close: candle.close
+          }));
+          
+          // Add the initial data
+          mainSeries.setData(formattedData);
+          
+          // Fit content to ensure all data is visible
+          chart.current.timeScale().fitContent();
+          
+          // Mark chart as initialized
+          setIsChartInitialized(true);
+          console.log('Chart initialized with data:', formattedData.length, 'candles');
+        } 
+        // If we already have a chart with data, just update the last candle
+        else if (candleSeries.current) {
+          // Get the latest data point
+          const latestPoint = marketData[marketData.length - 1];
+          
+          // Update the last candle with the latest data
+          candleSeries.current.update({
+            time: latestPoint.time,
+            open: latestPoint.open,
+            high: latestPoint.high,
+            low: latestPoint.low,
+            close: latestPoint.close
+          });
+        }
+      } catch (error) {
+        console.error('Error updating chart:', error);
         
-        // Store the series reference for later updates
-        candleSeries.current = mainSeries;
-        
-        // Add the initial data
-        mainSeries.setData(marketData);
-        
-        // Fit content to ensure all data is visible
-        chart.current.timeScale().fitContent();
-        
-        // Mark chart as initialized
-        setIsChartInitialized(true);
-      } 
-      // If we already have a chart with data, just update the last candle
-      else if (candleSeries.current) {
-        // Get the latest data point
-        const latestPoint = marketData[marketData.length - 1];
-        
-        // Update the last candle with the latest data
-        candleSeries.current.update(latestPoint);
+        // If there's an error with the chart, try to recreate it
+        if (chartContainerRef.current && chart.current) {
+          chart.current.remove();
+          
+          const newChart = createChart(chartContainerRef.current, {
+            layout: {
+              background: { type: ColorType.Solid, color: 'transparent' },
+              textColor: '#D9D9D9',
+            },
+            grid: {
+              vertLines: { color: 'rgba(42, 46, 57, 0.5)' },
+              horzLines: { color: 'rgba(42, 46, 57, 0.5)' },
+            },
+            width: chartContainerRef.current.clientWidth,
+            height: 300,
+            timeScale: {
+              timeVisible: true,
+              secondsVisible: false,
+            }
+          });
+          
+          chart.current = newChart;
+          setIsChartInitialized(false);
+        }
       }
     }
   }, [marketData, isChartInitialized]);

@@ -20,7 +20,11 @@ enum Controls {
   jump = 'jump',
 }
 
-export default function Scene() {
+interface SceneProps {
+  showStats?: boolean;
+}
+
+export default function Scene({ showStats = true }: SceneProps) {
   // Define key mappings for controls
   const keyMap = [
     { name: Controls.forward, keys: ['ArrowUp', 'KeyW'] },
@@ -40,7 +44,7 @@ export default function Scene() {
           camera={{ position: [10, 10, 10], fov: 50 }}
           style={{ background: '#87CEEB' }}
         >
-          <Stats />
+          {showStats && <Stats />}
           <fog attach="fog" args={['#87CEEB', 30, 100]} />
           <Sky sunPosition={[100, 10, 100]} />
           
