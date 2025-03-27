@@ -5,7 +5,7 @@ import { useMultiplayer } from "@/lib/stores/useMultiplayer";
 import { Button } from "./button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
 //import { Confetti } from "../game/Confetti"; // Uncomment if this component exists
-import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map, Mic, MicOff, MessageSquare, Smartphone, LineChart, BarChart2, ChevronUp, ChevronDown, Settings, Sparkles, Lightbulb } from "lucide-react";
+import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map, Mic, MicOff, MessageSquare, Smartphone, LineChart, BarChart2, ChevronUp, ChevronDown, Settings, Sparkles, Lightbulb, GraduationCap } from "lucide-react";
 import { AugmentedReality } from "./augmented-reality";
 import { PlayerCustomizer } from "./player-customizer";
 import { GameSidebar } from "./game-sidebar";
@@ -16,6 +16,7 @@ import { AIAssistant } from "./ai-assistant";
 import { PopupManager } from "./popup-manager";
 import { GuideTourLauncher } from "./contextual-tooltip";
 import { ShowTradingTipButton, useTradingTips } from "./trading-tips";
+import { ShowTradingEducationButton, TradingEducation } from "./trading-education";
 import { toast } from "sonner";
 
 interface InterfaceProps {
@@ -36,6 +37,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
   const [showAR, setShowAR] = useState(false);
   const [showTradingTools, setShowTradingTools] = useState(false);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [showEducation, setShowEducation] = useState(false);
   const [controlsMinimized, setControlsMinimized] = useState(false);
 
   // Use either the internal state or the external override prop
@@ -109,12 +111,25 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
           description: "Showing a helpful trading tip",
           duration: 2000,
         });
+      } else if (e.key.toLowerCase() === 'e') {
+        setShowEducation(prev => !prev);
+        if (showEducation) {
+          toast("Education Hub closed", {
+            description: "Press E to reopen the Education Hub",
+            duration: 2000,
+          });
+        } else {
+          toast("Education Hub opened", {
+            description: "Press E to close the Education Hub",
+            duration: 2000,
+          });
+        }
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showChat, voiceChatEnabled, toggleVoiceChat, controlsMinimized, showAIAssistant, showTip]);
+  }, [showChat, voiceChatEnabled, toggleVoiceChat, controlsMinimized, showAIAssistant, showTip, showEducation]);
   
   // Auto-hide controls after initial display
   useEffect(() => {
@@ -287,6 +302,10 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
               </Button>
               
               <ShowTradingTipButton />
+              
+              <ShowTradingEducationButton 
+                onClick={() => setShowEducation(!showEducation)} 
+              />
             </div>
           </div>
         </div>
@@ -521,6 +540,30 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
         </div>
       )}
       
+      {/* Trading Education Panel */}
+      {showEducation && (
+        <div className="fixed inset-0 flex items-center justify-center z-20 bg-black/50 backdrop-blur-sm">
+          <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-lg w-[90%] max-w-6xl max-h-[90vh] overflow-auto">
+            <div className="sticky top-0 p-4 flex justify-between items-center border-b bg-background z-10">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <GraduationCap className="h-6 w-6 text-primary" />
+                <span>Trading Education Hub</span>
+              </h2>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setShowEducation(false)}
+              >
+                <X size={20} />
+              </Button>
+            </div>
+            <div className="overflow-auto">
+              <TradingEducation />
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Chat Panel */}
       {showChat && (
         <div className="fixed bottom-4 right-4 z-10">
@@ -550,7 +593,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
               <li>Space: Jump</li>
               <li>Double-tap movement key: Sprint</li>
               <li>Right mouse button: Rotate camera</li>
-              <li>E: Interact</li>
+              <li>E: Interact / Toggle Education Hub</li>
               <li>M: Toggle map</li>
               <li>T: Toggle microphone</li>
               <li>C: Toggle chat</li>
