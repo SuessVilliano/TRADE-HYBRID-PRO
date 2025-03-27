@@ -272,14 +272,9 @@ export function TradeJournalPopup({
   if (!isOpen) return null;
 
   return (
-    <PopupContainer className="p-0">
+    <PopupContainer className="p-0" title="Trading Journal" onClose={onClose} showCloseButton={true}>
       <div className="bg-background rounded-lg shadow-lg w-full h-[80vh] flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-semibold">Trading Journal</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+        {/* Header is now handled by PopupContainer */}
         
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
           {/* Left panel: Trade history */}

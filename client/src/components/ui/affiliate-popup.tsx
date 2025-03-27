@@ -77,14 +77,8 @@ export function AffiliatePopup({
   if (!isOpen) return null;
 
   return (
-    <PopupContainer className="p-0">
+    <PopupContainer className="p-0" title="Affiliate Program" onClose={onClose} showCloseButton={true}>
       <div className="bg-background rounded-lg shadow-lg w-full h-[80vh] flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-semibold">Affiliate Program</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
         
         <Tabs defaultValue={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
           <div className="border-b px-4">

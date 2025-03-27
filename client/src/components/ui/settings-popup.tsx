@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { Slider } from './slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 import { useAudio } from '@/lib/stores/useAudio';
+import { PopupContainer } from './popup-container';
 
 /**
  * Settings Popup Component
@@ -138,14 +139,8 @@ export function SettingsPopup({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-background rounded-lg shadow-lg w-full max-w-3xl h-[80vh] flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-semibold">Settings</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+    <PopupContainer className="max-w-3xl" title="Settings" onClose={onClose} showCloseButton={true}>
+      <div className="bg-background rounded-lg shadow-lg w-full h-[80vh] flex flex-col">
         
         <Tabs defaultValue={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
           <div className="border-b px-4">
