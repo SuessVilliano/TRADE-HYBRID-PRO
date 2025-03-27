@@ -1,207 +1,186 @@
-import { useRef, useEffect, useState, Suspense } from "react";
-import { useFrame } from "@react-three/fiber";
-import { useKeyboardControls, OrbitControls, useGLTF } from "@react-three/drei";
-import * as THREE from "three";
-import { GLTF } from "three-stdlib";
-import { useMarketData } from "@/lib/stores/useMarketData";
-import { useTrader } from "@/lib/stores/useTrader";
-import { Html } from "@react-three/drei";
+import React, { useRef, useState, useEffect, Suspense } from 'react';
+import { useFrame } from '@react-three/fiber';
+import { useBox } from '@react-three/cannon';
+import { useGLTF, Text, Html } from '@react-three/drei';
+import * as THREE from 'three';
+import { GLTF } from 'three-stdlib';
 
-interface CryptoTradingProps {
-  position: [number, number, number];
-  rotation?: [number, number, number];
-  scale?: [number, number, number];
-  onInteract?: () => void;
-}
-
-// Preload the model
-useGLTF.preload('/models/trading_desk.glb');
-
-export default function CryptoTrading({
-  position = [0, 0, 0],
-  rotation = [0, 0, 0],
-  scale = [2.5, 2.5, 2.5],
-  onInteract
-}: CryptoTradingProps) {
-  const modelRef = useRef<THREE.Group>(null);
-  const [modelLoaded, setModelLoaded] = useState(false);
-  const [hovered, setHovered] = useState(false);
-  const [priceDisplay, setPriceDisplay] = useState("Loading...");
-  const { currentPrice, symbol } = useMarketData();
-  
-  // Load custom model
-  const { scene: tradingDeskModel } = useGLTF('/models/trading_desk.glb') as GLTF & {
-    scene: THREE.Group
+// Typing for our GLB model
+type GLTFResult = GLTF & {
+  nodes: {
+    [key: string]: THREE.Mesh;
   };
+  materials: {
+    [key: string]: THREE.Material;
+  };
+};
 
-  // Clone the model to avoid mutations affecting other instances
-  const model = tradingDeskModel.clone();
+// Bitcoin price display component
+function BitcoinPrice({ position }: { position: [number, number, number] }) {
+  const [price, setPrice] = useState(42567.89);
+  const [trend, setTrend] = useState<'up' | 'down' | 'neutral'>('neutral');
+  const textRef = useRef<THREE.Mesh>(null!);
   
-  // Update when model loads
-  useEffect(() => {
-    if (model) {
-      setModelLoaded(true);
-      console.log("Crypto trading desk model loaded successfully");
-    }
-  }, [model]);
-
-  // Customize model materials for crypto theme
-  useEffect(() => {
-    if (modelLoaded && modelRef.current) {
-      modelRef.current.traverse((child) => {
-        if (child instanceof THREE.Mesh && child.material) {
-          // Customize screen materials to show crypto colors
-          if (child.name.includes('screen') || child.name.includes('monitor')) {
-            if (child.material instanceof THREE.MeshStandardMaterial) {
-              // Set screen to orange/blue crypto theme
-              child.material.emissive = new THREE.Color('#ff9900');
-              child.material.emissiveIntensity = 0.8;
-            }
-          }
-          
-          // Make the desk more metallic for a crypto vibe
-          if (child.name.includes('desk') || child.name.includes('base')) {
-            if (child.material instanceof THREE.MeshStandardMaterial) {
-              child.material.metalness = 0.8;
-              child.material.roughness = 0.2;
-              child.material.color = new THREE.Color('#444455');
-            }
-          }
-          
-          // Set up shadows
-          child.castShadow = true;
-          child.receiveShadow = true;
-        }
-      });
-    }
-  }, [modelLoaded]);
-
-  // Update price display
-  useEffect(() => {
-    if (currentPrice > 0) {
-      // Format the price with proper formatting
-      setPriceDisplay(`${symbol}: $${currentPrice.toLocaleString('en-US', { 
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })}`);
-    }
-  }, [currentPrice, symbol]);
-  
-  // Animate model (subtle breathing/floating effect)
-  useFrame((_, delta) => {
-    if (modelRef.current) {
-      // Apply subtle floating animation
-      modelRef.current.position.y = position[1] + Math.sin(Date.now() * 0.001) * 0.05;
+  // Update Bitcoin price periodically
+  useFrame(({ clock }) => {
+    const time = clock.getElapsedTime();
+    
+    // Update price every 2 seconds with some random movement
+    if (Math.floor(time) % 2 === 0 && Math.floor(time) !== Math.floor(time - 0.1)) {
+      const change = (Math.random() - 0.5) * 200;
+      const newPrice = price + change;
+      setPrice(newPrice);
+      setTrend(change > 0 ? 'up' : change < 0 ? 'down' : 'neutral');
       
-      // Pulse the screen brightness based on price movement
-      modelRef.current.traverse((child) => {
-        if (child instanceof THREE.Mesh && 
-            child.material instanceof THREE.MeshStandardMaterial && 
-            (child.name.includes('screen') || child.name.includes('monitor'))) {
-          
-          // Pulse based on whether hovered or not
-          const targetIntensity = hovered ? 1.2 : 0.8;
-          child.material.emissiveIntensity += (targetIntensity - child.material.emissiveIntensity) * delta * 2;
-        }
-      });
+      // Log price change for debugging
+      console.log(`Bitcoin price updated: ${newPrice.toFixed(2)}, trend: ${trend}`);
+    }
+    
+    // Add subtle floating animation to the text
+    if (textRef.current) {
+      textRef.current.position.y = position[1] + Math.sin(time * 2) * 0.05;
     }
   });
-
-  // Handle interaction
-  const handleClick = () => {
-    if (onInteract) {
-      onInteract();
-    } else {
-      // Default behavior: navigate to crypto trading page
-      window.location.href = '/trading-space?location=crypto';
+  
+  // Color based on price trend
+  const getColor = () => {
+    switch (trend) {
+      case 'up':
+        return '#00ff00';
+      case 'down':
+        return '#ff0000';
+      case 'neutral':
+      default:
+        return '#ffffff';
     }
   };
   
   return (
-    <group
-      ref={modelRef}
-      position={new THREE.Vector3(...position)}
-      rotation={new THREE.Euler(...rotation)}
-      scale={new THREE.Vector3(...scale)}
-      onClick={handleClick}
-      onPointerOver={() => setHovered(true)}
-      onPointerOut={() => setHovered(false)}
-    >
-      {modelLoaded ? (
-        <Suspense fallback={
-          <mesh castShadow>
-            <boxGeometry args={[1, 1, 1]} />
-            <meshStandardMaterial color="#FFFFFF" />
-          </mesh>
-        }>
+    <group position={position} ref={textRef}>
+      <Text
+        color={getColor()}
+        fontSize={0.5}
+        maxWidth={10}
+        lineHeight={1}
+        textAlign="center"
+        font="/fonts/Inter-Bold.woff"
+        anchorX="center"
+        anchorY="middle"
+      >
+        {`BTC $${price.toFixed(2)}`}
+      </Text>
+      
+      <Text
+        position={[0, -0.6, 0]}
+        color="white"
+        fontSize={0.2}
+        maxWidth={10}
+        lineHeight={1}
+        textAlign="center"
+        font="/fonts/Inter-Medium.woff"
+        anchorX="center"
+        anchorY="middle"
+      >
+        Live Crypto Trading
+      </Text>
+    </group>
+  );
+}
+
+// Main CryptoTrading component
+export function CryptoTrading(props: any) {
+  const [ref] = useBox(() => ({
+    type: 'Static',
+    position: props.position || [0, 0, 0],
+    args: [4, 2, 4],
+    ...props
+  }));
+  
+  const [modelLoaded, setModelLoaded] = useState(false);
+  const [model, setModel] = useState<THREE.Group | null>(null);
+  
+  // Preload the model on component first mount
+  useEffect(() => {
+    // Preload the desk model
+    useGLTF.preload('/models/trading_desk.glb');
+  }, []);
+  
+  // Load the trading desk model
+  useEffect(() => {
+    try {
+      // Use the preloaded model
+      const gltf = useGLTF('/models/trading_desk.glb');
+      
+      if (gltf && gltf.scene) {
+        // Clone the model to avoid issues
+        const modelClone = gltf.scene.clone();
+        
+        // Scale and position adjustments
+        modelClone.scale.set(1.5, 1.5, 1.5);
+        modelClone.position.set(0, 0, 0);
+        
+        // Enable shadows
+        modelClone.traverse((child: THREE.Object3D) => {
+          if (child instanceof THREE.Mesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+        
+        setModel(modelClone);
+        setModelLoaded(true);
+        console.log("Trading desk model loaded successfully");
+      } else {
+        console.error("Trading desk model scene is undefined");
+        setModelLoaded(false);
+      }
+    } catch (error) {
+      console.error("Error in trading desk model loading:", error);
+      setModelLoaded(false);
+    }
+  }, []);
+  
+  // Trading desk with monitors/screens
+  return (
+    <group>
+      <group ref={ref as any}>
+        {modelLoaded && model ? (
           <primitive object={model} />
-          
-          {/* Add floating price display */}
-          <Html
-            position={[0, 2, 0]}
-            center
-            distanceFactor={10}
-            sprite
-          >
-            <div className="bg-black/80 text-white px-3 py-1 rounded-md whitespace-nowrap text-center font-bold">
-              {priceDisplay}
-            </div>
-          </Html>
-          
-          {/* Add a floating Bitcoin logo */}
-          <mesh position={[0, 3, 0]} rotation={[0, 0, 0]}>
-            <cylinderGeometry args={[0.5, 0.5, 0.1, 32]} />
-            <meshStandardMaterial 
-              color="#ff9900" 
-              emissive="#ff9900"
-              emissiveIntensity={0.5}
-              metalness={1}
-              roughness={0.3}
-            />
-          </mesh>
-          
-          {/* Bitcoin symbol (simpler version using basic shapes) */}
-          <group position={[0, 3, 0.06]}>
-            <mesh position={[0, 0, 0]}>
-              <cylinderGeometry args={[0.25, 0.25, 0.05, 16]} />
-              <meshStandardMaterial 
-                color="#ffffff" 
-                emissive="#ffffff"
-                emissiveIntensity={1}
-              />
+        ) : (
+          // Fallback if model fails to load
+          <group>
+            {/* Base table */}
+            <mesh receiveShadow castShadow position={[0, 0.5, 0]}>
+              <boxGeometry args={[4, 1, 2]} />
+              <meshStandardMaterial color="#3a3a3a" />
             </mesh>
-            {/* Simplified B symbol using thin boxes */}
-            <mesh position={[0, 0, 0.03]}>
-              <boxGeometry args={[0.05, 0.3, 0.01]} />
-              <meshStandardMaterial color="#ff9900" />
+            
+            {/* Monitor stand */}
+            <mesh receiveShadow castShadow position={[0, 1.25, -0.5]}>
+              <boxGeometry args={[0.5, 0.5, 0.5]} />
+              <meshStandardMaterial color="#222222" />
             </mesh>
-            <mesh position={[0.05, 0.075, 0.03]}>
-              <boxGeometry args={[0.15, 0.05, 0.01]} />
-              <meshStandardMaterial color="#ff9900" />
+            
+            {/* Monitor screen */}
+            <mesh receiveShadow castShadow position={[0, 2, -0.5]}>
+              <boxGeometry args={[3, 1.5, 0.1]} />
+              <meshStandardMaterial color="#000000" emissive="#2a2a50" emissiveIntensity={0.5} />
             </mesh>
-            <mesh position={[0.05, -0.075, 0.03]}>
-              <boxGeometry args={[0.15, 0.05, 0.01]} />
-              <meshStandardMaterial color="#ff9900" />
+            
+            {/* Keyboard */}
+            <mesh receiveShadow castShadow position={[0, 1.05, 0.5]}>
+              <boxGeometry args={[2, 0.1, 0.8]} />
+              <meshStandardMaterial color="#111111" />
             </mesh>
           </group>
-        </Suspense>
-      ) : (
-        <mesh castShadow>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial color="#FFFFFF" />
-        </mesh>
-      )}
-      
-      {/* Add an interaction hitbox */}
-      <mesh 
-        visible={false} 
-        position={[0, 1, 0]} 
-        scale={[2, 2, 2]}
-        onClick={handleClick}
-      >
-        <boxGeometry args={[1, 1, 1]} />
-        <meshBasicMaterial transparent opacity={0} />
-      </mesh>
+        )}
+        
+        {/* Bitcoin price display above the desk */}
+        <BitcoinPrice position={[0, 3, 0]} />
+        
+        {/* Add lighting to highlight the trading desk */}
+        <pointLight position={[0, 3, 0]} intensity={0.8} color="#64c8ff" distance={10} />
+      </group>
     </group>
   );
 }

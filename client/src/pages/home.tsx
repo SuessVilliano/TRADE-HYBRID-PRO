@@ -5,21 +5,37 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { ArrowRightCircle, BarChart2, Bot, Building, CandlestickChart, Globe, Trophy, Wallet, Gamepad2 } from "lucide-react";
 import { TRADING_SYMBOLS } from "@/lib/constants";
-import { useAudio } from "@/lib/stores/useAudio";
-import { AudioInitializer, AudioPermissionDialog } from "@/components/ui/audio-initializer";
+import { AudioPermissionDialog } from "@/components/ui/audio-initializer";
+
+// Create placeholders for audio functions until the store is properly initialized
+const dummyAudio = {
+  isMuted: true,
+  toggleMute: () => console.log("Toggle mute called"),
+  setBackgroundMusic: () => console.log("Set background music called"),
+  setHitSound: () => console.log("Set hit sound called"),
+  setSuccessSound: () => console.log("Set success sound called"),
+  playSuccess: () => console.log("Play success called"),
+};
 
 export default function Home() {
   const [username, setUsername] = useState("Trader1");
-  const { isMuted, toggleMute } = useAudio();
+  const [isMuted, setIsMuted] = useState(true);
   const [showAudioPermission, setShowAudioPermission] = useState(false);
   
-  // Get state setters and actions from audio store
+  // Use our dummy audio functions
   const { 
+    toggleMute,
     setBackgroundMusic, 
     setHitSound, 
     setSuccessSound,
     playSuccess 
-  } = useAudio();
+  } = dummyAudio;
+  
+  // Create a local toggle function since we're not using the zustand store
+  const handleToggleMute = () => {
+    setIsMuted(!isMuted);
+    toggleMute();
+  };
   
   // Initialize audio assets
   useEffect(() => {

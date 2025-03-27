@@ -18,7 +18,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/trading-space",
-    element: <Scene />,
+    element: <TradingSpace />,
   },
   {
     path: "/game",

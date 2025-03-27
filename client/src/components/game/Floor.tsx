@@ -1,63 +1,90 @@
-import React, { useEffect } from 'react';
+import React, { useRef } from 'react';
+import { usePlane } from '@react-three/cannon';
+import { useFrame } from '@react-three/fiber';
+import { Plane, Grid } from '@react-three/drei';
 import * as THREE from 'three';
-import { useTexture } from '@react-three/drei';
 
-export default function Floor() {
-  // Log when floor is initialized
-  useEffect(() => {
-    console.log("Floor component mounted");
-    return () => console.log("Floor component unmounted");
-  }, []);
+export function Floor(props: any) {
+  // Physics body for the floor (static)
+  const [ref] = usePlane(() => ({ 
+    rotation: [-Math.PI / 2, 0, 0], 
+    position: [0, 0, 0],
+    type: 'Static'
+  }));
 
-  // Create a grid pattern
-  const gridSize = 100;
-  const gridDivisions = 50;
+  // Grid helper for better visual orientation
+  const gridRef = useRef<THREE.GridHelper>(null!);
+  
+  // Update grid with subtle animation
+  useFrame((state, delta) => {
+    if (gridRef.current) {
+      // Add slight wave effect to grid for visual interest
+      gridRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.02;
+    }
+  });
   
   return (
-    <>
-      {/* Main floor */}
-      <mesh 
-        rotation={[-Math.PI / 2, 0, 0]} 
-        position={[0, 0, 0]} 
-        receiveShadow
-      >
-        <planeGeometry args={[gridSize, gridSize]} />
-        <meshStandardMaterial 
-          color="#4a5568" 
-          roughness={0.7}
-          metalness={0.3}
-          emissive="#111111"
-          emissiveIntensity={0.1}
-        />
+    <group>
+      {/* Physical floor */}
+      <mesh ref={ref as any} receiveShadow>
+        <planeGeometry args={[100, 100]} />
+        <meshStandardMaterial color="#444444" />
       </mesh>
       
-      {/* Grid lines overlay */}
-      <gridHelper 
-        args={[gridSize, gridDivisions, '#2563eb', '#94a3b8']} 
+      {/* Visual floor enhancements */}
+      <Plane 
+        args={[100, 100]} 
+        rotation={[-Math.PI / 2, 0, 0]}
         position={[0, 0.01, 0]}
+        receiveShadow
+      >
+        <meshStandardMaterial 
+          color="#3a3a3a" 
+          roughness={0.8}
+          metalness={0.2}
+        />
+      </Plane>
+      
+      {/* Decorative grid overlay */}
+      <Grid
+        args={[100, 100, 100, 100]}
+        position={[0, 0.02, 0]}
+        cellColor="#666666"
+        sectionColor="#888888"
+        infiniteGrid
+        fadeDistance={50}
+        fadeStrength={1.5}
       />
       
-      {/* Central platform */}
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, 0.02, 0]}
-        receiveShadow
-      >
-        <circleGeometry args={[10, 32]} />
-        <meshStandardMaterial 
-          color="#1e40af" 
-          roughness={0.5}
-          metalness={0.5}
-          emissive="#1e3a8a"
-          emissiveIntensity={0.2}
-        />
-      </mesh>
+      {/* Add a center marker for orientation */}
+      <group position={[0, 0.03, 0]}>
+        <mesh>
+          <ringGeometry args={[1, 2, 32]} />
+          <meshBasicMaterial color="#ffff00" transparent opacity={0.5} />
+        </mesh>
+        <mesh>
+          <ringGeometry args={[3, 3.2, 32]} />
+          <meshBasicMaterial color="#ff6600" transparent opacity={0.3} />
+        </mesh>
+      </group>
       
-      {/* Debug position marker at origin */}
-      <mesh position={[0, 0.2, 0]}>
-        <boxGeometry args={[0.5, 0.1, 0.5]} />
-        <meshStandardMaterial color="red" />
-      </mesh>
-    </>
+      {/* Add some reference orientation lines */}
+      <group position={[0, 0.03, 0]}>
+        {/* X-axis (red) */}
+        <mesh position={[15, 0, 0]}>
+          <boxGeometry args={[30, 0.05, 0.05]} />
+          <meshBasicMaterial color="#ff0000" transparent opacity={0.5} />
+        </mesh>
+        
+        {/* Z-axis (blue) */}
+        <mesh position={[0, 0, 15]}>
+          <boxGeometry args={[0.05, 0.05, 30]} />
+          <meshBasicMaterial color="#0000ff" transparent opacity={0.5} />
+        </mesh>
+      </group>
+      
+      {/* Lighting optimization for floor highlight */}
+      <pointLight position={[0, 5, 0]} intensity={0.3} color="white" />
+    </group>
   );
 }
