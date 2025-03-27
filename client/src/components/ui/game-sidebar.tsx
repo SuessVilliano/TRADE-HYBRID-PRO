@@ -41,47 +41,52 @@ export function GameSidebar() {
   const { fetchSignals } = useSignals();
   const { fetchLeaderboard } = useLeaderboard();
   
-  // Function to open a feature in fullscreen via WebApp
+  // Function to open a feature in fullscreen via popup in the metaverse
   const openFullscreen = (tabId: string) => {
     try {
-      // For safety, ensure we have a base URL
-      const baseUrl = 'https://app.tradehybrid.co';
+      // First ensure the tab is active to load content
+      setActiveTab(tabId);
       
+      // Use custom events to trigger showing the content in a popup
+      // This keeps users in the metaverse instead of navigating to external URLs
       switch (tabId) {
         case 'journal':
-          window.open(`${baseUrl}/journal`, '_blank');
+          // Display the trade journal in a popup (similar to TradingView tools)
+          document.dispatchEvent(new CustomEvent('show-trade-journal-popup'));
           break;
         case 'bots':
-          window.open(`${baseUrl}/trading-bots`, '_blank');
+          document.dispatchEvent(new CustomEvent('show-bots-popup'));
           break;
         case 'signals':
-          window.open(`${baseUrl}/signals`, '_blank');
+          document.dispatchEvent(new CustomEvent('show-signals-popup'));
           break;
         case 'leaderboard':
-          window.open(`${baseUrl}/leaderboard`, '_blank');
+          document.dispatchEvent(new CustomEvent('show-leaderboard-popup'));
           break;
         case 'chat':
-          window.open(`${baseUrl}/community`, '_blank');
+          // Show chat directly in the interface
+          document.dispatchEvent(new CustomEvent('show-chat-popup'));
           break;
         case 'affiliate':
-          window.open(`${baseUrl}/affiliate`, '_blank');
+          document.dispatchEvent(new CustomEvent('show-affiliate-popup'));
           break;
         case 'wallet':
-          window.open(`${baseUrl}/wallet`, '_blank');
+          document.dispatchEvent(new CustomEvent('show-wallet-popup'));
           break;
         case 'settings':
-          window.open(`${baseUrl}/settings`, '_blank');
+          document.dispatchEvent(new CustomEvent('show-settings-popup'));
           break;
         case 'game':
+          // For the game, we'll still open it in a new tab
           window.open('/game', '_blank');
           break;
         default:
-          window.open(baseUrl, '_blank');
+          openWebApp();
       }
     } catch (error) {
-      console.error("Error opening fullscreen:", error);
-      // Fallback to just opening the base URL if there's an error
-      window.open('https://app.tradehybrid.co', '_blank');
+      console.error("Error opening fullscreen popup:", error);
+      // If there's an error, use the web app as fallback
+      openWebApp();
     }
   };
 

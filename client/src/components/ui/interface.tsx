@@ -5,13 +5,15 @@ import { useMultiplayer } from "@/lib/stores/useMultiplayer";
 import { Button } from "./button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
 //import { Confetti } from "../game/Confetti"; // Uncomment if this component exists
-import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map, Mic, MicOff, MessageSquare, Smartphone, LineChart, BarChart2, ChevronUp, ChevronDown, Settings } from "lucide-react";
+import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map, Mic, MicOff, MessageSquare, Smartphone, LineChart, BarChart2, ChevronUp, ChevronDown, Settings, Sparkles } from "lucide-react";
 import { AugmentedReality } from "./augmented-reality";
 import { PlayerCustomizer } from "./player-customizer";
 import { GameSidebar } from "./game-sidebar";
 import { Chat } from "./chat";
 import { UserStatusManager } from "./user-status-manager";
 import { TradingViewTools } from "./trading-view-tools";
+import { AIAssistant } from "./ai-assistant";
+import { PopupManager } from "./popup-manager";
 import { toast } from "sonner";
 
 interface InterfaceProps {
@@ -30,6 +32,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
   const [showChat, setShowChat] = useState(false);
   const [showAR, setShowAR] = useState(false);
   const [showTradingTools, setShowTradingTools] = useState(false);
+  const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [controlsMinimized, setControlsMinimized] = useState(false);
 
   // Use either the internal state or the external override prop
@@ -71,6 +74,19 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
       } else if (e.key.toLowerCase() === 'c') {
         setShowChat(prev => !prev);
         if (!showChat) setChatMinimized(false);
+      } else if (e.key.toLowerCase() === 'a') {
+        setShowAIAssistant(prev => !prev);
+        if (showAIAssistant) {
+          toast("AI Assistant closed", {
+            description: "Press A to reopen the AI Assistant",
+            duration: 2000,
+          });
+        } else {
+          toast("AI Assistant opened", {
+            description: "Press A to close the AI Assistant",
+            duration: 2000,
+          });
+        }
       } else if (e.key.toLowerCase() === 'h') {
         setControlsMinimized(prev => !prev);
         // Show a toast notification to inform the user about the shortcut
@@ -95,6 +111,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
   // Voice chat status will be handled by the multiplayer service
 
   return (
+    <>
     <div>
       {/* Game Sidebar */}
       <GameSidebar />
@@ -172,6 +189,16 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
                 className={showChat ? "bg-blue-600 hover:bg-blue-700" : ""}
               >
                 <MessageSquare size={18} />
+              </Button>
+              
+              <Button
+                variant={showAIAssistant ? "default" : "outline"}
+                size="icon"
+                onClick={() => setShowAIAssistant(!showAIAssistant)}
+                title="AI Trading Assistant"
+                className={showAIAssistant ? "bg-purple-600 hover:bg-purple-700" : ""}
+              >
+                <Sparkles size={18} />
               </Button>
               
               <Button
@@ -417,6 +444,23 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
         />
       )}
       
+      {/* AI Assistant Panel */}
+      {showAIAssistant && (
+        <div className="fixed top-16 right-4 z-20 w-96 max-w-[90vw]">
+          <div className="relative">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="absolute -top-2 -right-2 z-10 rounded-full bg-background shadow-md"
+              onClick={() => setShowAIAssistant(false)}
+            >
+              <X size={16} />
+            </Button>
+            <AIAssistant />
+          </div>
+        </div>
+      )}
+      
       {/* Game completion overlay */}
       {phase === "ended" && (
         <div className="fixed inset-0 flex items-center justify-center z-20 bg-black/30">
@@ -480,5 +524,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
         </Card>
       </div>
     </div>
+    <PopupManager />
+    </>
   );
 }

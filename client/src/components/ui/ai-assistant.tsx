@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot, Send, Sparkles, Lightbulb, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
+import { Bot, Send, Sparkles, Lightbulb, TrendingUp, TrendingDown, AlertTriangle, Mic, Upload, FileText, BookOpen, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useMarketData } from "@/lib/stores/useMarketData";
+import { toast } from "sonner";
 
 interface AIAssistantProps {
   className?: string;
@@ -20,19 +21,46 @@ interface Message {
   timestamp: Date;
 }
 
+interface JournalEntry {
+  id: string;
+  date: Date;
+  content: string;
+  symbol: string;
+  trades?: {
+    side: 'buy' | 'sell';
+    price: number;
+    quantity: number;
+    pnl?: number;
+  }[];
+  sentiment: 'positive' | 'negative' | 'neutral';
+  lessons?: string[];
+}
+
 export function AIAssistant({ className }: AIAssistantProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "system-1",
       role: "assistant",
-      content: "Hello! I'm your AI trading assistant. Ask me about market trends, trading strategies, or risk management advice.",
+      content: "Hello! I'm your AI trading assistant. Ask me about market trends, trading strategies, or risk management advice. I can also help you maintain your trading journal.",
       timestamp: new Date(),
     }
   ]);
   const [input, setInput] = useState("");
   const [insights, setInsights] = useState<any[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [activeTab, setActiveTab] = useState<"chat" | "insights" | "journal">("chat");
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [newJournalEntry, setNewJournalEntry] = useState("");
+  const [selectedSymbol, setSelectedSymbol] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  const [sentimentFilter, setSentimentFilter] = useState<"all" | "positive" | "negative" | "neutral">("all");
+  
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const { currentPrice, symbol, marketData } = useMarketData();
   
   useEffect(() => {
@@ -133,6 +161,10 @@ export function AIAssistant({ className }: AIAssistantProps) {
     else if (lowerQuestion.includes("risk") || lowerQuestion.includes("manage")) {
       response = `For effective risk management, never risk more than 1-2% of your portfolio on a single trade. With the current market volatility, consider reducing position sizes and using stop losses consistently.`;
     }
+    else if (lowerQuestion.includes("journal") || lowerQuestion.includes("track")) {
+      response = `I can help you keep a trading journal. Switch to the Journal tab to record your trades, thoughts, and lessons learned. You can also import trading data from platforms like NinjaTrader or upload CSV/PDF files.`;
+      setActiveTab("journal");
+    }
     else {
       response = `Thank you for your question. As an AI trading assistant, I can help with market analysis, risk management, and trading strategies. Could you provide more specific details about what you'd like to know about ${symbol} or your trading approach?`;
     }
@@ -147,6 +179,233 @@ export function AIAssistant({ className }: AIAssistantProps) {
     setMessages(prev => [...prev, aiMessage]);
   };
   
+  // Voice recording functions
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        // Here you would normally send this audio for transcription
+        // For now, we'll simulate a transcription response
+        setTimeout(() => {
+          handleVoiceTranscription("This is a voice note about my trading experience with " + symbol);
+        }, 1500);
+        
+        // Clean up
+        stream.getTracks().forEach(track => track.stop());
+      };
+      
+      mediaRecorder.start();
+      setIsRecording(true);
+      
+      toast.info("Recording started. Speak now...");
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      toast.error("Couldn't access microphone. Please check permissions.");
+    }
+  };
+  
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      toast.info("Processing your recording...");
+    }
+  };
+  
+  const handleVoiceTranscription = (transcription: string) => {
+    setNewJournalEntry(transcription);
+    toast.success("Voice transcription completed");
+  };
+  
+  // Journal functions
+  const addJournalEntry = () => {
+    if (!newJournalEntry.trim()) return;
+    
+    const entry: JournalEntry = {
+      id: `journal-${Date.now()}`,
+      date: new Date(),
+      content: newJournalEntry,
+      symbol: selectedSymbol || symbol,
+      sentiment: determineSentiment(newJournalEntry),
+      lessons: extractLessons(newJournalEntry),
+      trades: extractTrades(newJournalEntry),
+    };
+    
+    setJournalEntries(prev => [entry, ...prev]);
+    setNewJournalEntry("");
+    toast.success("Journal entry saved");
+  };
+  
+  const determineSentiment = (text: string): 'positive' | 'negative' | 'neutral' => {
+    const lowerText = text.toLowerCase();
+    const positiveWords = ['profit', 'gain', 'success', 'good', 'happy', 'improve', 'win', 'positive'];
+    const negativeWords = ['loss', 'bad', 'mistake', 'wrong', 'fail', 'error', 'negative', 'poor'];
+    
+    let positiveScore = 0;
+    let negativeScore = 0;
+    
+    positiveWords.forEach(word => {
+      if (lowerText.includes(word)) positiveScore++;
+    });
+    
+    negativeWords.forEach(word => {
+      if (lowerText.includes(word)) negativeScore++;
+    });
+    
+    if (positiveScore > negativeScore) return 'positive';
+    if (negativeScore > positiveScore) return 'negative';
+    return 'neutral';
+  };
+  
+  const extractLessons = (text: string): string[] => {
+    // Simple extraction based on phrases like "I learned" or "lesson"
+    const lessons: string[] = [];
+    const sentences = text.split(/[.!?]/);
+    
+    sentences.forEach(sentence => {
+      const lowerSentence = sentence.toLowerCase().trim();
+      if (
+        lowerSentence.includes("learned") || 
+        lowerSentence.includes("lesson") ||
+        lowerSentence.includes("takeaway") ||
+        lowerSentence.includes("next time")
+      ) {
+        lessons.push(sentence.trim() + ".");
+      }
+    });
+    
+    return lessons.length > 0 ? lessons : ["Reflect on what you learned from this trade."];
+  };
+  
+  const extractTrades = (text: string): { side: 'buy' | 'sell'; price: number; quantity: number; pnl?: number }[] | undefined => {
+    // This is a simplified extraction. In a real app, we'd use more sophisticated NLP.
+    const trades: { side: 'buy' | 'sell'; price: number; quantity: number; pnl?: number }[] = [];
+    const lowerText = text.toLowerCase();
+    
+    // Check for buy patterns
+    if (lowerText.includes("bought") || lowerText.includes("buy")) {
+      trades.push({
+        side: 'buy',
+        price: currentPrice,
+        quantity: 1,
+      });
+    }
+    
+    // Check for sell patterns
+    if (lowerText.includes("sold") || lowerText.includes("sell")) {
+      trades.push({
+        side: 'sell',
+        price: currentPrice,
+        quantity: 1,
+      });
+    }
+    
+    return trades.length > 0 ? trades : undefined;
+  };
+  
+  // File import handling
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    const file = e.target.files[0];
+    setIsImporting(true);
+    
+    // Here you would normally process the file
+    // For now, we'll simulate file processing
+    setTimeout(() => {
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
+      
+      if (fileExt === 'csv') {
+        processCSVFile(file);
+      } else if (fileExt === 'pdf') {
+        processPDFFile(file);
+      } else {
+        toast.error("Unsupported file format. Please upload CSV or PDF files.");
+      }
+      
+      setIsImporting(false);
+    }, 2000);
+  };
+  
+  const processCSVFile = (file: File) => {
+    // Simulate CSV processing
+    const platformData = detectTradingPlatform(file.name);
+    
+    setJournalEntries(prev => [{
+      id: `import-${Date.now()}`,
+      date: new Date(),
+      content: `Imported trading data from ${platformData.platform}. Contains ${platformData.tradeCount} trades with a total P&L of ${platformData.totalPnL > 0 ? '+' : ''}${platformData.totalPnL.toFixed(2)}.`,
+      symbol: platformData.primarySymbol,
+      sentiment: platformData.totalPnL > 0 ? 'positive' : 'negative',
+      trades: [
+        {
+          side: platformData.totalPnL > 0 ? 'buy' : 'sell',
+          price: platformData.averagePrice,
+          quantity: platformData.totalQuantity,
+          pnl: platformData.totalPnL
+        }
+      ]
+    }, ...prev]);
+    
+    toast.success(`Imported ${platformData.tradeCount} trades from ${platformData.platform}`);
+  };
+  
+  const processPDFFile = (file: File) => {
+    // Simulate PDF processing
+    toast.success(`Extracted trading notes from ${file.name}`);
+    
+    setJournalEntries(prev => [{
+      id: `import-${Date.now()}`,
+      date: new Date(),
+      content: `Trading notes imported from PDF: ${file.name}. The document contains trading strategies and analysis for various symbols.`,
+      symbol: "Multiple",
+      sentiment: 'neutral',
+      lessons: ["Always document your trading strategies", "Review your trading plans regularly"]
+    }, ...prev]);
+  };
+  
+  const detectTradingPlatform = (filename: string): {
+    platform: string;
+    tradeCount: number;
+    totalPnL: number;
+    primarySymbol: string;
+    averagePrice: number;
+    totalQuantity: number;
+  } => {
+    // Detect platform based on filename
+    let platform = "Unknown Platform";
+    if (filename.toLowerCase().includes('ninja') || filename.toLowerCase().includes('nt8')) {
+      platform = "NinjaTrader";
+    } else if (filename.toLowerCase().includes('tradeof8') || filename.toLowerCase().includes('toe')) {
+      platform = "Trade of Eight";
+    } else if (filename.toLowerCase().includes('mt4') || filename.toLowerCase().includes('mt5')) {
+      platform = "MetaTrader";
+    }
+    
+    // Generate mock data
+    return {
+      platform,
+      tradeCount: Math.floor(Math.random() * 15) + 5,
+      totalPnL: (Math.random() * 2000) - 1000,
+      primarySymbol: symbol || "BTCUSD",
+      averagePrice: currentPrice || 50000,
+      totalQuantity: Math.floor(Math.random() * 10) + 1
+    };
+  };
+  
   return (
     <Card className={cn("w-full", className)}>
       <CardHeader className="pb-2">
@@ -158,10 +417,11 @@ export function AIAssistant({ className }: AIAssistantProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="chat">
-          <TabsList className="grid w-full grid-cols-2 h-8 mb-4">
+        <Tabs defaultValue="chat" value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
+          <TabsList className="grid w-full grid-cols-3 h-8 mb-4">
             <TabsTrigger value="chat">Chat</TabsTrigger>
             <TabsTrigger value="insights">Market Insights</TabsTrigger>
+            <TabsTrigger value="journal">Journal</TabsTrigger>
           </TabsList>
           
           <TabsContent value="chat" className="space-y-4">
@@ -307,6 +567,184 @@ export function AIAssistant({ className }: AIAssistantProps) {
                 </div>
               </div>
             </ScrollArea>
+          </TabsContent>
+          
+          <TabsContent value="journal">
+            <div className="space-y-4">
+              <div className="mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-sm font-semibold">Trading Journal</h3>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isImporting}
+                    >
+                      {isImporting ? (
+                        <>
+                          <RotateCcw className="h-3 w-3 mr-1 animate-spin" /> Importing...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-3 w-3 mr-1" /> Import 
+                        </>
+                      )}
+                    </Button>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept=".csv,.pdf"
+                      onChange={handleFileUpload}
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex gap-2 items-center">
+                  <div className="grow">
+                    <Input
+                      placeholder="Record your trading thoughts, lessons, and performance..."
+                      value={newJournalEntry}
+                      onChange={(e) => setNewJournalEntry(e.target.value)}
+                      disabled={isRecording}
+                    />
+                  </div>
+                  <div className="flex gap-1">
+                    {isRecording ? (
+                      <Button 
+                        size="icon" 
+                        variant="destructive" 
+                        className="h-8 w-8" 
+                        onClick={stopRecording}
+                      >
+                        <Mic className="h-4 w-4 animate-pulse" />
+                      </Button>
+                    ) : (
+                      <Button 
+                        size="icon" 
+                        variant="outline" 
+                        className="h-8 w-8" 
+                        onClick={startRecording}
+                      >
+                        <Mic className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button 
+                      size="icon" 
+                      className="h-8 w-8" 
+                      onClick={addJournalEntry}
+                      disabled={!newJournalEntry.trim() || isRecording}
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                {isRecording && (
+                  <p className="text-xs text-primary mt-1 animate-pulse">
+                    Recording... Click the microphone button again to stop.
+                  </p>
+                )}
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <h4 className="text-xs font-medium text-muted-foreground">
+                  {journalEntries.length} {journalEntries.length === 1 ? 'Entry' : 'Entries'}
+                </h4>
+                <div className="flex gap-1 items-center">
+                  <span className="text-xs text-muted-foreground">Filter:</span>
+                  <select 
+                    className="text-xs bg-transparent border rounded px-1"
+                    value={sentimentFilter}
+                    onChange={(e) => setSentimentFilter(e.target.value as any)}
+                  >
+                    <option value="all">All</option>
+                    <option value="positive">Positive</option>
+                    <option value="negative">Negative</option>
+                    <option value="neutral">Neutral</option>
+                  </select>
+                </div>
+              </div>
+              
+              <ScrollArea className="h-[220px]">
+                <div className="space-y-3">
+                  {journalEntries
+                    .filter(entry => sentimentFilter === "all" || entry.sentiment === sentimentFilter)
+                    .map((entry) => (
+                    <Card key={entry.id} className="p-3 text-sm">
+                      <div className="flex justify-between items-start mb-1">
+                        <div className="flex items-center gap-1">
+                          <BookOpen className="h-3 w-3 text-muted-foreground" />
+                          <span className="font-medium">{entry.symbol}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {entry.date.toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className={cn(
+                          "px-1.5 py-0.5 rounded-full text-xs",
+                          entry.sentiment === "positive" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                          entry.sentiment === "negative" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+                          "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                        )}>
+                          {entry.sentiment.charAt(0).toUpperCase() + entry.sentiment.slice(1)}
+                        </div>
+                      </div>
+                      
+                      <p className="text-xs mb-2">{entry.content}</p>
+                      
+                      {entry.trades && entry.trades.length > 0 && (
+                        <div className="mb-2">
+                          <p className="text-xs font-medium mb-1">Trades:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {entry.trades.map((trade, i) => (
+                              <div 
+                                key={i} 
+                                className={cn(
+                                  "text-xs px-2 py-0.5 rounded-full",
+                                  trade.side === "buy" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                                  "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                )}
+                              >
+                                {trade.side.toUpperCase()} {trade.quantity} @ ${trade.price.toFixed(2)}
+                                {trade.pnl !== undefined && (
+                                  <span className={trade.pnl >= 0 ? "text-green-600" : "text-red-600"}>
+                                    {' '}({trade.pnl >= 0 ? '+' : ''}{trade.pnl.toFixed(2)})
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {entry.lessons && entry.lessons.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium mb-1">Lessons:</p>
+                          <ul className="text-xs text-muted-foreground pl-4 list-disc">
+                            {entry.lessons.map((lesson, i) => (
+                              <li key={i}>{lesson}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </Card>
+                  ))}
+                  
+                  {journalEntries.filter(entry => sentimentFilter === "all" || entry.sentiment === sentimentFilter).length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <FileText className="h-8 w-8 text-muted-foreground/50 mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        No journal entries yet. Start recording your trading journey!
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Use the voice recording feature or import your trading data from CSV/PDF files.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
           </TabsContent>
         </Tabs>
       </CardContent>
