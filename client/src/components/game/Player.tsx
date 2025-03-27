@@ -126,6 +126,14 @@ export default function Player() {
   const { scene: characterModel, animations } = useGLTF('/models/trader_character.glb') as GLTFResult;
   const { actions, mixer } = useAnimations(animations, modelRef);
   
+  // Debug model loading
+  useEffect(() => {
+    console.log('Character model loading status:', characterModel ? 'Loaded' : 'Not loaded');
+    if (characterModel) {
+      console.log('Character model properties:', Object.keys(characterModel));
+    }
+  }, [characterModel]);
+  
   // Audio
   const { playHit, enableVoiceChat, voiceChatEnabled, getMicrophoneStream, updateAudioPosition } = useAudio();
   
@@ -411,14 +419,17 @@ export default function Player() {
     if (keys.jump) {
       const now = Date.now();
       
-      // Ensure we prevent auto-jump at game start
+      // Ensure we prevent auto-jump at game start - only on the very first frame
       if (!initialJumpPrevented.current) {
         initialJumpPrevented.current = true;
-        console.log('Key pressed: Space');
+        console.log('Preventing initial auto-jump');
         return;
       }
       
-      if (playerOnGround.current) {
+      // Only jump if space was just pressed (not held)
+      const jumpKeyJustPressed = now - lastKeyTimes.current.jump < 200;
+      
+      if (jumpKeyJustPressed && playerOnGround.current) {
         // First jump
         playerVelocity.current.y = jumpHeight;
         playerOnGround.current = false;
@@ -426,13 +437,19 @@ export default function Player() {
         lastJumpTime.current = now;
         playHit?.(); // Play jump sound
         console.log('Player jumped');
-      } else if (doubleJumpAvailable.current && (now - lastJumpTime.current > jumpCooldown)) {
+        
+        // Update last key time
+        lastKeyTimes.current.jump = now;
+      } else if (jumpKeyJustPressed && doubleJumpAvailable.current && (now - lastJumpTime.current > jumpCooldown)) {
         // Double jump if available and cooldown has passed
         playerVelocity.current.y = jumpHeight * 0.8;
         doubleJumpAvailable.current = false;
         lastJumpTime.current = now;
         playHit?.(); // Play jump sound
         console.log('Player double jumped');
+        
+        // Update last key time
+        lastKeyTimes.current.jump = now;
       }
     }
     
@@ -501,6 +518,11 @@ export default function Player() {
       let currentAnimation = 'idle';
       if (moveX !== 0 || moveZ !== 0) {
         currentAnimation = isSprinting ? 'run' : 'walk';
+        
+        // Log movement for debugging
+        if (Math.abs(moveX) > 0.01 || Math.abs(moveZ) > 0.01) {
+          console.log(`Player moving: X=${moveX.toFixed(2)}, Z=${moveZ.toFixed(2)}, Animation=${currentAnimation}`);
+        }
       }
       if (!playerOnGround.current) {
         currentAnimation = 'jump';
@@ -510,11 +532,17 @@ export default function Player() {
       const currentPosition: [number, number, number] = 
         [playerPosition.current.x, playerPosition.current.y, playerPosition.current.z];
       
-      updatePlayerPosition(
-        currentPosition,
-        playerRotation.current,
-        currentAnimation
-      );
+      // Only send updates if there is movement or position change
+      const shouldSendUpdate = 
+        (moveX !== 0 || moveZ !== 0 || !playerOnGround.current);
+        
+      if (shouldSendUpdate) {
+        updatePlayerPosition(
+          currentPosition,
+          playerRotation.current,
+          currentAnimation
+        );
+      }
       
       // Update spatial audio positions for proximity voice chat
       if (voiceChatEnabled) {
@@ -696,17 +724,36 @@ export default function Player() {
         </group>
       )}
       
-      {/* Point light to make the player glow */}
+      {/* Enhanced point light to make the player more visible */}
       <pointLight
         position={[0, 1, 0]}
-        intensity={0.5}
+        intensity={1.0}
+        color={"#ffffff"}
+        distance={5}
+      />
+      
+      {/* Colored glow effect */}
+      <pointLight
+        position={[0, 2, 0]}
+        intensity={0.7}
         color={currentCustomization.bodyColor}
         distance={3}
       />
       
-      {/* 3D Character Model */}
-      <Suspense fallback={null}>
-        {modelLoaded && (
+      {/* 3D Character Model with Fallback */}
+      <Suspense fallback={
+        <group>
+          <mesh position={[0, 1, 0]} castShadow>
+            <boxGeometry args={[0.5, 1.5, 0.5]} />
+            <meshStandardMaterial color={currentCustomization.bodyColor} />
+          </mesh>
+          <mesh position={[0, 2, 0]} castShadow>
+            <sphereGeometry args={[0.3, 16, 16]} />
+            <meshStandardMaterial color={currentCustomization.headColor} />
+          </mesh>
+        </group>
+      }>
+        {modelLoaded ? (
           <group 
             ref={modelRef}
             position={[0, 0, 0]}
@@ -714,6 +761,18 @@ export default function Player() {
             rotation={[0, Math.PI, 0]}
           >
             <primitive object={characterModel.clone()} castShadow receiveShadow />
+          </group>
+        ) : (
+          // Use a colored box if model fails to load
+          <group>
+            <mesh position={[0, 1, 0]} castShadow>
+              <boxGeometry args={[0.5, 1.5, 0.5]} />
+              <meshStandardMaterial color={currentCustomization.bodyColor} />
+            </mesh>
+            <mesh position={[0, 2, 0]} castShadow>
+              <sphereGeometry args={[0.3, 16, 16]} />
+              <meshStandardMaterial color={currentCustomization.headColor} />
+            </mesh>
           </group>
         )}
       </Suspense>
