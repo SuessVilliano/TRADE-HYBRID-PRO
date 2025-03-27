@@ -13,6 +13,7 @@ import { AIAssistant } from "@/components/ui/ai-assistant";
 import { AIMarketAnalysis } from "@/components/ui/ai-market-analysis";
 import { AdvancedAIAnalysis } from "@/components/ui/advanced-ai-analysis";
 import { SignalsList } from "@/components/ui/signals-list";
+import { SmartTradePanel } from "@/components/ui/smart-trade-panel";
 import { ArrowLeft, LayoutGrid, Maximize2, Minimize2, X, Info, Sparkles, Bot, BookOpen, BarChart2, Activity, BrainCircuit } from "lucide-react";
 import { useMarketData } from "@/lib/stores/useMarketData";
 import { useNews } from "@/lib/stores/useNews";
@@ -214,7 +215,16 @@ function TradingSpaceContent() {
       case "news":
         return <NewsFeed className="h-full" />;
       case "trade":
-        return <TradingInterface className="h-full" symbol={effectiveSymbol} />;
+        return (
+          <div className="h-full flex flex-col space-y-4">
+            <div className="h-1/2">
+              <SmartTradePanel className="h-full" defaultSymbol={effectiveSymbol} />
+            </div>
+            <div className="h-1/2">
+              <TradingInterface className="h-full" symbol={effectiveSymbol} />
+            </div>
+          </div>
+        );
       case "journal":
         return <TradeJournal className="h-full" />;
       case "leaderboard":

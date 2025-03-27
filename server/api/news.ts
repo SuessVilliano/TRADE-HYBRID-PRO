@@ -1,6 +1,20 @@
 import { Request, Response } from "express";
 import * as crypto from "crypto";
-import { NEWS_SOURCES } from "@/lib/constants";
+// Define news sources directly in the server module
+const NEWS_SOURCES = [
+  "TradingView",
+  "Bloomberg",
+  "Wall Street Journal",
+  "CNBC",
+  "Reuters",
+  "Financial Times",
+  "MarketWatch",
+  "Coindesk",
+  "The Economist",
+  "Trade Hybrid Insights",
+  "Barron's",
+  "Seeking Alpha"
+];
 
 // News topics related to finance
 const newsTopics = [
