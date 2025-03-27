@@ -5,6 +5,7 @@ import { SimpleAffiliateSystem } from './simple-affiliate-system';
 import { TradeRunner } from './trade-runner';
 import { LivestreamTV } from './livestream-tv';
 import { CryptoSwap } from './crypto-swap';
+import { Users } from 'lucide-react';
 import { Label } from './label';
 import { Slider } from './slider';
 import { Input } from './input';
@@ -120,6 +121,14 @@ export function GameSidebar() {
         case 'crypto':
           // Open Crypto Swap in a new tab
           window.open('https://raydium.io/swap/?inputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&outputMint=4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4', '_blank');
+          break;
+        case 'community':
+          // Open community hub in a new tab
+          window.open('https://sqr.co/TradeHybridCommunity/', '_blank');
+          break;
+        case 'community-chat':
+          // Show chat directly in the interface
+          document.dispatchEvent(new CustomEvent('show-community-chat-popup'));
           break;
         default:
           openWebApp();
@@ -357,7 +366,25 @@ export function GameSidebar() {
                 onClick={() => handleTabClick('chat')}
               >
                 <MessageSquare className="h-4 w-4 mr-2 flex-shrink-0" />
-                {isExpanded && <span>Community</span>}
+                {isExpanded && <span>Community Chat</span>}
+              </Button>
+            </ContextualTooltip>
+            
+            {/* Community Hub */}
+            <ContextualTooltip
+              id="community-tooltip"
+              title="Community Hub"
+              content="Join the Trade Hybrid community hub"
+              position="right"
+            >
+              <Button
+                variant={activeTab === 'community' ? 'default' : 'ghost'}
+                size={isExpanded ? 'default' : 'icon'}
+                className={`w-full justify-start ${isExpanded ? '' : 'flex justify-center'}`}
+                onClick={() => handleTabClick('community')}
+              >
+                <Users className="h-4 w-4 mr-2 flex-shrink-0" />
+                {isExpanded && <span>Community Hub</span>}
               </Button>
             </ContextualTooltip>
             
