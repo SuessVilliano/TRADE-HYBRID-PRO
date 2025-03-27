@@ -396,6 +396,14 @@ function TradingEnvironment() {
             color={locationParam === 'crypto' ? '#22c55e' : '#15803d'} 
             name="Crypto Trading"
           />
+          <CryptoTrading 
+            position={[0, 0, -4]} 
+            scale={[1, 1, 1]} 
+            rotation={[0, Math.PI, 0]}
+            onInteract={() => {
+              window.location.href = '/trading-space?view=mobile&location=crypto&symbol=BTC/USD';
+            }}
+          />
         </group>
         
         {/* Forex Trading Floor - simplified */}

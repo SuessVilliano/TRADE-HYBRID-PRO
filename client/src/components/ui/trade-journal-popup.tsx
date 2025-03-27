@@ -50,7 +50,6 @@ export function TradeJournalPopup({
       }
     }
   };
-}) {
   const { trades, tradeStats } = useTrader();
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [newEntry, setNewEntry] = useState('');
@@ -58,7 +57,7 @@ export function TradeJournalPopup({
   const [useVoiceInput, setUseVoiceInput] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordedText, setRecordedText] = useState('');
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+  const [recognition, setRecognition] = useState<any | null>(null);
 
   // Tracking for new entries being recorded
   const [isVoiceSupported, setIsVoiceSupported] = useState(false);
