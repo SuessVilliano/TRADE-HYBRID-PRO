@@ -139,9 +139,8 @@ export function SettingsPopup({
   if (!isOpen) return null;
 
   return (
-    <PopupContainer className="max-w-3xl" title="Settings" onClose={onClose} showCloseButton={true}>
-      <div className="bg-background rounded-lg shadow-lg w-full h-[80vh] flex flex-col">
-        
+    <PopupContainer className="max-w-3xl" title="Settings" onClose={onClose}>
+      <div className="w-full flex flex-col">
         <Tabs defaultValue={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
           <div className="border-b px-4">
             <TabsList>
@@ -667,6 +666,6 @@ export function SettingsPopup({
           </div>
         </Tabs>
       </div>
-    </div>
+    </PopupContainer>
   );
 }

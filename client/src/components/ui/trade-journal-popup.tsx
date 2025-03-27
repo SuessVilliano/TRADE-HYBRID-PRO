@@ -272,236 +272,232 @@ export function TradeJournalPopup({
   if (!isOpen) return null;
 
   return (
-    <PopupContainer className="p-0" title="Trading Journal" onClose={onClose} showCloseButton={true}>
-      <div className="bg-background rounded-lg shadow-lg w-full h-[80vh] flex flex-col">
-        {/* Header is now handled by PopupContainer */}
-        
-        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-          {/* Left panel: Trade history */}
-          <div className="w-full md:w-1/2 border-r p-4 flex flex-col h-full">
-            <h3 className="font-medium mb-2">Trade History</h3>
-            
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <span className="text-sm text-muted-foreground">Win Rate:</span>
-                <span className="ml-2 font-semibold">{tradeStats?.winRate || 0}%</span>
-              </div>
-              <div>
-                <span className="text-sm text-muted-foreground">Net P&L:</span>
-                <span className={cn(
-                  "ml-2 font-semibold",
-                  (tradeStats?.netPnL || 0) > 0 ? "text-green-500" : "text-red-500"
-                )}>
-                  {formatCurrency(tradeStats?.netPnL || 0)}
-                </span>
-              </div>
+    <PopupContainer title="Trading Journal" onClose={onClose}>
+      <div className="w-full flex flex-col md:flex-row gap-4">
+        {/* Left panel: Trade history */}
+        <div className="w-full md:w-1/2 flex flex-col">
+          <h3 className="font-medium mb-2">Trade History</h3>
+          
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <span className="text-sm text-muted-foreground">Win Rate:</span>
+              <span className="ml-2 font-semibold">{tradeStats?.winRate || 0}%</span>
             </div>
-            
-            <ScrollArea className="flex-1">
-              <div className="space-y-2">
-                {trades && trades.length > 0 ? (
-                  trades.map((trade) => (
-                    <div key={trade.id} className="border rounded-md p-3 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{trade.symbol}</span>
-                        <span className={cn(
-                          "text-xs px-2 py-0.5 rounded-full",
-                          trade.side === 'buy' ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                        )}>
-                          {trade.side.toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {formatDate(trade.timestamp)}
-                      </div>
-                      <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
-                        <div>Entry: {formatCurrency(trade.entryPrice)}</div>
-                        <div>Exit: {formatCurrency(trade.exitPrice)}</div>
-                        <div>Quantity: {trade.quantity}</div>
-                        <div className={cn(
-                          "font-semibold",
-                          trade.profit > 0 ? "text-green-500" : "text-red-500"
-                        )}>
-                          P&L: {formatCurrency(trade.profit)}
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>No trades found</p>
-                    <p className="text-xs mt-1">Import your trades or execute new ones</p>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-            
-            <div className="mt-4 flex justify-between">
-              <div>
-                <Input 
-                  type="file" 
-                  id="trade-import"
-                  className="hidden"
-                  accept=".csv,.pdf" 
-                  onChange={handleFileUpload}
-                />
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => document.getElementById('trade-import')?.click()}
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Import Trades
-                </Button>
-              </div>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
+            <div>
+              <span className="text-sm text-muted-foreground">Net P&L:</span>
+              <span className={cn(
+                "ml-2 font-semibold",
+                (tradeStats?.netPnL || 0) > 0 ? "text-green-500" : "text-red-500"
+              )}>
+                {formatCurrency(tradeStats?.netPnL || 0)}
+              </span>
             </div>
           </div>
           
-          {/* Right panel: Journal entries */}
-          <div className="w-full md:w-1/2 p-4 flex flex-col h-full">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium">Journal Entries</h3>
-              
-              {isVoiceSupported && (
-                <div className="flex items-center">
-                  <span className="text-xs mr-2">Voice Input</span>
-                  <Switch
-                    checked={useVoiceInput}
-                    onCheckedChange={setUseVoiceInput}
-                  />
+          <ScrollArea className="flex-1">
+            <div className="space-y-2">
+              {trades && trades.length > 0 ? (
+                trades.map((trade) => (
+                  <div key={trade.id} className="border rounded-md p-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{trade.symbol}</span>
+                      <span className={cn(
+                        "text-xs px-2 py-0.5 rounded-full",
+                        trade.side === 'buy' ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                      )}>
+                        {trade.side.toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {formatDate(trade.timestamp)}
+                    </div>
+                    <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
+                      <div>Entry: {formatCurrency(trade.entryPrice)}</div>
+                      <div>Exit: {formatCurrency(trade.exitPrice)}</div>
+                      <div>Quantity: {trade.quantity}</div>
+                      <div className={cn(
+                        "font-semibold",
+                        trade.profit > 0 ? "text-green-500" : "text-red-500"
+                      )}>
+                        P&L: {formatCurrency(trade.profit)}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No trades found</p>
+                  <p className="text-xs mt-1">Import your trades or execute new ones</p>
                 </div>
               )}
             </div>
-            
-            <div className="mb-4">
-              <div className="flex mb-2">
-                <Input
-                  placeholder="Symbol (optional)"
-                  className="w-32 mr-2"
-                  value={selectedSymbol}
-                  onChange={(e) => setSelectedSymbol(e.target.value)}
-                />
-                
-                {useVoiceInput && (
-                  <Button
-                    variant={isRecording ? "destructive" : "secondary"}
-                    onClick={toggleRecording}
-                    className="mr-2"
-                  >
-                    {isRecording ? (
-                      <>
-                        <MicOff className="h-4 w-4 mr-2" />
-                        Stop
-                      </>
-                    ) : (
-                      <>
-                        <Mic className="h-4 w-4 mr-2" />
-                        Record
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-              
-              <Textarea
-                placeholder="Write your trading thoughts, lessons learned, and reflections..."
-                className="min-h-[100px]"
-                value={newEntry}
-                onChange={(e) => setNewEntry(e.target.value)}
+          </ScrollArea>
+          
+          <div className="mt-4 flex justify-between">
+            <div>
+              <Input 
+                type="file" 
+                id="trade-import"
+                className="hidden"
+                accept=".csv,.pdf" 
+                onChange={handleFileUpload}
               />
-              
-              {isRecording && (
-                <div className="text-sm mt-2 text-muted-foreground">
-                  <p className="font-medium">Recording:</p>
-                  <p className="italic">{recordedText || "Speak now..."}</p>
-                </div>
-              )}
-              
               <Button 
-                className="mt-2" 
-                onClick={addJournalEntry}
-                disabled={!newEntry.trim()}
+                variant="outline" 
+                size="sm"
+                onClick={() => document.getElementById('trade-import')?.click()}
               >
-                Add Entry
+                <Upload className="h-4 w-4 mr-2" />
+                Import Trades
               </Button>
             </div>
-            
-            <ScrollArea className="flex-1">
-              <div className="space-y-4">
-                {journalEntries.length > 0 ? (
-                  journalEntries.map((entry) => (
-                    <div 
-                      key={entry.id} 
-                      className={cn(
-                        "border rounded-md p-3 text-sm",
-                        entry.sentiment === 'positive' && "border-l-green-500 border-l-4",
-                        entry.sentiment === 'negative' && "border-l-red-500 border-l-4",
-                        entry.sentiment === 'neutral' && "border-l-blue-500 border-l-4"
-                      )}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{entry.symbol}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(entry.date.toString())}
-                        </span>
-                      </div>
-                      
-                      <p className="mt-2 whitespace-pre-line">{entry.content}</p>
-                      
-                      {entry.lessons && entry.lessons.length > 0 && (
-                        <div className="mt-2">
-                          <p className="text-xs font-medium">Lessons:</p>
-                          <ul className="list-disc list-inside text-xs text-muted-foreground">
-                            {entry.lessons.map((lesson, idx) => (
-                              <li key={idx}>{lesson}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      
-                      {entry.trades && entry.trades.length > 0 && (
-                        <div className="mt-2 border-t pt-2">
-                          <p className="text-xs font-medium">Associated Trades:</p>
-                          <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs mt-1">
-                            {entry.trades.map((trade, idx) => (
-                              <div 
-                                key={idx} 
-                                className={cn(
-                                  "py-1 px-2 rounded",
-                                  trade.side === 'buy' ? "bg-green-50" : "bg-red-50"
-                                )}
-                              >
-                                {trade.side.toUpperCase()} {trade.quantity} @ {formatCurrency(trade.price)}
-                                {trade.pnl !== undefined && (
-                                  <span 
-                                    className={cn(
-                                      "ml-1",
-                                      trade.pnl > 0 ? "text-green-600" : "text-red-600"
-                                    )}
-                                  >
-                                    ({formatCurrency(trade.pnl)})
-                                  </span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>No journal entries yet</p>
-                    <p className="text-xs mt-1">Record your thoughts and trading insights</p>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
           </div>
+        </div>
+        
+        {/* Right panel: Journal entries */}
+        <div className="w-full md:w-1/2 flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-medium">Journal Entries</h3>
+            
+            {isVoiceSupported && (
+              <div className="flex items-center">
+                <span className="text-xs mr-2">Voice Input</span>
+                <Switch
+                  checked={useVoiceInput}
+                  onCheckedChange={setUseVoiceInput}
+                />
+              </div>
+            )}
+          </div>
+          
+          <div className="mb-4">
+            <div className="flex mb-2">
+              <Input
+                placeholder="Symbol (optional)"
+                className="w-32 mr-2"
+                value={selectedSymbol}
+                onChange={(e) => setSelectedSymbol(e.target.value)}
+              />
+              
+              {useVoiceInput && (
+                <Button
+                  variant={isRecording ? "destructive" : "secondary"}
+                  onClick={toggleRecording}
+                  className="mr-2"
+                >
+                  {isRecording ? (
+                    <>
+                      <MicOff className="h-4 w-4 mr-2" />
+                      Stop
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="h-4 w-4 mr-2" />
+                      Record
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+            
+            <Textarea
+              placeholder="Write your trading thoughts, lessons learned, and reflections..."
+              className="min-h-[100px]"
+              value={newEntry}
+              onChange={(e) => setNewEntry(e.target.value)}
+            />
+            
+            {isRecording && (
+              <div className="text-sm mt-2 text-muted-foreground">
+                <p className="font-medium">Recording:</p>
+                <p className="italic">{recordedText || "Speak now..."}</p>
+              </div>
+            )}
+            
+            <Button 
+              className="mt-2" 
+              onClick={addJournalEntry}
+              disabled={!newEntry.trim()}
+            >
+              Add Entry
+            </Button>
+          </div>
+          
+          <ScrollArea className="flex-1">
+            <div className="space-y-4">
+              {journalEntries.length > 0 ? (
+                journalEntries.map((entry) => (
+                  <div 
+                    key={entry.id} 
+                    className={cn(
+                      "border rounded-md p-3 text-sm",
+                      entry.sentiment === 'positive' && "border-l-green-500 border-l-4",
+                      entry.sentiment === 'negative' && "border-l-red-500 border-l-4",
+                      entry.sentiment === 'neutral' && "border-l-blue-500 border-l-4"
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{entry.symbol}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(entry.date.toString())}
+                      </span>
+                    </div>
+                    
+                    <p className="mt-2 whitespace-pre-line">{entry.content}</p>
+                    
+                    {entry.lessons && entry.lessons.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-xs font-medium">Lessons:</p>
+                        <ul className="list-disc list-inside text-xs text-muted-foreground">
+                          {entry.lessons.map((lesson, idx) => (
+                            <li key={idx}>{lesson}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {entry.trades && entry.trades.length > 0 && (
+                      <div className="mt-2 border-t pt-2">
+                        <p className="text-xs font-medium">Associated Trades:</p>
+                        <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs mt-1">
+                          {entry.trades.map((trade, idx) => (
+                            <div 
+                              key={idx} 
+                              className={cn(
+                                "py-1 px-2 rounded",
+                                trade.side === 'buy' ? "bg-green-50" : "bg-red-50"
+                              )}
+                            >
+                              {trade.side.toUpperCase()} {trade.quantity} @ {formatCurrency(trade.price)}
+                              {trade.pnl !== undefined && (
+                                <span 
+                                  className={cn(
+                                    "ml-1",
+                                    trade.pnl > 0 ? "text-green-600" : "text-red-600"
+                                  )}
+                                >
+                                  ({formatCurrency(trade.pnl)})
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No journal entries yet</p>
+                  <p className="text-xs mt-1">Record your thoughts and trading insights</p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
         </div>
       </div>
     </PopupContainer>
