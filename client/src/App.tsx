@@ -10,6 +10,7 @@ import NotFound from "./pages/not-found";
 import Scene from "./components/game/Scene";
 import GamePage from "./pages/game";
 import { Suspense } from "react";
+import { GuideTourProvider, GuideTourLauncher } from "./components/ui/contextual-tooltip";
 
 const router = createBrowserRouter([
   {
@@ -30,7 +31,6 @@ const router = createBrowserRouter([
   }
 ], {
   future: {
-    v7_startTransition: true,
     v7_relativeSplatPath: true
   }
 });
@@ -38,8 +38,11 @@ const router = createBrowserRouter([
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-      <Toaster position="top-right" />
+      <GuideTourProvider>
+        <RouterProvider router={router} />
+        <Toaster position="top-right" />
+        <GuideTourLauncher title="Welcome to Trade Hybrid! Take a tour" />
+      </GuideTourProvider>
     </QueryClientProvider>
   );
 }

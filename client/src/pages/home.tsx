@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRightCircle, BarChart2, Bot, Building, CandlestickChart, Globe, Trophy, Wallet, Gamepad2 } from "lucide-react";
 import { TRADING_SYMBOLS } from "@/lib/constants";
 import { AudioPermissionDialog } from "@/components/ui/audio-initializer";
+import { GuidedFeatures } from "@/components/ui/guided-features";
+import { useGuideTour } from "@/components/ui/contextual-tooltip";
 
 // Create placeholders for audio functions until the store is properly initialized
 const dummyAudio = {
@@ -21,6 +23,8 @@ export default function Home() {
   const [username, setUsername] = useState("Trader1");
   const [isMuted, setIsMuted] = useState(true);
   const [showAudioPermission, setShowAudioPermission] = useState(false);
+  const [showGuidedFeatures, setShowGuidedFeatures] = useState(false);
+  const guideTour = useGuideTour();
   
   // Use our dummy audio functions
   const { 
@@ -37,7 +41,7 @@ export default function Home() {
     toggleMute();
   };
   
-  // Initialize audio assets
+  // Initialize audio assets and check for first-time users
   useEffect(() => {
     // Initialize audio assets on component mount
     const backgroundMusic = new Audio('/sounds/background.mp3');
@@ -51,9 +55,10 @@ export default function Home() {
     successSound.volume = 0.5;
     
     // Store audio elements in global state
-    setBackgroundMusic(backgroundMusic);
-    setHitSound(hitSound);
-    setSuccessSound(successSound);
+    // Use dummy implementation to avoid errors
+    if (typeof setBackgroundMusic === 'function') setBackgroundMusic(backgroundMusic);
+    if (typeof setHitSound === 'function') setHitSound(hitSound);
+    if (typeof setSuccessSound === 'function') setSuccessSound(successSound);
     
     // Check if it's the first visit and show audio permission dialog
     const audioPermissionSeen = localStorage.getItem('audio_permission_seen');
@@ -63,7 +68,18 @@ export default function Home() {
         setShowAudioPermission(true);
       }, 1000);
     }
-  }, [setBackgroundMusic, setHitSound, setSuccessSound]);
+    
+    // Check if user has seen the guided features before
+    const guidedFeaturesSeen = localStorage.getItem('guided_features_seen');
+    if (!guidedFeaturesSeen) {
+      // Show guided features after a short delay
+      setTimeout(() => {
+        setShowGuidedFeatures(true);
+        // Start the guided tour
+        guideTour.startTour();
+      }, 2000);
+    }
+  }, [setBackgroundMusic, setHitSound, setSuccessSound, guideTour]);
   
   const handleEnterMetaverse = () => {
     // Play success sound when entering the metaverse
@@ -259,6 +275,33 @@ export default function Home() {
         </div>
       </div>
       
+      {/* Interactive Guided Features Section */}
+      {showGuidedFeatures && (
+        <div className="container mx-auto px-4 py-16 sm:px-6 lg:px-8 bg-primary/5 rounded-lg">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold tracking-tight">Explore Our Features</h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              Take a guided tour through Trade Hybrid's innovative features
+            </p>
+          </div>
+          
+          <GuidedFeatures />
+          
+          <div className="mt-8 text-center">
+            <Button 
+              onClick={() => {
+                setShowGuidedFeatures(false);
+                localStorage.setItem('guided_features_seen', 'true');
+                guideTour.completeTour();
+              }}
+              variant="outline"
+            >
+              Close Tour
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* CTA Section */}
       <div className="bg-primary/5 py-16">
         <div className="container mx-auto px-4 text-center">
@@ -277,6 +320,15 @@ export default function Home() {
                 Play Trade Runner Game
               </Button>
             </Link>
+            <Button 
+              variant="outline" 
+              size="lg" 
+              onClick={() => {
+                setShowGuidedFeatures(true);
+                guideTour.startTour();
+              }}>
+              Take Feature Tour
+            </Button>
           </div>
         </div>
       </div>

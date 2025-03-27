@@ -1,9 +1,19 @@
-import { useState, useEffect, useRef, ReactNode } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "../../lib/utils";
-import { useOnClickOutside } from "../../hooks/use-on-click-outside";
-import { Info, X, CheckCircle2, BarChart2 } from "lucide-react";
-import { Button } from "./button";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { 
+  Info,
+  HelpCircle,
+  AlertCircle,
+  CheckCircle2,
+  AlertTriangle
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger as RadixTooltipTrigger,
+  TooltipContent
+} from './tooltip';
+import { Button } from './button';
 
 export interface ContextualTooltipProps {
   id: string;
@@ -19,213 +29,331 @@ export interface ContextualTooltipProps {
   onAcknowledge?: () => void;
   persistent?: boolean;
   children: ReactNode;
+  guideStep?: number;
+  pulse?: boolean;
+  appearance?: "info" | "success" | "warning" | "critical";
 }
 
-// Store which tooltips have been acknowledged
-const ACKNOWLEDGED_TOOLTIPS_KEY = "trade-hybrid-acknowledged-tooltips";
-const getAcknowledgedTooltips = (): string[] => {
-  try {
-    const saved = localStorage.getItem(ACKNOWLEDGED_TOOLTIPS_KEY);
-    return saved ? JSON.parse(saved) : [];
-  } catch (e) {
-    console.error("Failed to parse acknowledged tooltips:", e);
-    return [];
-  }
+interface GuideTourContextType {
+  currentStep: number;
+  setCurrentStep: (step: number) => void;
+  isFirstTimeUser: boolean;
+  completeTour: () => void;
+  registerTooltip: (id: string, step: number) => void;
+  tooltips: Map<string, number>;
+  startTour: () => void;
+  isTourActive: boolean;
+}
+
+const defaultGuideTourContext: GuideTourContextType = {
+  currentStep: 0,
+  setCurrentStep: () => {},
+  isFirstTimeUser: false,
+  completeTour: () => {},
+  registerTooltip: () => {},
+  tooltips: new Map(),
+  startTour: () => {},
+  isTourActive: false
 };
 
-const acknowledgeTooltip = (id: string) => {
-  try {
-    const acknowledged = getAcknowledgedTooltips();
-    if (!acknowledged.includes(id)) {
-      acknowledged.push(id);
-      localStorage.setItem(ACKNOWLEDGED_TOOLTIPS_KEY, JSON.stringify(acknowledged));
+const GuideTourContext = createContext<GuideTourContextType>(defaultGuideTourContext);
+
+export const GuideTourProvider: React.FC<{children: ReactNode}> = ({ children }) => {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isFirstTimeUser, setIsFirstTimeUser] = useState(false);
+  const [tooltips, setTooltips] = useState<Map<string, number>>(new Map());
+  const [isTourActive, setIsTourActive] = useState(false);
+  
+  // Check if user is first time visitor
+  useEffect(() => {
+    const hasCompletedTour = localStorage.getItem('tour_completed');
+    if (!hasCompletedTour) {
+      setIsFirstTimeUser(true);
     }
-  } catch (e) {
-    console.error("Failed to save acknowledged tooltip:", e);
-  }
+  }, []);
+  
+  // Register a tooltip with its guide step
+  const registerTooltip = (id: string, step: number) => {
+    setTooltips(prev => {
+      const newMap = new Map(prev);
+      newMap.set(id, step);
+      return newMap;
+    });
+  };
+  
+  // Complete the tour
+  const completeTour = () => {
+    setIsTourActive(false);
+    setCurrentStep(0);
+    localStorage.setItem('tour_completed', 'true');
+  };
+  
+  // Start the tour
+  const startTour = () => {
+    setIsTourActive(true);
+    setCurrentStep(1); // Start with the first step
+  };
+  
+  return (
+    <GuideTourContext.Provider 
+      value={{ 
+        currentStep, 
+        setCurrentStep, 
+        isFirstTimeUser,
+        completeTour,
+        registerTooltip,
+        tooltips,
+        startTour,
+        isTourActive
+      }}
+    >
+      {children}
+    </GuideTourContext.Provider>
+  );
 };
+
+export const useGuideTour = () => useContext(GuideTourContext);
 
 export function ContextualTooltip({
   id,
   title,
   content,
-  position = "bottom",
-  highlight = true,
+  position = "top",
+  highlight = false,
   showArrow = true,
   className,
   trigger,
-  autoShow = true,
-  delay = 1000,
+  autoShow = false,
+  delay = 300,
   onAcknowledge,
   persistent = false,
-  children
+  children,
+  guideStep,
+  pulse = false,
+  appearance = "info"
 }: ContextualTooltipProps) {
-  const [isVisible, setIsVisible] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [wasShown, setWasShown] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(autoShow);
+  const [acknowledged, setAcknowledged] = useState(false);
+  const guideTour = useGuideTour();
   
-  useOnClickOutside(containerRef, () => {
-    if (showTooltip && !persistent) {
-      setShowTooltip(false);
-    }
-  });
-  
+  // Register this tooltip with the guide tour system if it has a step
   useEffect(() => {
-    // Check if this tooltip has been acknowledged
-    const acknowledged = getAcknowledgedTooltips();
-    const isAcknowledged = acknowledged.includes(id);
-    
-    if (isAcknowledged && !persistent) {
-      return;
+    if (guideStep !== undefined) {
+      guideTour.registerTooltip(id, guideStep);
     }
-    
-    // Auto show tooltip after delay
-    if (autoShow && !wasShown) {
+  }, [id, guideStep, guideTour]);
+  
+  // Show tooltip when it's this tooltip's turn in the guide tour
+  useEffect(() => {
+    if (
+      guideTour.isTourActive && 
+      guideStep !== undefined && 
+      guideTour.currentStep === guideStep
+    ) {
+      setOpen(true);
+    }
+  }, [guideTour.isTourActive, guideTour.currentStep, guideStep]);
+  
+  // Auto-show tooltip after delay
+  useEffect(() => {
+    if (autoShow && !acknowledged) {
       const timer = setTimeout(() => {
-        setShowTooltip(true);
-        setWasShown(true);
+        setOpen(true);
       }, delay);
       
       return () => clearTimeout(timer);
     }
-  }, [id, autoShow, delay, wasShown, persistent]);
+  }, [autoShow, acknowledged, delay]);
   
+  // Handle tooltip acknowledgment
   const handleAcknowledge = () => {
-    setShowTooltip(false);
-    if (!persistent) {
-      acknowledgeTooltip(id);
-    }
+    setAcknowledged(true);
+    setOpen(false);
+    
     if (onAcknowledge) {
       onAcknowledge();
     }
-  };
-  
-  // Position styles for the tooltip
-  const getPositionStyles = () => {
-    switch (position) {
-      case "top":
-        return "bottom-full left-1/2 -translate-x-1/2 mb-2";
-      case "right":
-        return "left-full top-1/2 -translate-y-1/2 ml-2";
-      case "left":
-        return "right-full top-1/2 -translate-y-1/2 mr-2";
-      case "bottom":
-      default:
-        return "top-full left-1/2 -translate-x-1/2 mt-2";
+    
+    // If this is part of a guide tour, move to next step
+    if (
+      guideTour.isTourActive && 
+      guideStep !== undefined && 
+      guideTour.currentStep === guideStep
+    ) {
+      // Find the next step
+      let nextStep = guideStep + 1;
+      let foundNextStep = false;
+      
+      // Find if there are any tooltips with the next step number
+      guideTour.tooltips.forEach((step, tooltipId) => {
+        if (step === nextStep) {
+          foundNextStep = true;
+        }
+      });
+      
+      if (foundNextStep) {
+        guideTour.setCurrentStep(nextStep);
+      } else {
+        // If no more steps, complete the tour
+        guideTour.completeTour();
+      }
     }
   };
   
-  // Arrow position styles
-  const getArrowStyles = () => {
-    switch (position) {
-      case "top":
-        return "bottom-[-6px] left-1/2 -translate-x-1/2 rotate-45";
-      case "right":
-        return "left-[-6px] top-1/2 -translate-y-1/2 rotate-45";
-      case "left":
-        return "right-[-6px] top-1/2 -translate-y-1/2 rotate-45";
-      case "bottom":
+  // Get appearance styles
+  const getAppearanceStyles = () => {
+    switch (appearance) {
+      case "success":
+        return "border-green-500 bg-green-50 dark:bg-green-950/50 text-green-900 dark:text-green-100";
+      case "warning":
+        return "border-yellow-500 bg-yellow-50 dark:bg-yellow-950/50 text-yellow-900 dark:text-yellow-100";
+      case "critical":
+        return "border-red-500 bg-red-50 dark:bg-red-950/50 text-red-900 dark:text-red-100";
+      case "info":
       default:
-        return "top-[-6px] left-1/2 -translate-x-1/2 rotate-45";
+        return "border-blue-500 bg-blue-50 dark:bg-blue-950/50 text-blue-900 dark:text-blue-100";
+    }
+  };
+  
+  // Get icon based on appearance
+  const getIcon = () => {
+    switch (appearance) {
+      case "success":
+        return <CheckCircle2 className="h-4 w-4 text-green-500 mr-2" />;
+      case "warning":
+        return <AlertTriangle className="h-4 w-4 text-yellow-500 mr-2" />;
+      case "critical":
+        return <AlertCircle className="h-4 w-4 text-red-500 mr-2" />;
+      case "info":
+      default:
+        return <Info className="h-4 w-4 text-blue-500 mr-2" />;
+    }
+  };
+  
+  return (
+    <TooltipProvider>
+      <Tooltip open={persistent ? open : (acknowledged ? false : open)} onOpenChange={setOpen}>
+        <div className={cn("relative", highlight && "z-10", className)}>
+          {children}
+          {trigger && (
+            <div className="absolute -top-2 -right-2">
+              {trigger}
+            </div>
+          )}
+          {!trigger && pulse && (
+            <div className="absolute -top-2 -right-2 z-10">
+              <div className={cn(
+                "h-4 w-4 rounded-full",
+                appearance === "success" ? "bg-green-500" : 
+                appearance === "warning" ? "bg-yellow-500" : 
+                appearance === "critical" ? "bg-red-500" : 
+                "bg-blue-500",
+                "animate-pulse"
+              )}></div>
+            </div>
+          )}
+        </div>
+        <TooltipContent
+          side={position}
+          className={cn(
+            "max-w-md p-4 border-2 shadow-lg",
+            getAppearanceStyles(),
+            highlight && "animate-bounce-subtle",
+          )}
+        >
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center">
+              {getIcon()}
+              <h3 className="font-semibold">{title}</h3>
+            </div>
+            <div>{content}</div>
+            {(persistent || guideTour.isTourActive) && (
+              <div className="flex justify-end mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleAcknowledge}
+                  className={cn(
+                    appearance === "success" ? "hover:bg-green-100 border-green-200" : 
+                    appearance === "warning" ? "hover:bg-yellow-100 border-yellow-200" : 
+                    appearance === "critical" ? "hover:bg-red-100 border-red-200" : 
+                    "hover:bg-blue-100 border-blue-200",
+                  )}
+                >
+                  {guideStep !== undefined && guideTour.isTourActive ? "Next" : "Got it"}
+                </Button>
+              </div>
+            )}
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+export interface GuideTooltipTriggerProps {
+  onClick?: () => void;
+  type?: "info" | "success" | "warning" | "error";
+  pulse?: boolean;
+  className?: string;
+}
+
+export function GuideTooltipTrigger({ 
+  onClick,
+  type = "info",
+  pulse = false,
+  className
+}: GuideTooltipTriggerProps) {
+  // Get background color based on type
+  const getBgColor = () => {
+    switch (type) {
+      case "success":
+        return "bg-green-500 hover:bg-green-600";
+      case "warning":
+        return "bg-yellow-500 hover:bg-yellow-600";
+      case "error":
+        return "bg-red-500 hover:bg-red-600";
+      case "info":
+      default:
+        return "bg-blue-500 hover:bg-blue-600";
     }
   };
   
   return (
     <div 
-      ref={containerRef} 
-      className={cn("relative inline-block", highlight && "z-30")}
-      onMouseEnter={() => setIsVisible(true)}
-      onMouseLeave={() => setIsVisible(false)}
+      onClick={onClick}
+      className={cn(
+        "rounded-full p-1 flex items-center justify-center cursor-pointer z-10",
+        getBgColor(),
+        pulse && "animate-pulse",
+        className
+      )}
     >
-      {/* The content that the tooltip is attached to */}
-      <div 
-        className={cn(
-          "relative",
-          highlight && showTooltip && "ring-2 ring-primary ring-opacity-50 rounded-sm"
-        )}
-        onClick={() => trigger && setShowTooltip(!showTooltip)}
-      >
-        {children}
-        
-        {/* Trigger button if provided */}
-        {trigger && (
-          <div className="absolute -top-2 -right-2 z-10">
-            {trigger}
-          </div>
-        )}
-      </div>
-      
-      {/* Tooltip content */}
-      <AnimatePresence>
-        {(showTooltip || (isVisible && trigger)) && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9, y: position === "top" ? 10 : position === "bottom" ? -10 : 0, x: position === "left" ? 10 : position === "right" ? -10 : 0 }}
-            animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ type: "spring", damping: 20, stiffness: 300 }}
-            className={cn(
-              "absolute z-50 w-64 p-3 bg-popover text-popover-foreground rounded-md shadow-lg border",
-              getPositionStyles(),
-              className
-            )}
-          >
-            {/* Arrow */}
-            {showArrow && (
-              <div 
-                className={cn(
-                  "absolute w-3 h-3 bg-popover border-t border-l transform -rotate-45",
-                  getArrowStyles()
-                )} 
-              />
-            )}
-            
-            {/* Tooltip header */}
-            <div className="flex items-start justify-between mb-2">
-              <h4 className="font-medium text-sm">{title}</h4>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-5 w-5 -mr-1 -mt-1 text-muted-foreground hover:text-foreground"
-                onClick={handleAcknowledge}
-              >
-                <X size={14} />
-              </Button>
-            </div>
-            
-            {/* Tooltip content */}
-            <div className="text-xs text-muted-foreground space-y-2">
-              {content}
-            </div>
-            
-            {/* Acknowledge button */}
-            <div className="mt-3 flex justify-end">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-xs h-7 px-2"
-                onClick={handleAcknowledge}
-              >
-                Got it
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <HelpCircle className="h-4 w-4 text-white" />
     </div>
   );
 }
 
-// Default trigger element
-export function TooltipTrigger({ onClick }: { onClick?: () => void }) {
+/**
+ * Component to launch a guided tutorial tour for new users
+ */
+export function GuideTourLauncher({ title = "Start Tour" }: { title?: string }) {
+  const guideTour = useGuideTour();
+  
+  if (!guideTour.isFirstTimeUser && !guideTour.isTourActive) {
+    return null;
+  }
+  
   return (
-    <Button 
-      variant="outline" 
-      size="icon"
-      className="h-5 w-5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
-      onClick={onClick}
-    >
-      <Info size={10} />
-    </Button>
+    <div className="fixed bottom-4 right-4 z-50">
+      <Button 
+        onClick={() => guideTour.startTour()}
+        variant="default"
+        className="animate-bounce-slow gap-2"
+      >
+        <HelpCircle className="h-4 w-4" />
+        {title}
+      </Button>
+    </div>
   );
 }

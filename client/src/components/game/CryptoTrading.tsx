@@ -56,7 +56,7 @@ function BitcoinPrice({ position }: { position: [number, number, number] }) {
   };
   
   return (
-    <group position={position} ref={textRef}>
+    <group position={position}>
       <Text
         color={getColor()}
         fontSize={0.5}
