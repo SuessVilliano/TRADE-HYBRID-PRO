@@ -6,7 +6,8 @@ import {
   Text, 
   OrbitControls, 
   PerspectiveCamera, 
-  useKeyboardControls 
+  useKeyboardControls,
+  KeyboardControls
 } from '@react-three/drei';
 import * as THREE from 'three';
 import { useIsMobile } from '../../hooks/use-is-mobile';
@@ -583,6 +584,15 @@ export default function TradeRunner() {
   
   const isMobile = useIsMobile();
   
+  // Map of keys for keyboard controls
+  const keyMap = [
+    { name: 'forward', keys: ['KeyW', 'ArrowUp'] },
+    { name: 'backward', keys: ['KeyS', 'ArrowDown'] },
+    { name: 'left', keys: ['KeyA', 'ArrowLeft'] },
+    { name: 'right', keys: ['KeyD', 'ArrowRight'] },
+    { name: 'jump', keys: ['Space'] },
+  ];
+  
   const handleGameOver = (score: number) => {
     setGameActive(false);
     if (score > highScore) {
@@ -660,14 +670,14 @@ export default function TradeRunner() {
           {gameActive && <GameHUD stats={gameStats} />}
           
           <Suspense fallback={<div className="text-center py-10">Loading game...</div>}>
-            <Canvas shadows className="w-full h-full">
-              <GameControls>
+            <KeyboardControls map={keyMap}>
+              <Canvas shadows className="w-full h-full">
                 <Game
                   onGameOver={handleGameOver}
                   onUpdateScore={handleUpdateScore}
                 />
-              </GameControls>
-            </Canvas>
+              </Canvas>
+            </KeyboardControls>
           </Suspense>
           
           {!gameActive && (
