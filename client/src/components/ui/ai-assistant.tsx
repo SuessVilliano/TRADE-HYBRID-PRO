@@ -409,24 +409,59 @@ export function AIAssistant({ className }: AIAssistantProps) {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     
-    const file = e.target.files[0];
-    setIsImporting(true);
-    
-    // Here you would normally process the file
-    // For now, we'll simulate file processing
-    setTimeout(() => {
-      const fileExt = file.name.split('.').pop()?.toLowerCase();
+    try {
+      const file = e.target.files[0];
+      setIsImporting(true);
       
-      if (fileExt === 'csv') {
-        processCSVFile(file);
-      } else if (fileExt === 'pdf') {
-        processPDFFile(file);
-      } else {
-        toast.error("Unsupported file format. Please upload CSV or PDF files.");
+      // Check max file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File is too large. Maximum size is 5MB.");
+        setIsImporting(false);
+        // Reset the file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        return;
       }
       
+      console.log(`Processing file: ${file.name} (${file.type}, ${file.size} bytes)`);
+      
+      // Process file based on extension and mime type
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
+      
+      if (fileExt === 'csv' && (file.type === 'text/csv' || file.type === 'application/vnd.ms-excel')) {
+        toast.info(`Processing CSV file: ${file.name}`);
+        setTimeout(() => {
+          processCSVFile(file);
+          setIsImporting(false);
+        }, 1500);
+      } 
+      else if (fileExt === 'pdf' && file.type === 'application/pdf') {
+        toast.info(`Processing PDF file: ${file.name}`);
+        setTimeout(() => {
+          processPDFFile(file);
+          setIsImporting(false);
+        }, 1500);
+      } 
+      else {
+        toast.error(`Unsupported file format: ${file.type}. Please upload CSV or PDF files.`);
+        setIsImporting(false);
+      }
+      
+      // Reset the file input after processing
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (error) {
+      console.error("Error processing file:", error);
+      toast.error("Failed to process file. Please try again.");
       setIsImporting(false);
-    }, 2000);
+      
+      // Reset the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
   
   const processCSVFile = (file: File) => {

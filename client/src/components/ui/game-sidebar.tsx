@@ -189,10 +189,19 @@ export function GameSidebar() {
 
   return (
     <div className={`fixed left-0 top-16 h-[calc(100%-64px)] z-30 flex transition-all duration-300 ease-in-out ${isExpanded ? '' : 'transform -translate-x-[calc(100%-3.5rem)]'}`}>
+      {/* Mobile overlay - prevents sidebar from trapping the screen */}
+      {isMobile && isExpanded && (
+        <div 
+          className="fixed inset-0 bg-black/30 z-20" 
+          onClick={() => setIsExpanded(false)}
+          aria-hidden="true"
+        />
+      )}
+      
       {/* Sidebar container */}
-      <div className="relative flex h-full">
+      <div className="relative flex h-full z-30">
         {/* Main sidebar */}
-        <div className={`bg-background/80 backdrop-blur-sm border-r flex flex-col h-full shadow-md transition-all duration-300 ${isExpanded ? 'w-64' : 'w-14'}`}>
+        <div className={`bg-background/90 backdrop-blur-sm border-r flex flex-col h-full shadow-md transition-all duration-300 ${isExpanded ? 'w-64' : 'w-14'}`}>
           {/* Sidebar header */}
           <div className="p-3 border-b flex items-center justify-between">
             {isExpanded ? (
