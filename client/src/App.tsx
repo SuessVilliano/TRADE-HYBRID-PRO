@@ -11,7 +11,7 @@ import Scene from "./components/game/Scene";
 import GamePage from "./pages/game";
 import { Suspense } from "react";
 import { GuideTourProvider, GuideTourLauncher } from "./components/ui/contextual-tooltip";
-import { TradingTipsProvider } from "./components/ui/trading-tips";
+import { TradingTipsProvider } from "./components/ui/trading-tips-provider";
 
 const router = createBrowserRouter([
   {
@@ -39,15 +39,13 @@ const router = createBrowserRouter([
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <GuideTourProvider>
-        <TradingTipsProvider>
-          <div className="app-container">
-            <RouterProvider router={router} />
-            <Toaster position="top-right" />
-            <GuideTourLauncher title="Welcome to Trade Hybrid! Take a tour" />
-          </div>
-        </TradingTipsProvider>
-      </GuideTourProvider>
+      <RouterProvider 
+        router={router} 
+        future={{
+          v7_startTransition: true
+        }}
+      />
+      <Toaster position="top-right" />
     </QueryClientProvider>
   );
 }

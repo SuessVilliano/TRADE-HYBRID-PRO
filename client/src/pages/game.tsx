@@ -6,7 +6,20 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Maximize2, Minimize2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+import { TradingTipsProvider } from '@/components/ui/trading-tips-provider';
+import { GuideTourProvider } from '@/components/ui/contextual-tooltip';
+
 export default function GamePage() {
+  return (
+    <GuideTourProvider>
+      <TradingTipsProvider currentPath="/game">
+        <GameContent />
+      </TradingTipsProvider>
+    </GuideTourProvider>
+  );
+}
+
+function GameContent() {
   const [gameMode, setGameMode] = useState<'3d' | '2d'>('3d');
   const [fullscreen, setFullscreen] = useState(false);
 

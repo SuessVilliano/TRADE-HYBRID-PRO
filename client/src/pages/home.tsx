@@ -19,7 +19,21 @@ const dummyAudio = {
   playSuccess: () => console.log("Play success called"),
 };
 
+// Import existing providers from proper locations
+import { TradingTipsProvider } from "@/components/ui/trading-tips-provider";
+import { GuideTourProvider } from "@/components/ui/contextual-tooltip";
+
 export default function Home() {
+  return (
+    <GuideTourProvider>
+      <TradingTipsProvider currentPath="/home">
+        <HomeContent />
+      </TradingTipsProvider>
+    </GuideTourProvider>
+  );
+}
+
+function HomeContent() {
   const [username, setUsername] = useState("Trader1");
   const [isMuted, setIsMuted] = useState(true);
   const [showAudioPermission, setShowAudioPermission] = useState(false);

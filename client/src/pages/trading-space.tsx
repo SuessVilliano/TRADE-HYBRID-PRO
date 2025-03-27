@@ -41,7 +41,22 @@ const LOCATION_TO_SYMBOL = {
   tradehouse: "BTCUSD"
 };
 
+import { TradingTipsProvider } from "@/components/ui/trading-tips-provider";
+import { GuideTourProvider } from "@/components/ui/contextual-tooltip";
+
 export default function TradingSpace() {
+  const location = useLocation();
+  
+  return (
+    <GuideTourProvider>
+      <TradingTipsProvider currentPath={location.pathname}>
+        <TradingSpaceContent />
+      </TradingTipsProvider>
+    </GuideTourProvider>
+  );
+}
+
+function TradingSpaceContent() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const locationParam = searchParams.get('location') || 'tradehouse';

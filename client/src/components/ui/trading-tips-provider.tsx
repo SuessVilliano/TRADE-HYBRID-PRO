@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { useTradingTips } from '@/lib/stores/useTradingTips';
 import { TradingTipPopup } from './trading-tips';
-import { useLocation } from 'react-router-dom';
 
 interface TradingTipsProviderProps {
   children: React.ReactNode;
   autoShowInterval?: number; // in milliseconds
+  currentPath?: string; // Optional prop to pass the current path
 }
 
 /**
@@ -14,10 +14,10 @@ interface TradingTipsProviderProps {
  */
 export function TradingTipsProvider({ 
   children, 
-  autoShowInterval = 300000 // 5 minutes by default
+  autoShowInterval = 300000, // 5 minutes by default
+  currentPath = '/'
 }: TradingTipsProviderProps) {
   const { fetchTips, showTip } = useTradingTips();
-  const location = useLocation();
   
   // Fetch tips when the component mounts
   useEffect(() => {
@@ -30,7 +30,7 @@ export function TradingTipsProvider({
     if (autoShowInterval <= 0) return;
     
     const tipTimer = setInterval(() => {
-      // Get a random category based on current location
+      // Get a random category
       const categories = ['general', 'technical', 'fundamental', 'crypto', 'forex', 'stocks'];
       const randomCategory = categories[Math.floor(Math.random() * categories.length)];
       
@@ -43,12 +43,14 @@ export function TradingTipsProvider({
     
     // Clear interval on unmount
     return () => clearInterval(tipTimer);
-  }, [autoShowInterval, showTip, location.pathname]);
+  }, [autoShowInterval, showTip]);
   
-  // Show relevant tips based on the current location
+  // Show relevant tips based on the current path (if provided)
   useEffect(() => {
+    if (!currentPath) return;
+    
     // Extract location type from path to determine relevant category
-    const path = location.pathname.toLowerCase();
+    const path = currentPath.toLowerCase();
     
     if (path.includes('crypto')) {
       // Show crypto-specific tip for crypto section
@@ -66,7 +68,7 @@ export function TradingTipsProvider({
         showTip('stocks');
       }, 5000);
     }
-  }, [location.pathname, showTip]);
+  }, [currentPath, showTip]);
   
   return (
     <>
