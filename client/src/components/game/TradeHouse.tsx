@@ -14,6 +14,7 @@ import {
 } from '@react-three/drei';
 import { Physics, useBox, usePlane } from '@react-three/cannon';
 import * as THREE from 'three';
+import { useControlsStore } from '@/lib/stores/useControlsStore';
 
 // Define control keys map
 const controlKeys = [
@@ -468,6 +469,7 @@ export default function TradeHouse() {
   const [moveDirection, setMoveDirection] = useState({ x: 0, y: 0 });
   const [isJumping, setIsJumping] = useState(false);
   const [isSprinting, setIsSprinting] = useState(false);
+  const { controlsEnabled } = useControlsStore();
   
   // Detect mobile device
   useEffect(() => {
@@ -529,7 +531,8 @@ export default function TradeHouse() {
                 mobileJump={isJumping}
                 mobileSprint={isSprinting}
               />
-              {!mobileControls && <PointerLockControls />}
+              {/* Only activate pointer lock when we're in navigation mode and not on mobile */}
+              {!mobileControls && controlsEnabled && <PointerLockControls />}
             </Suspense>
           </Physics>
         </Canvas>

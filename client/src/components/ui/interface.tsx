@@ -21,6 +21,7 @@ import { ShowTradingEducationButton, TradingEducation } from "./trading-educatio
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { FixedMobileExit } from "./fixed-mobile-exit";
+import { ControlsToggle } from "./controls-toggle";
 
 interface InterfaceProps {
   showMapOverride?: boolean;
@@ -157,6 +158,9 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
     <>
     <FixedMobileExit />
     <div>
+      {/* Controls Toggle for switching between navigation and UI interaction modes */}
+      <ControlsToggle />
+      
       {/* Guide Tour Launcher */}
       <GuideTourLauncher title="Tour Guide" />
       {/* Game Sidebar */}
