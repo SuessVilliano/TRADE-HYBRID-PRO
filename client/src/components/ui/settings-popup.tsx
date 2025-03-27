@@ -24,6 +24,16 @@ export function SettingsPopup({
   isOpen: boolean;
   onClose: () => void;
 }) {
+  // Ensure safe closing with cleanup
+  const handleClose = () => {
+    if (onClose) {
+      try {
+        onClose();
+      } catch (error) {
+        console.error("Error closing settings popup:", error);
+      }
+    }
+  };
   const [activeTab, setActiveTab] = useState<'audio' | 'graphics' | 'accessibility' | 'account'>('audio');
   const { 
     isMuted, 
@@ -133,13 +143,13 @@ export function SettingsPopup({
   // Save settings (simulation)
   const saveSettings = () => {
     alert('Settings saved successfully!');
-    onClose();
+    handleClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <PopupContainer className="max-w-3xl" title="Settings" onClose={onClose}>
+    <PopupContainer className="max-w-3xl" title="Settings" onClose={handleClose}>
       <div className="w-full flex flex-col">
         <Tabs defaultValue={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
           <div className="border-b px-4">

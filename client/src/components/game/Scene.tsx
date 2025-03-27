@@ -24,6 +24,7 @@ import GameControls from './Controls';
 import Player from './Player';
 import OtherPlayer from './OtherPlayer';
 import SignalTower from './SignalTower';
+import CryptoTrading from './CryptoTrading';
 
 interface SceneProps {
   showStats?: boolean;
@@ -475,11 +476,13 @@ function TradingEnvironment() {
           color={locationParam === 'crypto' ? '#22c55e' : '#15803d'} 
           name="Crypto Trading"
         />
-        <TradingDesk 
+        <CryptoTrading 
           position={[0, 0, -4]} 
           scale={[1.5, 1.5, 1.5]} 
           rotation={[0, Math.PI, 0]}
-          active={locationParam === 'crypto'}
+          onInteract={() => {
+            window.location.href = '/trading-space?location=crypto&symbol=BTC/USD';
+          }}
         />
         <MarketDisplay
           position={[0, 1, 4]}

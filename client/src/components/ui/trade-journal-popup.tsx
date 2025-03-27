@@ -40,6 +40,17 @@ export function TradeJournalPopup({
   isOpen: boolean;
   onClose: () => void;
 }) {
+  // Ensure safe closing with cleanup
+  const handleClose = () => {
+    if (onClose) {
+      try {
+        onClose();
+      } catch (error) {
+        console.error("Error closing trade journal popup:", error);
+      }
+    }
+  };
+}) {
   const { trades, tradeStats } = useTrader();
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [newEntry, setNewEntry] = useState('');
