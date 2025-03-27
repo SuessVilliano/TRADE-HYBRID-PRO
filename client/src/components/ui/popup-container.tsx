@@ -52,12 +52,12 @@ export function PopupContainer({
       
       <div 
         className={cn(
-          "w-[90%] max-w-4xl max-h-[90vh] overflow-y-auto rounded-lg bg-gray-800 border border-gray-600 shadow-xl text-white",
+          "w-[94%] max-w-4xl max-h-[90vh] overflow-y-auto rounded-lg bg-gray-800 border border-gray-600 shadow-xl text-white",
           className
         )}
       >
         {(title || showCloseButton) && (
-          <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-gray-700 bg-gray-900">
+          <div className="sticky top-0 z-20 flex items-center justify-between p-4 border-b border-gray-700 bg-gray-900">
             {title && <h2 className="text-xl font-semibold text-white">{title}</h2>}
             {showCloseButton && onClose && (
               <button 
@@ -73,13 +73,17 @@ export function PopupContainer({
         )}
         
         {/* 
-          Enable touch scrolling for mobile devices by setting
-          -webkit-overflow-scrolling: touch, and ensure content is 
-          positioned correctly with relative positioning
+          Improved mobile scrolling with additional touch event handling
+          and making sure content doesn't get clipped on mobile devices
         */}
         <div 
-          className="p-4 relative overflow-y-auto" 
-          style={{ WebkitOverflowScrolling: 'touch' }}
+          className="p-4 relative overflow-y-auto max-h-[calc(90vh-80px)]" 
+          style={{ 
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            msOverflowStyle: 'none', /* for Internet Explorer, Edge */
+            scrollbarWidth: 'thin'
+          }}
         >
           {children}
         </div>
