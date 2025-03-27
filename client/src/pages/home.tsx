@@ -69,16 +69,17 @@ export default function Home() {
       }, 1000);
     }
     
-    // Check if user has seen the guided features before
-    const guidedFeaturesSeen = localStorage.getItem('guided_features_seen');
-    if (!guidedFeaturesSeen) {
-      // Show guided features after a short delay
-      setTimeout(() => {
-        setShowGuidedFeatures(true);
-        // Start the guided tour
+    // Always show guided features, but only trigger the auto tour if not seen before
+    setTimeout(() => {
+      setShowGuidedFeatures(true);
+      
+      // Only auto-start the tour for first-time users
+      const guidedFeaturesSeen = localStorage.getItem('guided_features_seen');
+      if (!guidedFeaturesSeen) {
+        // Start the guided tour automatically
         guideTour.startTour();
-      }, 2000);
-    }
+      }
+    }, 1500);
   }, [setBackgroundMusic, setHitSound, setSuccessSound, guideTour]);
   
   const handleEnterMetaverse = () => {

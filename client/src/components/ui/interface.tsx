@@ -14,6 +14,7 @@ import { UserStatusManager } from "./user-status-manager";
 import { TradingViewTools } from "./trading-view-tools";
 import { AIAssistant } from "./ai-assistant";
 import { PopupManager } from "./popup-manager";
+import { GuideTourLauncher } from "./contextual-tooltip";
 import { toast } from "sonner";
 
 interface InterfaceProps {
@@ -89,15 +90,14 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
         }
       } else if (e.key.toLowerCase() === 'h') {
         setControlsMinimized(prev => !prev);
-        // Show a toast notification to inform the user about the shortcut
         if (controlsMinimized) {
           toast("Controls shown", {
-            description: "Press H to hide the controls panel",
+            description: "Press H to hide controls again",
             duration: 2000,
           });
         } else {
           toast("Controls hidden", {
-            description: "Press H to show the controls panel",
+            description: "Press H to show controls again",
             duration: 2000,
           });
         }
@@ -113,17 +113,19 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
   return (
     <>
     <div>
+      {/* Guide Tour Launcher */}
+      <GuideTourLauncher title="Tour Guide" />
       {/* Game Sidebar */}
       <GameSidebar />
       
       {/* Minimized control button when controls are hidden */}
       {controlsMinimized && (
-        <div className="fixed top-4 right-4 z-10">
+        <div className="fixed bottom-4 left-4 z-10">
           <Button
             variant="default"
             size="sm"
             onClick={() => setControlsMinimized(false)}
-            className="rounded-full shadow-lg bg-gray-800/80 hover:bg-gray-700"
+            className="rounded-full shadow-lg bg-gray-800/90 hover:bg-gray-700"
             title="Show Controls"
           >
             <Settings size={16} className="mr-1" />
@@ -131,20 +133,20 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
             <ChevronDown size={16} className="ml-1" />
             <span className="sr-only">Press H to show controls</span>
           </Button>
-          <div className="absolute -bottom-6 right-0 text-[10px] text-gray-400 bg-gray-800/70 px-2 py-0.5 rounded-full opacity-50 hover:opacity-100 transition-opacity">
+          <div className="absolute -top-6 left-0 text-[10px] text-gray-400 bg-gray-800/90 px-2 py-0.5 rounded-full opacity-70 hover:opacity-100 transition-opacity">
             Press H to show
           </div>
         </div>
       )}
       
-      {/* Top-right corner UI controls */}
+      {/* Top-right corner UI controls - moved down to avoid crowding with the sidebar */}
       {!controlsMinimized && (
-        <div className="fixed top-4 right-4 z-10">
-          <div className="bg-gray-900/30 backdrop-blur-sm p-2 rounded-lg shadow-lg border border-gray-800/50">
+        <div className="fixed bottom-4 left-4 z-10">
+          <div className="bg-gray-900/80 backdrop-blur-sm p-2 rounded-lg shadow-lg border border-gray-800/50">
             <div className="flex justify-between items-center mb-2">
               <div className="flex items-center">
                 <span className="text-xs font-medium text-gray-200 mx-2">Control Panel</span>
-                <span className="text-[10px] text-gray-400 bg-gray-800/50 px-1 py-0.5 rounded">Press H to hide</span>
+                <span className="text-[10px] text-gray-400 bg-gray-800/70 px-1 py-0.5 rounded">Press H to hide</span>
               </div>
               <Button
                 variant="ghost"
@@ -505,8 +507,17 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
       )}
       
       {/* Instructions panel */}
-      <div className="fixed bottom-4 left-4 z-10 hidden md:block">
-        <Card className="w-auto max-w-xs bg-background/80 backdrop-blur-sm">
+      <div className={`fixed bottom-4 left-4 z-10 hidden md:${controlsMinimized ? 'hidden' : 'block'}`}>
+        <Card className="w-auto max-w-xs bg-background/80 backdrop-blur-sm relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute -top-2 -right-2 z-20 h-6 w-6 rounded-full bg-background shadow-md"
+            onClick={() => setControlsMinimized(true)}
+            title="Hide Controls"
+          >
+            <X size={14} />
+          </Button>
           <CardContent className="p-4">
             <h3 className="font-medium mb-2">Controls:</h3>
             <ul className="text-sm space-y-1 text-muted-foreground">
@@ -518,11 +529,27 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
               <li>M: Toggle map</li>
               <li>T: Toggle microphone</li>
               <li>C: Toggle chat</li>
+              <li>H: Hide controls</li>
+              <li>A: Toggle AI Assistant</li>
               <li>AR Button: View in augmented reality</li>
             </ul>
           </CardContent>
         </Card>
       </div>
+      
+      {/* Show controls button when minimized */}
+      {controlsMinimized && (
+        <div className="fixed bottom-4 left-4 z-10 hidden md:block">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setControlsMinimized(false)}
+            className="bg-background/80 backdrop-blur-sm text-xs"
+          >
+            Show Controls
+          </Button>
+        </div>
+      )}
     </div>
     <PopupManager />
     </>

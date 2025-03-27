@@ -340,19 +340,24 @@ export function GuideTooltipTrigger({
 export function GuideTourLauncher({ title = "Start Tour" }: { title?: string }) {
   const guideTour = useGuideTour();
   
-  if (!guideTour.isFirstTimeUser && !guideTour.isTourActive) {
-    return null;
-  }
-  
   return (
     <div className="fixed bottom-4 right-4 z-50">
       <Button 
         onClick={() => guideTour.startTour()}
         variant="default"
-        className="animate-bounce-slow gap-2"
+        className={cn(
+          "gap-2 shadow-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white border-none hover:from-blue-600 hover:to-purple-600",
+          guideTour.isFirstTimeUser ? "animate-bounce-slow" : ""
+        )}
       >
         <HelpCircle className="h-4 w-4" />
         {title}
+        {guideTour.isFirstTimeUser && (
+          <span className="absolute -top-1 -right-1 flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+          </span>
+        )}
       </Button>
     </div>
   );

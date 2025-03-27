@@ -152,7 +152,7 @@ export function GameSidebar() {
   };
 
   return (
-    <div className={`fixed left-0 top-0 h-full z-40 flex transition-all duration-300 ease-in-out ${isExpanded ? '' : 'transform -translate-x-[calc(100%-3.5rem)]'}`}>
+    <div className={`fixed left-0 top-16 h-[calc(100%-64px)] z-30 flex transition-all duration-300 ease-in-out ${isExpanded ? '' : 'transform -translate-x-[calc(100%-3.5rem)]'}`}>
       {/* Sidebar container */}
       <div className="relative flex h-full">
         {/* Main sidebar */}
