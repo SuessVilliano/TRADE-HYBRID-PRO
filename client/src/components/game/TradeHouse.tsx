@@ -26,7 +26,19 @@ const controlKeys = [
 ];
 
 // Player component with first-person controls
-function Player() {
+interface PlayerProps {
+  mobileControls?: boolean;
+  mobileDirection?: { x: number; y: number };
+  mobileJump?: boolean;
+  mobileSprint?: boolean;
+}
+
+function Player({ 
+  mobileControls = false, 
+  mobileDirection = { x: 0, y: 0 }, 
+  mobileJump = false,
+  mobileSprint = false
+}: PlayerProps) {
   const playerRef = useRef<THREE.Group>(null);
   const [ref, api] = useBox(() => ({
     mass: 1,
@@ -34,7 +46,7 @@ function Player() {
     args: [0.5, 1.8, 0.5]
   }));
 
-  // Movement controls
+  // Movement controls from keyboard
   const [, getKeys] = useKeyboardControls();
   const velocity = useRef([0, 0, 0]);
   const position = useRef([0, 2, 0]);
@@ -52,9 +64,18 @@ function Player() {
 
   // Player movement logic
   useFrame(() => {
-    const { forward, backward, left, right, jump, sprint } = getKeys();
+    // Get keyboard controls if not on mobile
+    const keyboard = getKeys();
     
-    // Apply movement forces based on key presses
+    // Determine control values based on whether we're using mobile or keyboard
+    const forward = mobileControls ? mobileDirection.y < -0.2 : keyboard.forward;
+    const backward = mobileControls ? mobileDirection.y > 0.2 : keyboard.backward;
+    const left = mobileControls ? mobileDirection.x < -0.2 : keyboard.left;
+    const right = mobileControls ? mobileDirection.x > 0.2 : keyboard.right;
+    const jump = mobileControls ? mobileJump : keyboard.jump;
+    const sprint = mobileControls ? mobileSprint : keyboard.sprint;
+    
+    // Apply movement forces based on inputs
     const direction = new THREE.Vector3();
     const frontVector = new THREE.Vector3(0, 0, (backward ? 1 : 0) - (forward ? 1 : 0));
     const sideVector = new THREE.Vector3((left ? 1 : 0) - (right ? 1 : 0), 0, 0);
@@ -443,24 +464,120 @@ function Lights() {
 
 // Main TradeHouse component
 export default function TradeHouse() {
+  const [mobileControls, setMobileControls] = useState(false);
+  const [moveDirection, setMoveDirection] = useState({ x: 0, y: 0 });
+  const [isJumping, setIsJumping] = useState(false);
+  const [isSprinting, setIsSprinting] = useState(false);
+  
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setMobileControls(window.innerWidth <= 768);
+    };
+    
+    checkMobile(); // Check on mount
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+  
+  // Handle mobile joystick movement
+  const handleMobileMove = (x: number, y: number) => {
+    setMoveDirection({ x, y });
+  };
+  
+  // Handle stop moving on mobile
+  const handleStopMove = () => {
+    setMoveDirection({ x: 0, y: 0 });
+  };
+  
+  // Handle jump on mobile
+  const handleMobileJump = () => {
+    setIsJumping(true);
+    setTimeout(() => setIsJumping(false), 300); // Reset after 300ms
+  };
+  
+  // Handle sprint on mobile
+  const handleMobileSprint = () => {
+    setIsSprinting(true);
+  };
+  
+  // Handle stop sprint on mobile
+  const handleStopSprint = () => {
+    setIsSprinting(false);
+  };
+  
   return (
-    <KeyboardControls map={controlKeys}>
-      <Canvas shadows className="w-full h-full">
-        <Sky sunPosition={[100, 100, 0]} />
-        <Lights />
-        
-        <Physics gravity={[0, -30, 0]}>
-          <TradeHouseStructure />
-          <TradingScreens />
-          <RoomLabels />
+    <>
+      <KeyboardControls map={controlKeys}>
+        <Canvas shadows className="w-full h-full">
+          <Sky sunPosition={[100, 100, 0]} />
+          <Lights />
           
-          {/* Player needs to be wrapped in Suspense since it uses dynamic imports */}
-          <Suspense fallback={null}>
-            <Player />
-            <PointerLockControls />
-          </Suspense>
-        </Physics>
-      </Canvas>
-    </KeyboardControls>
+          <Physics gravity={[0, -30, 0]}>
+            <TradeHouseStructure />
+            <TradingScreens />
+            <RoomLabels />
+            
+            {/* Player needs to be wrapped in Suspense since it uses dynamic imports */}
+            <Suspense fallback={null}>
+              <Player 
+                mobileControls={mobileControls} 
+                mobileDirection={moveDirection} 
+                mobileJump={isJumping}
+                mobileSprint={isSprinting}
+              />
+              {!mobileControls && <PointerLockControls />}
+            </Suspense>
+          </Physics>
+        </Canvas>
+      </KeyboardControls>
+      
+      {/* Show mobile controls if needed */}
+      {mobileControls && (
+        <div className="absolute inset-0 pointer-events-none z-10">
+          <div className="pointer-events-auto">
+            <div className="absolute bottom-24 left-10 w-36 h-36 rounded-full bg-black/20 border-2 border-white/30 touch-none"
+                onTouchStart={(e) => {
+                  const touch = e.touches[0];
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = (touch.clientX - rect.left) / rect.width * 2 - 1;
+                  const y = (touch.clientY - rect.top) / rect.height * 2 - 1;
+                  handleMobileMove(x, y);
+                }}
+                onTouchMove={(e) => {
+                  const touch = e.touches[0];
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = (touch.clientX - rect.left) / rect.width * 2 - 1;
+                  const y = (touch.clientY - rect.top) / rect.height * 2 - 1;
+                  handleMobileMove(x, y);
+                }}
+                onTouchEnd={handleStopMove}
+            >
+              <div className="absolute w-20 h-20 rounded-full bg-white/30 border-2 border-white/50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+            </div>
+            
+            {/* Jump button */}
+            <button
+              className="absolute right-8 bottom-24 w-16 h-16 rounded-full bg-green-600/80 text-white font-bold text-lg"
+              onTouchStart={handleMobileJump}
+            >
+              JUMP
+            </button>
+            
+            {/* Sprint button */}
+            <button
+              className="absolute right-8 bottom-8 w-16 h-16 rounded-full bg-blue-600/80 text-white font-bold text-lg"
+              onTouchStart={handleMobileSprint}
+              onTouchEnd={handleStopSprint}
+            >
+              RUN
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

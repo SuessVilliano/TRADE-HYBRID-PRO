@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './button';
 import { SimpleWalletButton } from './simple-wallet-button';
 import { SimpleAffiliateSystem } from './simple-affiliate-system';
@@ -8,6 +8,7 @@ import { CryptoSwap } from './crypto-swap';
 import { Label } from './label';
 import { Slider } from './slider';
 import { Input } from './input';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 
 // Create dummy store functions to prevent crashes
 const dummyWebApp = {
@@ -55,8 +56,16 @@ import TradingViewWidget from './TradingViewWidget';
 import { ContextualTooltip } from './contextual-tooltip';
 
 export function GameSidebar() {
+  const isMobile = useIsMobile();
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<string | null>(null);
+  
+  // Auto-collapse sidebar on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setIsExpanded(false);
+    }
+  }, [isMobile]);
   
   // Use our dummy functions instead of the real stores to avoid crashes
   const { openWebApp } = dummyWebApp;

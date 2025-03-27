@@ -18,6 +18,7 @@ import { GuideTourLauncher } from "./contextual-tooltip";
 import { ShowTradingTipButton, useTradingTips } from "./trading-tips";
 import { ShowTradingEducationButton, TradingEducation } from "./trading-education";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 
 interface InterfaceProps {
   showMapOverride?: boolean;
@@ -30,6 +31,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
   const { isMuted, toggleMute } = useAudio();
   const { toggleVoiceChat, voiceChatEnabled } = useMultiplayer();
   const { showTip } = useTradingTips();
+  const isMobile = useIsMobile();
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [showMapState, setShowMapState] = useState(false);
   const [chatMinimized, setChatMinimized] = useState(true);
@@ -38,7 +40,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
   const [showTradingTools, setShowTradingTools] = useState(false);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showEducation, setShowEducation] = useState(false);
-  const [controlsMinimized, setControlsMinimized] = useState(false);
+  const [controlsMinimized, setControlsMinimized] = useState(isMobile ? true : false);
 
   // Use either the internal state or the external override prop
   const showMap = showMapOverride !== undefined ? showMapOverride : showMapState;
@@ -158,7 +160,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
       
       {/* Minimized control button when controls are hidden */}
       {controlsMinimized && (
-        <div className="fixed bottom-4 left-4 z-10">
+        <div className={`fixed ${isMobile ? 'bottom-24 left-4' : 'bottom-4 left-4'} z-10`}>
           <Button
             variant="default"
             size="sm"
@@ -171,20 +173,24 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
             <ChevronDown size={16} className="ml-1" />
             <span className="sr-only">Press H to show controls</span>
           </Button>
-          <div className="absolute -top-6 left-0 text-[10px] text-gray-400 bg-gray-800/90 px-2 py-0.5 rounded-full opacity-70 hover:opacity-100 transition-opacity">
-            Press H to show
-          </div>
+          {!isMobile && (
+            <div className="absolute -top-6 left-0 text-[10px] text-gray-400 bg-gray-800/90 px-2 py-0.5 rounded-full opacity-70 hover:opacity-100 transition-opacity">
+              Press H to show
+            </div>
+          )}
         </div>
       )}
       
-      {/* Top-right corner UI controls - moved down to avoid crowding with the sidebar */}
+      {/* UI controls panel */}
       {!controlsMinimized && (
-        <div className="fixed bottom-4 left-4 z-10">
+        <div className={`fixed ${isMobile ? 'bottom-24 left-4' : 'bottom-4 left-4'} z-10`}>
           <div className="bg-gray-900/80 backdrop-blur-sm p-2 rounded-lg shadow-lg border border-gray-800/50">
             <div className="flex justify-between items-center mb-2">
               <div className="flex items-center">
                 <span className="text-xs font-medium text-gray-200 mx-2">Control Panel</span>
-                <span className="text-[10px] text-gray-400 bg-gray-800/70 px-1 py-0.5 rounded">Press H to hide</span>
+                {!isMobile && (
+                  <span className="text-[10px] text-gray-400 bg-gray-800/70 px-1 py-0.5 rounded">Press H to hide</span>
+                )}
               </div>
               <Button
                 variant="ghost"
