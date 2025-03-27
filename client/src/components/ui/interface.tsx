@@ -521,8 +521,8 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
         </div>
       )}
       
-      {/* Instructions panel */}
-      <div className={`fixed bottom-4 left-4 z-10 hidden md:${controlsMinimized ? 'hidden' : 'block'}`}>
+      {/* Instructions panel - moved to top center */}
+      <div className={`fixed top-16 left-1/2 transform -translate-x-1/2 z-30 hidden md:${controlsMinimized ? 'hidden' : 'block'}`}>
         <Card className="w-auto max-w-xs bg-background/90 backdrop-blur-sm relative animate-fade-in-out shadow-xl border-gray-700">
           <Button
             variant="ghost"
@@ -545,7 +545,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
               <li>T: Toggle microphone</li>
               <li>C: Toggle chat</li>
               <li>H: Hide controls</li>
-              <li>A: Toggle AI Assistant</li>
+              <li>A: Toggle AI Assistantnt</li>
               <li>AR Button: View in augmented reality</li>
             </ul>
             <div className="text-[10px] text-gray-400 mt-2 italic">This controls help will disappear shortly...</div>
@@ -553,15 +553,16 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
         </Card>
       </div>
       
-      {/* Show controls button when minimized */}
+      {/* Show controls button when minimized - moved to top center */}
       {controlsMinimized && (
-        <div className="fixed bottom-4 left-4 z-10 hidden md:block">
+        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-30 hidden md:block">
           <Button
             variant="secondary"
             size="sm"
             onClick={() => setControlsMinimized(false)}
-            className="bg-background/80 backdrop-blur-sm text-xs"
+            className="bg-background/80 backdrop-blur-sm text-xs shadow-lg"
           >
+            <Settings size={14} className="mr-1" />
             Show Controls
           </Button>
         </div>

@@ -39,9 +39,11 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <GuideTourProvider>
-        <RouterProvider router={router} />
-        <Toaster position="top-right" />
-        <GuideTourLauncher title="Welcome to Trade Hybrid! Take a tour" />
+        <div className="app-container">
+          <RouterProvider router={router} />
+          <Toaster position="top-right" />
+          <GuideTourLauncher title="Welcome to Trade Hybrid! Take a tour" />
+        </div>
       </GuideTourProvider>
     </QueryClientProvider>
   );

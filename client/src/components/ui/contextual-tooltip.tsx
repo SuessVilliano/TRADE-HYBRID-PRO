@@ -356,6 +356,21 @@ export function GuideTourLauncher({ title = "Tour Guide" }: { title?: string }) 
   const guideTour = useGuideTour();
   const [isHidden, setIsHidden] = useState(false);
   
+  // Force startTour to be properly defined
+  useEffect(() => {
+    console.log("Tour guide initialized");
+    
+    // Add keyboard shortcut to start tour with 'T' key
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 't' || e.key === 'T') {
+        guideTour.startTour();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [guideTour]);
+  
   // If hidden, show a minimal button to restore
   if (isHidden) {
     return (
@@ -374,7 +389,7 @@ export function GuideTourLauncher({ title = "Tour Guide" }: { title?: string }) 
   }
   
   return (
-    <div className="fixed right-6 bottom-20 z-50">
+    <div className="fixed right-6 bottom-40 md:bottom-20 z-50">
       <div className={cn(
         "relative p-1 rounded-xl bg-gradient-to-r from-blue-300/20 to-purple-300/20 backdrop-blur-sm shadow-xl",
         "animate-pulse-slow" // Always animate to attract attention
@@ -392,7 +407,10 @@ export function GuideTourLauncher({ title = "Tour Guide" }: { title?: string }) 
         </div>
         
         <Button 
-          onClick={() => guideTour.startTour()}
+          onClick={() => {
+            console.log("Starting tour...");
+            guideTour.startTour();
+          }}
           variant="default"
           size="lg"
           className={cn(
