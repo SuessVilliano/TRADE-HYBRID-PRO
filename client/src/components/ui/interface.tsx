@@ -64,7 +64,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
       if (e.key.toLowerCase() === 'm') {
         toggleMap();
       } else if (e.key.toLowerCase() === 't') {
-        setMicEnabled(prev => !prev);
+        toggleVoiceChat(!voiceChatEnabled);
       } else if (e.key.toLowerCase() === 'c') {
         setShowChat(prev => !prev);
         if (!showChat) setChatMinimized(false);
@@ -73,41 +73,9 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showChat]);
+  }, [showChat, voiceChatEnabled, toggleVoiceChat]);
   
-  // Set up microphone when enabled
-  useEffect(() => {
-    let stream: MediaStream | null = null;
-    
-    const setupMicrophone = async () => {
-      try {
-        if (micEnabled) {
-          console.log("Enabling microphone...");
-          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          console.log("Microphone enabled successfully");
-          // Here you would connect the stream to your voice chat system
-        } else if (stream) {
-          // Stop all audio tracks
-          stream.getAudioTracks().forEach(track => track.stop());
-          stream = null;
-          console.log("Microphone disabled");
-        }
-      } catch (error) {
-        console.error("Error accessing microphone:", error);
-        setMicEnabled(false);
-      }
-    };
-    
-    setupMicrophone();
-    
-    // Cleanup function
-    return () => {
-      if (stream) {
-        stream.getAudioTracks().forEach(track => track.stop());
-        console.log("Microphone disabled on cleanup");
-      }
-    };
-  }, [micEnabled]);
+  // Voice chat status will be handled by the multiplayer service
 
   return (
     <div>
@@ -158,13 +126,13 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
         </Button>
         
         <Button
-          variant={micEnabled ? "default" : "outline"}
+          variant={voiceChatEnabled ? "default" : "outline"}
           size="icon"
-          onClick={() => setMicEnabled(!micEnabled)}
-          title={micEnabled ? "Disable Microphone" : "Enable Microphone"}
-          className={micEnabled ? "bg-green-600 hover:bg-green-700 relative" : ""}
+          onClick={() => toggleVoiceChat(!voiceChatEnabled)}
+          title={voiceChatEnabled ? "Disable Microphone" : "Enable Microphone"}
+          className={voiceChatEnabled ? "bg-green-600 hover:bg-green-700 relative" : ""}
         >
-          {micEnabled ? (
+          {voiceChatEnabled ? (
             <>
               <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
               <Mic size={18} />
