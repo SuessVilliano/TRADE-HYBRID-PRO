@@ -50,6 +50,7 @@ export default function TradingSpace() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPanelExpanded, setIsPanelExpanded] = useState(window.innerWidth > 768);
   const [showAITools, setShowAITools] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   
   // Initialize data stores
   const { fetchMarketData } = useMarketData();
@@ -58,6 +59,24 @@ export default function TradingSpace() {
   const { fetchLeaderboard } = useLeaderboard();
   const { fetchBots } = useBots();
   const { openWebApp } = useWebApp();
+  
+  // Detect if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+      setIsMobile(mobileRegex.test(userAgent));
+      
+      // Always expand panel on mobile for better visibility
+      if (mobileRegex.test(userAgent)) {
+        setIsPanelExpanded(true);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // Load initial data
   useEffect(() => {
@@ -209,6 +228,179 @@ export default function TradingSpace() {
     }
   };
   
+  // Render mobile-specific UI or desktop UI
+  if (isMobile) {
+    return (
+      <div className="relative h-screen w-screen overflow-hidden bg-gray-100 dark:bg-gray-900">
+        {/* Mobile-specific UI */}
+        <div className="flex flex-col h-full">
+          {/* Top Navigation Bar */}
+          <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+            <div className="flex h-14 items-center justify-between px-4">
+              <div className="flex items-center gap-2">
+                <Link to="/">
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <h1 className="text-lg font-semibold truncate">{getLocationTitle()}</h1>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => setShowAITools(!showAITools)}
+                >
+                  <Sparkles size={14} className="text-blue-500 mr-1" />
+                  <span className="text-xs">AI</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={toggleFullscreen}
+                >
+                  {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Main content area */}
+          <div className="flex-1 overflow-hidden">
+            {/* Content based on active panel */}
+            <div className="h-full">
+              {renderActivePanel()}
+            </div>
+          </div>
+          
+          {/* Bottom Navigation */}
+          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-sm">
+            <div className="grid grid-cols-5 h-16">
+              <button 
+                className={`flex flex-col items-center justify-center ${activePanel === "market" ? "text-blue-500" : "text-gray-600 dark:text-gray-400"}`}
+                onClick={() => setActivePanel("market")}
+              >
+                <BarChart2 size={20} />
+                <span className="text-xs mt-1">Chart</span>
+              </button>
+              <button 
+                className={`flex flex-col items-center justify-center ${activePanel === "trade" ? "text-blue-500" : "text-gray-600 dark:text-gray-400"}`}
+                onClick={() => setActivePanel("trade")}
+              >
+                <Activity size={20} />
+                <span className="text-xs mt-1">Trade</span>
+              </button>
+              <button 
+                className={`flex flex-col items-center justify-center ${activePanel === "news" ? "text-blue-500" : "text-gray-600 dark:text-gray-400"}`}
+                onClick={() => setActivePanel("news")}
+              >
+                <Info size={20} />
+                <span className="text-xs mt-1">News</span>
+              </button>
+              <button 
+                className={`flex flex-col items-center justify-center ${activePanel === "signals" ? "text-blue-500" : "text-gray-600 dark:text-gray-400"}`}
+                onClick={() => setActivePanel("signals")}
+              >
+                <Sparkles size={20} />
+                <span className="text-xs mt-1">Signals</span>
+              </button>
+              <button 
+                className={`flex flex-col items-center justify-center ${activePanel === "journal" ? "text-blue-500" : "text-gray-600 dark:text-gray-400"}`}
+                onClick={() => setActivePanel("journal")}
+              >
+                <BookOpen size={20} />
+                <span className="text-xs mt-1">Journal</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        {/* AI Tools Panel */}
+        {showAITools && (
+          <div className="absolute inset-0 z-50 bg-black/20 flex items-end justify-center animate-in fade-in duration-200">
+            <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-t-xl shadow-lg border border-gray-200 dark:border-gray-700">
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <Sparkles size={18} className="text-blue-500" />
+                  AI Trading Tools
+                </h3>
+                <Button 
+                  variant="ghost" 
+                  size="icon"  
+                  className="h-8 w-8"
+                  onClick={() => setShowAITools(false)}
+                >
+                  <X size={18} />
+                </Button>
+              </div>
+              <div className="p-4 max-h-[70vh] overflow-auto">
+                <div className="space-y-4">
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="w-full justify-start text-left flex items-center gap-3 h-auto py-3"
+                    onClick={() => {
+                      setActivePanel("assistant");
+                      setShowAITools(false);
+                    }}
+                  >
+                    <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full">
+                      <Info size={18} className="text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <span className="block font-medium">Trading Assistant</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 block mt-0.5">Get AI-powered trading advice and market insights</span>
+                    </div>
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="w-full justify-start text-left flex items-center gap-3 h-auto py-3"
+                    onClick={() => {
+                      setActivePanel("signals");
+                      setShowAITools(false);
+                    }}
+                  >
+                    <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-full">
+                      <Activity size={18} className="text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                      <span className="block font-medium">AI Signals</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 block mt-0.5">AI-generated trade signals with entry and exit points</span>
+                    </div>
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="w-full justify-start text-left flex items-center gap-3 h-auto py-3"
+                    onClick={() => {
+                      setActivePanel("bots");
+                      setShowAITools(false);
+                    }}
+                  >
+                    <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-full">
+                      <Bot size={18} className="text-green-600 dark:text-green-400" />
+                    </div>
+                    <div>
+                      <span className="block font-medium">Trading Bots</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 block mt-0.5">Create and manage automated trading bots</span>
+                    </div>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+  
+  // Desktop UI
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       {/* 3D Scene */}
