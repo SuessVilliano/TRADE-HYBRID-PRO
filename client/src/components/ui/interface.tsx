@@ -159,8 +159,9 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
       <GameSidebar />
       
       {/* Minimized control button when controls are hidden */}
-      {controlsMinimized && (
-        <div className={`fixed ${isMobile ? 'bottom-24 left-4' : 'bottom-4 left-4'} z-10`}>
+      {/* This bottom control button is kept for desktop users, but we now have another centered button for mobile */}
+      {controlsMinimized && !isMobile && (
+        <div className="fixed bottom-4 left-4 z-10">
           <Button
             variant="default"
             size="sm"
@@ -173,11 +174,9 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
             <ChevronDown size={16} className="ml-1" />
             <span className="sr-only">Press H to show controls</span>
           </Button>
-          {!isMobile && (
-            <div className="absolute -top-6 left-0 text-[10px] text-gray-400 bg-gray-800/90 px-2 py-0.5 rounded-full opacity-70 hover:opacity-100 transition-opacity">
-              Press H to show
-            </div>
-          )}
+          <div className="absolute -top-6 left-0 text-[10px] text-gray-400 bg-gray-800/90 px-2 py-0.5 rounded-full opacity-70 hover:opacity-100 transition-opacity">
+            Press H to show
+          </div>
         </div>
       )}
       
@@ -196,10 +195,11 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
                 variant="ghost"
                 size="icon"
                 onClick={() => setControlsMinimized(true)}
-                className="h-6 w-6 rounded-full hover:bg-gray-700/50"
+                className="h-8 w-8 rounded-full hover:bg-gray-700/50"
                 title="Minimize Controls"
+                style={{ zIndex: 100 }}
               >
-                <ChevronUp size={14} />
+                <ChevronUp size={20} />
               </Button>
             </div>
             
@@ -613,16 +613,17 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
         </Card>
       </div>
       
-      {/* Show controls button when minimized - moved to top center */}
+      {/* Show controls button when minimized - made visible for both mobile and desktop */}
       {controlsMinimized && (
-        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-30 hidden md:block">
+        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-30 md:block">
           <Button
             variant="secondary"
             size="sm"
             onClick={() => setControlsMinimized(false)}
-            className="bg-background/80 backdrop-blur-sm text-xs shadow-lg"
+            className="bg-background/80 backdrop-blur-sm text-sm shadow-lg"
+            style={{ zIndex: 100 }}
           >
-            <Settings size={14} className="mr-1" />
+            <Settings size={16} className="mr-1" />
             Show Controls
           </Button>
         </div>
