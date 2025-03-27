@@ -4,7 +4,8 @@ import {
   HelpCircle,
   AlertCircle,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -353,6 +354,24 @@ export function GuideTooltipTrigger({
  */
 export function GuideTourLauncher({ title = "Tour Guide" }: { title?: string }) {
   const guideTour = useGuideTour();
+  const [isHidden, setIsHidden] = useState(false);
+  
+  // If hidden, show a minimal button to restore
+  if (isHidden) {
+    return (
+      <div className="fixed right-6 bottom-20 z-50">
+        <Button 
+          onClick={() => setIsHidden(false)}
+          variant="outline"
+          size="sm"
+          className="bg-background/60 backdrop-blur-sm shadow-md hover:bg-background/80 border-gray-300 dark:border-gray-700"
+        >
+          <HelpCircle className="h-4 w-4 mr-1 text-primary" />
+          <span className="text-xs">Show Tour Guide</span>
+        </Button>
+      </div>
+    );
+  }
   
   return (
     <div className="fixed right-6 bottom-20 z-50">
@@ -360,6 +379,18 @@ export function GuideTourLauncher({ title = "Tour Guide" }: { title?: string }) 
         "relative p-1 rounded-xl bg-gradient-to-r from-blue-300/20 to-purple-300/20 backdrop-blur-sm shadow-xl",
         "animate-pulse-slow" // Always animate to attract attention
       )}>
+        <div className="absolute -top-3 -right-3 z-10">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsHidden(true)}
+            className="h-6 w-6 rounded-full bg-background shadow-md"
+            title="Hide Tour Guide"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+        
         <Button 
           onClick={() => guideTour.startTour()}
           variant="default"
