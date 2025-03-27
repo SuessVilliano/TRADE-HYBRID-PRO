@@ -5,7 +5,7 @@ import { useMultiplayer } from "@/lib/stores/useMultiplayer";
 import { Button } from "./button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
 //import { Confetti } from "../game/Confetti"; // Uncomment if this component exists
-import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map, Mic, MicOff, MessageSquare, Smartphone, LineChart, BarChart2, ChevronUp, ChevronDown, Settings, Sparkles, Lightbulb, GraduationCap } from "lucide-react";
+import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map, Mic, MicOff, MessageSquare, Smartphone, LineChart, BarChart2, ChevronUp, ChevronDown, Settings, Sparkles, Lightbulb, GraduationCap, School } from "lucide-react";
 import { AugmentedReality } from "./augmented-reality";
 import { PlayerCustomizer } from "./player-customizer";
 import { GameSidebar } from "./game-sidebar";
@@ -15,7 +15,8 @@ import { TradingViewTools } from "./trading-view-tools";
 import { AIAssistant } from "./ai-assistant";
 import { PopupManager } from "./popup-manager";
 import { GuideTourLauncher } from "./contextual-tooltip";
-import { ShowTradingTipButton, useTradingTips } from "./trading-tips";
+import { ShowTradingTipButton } from "./trading-tips";
+import { useTradingTips } from "@/lib/stores/useTradingTips";
 import { ShowTradingEducationButton, TradingEducation } from "./trading-education";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-is-mobile";
@@ -41,6 +42,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
   const [showTradingTools, setShowTradingTools] = useState(false);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showEducation, setShowEducation] = useState(false);
+  const [showHubPopup, setShowHubPopup] = useState(false);
   const [controlsMinimized, setControlsMinimized] = useState(isMobile ? true : false);
 
   // Use either the internal state or the external override prop
@@ -115,8 +117,8 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
           duration: 2000,
         });
       } else if (e.key.toLowerCase() === 'e') {
-        setShowEducation(prev => !prev);
-        if (showEducation) {
+        setShowHubPopup(prev => !prev);
+        if (showHubPopup) {
           toast("Education Hub closed", {
             description: "Press E to reopen the Education Hub",
             duration: 2000,
@@ -132,7 +134,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showChat, voiceChatEnabled, toggleVoiceChat, controlsMinimized, showAIAssistant, showTip, showEducation]);
+  }, [showChat, voiceChatEnabled, toggleVoiceChat, controlsMinimized, showAIAssistant, showTip, showHubPopup]);
   
   // Auto-hide controls after initial display
   useEffect(() => {
@@ -310,6 +312,16 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
               </Button>
               
               <ShowTradingTipButton />
+              
+              <Button
+                variant={showHubPopup ? "default" : "outline"}
+                size="icon"
+                onClick={() => setShowHubPopup(!showHubPopup)}
+                title="Education Hub"
+                className={showHubPopup ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+              >
+                <GraduationCap size={18} />
+              </Button>
               
               <ShowTradingEducationButton 
                 onClick={() => setShowEducation(!showEducation)} 
@@ -631,7 +643,171 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
         </div>
       )}
     </div>
-    <PopupManager />
+    
+    {/* Handle various popups */}
+    {showHubPopup && (
+      <PopupManager 
+        title="Education Hub" 
+        isOpen={showHubPopup}
+        onClose={() => setShowHubPopup(false)}
+        icon={<School className="h-5 w-5 text-primary" />}
+      >
+        <div className="p-4">
+          <h3 className="text-lg font-medium mb-4">Trading Education Hub</h3>
+          <p className="text-sm text-muted-foreground mb-6">
+            Access educational resources and trading materials to improve your skills.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+              <h4 className="font-medium flex items-center gap-2 text-primary">
+                <Lightbulb className="h-4 w-4" />
+                <span>Trading Tips Explorer</span>
+              </h4>
+              <p className="text-sm text-muted-foreground mt-2 mb-4">
+                Browse through organized trading tips based on category and difficulty level.
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full"
+                onClick={() => {
+                  setShowHubPopup(false);
+                  // Open the trading tips explorer component
+                  const tipsExplorerEvent = new CustomEvent('open-trading-tips-explorer');
+                  window.dispatchEvent(tipsExplorerEvent);
+                }}
+              >
+                Browse Tips Library
+              </Button>
+            </div>
+            
+            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+              <h4 className="font-medium flex items-center gap-2 text-green-600 dark:text-green-400">
+                <BarChart2 className="h-4 w-4" />
+                <span>Market Analysis Guides</span>
+              </h4>
+              <p className="text-sm text-muted-foreground mt-2 mb-4">
+                Comprehensive guides to technical and fundamental market analysis techniques.
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full"
+                onClick={() => {
+                  setShowHubPopup(false);
+                  setShowEducation(true);
+                }}
+              >
+                View Analysis Guides
+              </Button>
+            </div>
+          </div>
+          
+          <h4 className="font-medium mb-3 text-base">Trading Categories</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            {["Futures", "Forex", "Crypto", "Stocks"].map((category) => (
+              <Button 
+                key={category}
+                variant="outline"
+                size="sm"
+                className="justify-start"
+                onClick={() => {
+                  setShowHubPopup(false);
+                  setShowEducation(true);
+                  // Set category in localStorage for the education component to read
+                  localStorage.setItem('selectedEducationCategory', category.toLowerCase());
+                }}
+              >
+                {category}
+              </Button>
+            ))}
+          </div>
+          
+          <h4 className="font-medium mb-3 text-base">Difficulty Levels</h4>
+          <div className="flex flex-wrap gap-2 mb-6">
+            {["Beginner", "Intermediate", "Advanced", "Expert"].map((level, index) => (
+              <div 
+                key={level}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer
+                  ${index === 0 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                    index === 1 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                    index === 2 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' :
+                    'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                  }`}
+                onClick={() => {
+                  setShowHubPopup(false);
+                  setShowEducation(true);
+                  // Set difficulty in localStorage for the education component to read
+                  localStorage.setItem('selectedEducationDifficulty', level.toLowerCase());
+                }}
+              >
+                {level}
+              </div>
+            ))}
+          </div>
+          
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 mb-4">
+            <h4 className="font-medium text-blue-700 dark:text-blue-300 flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              <span>AI-Assisted Learning</span>
+            </h4>
+            <p className="text-sm text-blue-600 dark:text-blue-300 opacity-80 mt-2 mb-3">
+              Get personalized trading education with our AI assistant.
+            </p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full bg-blue-100/50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50"
+              onClick={() => {
+                setShowHubPopup(false);
+                setShowAIAssistant(true);
+              }}
+            >
+              Start AI-Assisted Learning
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="bg-background/60">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Trading Basics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm">Learn fundamentals of trading across different markets.</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-background/60">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Technical Analysis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm">Chart patterns, indicators, and analysis techniques.</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-background/60">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Risk Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm">Strategies to protect your capital and manage risk.</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-background/60">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Advanced Strategies</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm">Professional trading methods and advanced concepts.</p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </PopupManager>
+    )}
     </>
   );
 }

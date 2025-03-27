@@ -1,227 +1,175 @@
 import React, { useState, useEffect } from 'react';
-import { X, ArrowRight, Lightbulb } from 'lucide-react';
-import { Button } from './button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
-import { Separator } from './separator';
+import { Lightbulb, X, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useTradingTips } from '@/lib/stores/useTradingTips';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 
-interface TradingTip {
-  id: number;
-  title: string;
-  content: string;
-  category: 'beginner' | 'intermediate' | 'advanced';
-  tags: string[];
-}
+const difficultyColors = {
+  beginner: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100',
+  intermediate: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100',
+  advanced: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100'
+};
 
-const tradingTips: TradingTip[] = [
-  {
-    id: 1,
-    title: 'Understanding Risk Management',
-    content: 'Never risk more than 1-2% of your trading capital on a single trade. This helps protect your account from significant drawdowns and allows you to stay in the game longer.',
-    category: 'beginner',
-    tags: ['risk management', 'capital preservation']
-  },
-  {
-    id: 2,
-    title: 'Market Structure Analysis',
-    content: 'Learn to identify key market structure elements: higher highs/higher lows (uptrend) and lower highs/lower lows (downtrend). These patterns help determine the overall market direction.',
-    category: 'beginner',
-    tags: ['technical analysis', 'trends']
-  },
-  {
-    id: 3,
-    title: 'Finding Confluence',
-    content: 'The most reliable trading setups occur when multiple factors align (confluence). Look for trades where support/resistance, trend direction, and indicator signals all point to the same outcome.',
-    category: 'intermediate',
-    tags: ['strategy', 'confluence']
-  },
-  {
-    id: 4,
-    title: 'Trading Psychology',
-    content: 'Keep a trading journal to track not just your trades but your emotions. Understanding your psychological patterns is as important as technical analysis.',
-    category: 'intermediate',
-    tags: ['psychology', 'journaling']
-  },
-  {
-    id: 5,
-    title: 'Volume Analysis',
-    content: 'Price moves with conviction when accompanied by high volume. Low volume price movements are more likely to reverse. Use volume to confirm breakouts and trend strength.',
-    category: 'intermediate',
-    tags: ['volume', 'technical analysis']
-  },
-  {
-    id: 6,
-    title: 'Trading the THY Token',
-    content: 'When trading the Trade Hybrid token (THY), monitor liquidity pools on Raydium to determine optimal entry and exit points. Higher liquidity typically means less slippage.',
-    category: 'advanced',
-    tags: ['THY token', 'Solana', 'liquidity']
-  },
-  {
-    id: 7,
-    title: 'Advanced Order Types',
-    content: 'Use OCO (One-Cancels-Other) orders to set both a take profit and stop loss simultaneously. This ensures your position is closed automatically regardless of which price is hit first.',
-    category: 'advanced',
-    tags: ['order types', 'risk management']
-  },
-  {
-    id: 8,
-    title: 'Market Correlations',
-    content: 'Understanding market correlations can improve your trading. For example, when the US dollar strengthens, commodities often weaken. Use these relationships to validate your trade ideas.',
-    category: 'advanced',
-    tags: ['correlations', 'macro analysis']
-  },
-  {
-    id: 9,
-    title: 'Swing Trading vs. Day Trading',
-    content: 'Day trading requires more time and attention while swing trading allows for a more relaxed approach. Choose your style based on your availability and personality, not just potential returns.',
-    category: 'beginner',
-    tags: ['trading styles', 'time management']
-  },
-  {
-    id: 10,
-    title: 'Using Multiple Timeframes',
-    content: 'Always analyze at least three timeframes before entering a trade: higher for trend direction, middle for entry, and lower for precise timing. This multi-timeframe approach improves accuracy.',
-    category: 'intermediate',
-    tags: ['timeframes', 'technical analysis']
-  }
-];
+const categoryIcons = {
+  crypto: '₿',
+  forex: '💱',
+  stocks: '📈',
+  general: '🧠',
+  technical: '📊',
+  fundamental: '📰'
+};
 
-interface TradingTipPopupProps {
-  isOpen: boolean;
-  onClose: () => void;
-  userLevel?: 'beginner' | 'intermediate' | 'advanced';
-}
-
-export function TradingTipPopup({ isOpen, onClose, userLevel = 'beginner' }: TradingTipPopupProps) {
-  const [currentTipIndex, setCurrentTipIndex] = useState(0);
-  const [animation, setAnimation] = useState('fade-in');
+export function TradingTipPopup() {
+  const { currentTip, showingTip, closeTip, tips, showTip } = useTradingTips();
+  const [tipIndex, setTipIndex] = useState(0);
+  const isMobile = useIsMobile();
   
-  // Filter tips based on user level
-  const eligibleTips = tradingTips.filter(tip => {
-    if (userLevel === 'advanced') return true; // Show all tips for advanced users
-    if (userLevel === 'intermediate') return tip.category !== 'advanced'; // No advanced tips for intermediate
-    return tip.category === 'beginner'; // Only beginner tips for beginners
-  });
-  
-  const currentTip = eligibleTips[currentTipIndex];
-  
+  // Set initial tip index when currentTip changes
   useEffect(() => {
-    // Show tips randomly every 5-10 minutes if not manually closed
-    const showTipsInterval = setInterval(() => {
-      // 20% chance to show a tip
-      if (Math.random() < 0.2) {
-        setCurrentTipIndex(Math.floor(Math.random() * eligibleTips.length));
-        setAnimation('fade-in');
+    if (currentTip) {
+      const index = tips.findIndex(tip => tip.id === currentTip.id);
+      if (index !== -1) {
+        setTipIndex(index);
       }
-    }, 300000 + Math.random() * 300000); // Random interval between 5-10 minutes
-    
-    return () => clearInterval(showTipsInterval);
-  }, [eligibleTips.length]);
+    }
+  }, [currentTip, tips]);
   
-  const nextTip = () => {
-    setAnimation('fade-out');
-    setTimeout(() => {
-      setCurrentTipIndex((prevIndex) => (prevIndex + 1) % eligibleTips.length);
-      setAnimation('fade-in');
-    }, 300);
+  // Handle navigation between tips
+  const showNextTip = () => {
+    const nextIndex = (tipIndex + 1) % tips.length;
+    const nextTip = tips[nextIndex];
+    setTipIndex(nextIndex);
+    useTradingTips.setState({ currentTip: nextTip, showingTip: true });
   };
   
-  if (!isOpen || !currentTip) return null;
+  const showPreviousTip = () => {
+    const prevIndex = (tipIndex - 1 + tips.length) % tips.length;
+    const prevTip = tips[prevIndex];
+    setTipIndex(prevIndex);
+    useTradingTips.setState({ currentTip: prevTip, showingTip: true });
+  };
+  
+  if (!showingTip || !currentTip) return null;
   
   return (
-    <div className={`fixed bottom-20 right-8 max-w-md z-50 ${animation}`}>
-      <Card className="border shadow-lg bg-background">
-        <CardHeader className="pb-2">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-yellow-400" />
-              <CardTitle className="text-lg">Trading Tip</CardTitle>
-            </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="h-7 w-7">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <CardDescription>
-            {currentTip.category.charAt(0).toUpperCase() + currentTip.category.slice(1)} Level
-          </CardDescription>
-        </CardHeader>
-        <Separator />
-        <CardContent className="pt-4">
-          <h3 className="font-medium mb-2">{currentTip.title}</h3>
-          <p className="text-sm text-muted-foreground">{currentTip.content}</p>
-          <div className="flex flex-wrap gap-1 mt-3">
-            {currentTip.tags.map(tag => (
-              <span key={tag} className="bg-muted text-muted-foreground text-xs px-2 py-0.5 rounded-full">
-                {tag}
-              </span>
-            ))}
-          </div>
-        </CardContent>
-        <Separator />
-        <CardFooter className="pt-2 flex justify-between">
-          <p className="text-xs text-muted-foreground">Tip {currentTipIndex + 1} of {eligibleTips.length}</p>
-          <Button variant="ghost" size="sm" onClick={nextTip} className="h-8 gap-1">
-            Next Tip <ArrowRight className="h-3 w-3" />
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+    <AnimatePresence>
+      <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm p-4">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+          className="w-full max-w-md"
+        >
+          <Card className="border-2 border-primary shadow-lg">
+            <CardHeader className="pb-3 relative">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-800 text-yellow-600 dark:text-yellow-300 flex items-center justify-center">
+                    <Lightbulb size={18} />
+                  </div>
+                  <CardTitle className="text-lg font-medium">Trading Tip</CardTitle>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-full"
+                  onClick={closeTip}
+                >
+                  <X size={18} />
+                </Button>
+              </div>
+              
+              <div className="mt-1 flex items-center justify-between">
+                <div className="flex gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    <span className="mr-1">{categoryIcons[currentTip.category as keyof typeof categoryIcons]}</span>
+                    {currentTip.category.charAt(0).toUpperCase() + currentTip.category.slice(1)}
+                  </Badge>
+                  <Badge 
+                    variant="outline" 
+                    className={`text-xs ${difficultyColors[currentTip.difficulty as keyof typeof difficultyColors]}`}
+                  >
+                    {currentTip.difficulty.charAt(0).toUpperCase() + currentTip.difficulty.slice(1)}
+                  </Badge>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Tip {tipIndex + 1} of {tips.length}
+                </div>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="pt-3">
+              <h3 className="text-base font-semibold mb-2">{currentTip.title}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300">{currentTip.content}</p>
+              
+              <div className="mt-3 flex flex-wrap gap-1">
+                {currentTip.tags.map(tag => (
+                  <Badge key={tag} variant="secondary" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+            
+            <CardFooter className="flex justify-between border-t pt-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={showPreviousTip}
+                className="flex items-center gap-1"
+              >
+                <ChevronLeft size={16} />
+                <span className={isMobile ? 'sr-only' : ''}>Previous</span>
+              </Button>
+              
+              <Button
+                variant="default"
+                size="sm"
+                onClick={closeTip}
+                className="flex items-center gap-1"
+              >
+                <BookOpen size={16} />
+                <span className={isMobile ? 'sr-only' : ''}>Got it</span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={showNextTip}
+                className="flex items-center gap-1"
+              >
+                <span className={isMobile ? 'sr-only' : ''}>Next</span>
+                <ChevronRight size={16} />
+              </Button>
+            </CardFooter>
+          </Card>
+        </motion.div>
+      </div>
+    </AnimatePresence>
   );
 }
 
-// Context and Provider for managing the trading tips globally
-const TradingTipsContext = React.createContext<{
-  showTip: () => void;
-  hideTip: () => void;
-  setUserLevel: (level: 'beginner' | 'intermediate' | 'advanced') => void;
-}>({
-  showTip: () => {},
-  hideTip: () => {},
-  setUserLevel: () => {},
-});
-
-export function TradingTipsProvider({ children }: { children: React.ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [userLevel, setUserLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
-  
-  // Show tip on first visit
-  useEffect(() => {
-    const hasSeenTip = localStorage.getItem('hasSeenFirstTip');
-    if (!hasSeenTip) {
-      setTimeout(() => {
-        setIsOpen(true);
-        localStorage.setItem('hasSeenFirstTip', 'true');
-      }, 15000); // Show first tip after 15 seconds
-    }
-  }, []);
-  
-  const showTip = () => setIsOpen(true);
-  const hideTip = () => setIsOpen(false);
-  
-  return (
-    <TradingTipsContext.Provider value={{ showTip, hideTip, setUserLevel }}>
-      {children}
-      <TradingTipPopup isOpen={isOpen} onClose={hideTip} userLevel={userLevel} />
-    </TradingTipsContext.Provider>
-  );
-}
-
-export function useTradingTips() {
-  return React.useContext(TradingTipsContext);
-}
-
-// Button component to manually trigger tips
-export function ShowTradingTipButton() {
+export function ShowTradingTipButton({ onClick }: { onClick?: () => void }) {
   const { showTip } = useTradingTips();
   
+  const handleClick = () => {
+    showTip();
+    if (onClick) onClick();
+  };
+  
   return (
-    <Button 
-      onClick={showTip} 
-      size="sm" 
-      variant="outline" 
-      className="flex items-center gap-1 h-8"
+    <Button
+      variant="outline"
+      size="icon"
+      onClick={handleClick}
+      title="Show Trading Tip"
+      className="bg-gradient-to-r from-yellow-500/10 to-amber-500/10 border-yellow-300 dark:border-yellow-700"
     >
-      <Lightbulb className="h-4 w-4 text-yellow-400" />
-      <span>Trading Tip</span>
+      <Lightbulb size={18} className="text-yellow-600 dark:text-yellow-400" />
     </Button>
   );
 }

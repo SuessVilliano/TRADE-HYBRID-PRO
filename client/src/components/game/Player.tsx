@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { useBox } from '@react-three/cannon';
 import { useGLTF, useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
+import { useControlsStore } from '@/lib/stores/useControlsStore';
 
 // Define our control keys
 enum Controls {
@@ -31,7 +32,13 @@ interface PlayerProps {
   // Add any other props as needed
 }
 
-export function Player({ position = [0, 1, 0], controlsEnabled = true }: PlayerProps) {
+export function Player({ position = [0, 1, 0], controlsEnabled: propControlsEnabled }: PlayerProps) {
+  // Use the global controls store to properly integrate with the controls toggle system
+  const { controlsEnabled: storeControlsEnabled } = useControlsStore();
+  
+  // Combine prop and store controls - this allows override via props but defaults to store
+  const isControlsEnabled = propControlsEnabled !== undefined ? propControlsEnabled : storeControlsEnabled;
+  
   // Physics body reference
   const [ref, api] = useBox(() => ({
     mass: 1,
@@ -54,17 +61,20 @@ export function Player({ position = [0, 1, 0], controlsEnabled = true }: PlayerP
     const unsubVelocity = api.velocity.subscribe((v) => (velocity.current = v));
     const unsubPosition = api.position.subscribe((p) => (positionRef.current = p));
     
+    // Log controls state for debugging
+    console.log('Player controls enabled:', isControlsEnabled);
+    
     return () => {
       // Clean up subscriptions
       unsubVelocity();
       unsubPosition();
     };
-  }, [api]);
+  }, [api, isControlsEnabled]);
 
   // Player animation/movement logic
   useFrame((state) => {
     // Only process controls if they're enabled
-    if (controlsEnabled) {
+    if (isControlsEnabled) {
       // Get current control keys
       const { forward, back, left, right, jump } = getKeys();
       
