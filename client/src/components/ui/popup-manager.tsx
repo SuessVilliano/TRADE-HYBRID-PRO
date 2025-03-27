@@ -5,8 +5,9 @@ import { SignalsPopup } from './signals-popup';
 import { LeaderboardPopup } from './leaderboard-popup';
 import { ChatPopup } from './chat-popup';
 import { AffiliatePopup } from './affiliate-popup';
-import { WalletPopup } from './wallet-popup';
-import { SettingsPopup } from './settings-popup';
+// Temporarily commenting out problematic components
+// import { WalletPopup } from './wallet-popup';
+// import { SettingsPopup } from './settings-popup';
 
 /**
  * Popup Manager Component
@@ -147,6 +148,7 @@ export function PopupManager() {
         onClose={() => setShowAffiliate(false)} 
       />
       
+      {/* Temporarily disabled due to errors
       <WalletPopup 
         isOpen={showWallet} 
         onClose={() => setShowWallet(false)} 
@@ -156,6 +158,7 @@ export function PopupManager() {
         isOpen={showSettings} 
         onClose={() => setShowSettings(false)} 
       />
+      */}
     </>
   );
 }
