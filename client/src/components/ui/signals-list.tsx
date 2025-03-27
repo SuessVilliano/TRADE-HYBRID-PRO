@@ -5,7 +5,7 @@ import { ContextualTooltip } from "./contextual-tooltip";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "./card";
 import { Badge } from "./badge";
 import { Button } from "./button";
-import { Bell, BellOff, RefreshCw, ChevronDown, ChevronUp, ExternalLink, CheckCircle2, BarChart2 } from "lucide-react";
+import { Bell, BellOff, RefreshCw, ChevronDown, ChevronUp, ExternalLink, CheckCircle2, BarChart2, X as XCircle } from "lucide-react";
 import { formatDate, formatTime, truncate, cn } from "../../lib/utils";
 import { toast } from "sonner";
 
@@ -38,7 +38,7 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
     fetchSignals();
     
     // Initialize the broker aggregator
-    initializeAggregator().catch(error => {
+    initializeAggregator().catch((error: Error) => {
       console.error('Failed to initialize broker aggregator:', error);
       toast.error('Failed to connect to brokers');
     });
@@ -300,12 +300,12 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
               
               <div className="flex justify-between">
                 <span className="text-sm font-medium">Time</span>
-                <span className="text-sm">{formatTime(selectedSignal.timestamp)}</span>
+                <span className="text-sm">{formatTime(selectedSignal.timestamp.getTime())}</span>
               </div>
               
               <div className="flex justify-between">
                 <span className="text-sm font-medium">Date</span>
-                <span className="text-sm">{formatDate(selectedSignal.timestamp)}</span>
+                <span className="text-sm">{formatDate(selectedSignal.timestamp.getTime())}</span>
               </div>
               
               <div className="flex justify-between">
@@ -444,21 +444,19 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
                   const tradeDetails = {
                     symbol: selectedSignal.symbol,
                     quantity: 1, // Default quantity
-                    action: selectedSignal.action === 'neutral' ? 'buy' : selectedSignal.action,
-                    orderType: 'market' as const, // Type assertion to fix type error
-                    stopLoss: selectedSignal.stopLoss,
-                    takeProfit1: selectedSignal.takeProfit1,
-                    takeProfit2: selectedSignal.takeProfit2,
-                    takeProfit3: selectedSignal.takeProfit3
+                    side: selectedSignal.action === 'neutral' ? 'buy' : selectedSignal.action,
+                    type: 'market' as 'market', // Type assertion to fix type error
+                    stopLossPrice: selectedSignal.stopLoss,
+                    takeProfitPrice: selectedSignal.takeProfit1
                   };
                   
                   toast.promise(executeTrade(tradeDetails), {
                     loading: 'Executing trade...',
-                    success: (result) => {
-                      if (result.success) {
-                        return `Trade executed through ${result.broker}`;
+                    success: (result: any) => {
+                      if (result.status === 'filled' || result.status === 'pending') {
+                        return `Trade executed with order ID: ${result.orderId}`;
                       }
-                      throw new Error(result.error);
+                      throw new Error(result.message || 'Trade execution failed');
                     },
                     error: 'Failed to execute trade'
                   });
@@ -553,7 +551,7 @@ function SignalCard({
           </Badge>
           <span className="font-medium">{signal.symbol}</span>
         </div>
-        <span className="text-xs text-muted-foreground">{formatTime(signal.timestamp)}</span>
+        <span className="text-xs text-muted-foreground">{formatTime(signal.timestamp.getTime())}</span>
       </div>
       
       <p className="text-xs text-muted-foreground mb-1">

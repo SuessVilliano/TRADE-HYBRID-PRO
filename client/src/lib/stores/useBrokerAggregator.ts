@@ -14,6 +14,9 @@ interface BrokerAggregatorState {
   accountInfo: AccountInfo | null;
   positions: Position[];
   error: string | null;
+  isConnected: boolean;
+  selectedBroker: string;
+  useABATEV: boolean;
   
   // Actions
   authenticateBroker: (credentials: BrokerCredentials) => Promise<boolean>;
@@ -26,6 +29,12 @@ interface BrokerAggregatorState {
   setCurrentSymbol: (symbol: string) => void;
   toggleDemoMode: () => void;
   getSupportedBrokers: () => typeof SUPPORTED_BROKERS;
+  
+  // Additional actions needed for SignalsList
+  initializeAggregator: () => Promise<boolean>;
+  executeTrade: (order: OrderRequest) => Promise<any>;
+  selectBroker: (brokerId: string) => void;
+  toggleABATEV: () => void;
 }
 
 export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => ({
@@ -39,6 +48,9 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
   accountInfo: null,
   positions: [],
   error: null,
+  isConnected: false,
+  selectedBroker: 'alpaca',
+  useABATEV: true,
   
   authenticateBroker: async (credentials: BrokerCredentials) => {
     set({ isLoading: true, error: null });
@@ -210,5 +222,36 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
   
   getSupportedBrokers: () => {
     return SUPPORTED_BROKERS;
+  },
+  
+  // Additional actions implementation for SignalsList
+  initializeAggregator: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      // Simulate connection to broker aggregator service
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      set({ isConnected: true, isLoading: false });
+      return true;
+    } catch (error) {
+      console.error('Error initializing broker aggregator:', error);
+      set({
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to initialize broker aggregator',
+        isConnected: false
+      });
+      return false;
+    }
+  },
+  
+  executeTrade: async (order: OrderRequest) => {
+    return get().placeOrder(order);
+  },
+  
+  selectBroker: (brokerId: string) => {
+    set({ selectedBroker: brokerId });
+  },
+  
+  toggleABATEV: () => {
+    set(state => ({ useABATEV: !state.useABATEV }));
   }
 }));

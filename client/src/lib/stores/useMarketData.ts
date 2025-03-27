@@ -167,6 +167,19 @@ export const useMarketData = create<MarketDataState>((set, get) => {
             const highPrice = Math.max(state.highPrice, newPrice);
             const lowPrice = Math.min(state.lowPrice, newPrice);
             
+            // Create new market data point for AI analysis
+            const newMarketDataPoint = {
+              time: Math.floor(now / 1000), // Convert milliseconds to seconds
+              open: newPrice * (1 - Math.random() * 0.001),
+              high: newPrice * (1 + Math.random() * 0.001),
+              low: newPrice * (1 - Math.random() * 0.001),
+              close: newPrice,
+              volume: Math.floor(Math.random() * 100 + 10)
+            };
+            
+            // Update market data array (keep last 100 points)
+            const newMarketData = [...state.marketData, newMarketDataPoint].slice(-100);
+            
             // Update state
             set({
               currentPrice: newPrice,
@@ -175,7 +188,8 @@ export const useMarketData = create<MarketDataState>((set, get) => {
               lowPrice,
               close: newPrice,
               change24h: newPrice - state.open,
-              changePercent24h: ((newPrice - state.open) / state.open) * 100
+              changePercent24h: ((newPrice - state.open) / state.open) * 100,
+              marketData: newMarketData
             });
           }
         }, 3000);

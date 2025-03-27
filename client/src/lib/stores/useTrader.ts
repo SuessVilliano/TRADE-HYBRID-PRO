@@ -44,6 +44,7 @@ interface TraderState {
   
   closePosition: (symbol: string) => Promise<boolean>;
   updateAccountInfo: () => Promise<void>;
+  fetchTrades: () => Promise<void>;
 }
 
 export const useTrader = create<TraderState>((set, get) => ({
@@ -413,6 +414,24 @@ export const useTrader = create<TraderState>((set, get) => ({
       }));
     } catch (error) {
       console.error('Error updating account info:', error);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  
+  fetchTrades: async () => {
+    set({ isLoading: true });
+    
+    try {
+      // In a real implementation, this would call to an API
+      await new Promise(resolve => setTimeout(resolve, 700));
+      
+      // For demo purposes, we're not changing the trades
+      // In a real implementation, this would fetch the latest trades from the server
+      console.log("Fetched latest trades");
+      
+    } catch (error) {
+      console.error('Error fetching trades:', error);
     } finally {
       set({ isLoading: false });
     }
