@@ -1,105 +1,72 @@
-import React, { ReactNode, useEffect } from 'react';
-import { cn } from '../../lib/utils';
-import { X } from 'lucide-react';
+import React, { ReactNode } from 'react';
+import { X, Minimize2 } from 'lucide-react';
+import { Button } from './button';
+import { useIsMobile } from '@/hooks/use-is-mobile';
+import { cn } from '@/lib/utils';
 
 interface PopupContainerProps {
+  title: string;
   children: ReactNode;
-  className?: string;
   onClose?: () => void;
-  title?: string;
-  showCloseButton?: boolean;
+  onMinimize?: () => void;
+  className?: string;
+  icon?: ReactNode;
+  fullWidth?: boolean;
 }
 
-/**
- * A common container component for all popups with improved visibility
- */
 export function PopupContainer({ 
-  children, 
-  className, 
-  onClose, 
   title, 
-  showCloseButton = true // Default to showing close button
+  children, 
+  onClose, 
+  onMinimize, 
+  className,
+  icon,
+  fullWidth = false
 }: PopupContainerProps) {
-  // Handle escape key press to close popup
-  useEffect(() => {
-    function handleEscapeKey(e: KeyboardEvent) {
-      if (e.key === 'Escape' && onClose) {
-        onClose();
-      }
-    }
-
-    window.addEventListener('keydown', handleEscapeKey);
-    
-    // Prevent scrolling of the body when popup is open
-    document.body.style.overflow = 'hidden';
-    
-    return () => {
-      window.removeEventListener('keydown', handleEscapeKey);
-      document.body.style.overflow = 'auto';
-    };
-  }, [onClose]);
-
+  const isMobile = useIsMobile();
+  
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 overflow-hidden">
-      {/* Overlay that can be clicked to close */}
-      {onClose && (
-        <div 
-          className="absolute inset-0 -z-10" 
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      )}
-      
-      <div 
-        className={cn(
-          "w-[94%] max-w-4xl max-h-[90vh] rounded-lg bg-gray-800 border border-gray-600 shadow-xl text-white flex flex-col",
-          className
-        )}
-      >
-        {(title || showCloseButton) && (
-          <div className="sticky top-0 z-20 flex items-center justify-between p-4 border-b border-gray-700 bg-gray-900">
-            {title && <h2 className="text-xl font-semibold text-white">{title}</h2>}
-            {showCloseButton && onClose && (
-              <button 
-                type="button" 
-                onClick={onClose} 
-                className="rounded-full p-2 hover:bg-gray-700 focus:outline-none"
-                aria-label="Close"
-              >
-                <X className="h-6 w-6 text-gray-300" />
-              </button>
-            )}
-          </div>
-        )}
-        
-        {/* Exit button for mobile - always visible at bottom */}
-        {onClose && (
-          <button
-            className="absolute bottom-4 right-4 z-30 md:hidden bg-primary text-white rounded-full p-3 shadow-lg"
-            onClick={onClose}
-            aria-label="Exit"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        )}
-        
-        {/* 
-          Improved mobile scrolling with additional touch event handling
-          and making sure content doesn't get clipped on mobile devices
-        */}
-        <div 
-          className="p-4 pb-16 relative flex-1 overflow-y-auto" 
-          style={{ 
-            WebkitOverflowScrolling: 'touch',
-            overscrollBehavior: 'contain',
-            msOverflowStyle: 'none', /* for Internet Explorer, Edge */
-            scrollbarWidth: 'thin',
-            touchAction: 'pan-y'
-          }}
-        >
-          {children}
+    <div className={cn(
+      "bg-background border rounded-lg shadow-lg overflow-hidden flex flex-col",
+      fullWidth ? "w-full" : "w-[90%] md:w-auto md:min-w-[500px] max-w-[95vw]", 
+      className
+    )}>
+      {/* Header */}
+      <div className="p-3 border-b flex items-center justify-between bg-muted/30">
+        <div className="flex items-center">
+          {icon && <span className="mr-2">{icon}</span>}
+          <h2 className="font-semibold text-lg">{title}</h2>
+        </div>
+        <div className="flex items-center gap-1">
+          {onMinimize && (
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onMinimize} aria-label="Minimize">
+              <Minimize2 className="h-4 w-4" />
+            </Button>
+          )}
+          {onClose && (
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose} aria-label="Close">
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
+      
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-4 max-h-[80vh]">
+        {children}
+      </div>
+      
+      {/* Mobile fixed close button */}
+      {isMobile && onClose && (
+        <Button 
+          className="fixed bottom-20 right-4 z-50 rounded-full shadow-lg bg-primary text-white" 
+          size="icon"
+          onClick={onClose}
+          aria-label="Close popup"
+        >
+          <X className="h-5 w-5" />
+        </Button>
+      )}
     </div>
   );
 }
