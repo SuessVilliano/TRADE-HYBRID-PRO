@@ -110,7 +110,7 @@ export function GameSidebar() {
           break;
         case 'crypto':
           // Open Crypto Swap in a new tab
-          window.open('https://raydium.io/swap/?inputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&outputMint=5GedhKVXeyEM7Tun4rTu8mF56PSF9brdbD3t2LEUQxTL', '_blank');
+          window.open('https://raydium.io/swap/?inputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&outputMint=4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4', '_blank');
           break;
         default:
           openWebApp();
@@ -686,7 +686,7 @@ export function GameSidebar() {
                       size="sm" 
                       variant="outline" 
                       className="h-7 px-2 flex items-center gap-1" 
-                      onClick={() => window.open('https://raydium.io/swap/?inputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&outputMint=5GedhKVXeyEM7Tun4rTu8mF56PSF9brdbD3t2LEUQxTL', '_blank')}
+                      onClick={() => window.open('https://raydium.io/swap/?inputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&outputMint=4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4', '_blank')}
                     >
                       <Maximize2 className="h-3 w-3" />
                       <span className="text-xs">Raydium</span>

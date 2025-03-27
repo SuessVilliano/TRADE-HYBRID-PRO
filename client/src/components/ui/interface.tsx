@@ -5,7 +5,7 @@ import { useMultiplayer } from "@/lib/stores/useMultiplayer";
 import { Button } from "./button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
 //import { Confetti } from "../game/Confetti"; // Uncomment if this component exists
-import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map, Mic, MicOff, MessageSquare, Smartphone, LineChart, BarChart2, ChevronUp, ChevronDown, Settings, Sparkles } from "lucide-react";
+import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map, Mic, MicOff, MessageSquare, Smartphone, LineChart, BarChart2, ChevronUp, ChevronDown, Settings, Sparkles, Lightbulb } from "lucide-react";
 import { AugmentedReality } from "./augmented-reality";
 import { PlayerCustomizer } from "./player-customizer";
 import { GameSidebar } from "./game-sidebar";
@@ -15,6 +15,7 @@ import { TradingViewTools } from "./trading-view-tools";
 import { AIAssistant } from "./ai-assistant";
 import { PopupManager } from "./popup-manager";
 import { GuideTourLauncher } from "./contextual-tooltip";
+import { ShowTradingTipButton, useTradingTips } from "./trading-tips";
 import { toast } from "sonner";
 
 interface InterfaceProps {
@@ -27,6 +28,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
   const phase = useGame((state) => state.phase);
   const { isMuted, toggleMute } = useAudio();
   const { toggleVoiceChat, voiceChatEnabled } = useMultiplayer();
+  const { showTip } = useTradingTips();
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [showMapState, setShowMapState] = useState(false);
   const [chatMinimized, setChatMinimized] = useState(true);
@@ -101,12 +103,18 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
             duration: 2000,
           });
         }
+      } else if (e.key.toLowerCase() === 'l') {
+        showTip();
+        toast("Trading Tip", {
+          description: "Showing a helpful trading tip",
+          duration: 2000,
+        });
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showChat, voiceChatEnabled, toggleVoiceChat, controlsMinimized]);
+  }, [showChat, voiceChatEnabled, toggleVoiceChat, controlsMinimized, showAIAssistant, showTip]);
   
   // Auto-hide controls after initial display
   useEffect(() => {
@@ -277,6 +285,8 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
               >
                 <RotateCw size={18} />
               </Button>
+              
+              <ShowTradingTipButton />
             </div>
           </div>
         </div>
@@ -545,7 +555,8 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
               <li>T: Toggle microphone</li>
               <li>C: Toggle chat</li>
               <li>H: Hide controls</li>
-              <li>A: Toggle AI Assistantnt</li>
+              <li>A: Toggle AI Assistant</li>
+              <li>L: Show trading tip</li>
               <li>AR Button: View in augmented reality</li>
             </ul>
             <div className="text-[10px] text-gray-400 mt-2 italic">This controls help will disappear shortly...</div>
