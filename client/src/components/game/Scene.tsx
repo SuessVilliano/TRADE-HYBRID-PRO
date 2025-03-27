@@ -23,6 +23,7 @@ import Lights from './Lights';
 import GameControls from './Controls';
 import Player from './Player';
 import OtherPlayer from './OtherPlayer';
+import SignalTower from './SignalTower';
 
 interface SceneProps {
   showStats?: boolean;
@@ -416,13 +417,15 @@ function TradingEnvironment() {
           />
         </group>
         
-        {/* Signal Towers - simplified */}
+        {/* Signal Towers - with 3D model */}
         <group position={[0, 0, -15]}>
-          <Building 
-            position={[0, 1, 0]} 
-            size={[6, 4, 6]} 
-            color={locationParam === 'signals' ? '#3b82f6' : '#1d4ed8'} 
-            name="Signal Towers"
+          <SignalTower 
+            position={[0, 0, 0]} 
+            scale={[2, 2, 2]}
+            rotation={[0, 0, 0]}
+            onInteract={() => {
+              window.location.href = '/trading-space?location=signals';
+            }}
           />
         </group>
         
@@ -535,25 +538,24 @@ function TradingEnvironment() {
       
       {/* Signal Towers */}
       <group position={[0, 0, -15]}>
-        <Building 
-          position={[0, 1, 0]} 
-          size={[6, 4, 6]} 
-          color={locationParam === 'signals' ? '#3b82f6' : '#1d4ed8'} 
-          name="Signal Towers"
-        />
-        <MarketDisplay
-          position={[0, 3, 0]}
-          scale={[1.2, 1.2, 1.2]}
+        {/* Use our new SignalTower 3D model */}
+        <SignalTower 
+          position={[0, 0, 0]} 
+          scale={[3, 3, 3]}
           rotation={[0, 0, 0]}
+          onInteract={() => {
+            window.location.href = '/trading-space?location=signals';
+          }}
         />
+        
         <TradingDesk 
-          position={[-4, 0, -4]} 
+          position={[-8, 0, -4]} 
           scale={[1.2, 1.2, 1.2]} 
           rotation={[0, Math.PI / 4, 0]}
           active={locationParam === 'signals'}
         />
         <TradingDesk 
-          position={[4, 0, -4]} 
+          position={[8, 0, -4]} 
           scale={[1.2, 1.2, 1.2]} 
           rotation={[0, -Math.PI / 4, 0]}
           active={locationParam === 'signals'}
