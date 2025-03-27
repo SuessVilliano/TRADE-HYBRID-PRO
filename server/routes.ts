@@ -6,6 +6,7 @@ import { getNews, getTopicNews } from "./api/news";
 import { getLeaderboard, getTrader } from "./api/leaderboard";
 import { getBots, getBot, createBot, updateBot, deleteBot, runBot, stopBot } from "./api/bots";
 import { getSignals, receiveWebhook } from "./api/signals";
+import { getGameLeaderboard, getGamePlayer, submitGameScore } from "./api/game-leaderboard";
 import { MultiplayerServer } from "./multiplayer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -34,6 +35,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Signals routes
   app.get("/api/signals", getSignals);
   app.post("/api/webhooks/tradingview", receiveWebhook);
+  
+  // Game leaderboard routes
+  app.get("/api/games/:gameId/leaderboard", getGameLeaderboard);
+  app.get("/api/games/:gameId/players/:playerId", getGamePlayer);
+  app.post("/api/games/:gameId/scores", submitGameScore);
   
   // Trader routes - Mock trading functionality
   app.get("/api/trader/trades", (_req, res) => {
