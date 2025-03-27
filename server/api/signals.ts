@@ -86,6 +86,20 @@ export const receiveWebhook = (req: Request, res: Response) => {
       return res.status(400).send({ error: 'Invalid webhook payload' });
     }
 
+    // Determine the source based on the webhook URL or payload
+    let source = 'Trade Hybrid';
+    let strategy = payload.strategy || payload.name || 'Trade Hybrid';
+    
+    // Check the URL path to determine the source 
+    const url = req.originalUrl || '';
+    if (url.includes('IjU3NjUwNTY4MDYzNjA0MzQ1MjZhNTUzMTUxMzci')) {
+      source = 'Paradox AI';
+      strategy = 'Solana Signals';
+    } else if (url.includes('tUOebm12d8na01WofspmU')) {
+      source = 'Paradox AI';
+      strategy = payload.symbol && payload.symbol.includes('BTC') ? 'Bitcoin Signals' : 'Ethereum Signals';
+    }
+
     // Create a new signal object with required fields
     const signal = {
       id: randomUUID(),
@@ -99,8 +113,8 @@ export const receiveWebhook = (req: Request, res: Response) => {
       takeProfit1: parseFloat(payload.takeProfit1 || payload.tp1 || payload.tp) || 0,
       takeProfit2: parseFloat(payload.takeProfit2 || payload.tp2) || 0,
       takeProfit3: parseFloat(payload.takeProfit3 || payload.tp3) || 0,
-      source: payload.source || 'Trade Hybrid',
-      strategy: payload.strategy || payload.name || 'Trade Hybrid',
+      source: payload.source || source,
+      strategy: strategy,
       message: payload.message || `${normalizeAction(payload.action || 'Signal')} on ${payload.symbol}`,
       confidence: parseFloat(payload.confidence || '50'),
       timeframe: payload.timeframe || payload.interval || '1d',

@@ -11,6 +11,7 @@ import { Badge } from './badge';
 import { Progress } from './progress';
 import { Separator } from './separator';
 import { AIMarketAnalysis, AITradeSuggestion, MarketPattern } from '@/lib/services/ai-market-analysis-service';
+import { openAIService } from '@/lib/services/openai-service';
 import { 
   Sparkles, 
   Loader2, 
@@ -27,7 +28,8 @@ import {
   BarChart,
   Activity,
   RefreshCw,
-  Info
+  Info,
+  Globe
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { format } from 'date-fns';
@@ -48,7 +50,7 @@ export function AdvancedAIAnalysis() {
     error
   } = useAIAnalysis();
   
-  const { marketData, symbol: activeSymbol } = useMarketData();
+  const { marketData, symbol: activeSymbol, currentPrice } = useMarketData();
   // Default timeframe and available symbols
   const defaultTimeframe = "1h";
   const availableSymbols = ["BTCUSD", "ETHUSD", "EURUSD", "AAPL", "MSFT", "AMZN"];
@@ -73,53 +75,41 @@ export function AdvancedAIAnalysis() {
   }, [activeSymbol, defaultTimeframe, analyzeMarket, getSuggestions, marketData]);
 
   // Handle AI query submission
-  const handleSubmitQuery = () => {
+  const handleSubmitQuery = async () => {
     if (!userQuery.trim()) return;
     
     setAiResponse('');
     setIsProcessingQuery(true);
     
-    // AI processing simulation
-    setTimeout(() => {
-      // Generate more sophisticated response based on query keywords
-      let response = '';
-      
-      if (userQuery.toLowerCase().includes(activeSymbol.toLowerCase())) {
-        response = `Based on my analysis of ${activeSymbol}, the market is showing ${
-          currentAnalysis?.prediction.direction === 'bullish' ? 'bullish momentum' : 
-          currentAnalysis?.prediction.direction === 'bearish' ? 'bearish pressure' : 
-          'neutral consolidation'
-        } with a confidence level of ${Math.round((currentAnalysis?.prediction.confidence || 0) * 100)}%. ${
-          currentAnalysis?.insights[0] || "The current price action suggests caution."
-        } ${
-          currentAnalysis?.insights[1] || ""
-        }`;
-      } else if (userQuery.toLowerCase().includes('risk') || userQuery.toLowerCase().includes('manage')) {
-        response = `For effective risk management in the current market conditions, consider that ${activeSymbol} has a ${
-          currentAnalysis?.riskAssessment.level || 'medium'
-        } risk profile. I recommend: 1) Setting stop losses at key support levels (${
-          marketData[marketData.length - 1]?.close * 0.95
-        } for long positions), 2) Not risking more than 1-2% of your portfolio per trade, and 3) Being aware of ${
-          currentAnalysis?.riskAssessment.factors[0] || "increased volatility"
-        }.`;
-      } else if (userQuery.toLowerCase().includes('pattern') || userQuery.toLowerCase().includes('technical')) {
-        const pattern = currentAnalysis?.patterns[0];
-        response = pattern ? `I've identified a ${pattern.name} pattern with ${Math.round(pattern.confidence * 100)}% confidence. This is typically a ${pattern.type} signal. ${pattern.description}. ${
-          currentAnalysis?.patterns[1] ? `There's also a possible ${currentAnalysis.patterns[1].name} forming.` : ''
-        }` : `No clear patterns are currently visible in the ${activeSymbol} chart. The market is showing mixed signals.`;
-      } else {
-        response = `Based on my analysis of current market conditions for ${activeSymbol}, I'm seeing ${
-          currentAnalysis?.prediction.direction === 'bullish' ? 'positive momentum' : 
-          currentAnalysis?.prediction.direction === 'bearish' ? 'downward pressure' : 
-          'ranging behavior'
-        }. Key insights: ${currentAnalysis?.insights.join(' ')}. For risk management, be aware of ${
-          currentAnalysis?.riskAssessment.factors.join(', ')
-        }.`;
-      }
+    try {
+      // Build context from current market data and analysis
+      const marketContext = currentAnalysis ? 
+        `Symbol: ${activeSymbol}
+        Current Price: ${latestPrice.toFixed(2)}
+        Market Direction: ${currentAnalysis.prediction.direction} with ${Math.round(currentAnalysis.prediction.confidence)}% confidence
+        Key Insights: ${currentAnalysis.insights.join('. ')}
+        Risk Level: ${currentAnalysis.riskAssessment.level}
+        Risk Factors: ${currentAnalysis.riskAssessment.factors.join(', ')}
+        ${currentAnalysis.patterns.length > 0 ? 
+          `Identified Patterns: ${currentAnalysis.patterns.map(p => p.name).join(', ')}` : 
+          'No clear patterns identified'
+        }` :
+        `Symbol: ${activeSymbol}, Current Price: ${latestPrice.toFixed(2)}`;
+
+      // Use OpenAI service to get real AI-powered response
+      const response = await openAIService.getTradingAssistantResponse({
+        query: userQuery,
+        symbol: activeSymbol,
+        marketConditions: marketContext
+      });
       
       setAiResponse(response);
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      setAiResponse('Sorry, I encountered an error while processing your question. Please try again or refresh the analysis.');
+    } finally {
       setIsProcessingQuery(false);
-    }, 1500);
+    }
   };
 
   // Render confidence score with appropriate color and visual indicator

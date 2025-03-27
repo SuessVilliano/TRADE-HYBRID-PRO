@@ -86,13 +86,18 @@ export const THC_TOKEN = {
   name: 'Trade Hybrid Coin',
   symbol: 'THC',
   address: '4Th5syNiCf4jfxBzfLZJLFkFrcmJmw4UoNGCTY1EXdHo', // Solana blockchain address
+  contractAddress: '4Th5syNiCf4jfxBzfLZJLFkFrcmJmw4UoNGCTY1EXdHo', // Alias for components
   decimals: 9,
   logo: '/images/thc-logo.png',
   explorer: 'https://solscan.io/token/4Th5syNiCf4jfxBzfLZJLFkFrcmJmw4UoNGCTY1EXdHo',
   price: 3.75, // Current price in USD
+  priceChange24h: 2.5, // 24h price change in percentage
   marketCap: 37500000, // Market cap in USD
   totalSupply: 10000000, // Total supply of tokens
-  circulatingSupply: 5000000 // Circulating supply of tokens
+  circulatingSupply: 5000000, // Circulating supply of tokens
+  holderCount: 2850, // Number of token holders
+  stakingApy: 15.75, // Annual percentage yield for staking
+  tradingVolume24h: 1250000 // 24h trading volume in USD
 };
 
 // Trading Chart Timeframes

@@ -1,0 +1,102 @@
+Here’s a Solidity-based smart contract for your Trade Hybrid Coin (THC) that integrates staking, trading rewards, governance, and payments.
+
+⸻
+
+🛠 Features in This Smart Contract:
+
+✅ ERC-20 Token Standard (Compatible with Ethereum/Solana-compatible blockchains)
+✅ Staking System (Users stake THC for lower fees & VIP access)
+✅ Governance Mechanism (Stakers vote on platform decisions)
+✅ Trading Rewards System (Earn THC based on trading activity)
+✅ Payments & Transactions in THC (For AI tools, copy trading, etc.)
+
+⸻
+
+📜 Smart Contract Code (Solidity - Ethereum/Solana Compatible)
+
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract TradeHybridCoin is ERC20, Ownable {
+    mapping(address => uint256) public stakedBalance;
+    mapping(address => uint256) public stakingTimestamp;
+    mapping(address => uint256) public tradingRewards;
+    uint256 public stakingRewardRate = 10; // 10% APY
+    uint256 public transactionFee = 2; // 2% transaction fee (burn mechanism)
+
+    event Staked(address indexed user, uint256 amount);
+    event Unstaked(address indexed user, uint256 amount);
+    event TradingRewardClaimed(address indexed user, uint256 amount);
+    
+    constructor() ERC20("Trade Hybrid Coin", "THC") {
+        _mint(msg.sender, 100000000 * 10**18); // 100M THC Initial Supply
+    }
+
+    function stake(uint256 _amount) external {
+        require(balanceOf(msg.sender) >= _amount, "Insufficient THC balance");
+        _transfer(msg.sender, address(this), _amount);
+        stakedBalance[msg.sender] += _amount;
+        stakingTimestamp[msg.sender] = block.timestamp;
+        emit Staked(msg.sender, _amount);
+    }
+
+    function unstake() external {
+        require(stakedBalance[msg.sender] > 0, "No staked balance");
+        uint256 stakedAmount = stakedBalance[msg.sender];
+        uint256 stakingDuration = block.timestamp - stakingTimestamp[msg.sender];
+        uint256 reward = (stakedAmount * stakingRewardRate * stakingDuration) / (365 days * 100);
+        
+        _mint(msg.sender, reward); // Reward staking with THC
+        _transfer(address(this), msg.sender, stakedAmount);
+        stakedBalance[msg.sender] = 0;
+        
+        emit Unstaked(msg.sender, stakedAmount);
+    }
+
+    function rewardTrader(address _trader, uint256 _reward) external onlyOwner {
+        tradingRewards[_trader] += _reward;
+    }
+
+    function claimTradingRewards() external {
+        uint256 reward = tradingRewards[msg.sender];
+        require(reward > 0, "No rewards available");
+        tradingRewards[msg.sender] = 0;
+        _mint(msg.sender, reward);
+        
+        emit TradingRewardClaimed(msg.sender, reward);
+    }
+
+    function transfer(address recipient, uint256 amount) public override returns (bool) {
+        uint256 fee = (amount * transactionFee) / 100;
+        uint256 amountAfterFee = amount - fee;
+
+        _burn(msg.sender, fee);
+        return super.transfer(recipient, amountAfterFee);
+    }
+}
+
+
+
+⸻
+
+🔗 How This Smart Contract Works:
+
+1️⃣ Users Can Stake THC → They earn staking rewards (10% APY).
+2️⃣ Traders Get Rewarded in THC → For high trading volume & performance.
+3️⃣ Users Can Vote With Staked THC → Governance for platform upgrades.
+4️⃣ THC Has a Transaction Fee → 2% fee (burns supply over time).
+
+⸻
+
+🚀 Next Steps:
+	•	Deploy on Ethereum or Solana (Use Replit + Hardhat for Ethereum, Anchor for Solana).
+	•	Integrate with Metaverse Trading Platform (Payments, AI tools, copy trading).
+	•	List on Uniswap, PancakeSwap, or CEXs (For liquidity & adoption).
+
+⸻
+
+This contract makes THC the foundation of your trading metaverse.
+Want help with deployment?

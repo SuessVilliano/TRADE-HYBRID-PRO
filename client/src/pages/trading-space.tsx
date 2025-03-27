@@ -14,7 +14,10 @@ import { AIMarketAnalysis } from "@/components/ui/ai-market-analysis";
 import { AdvancedAIAnalysis } from "@/components/ui/advanced-ai-analysis";
 import { SignalsList } from "@/components/ui/signals-list";
 import { SmartTradePanel } from "@/components/ui/smart-trade-panel";
-import { ArrowLeft, LayoutGrid, Maximize2, Minimize2, X, Info, Sparkles, Bot, BookOpen, BarChart2, Activity, BrainCircuit } from "lucide-react";
+import { CopyTradePanel } from "@/components/ui/copy-trade-panel";
+import { ThcTokenInfo } from "@/components/ui/thc-token-info";
+import { ThcTradingPanel } from "@/components/ui/thc-trading-panel";
+import { ArrowLeft, LayoutGrid, Maximize2, Minimize2, X, Info, Sparkles, Bot, BookOpen, BarChart2, Activity, BrainCircuit, Users, Coins } from "lucide-react";
 import { useMarketData } from "@/lib/stores/useMarketData";
 import { useNews } from "@/lib/stores/useNews";
 import { useTrader } from "@/lib/stores/useTrader";
@@ -30,7 +33,9 @@ const LOCATION_TO_PANEL = {
   forex: "market",
   stocks: "market",
   signals: "signals",
-  tradehouse: "assistant"
+  tradehouse: "assistant",
+  copytrading: "copy",
+  thc: "thc"
 };
 
 // Map of location parameters to appropriate market symbols
@@ -39,7 +44,9 @@ const LOCATION_TO_SYMBOL = {
   forex: "EURUSD",
   stocks: "AAPL",
   signals: "BTCUSD",
-  tradehouse: "BTCUSD"
+  tradehouse: "BTCUSD",
+  copytrading: "BTCUSD",
+  thc: "THCUSD"
 };
 
 import { useTradingTips } from "@/lib/stores/useTradingTips";
@@ -194,6 +201,10 @@ function TradingSpaceContent() {
         return 'Stock Market Exchange';
       case 'signals':
         return 'Signal Towers Command Center';
+      case 'copytrading':
+        return 'Copy Trading Center';
+      case 'thc':
+        return 'THC Token Center';
       case 'tradehouse':
       default:
         return 'Trade House Hub';
@@ -217,11 +228,14 @@ function TradingSpaceContent() {
       case "trade":
         return (
           <div className="h-full flex flex-col space-y-4">
-            <div className="h-1/2">
+            <div className="h-1/3">
               <SmartTradePanel className="h-full" defaultSymbol={effectiveSymbol} />
             </div>
-            <div className="h-1/2">
+            <div className="h-1/3">
               <TradingInterface className="h-full" symbol={effectiveSymbol} />
+            </div>
+            <div className="h-1/3">
+              <CopyTradePanel />
             </div>
           </div>
         );
@@ -237,6 +251,20 @@ function TradingSpaceContent() {
         return <AdvancedAIAnalysis />;
       case "signals":
         return <SignalsList className="h-full" />;
+      case "copy":
+        return <CopyTradePanel />;
+      case "thc":
+        return (
+          <div className="h-full flex flex-col space-y-4 overflow-auto">
+            <div className="h-1/2">
+              <ThcTokenInfo className="h-full" />
+            </div>
+            <div className="h-1/2">
+              <ThcTradingPanel className="h-full" />
+            </div>
+          </div>
+        );
+        
       case "bots":
         return (
           <div className="h-full flex flex-col space-y-4">
@@ -365,40 +393,54 @@ function TradingSpaceContent() {
           
           {/* Bottom Navigation */}
           <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-sm">
-            <div className="grid grid-cols-5 h-16">
+            <div className="grid grid-cols-7 h-16">
               <button 
                 className={`flex flex-col items-center justify-center ${activePanel === "market" ? "text-blue-500" : "text-gray-600 dark:text-gray-400"}`}
                 onClick={() => setActivePanel("market")}
               >
-                <BarChart2 size={20} />
+                <BarChart2 size={18} />
                 <span className="text-xs mt-1">Chart</span>
               </button>
               <button 
                 className={`flex flex-col items-center justify-center ${activePanel === "trade" ? "text-blue-500" : "text-gray-600 dark:text-gray-400"}`}
                 onClick={() => setActivePanel("trade")}
               >
-                <Activity size={20} />
+                <Activity size={18} />
                 <span className="text-xs mt-1">Trade</span>
               </button>
               <button 
-                className={`flex flex-col items-center justify-center ${activePanel === "news" ? "text-blue-500" : "text-gray-600 dark:text-gray-400"}`}
-                onClick={() => setActivePanel("news")}
+                className={`flex flex-col items-center justify-center ${activePanel === "thc" ? "text-blue-500" : "text-gray-600 dark:text-gray-400"}`}
+                onClick={() => setActivePanel("thc")}
               >
-                <Info size={20} />
-                <span className="text-xs mt-1">News</span>
+                <Coins size={18} />
+                <span className="text-xs mt-1">THC</span>
+              </button>
+              <button 
+                className={`flex flex-col items-center justify-center ${activePanel === "copy" ? "text-blue-500" : "text-gray-600 dark:text-gray-400"}`}
+                onClick={() => setActivePanel("copy")}
+              >
+                <Users size={18} />
+                <span className="text-xs mt-1">Copy</span>
               </button>
               <button 
                 className={`flex flex-col items-center justify-center ${activePanel === "signals" ? "text-blue-500" : "text-gray-600 dark:text-gray-400"}`}
                 onClick={() => setActivePanel("signals")}
               >
-                <Sparkles size={20} />
+                <Sparkles size={18} />
                 <span className="text-xs mt-1">Signals</span>
+              </button>
+              <button 
+                className={`flex flex-col items-center justify-center ${activePanel === "advanced-ai-analysis" ? "text-purple-500" : "text-gray-600 dark:text-gray-400"}`}
+                onClick={() => setActivePanel("advanced-ai-analysis")}
+              >
+                <BrainCircuit size={18} />
+                <span className="text-xs mt-1">AI</span>
               </button>
               <button 
                 className={`flex flex-col items-center justify-center ${activePanel === "journal" ? "text-blue-500" : "text-gray-600 dark:text-gray-400"}`}
                 onClick={() => setActivePanel("journal")}
               >
-                <BookOpen size={20} />
+                <BookOpen size={18} />
                 <span className="text-xs mt-1">Journal</span>
               </button>
             </div>
@@ -696,6 +738,13 @@ function TradingSpaceContent() {
                 Trade
               </Button>
               <Button
+                variant={activePanel === "thc" ? "default" : "ghost"}
+                className="flex-1 rounded-none"
+                onClick={() => setActivePanel("thc")}
+              >
+                THC
+              </Button>
+              <Button
                 variant={activePanel === "news" ? "default" : "ghost"}
                 className="flex-1 rounded-none"
                 onClick={() => setActivePanel("news")}
@@ -711,6 +760,13 @@ function TradingSpaceContent() {
                 onClick={() => setActivePanel("journal")}
               >
                 Journal
+              </Button>
+              <Button
+                variant={activePanel === "copy" ? "default" : "ghost"}
+                className="flex-1 rounded-none"
+                onClick={() => setActivePanel("copy")}
+              >
+                Copy Trade
               </Button>
               <Button
                 variant={activePanel === "signals" ? "default" : "ghost"}
@@ -759,6 +815,16 @@ function TradingSpaceContent() {
               variant="ghost"
               size="icon"
               onClick={() => {
+                setActivePanel("thc");
+                setIsPanelExpanded(true);
+              }}
+            >
+              $
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
                 setActivePanel("news");
                 setIsPanelExpanded(true);
               }}
@@ -774,6 +840,16 @@ function TradingSpaceContent() {
               }}
             >
               J
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setActivePanel("copy");
+                setIsPanelExpanded(true);
+              }}
+            >
+              C
             </Button>
             <Button
               variant="ghost"

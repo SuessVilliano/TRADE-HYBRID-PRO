@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { MarketData } from '@/lib/types';
 
 interface MarketDataState {
   currentSymbol: string;
@@ -14,6 +15,8 @@ interface MarketDataState {
   isLoading: boolean;
   isSubscribed: boolean;
   subscriptions: string[];
+  marketData: MarketData[]; // Full market data array
+  symbol: string; // Symbol for API compatibility
   
   // Actions
   fetchMarketData: (symbol: string) => Promise<void>;
@@ -43,9 +46,11 @@ export const useMarketData = create<MarketDataState>((set, get) => {
     isLoading: false,
     isSubscribed: false,
     subscriptions: [],
+    marketData: [], // Initialize empty marketData array
+    symbol: 'BTCUSD', // Initialize symbol for API compatibility
     
     fetchMarketData: async (symbol: string) => {
-      set({ isLoading: true, currentSymbol: symbol });
+      set({ isLoading: true, currentSymbol: symbol, symbol });
       
       try {
         // In a real implementation, this would call to a market data API
@@ -89,6 +94,16 @@ export const useMarketData = create<MarketDataState>((set, get) => {
         const change24h = close - open;
         const changePercent24h = (change24h / open) * 100;
         
+        // Create marketData for AI analysis
+        const marketData = priceHistory.map((item, index) => ({
+          time: Math.floor(item.timestamp / 1000), // Convert milliseconds to seconds
+          open: item.price * (1 - Math.random() * 0.005),
+          high: item.price * (1 + Math.random() * 0.008),
+          low: item.price * (1 - Math.random() * 0.008),
+          close: item.price,
+          volume: Math.floor(Math.random() * 1000 + 100)
+        }));
+        
         set({
           currentPrice: close,
           priceHistory,
@@ -98,7 +113,8 @@ export const useMarketData = create<MarketDataState>((set, get) => {
           close,
           volume: Math.floor(Math.random() * 30000 + 5000),
           change24h,
-          changePercent24h
+          changePercent24h,
+          marketData // Set the marketData for AI analysis
         });
       } catch (error) {
         console.error(`Error fetching market data for ${symbol}:`, error);

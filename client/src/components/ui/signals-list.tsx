@@ -31,6 +31,7 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [selectedSignal, setSelectedSignal] = useState<TradingSignal | null>(null);
   const [showingBrokerComparison, setShowingBrokerComparison] = useState(false);
+  const [filterProvider, setFilterProvider] = useState<string | null>(null);
   
   useEffect(() => {
     // Initial fetch for signals
@@ -50,8 +51,13 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
     return () => clearInterval(interval);
   }, [fetchSignals, initializeAggregator]);
   
+  // Apply filters if needed
+  const filteredSignals = filterProvider 
+    ? signals.filter(signal => signal.source === filterProvider)
+    : signals;
+  
   // Display a limited number of signals unless expanded
-  const displayedSignals = expanded ? signals : signals.slice(0, maxSignals);
+  const displayedSignals = expanded ? filteredSignals : filteredSignals.slice(0, maxSignals);
   
   return (
     <div className={cn("w-full", className)}>
@@ -82,11 +88,24 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
             </ContextualTooltip>
             
             <Badge variant="outline" className="ml-2 text-xs">
-              {signals.length} available
+              {filteredSignals.length} / {signals.length} available
             </Badge>
           </CardTitle>
           
           <div className="flex gap-1">
+            {filterProvider && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-xs gap-1"
+                onClick={() => setFilterProvider(null)}
+                title="Clear filter"
+              >
+                <XCircle size={12} />
+                <span>Clear Filter</span>
+              </Button>
+            )}
+            
             <ContextualTooltip
               id="signal-notifications"
               title="Signal Notifications"
@@ -140,6 +159,11 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
               <p>No trading signals available</p>
               <p className="text-xs mt-1">Signals from TradingView will appear here</p>
             </div>
+          ) : displayedSignals.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground">
+              <p>No signals match your current filter</p>
+              <p className="text-xs mt-1">Click on a provider name to clear the filter</p>
+            </div>
           ) : (
             <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
               {displayedSignals.map((signal) => (
@@ -154,26 +178,62 @@ export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
           )}
         </CardContent>
         
-        {/* Connect to Hybrid AI footer */}
+        {/* Signal Providers footer */}
         <CardFooter className="px-3 py-2 border-t text-xs text-muted-foreground">
-          <div className="flex justify-between w-full items-center">
-            <span>Trade Hybrid Signal Provider:</span>
-            <Button 
-              variant="link" 
-              size="sm" 
-              className="h-6 text-xs p-0 ml-1"
-              asChild
-            >
-              <a 
-                href="https://app.tradehybrid.co/api/webhooks/signals" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center"
+          <div className="flex flex-col w-full gap-1">
+            <div className="flex justify-between w-full items-center">
+              <span>Signal Providers:</span>
+              <Button 
+                variant="link" 
+                size="sm" 
+                className="h-6 text-xs p-0 ml-1"
+                asChild
               >
-                <span className="truncate max-w-32">Trade Hybrid</span>
-                <ExternalLink size={10} className="ml-1" />
-              </a>
-            </Button>
+                <a 
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setFilterProvider(filterProvider === 'Trade Hybrid' ? null : 'Trade Hybrid');
+                  }}
+                  className="flex items-center"
+                >
+                  <span className={cn(
+                    "truncate max-w-32",
+                    filterProvider === 'Trade Hybrid' ? "font-bold text-primary" : ""
+                  )}>
+                    Trade Hybrid
+                    {filterProvider === 'Trade Hybrid' ? ' (filtered)' : ''}
+                  </span>
+                  <ExternalLink size={10} className="ml-1" />
+                </a>
+              </Button>
+            </div>
+            <div className="flex justify-between w-full items-center">
+              <span>Crypto Signals:</span>
+              <Button 
+                variant="link" 
+                size="sm" 
+                className="h-6 text-xs p-0 ml-1"
+                asChild
+              >
+                <a 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setFilterProvider(filterProvider === 'Paradox AI' ? null : 'Paradox AI');
+                  }}
+                  className="flex items-center"
+                >
+                  <span className={cn(
+                    "truncate max-w-32",
+                    filterProvider === 'Paradox AI' ? "font-bold text-primary" : ""
+                  )}>
+                    Paradox AI
+                    {filterProvider === 'Paradox AI' ? ' (filtered)' : ''}
+                  </span>
+                </a>
+              </Button>
+            </div>
           </div>
         </CardFooter>
       </Card>

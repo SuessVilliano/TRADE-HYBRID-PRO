@@ -5,13 +5,15 @@ import { Button } from "./button";
 import { 
   X, Maximize2, Minimize2, ExternalLink, Loader2, 
   Move, RotateCw, ChevronsRight, ChevronsLeft, 
-  ChevronsUp, ChevronsDown 
+  ChevronsUp, ChevronsDown, Globe, BrainCircuit
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ContextualTooltip } from "./contextual-tooltip";
+import { MetaverseWebView } from "./metaverse-web-view";
 
 export function WebApp() {
   const { isOpen, url, closeWebApp } = useWebApp();
+  const [isAdvancedView, setIsAdvancedView] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
@@ -182,6 +184,11 @@ export function WebApp() {
   
   if (!isOpen) return null;
   
+  // Render the advanced metaverse web view that integrates AI analysis
+  if (isAdvancedView) {
+    return <MetaverseWebView />;
+  }
+  
   // Style for positioning when not fullscreen
   const positionedStyle = !isFullscreen ? {
     top: `${position.y}vh`,
@@ -229,6 +236,26 @@ export function WebApp() {
                 >
                   <RotateCw size={14} />
                   <span className="sr-only">Reload</span>
+                </Button>
+              </ContextualTooltip>
+              
+              {/* Toggle Advanced AI View button */}
+              <ContextualTooltip
+                id="toggle-ai-view"
+                title={isAdvancedView ? "Standard View" : "Advanced AI View"}
+                content={isAdvancedView ? "Switch to standard web view" : "Switch to advanced AI analysis view"}
+                position="bottom"
+              >
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-7 w-7"
+                  onClick={() => setIsAdvancedView(!isAdvancedView)}
+                >
+                  {isAdvancedView ? <Globe size={14} /> : <BrainCircuit size={14} className="text-purple-500" />}
+                  <span className="sr-only">
+                    {isAdvancedView ? "Standard View" : "Advanced AI View"}
+                  </span>
                 </Button>
               </ContextualTooltip>
               

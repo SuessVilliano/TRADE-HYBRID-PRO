@@ -37,6 +37,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/webhooks/tradingview", receiveWebhook);
   app.post("/api/webhooks/signals", receiveWebhook);
   
+  // New signal webhook endpoints from user
+  app.post("/workflow/sendwebhookdata/IjU3NjUwNTY4MDYzNjA0MzQ1MjZhNTUzMTUxMzci_pc", receiveWebhook); // Solana signals
+  app.post("/api/v1/webhooks/tUOebm12d8na01WofspmU", receiveWebhook); // Bitcoin and Ether signals
+  
   // Game leaderboard routes
   app.get("/api/games/:gameId/leaderboard", getGameLeaderboard);
   app.get("/api/games/:gameId/players/:playerId", getGamePlayer);

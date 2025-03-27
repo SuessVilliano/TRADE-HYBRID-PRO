@@ -5,6 +5,7 @@ import {
   AITradeSuggestion, 
   MarketPattern 
 } from '@/lib/services/ai-market-analysis-service';
+import { MarketData } from "@/lib/types";
 
 interface AIAnalysisState {
   // Analysis data
@@ -26,7 +27,7 @@ interface AIAnalysisState {
   };
   
   // Actions
-  analyzeMarket: (symbol: string, marketData: any[], timeframe?: string) => Promise<void>;
+  analyzeMarket: (symbol: string, marketData: MarketData[], timeframe?: string) => Promise<void>;
   getSuggestions: (symbol: string, count?: number) => Promise<void>;
   favoritePattern: (pattern: MarketPattern) => void;
   unfavoritePattern: (patternName: string) => void;
