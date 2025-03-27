@@ -5,12 +5,13 @@ import { useMultiplayer } from "@/lib/stores/useMultiplayer";
 import { Button } from "./button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
 //import { Confetti } from "../game/Confetti"; // Uncomment if this component exists
-import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map, Mic, MicOff, MessageSquare, Smartphone } from "lucide-react";
+import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map, Mic, MicOff, MessageSquare, Smartphone, LineChart, BarChart2, ChevronUp, ChevronDown, Settings } from "lucide-react";
 import { AugmentedReality } from "./augmented-reality";
 import { PlayerCustomizer } from "./player-customizer";
 import { GameSidebar } from "./game-sidebar";
 import { Chat } from "./chat";
 import { UserStatusManager } from "./user-status-manager";
+import { TradingViewTools } from "./trading-view-tools";
 import { toast } from "sonner";
 
 interface InterfaceProps {
@@ -28,6 +29,8 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
   const [chatMinimized, setChatMinimized] = useState(true);
   const [showChat, setShowChat] = useState(false);
   const [showAR, setShowAR] = useState(false);
+  const [showTradingTools, setShowTradingTools] = useState(false);
+  const [controlsMinimized, setControlsMinimized] = useState(false);
 
   // Use either the internal state or the external override prop
   const showMap = showMapOverride !== undefined ? showMapOverride : showMapState;
@@ -58,7 +61,7 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
     }
   }, [phase]);
   
-  // Handle keyboard shortcuts: M for map, T for microphone, C for chat
+  // Handle keyboard shortcuts: M for map, T for microphone, C for chat, H for hide/show controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === 'm') {
@@ -68,12 +71,26 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
       } else if (e.key.toLowerCase() === 'c') {
         setShowChat(prev => !prev);
         if (!showChat) setChatMinimized(false);
+      } else if (e.key.toLowerCase() === 'h') {
+        setControlsMinimized(prev => !prev);
+        // Show a toast notification to inform the user about the shortcut
+        if (controlsMinimized) {
+          toast("Controls shown", {
+            description: "Press H to hide the controls panel",
+            duration: 2000,
+          });
+        } else {
+          toast("Controls hidden", {
+            description: "Press H to show the controls panel",
+            duration: 2000,
+          });
+        }
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showChat, voiceChatEnabled, toggleVoiceChat]);
+  }, [showChat, voiceChatEnabled, toggleVoiceChat, controlsMinimized]);
   
   // Voice chat status will be handled by the multiplayer service
 
@@ -81,91 +98,145 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
     <div>
       {/* Game Sidebar */}
       <GameSidebar />
+      
+      {/* Minimized control button when controls are hidden */}
+      {controlsMinimized && (
+        <div className="fixed top-4 right-4 z-10">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setControlsMinimized(false)}
+            className="rounded-full shadow-lg bg-gray-800/80 hover:bg-gray-700"
+            title="Show Controls"
+          >
+            <Settings size={16} className="mr-1" />
+            <span>Controls</span>
+            <ChevronDown size={16} className="ml-1" />
+            <span className="sr-only">Press H to show controls</span>
+          </Button>
+          <div className="absolute -bottom-6 right-0 text-[10px] text-gray-400 bg-gray-800/70 px-2 py-0.5 rounded-full opacity-50 hover:opacity-100 transition-opacity">
+            Press H to show
+          </div>
+        </div>
+      )}
+      
       {/* Top-right corner UI controls */}
-      <div className="fixed top-4 right-4 flex gap-2 z-10">
-        <UserStatusManager className="mr-1" />
-        
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={toggleMap}
-          title="Toggle Map"
-        >
-          <Map size={18} />
-        </Button>
-        
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setShowCustomizer(!showCustomizer)}
-          title="Customize Character"
-        >
-          <Palette size={18} />
-        </Button>
-        
-        <Button
-          variant={showChat ? "default" : "outline"}
-          size="icon"
-          onClick={() => {
-            setShowChat(!showChat);
-            if (!showChat) setChatMinimized(false);
-          }}
-          title="Toggle Chat"
-          className={showChat ? "bg-blue-600 hover:bg-blue-700" : ""}
-        >
-          <MessageSquare size={18} />
-        </Button>
-        
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={toggleMute}
-          title={isMuted ? "Unmute" : "Mute"}
-        >
-          {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-        </Button>
-        
-        <Button
-          variant={voiceChatEnabled ? "default" : "outline"}
-          size="icon"
-          onClick={() => toggleVoiceChat(!voiceChatEnabled)}
-          title={voiceChatEnabled ? "Disable Microphone" : "Enable Microphone"}
-          className={voiceChatEnabled ? "bg-green-600 hover:bg-green-700 relative" : ""}
-        >
-          {voiceChatEnabled ? (
-            <>
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-              <Mic size={18} />
-            </>
-          ) : (
-            <MicOff size={18} />
-          )}
-        </Button>
-        
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => {
-            setShowAR(true);
-            toast("Augmented Reality Mode", {
-              description: "Entering AR view. Allow camera access to experience the trading world in your space.",
-            });
-          }}
-          title="Augmented Reality View"
-          className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 border-purple-300 dark:border-purple-700"
-        >
-          <Smartphone size={18} className="text-purple-600 dark:text-purple-400" />
-        </Button>
-        
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={restart}
-          title="Restart Game"
-        >
-          <RotateCw size={18} />
-        </Button>
-      </div>
+      {!controlsMinimized && (
+        <div className="fixed top-4 right-4 z-10">
+          <div className="bg-gray-900/30 backdrop-blur-sm p-2 rounded-lg shadow-lg border border-gray-800/50">
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center">
+                <span className="text-xs font-medium text-gray-200 mx-2">Control Panel</span>
+                <span className="text-[10px] text-gray-400 bg-gray-800/50 px-1 py-0.5 rounded">Press H to hide</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setControlsMinimized(true)}
+                className="h-6 w-6 rounded-full hover:bg-gray-700/50"
+                title="Minimize Controls"
+              >
+                <ChevronUp size={14} />
+              </Button>
+            </div>
+            
+            <div className="flex flex-wrap gap-2 justify-center">
+              <UserStatusManager className="mr-1" />
+              
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={toggleMap}
+                title="Toggle Map"
+              >
+                <Map size={18} />
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setShowCustomizer(!showCustomizer)}
+                title="Customize Character"
+              >
+                <Palette size={18} />
+              </Button>
+              
+              <Button
+                variant={showChat ? "default" : "outline"}
+                size="icon"
+                onClick={() => {
+                  setShowChat(!showChat);
+                  if (!showChat) setChatMinimized(false);
+                }}
+                title="Toggle Chat"
+                className={showChat ? "bg-blue-600 hover:bg-blue-700" : ""}
+              >
+                <MessageSquare size={18} />
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={toggleMute}
+                title={isMuted ? "Unmute" : "Mute"}
+              >
+                {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+              </Button>
+              
+              <Button
+                variant={voiceChatEnabled ? "default" : "outline"}
+                size="icon"
+                onClick={() => toggleVoiceChat(!voiceChatEnabled)}
+                title={voiceChatEnabled ? "Disable Microphone" : "Enable Microphone"}
+                className={voiceChatEnabled ? "bg-green-600 hover:bg-green-700 relative" : ""}
+              >
+                {voiceChatEnabled ? (
+                  <>
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    <Mic size={18} />
+                  </>
+                ) : (
+                  <MicOff size={18} />
+                )}
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  setShowAR(true);
+                  toast("Augmented Reality Mode", {
+                    description: "Entering AR view. Allow camera access to experience the trading world in your space.",
+                  });
+                }}
+                title="Augmented Reality View"
+                className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 border-purple-300 dark:border-purple-700"
+              >
+                <Smartphone size={18} className="text-purple-600 dark:text-purple-400" />
+              </Button>
+              
+              <Button
+                variant={showTradingTools ? "default" : "outline"}
+                size="icon"
+                onClick={() => setShowTradingTools(!showTradingTools)}
+                title="TradingView Tools"
+                className={showTradingTools ? "bg-amber-600 hover:bg-amber-700" : ""}
+              >
+                <BarChart2 size={18} />
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={restart}
+                title="Restart Game"
+              >
+                <RotateCw size={18} />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Player Customizer Panel */}
       {showCustomizer && (
@@ -369,6 +440,13 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
               </Button>
             </CardFooter>
           </Card>
+        </div>
+      )}
+      
+      {/* TradingView Tools Panel */}
+      {showTradingTools && (
+        <div className="fixed top-16 right-4 z-20 w-[90%] max-w-[800px]">
+          <TradingViewTools onClose={() => setShowTradingTools(false)} />
         </div>
       )}
       

@@ -39,7 +39,7 @@ export const useScreenShare = create<ScreenShareState>((set, get) => ({
   selectedShareId: null,
   
   startSharing: (data) => {
-    const id = `share_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const id = `share_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     const newShare: ScreenShareData = {
       ...data,
       id,

@@ -68,34 +68,65 @@ export function ScreenShare({ className }: ScreenShareProps) {
     return () => clearInterval(interval);
   }, [loadShares]);
   
-  // Function to simulate a screen capture
+  // Function to simulate a screen capture with improved error handling
   const captureScreen = () => {
-    setIsCapturing(true);
-    
-    // Simulate screen capture delay
-    setTimeout(() => {
-      startSharing({
-        userId: clientId || 'current-user',
-        username: 'You',
-        symbol: selectedSymbol,
-        marketData: [...marketData],
-        viewport: {
-          x: 0,
-          y: 0,
-          width: chartRef.current?.clientWidth || 800,
-          height: chartRef.current?.clientHeight || 600
+    try {
+      // Validate that the chart element exists before proceeding
+      if (!chartRef.current) {
+        console.error("Chart reference doesn't exist");
+        toast("Error", {
+          description: "Cannot share chart. Please try again later."
+        });
+        return;
+      }
+
+      setIsCapturing(true);
+      
+      // Use a safer method to get dimensions with fallbacks
+      const chartWidth = chartRef.current?.clientWidth || 800;
+      const chartHeight = chartRef.current?.clientHeight || 600;
+      
+      // Make sure we have market data to share
+      const safeMarketData = marketData.length > 0 ? [...marketData] : [];
+      
+      // Use a try-catch inside the timeout to handle any async errors
+      setTimeout(() => {
+        try {
+          startSharing({
+            userId: clientId || 'current-user',
+            username: 'You',
+            symbol: selectedSymbol,
+            marketData: safeMarketData,
+            viewport: {
+              x: 0,
+              y: 0,
+              width: chartWidth,
+              height: chartHeight
+            }
+          });
+          
+          // Notify others in chat
+          sendChatMessage(`I've shared my ${selectedSymbol} chart. Check it out!`, 'global');
+          
+          toast("Chart Shared", {
+            description: "Your trading chart has been shared with other traders"
+          });
+        } catch (err) {
+          console.error("Error sharing chart:", err);
+          toast("Error", {
+            description: "Failed to share the chart. Please try again."
+          });
+        } finally {
+          setIsCapturing(false);
         }
-      });
-      
+      }, 1000);
+    } catch (err) {
+      console.error("Error preparing chart share:", err);
       setIsCapturing(false);
-      
-      // Notify others in chat
-      sendChatMessage(`I've shared my ${selectedSymbol} chart. Check it out!`, 'global');
-      
-      toast("Chart Shared", {
-        description: "Your trading chart has been shared with other traders"
+      toast("Error", {
+        description: "Could not prepare chart for sharing."
       });
-    }, 1000);
+    }
   };
   
   // Start/stop sharing functions
@@ -475,12 +506,16 @@ function SharedChart({ shareData }: { shareData: ScreenShareData }) {
   const chartId = useMemo(() => `shared_chart_${shareData.id}_${Math.random().toString(36).substring(2, 7)}`, [shareData.id]);
   
   // Set chart loaded after a short delay (for performance)
+  // Safely load the chart after component mounts
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsChartLoaded(true);
-    }, 500);
-    
-    return () => clearTimeout(timer);
+    // Safety check to make sure we're in browser environment
+    if (typeof window !== 'undefined') {
+      const timer = setTimeout(() => {
+        setIsChartLoaded(true);
+      }, 1000); // Slightly longer delay to ensure DOM is ready
+      
+      return () => clearTimeout(timer);
+    }
   }, []);
   
   // Handle copy trade functionality

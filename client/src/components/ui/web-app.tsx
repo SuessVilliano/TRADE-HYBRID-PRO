@@ -243,6 +243,36 @@ export function WebApp() {
                   <span className="sr-only">Open in new tab</span>
                 </a>
               </Button>
+              
+              <ContextualTooltip
+                id="rss-feed"
+                title="EB4 RSS Feed"
+                content="View the EB4 RSS feed"
+                position="bottom"
+              >
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-7 w-7"
+                  onClick={() => {
+                    const currentUrl = url || 'https://app.tradehybrid.co';
+                    if (currentUrl !== 'https://eb4app.com/feed') {
+                      const iframe = document.getElementById('tradehybrid-iframe') as HTMLIFrameElement;
+                      if (iframe) {
+                        iframe.src = 'https://eb4app.com/feed';
+                        setIsLoading(true);
+                      }
+                    }
+                  }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 11a9 9 0 0 1 9 9" />
+                    <path d="M4 4a16 16 0 0 1 16 16" />
+                    <circle cx="5" cy="19" r="1" />
+                  </svg>
+                  <span className="sr-only">RSS Feed</span>
+                </Button>
+              </ContextualTooltip>
             </div>
             
             <div className="flex items-center space-x-1">
