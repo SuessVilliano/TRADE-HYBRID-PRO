@@ -52,7 +52,7 @@ export function PopupContainer({
       
       <div 
         className={cn(
-          "w-[94%] max-w-4xl max-h-[90vh] overflow-y-auto rounded-lg bg-gray-800 border border-gray-600 shadow-xl text-white",
+          "w-[94%] max-w-4xl max-h-[90vh] rounded-lg bg-gray-800 border border-gray-600 shadow-xl text-white flex flex-col",
           className
         )}
       >
@@ -63,13 +63,24 @@ export function PopupContainer({
               <button 
                 type="button" 
                 onClick={onClose} 
-                className="rounded-full p-1 hover:bg-gray-700 focus:outline-none"
+                className="rounded-full p-2 hover:bg-gray-700 focus:outline-none"
                 aria-label="Close"
               >
-                <X className="h-5 w-5 text-gray-300" />
+                <X className="h-6 w-6 text-gray-300" />
               </button>
             )}
           </div>
+        )}
+        
+        {/* Exit button for mobile - always visible at bottom */}
+        {onClose && (
+          <button
+            className="absolute bottom-4 right-4 z-30 md:hidden bg-primary text-white rounded-full p-3 shadow-lg"
+            onClick={onClose}
+            aria-label="Exit"
+          >
+            <X className="h-6 w-6" />
+          </button>
         )}
         
         {/* 
@@ -77,12 +88,13 @@ export function PopupContainer({
           and making sure content doesn't get clipped on mobile devices
         */}
         <div 
-          className="p-4 relative overflow-y-auto max-h-[calc(90vh-80px)]" 
+          className="p-4 pb-16 relative flex-1 overflow-y-auto" 
           style={{ 
             WebkitOverflowScrolling: 'touch',
             overscrollBehavior: 'contain',
             msOverflowStyle: 'none', /* for Internet Explorer, Edge */
-            scrollbarWidth: 'thin'
+            scrollbarWidth: 'thin',
+            touchAction: 'pan-y'
           }}
         >
           {children}
