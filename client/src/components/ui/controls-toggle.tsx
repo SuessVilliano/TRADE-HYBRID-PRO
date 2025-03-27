@@ -6,7 +6,7 @@ import { useIsMobile } from '@/hooks/use-is-mobile';
 import { toast } from 'sonner';
 
 export function ControlsToggle() {
-  const { controlsEnabled, toggleControls } = useControlsStore();
+  const { controlsEnabled, toggleControls, setControlsEnabled } = useControlsStore();
   const isMobile = useIsMobile();
   
   // Don't show this control on mobile devices
@@ -17,13 +17,29 @@ export function ControlsToggle() {
     toggleControls();
     
     if (controlsEnabled) {
+      // When disabling navigation mode
       toast.info("Navigation controls disabled. You can now interact with the UI.", {
         duration: 3000,
       });
+      
+      // Release pointer lock if it's active
+      if (document.pointerLockElement) {
+        document.exitPointerLock();
+      }
     } else {
+      // When enabling navigation mode
       toast.info("Navigation controls enabled. You can now move your character.", {
         duration: 3000,
       });
+      
+      // We need to force the pointer lock to engage
+      // This timeout allows the state to update first
+      setTimeout(() => {
+        const canvas = document.querySelector('canvas');
+        if (canvas && !document.pointerLockElement) {
+          canvas.requestPointerLock();
+        }
+      }, 100);
     }
   };
   

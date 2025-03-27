@@ -40,6 +40,8 @@ function Player({
   mobileJump = false,
   mobileSprint = false
 }: PlayerProps) {
+  // Get controls state for enabling/disabling movement
+  const { controlsEnabled } = useControlsStore();
   const playerRef = useRef<THREE.Group>(null);
   const [ref, api] = useBox(() => ({
     mass: 1,
@@ -65,8 +67,25 @@ function Player({
 
   // Player movement logic
   useFrame(() => {
+    // Only process movement if controls are enabled
+    if (!controlsEnabled) {
+      // If controls are disabled, zero out the velocity to stop movement
+      api.velocity.set(0, velocity.current[1], 0);
+      return;
+    }
+    
     // Get keyboard controls if not on mobile
     const keyboard = getKeys();
+    
+    // Debug keyboard controls - log to console for debugging
+    if (keyboard.forward || keyboard.backward || keyboard.left || keyboard.right) {
+      console.log("Keyboard Controls:", {
+        forward: keyboard.forward,
+        backward: keyboard.backward,
+        left: keyboard.left,
+        right: keyboard.right
+      });
+    }
     
     // Determine control values based on whether we're using mobile or keyboard
     const forward = mobileControls ? mobileDirection.y < -0.2 : keyboard.forward;
