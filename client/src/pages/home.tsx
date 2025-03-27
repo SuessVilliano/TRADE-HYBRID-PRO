@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { TRADING_SYMBOLS } from "@/lib/constants";
 import { AudioPermissionDialog } from "@/components/ui/audio-initializer";
 import { GuidedFeatures } from "@/components/ui/guided-features";
 import { useGuideTour } from "@/components/ui/contextual-tooltip";
+import { useTradingTips } from "@/lib/stores/useTradingTips";
 
 // Create placeholders for audio functions until the store is properly initialized
 const dummyAudio = {
@@ -19,18 +20,21 @@ const dummyAudio = {
   playSuccess: () => console.log("Play success called"),
 };
 
-// Import existing providers from proper locations
-import { TradingTipsProvider } from "@/components/ui/trading-tips-provider";
-import { GuideTourProvider } from "@/components/ui/contextual-tooltip";
-
 export default function Home() {
-  return (
-    <GuideTourProvider>
-      <TradingTipsProvider currentPath="/home">
-        <HomeContent />
-      </TradingTipsProvider>
-    </GuideTourProvider>
-  );
+  const location = useLocation();
+  const { showTip } = useTradingTips();
+  
+  // Show a home-specific tip when the page loads
+  useEffect(() => {
+    // Delay the tip to give the page time to load
+    const timer = setTimeout(() => {
+      showTip('general', 'beginner');
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, [showTip]);
+  
+  return <HomeContent />;
 }
 
 function HomeContent() {

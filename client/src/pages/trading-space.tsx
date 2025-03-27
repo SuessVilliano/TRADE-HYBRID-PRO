@@ -41,19 +41,36 @@ const LOCATION_TO_SYMBOL = {
   tradehouse: "BTCUSD"
 };
 
-import { TradingTipsProvider } from "@/components/ui/trading-tips-provider";
-import { GuideTourProvider } from "@/components/ui/contextual-tooltip";
+import { useTradingTips } from "@/lib/stores/useTradingTips";
 
 export default function TradingSpace() {
   const location = useLocation();
+  const { showTip } = useTradingTips();
   
-  return (
-    <GuideTourProvider>
-      <TradingTipsProvider currentPath={location.pathname}>
-        <TradingSpaceContent />
-      </TradingTipsProvider>
-    </GuideTourProvider>
-  );
+  // Show a trading-specific tip when the page loads
+  useEffect(() => {
+    // Delay the tip to give the page time to load
+    const timer = setTimeout(() => {
+      // Show a tip relevant to the current trading screen
+      const path = location.pathname.toLowerCase();
+      const searchParams = new URLSearchParams(location.search);
+      const locationParam = searchParams.get('location') || 'tradehouse';
+      
+      if (locationParam === 'crypto') {
+        showTip('crypto');
+      } else if (locationParam === 'forex') {
+        showTip('forex');
+      } else if (locationParam === 'stocks') {
+        showTip('stocks');
+      } else {
+        showTip('general');
+      }
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, [showTip, location]);
+  
+  return <TradingSpaceContent />;
 }
 
 function TradingSpaceContent() {

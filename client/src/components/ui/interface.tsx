@@ -4,6 +4,7 @@ import { useAudio } from "@/lib/stores/useAudio";
 import { useMultiplayer } from "@/lib/stores/useMultiplayer";
 import { Button } from "./button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
+import { Badge } from "./badge";
 //import { Confetti } from "../game/Confetti"; // Uncomment if this component exists
 import { VolumeX, Volume2, RotateCw, Trophy, Palette, X, Map, Mic, MicOff, MessageSquare, Smartphone, LineChart, BarChart2, ChevronUp, ChevronDown, Settings, Sparkles, Lightbulb, GraduationCap, School } from "lucide-react";
 import { AugmentedReality } from "./augmented-reality";
@@ -16,6 +17,7 @@ import { AIAssistant } from "./ai-assistant";
 import { PopupManager } from "./popup-manager";
 import { GuideTourLauncher } from "./contextual-tooltip";
 import { ShowTradingTipButton } from "./trading-tips";
+import { TradingTipsButton } from "./trading-tips-button";
 import { useTradingTips } from "@/lib/stores/useTradingTips";
 import { ShowTradingEducationButton, TradingEducation } from "./trading-education";
 import { toast } from "sonner";
@@ -307,7 +309,8 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
                 <RotateCw size={18} />
               </Button>
               
-              <ShowTradingTipButton />
+              {/* Full TradingTipsButton component with explorer dialog */}
+              <TradingTipsButton />
               
               <Button
                 variant={showHubPopup ? "default" : "outline"}

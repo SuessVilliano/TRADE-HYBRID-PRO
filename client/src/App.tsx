@@ -1,5 +1,5 @@
 
-import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import { RouterProvider, createBrowserRouter, useLocation } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { Canvas } from '@react-three/fiber';
@@ -36,16 +36,36 @@ const router = createBrowserRouter([
   }
 });
 
-export default function App() {
+// Root app wrapper with all providers
+function AppWithProviders() {
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider 
-        router={router} 
-        future={{
-          v7_startTransition: true
-        }}
-      />
-      <Toaster position="top-right" />
+      {/* TradingTipsProvider at the root application level */}
+      <TradingTipsProvider autoShowInterval={300000}> {/* Show a tip every 5 minutes */}
+        <GuideTourProvider>
+          <RouterProvider 
+            router={router} 
+            future={{
+              v7_startTransition: true
+            }}
+          />
+          <Toaster 
+            position="top-right" 
+            toastOptions={{
+              // Adding global toast styling
+              style: {
+                background: 'var(--background)',
+                color: 'var(--foreground)',
+                border: '1px solid var(--border)'
+              }
+            }}
+          />
+        </GuideTourProvider>
+      </TradingTipsProvider>
     </QueryClientProvider>
   );
+}
+
+export default function App() {
+  return <AppWithProviders />;
 }

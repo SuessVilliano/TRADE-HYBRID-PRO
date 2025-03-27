@@ -119,8 +119,8 @@ function Player({
   });
 
   return (
-    <group ref={playerRef}>
-      <mesh ref={ref} castShadow>
+    <group ref={playerRef as React.RefObject<THREE.Group>}>
+      <mesh ref={ref as React.RefObject<THREE.Mesh>} castShadow>
         <boxGeometry args={[0.5, 1.8, 0.5]} />
         <meshStandardMaterial color="blue" transparent opacity={0} />
       </mesh>
@@ -137,7 +137,7 @@ function Floor() {
   }));
   
   return (
-    <group ref={ref}>
+    <group ref={ref as React.RefObject<THREE.Group>}>
       <mesh receiveShadow>
         <planeGeometry args={[100, 100]} />
         <meshStandardMaterial color="#333333" />
@@ -156,7 +156,7 @@ function Wall({ position, size, rotation = [0, 0, 0] }: { position: [number, num
   }));
   
   return (
-    <mesh ref={ref} receiveShadow castShadow>
+    <mesh ref={ref as React.RefObject<THREE.Mesh>} receiveShadow castShadow>
       <boxGeometry args={size} />
       <meshStandardMaterial color="#555555" />
     </mesh>

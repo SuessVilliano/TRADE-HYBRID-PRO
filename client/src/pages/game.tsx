@@ -1,22 +1,27 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { TradeRunner as TradeRunner2D } from '@/components/ui/trade-runner';
 import TradeRunner3D from '@/components/games/TradeRunner';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Maximize2, Minimize2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-import { TradingTipsProvider } from '@/components/ui/trading-tips-provider';
-import { GuideTourProvider } from '@/components/ui/contextual-tooltip';
+import { useTradingTips } from '@/lib/stores/useTradingTips';
 
 export default function GamePage() {
-  return (
-    <GuideTourProvider>
-      <TradingTipsProvider currentPath="/game">
-        <GameContent />
-      </TradingTipsProvider>
-    </GuideTourProvider>
-  );
+  const location = useLocation();
+  const { showTip } = useTradingTips();
+  
+  // Show a game-specific tip when the page loads
+  useEffect(() => {
+    // Delay the tip to give the page time to load
+    const timer = setTimeout(() => {
+      showTip('general', 'beginner');
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, [showTip]);
+  
+  return <GameContent />;
 }
 
 function GameContent() {
