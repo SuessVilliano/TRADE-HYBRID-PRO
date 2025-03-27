@@ -837,13 +837,27 @@ export default function Scene({ showStats = false }: SceneProps) {
   });
   const { phase } = useGame();
   const [isMobile, setIsMobile] = useState(false);
+  
+  // Debug message to track component mounting
+  useEffect(() => {
+    console.log("Scene component mounted");
+    
+    // Log THREE.js version for debugging
+    console.log("THREE.js version:", THREE.REVISION);
+    
+    return () => {
+      console.log("Scene component unmounted");
+    };
+  }, []);
 
   // Detect if device is mobile
   useEffect(() => {
     const checkMobile = () => {
       const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
       const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-      setIsMobile(mobileRegex.test(userAgent));
+      const isMobileDevice = mobileRegex.test(userAgent);
+      setIsMobile(isMobileDevice);
+      console.log("Device detected as:", isMobileDevice ? "mobile" : "desktop");
     };
     
     checkMobile();
@@ -854,6 +868,7 @@ export default function Scene({ showStats = false }: SceneProps) {
   // Function to toggle map for mobile users
   const toggleMobileMap = () => {
     setShowMobileMap(!showMobileMap);
+    console.log("Mobile map toggled:", !showMobileMap);
   };
 
   // Update isDarkMode when the theme changes
@@ -861,7 +876,9 @@ export default function Scene({ showStats = false }: SceneProps) {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.attributeName === 'class') {
-          setIsDarkMode(document.documentElement.classList.contains('dark'));
+          const isDark = document.documentElement.classList.contains('dark');
+          setIsDarkMode(isDark);
+          console.log("Dark mode changed:", isDark);
         }
       });
     });
@@ -883,6 +900,7 @@ export default function Scene({ showStats = false }: SceneProps) {
       localStorage.theme = 'dark';
     }
     setIsDarkMode(!isDarkMode);
+    console.log("Dark mode toggled:", !isDarkMode);
   };
   
   return (

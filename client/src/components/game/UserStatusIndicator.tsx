@@ -1,54 +1,54 @@
-import React from 'react';
-import { Text } from '@react-three/drei';
-import { UserStatus } from '@/lib/services/multiplayer-service';
-import { useMultiplayer } from '@/lib/stores/useMultiplayer';
+import React, { useEffect, useState } from 'react';
+import { useMultiplayer } from '../../lib/stores/useMultiplayer';
+import * as THREE from 'three';
 
 interface UserStatusIndicatorProps {
   userId: string;
-  position: [number, number, number];
+  position?: [number, number, number];
 }
 
-export default function UserStatusIndicator({ userId, position }: UserStatusIndicatorProps) {
+export default function UserStatusIndicator({ userId, position = [0, 2.8, 0] }: UserStatusIndicatorProps) {
   const { getUserStatus } = useMultiplayer();
-  const status = getUserStatus(userId);
+  const [statusColor, setStatusColor] = useState<string>('#10b981'); // Default to online/green
   
-  if (!status || status.status === 'online') {
-    return null; // Don't show anything if online (default state)
-  }
-  
-  // Position the status indicator above the player model
-  const statusPosition: [number, number, number] = [
-    position[0],
-    position[1] + 2.2, // Adjust based on player model height
-    position[2]
-  ];
-  
-  let statusColor = '';
-  switch (status.status) {
-    case 'away':
-      statusColor = '#FFD700'; // Gold
-      break;
-    case 'busy':
-      statusColor = '#FF6347'; // Tomato
-      break;
-    case 'offline':
-      statusColor = '#808080'; // Gray
-      break;
-    default:
-      statusColor = '#4CAF50'; // Green
-  }
+  // Get user status and set appropriate color
+  useEffect(() => {
+    const status = getUserStatus(userId);
+    
+    if (!status) {
+      console.log(`No status found for user ${userId}, defaulting to online`);
+      setStatusColor('#10b981'); // green for online
+      return;
+    }
+    
+    console.log(`User ${userId} status: ${status.status}`);
+    
+    switch (status.status) {
+      case 'online':
+        setStatusColor('#10b981'); // green
+        break;
+      case 'away':
+        setStatusColor('#f59e0b'); // yellow/amber
+        break;
+      case 'busy':
+        setStatusColor('#ef4444'); // red
+        break;
+      case 'offline':
+        setStatusColor('#6b7280'); // gray
+        break;
+      default:
+        setStatusColor('#10b981'); // default green
+    }
+  }, [userId, getUserStatus]);
   
   return (
-    <Text
-      position={statusPosition}
-      fontSize={0.3}
-      color={statusColor}
-      anchorX="center"
-      anchorY="middle"
-      outlineWidth={0.01}
-      outlineColor="#000000"
-    >
-      {status.status.toUpperCase()}
-    </Text>
+    <mesh position={position}>
+      <sphereGeometry args={[0.1, 16, 16]} />
+      <meshStandardMaterial 
+        color={statusColor} 
+        emissive={statusColor} 
+        emissiveIntensity={0.8} 
+      />
+    </mesh>
   );
 }
