@@ -5,6 +5,7 @@ import { X, Copy, Link, ExternalLink, Users, DollarSign, Award } from 'lucide-re
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 import { Input } from './input';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
+import { PopupContainer } from './popup-container';
 
 /**
  * Affiliate Program Popup Component
@@ -76,8 +77,8 @@ export function AffiliatePopup({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-background rounded-lg shadow-lg w-full max-w-4xl h-[80vh] flex flex-col">
+    <PopupContainer className="p-0">
+      <div className="bg-background rounded-lg shadow-lg w-full h-[80vh] flex flex-col">
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-xl font-semibold">Affiliate Program</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -382,6 +383,6 @@ export function AffiliatePopup({
           </div>
         </Tabs>
       </div>
-    </div>
+    </PopupContainer>
   );
 }

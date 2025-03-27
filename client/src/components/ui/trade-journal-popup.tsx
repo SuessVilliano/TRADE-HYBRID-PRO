@@ -8,6 +8,7 @@ import { formatDate, formatCurrency } from '@/lib/utils';
 import { Switch } from './switch';
 import { cn } from '@/lib/utils';
 import { Input } from './input';
+import { PopupContainer } from './popup-container';
 import { Trade } from '@/lib/types';
 
 // Same journal entry interface from ai-assistant.tsx
@@ -271,8 +272,8 @@ export function TradeJournalPopup({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-background rounded-lg shadow-lg w-full max-w-4xl h-[80vh] flex flex-col">
+    <PopupContainer className="p-0">
+      <div className="bg-background rounded-lg shadow-lg w-full h-[80vh] flex flex-col">
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-xl font-semibold">Trading Journal</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -508,6 +509,6 @@ export function TradeJournalPopup({
           </div>
         </div>
       </div>
-    </div>
+    </PopupContainer>
   );
 }
