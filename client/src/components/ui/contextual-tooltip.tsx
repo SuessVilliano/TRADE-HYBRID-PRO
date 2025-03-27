@@ -262,9 +262,23 @@ export function ContextualTooltip({
           )}
         >
           <div className="flex flex-col gap-2">
-            <div className="flex items-center">
-              {getIcon()}
-              <h3 className="font-semibold">{title}</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                {getIcon()}
+                <h3 className="font-semibold">{title}</h3>
+              </div>
+              {(guideTour.isTourActive) && (
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => guideTour.completeTour()}
+                  className="h-5 w-5 rounded-full -mr-2 -mt-2"
+                  title="Skip Tour"
+                >
+                  <span className="sr-only">Skip Tour</span>
+                  ✕
+                </Button>
+              )}
             </div>
             <div>{content}</div>
             {(persistent || guideTour.isTourActive) && (
@@ -337,28 +351,44 @@ export function GuideTooltipTrigger({
 /**
  * Component to launch a guided tutorial tour for new users
  */
-export function GuideTourLauncher({ title = "Start Tour" }: { title?: string }) {
+export function GuideTourLauncher({ title = "Tour Guide" }: { title?: string }) {
   const guideTour = useGuideTour();
   
   return (
-    <div className="fixed bottom-4 right-4 z-50">
-      <Button 
-        onClick={() => guideTour.startTour()}
-        variant="default"
-        className={cn(
-          "gap-2 shadow-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white border-none hover:from-blue-600 hover:to-purple-600",
-          guideTour.isFirstTimeUser ? "animate-bounce-slow" : ""
-        )}
-      >
-        <HelpCircle className="h-4 w-4" />
-        {title}
-        {guideTour.isFirstTimeUser && (
-          <span className="absolute -top-1 -right-1 flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+    <div className="fixed right-4 top-24 z-50">
+      <div className={cn(
+        "relative p-1 rounded-xl bg-gradient-to-r from-blue-300/20 to-purple-300/20 backdrop-blur-sm shadow-xl",
+        "animate-pulse-slow" // Always animate to attract attention
+      )}>
+        <Button 
+          onClick={() => guideTour.startTour()}
+          variant="default"
+          size="lg"
+          className={cn(
+            "gap-2 shadow-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white border-none hover:from-blue-600 hover:to-purple-600 rounded-lg",
+            guideTour.isTourActive ? "opacity-50 pointer-events-none" : ""
+          )}
+        >
+          <HelpCircle className="h-5 w-5 mr-1" />
+          {title}
+          {guideTour.isFirstTimeUser && (
+            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+            </span>
+          )}
+        </Button>
+        
+        {/* Animated glow effect */}
+        <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 opacity-30 blur group-hover:opacity-50 animate-pulse-slow"></div>
+        
+        {/* Helper text */}
+        <div className="absolute top-full left-0 right-0 mt-1 text-center">
+          <span className="text-xs bg-background/80 text-primary px-2 py-0.5 rounded-full shadow-sm backdrop-blur-sm">
+            {guideTour.isTourActive ? "Tour in progress..." : "Click for guided tour"}
           </span>
-        )}
-      </Button>
+        </div>
+      </div>
     </div>
   );
 }
