@@ -150,3 +150,15 @@ export function formatDate(date: Date | string | number, options: Intl.DateTimeF
   const mergedOptions = { ...defaultOptions, ...options };
   return new Intl.DateTimeFormat('en-US', mergedOptions).format(new Date(date));
 }
+
+// Format time only
+export function formatTime(date: Date | string | number): string {
+  const options: Intl.DateTimeFormatOptions = {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  };
+  
+  return new Intl.DateTimeFormat('en-US', options).format(new Date(date));
+}
