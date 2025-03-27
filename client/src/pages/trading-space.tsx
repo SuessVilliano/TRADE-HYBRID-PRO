@@ -203,7 +203,7 @@ export default function TradingSpace() {
                     <span>AI Strategy Builder</span>
                   </h3>
                   <p className="text-xs mt-1 text-gray-600 dark:text-gray-300">Build trading strategies using natural language and AI assistance</p>
-                  <Button size="sm" variant="outline" className="mt-2 w-full" onClick={() => openWebApp("https://app.tradehybrid.co/ai-builder")}>
+                  <Button size="sm" variant="outline" className="mt-2 w-full" onClick={() => window.open("https://app.tradehybrid.co/builder", "_blank")}>
                     Open Builder
                   </Button>
                 </div>
@@ -214,7 +214,7 @@ export default function TradingSpace() {
                     <span>Bot Management</span>
                   </h3>
                   <p className="text-xs mt-1 text-gray-600 dark:text-gray-300">Monitor and control your active trading bots</p>
-                  <Button size="sm" variant="outline" className="mt-2 w-full" onClick={() => openWebApp("https://app.tradehybrid.co/bots")}>
+                  <Button size="sm" variant="outline" className="mt-2 w-full" onClick={() => window.open("https://app.tradehybrid.co/bots", "_blank")}>
                     Manage Bots
                   </Button>
                 </div>

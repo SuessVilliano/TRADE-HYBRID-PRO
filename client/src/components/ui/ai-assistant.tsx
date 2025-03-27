@@ -498,9 +498,20 @@ export function AIAssistant({ className }: AIAssistantProps) {
                   }
                 }}
                 disabled={isGenerating}
+                className="px-3 py-2 focus:ring-2 focus:ring-primary"
+                autoFocus
+                autoComplete="off"
               />
-              <Button onClick={handleSendMessage} disabled={isGenerating || !input.trim()}>
-                <Send className="h-4 w-4" />
+              <Button 
+                onClick={handleSendMessage} 
+                disabled={isGenerating || !input.trim()}
+                className="bg-primary hover:bg-primary/90 focus:ring-2 focus:ring-primary"
+              >
+                {isGenerating ? (
+                  <span className="animate-pulse">...</span>
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </TabsContent>
@@ -654,16 +665,21 @@ export function AIAssistant({ className }: AIAssistantProps) {
                 </h4>
                 <div className="flex gap-1 items-center">
                   <span className="text-xs text-muted-foreground">Filter:</span>
-                  <select 
-                    className="text-xs bg-transparent border rounded px-1"
-                    value={sentimentFilter}
-                    onChange={(e) => setSentimentFilter(e.target.value as any)}
-                  >
-                    <option value="all">All</option>
-                    <option value="positive">Positive</option>
-                    <option value="negative">Negative</option>
-                    <option value="neutral">Neutral</option>
-                  </select>
+                  <div className="relative">
+                    <select 
+                      className="text-xs bg-background border rounded px-2 py-1 appearance-none pr-6 focus:ring-2 focus:ring-primary cursor-pointer"
+                      value={sentimentFilter}
+                      onChange={(e) => setSentimentFilter(e.target.value as any)}
+                    >
+                      <option value="all">All</option>
+                      <option value="positive">Positive</option>
+                      <option value="negative">Negative</option>
+                      <option value="neutral">Neutral</option>
+                    </select>
+                    <div className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </div>
+                  </div>
                 </div>
               </div>
               
