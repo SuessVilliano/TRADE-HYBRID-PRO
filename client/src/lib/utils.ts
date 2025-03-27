@@ -86,6 +86,11 @@ export function truncateText(text: string, maxLength: number): string {
   return `${text.substring(0, maxLength)}...`;
 }
 
+// Alias for truncateText to match import in signals-list
+export function truncate(text: string, maxLength: number): string {
+  return truncateText(text, maxLength);
+}
+
 // Generate a random ID
 export function generateId(length = 8): string {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
