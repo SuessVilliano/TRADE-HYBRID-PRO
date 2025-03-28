@@ -1,0 +1,53 @@
+[vite] connecting...
+DOMException {}
+
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+Connecting to multiplayer as: Trader954
+Connecting to multiplayer server at wss://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/ws
+Connected to multiplayer server
+Initialized multiplayer with client ID: zennliql2kb
+Connected players: 0
+Player character model loaded successfully
+OtherPlayers component mounted
+Number of other players: 0
+Trade house model loaded successfully
+THC coin model loaded successfully
+OtherPlayers component unmounted
+THREE.WebGLRenderer: Context Lost.
+TradeRunner: Performing initial canvas resize
+TradeRunner: Canvas resized to 737.6 x 569
+TradeRunner: Performing initial canvas resize
+TradeRunner: Canvas resized to 737.6 x 569
+TradeRunner: Starting game
+TradeRunner: Initializing game canvas dimensions: 737 569
+TradeRunner: Set initial game speed to 5
+TradeRunner: Player initialized at position 50 419
+TradeRunner: Game state initialized successfully
+TradeRunner: Starting game loop
+TradeRunner: Performing initial canvas resize
+TradeRunner: Canvas resized to 737.6 x 569
+Cannot read properties of undefined (reading 'THC')
+Cannot read properties of undefined (reading 'THC')
+The above error occurred in the <THCBalanceDisplay> component:
+
+    at THCBalanceDisplay (https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/src/components/ui/thc-balance-display.tsx:22:3)
+    at div
+    at div
+    at div
+    at NFTMarketplace (https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/src/pages/nft-marketplace.tsx:40:7)
+    at RenderedRoute (https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-router-dom.js?v=9ca15057:4089:5)
+    at Routes (https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-router-dom.js?v=9ca15057:4559:5)
+    at main
+    at div
+    at AppContent (https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/src/App.tsx?v=rETYDZchvNhvg5paJX8k1:69:52)
+    at MicroLearningProvider (https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/src/lib/context/MicroLearningProvider.tsx:103:3)
+    at ToastProvider (https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/src/components/ui/toaster.tsx:21:33)
+    at Router (https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-router-dom.js?v=9ca15057:4502:15)
+    at BrowserRouter (https://8901fbed-36ef-448c-8cb9-b6f518422d98-00-91z038a1jzl.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-router-dom.js?v=9ca15057:5248:5)
+    at AppWithProviders
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+Cannot read properties of undefined (reading 'THC')

@@ -13,7 +13,7 @@ const TradeRunner = lazy(() => import('./pages/trade-runner'));
 const BullsVsBears = lazy(() => import('./pages/bulls-vs-bears-new')); // Legacy reference
 const NewsDashboard = lazy(() => import('./pages/news-dashboard'));
 const TradeJournalPage = lazy(() => import('./pages/trade-journal'));
-const SolanaTrading = lazy(() => import('./pages/solana-trading'));
+const SolanaDexEmbedded = lazy(() => import('./pages/solana-dex-embedded'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -145,7 +145,7 @@ function AppContent() {
                 </div>
               </div>
             }>
-              {typeof window !== 'undefined' && <SolanaTrading />}
+              {typeof window !== 'undefined' && <SolanaDexEmbedded />}
             </Suspense>
           } />
           <Route path="/metaverse" element={<MetaversePlaceholder />} />
