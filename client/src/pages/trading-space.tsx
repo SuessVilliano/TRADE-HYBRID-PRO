@@ -19,7 +19,9 @@ import { ThcTokenInfo } from "@/components/ui/thc-token-info";
 import { ThcTradingPanel } from "@/components/ui/thc-trading-panel";
 import { MicroTradingTipTrigger } from "@/components/ui/micro-trading-tip-trigger";
 import { MobileSidebarToggle } from "@/components/ui/mobile-sidebar-toggle";
-import { ArrowLeft, LayoutGrid, Maximize2, Minimize2, X, Info, Sparkles, Bot, BookOpen, BarChart2, Activity, BrainCircuit, Users, Coins } from "lucide-react";
+import { MobileMenu } from "@/components/ui/mobile-menu";
+import { ScreenSharing } from "@/components/ui/screen-sharing";
+import { ArrowLeft, LayoutGrid, Maximize2, Minimize2, X, Info, Sparkles, Bot, BookOpen, BarChart2, Activity, BrainCircuit, Users, Coins, Cast } from "lucide-react";
 import { useMarketData } from "@/lib/stores/useMarketData";
 import { useNews } from "@/lib/stores/useNews";
 import { useTrader } from "@/lib/stores/useTrader";
@@ -100,6 +102,8 @@ function TradingSpaceContent() {
   const [isPanelExpanded, setIsPanelExpanded] = useState(window.innerWidth > 768);
   const [showAITools, setShowAITools] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [screenShareOpen, setScreenShareOpen] = useState(false);
   
   // Initialize data stores
   const { fetchMarketData } = useMarketData();
@@ -488,7 +492,10 @@ function TradingSpaceContent() {
           <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
             <div className="flex h-14 items-center justify-between px-4">
               <div className="flex items-center gap-2">
-                <MobileSidebarToggle className="h-8 w-8 mr-1" />
+                <MobileSidebarToggle 
+                  className="h-8 w-8 mr-1" 
+                  onClick={() => setMobileMenuOpen(true)}
+                />
                 <Link to="/">
                   <Button variant="ghost" size="icon" className="h-8 w-8">
                     <ArrowLeft className="h-4 w-4" />
@@ -498,6 +505,16 @@ function TradingSpaceContent() {
               </div>
               
               <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => setScreenShareOpen(true)}
+                  title="Share Screen"
+                >
+                  <Cast size={14} className="text-blue-500 mr-1" />
+                  <span className="text-xs">Share</span>
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -697,6 +714,22 @@ function TradingSpaceContent() {
             </div>
           </div>
         )}
+        
+        {/* Mobile Menu */}
+        <MobileMenu 
+          isOpen={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          onItemClick={(itemId) => {
+            setActivePanel(itemId);
+            setMobileMenuOpen(false);
+          }}
+        />
+        
+        {/* Screen Sharing */}
+        <ScreenSharing 
+          isOpen={screenShareOpen}
+          onClose={() => setScreenShareOpen(false)}
+        />
       </div>
     );
   }
@@ -731,6 +764,16 @@ function TradingSpaceContent() {
           </div>
           
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline" 
+              size="sm" 
+              className="ml-2 h-7 hidden md:flex items-center gap-1"
+              onClick={() => setScreenShareOpen(true)}
+              title="Share Screen"
+            >
+              <Cast size={14} className="text-blue-500" />
+              <span className="text-xs">Share Screen</span>
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -1016,6 +1059,12 @@ function TradingSpaceContent() {
       
       {/* Game HUD */}
       <HUD className="z-20" />
+      
+      {/* Screen Sharing */}
+      <ScreenSharing 
+        isOpen={screenShareOpen}
+        onClose={() => setScreenShareOpen(false)}
+      />
     </div>
   );
 }

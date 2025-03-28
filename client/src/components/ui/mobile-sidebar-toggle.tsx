@@ -16,8 +16,10 @@ export function MobileSidebarToggle({ className = '', onClick }: MobileSidebarTo
       // Find SheetTrigger and click it directly
       const sheetTriggers = document.querySelectorAll('button[data-radix-collection-item]');
       if (sheetTriggers.length > 0) {
-        // Find a trigger by aria-controls that contains "radix-:r0:" pattern
-        for (const trigger of sheetTriggers) {
+        // Find a trigger by aria-controls that contains "radix-:r" pattern
+        // Use traditional for loop to avoid TypeScript downlevelIteration issues
+        for (let i = 0; i < sheetTriggers.length; i++) {
+          const trigger = sheetTriggers[i];
           const ariaControls = trigger.getAttribute('aria-controls');
           if (ariaControls && ariaControls.includes('radix-:r')) {
             (trigger as HTMLElement).click();
@@ -77,14 +79,16 @@ export function MobileSidebarToggle({ className = '', onClick }: MobileSidebarTo
       // Try to close any dialog/overlay if open
       const dialogs = document.querySelectorAll('[role="dialog"]');
       if (dialogs.length > 0) {
-        dialogs.forEach(dialog => {
+        // Use traditional for loop to avoid TypeScript downlevelIteration issues
+        for (let i = 0; i < dialogs.length; i++) {
+          const dialog = dialogs[i];
           // Find close button and click it
           const closeButton = dialog.querySelector('button[aria-label="Close"]');
           if (closeButton) {
             (closeButton as HTMLElement).click();
             console.log("Closed dialog");
           }
-        });
+        }
         return;
       }
       
@@ -121,7 +125,9 @@ export function MobileSidebarToggle({ className = '', onClick }: MobileSidebarTo
         // Close any open overlays or dialogs
         const dialogs = document.querySelectorAll('[role="dialog"]');
         if (dialogs.length > 0) {
-          dialogs.forEach(dialog => {
+          // Use traditional for loop to avoid TypeScript downlevelIteration issues
+          for (let i = 0; i < dialogs.length; i++) {
+            const dialog = dialogs[i];
             // Only if this is a sidebar dialog
             if (dialog.querySelector('[data-sidebar="sidebar"]')) {
               const closeButton = dialog.querySelector('button[aria-label="Close"]');
@@ -130,7 +136,7 @@ export function MobileSidebarToggle({ className = '', onClick }: MobileSidebarTo
                 console.log("Auto-closed dialog");
               }
             }
-          });
+          }
         }
       }
     };
