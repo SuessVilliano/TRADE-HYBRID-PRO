@@ -1,64 +1,46 @@
 import React, { useState } from 'react';
-import { Lightbulb } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { TradingTipsExplorer } from './trading-tips-explorer';
-import { useTradingTips } from '@/lib/stores/useTradingTips';
-import { toast } from 'sonner';
+import { LightbulbIcon } from 'lucide-react';
+import { Button } from './button';
+import { useMicroLearning } from '../../lib/context/MicroLearningProvider';
+import { MicroLearningSettings } from './micro-learning-settings';
 
-export function TradingTipsButton() {
-  const [isOpen, setIsOpen] = useState(false);
-  const { tips, viewedTips } = useTradingTips();
+const TradingTipsButton: React.FC = () => {
+  const { showTip } = useMicroLearning();
+  const [showSettings, setShowSettings] = useState(false);
   
-  // Calculate number of unread tips
-  const unreadCount = tips.filter(tip => !viewedTips.includes(tip.id)).length;
-  
-  const handleOpenTips = () => {
-    setIsOpen(true);
-    
-    if (unreadCount > 0) {
-      toast.info(`You have ${unreadCount} unread trading tips`, {
-        description: "Explore helpful tips to improve your trading skills",
-        duration: 3000,
-      });
-    }
+  const handleShowTip = () => {
+    showTip('bottom-right');
   };
   
   return (
-    <>
-      <div className="relative">
-        <Button
-          onClick={handleOpenTips}
-          variant="outline"
-          className="flex items-center gap-2 bg-yellow-50 dark:bg-yellow-950 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900/50"
-        >
-          <Lightbulb className="h-4 w-4" />
-          <span>Trading Tips</span>
-        </Button>
-        
-        {unreadCount > 0 && (
-          <Badge 
-            variant="default" 
-            className="absolute -top-2 -right-2 bg-red-500 h-5 min-w-5 flex items-center justify-center p-0 px-1"
-          >
-            {unreadCount}
-          </Badge>
-        )}
-      </div>
+    <div className="relative">
+      {/* Trading Tips Button */}
+      <Button 
+        variant="outline" 
+        size="sm" 
+        className="relative flex items-center gap-2"
+        onClick={() => setShowSettings(true)}
+      >
+        <LightbulbIcon size={16} className="text-yellow-400" />
+        <span className="hidden sm:inline">Trading Tips</span>
+        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+        </span>
+      </Button>
       
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-yellow-500" />
-              <span>Trading Tips Library</span>
-            </DialogTitle>
-          </DialogHeader>
-          
-          <TradingTipsExplorer />
-        </DialogContent>
-      </Dialog>
-    </>
+      {/* Dropdown Menu */}
+      {showSettings && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
+          <MicroLearningSettings 
+            onClose={() => setShowSettings(false)} 
+          />
+        </div>
+      )}
+    </div>
   );
-}
+};
+
+// Export both named and default export
+export { TradingTipsButton };
+export default TradingTipsButton;

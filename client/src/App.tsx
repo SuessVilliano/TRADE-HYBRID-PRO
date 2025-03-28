@@ -5,16 +5,24 @@ import NFTMarketplace from './pages/nft-marketplace';
 import { Button } from './components/ui/button';
 import THCBalanceDisplay from './components/ui/thc-balance-display';
 import { ThemeToggle } from './components/ui/theme-toggle';
+import { TradingTipsButton } from './components/ui/trading-tips-button';
 import { useUserStore } from './lib/stores/useUserStore';
 
 // Lazy load the Bulls vs Bears page
 const BullsVsBears = lazy(() => import('./pages/bulls-vs-bears-new'));
 
+// Import the MicroLearningProvider and renderer
+import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
+import { MicroLearningTipRenderer } from './components/ui/micro-learning-tip-renderer';
+
 // Light wrapper with providers
 function AppWithProviders() {
   return (
     <Router>
-      <AppContent />
+      <MicroLearningProvider>
+        <AppContent />
+        <MicroLearningTipRenderer />
+      </MicroLearningProvider>
     </Router>
   );
 }
@@ -71,6 +79,7 @@ function AppContent() {
           </div>
           
           <div className="flex items-center gap-4">
+            <TradingTipsButton />
             <ThemeToggle className="mr-2" />
             
             {isAuthenticated ? (

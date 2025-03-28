@@ -1,58 +1,36 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { cn } from '../../lib/utils';
 
 interface PopupContainerProps {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
   padding?: boolean;
-  opacity?: 'low' | 'medium' | 'high';
-  blur?: 'none' | 'low' | 'medium' | 'high';
-  border?: boolean;
-  rounded?: boolean;
-  glass?: boolean;
-  onClick?: () => void;
+  variant?: 'default' | 'primary' | 'secondary' | 'warning' | 'error' | 'success';
 }
 
-export function PopupContainer({
+export const PopupContainer: React.FC<PopupContainerProps> = ({
   children,
   className,
-  padding = true,
-  opacity = 'medium',
-  blur = 'medium',
-  border = true,
-  rounded = true,
-  glass = true,
-  onClick,
-}: PopupContainerProps) {
-  // Opacity classes
-  const opacityClasses = {
-    low: 'bg-opacity-30',
-    medium: 'bg-opacity-50',
-    high: 'bg-opacity-70',
-  };
-
-  // Blur classes 
-  const blurClasses = {
-    none: '',
-    low: 'backdrop-blur-sm',
-    medium: 'backdrop-blur-md',
-    high: 'backdrop-blur-lg',
+  padding = false,
+  variant = 'default'
+}) => {
+  const variantClasses = {
+    default: 'bg-slate-800 border-slate-700',
+    primary: 'bg-indigo-900/90 border-indigo-700',
+    secondary: 'bg-purple-900/90 border-purple-700',
+    warning: 'bg-amber-900/90 border-amber-700',
+    error: 'bg-red-900/90 border-red-700',
+    success: 'bg-green-900/90 border-green-700',
   };
 
   return (
-    <div
-      className={cn(
-        'bg-slate-800',
-        opacityClasses[opacity],
-        glass && blurClasses[blur],
-        border && 'border border-slate-700',
-        rounded && 'rounded-lg',
-        padding && 'p-4',
-        className
-      )}
-      onClick={onClick}
-    >
+    <div className={cn(
+      'rounded-lg border backdrop-blur-sm shadow-lg', 
+      variantClasses[variant],
+      padding && 'p-4',
+      className
+    )}>
       {children}
     </div>
   );
-}
+};
