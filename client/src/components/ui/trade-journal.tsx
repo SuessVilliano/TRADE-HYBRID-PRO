@@ -9,7 +9,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { UploadCloud, Calendar, PieChart, DollarSign, TrendingUp, TrendingDown, Clock, FileText, BarChart2, Download, RotateCw, Filter, Briefcase, ChevronsUpDown, Plus } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Check, UploadCloud, Calendar, PieChart, DollarSign, TrendingUp, TrendingDown, Clock, FileText, BarChart2, Download, RotateCw, Filter, Briefcase, ChevronsUpDown, Plus, PlusCircle, Search as SearchIcon } from 'lucide-react';
 
 export interface Trade {
   id: string;
@@ -240,7 +241,7 @@ export function TradeJournal({ className }: TradeJournalProps) {
                 {fileUploadStatus === 'uploading' ? (
                   <RotateCw className="h-4 w-4 animate-spin" />
                 ) : fileUploadStatus === 'success' ? (
-                  <CheckIcon className="h-4 w-4 text-green-500" />
+                  <Check className="h-4 w-4 text-green-500" />
                 ) : (
                   <UploadCloud className="h-4 w-4" />
                 )}
@@ -251,7 +252,7 @@ export function TradeJournal({ className }: TradeJournalProps) {
                 Export
               </Button>
               <Button variant="default" size="sm" className="gap-1">
-                <PlusCircleIcon className="h-4 w-4" />
+                <PlusCircle className="h-4 w-4" />
                 New Trade
               </Button>
             </div>
@@ -440,7 +441,7 @@ export function TradeJournal({ className }: TradeJournalProps) {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
                   <div className="flex flex-1 items-center gap-2">
                     <div className="relative flex-1 max-w-md">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input 
                         placeholder="Search trades..." 
                         className="pl-10"
@@ -1151,7 +1152,7 @@ function Pencil(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-function Search(props: React.SVGProps<SVGSVGElement>) {
+function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <circle cx="11" cy="11" r="8" />
@@ -1234,5 +1235,3 @@ function Target(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
-
-import { Badge } from "@/components/ui/badge";
