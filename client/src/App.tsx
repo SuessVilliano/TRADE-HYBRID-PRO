@@ -78,7 +78,7 @@ function AppContent() {
             <nav className="hidden md:flex gap-4">
               <Link to="/" className="hover:text-blue-400 transition-colors">Home</Link>
               <Link to="/trading" className="hover:text-blue-400 transition-colors">Trading</Link>
-              <Link to="/solana-trading" className="hover:text-blue-400 transition-colors">Solana DEX</Link>
+              <Link to="/solana-trading" className="hover:text-blue-400 transition-colors">DEX</Link>
               <Link to="/metaverse" className="hover:text-blue-400 transition-colors">Metaverse</Link>
               <Link to="/news" className="hover:text-blue-400 transition-colors">News</Link>
               <Link to="/trade-journal" className="hover:text-blue-400 transition-colors">Journal</Link>
@@ -141,7 +141,7 @@ function AppContent() {
               <div className="flex items-center justify-center h-screen">
                 <div className="text-center">
                   <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <p className="text-slate-300">Loading Solana DEX trading...</p>
+                  <p className="text-slate-300">Loading DEX trading...</p>
                 </div>
               </div>
             }>
@@ -239,7 +239,7 @@ function Home() {
           linkTo="/trading"
         />
         <FeatureCard 
-          title="Solana DEX"
+          title="DEX"
           description="Trade directly on Solana decentralized exchanges with lower fees using THC token."
           linkTo="/solana-trading"
         />
