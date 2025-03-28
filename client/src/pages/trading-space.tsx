@@ -22,6 +22,7 @@ import { MobileSidebarToggle } from "@/components/ui/mobile-sidebar-toggle";
 import { MobileMenu } from "@/components/ui/mobile-menu";
 import { ScreenSharing } from "@/components/ui/screen-sharing";
 import { MusicPlayer } from "@/components/ui/music-player";
+import { CustomizableBottomNav } from "@/components/ui/customizable-bottom-nav";
 import { ArrowLeft, LayoutGrid, Maximize2, Minimize2, X, Info, Sparkles, Bot, BookOpen, BarChart2, Activity, BrainCircuit, Users, Coins, Cast } from "lucide-react";
 import { useMarketData } from "@/lib/stores/useMarketData";
 import { useNews } from "@/lib/stores/useNews";
@@ -542,60 +543,11 @@ function TradingSpaceContent() {
             </div>
           </div>
           
-          {/* Bottom Navigation */}
-          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-sm">
-            <div className="grid grid-cols-7 h-16">
-              <button 
-                className={`flex flex-col items-center justify-center ${activePanel === "market" ? "text-blue-500" : "text-gray-600 dark:text-gray-400"}`}
-                onClick={() => setActivePanel("market")}
-              >
-                <BarChart2 size={18} />
-                <span className="text-xs mt-1">Chart</span>
-              </button>
-              <button 
-                className={`flex flex-col items-center justify-center ${activePanel === "trade" ? "text-blue-500" : "text-gray-600 dark:text-gray-400"}`}
-                onClick={() => setActivePanel("trade")}
-              >
-                <Activity size={18} />
-                <span className="text-xs mt-1">Trade</span>
-              </button>
-              <button 
-                className={`flex flex-col items-center justify-center ${activePanel === "thc" ? "text-blue-500" : "text-gray-600 dark:text-gray-400"}`}
-                onClick={() => setActivePanel("thc")}
-              >
-                <Coins size={18} />
-                <span className="text-xs mt-1">THC</span>
-              </button>
-              <button 
-                className={`flex flex-col items-center justify-center ${activePanel === "copy" ? "text-blue-500" : "text-gray-600 dark:text-gray-400"}`}
-                onClick={() => setActivePanel("copy")}
-              >
-                <Users size={18} />
-                <span className="text-xs mt-1">Copy</span>
-              </button>
-              <button 
-                className={`flex flex-col items-center justify-center ${activePanel === "signals" ? "text-blue-500" : "text-gray-600 dark:text-gray-400"}`}
-                onClick={() => setActivePanel("signals")}
-              >
-                <Sparkles size={18} />
-                <span className="text-xs mt-1">Signals</span>
-              </button>
-              <button 
-                className={`flex flex-col items-center justify-center ${activePanel === "advanced-ai-analysis" ? "text-purple-500" : "text-gray-600 dark:text-gray-400"}`}
-                onClick={() => setActivePanel("advanced-ai-analysis")}
-              >
-                <BrainCircuit size={18} />
-                <span className="text-xs mt-1">AI</span>
-              </button>
-              <button 
-                className={`flex flex-col items-center justify-center ${activePanel === "journal" ? "text-blue-500" : "text-gray-600 dark:text-gray-400"}`}
-                onClick={() => setActivePanel("journal")}
-              >
-                <BookOpen size={18} />
-                <span className="text-xs mt-1">Journal</span>
-              </button>
-            </div>
-          </div>
+          {/* Customizable Bottom Navigation */}
+          <CustomizableBottomNav 
+            activePanel={activePanel} 
+            onChange={(panel) => setActivePanel(panel)}
+          />
         </div>
         
         {/* AI Tools Panel */}
