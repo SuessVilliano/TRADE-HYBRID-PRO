@@ -1,238 +1,122 @@
-// Trading symbols by category
-export const TRADING_SYMBOLS = {
-  crypto: ['BTC/USD', 'ETH/USD', 'SOL/USD', 'ADA/USD', 'XRP/USD', 'DOT/USD', 'AVAX/USD', 'MATIC/USD', 'LINK/USD', 'UNI/USD', 'THC/USD'],
-  forex: ['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CAD', 'AUD/USD', 'NZD/USD', 'USD/CHF', 'EUR/GBP', 'EUR/JPY', 'GBP/JPY'],
-  stocks: ['AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META', 'TSLA', 'NVDA', 'JPM', 'V', 'WMT', 'DIS', 'NFLX'],
-  indices: ['SPX500', 'NASDAQ', 'DJ30', 'VIX', 'UK100', 'GER40', 'JPN225', 'AUS200'],
-  commodities: ['XAUUSD', 'XAGUSD', 'USOIL', 'UKOIL', 'NATGAS', 'COPPER', 'CORN', 'WHEAT', 'COTTON', 'SUGAR']
+// Application-wide constants
+
+// API endpoints
+export const API_BASE_URL = '/api';
+export const API_ENDPOINTS = {
+  MARKET_DATA: `${API_BASE_URL}/market`,
+  NEWS: `${API_BASE_URL}/news`,
+  LEADERBOARD: `${API_BASE_URL}/leaderboard`,
+  SIGNALS: `${API_BASE_URL}/signals`,
+  BOTS: `${API_BASE_URL}/bots`,
+  GAME: `${API_BASE_URL}/game`,
 };
 
-// All trading symbols combined in one array for convenience
-export const ALL_TRADING_SYMBOLS = [
-  ...TRADING_SYMBOLS.crypto,
-  ...TRADING_SYMBOLS.forex,
-  ...TRADING_SYMBOLS.stocks,
-  ...TRADING_SYMBOLS.indices,
-  ...TRADING_SYMBOLS.commodities
-];
+// Websocket configuration
+export const WS_CONFIG = {
+  ENDPOINT: window.location.origin.replace(/^http/, 'ws') + '/ws',
+  RECONNECT_INTERVAL: 3000,
+  MAX_RECONNECT_ATTEMPTS: 10,
+};
 
-// Supported brokers
-export const SUPPORTED_BROKERS = [
-  {
-    id: 'alpaca',
-    name: 'Alpaca',
-    description: 'Commission-free stock trading API',
-    url: 'https://alpaca.markets',
-    assets: ['stocks', 'crypto'],
-    logoUrl: '/images/brokers/alpaca.svg',
-    apiKeyFields: [
-      { id: 'apiKey', label: 'API Key', type: 'password' },
-      { id: 'apiSecret', label: 'API Secret', type: 'password' }
-    ],
-    testnetSupported: true
-  },
-  {
-    id: 'oanda',
-    name: 'OANDA',
-    description: 'Forex and CFD trading platform',
-    url: 'https://www.oanda.com',
-    assets: ['forex', 'indices', 'commodities'],
-    logoUrl: '/images/brokers/oanda.svg',
-    apiKeyFields: [
-      { id: 'accountId', label: 'Account ID', type: 'text' },
-      { id: 'apiToken', label: 'API Token', type: 'password' }
-    ],
-    testnetSupported: true
-  },
-  {
-    id: 'binance',
-    name: 'Binance',
-    description: 'Cryptocurrency exchange',
-    url: 'https://www.binance.com',
-    assets: ['crypto'],
-    logoUrl: '/images/brokers/binance.svg',
-    apiKeyFields: [
-      { id: 'apiKey', label: 'API Key', type: 'password' },
-      { id: 'apiSecret', label: 'API Secret', type: 'password' }
-    ],
-    testnetSupported: true
-  },
-  {
-    id: 'tradehybrid',
-    name: 'Trade Hybrid',
-    description: 'All-in-one trading solution',
-    url: 'https://tradehybrid.io',
-    assets: ['stocks', 'forex', 'crypto', 'indices', 'commodities'],
-    logoUrl: '/images/brokers/tradehybrid.svg',
-    apiKeyFields: [
-      { id: 'apiKey', label: 'API Key', type: 'password' },
-      { id: 'accountId', label: 'Account ID', type: 'text' }
-    ],
-    testnetSupported: true,
-    isBrokerAggregator: true
-  }
-];
-
-// Game settings
-export const GAME_SETTINGS = {
-  // Bulls vs Bears game settings
-  bullsVsBears: {
-    difficultyLevels: ['beginner', 'intermediate', 'advanced', 'expert'],
-    defaultDifficulty: 'intermediate',
-    roundDuration: 180, // seconds
-    initialBalance: 10000,
-    scoreMultipliers: {
-      beginner: 1,
-      intermediate: 1.5,
-      advanced: 2,
-      expert: 3
+// UI theme configuration
+export const THEME = {
+  COLORS: {
+    PRIMARY: '#6D28D9', // Cyberpunk purple
+    SECONDARY: '#06B6D4', // Turquoise blue
+    BACKGROUND: {
+      DARK: '#0F172A',
+      LIGHT: '#F8FAFC',
     },
-    aiStrategies: ['trend_follower', 'contrarian', 'swing_trader', 'day_trader', 'scalper'],
-    marketVolatility: {
-      beginner: 0.5,
-      intermediate: 1,
-      advanced: 1.5,
-      expert: 2
-    }
+    TEXT: {
+      DARK: '#F8FAFC', 
+      LIGHT: '#1E293B',
+    },
+    ACCENT: {
+      BULL: '#22C55E', // Green for bullish moves
+      BEAR: '#EF4444', // Red for bearish moves
+    },
+    CHART: {
+      UP: 'rgba(34, 197, 94, 0.2)',
+      DOWN: 'rgba(239, 68, 68, 0.2)',
+      LINE_UP: '#22C55E',
+      LINE_DOWN: '#EF4444',
+    },
   },
-  
-  // Avatar customization options
-  avatar: {
-    skins: ['default', 'bronze', 'silver', 'gold', 'diamond', 'dark', 'cyborg'],
-    outfits: ['suit', 'casual', 'formal', 'streetwear', 'futuristic', 'vintage', 'sporty'],
-    accessories: ['none', 'glasses', 'hat', 'tie', 'watch', 'backpack', 'briefcase'],
-    badges: ['none', 'beginner', 'intermediate', 'expert', 'master', 'diamond_hands', 'early_adopter']
+  FONTS: {
+    PRIMARY: 'Inter, system-ui, sans-serif',
+    MONOSPACE: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
   },
-  
-  // Trade House zones and features
-  tradeHouse: {
-    floors: ['lobby', 'trading_floor', 'education_center', 'vip_lounge', 'social_hub', 'marketplace'],
-    specialEvents: ['market_crash', 'bull_run', 'earnings_season', 'economic_report', 'crypto_halving'],
-    npcTypes: ['broker', 'analyst', 'mentor', 'trader', 'market_maker', 'influencer', 'regulator']
-  }
+  ANIMATION: {
+    DURATION: {
+      FAST: 150,
+      NORMAL: 300,
+      SLOW: 500,
+    },
+  },
 };
 
-// Chart timeframes
-export const CHART_TIMEFRAMES = [
-  { id: '1m', label: '1 minute' },
-  { id: '5m', label: '5 minutes' },
-  { id: '15m', label: '15 minutes' },
-  { id: '30m', label: '30 minutes' },
-  { id: '1h', label: '1 hour' },
-  { id: '4h', label: '4 hours' },
-  { id: 'D', label: 'Daily' },
-  { id: 'W', label: 'Weekly' },
-  { id: 'M', label: 'Monthly' }
-];
-
-// Trading tips categories
-export const TRADING_TIP_CATEGORIES = [
-  { id: 'general', label: 'General Trading' },
-  { id: 'technical', label: 'Technical Analysis' },
-  { id: 'fundamental', label: 'Fundamental Analysis' },
-  { id: 'psychology', label: 'Trading Psychology' },
-  { id: 'risk', label: 'Risk Management' },
-  { id: 'crypto', label: 'Cryptocurrency' },
-  { id: 'forex', label: 'Forex Trading' },
-  { id: 'stocks', label: 'Stock Market' }
-];
-
-// Trading tips experience levels
-export const TRADING_TIP_LEVELS = [
-  { id: 'beginner', label: 'Beginner' },
-  { id: 'intermediate', label: 'Intermediate' },
-  { id: 'advanced', label: 'Advanced' },
-  { id: 'expert', label: 'Expert' }
-];
-
-// WebSocket event types
-export const WS_EVENT_TYPES = {
-  // Player events
-  PLAYER_JOIN: 'player_join',
-  PLAYER_LEAVE: 'player_leave',
-  PLAYER_UPDATE: 'player_update',
-  PLAYER_CHAT: 'player_chat',
-  
-  // Trading events
-  TRADE_EXECUTED: 'trade_executed',
-  PRICE_UPDATE: 'price_update',
-  MARKET_ALERT: 'market_alert',
-  
-  // Social events
-  FRIEND_REQUEST: 'friend_request',
-  FRIEND_RESPONSE: 'friend_response',
-  SOCIAL_ACTIVITY: 'social_activity',
-  
-  // Voice chat events
-  VOICE_STATUS: 'voice_status',
-  VOICE_DATA: 'voice_data',
-  
-  // System events
-  SERVER_ANNOUNCEMENT: 'server_announcement',
-  PING: 'ping',
-  PONG: 'pong'
+// Asset paths for media files
+export const ASSETS = {
+  MODELS: {
+    TRADER: '/models/trader_character.glb',
+    BUILDING: '/models/trade_house.glb',
+    BULL: '/models/bull_mascot.glb',
+    BEAR: '/models/bear_mascot.glb',
+  },
+  TEXTURES: {
+    FLOOR: '/textures/grid_floor.jpg',
+    SKYBOX: '/textures/skybox.jpg',
+  },
+  SOUNDS: {
+    NOTIFICATION: '/sounds/notification.mp3',
+    BUTTON_CLICK: '/sounds/button_click.mp3',
+    TRADE_SUCCESS: '/sounds/trade_success.mp3',
+    TRADE_FAIL: '/sounds/trade_fail.mp3',
+    BACKGROUND_MUSIC: '/sounds/background_music.mp3',
+  },
+  ICONS: {
+    LOGO: '/icons/logo.svg',
+    FAVICON: '/favicon.ico',
+  },
 };
 
-// Default avatar options for new users
-export const DEFAULT_AVATAR_OPTIONS = {
-  skin: 'default',
-  outfit: 'casual',
-  accessories: 'none',
-  badges: ['beginner']
+// Game configuration
+export const GAME_CONFIG = {
+  SCENE: {
+    FOG_NEAR: 10,
+    FOG_FAR: 100,
+    GRAVITY: -9.8,
+  },
+  PLAYER: {
+    MOVEMENT_SPEED: 5,
+    JUMP_FORCE: 5,
+    CAMERA_HEIGHT: 1.8,
+    INTERACT_DISTANCE: 3,
+  },
+  PHYSICS: {
+    TIMESTEP: 1 / 60,
+    SOLVER_ITERATIONS: 10,
+  },
 };
 
-// NFT categories for marketplace
-export const NFT_CATEGORIES = [
-  { id: 'avatar', label: 'Avatar Items' },
-  { id: 'badge', label: 'Achievement Badges' },
-  { id: 'property', label: 'Virtual Property' },
-  { id: 'tools', label: 'Trading Tools' },
-  { id: 'art', label: 'Digital Art' },
-  { id: 'collectible', label: 'Collectibles' }
-];
-
-// THC Token details
-export const THC_TOKEN = {
-  name: 'Trade Hybrid Coin',
-  symbol: 'THC',
-  decimals: 8,
-  totalSupply: 100000000,
-  contract: {
-    solana: 'THC1nJ4vgBBNV8uFZ7ZjnQwX9FMbL3JCbL9KzYZhX7Bj',
-    ethereum: '0xTHC1nJ4vgBBNV8uFZ7ZjnQwX9FMbL3JCbL9K'
-  },
-  logo: '/images/thc-logo.svg',
-  useCases: ['marketplace', 'tips', 'premium-features', 'governance', 'staking']
+// NFT Marketplace configuration
+export const NFT_CONFIG = {
+  CHAIN_ID: '8899',  // Solana devnet
+  TOKEN_NAME: 'Trade Hybrid Coin',
+  TOKEN_SYMBOL: 'THC',
+  CONTRACT_ADDRESS: '0xTHC123456789...', // Example address
+  MARKETPLACE_FEE: 0.025, // 2.5%
+  MIN_LISTING_PRICE: 10, // 10 THC
+  MAX_LISTING_PRICE: 100000, // 100,000 THC
 };
 
-// Smart Trade Panel default settings
-export const SMART_TRADE_PANEL_DEFAULT_SETTINGS = {
-  defaultSymbol: 'BTC/USD',
-  defaultTimeframe: '1h',
-  orderTypes: ['market', 'limit', 'stop', 'stop_limit'],
-  defaultOrderType: 'market',
-  defaultLeverage: 1,
-  maxLeverage: 10,
-  fees: {
-    maker: 0.001, // 0.1%
-    taker: 0.002, // 0.2%
-  },
-  riskLevels: {
-    low: 0.01, // 1% of account
-    medium: 0.02, // 2% of account
-    high: 0.05, // 5% of account
-  },
-  defaultRiskLevel: 'medium',
-  autoTakeProfit: {
-    conservative: 0.03, // 3%
-    moderate: 0.05, // 5%
-    aggressive: 0.1, // 10%
-  },
-  autoStopLoss: {
-    tight: 0.02, // 2%
-    medium: 0.05, // 5%
-    wide: 0.1, // 10%
-  },
-  chartIndicators: ['MA', 'EMA', 'RSI', 'MACD', 'Bollinger Bands'],
-  defaultTradeBroker: 'tradehybrid'
+// Trading platform configuration
+export const TRADING_CONFIG = {
+  DEFAULT_LEVERAGE: 10,
+  MAX_LEVERAGE: 100,
+  DEFAULT_SYMBOL: 'BTCUSD',
+  CHART_TIMEFRAMES: ['1m', '5m', '15m', '1h', '4h', '1d', '1w'],
+  ORDER_TYPES: ['MARKET', 'LIMIT', 'STOP', 'TAKE_PROFIT'],
+  DEFAULT_TAKE_PROFIT_PERCENTAGE: 0.05, // 5%
+  DEFAULT_STOP_LOSS_PERCENTAGE: 0.03, // 3%
 };

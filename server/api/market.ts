@@ -1,34 +1,22 @@
 import { Request, Response } from "express";
 import * as crypto from "crypto";
-import { TRADING_SYMBOLS } from "@/lib/constants";
+import { TRADING_SYMBOLS } from "../lib/constants";
 
 // Simulates all available market symbols
-const availableSymbols = [
-  ...TRADING_SYMBOLS.crypto,
-  ...TRADING_SYMBOLS.forex,
-  ...TRADING_SYMBOLS.stocks,
-  ...TRADING_SYMBOLS.indices,
-  ...TRADING_SYMBOLS.commodities
-];
-
-// Basic price range assumptions for different asset classes
-const priceRanges: Record<string, { min: number; max: number; precision: number }> = {
-  crypto: { min: 100, max: 50000, precision: 2 },
-  forex: { min: 0.5, max: 2, precision: 5 },
-  stocks: { min: 10, max: 500, precision: 2 },
-  indices: { min: 1000, max: 40000, precision: 2 },
-  commodities: { min: 10, max: 2000, precision: 2 },
-};
+const availableSymbols = TRADING_SYMBOLS.map(symbol => symbol.id);
 
 // Get price range for a specific symbol
 function getPriceRange(symbol: string) {
-  // Identify the asset class
-  for (const [category, symbols] of Object.entries(TRADING_SYMBOLS)) {
-    if ((symbols as string[]).includes(symbol)) {
-      return priceRanges[category] || { min: 10, max: 1000, precision: 2 };
-    }
+  // Find the symbol in our list
+  const symbolData = TRADING_SYMBOLS.find(s => s.id === symbol);
+  if (symbolData) {
+    return { 
+      min: symbolData.minPrice, 
+      max: symbolData.maxPrice, 
+      precision: symbolData.quoteCurrency === 'USDT' ? 2 : 2 
+    };
   }
-  return { min: 10, max: 1000, precision: 2 };
+  return { min: 10, max: 1000, precision: 2 }; // Default fallback
 }
 
 // Generate deterministic but seemingly random price data for a given symbol
@@ -106,18 +94,12 @@ function generateSeededRandomPrice(seed: string, min: number, max: number) {
 
 // Different assets have different volatility
 function getVolatilityFactor(symbol: string) {
-  if (TRADING_SYMBOLS.crypto.includes(symbol)) {
-    return 3.0; // Crypto is more volatile
-  } else if (TRADING_SYMBOLS.forex.includes(symbol)) {
-    return 0.5; // Forex is less volatile
-  } else if (TRADING_SYMBOLS.stocks.includes(symbol)) {
-    return 1.5;
-  } else if (TRADING_SYMBOLS.indices.includes(symbol)) {
-    return 1.0;
-  } else if (TRADING_SYMBOLS.commodities.includes(symbol)) {
-    return 2.0;
+  // Find the symbol in our list to get its volatility
+  const symbolData = TRADING_SYMBOLS.find(s => s.id === symbol);
+  if (symbolData) {
+    return symbolData.volatility;
   }
-  return 1.0;
+  return 0.05; // Default volatility
 }
 
 // Get historical market data
@@ -173,12 +155,14 @@ export const getCurrentPrice = (req: Request, res: Response) => {
 // Get available symbols
 export const getSymbols = (_req: Request, res: Response) => {
   try {
+    // Group symbols by type (using the base currency as a simple way to group)
+    const cryptoSymbols = TRADING_SYMBOLS.filter(s => ['BTC', 'ETH', 'SOL', 'BNB', 'ADA', 'DOGE'].includes(s.baseCurrency));
+    const forexSymbols = TRADING_SYMBOLS.filter(s => ['USD', 'EUR', 'GBP', 'JPY', 'AUD'].includes(s.baseCurrency));
+    
     res.json({
-      crypto: TRADING_SYMBOLS.crypto,
-      forex: TRADING_SYMBOLS.forex,
-      stocks: TRADING_SYMBOLS.stocks,
-      indices: TRADING_SYMBOLS.indices,
-      commodities: TRADING_SYMBOLS.commodities
+      crypto: cryptoSymbols.map(s => s.id),
+      forex: forexSymbols.map(s => s.id),
+      all: TRADING_SYMBOLS.map(s => s.id)
     });
   } catch (error) {
     console.error("Error getting symbols:", error);
