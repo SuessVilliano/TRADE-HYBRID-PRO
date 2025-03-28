@@ -23,10 +23,10 @@ interface SolanaWalletProviderProps {
 
 export const SolanaWalletProvider: FC<SolanaWalletProviderProps> = ({ children }) => {
   // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'
-  const network = WalletAdapterNetwork.Devnet;
+  const network = WalletAdapterNetwork.Testnet;
 
-  // You can also provide a custom RPC endpoint
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  // Use the Solana testnet API endpoint
+  const endpoint = useMemo(() => "https://api.testnet.solana.com", []);
 
   // @solana/wallet-adapter-wallets includes all the adapters but supports tree shaking and lazy loading
   // Only the wallets you configure here will be compiled into your application
