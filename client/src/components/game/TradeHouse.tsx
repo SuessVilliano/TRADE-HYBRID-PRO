@@ -16,6 +16,7 @@ import { Physics, useBox, usePlane } from '@react-three/cannon';
 import * as THREE from 'three';
 import { useControlsStore } from '@/lib/stores/useControlsStore';
 import THCCoinDisplay from './THCCoinDisplay';
+import BadgeTriggerZone from './BadgeTriggerZone';
 
 // Define control keys map
 const controlKeys = [
@@ -499,6 +500,72 @@ function THCCoins() {
   );
 }
 
+// Badge trigger zones throughout the trade house
+function BadgeTriggerZones() {
+  // Handle location visited event for additional effects if needed
+  const handleLocationVisited = (locationId: string) => {
+    console.log(`📍 Location visited: ${locationId}`);
+  };
+  
+  return (
+    <group>
+      {/* Trading Floor - Main Lobby */}
+      <BadgeTriggerZone 
+        locationId="trade_floor" 
+        position={[0, 2, 0]} 
+        size={[10, 3, 10]} 
+        color="#4A90E2" 
+        onLocationVisited={handleLocationVisited}
+      />
+      
+      {/* Education Center - Training Room */}
+      <BadgeTriggerZone 
+        locationId="education_center" 
+        position={[-15, 7, -10]} 
+        size={[8, 3, 8]} 
+        color="#50E3C2" 
+        onLocationVisited={handleLocationVisited}
+      />
+      
+      {/* Social Hub - Meditation Spa */}
+      <BadgeTriggerZone 
+        locationId="social_hub" 
+        position={[15, 2, 0]} 
+        size={[8, 3, 8]} 
+        color="#9013FE" 
+        onLocationVisited={handleLocationVisited}
+      />
+      
+      {/* Signal Room - Trading Lounge */}
+      <BadgeTriggerZone 
+        locationId="signal_room" 
+        position={[0, 7, 15]} 
+        size={[8, 3, 8]} 
+        color="#F5A623" 
+        onLocationVisited={handleLocationVisited}
+      />
+      
+      {/* Crypto Exchange - Conference Room */}
+      <BadgeTriggerZone 
+        locationId="crypto_exchange" 
+        position={[0, 12, 0]} 
+        size={[8, 3, 8]} 
+        color="#7ED321" 
+        onLocationVisited={handleLocationVisited}
+      />
+      
+      {/* THC Vault - Executive Suite */}
+      <BadgeTriggerZone 
+        locationId="thc_vault" 
+        position={[0, 17, 0]} 
+        size={[10, 3, 10]} 
+        color="#E91E63" 
+        onLocationVisited={handleLocationVisited}
+      />
+    </group>
+  );
+}
+
 // Light sources
 function Lights() {
   const mainLightRef = useRef<THREE.DirectionalLight>(null);
@@ -596,6 +663,7 @@ export default function TradeHouse() {
             <TradingScreens />
             <RoomLabels />
             <THCCoins />
+            <BadgeTriggerZones />
             
             {/* Player needs to be wrapped in Suspense since it uses dynamic imports */}
             <Suspense fallback={null}>

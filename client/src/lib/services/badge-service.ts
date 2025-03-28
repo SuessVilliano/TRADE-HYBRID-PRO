@@ -27,6 +27,56 @@ export class BadgeService {
   public initialize() {
     // Set up periodic checks for badge unlocking
     this.setupBadgeChecks();
+    
+    // Register for trading events
+    this.setupTradingEventListeners();
+    
+    // If this is a new user, unlock the Early Adopter badge
+    // For production, add a cut-off date check
+    this.unlockEarlyAdopterBadge();
+  }
+  
+  /**
+   * Setup event listeners for trading activities
+   */
+  private setupTradingEventListeners() {
+    // In a production app, we'd use a proper event system
+    // For demo purposes, we'll use a direct approach
+    
+    // Check trade execution for "Diamond Hands" badge
+    document.addEventListener('trade:position-held', (event) => {
+      const customEvent = event as CustomEvent<{drawdownPercent: number, profitable: boolean}>;
+      if (customEvent.detail.drawdownPercent >= 20 && customEvent.detail.profitable) {
+        const badges = useBadges.getState();
+        if (!badges.hasUnlockedBadge('diamond-hands')) {
+          badges.unlockBadge('diamond-hands');
+          this.showBadgeNotification('Diamond Hands');
+        }
+      }
+    });
+    
+    // Check signal sharing for "Signal Provider" badge
+    document.addEventListener('signal:shared', () => {
+      const badges = useBadges.getState();
+      if (!badges.hasUnlockedBadge('signal-provider')) {
+        // Count shared signals
+        const currentProgress = badges.badges.find(b => b.id === 'signal-provider')?.progress || 0;
+        badges.setBadgeProgress('signal-provider', currentProgress + 1);
+        
+        if (currentProgress + 1 >= 5) {
+          this.showBadgeNotification('Signal Provider');
+        }
+      }
+    });
+    
+    // Check community contributions for "Community Contributor" badge
+    document.addEventListener('community:contribution', () => {
+      const badges = useBadges.getState();
+      if (!badges.hasUnlockedBadge('community-contributor')) {
+        badges.unlockBadge('community-contributor');
+        this.showBadgeNotification('Community Contributor');
+      }
+    });
   }
 
   /**
@@ -188,13 +238,52 @@ export class BadgeService {
     }
   }
   
+  // Keep track of visited locations
+  private visitedLocations: Set<string> = new Set();
+  
+  // Key locations in the metaverse that need to be visited for the Pioneer badge
+  private readonly KEY_LOCATIONS = [
+    'trade_floor',
+    'education_center',
+    'social_hub',
+    'signal_room',
+    'crypto_exchange',
+    'thc_vault'
+  ];
+
   /**
    * Mark a location as visited and check for Metaverse Pioneer badge
+   * @param locationId The unique identifier for the location
    */
   public recordLocationVisit(locationId: string) {
-    // This would track which locations have been visited
-    // When all key locations are visited, unlock the badge
-    // For demo purposes, we won't implement the full logic
+    const badges = useBadges.getState();
+    
+    // Add to visited locations
+    this.visitedLocations.add(locationId);
+    
+    // Check if this is a key location
+    if (this.KEY_LOCATIONS.includes(locationId)) {
+      console.log(`🌍 Visited key location: ${locationId}`);
+      
+      // Calculate progress as percentage of key locations visited
+      const visitedKeyLocations = this.KEY_LOCATIONS.filter(loc => 
+        this.visitedLocations.has(loc)
+      );
+      
+      const progress = Math.floor(
+        (visitedKeyLocations.length / this.KEY_LOCATIONS.length) * 100
+      );
+      
+      // Update badge progress
+      badges.setBadgeProgress('metaverse-pioneer', progress);
+      
+      // Notify the user about progress
+      if (progress === 100 && !badges.hasUnlockedBadge('metaverse-pioneer')) {
+        this.showBadgeNotification('Metaverse Pioneer');
+      } else if (visitedKeyLocations.length > 0) {
+        console.log(`🏆 Metaverse Pioneer progress: ${visitedKeyLocations.length}/${this.KEY_LOCATIONS.length} locations`);
+      }
+    }
   }
   
   /**
