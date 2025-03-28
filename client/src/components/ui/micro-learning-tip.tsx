@@ -97,11 +97,11 @@ export const MicroLearningTip: React.FC<MicroLearningTipProps> = ({
         <div className="relative">
           {/* Close button */}
           <button 
-            className="absolute top-0 right-0 p-1 text-slate-400 hover:text-slate-100 transition-colors"
+            className="absolute top-0 right-0 p-2 text-white bg-red-500 hover:bg-red-600 transition-colors rounded-bl-md"
             onClick={handleClose}
             aria-label="Close tip"
           >
-            <X size={16} />
+            <X size={18} />
           </button>
 
           {/* Header with category and difficulty */}
@@ -132,61 +132,74 @@ export const MicroLearningTip: React.FC<MicroLearningTipProps> = ({
           </div>
 
           {/* Actions */}
-          <div className="flex justify-between items-center pt-2 border-t border-slate-700">
-            {/* Navigation */}
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onPrevious && onPrevious()}
-                disabled={!hasPrevious}
-                className="p-1 h-auto"
-                aria-label="Previous tip"
-              >
-                <ChevronLeft size={16} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onNext && onNext()}
-                disabled={!hasNext}
-                className="p-1 h-auto"
-                aria-label="Next tip"
-              >
-                <ChevronRight size={16} />
-              </Button>
+          <div className="pt-2 border-t border-slate-700">
+            <div className="flex justify-between items-center mb-2">
+              {/* Navigation */}
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onPrevious && onPrevious()}
+                  disabled={!hasPrevious}
+                  className="p-1 h-auto"
+                  aria-label="Previous tip"
+                >
+                  <ChevronLeft size={16} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onNext && onNext()}
+                  disabled={!hasNext}
+                  className="p-1 h-auto"
+                  aria-label="Next tip"
+                >
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
+              
+              {/* Feedback and save */}
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onLike && onLike(tip.id)}
+                  className="p-1 h-auto text-green-500 hover:text-green-400"
+                  aria-label="Like tip"
+                >
+                  <ThumbsUp size={16} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onDislike && onDislike(tip.id)}
+                  className="p-1 h-auto text-red-500 hover:text-red-400"
+                  aria-label="Dislike tip"
+                >
+                  <ThumbsDown size={16} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onSaveForLater && onSaveForLater(tip.id)}
+                  className="p-1 h-auto text-blue-500 hover:text-blue-400"
+                  aria-label="Save tip for later"
+                >
+                  <BookOpen size={16} />
+                </Button>
+              </div>
             </div>
             
-            {/* Feedback and save */}
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onLike && onLike(tip.id)}
-                className="p-1 h-auto text-green-500 hover:text-green-400"
-                aria-label="Like tip"
-              >
-                <ThumbsUp size={16} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onDislike && onDislike(tip.id)}
-                className="p-1 h-auto text-red-500 hover:text-red-400"
-                aria-label="Dislike tip"
-              >
-                <ThumbsDown size={16} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onSaveForLater && onSaveForLater(tip.id)}
-                className="p-1 h-auto text-blue-500 hover:text-blue-400"
-                aria-label="Save tip for later"
-              >
-                <BookOpen size={16} />
-              </Button>
-            </div>
+            {/* Bottom close button */}
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleClose}
+              className="w-full mt-1"
+              aria-label="Close tip"
+            >
+              <X size={14} className="mr-1" /> Close Tip
+            </Button>
           </div>
         </div>
       </PopupContainer>
