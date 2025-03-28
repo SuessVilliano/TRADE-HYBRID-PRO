@@ -77,7 +77,7 @@ const TraderCharacter = React.memo(function TraderCharacter(props: any) {
       )}
     </group>
   );
-}
+});
 
 // Optimize with React.memo for better performance
 const AnimatedBox = React.memo(function AnimatedBox(props: any) {
