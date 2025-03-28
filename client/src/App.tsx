@@ -8,9 +8,10 @@ import { ThemeToggle } from './components/ui/theme-toggle';
 import { TradingTipsButton } from './components/ui/trading-tips-button';
 import { useUserStore } from './lib/stores/useUserStore';
 
-// Lazy load the Trade Runner page
+// Lazy load pages
 const TradeRunner = lazy(() => import('./pages/trade-runner'));
 const BullsVsBears = lazy(() => import('./pages/bulls-vs-bears-new')); // Legacy reference
+const NewsDashboard = lazy(() => import('./pages/news-dashboard'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -73,6 +74,7 @@ function AppContent() {
               <Link to="/" className="hover:text-blue-400 transition-colors">Home</Link>
               <Link to="/trading" className="hover:text-blue-400 transition-colors">Trading</Link>
               <Link to="/metaverse" className="hover:text-blue-400 transition-colors">Metaverse</Link>
+              <Link to="/news" className="hover:text-blue-400 transition-colors">News</Link>
               <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Trade Runner</Link>
               <Link to="/marketplace" className="hover:text-blue-400 transition-colors">NFT Marketplace</Link>
               <Link to="/learn" className="hover:text-blue-400 transition-colors">Learn</Link>
@@ -128,6 +130,18 @@ function AppContent() {
           <Route path="/marketplace" element={<NFTMarketplace />} />
           <Route path="/trading" element={<TradingPlaceholder />} />
           <Route path="/metaverse" element={<MetaversePlaceholder />} />
+          <Route path="/news" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading news dashboard...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <NewsDashboard />}
+            </Suspense>
+          } />
           <Route path="/trade-runner" element={
             <Suspense fallback={
               <div className="flex items-center justify-center h-screen">
@@ -187,7 +201,7 @@ function Home() {
         </p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
         <FeatureCard 
           title="Trading"
           description="Trade with AI-powered insights, real-time market data, and advanced charting tools."
@@ -199,6 +213,11 @@ function Home() {
           linkTo="/metaverse"
         />
         <FeatureCard 
+          title="News & Analysis"
+          description="Stay informed with real-time financial news, economic calendar, and market sentiment analysis."
+          linkTo="/news"
+        />
+        <FeatureCard 
           title="Trade Runner"
           description="Test your trading skills in our gamified trading simulator. Compete on the leaderboard and earn rewards."
           linkTo="/trade-runner"
@@ -207,6 +226,11 @@ function Home() {
           title="NFT Marketplace"
           description="Buy, sell, and trade unique NFTs including trading strategies, virtual properties, and more."
           linkTo="/marketplace"
+        />
+        <FeatureCard 
+          title="Learning"
+          description="Access comprehensive educational resources to master trading and financial markets."
+          linkTo="/learn"
         />
       </div>
     </PopupContainer>

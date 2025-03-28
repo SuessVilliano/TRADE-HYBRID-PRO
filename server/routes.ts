@@ -7,6 +7,7 @@ import { getLeaderboard, getTrader } from "./api/leaderboard";
 import { getBots, getBot, createBot, updateBot, deleteBot, runBot, stopBot } from "./api/bots";
 import { getSignals, receiveWebhook } from "./api/signals";
 import { getGameLeaderboard, getGamePlayer, submitGameScore } from "./api/game-leaderboard";
+import { getRssFeed, getAvailableSources, getEconomicCalendar } from "./api/rss-feeds";
 import { MultiplayerServer } from "./multiplayer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -45,6 +46,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/games/:gameId/leaderboard", getGameLeaderboard);
   app.get("/api/games/:gameId/players/:playerId", getGamePlayer);
   app.post("/api/games/:gameId/scores", submitGameScore);
+  
+  // RSS Feeds and Economic Calendar routes
+  app.get("/api/rss-feeds/feed/:sourceId", getRssFeed);
+  app.get("/api/rss-feeds/sources", getAvailableSources);
+  app.get("/api/rss-feeds/economic-calendar", getEconomicCalendar);
+  app.get("/api/rss-feeds/news", getRssFeed);
   
   // Trader routes - Mock trading functionality
   app.get("/api/trader/trades", (_req, res) => {
