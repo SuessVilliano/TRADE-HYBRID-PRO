@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { FixedMobileExit } from "./fixed-mobile-exit";
 import { ControlsToggle } from "./controls-toggle";
+import { SocialPanel } from "./social-panel";
 
 interface InterfaceProps {
   showMapOverride?: boolean;
@@ -807,6 +808,9 @@ export function Interface({ showMapOverride, onToggleMap }: InterfaceProps) {
         </div>
       </PopupManager>
     )}
+    
+    {/* Social Panel with player list, activity feed, and voice chat */}
+    <SocialPanel />
     </>
   );
 }

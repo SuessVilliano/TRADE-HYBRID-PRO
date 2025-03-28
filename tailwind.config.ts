@@ -92,6 +92,21 @@ export default {
           '10%, 90%': { opacity: '1' },
           '100%': { opacity: '0' },
         },
+        "soundwave": { 
+          '0%': { height: '3px' }, 
+          '50%': { height: '8px' }, 
+          '100%': { height: '3px' } 
+        },
+        "soundwave-2": { 
+          '0%': { height: '5px' }, 
+          '50%': { height: '12px' }, 
+          '100%': { height: '5px' } 
+        },
+        "soundwave-3": { 
+          '0%': { height: '4px' }, 
+          '50%': { height: '10px' }, 
+          '100%': { height: '4px' } 
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -100,6 +115,9 @@ export default {
         "bounce-slow": "bounce-subtle 3s ease-in-out infinite",
         "bounce-subtle": "bounce-subtle 2s ease-in-out infinite",
         "fade-in-out": "fade-in-out 10s ease-in-out forwards",
+        "soundwave": "soundwave 1s ease-in-out infinite",
+        "soundwave-2": "soundwave-2 1.2s ease-in-out infinite",
+        "soundwave-3": "soundwave-3 0.8s ease-in-out infinite",
       },
     },
   },
