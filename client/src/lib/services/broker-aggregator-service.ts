@@ -3,9 +3,6 @@ import { SUPPORTED_BROKERS } from '@/lib/constants';
 // Re-export SUPPORTED_BROKERS for components that import it from here
 export { SUPPORTED_BROKERS };
 
-// For components that import brokerAggregatorService
-export const brokerAggregatorService = null;
-
 // For components that import BrokerPriceComparison interface
 export interface BrokerPriceComparison {
   symbol: string;
@@ -15,6 +12,13 @@ export interface BrokerPriceComparison {
     spread?: number;
     timestamp: number;
   }[];
+}
+
+// Add interface for broker comparison with names and scores
+export interface BrokerComparisonWithScore extends BrokerPriceComparison {
+  brokerName: string;
+  score: number;
+  latency: number;
 }
 
 // Storage key for API credentials
@@ -256,6 +260,38 @@ class BrokerAggregatorService {
     }
   }
   
+  // Get price comparisons across different brokers
+  public async getBrokerPriceComparisons(symbol: string): Promise<BrokerPriceComparison[]> {
+    try {
+      // In a real implementation, this would fetch prices from multiple broker APIs
+      // For now, generate mock price comparison data
+      const brokers = ['binance', 'alpaca', 'oanda', 'ironbeam'];
+      const basePrice = this.getBasePrice(symbol);
+      
+      const prices: BrokerPriceComparison = {
+        symbol,
+        prices: brokers.map(brokerId => {
+          // Add small variations to simulate different broker prices
+          const variation = (Math.random() * 0.01 - 0.005) * basePrice; // +/- 0.5% variation
+          const price = basePrice + variation;
+          const spread = Math.random() * 0.002 + 0.001; // 0.1% to 0.3% spread
+          
+          return {
+            brokerId,
+            price,
+            spread,
+            timestamp: Date.now()
+          };
+        })
+      };
+      
+      return [prices];
+    } catch (error) {
+      console.error(`Failed to get broker price comparisons for ${symbol}:`, error);
+      throw error;
+    }
+  }
+  
   // Helper to generate mock market data
   private generateMockMarketData(symbol: string, count: number): MarketData[] {
     const data: MarketData[] = [];
@@ -446,5 +482,6 @@ class BrokerAggregatorService {
   }
 }
 
-// Create and export singleton instance
+// Create and export singleton instances
 export const brokerAggregator = new BrokerAggregatorService();
+export const brokerAggregatorService = brokerAggregator;

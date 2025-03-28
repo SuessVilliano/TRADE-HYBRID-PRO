@@ -11,6 +11,69 @@ export const API_ENDPOINTS = {
   GAME: `${API_BASE_URL}/game`,
 };
 
+// Supported brokers with API integration details
+export const SUPPORTED_BROKERS = [
+  {
+    id: 'alpaca',
+    name: 'Alpaca',
+    logo: '/logos/alpaca.svg',
+    type: 'stocks',
+    url: 'https://app.alpaca.markets/signin',
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password' },
+      { key: 'secretKey', label: 'Secret Key', type: 'password' }
+    ],
+    description: 'Commission-free stock trading API for automated investing and trading algorithms'
+  },
+  {
+    id: 'binance',
+    name: 'Binance',
+    logo: '/logos/binance.svg',
+    type: 'crypto',
+    url: 'https://www.binance.com/en/my/settings/api-management',
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password' },
+      { key: 'secretKey', label: 'Secret Key', type: 'password' }
+    ],
+    description: 'World\'s largest crypto exchange by trading volume'
+  },
+  {
+    id: 'oanda',
+    name: 'OANDA',
+    logo: '/logos/oanda.svg',
+    type: 'forex',
+    url: 'https://www.oanda.com/account/login',
+    credentialFields: [
+      { key: 'apiToken', label: 'API Token', type: 'password' },
+      { key: 'accountId', label: 'Account ID', type: 'text' }
+    ],
+    description: 'Leading forex trading and CFD platform'
+  },
+  {
+    id: 'ironbeam',
+    name: 'Ironbeam',
+    logo: '/logos/ironbeam.svg',
+    type: 'futures',
+    url: 'https://www.ironbeam.com/login',
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password' },
+      { key: 'accountId', label: 'Account ID', type: 'text' }
+    ],
+    description: 'Futures and options brokerage firm focused on institutional and professional traders'
+  }
+];
+
+// Trading symbols by category
+export const TRADING_SYMBOLS = {
+  crypto: ['BTC/USD', 'ETH/USD', 'SOL/USD', 'BNB/USD', 'ADA/USD', 'DOT/USD', 'XRP/USD'],
+  stocks: ['AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META', 'TSLA', 'NVDA', 'JPM', 'V', 'DIS'],
+  forex: ['EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD', 'USD/CAD', 'USD/CHF', 'NZD/USD'],
+  futures: ['ES', 'NQ', 'YM', 'RTY', 'CL', 'GC', 'SI', 'ZB', 'ZN', 'ZF']
+};
+
+// Combined list of all trading symbols
+export const ALL_TRADING_SYMBOLS = Object.values(TRADING_SYMBOLS).flat();
+
 // Websocket configuration
 export const WS_CONFIG = {
   ENDPOINT: window.location.origin.replace(/^http/, 'ws') + '/ws',
@@ -119,4 +182,83 @@ export const TRADING_CONFIG = {
   ORDER_TYPES: ['MARKET', 'LIMIT', 'STOP', 'TAKE_PROFIT'],
   DEFAULT_TAKE_PROFIT_PERCENTAGE: 0.05, // 5%
   DEFAULT_STOP_LOSS_PERCENTAGE: 0.03, // 3%
+};
+
+// Smart Trade Panel default settings
+export const SMART_TRADE_PANEL_DEFAULT_SETTINGS = {
+  autoFetchPrices: true,
+  priceRefreshInterval: 5000, // 5 seconds
+  enablePriceAlerts: true,
+  enableNotifications: true,
+  defaultOrderType: 'MARKET',
+  defaultBroker: 'binance',
+  showSpreadComparison: true,
+  enableAITradeAnalysis: true,
+  showTHCTokenInfo: true,
+  defaultLeverage: 10,
+  riskLevel: 'medium', // low, medium, high
+  defaultTimeframe: '1h',
+  tradeSizePercentage: 0.05, // 5% of account
+  enableTrailingStopLoss: false,
+  aiAnalysisLevel: 'standard', // basic, standard, advanced
+};
+
+// THC Token settings
+export const THC_TOKEN = {
+  name: 'Trade Hybrid Coin',
+  symbol: 'THC',
+  decimals: 18,
+  initialSupply: 1000000000, // 1 billion
+  contractAddress: '0xTHC123456789...', // Will be replaced with real address
+  networkId: 8899, // Solana devnet
+  explorerUrl: 'https://explorer.solana.com/address/',
+  features: {
+    staking: true,
+    governance: true,
+    reducedFees: true,
+    exclusiveContent: true,
+    tradingDiscounts: true,
+  },
+  distibution: {
+    team: 0.15, // 15%
+    publicSale: 0.40, // 40%
+    ecosystem: 0.20, // 20%
+    marketing: 0.10, // 10%
+    rewards: 0.15, // 15%
+  }
+};
+
+// ABATEV configuration (Advanced Broker Aggregation & Trade Execution View)
+export const ABATEV_CONFIG = {
+  enabled: true,
+  supportedBrokers: ['alpaca', 'binance', 'oanda', 'ironbeam'],
+  features: {
+    priceComparison: true,
+    smartRouting: true,
+    multibrokerExecution: true,
+    crossMarginTrading: true,
+    bestExecutionAlgorithms: true,
+    customStrategySupport: true
+  },
+  executionPresets: [
+    { id: 'bestPrice', name: 'Best Price', description: 'Route orders to the broker offering the best price' },
+    { id: 'lowestFees', name: 'Lowest Fees', description: 'Route orders to minimize trading fees' },
+    { id: 'splitOrder', name: 'Split Order', description: 'Distribute large orders across multiple brokers to reduce market impact' },
+    { id: 'instantExecution', name: 'Instant Execution', description: 'Prioritize execution speed over price optimization' }
+  ],
+  defaultExecutionPreset: 'bestPrice',
+  refreshInterval: 2000, // 2 seconds
+  // Scoring metrics for broker evaluation
+  MAX_PRICE_SCORE: 100,
+  MAX_LATENCY_SCORE: 100,
+  MAX_RELIABILITY_SCORE: 100,
+  // Broker reliability scores (0-100)
+  BROKER_RELIABILITY_SCORES: {
+    'alpaca': 88,
+    'binance': 92,
+    'oanda': 90,
+    'ironbeam': 85,
+    'kraken': 87,
+    'coinbase': 89
+  }
 };

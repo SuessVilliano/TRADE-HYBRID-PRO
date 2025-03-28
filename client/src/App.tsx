@@ -205,6 +205,7 @@ function TradingPlaceholder() {
   const AIAssistantLazy = React.lazy(() => import('./components/ui/AIAssistant'));
   const TradingSignalsLazy = React.lazy(() => import('./components/ui/TradingSignals'));
   const CopyTradingLazy = React.lazy(() => import('./components/ui/CopyTrading'));
+  const SmartTradePanelLazy = React.lazy(() => import('./components/ui/smart-trade-panel').then(module => ({ default: module.SmartTradePanel })));
   
   const [selectedSymbol, setSelectedSymbol] = useState('BITSTAMP:BTCUSD');
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
@@ -248,6 +249,7 @@ function TradingPlaceholder() {
         className="w-full bg-slate-800 border border-slate-700 rounded-md p-2"
       >
         <option value="chart">Charts</option>
+        <option value="smart">ABATEV Smart Trading</option>
         <option value="signals">Signals</option>
         <option value="copy">Copy Trading</option>
         <option value="assistant">AI Assistant</option>
@@ -320,10 +322,22 @@ function TradingPlaceholder() {
           </div>
         )}
         
+        {/* Smart Trade Panel (Mobile) */}
+        {windowWidth < 768 && activeTab === 'smart' && (
+          <div className="w-full">
+            <React.Suspense fallback={
+              <div className="h-[500px] bg-slate-800 rounded-lg animate-pulse mb-4"></div>
+            }>
+              <SmartTradePanelLazy defaultSymbol={selectedSymbol.replace('BITSTAMP:', '').replace('BINANCE:', '')} />
+            </React.Suspense>
+          </div>
+        )}
+        
         {/* Main Chart Area */}
         <div className={`
           flex-grow overflow-hidden
-          ${windowWidth < 768 && activeTab !== 'chart' ? 'hidden' : ''}
+          ${windowWidth < 768 && (activeTab !== 'chart' && activeTab !== 'smart') ? 'hidden' : ''}
+          ${windowWidth < 768 && activeTab === 'smart' ? 'hidden' : ''}
           ${(windowWidth >= 768 && leftSidebarOpen && rightSidebarOpen) ? 'mx-4' : ''}
         `}>
           <PopupContainer className="h-[600px] mb-4" padding>
@@ -355,54 +369,12 @@ function TradingPlaceholder() {
             </Button>
           </div>
           
-          {/* Quick Trade Form */}
-          <PopupContainer className="mb-4" padding>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
-                  Quantity
-                </label>
-                <input
-                  type="text"
-                  placeholder="0.01"
-                  className="w-full bg-slate-800 border border-slate-700 rounded-md p-2"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
-                  Price
-                </label>
-                <input
-                  type="text"
-                  placeholder="Market"
-                  className="w-full bg-slate-800 border border-slate-700 rounded-md p-2"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
-                  Stop Loss
-                </label>
-                <input
-                  type="text"
-                  placeholder="Optional"
-                  className="w-full bg-slate-800 border border-slate-700 rounded-md p-2"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
-                  Take Profit
-                </label>
-                <input
-                  type="text"
-                  placeholder="Optional"
-                  className="w-full bg-slate-800 border border-slate-700 rounded-md p-2"
-                />
-              </div>
-            </div>
-          </PopupContainer>
+          {/* Smart Trade Panel with ABATEV */}
+          <React.Suspense fallback={
+            <div className="h-[300px] bg-slate-800 rounded-lg animate-pulse mb-4"></div>
+          }>
+            <SmartTradePanelLazy defaultSymbol={selectedSymbol.replace('BITSTAMP:', '').replace('BINANCE:', '')} />
+          </React.Suspense>
         </div>
         
         {/* Right Sidebar - Trading Tools */}
@@ -436,7 +408,7 @@ function TradingPlaceholder() {
       
       {/* Mobile Navigation for quick access to hidden features */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-800/95 border-t border-slate-700 p-2 backdrop-blur-sm">
-        <div className="grid grid-cols-4 gap-1">
+        <div className="grid grid-cols-5 gap-1">
           <Button
             variant={activeTab === 'chart' ? 'default' : 'ghost'}
             className="h-auto py-2 flex flex-col items-center text-xs"
@@ -444,6 +416,14 @@ function TradingPlaceholder() {
           >
             <div className="mb-1">📊</div>
             Charts
+          </Button>
+          <Button
+            variant={activeTab === 'smart' ? 'default' : 'ghost'}
+            className="h-auto py-2 flex flex-col items-center text-xs"
+            onClick={() => setActiveTab('smart')}
+          >
+            <div className="mb-1">💼</div>
+            ABATEV
           </Button>
           <Button
             variant={activeTab === 'signals' ? 'default' : 'ghost'}
