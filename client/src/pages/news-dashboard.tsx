@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { Helmet } from "react-helmet-async";
 import { TradingViewTools } from "@/components/ui/trading-view-tools";
 import { EnhancedNewsFeed } from "@/components/ui/enhanced-news-feed";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Calendar, Globe, BarChart, Layers, Filter } from "lucide-react";
+import { Calendar, Globe, BarChart, Layers } from "lucide-react";
 
 export default function NewsDashboard() {
   const [timeframe, setTimeframe] = useState<string>("1D");
@@ -23,9 +22,6 @@ export default function NewsDashboard() {
   
   return (
     <>
-      <Helmet>
-        <title>News Dashboard | Trade Hybrid</title>
-      </Helmet>
       <div className="container px-4 py-6 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <div>

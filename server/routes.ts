@@ -51,7 +51,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/rss-feeds/feed/:sourceId", getRssFeed);
   app.get("/api/rss-feeds/sources", getAvailableSources);
   app.get("/api/rss-feeds/economic-calendar", getEconomicCalendar);
-  app.get("/api/rss-feeds/news", getRssFeed);
+  
+  // News route using default source (bloomberg)
+  app.get("/api/rss-feeds/news", (req, res) => {
+    req.params.sourceId = 'bloomberg'; // Set default source
+    return getRssFeed(req, res);
+  });
   
   // Trader routes - Mock trading functionality
   app.get("/api/trader/trades", (_req, res) => {
