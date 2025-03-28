@@ -17,6 +17,7 @@ export default function Scene({ showStats = true }: SceneProps) {
     <div className="relative w-full h-screen">
       {/* Main 3D Canvas */}
       <div className="w-full h-full">
+        {/* TradeHouse component already includes Canvas and Physics providers */}
         <TradeHouse />
       </div>
       
