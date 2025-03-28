@@ -17,7 +17,7 @@ const TradeJournalSimple = lazy(() => import('./pages/trade-journal-simple'));
 const NFTMarketplaceSimple = lazy(() => import('./pages/nft-marketplace-simple'));
 const SolanaDexEmbedded = lazy(() => import('./pages/solana-dex-embedded'));
 const LearnEmbedded = lazy(() => import('./pages/learn-embedded'));
-const THCStaking = lazy(() => import('./pages/thc-staking'));
+const StakeAndBake = lazy(() => import('./pages/thc-staking'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -95,12 +95,12 @@ function AppContent() {
               <Link to="/" className="hover:text-blue-400 transition-colors">Home</Link>
               <Link to="/trading" className="hover:text-blue-400 transition-colors">Trading</Link>
               <Link to="/solana-trading" className="hover:text-blue-400 transition-colors">DEX</Link>
-              <Link to="/thc-staking" className="hover:text-blue-400 transition-colors">THC Staking</Link>
+              <Link to="/thc-staking" className="hover:text-blue-400 transition-colors">Stake & Bake</Link>
               <Link to="/metaverse" className="hover:text-blue-400 transition-colors">Metaverse</Link>
               <Link to="/news" className="hover:text-blue-400 transition-colors">News</Link>
               <Link to="/trade-journal" className="hover:text-blue-400 transition-colors">Journal</Link>
               <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Trade Runner</Link>
-              <Link to="/marketplace" className="hover:text-blue-400 transition-colors">NFT Marketplace</Link>
+              <Link to="/marketplace" className="hover:text-blue-400 transition-colors">NFTs</Link>
               <Link to="/learn" className="hover:text-blue-400 transition-colors">Learn</Link>
             </nav>
           </div>
@@ -243,11 +243,11 @@ function AppContent() {
               <div className="flex items-center justify-center h-screen">
                 <div className="text-center">
                   <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <p className="text-slate-300">Loading THC staking...</p>
+                  <p className="text-slate-300">Loading Stake & Bake...</p>
                 </div>
               </div>
             }>
-              {typeof window !== 'undefined' && <THCStaking />}
+              {typeof window !== 'undefined' && <StakeAndBake />}
             </Suspense>
           } />
         </Routes>
@@ -320,7 +320,7 @@ function Home() {
           linkTo="/learn"
         />
         <FeatureCard 
-          title="THC Staking"
+          title="Stake & Bake"
           description="Stake THC tokens for rewards and build your network with our 2x3 affiliate matrix system."
           linkTo="/thc-staking"
         />
