@@ -66,6 +66,9 @@ export interface UserState {
     lastLogin?: string;
     role?: 'user' | 'premium' | 'admin';
     apiKeys?: Record<string, string>;
+    walletAddress?: string;
+    walletSignature?: string;
+    walletAuthEnabled?: boolean;
   };
   demoBalances: AccountBalance[];
   liveBalances: AccountBalance[];
@@ -515,7 +518,10 @@ export const useUserStore = create<UserState>()(
           avatar: state.user.avatar,
           joinDate: state.user.joinDate,
           lastLogin: state.user.lastLogin,
-          role: state.user.role
+          role: state.user.role,
+          walletAddress: state.user.walletAddress,
+          walletAuthEnabled: state.user.walletAuthEnabled
+          // Note: walletSignature is intentionally not persisted for security
         },
         demoBalances: state.demoBalances,
         tradeHistory: state.tradeHistory,

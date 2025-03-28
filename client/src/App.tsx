@@ -8,6 +8,11 @@ import { ThemeToggle } from './components/ui/theme-toggle';
 import { TradingTipsButton } from './components/ui/trading-tips-button';
 import { useUserStore } from './lib/stores/useUserStore';
 import { useAffiliateTracking } from './lib/services/affiliate-service';
+import { SolanaWalletProvider } from './lib/context/SolanaWalletProvider';
+import { SolanaAuthProvider } from './lib/context/SolanaAuthProvider';
+import { useSolanaAuth } from './lib/context/SolanaAuthProvider';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import '@solana/wallet-adapter-react-ui/styles.css';
 
 // Lazy load pages
 const TradeRunner = lazy(() => import('./pages/trade-runner'));
@@ -18,6 +23,7 @@ const NFTMarketplaceSimple = lazy(() => import('./pages/nft-marketplace-simple')
 const SolanaDexEmbedded = lazy(() => import('./pages/solana-dex-embedded'));
 const LearnEmbedded = lazy(() => import('./pages/learn-embedded'));
 const StakeAndBake = lazy(() => import('./pages/thc-staking'));
+const LiveStream = lazy(() => import('./pages/live-stream'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -29,10 +35,14 @@ function AppWithProviders() {
   return (
     <Router>
       <ToastProvider>
-        <MicroLearningProvider>
-          <AppContent />
-          <MicroLearningTipRenderer />
-        </MicroLearningProvider>
+        <SolanaWalletProvider>
+          <SolanaAuthProvider>
+            <MicroLearningProvider>
+              <AppContent />
+              <MicroLearningTipRenderer />
+            </MicroLearningProvider>
+          </SolanaAuthProvider>
+        </SolanaWalletProvider>
       </ToastProvider>
     </Router>
   );
@@ -40,6 +50,7 @@ function AppWithProviders() {
 
 function AppContent() {
   const { isAuthenticated, login, logout, user } = useUserStore();
+  const { loginWithSolana, isWalletAuthenticated, solanaAuthError, isAuthenticatingWithSolana, logoutFromSolana } = useSolanaAuth();
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -98,6 +109,7 @@ function AppContent() {
               <Link to="/thc-staking" className="hover:text-blue-400 transition-colors">Stake & Bake</Link>
               <Link to="/metaverse" className="hover:text-blue-400 transition-colors">Metaverse</Link>
               <Link to="/news" className="hover:text-blue-400 transition-colors">News</Link>
+              <Link to="/live-stream" className="hover:text-blue-400 transition-colors">Live Stream</Link>
               <Link to="/trade-journal" className="hover:text-blue-400 transition-colors">Journal</Link>
               <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Trade Runner</Link>
               <Link to="/marketplace" className="hover:text-blue-400 transition-colors">NFTs</Link>
@@ -114,11 +126,30 @@ function AppContent() {
                 <THCBalanceDisplay />
                 <div className="flex items-center gap-2">
                   <span>Welcome, {user?.username}</span>
-                  <Button variant="outline" size="sm" onClick={handleLogout}>Logout</Button>
+                  {user?.walletAddress && (
+                    <div className="text-xs text-slate-400">
+                      Wallet: {user.walletAddress.substring(0, 4)}...{user.walletAddress.substring(user.walletAddress.length - 4)}
+                    </div>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      // If using wallet auth, also logout from Solana
+                      if (isWalletAuthenticated) {
+                        logoutFromSolana();
+                      }
+                      handleLogout();
+                    }}
+                  >
+                    Logout
+                  </Button>
                 </div>
               </>
             ) : (
-              <>
+              <div className="flex items-center gap-3">
+                <WalletMultiButton />
+                <div className="border-r border-slate-600 h-8" />
                 {showLoginForm ? (
                   <form onSubmit={handleLogin} className="flex gap-2">
                     <input
@@ -139,9 +170,25 @@ function AppContent() {
                     <Button type="button" variant="outline" size="sm" onClick={() => setShowLoginForm(false)}>Cancel</Button>
                   </form>
                 ) : (
-                  <Button onClick={() => setShowLoginForm(true)}>Login</Button>
+                  <>
+                    <Button onClick={async () => {
+                      const success = await loginWithSolana();
+                      if (!success && solanaAuthError) {
+                        setLoginError(solanaAuthError);
+                      }
+                    }} disabled={isAuthenticatingWithSolana}>
+                      {isAuthenticatingWithSolana ? 'Connecting...' : 'Login with Wallet'}
+                    </Button>
+                    <span className="text-slate-500">or</span>
+                    <Button onClick={() => setShowLoginForm(true)}>Password Login</Button>
+                  </>
                 )}
-              </>
+              </div>
+            )}
+            {loginError && (
+              <div className="absolute top-16 right-4 bg-red-900/90 text-white p-2 rounded text-sm">
+                {loginError}
+              </div>
             )}
           </div>
         </div>
@@ -250,6 +297,18 @@ function AppContent() {
               {typeof window !== 'undefined' && <StakeAndBake />}
             </Suspense>
           } />
+          <Route path="/live-stream" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading Live Stream...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <LiveStream />}
+            </Suspense>
+          } />
         </Routes>
       </main>
       
@@ -324,6 +383,11 @@ function Home() {
           description="Stake THC tokens for rewards and build your network with our 2x3 affiliate matrix system."
           linkTo="/thc-staking"
         />
+        <FeatureCard 
+          title="Live Stream"
+          description="Watch live trading sessions, market analysis, and educational content from our expert traders."
+          linkTo="/live-stream"
+        />
       </div>
     </PopupContainer>
   );
@@ -350,10 +414,10 @@ function TradingPlaceholder() {
     { value: 'BITSTAMP:BTCUSD', label: 'Bitcoin (BTC/USD)' },
     { value: 'BINANCE:ETHUSDT', label: 'Ethereum (ETH/USDT)' },
     { value: 'BINANCE:SOLUSDT', label: 'Solana (SOL/USDT)' },
-    { value: 'CME:MNQ1!', label: 'MNQ (Micro E-mini Nasdaq)' },
+    { value: 'CME:MNQ!', label: 'MNQ (Micro E-mini Nasdaq)' },
     { value: 'OANDA:XAUUSD', label: 'Gold (XAU/USD)' },
     { value: 'COMEX:GC1!', label: 'Gold Futures' },
-    { value: 'FOREXCOM:NSDX', label: 'Nasdaq 100 (Nas100)' },
+    { value: 'CME:NQ!', label: 'Nasdaq 100 (Nas100)' },
   ];
   
   const handleSymbolChange = (newSymbol: string) => {
