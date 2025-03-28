@@ -68,16 +68,35 @@ const TradeRunner: React.FC = () => {
   useEffect(() => {
     function resizeCanvas() {
       if (canvasRef.current) {
-        canvasRef.current.width = Math.min(window.innerWidth, 1200);
-        canvasRef.current.height = Math.min(window.innerHeight - 100, 600);
+        // Set explicit dimensions
+        const width = Math.min(window.innerWidth * 0.8, 1200);
+        const height = Math.min(window.innerHeight - 100, 600);
+        
+        canvasRef.current.width = width;
+        canvasRef.current.height = height;
+        
+        console.log("TradeRunner: Canvas resized to", width, "x", height);
+        
+        // If game is active, redraw immediately
+        if (gameActive && playerRef.current) {
+          const ctx = canvasRef.current.getContext('2d');
+          if (ctx) {
+            drawGame(ctx);
+          }
+        }
       }
     }
 
     window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+    
+    // Initial resize - Schedule this after the component has fully mounted
+    setTimeout(() => {
+      console.log("TradeRunner: Performing initial canvas resize");
+      resizeCanvas();
+    }, 100);
 
     return () => window.removeEventListener('resize', resizeCanvas);
-  }, []);
+  }, [gameActive]);
 
   // Setup keyboard and touch controls
   useEffect(() => {
@@ -117,9 +136,13 @@ const TradeRunner: React.FC = () => {
 
   // Initialize game
   const initGame = () => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current) {
+      console.error("TradeRunner: Canvas reference is null during initialization");
+      return;
+    }
     
     const canvas = canvasRef.current;
+    console.log("TradeRunner: Initializing game canvas dimensions:", canvas.width, canvas.height);
     
     // Set initial game speed based on difficulty
     switch(difficulty) {
@@ -127,6 +150,7 @@ const TradeRunner: React.FC = () => {
       case 'medium': gameSpeedRef.current = 7; break;
       case 'hard': gameSpeedRef.current = 9; break;
     }
+    console.log("TradeRunner: Set initial game speed to", gameSpeedRef.current);
     
     // Initialize player
     playerRef.current = {
@@ -139,6 +163,7 @@ const TradeRunner: React.FC = () => {
       frame: 0,
       frameCount: 0
     };
+    console.log("TradeRunner: Player initialized at position", playerRef.current.x, playerRef.current.y);
     
     // Initialize empty arrays
     obstaclesRef.current = [];
@@ -146,15 +171,22 @@ const TradeRunner: React.FC = () => {
     priceDataRef.current = [];
     scoreRef.current = 0;
     setScore(0);
+    console.log("TradeRunner: Game state initialized successfully");
   };
 
   // Start game
   const startGame = () => {
+    console.log("TradeRunner: Starting game");
     setShowWelcome(false);
     setShowGameOver(false);
     setGameActive(true);
     initGame();
-    gameLoop();
+    
+    // Delay the game loop slightly to ensure initialization is complete
+    setTimeout(() => {
+      console.log("TradeRunner: Starting game loop");
+      gameLoop();
+    }, 100);
   };
 
   // Game over
@@ -544,7 +576,10 @@ const TradeRunner: React.FC = () => {
     <div className="flex justify-center items-center flex-col py-4 relative min-h-screen">
       <canvas 
         ref={canvasRef}
+        width="800"
+        height="500"
         className="bg-gradient-to-b from-slate-900 to-black border-2 border-cyan-500"
+        style={{ width: '80%', maxWidth: '1200px', maxHeight: '600px' }}
       ></canvas>
       
       {/* Welcome Screen */}

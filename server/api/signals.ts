@@ -79,10 +79,11 @@ let signals: any[] = [
 export const receiveWebhook = (req: Request, res: Response) => {
   try {
     const payload = req.body;
-    console.log('Received webhook signal:', payload);
+    console.log('Received webhook signal:', JSON.stringify(payload, null, 2));
 
     // Validate the payload (basic validation)
     if (!payload || typeof payload !== 'object') {
+      console.error('Invalid webhook payload, not an object:', payload);
       return res.status(400).send({ error: 'Invalid webhook payload' });
     }
 
@@ -92,6 +93,8 @@ export const receiveWebhook = (req: Request, res: Response) => {
     
     // Check the URL path to determine the source 
     const url = req.originalUrl || '';
+    console.log('Webhook URL:', url);
+
     if (url.includes('IjU3NjUwNTY4MDYzNjA0MzQ1MjZhNTUzMTUxMzci')) {
       source = 'Paradox AI';
       strategy = 'Solana Signals';
@@ -100,27 +103,79 @@ export const receiveWebhook = (req: Request, res: Response) => {
       strategy = payload.symbol && payload.symbol.includes('BTC') ? 'Bitcoin Signals' : 'Ethereum Signals';
     }
 
+    // Extract symbol, making sure it exists
+    const symbol = payload.symbol || payload.ticker || payload.pair || payload.instrument || 'UNKNOWN';
+    console.log(`Processing signal for symbol: ${symbol}`);
+
+    // Process entry price, stop loss, and take profits - these might be provided in multiple formats
+    let entryPrice = 0;
+    if (payload.entryPrice !== undefined) entryPrice = parseFloat(payload.entryPrice);
+    else if (payload.entry !== undefined) entryPrice = parseFloat(payload.entry);
+    else if (payload.price !== undefined) entryPrice = parseFloat(payload.price);
+    
+    let stopLoss = 0;
+    if (payload.stopLoss !== undefined) stopLoss = parseFloat(payload.stopLoss);
+    else if (payload.sl !== undefined) stopLoss = parseFloat(payload.sl);
+    
+    let takeProfit1 = 0, takeProfit2 = 0, takeProfit3 = 0;
+    
+    // Parse TP values in different formats
+    if (payload.takeProfit1 !== undefined) takeProfit1 = parseFloat(payload.takeProfit1);
+    else if (payload.tp1 !== undefined) takeProfit1 = parseFloat(payload.tp1);
+    else if (payload.tp !== undefined) takeProfit1 = parseFloat(payload.tp);
+    
+    if (payload.takeProfit2 !== undefined) takeProfit2 = parseFloat(payload.takeProfit2);
+    else if (payload.tp2 !== undefined) takeProfit2 = parseFloat(payload.tp2);
+    
+    if (payload.takeProfit3 !== undefined) takeProfit3 = parseFloat(payload.takeProfit3);
+    else if (payload.tp3 !== undefined) takeProfit3 = parseFloat(payload.tp3);
+    
+    // Support for arrays of take profits
+    if (Array.isArray(payload.takeProfits) && payload.takeProfits.length > 0) {
+      if (payload.takeProfits[0] !== undefined) takeProfit1 = parseFloat(payload.takeProfits[0]);
+      if (payload.takeProfits[1] !== undefined) takeProfit2 = parseFloat(payload.takeProfits[1]);
+      if (payload.takeProfits[2] !== undefined) takeProfit3 = parseFloat(payload.takeProfits[2]);
+    } else if (Array.isArray(payload.tps) && payload.tps.length > 0) {
+      if (payload.tps[0] !== undefined) takeProfit1 = parseFloat(payload.tps[0]);
+      if (payload.tps[1] !== undefined) takeProfit2 = parseFloat(payload.tps[1]);
+      if (payload.tps[2] !== undefined) takeProfit3 = parseFloat(payload.tps[2]);
+    }
+    
+    console.log(`Entry: ${entryPrice}, SL: ${stopLoss}, TP1: ${takeProfit1}, TP2: ${takeProfit2}, TP3: ${takeProfit3}`);
+
+    // Determine action type (buy, sell, etc.)
+    const action = normalizeAction(
+      payload.action || 
+      payload.signal || 
+      payload.side || 
+      payload.direction || 
+      payload.type || 
+      'neutral'
+    );
+    console.log(`Signal action: ${action}`);
+
     // Create a new signal object with required fields
     const signal = {
       id: randomUUID(),
       timestamp: new Date(),
-      // Extract data from the payload, with fallbacks for missing fields
-      symbol: payload.symbol || 'UNKNOWN',
-      action: normalizeAction(payload.action || payload.signal || payload.side || 'neutral'),
-      price: parseFloat(payload.price) || 0,
-      entryPrice: parseFloat(payload.entryPrice || payload.entry || payload.price) || 0,
-      stopLoss: parseFloat(payload.stopLoss || payload.sl) || 0,
-      takeProfit1: parseFloat(payload.takeProfit1 || payload.tp1 || payload.tp) || 0,
-      takeProfit2: parseFloat(payload.takeProfit2 || payload.tp2) || 0,
-      takeProfit3: parseFloat(payload.takeProfit3 || payload.tp3) || 0,
+      symbol: symbol,
+      action: action,
+      price: parseFloat(payload.price) || entryPrice || 0,
+      entryPrice: entryPrice,
+      stopLoss: stopLoss,
+      takeProfit1: takeProfit1,
+      takeProfit2: takeProfit2,
+      takeProfit3: takeProfit3,
       source: payload.source || source,
       strategy: strategy,
-      message: payload.message || `${normalizeAction(payload.action || 'Signal')} on ${payload.symbol}`,
+      message: payload.message || `${action.toUpperCase()} signal on ${symbol}`,
       confidence: parseFloat(payload.confidence || '50'),
       timeframe: payload.timeframe || payload.interval || '1d',
       indicators: payload.indicators || {},
       read: false
     };
+
+    console.log('Created signal object:', signal);
 
     // Add to signals store
     signals.unshift(signal);
@@ -130,7 +185,11 @@ export const receiveWebhook = (req: Request, res: Response) => {
       signals = signals.slice(0, 100);
     }
 
-    return res.status(200).send({ success: true, signalId: signal.id });
+    return res.status(200).send({ 
+      success: true, 
+      signalId: signal.id,
+      message: 'Signal processed successfully'
+    });
   } catch (error) {
     console.error('Error processing webhook:', error);
     return res.status(500).send({ error: 'Failed to process signal' });
@@ -144,13 +203,39 @@ export const getSignals = (_req: Request, res: Response) => {
 
 // Utility function to normalize action values
 function normalizeAction(action: string): 'buy' | 'sell' | 'neutral' {
-  const normalized = action.toLowerCase();
+  if (!action || typeof action !== 'string') {
+    console.log('Invalid action value received:', action);
+    return 'neutral';
+  }
   
-  if (['buy', 'long', 'bullish', 'call', 'purchase'].some(term => normalized.includes(term))) {
+  const normalized = action.toLowerCase().trim();
+  console.log('Normalizing action value:', normalized);
+  
+  // Buy signals
+  if (['buy', 'long', 'bullish', 'call', 'purchase', 'up', 'enter long', 'open long', 'entry long'].some(term => normalized.includes(term))) {
     return 'buy';
-  } else if (['sell', 'short', 'bearish', 'put'].some(term => normalized.includes(term))) {
+  }
+  // Sell signals 
+  else if (['sell', 'short', 'bearish', 'put', 'down', 'enter short', 'open short', 'entry short'].some(term => normalized.includes(term))) {
     return 'sell';
-  } else {
+  }
+  // Single character indicators
+  else if (normalized === 'b' || normalized === 'l' || normalized === '1') {
+    return 'buy';
+  }
+  else if (normalized === 's' || normalized === '0' || normalized === '-1') {
+    return 'sell';
+  }
+  // Numeric indicators sometimes used by algorithmic systems
+  else if (normalized === '1.0' || normalized === '+1') {
+    return 'buy';
+  }
+  else if (normalized === '-1.0') {
+    return 'sell';
+  }
+  // Default when no match
+  else {
+    console.log('Action defaulted to neutral:', normalized);
     return 'neutral';
   }
 }
