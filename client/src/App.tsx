@@ -204,7 +204,7 @@ function FeatureCard({ title, description, linkTo }: { title: string, descriptio
 
 function TradingPlaceholder() {
   // Use the JSX extension to properly import the TradingViewWidget
-  const TradingViewWidgetLazy = React.lazy(() => import('./components/ui/TradingViewWidget.jsx'));
+  const TradingViewWidgetLazy = React.lazy(() => import('./components/ui/TradingViewWidget'));
   const AIAssistantLazy = React.lazy(() => import('./components/ui/ai-trade-assistant'));
   const TradingSignalsLazy = React.lazy(() => import('./components/ui/TradingSignals'));
   const CopyTradingLazy = React.lazy(() => import('./components/ui/CopyTrading'));
