@@ -1,0 +1,262 @@
+
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Hybrid Coin Access Board</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1d1f27;
+            color: #f3f3f3;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        .user-details {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .levels-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+        .level-box {
+            background: rgba(0, 0, 0, 0.3);
+            width: 120px;
+            height: 140px;
+            margin: 10px;
+            border-radius: 10px;
+            text-align: center;
+            padding: 10px;
+        }
+        .purchase-button {
+            background-color: #6a11cb;
+            color: #fff;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .purchase-button:hover {
+            background-color: #2575fc;
+        }
+        #all-in-box {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .circles {
+            margin-top: 5px;
+            color: #ccc;
+        }
+    </style>
+
+
+    <div class="container">
+        <h1>Trade Hybrid Coin Access Board</h1>
+
+        <div class="user-details">
+            <p><strong>User ID:</strong> <span id="user-id">00123</span></p>
+            <p><strong>Status:</strong> VIP Member</p>
+            <p><strong>Balance:</strong> <span id="balance">Loading...</span></p>
+            <p><strong>Affiliate Link:</strong> <span id="affiliate-link">Generating...</span></p>
+            <p><strong>Your Wallet:</strong> <span id="user-wallet">Connecting...</span></p>
+            <p><strong>THC on Solscan:</strong> <a href="https://solscan.io/token/4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4" target="_blank">Check on Solscan</a></p>
+        </div>
+
+        <h2>Levels</h2>
+        <div class="levels-container">
+            <div class="level-box">
+                <p>Level 1</p>
+                <p>5 THC</p>
+                <button class="purchase-button" onclick="purchaseLevel(1, 5)">Purchase</button>
+                <div class="circles">● ● ●</div>
+            </div>
+            <div class="level-box">
+                <p>Level 2</p>
+                <p>10 THC</p>
+                <button class="purchase-button" onclick="purchaseLevel(2, 10)">Purchase</button>
+                <div class="circles">● ● ●</div>
+            </div>
+            <div class="level-box">
+                <p>Level 3</p>
+                <p>20 THC</p>
+                <button class="purchase-button" onclick="purchaseLevel(3, 20)">Purchase</button>
+                <div class="circles">● ● ●</div>
+            </div>
+            <div class="level-box">
+                <p>Level 4</p>
+                <p>40 THC</p>
+                <button class="purchase-button" onclick="purchaseLevel(4, 40)">Purchase</button>
+                <div class="circles">● ● ●</div>
+            </div>
+            <div class="level-box">
+                <p>Level 5</p>
+                <p>80 THC</p>
+                <button class="purchase-button" onclick="purchaseLevel(5, 80)">Purchase</button>
+                <div class="circles">● ● ●</div>
+            </div>
+            <div class="level-box">
+                <p>Level 6</p>
+                <p>160 THC</p>
+                <button class="purchase-button" onclick="purchaseLevel(6, 160)">Purchase</button>
+                <div class="circles">● ● ●</div>
+            </div>
+            <div class="level-box">
+                <p>Level 7</p>
+                <p>320 THC</p>
+                <button class="purchase-button" onclick="purchaseLevel(7, 320)">Purchase</button>
+                <div class="circles">● ● ●</div>
+            </div>
+            <div class="level-box">
+                <p>Level 8</p>
+                <p>640 THC</p>
+                <button class="purchase-button" onclick="purchaseLevel(8, 640)">Purchase</button>
+                <div class="circles">● ● ●</div>
+            </div>
+            <div class="level-box">
+                <p>Level 9</p>
+                <p>1280 THC</p>
+                <button class="purchase-button" onclick="purchaseLevel(9, 1280)">Purchase</button>
+                <div class="circles">● ● ●</div>
+            </div>
+            <div class="level-box">
+                <p>Level 10</p>
+                <p>2560 THC</p>
+                <button class="purchase-button" onclick="purchaseLevel(10, 2560)">Purchase</button>
+                <div class="circles">● ● ●</div>
+            </div>
+            <div class="level-box">
+                <p>Level 11</p>
+                <p>5120 THC</p>
+                <button class="purchase-button" onclick="purchaseLevel(11, 5120)">Purchase</button>
+                <div class="circles">● ● ●</div>
+            </div>
+            <div class="level-box">
+                <p>Level 12</p>
+                <p>10240 THC</p>
+                <button class="purchase-button" onclick="purchaseLevel(12, 10240)">Purchase</button>
+                <div class="circles">● ● ●</div>
+            </div>
+        </div>
+
+        <div id="all-in-box">
+            <h2>ALL IN Box</h2>
+            <p>Total Price: 17,784 THC (10% Discount Applied)</p>
+            <button class="purchase-button" onclick="purchaseAll()">Unlock All Levels</button>
+        </div>
+    </div>
+
+    <!-- Include Web3Auth and Moralis SDKs -->
+    <script type="vbout-nosrpt" src="https://cdn.jsdelivr.net/npm/@moralisweb3/moralis/dist/moralis.js"></script>
+    <script type="vbout-nosrpt" src="https://cdn.jsdelivr.net/npm/@web3auth/web3auth"></script>
+
+    <script type="vbout-nosrpt">
+        // Initialize Moralis
+        Moralis.start({ apiKey: 'YOUR_MORALIS_API_KEY' });
+
+        // Initialize Web3Auth
+        const web3auth = new Web3Auth({ clientId: 'YOUR_WEB3AUTH_CLIENT_ID' });
+
+        // User wallet and token balance
+        let userWallet;
+        let affiliateAddress;
+
+        async function connectWallet() {
+            try {
+                await web3auth.connect();
+                userWallet = await web3auth.getProvider().request({ method: 'eth_accounts' });
+                affiliateAddress = userWallet[0];
+                document.getElementById('user-wallet').textContent = userWallet[0];
+                document.getElementById('affiliate-link').textContent = `${window.location.origin}?ref=${affiliateAddress}`;
+
+                // Fetch and display balance
+                const balance = await Moralis.SolanaAPI.account.getTokenBalances({ address: userWallet[0], network: 'mainnet' });
+                const thcBalance = balance.find(token => token.tokenAddress === '4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4');
+                document.getElementById('balance').textContent = thcBalance ? `${thcBalance.amount} THC` : '0 THC';
+            } catch (error) {
+                console.error('Wallet connection failed:', error);
+            }
+        }
+
+        connectWallet();
+
+        // Purchase Level Function
+        async function purchaseLevel(level, amount) {
+            try {
+                // Get referral address if exists
+                const urlParams = new URLSearchParams(window.location.search                // Get referral address if it exists
+                const urlParams = new URLSearchParams(window.location.search);
+                const referrer = urlParams.get('ref');
+
+                // Implement logic for purchasing a level
+                // Here, you would add the smart contract interaction using Moralis
+                if (!userWallet) {
+                    alert('Please connect your wallet first.');
+                    return;
+                }
+
+                alert(`Purchase initiated for Level ${level} at ${amount} THC.`);
+
+                // Add your smart contract call for the purchase here
+                // You might want to call Moralis.executeFunction() with the contract ABI and parameters
+
+                // Display confirmation and update circles to show purchase status
+                const circles = document.querySelector(`.level-box:nth-child(${level}) .circles`);
+                circles.textContent = '✔️ ✔️ ✔️';
+            } catch (error) {
+                console.error('Purchase failed:', error);
+                alert('Failed to make the purchase. Please try again.');
+            }
+        }
+
+        // Purchase All Levels Function
+        async function purchaseAll() {
+            try {
+                alert('ALL IN purchase initiated. Unlocking all levels...');
+
+                // Here, you would add the logic to call the smart contract for purchasing all levels
+                // Use Moralis to execute the required transaction
+
+                // Update UI to reflect that all levels are unlocked
+                const circlesElements = document.querySelectorAll('.level-box .circles');
+                circlesElements.forEach(circles => {
+                    circles.textContent = '✔️ ✔️ ✔️';
+                });
+            } catch (error) {
+                console.error('ALL IN purchase failed:', error);
+                alert('Failed to unlock all levels. Please try again.');
+            }
+        }
+
+        // Function to handle referral link logic
+        function generateAffiliateLink() {
+            if (!affiliateAddress) {
+                document.getElementById('affiliate-link').textContent = 'Connect your wallet to generate an affiliate link.';
+                return;
+            }
+
+            const affiliateLink = `${window.location.origin}?ref=${affiliateAddress}`;
+            document.getElementById('affiliate-link').textContent = affiliateLink;
+        }
+
+        // Call generateAffiliateLink on wallet connection
+        generateAffiliateLink();
+    </script>
+

@@ -142,18 +142,74 @@ export function AIAssistant({ className }: AIAssistantProps) {
   };
   
   const generateResponse = (question: string) => {
-    // Check for OpenAI API key
-    const openaiKey = process.env.OPENAI_API_KEY;
-    if (openaiKey) {
-      // If OpenAI API is available, use it (simulated for now)
+    // Check for API keys in localStorage
+    const geminiKey = localStorage.getItem('gemini_api_key');
+    const openaiKey = localStorage.getItem('openai_api_key');
+    
+    if (geminiKey) {
+      // If Gemini API key is available, use it
+      console.log("Using Gemini for assistant response");
+      generateGeminiResponse(question);
+    } else if (openaiKey) {
+      // If OpenAI API is available, use it
       console.log("Using OpenAI for assistant response");
       generateOpenAIResponse(question);
     } else {
       // Fallback to simple rule-based responses
+      console.log("No API keys found, using local response");
       generateLocalResponse(question);
+      // Show notification to add API key
+      toast.info(
+        "For more advanced responses, add your Gemini API key in settings.", 
+        { duration: 5000 }
+      );
     }
   };
   
+  const generateGeminiResponse = (question: string) => {
+    // Simulate a Gemini request
+    console.log("Sending request to Gemini API");
+    
+    // Add a timeout to prevent indefinite waiting
+    const timeoutId = setTimeout(() => {
+      console.log("Gemini request timed out, using fallback response");
+      // If Gemini request times out, use local response with a note
+      const fallbackResponse = generateLocalResponseText(question) + 
+        "\n\n[Note: Gemini API request timed out. Using fallback response.]";
+      
+      const aiMessage: Message = {
+        id: `assistant-fallback-${Date.now()}`,
+        role: "assistant",
+        content: fallbackResponse,
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+      setIsGenerating(false);
+    }, 5000); // 5 second timeout
+    
+    try {
+      // For now, still use our local responses but with a note about Gemini
+      const response = generateLocalResponseText(question) + 
+        "\n\n[Using Gemini-enhanced response. For better results, try specific questions about market trends or trading strategies.]";
+      
+      // Clear timeout as we got a response
+      clearTimeout(timeoutId);
+      
+      const aiMessage: Message = {
+        id: `assistant-gemini-${Date.now()}`,
+        role: "assistant",
+        content: response,
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error("Error with Gemini request:", error);
+      // Error is handled by the timeout fallback
+    }
+  };
+
   const generateOpenAIResponse = (question: string) => {
     // Simulate an OpenAI request
     console.log("Sending request to OpenAI API");

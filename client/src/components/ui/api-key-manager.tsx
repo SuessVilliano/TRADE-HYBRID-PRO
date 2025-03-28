@@ -110,16 +110,32 @@ export function ApiKeyManager({
       return;
     }
     
-    // Save to local storage
-    localStorage.setItem(SECRET_STORAGE_KEY, JSON.stringify(apiKeys));
-    
-    // Validate keys
-    validateApiKeys();
-    
-    toast({
-      title: "API keys saved",
-      description: `Your API keys for ${getSelectedBrokerName()} have been saved.`
-    });
+    // Special handling for AI API keys
+    const selectedBrokerObj = SUPPORTED_BROKERS.find(b => b.id === selectedBroker);
+    if (selectedBrokerObj?.type === 'ai') {
+      // Store in specific localStorage key for AI models
+      if (selectedBroker === 'gemini') {
+        localStorage.setItem('gemini_api_key', apiKeys[selectedBroker]?.apiKey || '');
+      } else if (selectedBroker === 'openai') {
+        localStorage.setItem('openai_api_key', apiKeys[selectedBroker]?.apiKey || '');
+      }
+      
+      toast({
+        title: "AI API key saved",
+        description: `Your ${getSelectedBrokerName()} API key has been saved and will be used for AI functionality.`
+      });
+    } else {
+      // Save to local storage
+      localStorage.setItem(SECRET_STORAGE_KEY, JSON.stringify(apiKeys));
+      
+      // Validate keys
+      validateApiKeys();
+      
+      toast({
+        title: "API keys saved",
+        description: `Your API keys for ${getSelectedBrokerName()} have been saved.`
+      });
+    }
     
     // Notify parent component
     if (onValidStatusChange) {
@@ -136,6 +152,16 @@ export function ApiKeyManager({
   // Confirm deletion
   const confirmDelete = () => {
     if (!brokerToDelete) return;
+    
+    // Special handling for AI API keys
+    const brokerType = SUPPORTED_BROKERS.find(b => b.id === brokerToDelete)?.type;
+    if (brokerType === 'ai') {
+      if (brokerToDelete === 'gemini') {
+        localStorage.removeItem('gemini_api_key');
+      } else if (brokerToDelete === 'openai') {
+        localStorage.removeItem('openai_api_key');
+      }
+    }
     
     const newApiKeys = { ...apiKeys };
     delete newApiKeys[brokerToDelete];

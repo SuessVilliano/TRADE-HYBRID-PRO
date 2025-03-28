@@ -6,7 +6,7 @@ import { useMultiplayer } from "@/lib/stores/useMultiplayer";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { Button } from "./button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "./card";
-import { Share2, Eye, X, ChevronUp, ChevronDown, Copy, Users, CheckCircle2, ExternalLink, Coins } from "lucide-react";
+import { Share2, Eye, X, ChevronUp, ChevronDown, Copy, Users, CheckCircle2, ExternalLink, Coins, AlertTriangle } from "lucide-react";
 import { createChart, ColorType, IChartApi } from "lightweight-charts";
 import { MarketChart } from "./market-chart";
 import TradingViewWidget from "./TradingViewWidget";
@@ -14,6 +14,7 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
 import { Badge } from "./badge";
 import { toast } from "sonner";
+import { Dialog, DialogTitle, DialogContent, DialogHeader, DialogFooter, DialogDescription } from "./dialog";
 
 interface ScreenShareProps {
   className?: string;
@@ -501,6 +502,8 @@ function SharedChart({ shareData }: { shareData: ScreenShareData }) {
   const [copyTrades, setCopyTrades] = useState<CopyTrade[]>([]);
   const [copyingTrade, setCopyingTrade] = useState(false);
   const [isChartLoaded, setIsChartLoaded] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingTradeSide, setPendingTradeSide] = useState<'buy' | 'sell' | null>(null);
   
   // Generate a unique ID for the chart container to prevent conflicts
   const chartId = useMemo(() => `shared_chart_${shareData.id}_${Math.random().toString(36).substring(2, 7)}`, [shareData.id]);
