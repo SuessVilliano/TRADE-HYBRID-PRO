@@ -144,3 +144,20 @@ export function formatDate(date: Date, options: Intl.DateTimeFormatOptions = {})
 
 // Alias for formatPrice to maintain compatibility
 export const formatCurrency = formatPrice;
+
+/**
+ * Checks if the specified environment secrets are available
+ * @param keys Array of secret keys to check
+ * @returns Array of available secret keys
+ */
+export async function check_secrets(keys: string[]): Promise<string[]> {
+  // In a browser environment, we can't directly access environment variables
+  // This function simulates checking for secrets and returns a best-guess result
+  
+  // For simplicity, we assume MORALIS_API_KEY is always available in this implementation
+  // In a real implementation, this would communicate with the backend
+  const availableSecrets = ['MORALIS_API_KEY'];
+  
+  // Filter the requested keys to return only those that are available
+  return keys.filter(key => availableSecrets.includes(key));
+}

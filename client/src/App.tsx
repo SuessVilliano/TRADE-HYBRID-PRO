@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { PopupContainer } from './components/ui/popup-container';
 import NFTMarketplace from './pages/nft-marketplace';
 import { Button } from './components/ui/button';
 import THCBalanceDisplay from './components/ui/thc-balance-display';
 import { useUserStore } from './lib/stores/useUserStore';
+
+// Lazy load the Bulls vs Bears page
+const BullsVsBears = lazy(() => import('./pages/bulls-vs-bears'));
 
 // Light wrapper with providers
 function AppWithProviders() {
@@ -32,11 +35,15 @@ function AppContent() {
       return;
     }
     
-    const success = await login(username, password);
-    if (success) {
+    try {
+      await login(username, password);
+      // If login doesn't throw an error, consider it successful
       setShowLoginForm(false);
       setUsername('');
       setPassword('');
+    } catch (error) {
+      console.error('Login failed:', error);
+      setLoginError('Login failed. Please check your credentials.');
     }
   };
   
@@ -56,6 +63,7 @@ function AppContent() {
               <Link to="/" className="hover:text-blue-400 transition-colors">Home</Link>
               <Link to="/trading" className="hover:text-blue-400 transition-colors">Trading</Link>
               <Link to="/metaverse" className="hover:text-blue-400 transition-colors">Metaverse</Link>
+              <Link to="/bulls-vs-bears" className="hover:text-blue-400 transition-colors">Bulls vs Bears</Link>
               <Link to="/marketplace" className="hover:text-blue-400 transition-colors">NFT Marketplace</Link>
               <Link to="/learn" className="hover:text-blue-400 transition-colors">Learn</Link>
             </nav>
@@ -107,6 +115,18 @@ function AppContent() {
           <Route path="/marketplace" element={<NFTMarketplace />} />
           <Route path="/trading" element={<TradingPlaceholder />} />
           <Route path="/metaverse" element={<MetaversePlaceholder />} />
+          <Route path="/bulls-vs-bears" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading the Bulls vs Bears game...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <BullsVsBears />}
+            </Suspense>
+          } />
           <Route path="/learn" element={<LearnPlaceholder />} />
         </Routes>
       </main>
@@ -141,7 +161,7 @@ function Home() {
         </p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
         <FeatureCard 
           title="Trading"
           description="Trade with AI-powered insights, real-time market data, and advanced charting tools."
@@ -151,6 +171,11 @@ function Home() {
           title="Metaverse"
           description="Explore the trading metaverse, interact with other traders, and join trading communities."
           linkTo="/metaverse"
+        />
+        <FeatureCard 
+          title="Bulls vs Bears"
+          description="Test your trading skills in our gamified trading simulator. Compete on the leaderboard and earn rewards."
+          linkTo="/bulls-vs-bears"
         />
         <FeatureCard 
           title="NFT Marketplace"
@@ -175,7 +200,8 @@ function FeatureCard({ title, description, linkTo }: { title: string, descriptio
 }
 
 function TradingPlaceholder() {
-  const TradingViewWidgetLazy = React.lazy(() => import('./components/ui/TradingViewWidget'));
+  // Use the JSX extension to properly import the TradingViewWidget
+  const TradingViewWidgetLazy = React.lazy(() => import('./components/ui/TradingViewWidget.jsx'));
   const AIAssistantLazy = React.lazy(() => import('./components/ui/AIAssistant'));
   const TradingSignalsLazy = React.lazy(() => import('./components/ui/TradingSignals'));
   const CopyTradingLazy = React.lazy(() => import('./components/ui/CopyTrading'));

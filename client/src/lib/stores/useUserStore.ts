@@ -10,6 +10,13 @@ export interface UserProfile {
   balance: {
     USD: number;
     THC: number;
+    ETH?: number;
+    USDT?: number;
+  };
+  wallet?: {
+    address: string;
+    type: string;
+    network: string;
   };
   tradingExperience: 'beginner' | 'intermediate' | 'advanced';
   biography: string;
@@ -83,6 +90,13 @@ const mockUser: UserProfile = {
   balance: {
     USD: 10000,
     THC: 5000,
+    ETH: 1.5,
+    USDT: 2500,
+  },
+  wallet: {
+    address: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
+    type: 'MetaMask',
+    network: 'Ethereum',
   },
   tradingExperience: 'intermediate',
   biography: 'Passionate crypto trader focused on technical analysis and swing trading strategies.',
