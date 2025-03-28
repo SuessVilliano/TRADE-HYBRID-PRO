@@ -104,9 +104,13 @@ export function TradingTipsExplorer() {
   });
   
   const handleShowTip = (tipId: string) => {
+    // When tip is explicitly shown from explorer, we should force show it
+    // instead of using setState directly, we should use the showTip method
+    // which will handle the firstLoad logic properly
     const selectedTip = tips.find(tip => tip.id === tipId);
     if (selectedTip) {
-      useTradingTips.setState({ currentTip: selectedTip, showingTip: true });
+      // We force the tip to show regardless of first load status
+      showTip(selectedTip.category, selectedTip.difficulty, true);
     }
   };
   
@@ -216,7 +220,8 @@ export function TradingTipsExplorer() {
                   <Button 
                     variant="link" 
                     onClick={() => {
-                      showTip();
+                      // Force show tip when explicitly requested
+                      showTip(undefined, undefined, true);
                     }}
                   >
                     View a random tip
@@ -263,7 +268,7 @@ export function TradingTipsExplorer() {
         <div className="text-sm text-muted-foreground">
           {filteredTips.length} tips found
         </div>
-        <Button onClick={() => showTip(categoryFilter ?? undefined, difficultyFilter ?? undefined)}>
+        <Button onClick={() => showTip(categoryFilter ?? undefined, difficultyFilter ?? undefined, true)}>
           Show Random Tip
         </Button>
       </CardFooter>

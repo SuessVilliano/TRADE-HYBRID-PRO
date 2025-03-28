@@ -24,26 +24,19 @@ export function TradingTipsProvider({
     fetchTips();
   }, [fetchTips]);
   
-  // Set up automatic display of tips at regular intervals
+  // Show a tip only on the first load - automatic intervals are removed
   useEffect(() => {
-    // Only set up automatic tips if interval is positive
-    if (autoShowInterval <= 0) return;
+    // Get a random category
+    const categories = ['general', 'technical', 'fundamental', 'crypto', 'forex', 'stocks'];
+    const randomCategory = categories[Math.floor(Math.random() * categories.length)];
     
-    const tipTimer = setInterval(() => {
-      // Get a random category
-      const categories = ['general', 'technical', 'fundamental', 'crypto', 'forex', 'stocks'];
-      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-      
-      // Show a tip from a random category with random difficulty
-      const difficulties = ['beginner', 'intermediate', 'advanced'];
-      const randomDifficulty = difficulties[Math.floor(Math.random() * difficulties.length)];
-      
-      showTip(randomCategory, randomDifficulty);
-    }, autoShowInterval);
+    // Show a tip from a random category with random difficulty
+    const difficulties = ['beginner', 'intermediate', 'advanced'];
+    const randomDifficulty = difficulties[Math.floor(Math.random() * difficulties.length)];
     
-    // Clear interval on unmount
-    return () => clearInterval(tipTimer);
-  }, [autoShowInterval, showTip]);
+    // This will only show on first load due to our updated logic in the store
+    showTip(randomCategory, randomDifficulty);
+  }, [showTip]);
   
   // Show relevant tips based on the current path (if provided)
   useEffect(() => {
@@ -52,20 +45,21 @@ export function TradingTipsProvider({
     // Extract location type from path to determine relevant category
     const path = currentPath.toLowerCase();
     
+    // Only show path-specific tips on first load, no need for forcing
     if (path.includes('crypto')) {
       // Show crypto-specific tip for crypto section
       setTimeout(() => {
-        showTip('crypto');
+        showTip('crypto', undefined, false);
       }, 5000); // Delay by 5 seconds to allow page to load
     } else if (path.includes('forex')) {
       // Show forex-specific tip for forex section
       setTimeout(() => {
-        showTip('forex');
+        showTip('forex', undefined, false);
       }, 5000);
     } else if (path.includes('stocks')) {
       // Show stocks-specific tip for stocks section
       setTimeout(() => {
-        showTip('stocks');
+        showTip('stocks', undefined, false);
       }, 5000);
     }
   }, [currentPath, showTip]);

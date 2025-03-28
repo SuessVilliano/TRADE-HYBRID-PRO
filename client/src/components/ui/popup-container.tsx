@@ -29,16 +29,16 @@ export function PopupContainer({
   
   return (
     <div className={cn(
-      "bg-background border rounded-lg shadow-lg overflow-hidden flex flex-col",
+      "bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg overflow-hidden flex flex-col",
       fullWidth ? "w-full" : "w-[90%] md:w-auto md:min-w-[500px] max-w-[95vw]", 
       "h-[85vh] max-h-[85vh]",
       className
     )}>
       {/* Header */}
-      <div className="p-3 border-b flex items-center justify-between bg-muted/30">
+      <div className="p-3 border-b flex items-center justify-between bg-muted/50 backdrop-blur-sm">
         <div className="flex items-center">
           {icon && <span className="mr-2">{icon}</span>}
-          <h2 className="font-semibold text-lg">{title}</h2>
+          <h2 className="font-semibold text-lg text-foreground">{title}</h2>
         </div>
         <div className="flex items-center gap-1">
           {onMinimize && (
@@ -55,7 +55,7 @@ export function PopupContainer({
       </div>
       
       {/* Content - removing overflow-y-auto to prevent conflicts with ScrollArea */}
-      <div className={cn("flex-1 p-4 h-full overflow-hidden", contentClassName)}>
+      <div className={cn("flex-1 p-4 h-full overflow-hidden bg-white/90 dark:bg-gray-900/90", contentClassName)}>
         {children}
       </div>
       

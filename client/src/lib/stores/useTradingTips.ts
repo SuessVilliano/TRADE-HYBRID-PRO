@@ -17,11 +17,13 @@ interface TradingTipsState {
   currentTip: TradingTip | null;
   showingTip: boolean;
   isLoading: boolean;
+  isFirstLoad: boolean;
   // Actions
-  showTip: (category?: string, difficulty?: string) => void;
+  showTip: (category?: string, difficulty?: string, forceShow?: boolean) => void;
   closeTip: () => void;
   markTipAsViewed: (tipId: string) => void;
   fetchTips: () => Promise<void>;
+  setFirstLoadComplete: () => void;
 }
 
 export const useTradingTips = create<TradingTipsState>()(
@@ -32,9 +34,17 @@ export const useTradingTips = create<TradingTipsState>()(
       currentTip: null,
       showingTip: false,
       isLoading: false,
+      isFirstLoad: true,
       
-      showTip: (category?: string, difficulty?: string) => {
-        const { tips, viewedTips } = get();
+      showTip: (category?: string, difficulty?: string, forceShow: boolean = false) => {
+        const { tips, viewedTips, isFirstLoad } = get();
+        
+        // Only show tips on first load or when explicitly requested
+        if (!isFirstLoad && !forceShow) {
+          console.log('Skipping trading tip: not first load and not forced');
+          return;
+        }
+        
         if (tips.length === 0) return;
         
         // First apply category and difficulty filters if provided
@@ -74,6 +84,11 @@ export const useTradingTips = create<TradingTipsState>()(
         
         // Mark tip as viewed
         get().markTipAsViewed(selectedTip.id);
+        
+        // Mark first load as complete after showing the tip
+        if (isFirstLoad) {
+          get().setFirstLoadComplete();
+        }
       },
       
       closeTip: () => {
@@ -85,6 +100,10 @@ export const useTradingTips = create<TradingTipsState>()(
         if (!viewedTips.includes(tipId)) {
           set({ viewedTips: [...viewedTips, tipId] });
         }
+      },
+      
+      setFirstLoadComplete: () => {
+        set({ isFirstLoad: false });
       },
       
       fetchTips: async () => {
@@ -265,8 +284,11 @@ export const useTradingTips = create<TradingTipsState>()(
     }),
     {
       name: 'trading-tips-storage',
-      // Only persist viewed tips and not the entire state
-      partialize: (state) => ({ viewedTips: state.viewedTips }),
+      // Persist viewed tips and first load status
+      partialize: (state) => ({ 
+        viewedTips: state.viewedTips,
+        isFirstLoad: state.isFirstLoad 
+      }),
     }
   )
 );

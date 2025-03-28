@@ -157,7 +157,8 @@ export function ShowTradingTipButton({ onClick }: { onClick?: () => void }) {
   const { showTip } = useTradingTips();
   
   const handleClick = () => {
-    showTip();
+    // Force show tip when button is explicitly clicked
+    showTip(undefined, undefined, true);
     if (onClick) onClick();
   };
   
