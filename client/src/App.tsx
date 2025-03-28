@@ -464,7 +464,7 @@ function TradingPlaceholder() {
           <ControlCenterLazy 
             selectedSymbol={selectedSymbol}
             onChangeSymbol={handleSymbolChange}
-            initialPanels={['chart', 'signals', 'smart-trade', 'assistant', 'copy-trade']}
+            initialPanels={['chart', 'signals', 'smart-trade', 'companion', 'economic-calendar', 'market-overview']}
             className="h-full"
           />
         </React.Suspense>

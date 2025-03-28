@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PanelContainer } from './panel-container';
-import { LineChart, BarChart3, Signal, Bot, HelpCircle, BookOpen, Users, Cpu } from 'lucide-react';
+import { LineChart, BarChart3, Signal, Bot, HelpCircle, BookOpen, Users, Cpu, MessageSquare, Calendar, BarChart } from 'lucide-react';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
 
@@ -11,6 +11,9 @@ const TradingSignalsLazy = React.lazy(() => import('./TradingSignals'));
 const CopyTradingLazy = React.lazy(() => import('./CopyTrading'));
 const SmartTradePanelLazy = React.lazy(() => import('./smart-trade-panel').then(module => ({ default: module.SmartTradePanel })));
 const TradingBotsManagerLazy = React.lazy(() => import('./trading-bots-manager').then(module => ({ default: module.TradingBotsManager })));
+const TradingCompanionChatbotLazy = React.lazy(() => import('./trading-companion-chatbot'));
+const EconomicCalendarLazy = React.lazy(() => import('./economic-calendar'));
+const MarketOverviewLazy = React.lazy(() => import('./market-overview'));
 
 // Define the panel types
 export type PanelType = 
@@ -22,7 +25,10 @@ export type PanelType =
   | 'assistant' 
   | 'bots' 
   | 'news' 
-  | 'education';
+  | 'education'
+  | 'companion'
+  | 'economic-calendar'
+  | 'market-overview';
 
 // Panel definition with its metadata
 interface PanelDefinition {
@@ -49,7 +55,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
   selectedSymbol,
   onChangeSymbol,
   className = '',
-  initialPanels = ['chart', 'signals', 'smart-trade', 'assistant'],
+  initialPanels = ['chart', 'signals', 'smart-trade', 'companion', 'economic-calendar', 'market-overview'],
 }) => {
   // State to track active panels and their layout
   const [activePanels, setActivePanels] = useState<string[]>([]);
@@ -207,6 +213,55 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
       ),
       defaultSize: { width: '320px', height: '300px' },
       defaultPosition: { x: 760, y: 1230 }
+    },
+    'companion': {
+      id: 'companion',
+      type: 'companion',
+      title: 'Trading Companion',
+      icon: <MessageSquare size={16} />,
+      component: (
+        <React.Suspense fallback={<div className="h-full flex items-center justify-center">Loading Trading Companion...</div>}>
+          <TradingCompanionChatbotLazy selectedSymbol={selectedSymbol} />
+        </React.Suspense>
+      ),
+      defaultSize: { width: '320px', height: '500px' },
+      defaultPosition: { x: 760, y: 920 }
+    },
+    'economic-calendar': {
+      id: 'economic-calendar',
+      type: 'economic-calendar',
+      title: 'Economic Calendar',
+      icon: <Calendar size={16} />,
+      component: (
+        <React.Suspense fallback={<div className="h-full flex items-center justify-center">Loading Economic Calendar...</div>}>
+          <EconomicCalendarLazy 
+            colorTheme="dark"
+            isTransparent={false}
+            locale="en"
+            importanceFilter="-1,0,1"
+          />
+        </React.Suspense>
+      ),
+      defaultSize: { width: '100%', height: '400px' },
+      defaultPosition: { x: 0, y: 1530 }
+    },
+    'market-overview': {
+      id: 'market-overview',
+      type: 'market-overview',
+      title: 'Market Overview',
+      icon: <BarChart size={16} />,
+      component: (
+        <React.Suspense fallback={<div className="h-full flex items-center justify-center">Loading Market Overview...</div>}>
+          <MarketOverviewLazy 
+            colorTheme="dark"
+            dateRange="12M"
+            showChart={true}
+            isTransparent={false}
+          />
+        </React.Suspense>
+      ),
+      defaultSize: { width: '100%', height: '400px' },
+      defaultPosition: { x: 0, y: 1940 }
     }
   };
 
