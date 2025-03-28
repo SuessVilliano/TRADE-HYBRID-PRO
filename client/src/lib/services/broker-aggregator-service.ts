@@ -1,5 +1,22 @@
 import { SUPPORTED_BROKERS } from '@/lib/constants';
 
+// Re-export SUPPORTED_BROKERS for components that import it from here
+export { SUPPORTED_BROKERS };
+
+// For components that import brokerAggregatorService
+export const brokerAggregatorService = null;
+
+// For components that import BrokerPriceComparison interface
+export interface BrokerPriceComparison {
+  symbol: string;
+  prices: {
+    brokerId: string;
+    price: number;
+    spread?: number;
+    timestamp: number;
+  }[];
+}
+
 // Storage key for API credentials
 const API_KEYS_STORAGE_KEY = 'trade-hybrid-api-keys';
 
@@ -9,6 +26,14 @@ const API_BASE = '/api';
 // Interface for basic API credentials
 interface ApiCredentials {
   [key: string]: string;
+}
+
+// For components that need BrokerCredentials
+export interface BrokerCredentials {
+  brokerId: string;
+  credentials: {
+    [key: string]: string;
+  };
 }
 
 // Unified trading interfaces
