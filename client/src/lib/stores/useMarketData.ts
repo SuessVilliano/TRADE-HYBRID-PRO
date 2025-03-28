@@ -152,8 +152,30 @@ export const useMarketData = create<MarketDataState>((set, get) => {
           
           // Update the current symbol if it's in the subscriptions
           if (state.subscriptions.includes(state.currentSymbol)) {
-            // Generate a random price movement
-            const priceChange = state.currentPrice * (Math.random() * 0.004 - 0.002);
+            // Generate a more realistic price movement based on the asset
+            let volatilityFactor = 0.002; // Default
+            
+            // Adjust volatility factor based on symbol
+            switch (state.currentSymbol) {
+              case 'BTCUSD':
+                volatilityFactor = 0.003;
+                break;
+              case 'ETHUSD':
+                volatilityFactor = 0.004;
+                break;
+              case 'EURUSD':
+                volatilityFactor = 0.0005;
+                break;
+              case 'XAUUSD':
+                volatilityFactor = 0.001;
+                break;
+              case 'THCUSD':
+                volatilityFactor = 0.005; // More volatile as new token
+                break;
+            }
+            
+            // Generate a more realistic price movement with a slight upward bias for demo purposes
+            const priceChange = state.currentPrice * (Math.random() * volatilityFactor * 2 - volatilityFactor + 0.0001);
             const newPrice = state.currentPrice + priceChange;
             
             // Add to price history
@@ -168,13 +190,16 @@ export const useMarketData = create<MarketDataState>((set, get) => {
             const lowPrice = Math.min(state.lowPrice, newPrice);
             
             // Create new market data point for AI analysis
+            // More realistic OHLC data
+            const spread = newPrice * volatilityFactor * 0.5;
             const newMarketDataPoint = {
               time: Math.floor(now / 1000), // Convert milliseconds to seconds
-              open: newPrice * (1 - Math.random() * 0.001),
-              high: newPrice * (1 + Math.random() * 0.001),
-              low: newPrice * (1 - Math.random() * 0.001),
+              open: newPrice * (1 - Math.random() * volatilityFactor * 0.3),
+              high: newPrice + (Math.random() * spread),
+              low: newPrice - (Math.random() * spread),
               close: newPrice,
-              volume: Math.floor(Math.random() * 100 + 10)
+              volume: Math.floor(Math.random() * 100 + 10) * 
+                (state.currentSymbol === 'BTCUSD' ? 10 : 1) // Higher volume for BTC
             };
             
             // Update market data array (keep last 100 points)
@@ -192,7 +217,7 @@ export const useMarketData = create<MarketDataState>((set, get) => {
               marketData: newMarketData
             });
           }
-        }, 3000);
+        }, 2000); // Update more frequently
       }
     },
     

@@ -59,7 +59,19 @@ function TradingViewWidget({
             hide_side_toolbar: height < 400, // Hide side toolbar on smaller heights
             hide_top_toolbar: height < 300,  // Hide top toolbar on very small heights
             save_image: false,               // Disable save image on mobile
-            withdateranges: height > 350     // Only show date ranges on taller charts
+            withdateranges: height > 350,    // Only show date ranges on taller charts
+            studies_overrides: {             // Make studies more visible
+              "volume.volume.color.0": "#F44336",
+              "volume.volume.color.1": "#4CAF50",
+            },
+            overrides: {                     // Make chart more readable
+              "mainSeriesProperties.candleStyle.upColor": "#4CAF50",
+              "mainSeriesProperties.candleStyle.downColor": "#F44336",
+              "mainSeriesProperties.candleStyle.wickUpColor": "#4CAF50",
+              "mainSeriesProperties.candleStyle.wickDownColor": "#F44336",
+              "mainSeriesProperties.candleStyle.borderUpColor": "#4CAF50",
+              "mainSeriesProperties.candleStyle.borderDownColor": "#F44336",
+            }
           });
           setIsLoaded(true);
         } catch (err) {

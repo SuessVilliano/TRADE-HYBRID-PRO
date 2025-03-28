@@ -54,7 +54,6 @@ interface TraderState {
   isLoading: boolean;
   trades: Trade[];
   tradeStats: TradeStats;
-  loading: boolean;
   
   // Actions
   placeTrade: (
@@ -78,7 +77,6 @@ export const useTrader = create<TraderState>((set, get) => ({
   availableMargin: 90000,
   usedMargin: 10000,
   isLoading: false,
-  loading: false,
   positions: [
     {
       symbol: 'BTCUSD',
