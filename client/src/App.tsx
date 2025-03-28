@@ -16,6 +16,7 @@ const TradeJournalSimple = lazy(() => import('./pages/trade-journal-simple'));
 const NFTMarketplaceSimple = lazy(() => import('./pages/nft-marketplace-simple'));
 const SolanaDexEmbedded = lazy(() => import('./pages/solana-dex-embedded'));
 const LearnEmbedded = lazy(() => import('./pages/learn-embedded'));
+const THCStaking = lazy(() => import('./pages/thc-staking'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -81,6 +82,7 @@ function AppContent() {
               <Link to="/" className="hover:text-blue-400 transition-colors">Home</Link>
               <Link to="/trading" className="hover:text-blue-400 transition-colors">Trading</Link>
               <Link to="/solana-trading" className="hover:text-blue-400 transition-colors">DEX</Link>
+              <Link to="/thc-staking" className="hover:text-blue-400 transition-colors">THC Staking</Link>
               <Link to="/metaverse" className="hover:text-blue-400 transition-colors">Metaverse</Link>
               <Link to="/news" className="hover:text-blue-400 transition-colors">News</Link>
               <Link to="/trade-journal" className="hover:text-blue-400 transition-colors">Journal</Link>
@@ -223,6 +225,18 @@ function AppContent() {
               {typeof window !== 'undefined' && <LearnEmbedded />}
             </Suspense>
           } />
+          <Route path="/thc-staking" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading THC staking...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <THCStaking />}
+            </Suspense>
+          } />
         </Routes>
       </main>
       
@@ -291,6 +305,11 @@ function Home() {
           title="Learning"
           description="Access comprehensive educational resources to master trading and financial markets."
           linkTo="/learn"
+        />
+        <FeatureCard 
+          title="THC Staking"
+          description="Stake THC tokens for rewards and build your network with our 2x3 affiliate matrix system."
+          linkTo="/thc-staking"
         />
       </div>
     </PopupContainer>

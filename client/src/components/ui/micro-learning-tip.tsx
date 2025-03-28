@@ -55,10 +55,10 @@ export const MicroLearningTip: React.FC<MicroLearningTipProps> = ({
 
   // Set position classes based on the position prop
   const positionClasses = {
-    'top-right': 'top-20 right-4',
-    'bottom-right': 'bottom-20 right-4',
-    'top-left': 'top-20 left-4',
-    'bottom-left': 'bottom-20 left-4',
+    'top-right': 'top-40 right-4',
+    'bottom-right': 'bottom-4 right-4',
+    'top-left': 'top-40 left-4',
+    'bottom-left': 'bottom-4 left-4',
     'center': 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
   };
 

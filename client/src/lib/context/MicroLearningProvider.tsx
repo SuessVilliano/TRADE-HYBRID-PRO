@@ -111,8 +111,8 @@ interface MicroLearningProviderProps {
 
 export const MicroLearningProvider: React.FC<MicroLearningProviderProps> = ({ 
   children, 
-  autoShowInterval = 300000, // Default: 5 minutes
-  initialDelay = 60000 // Default: 1 minute
+  autoShowInterval = 900000, // Default: 15 minutes
+  initialDelay = 180000 // Default: 3 minutes
 }) => {
   const [currentTipIndex, setCurrentTipIndex] = useState<number>(0);
   const [isVisible, setIsVisible] = useState<boolean>(false);
