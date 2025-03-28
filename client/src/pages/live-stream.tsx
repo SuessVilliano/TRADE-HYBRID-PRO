@@ -3,7 +3,9 @@ import { PopupContainer } from '../components/ui/popup-container';
 import { Button } from '../components/ui/button';
 
 function LiveStream() {
-  const [streamUrl, setStreamUrl] = useState<string>('https://www.youtube.com/embed/live_stream?channel=UC8LPf8DcwLB3QYuSlS9gg9A');
+  const viloudEmbedCode = '<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe src="https://player.viloud.tv/embed/channel/6b3e6d6696fb33d051c1ca4b341d21cf?autoplay=1&volume=1&controls=1&title=1&share=1&open_playlist=0&random=0" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" frameborder="0" allow="autoplay" allowfullscreen></iframe></div>';
+  const viloudStreamUrl = 'https://app.viloud.tv/hls/channel/6b3e6d6696fb33d051c1ca4b341d21cf.m3u8';
+  
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showChat, setShowChat] = useState(true);
 
@@ -20,7 +22,7 @@ function LiveStream() {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-4">Live Trading Stream</h1>
+        <h1 className="text-4xl font-bold mb-4">Trade Hybrid TV</h1>
         <p className="text-xl text-slate-300 max-w-3xl mx-auto">
           Watch our live trading sessions, market analysis, and educational content.
         </p>
@@ -31,7 +33,7 @@ function LiveStream() {
           <div className={`${isFullscreen ? 'flex-grow' : 'lg:col-span-2'}`}>
             <PopupContainer padding className="h-full">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-semibold">Live Stream</h3>
+                <h3 className="font-semibold">Live Broadcast</h3>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={toggleChat}>
                     {showChat ? 'Hide Chat' : 'Show Chat'}
@@ -44,9 +46,10 @@ function LiveStream() {
               
               <div className="relative pb-[56.25%] h-0 overflow-hidden rounded-lg">
                 <iframe 
-                  src={streamUrl}
+                  src="https://player.viloud.tv/embed/channel/6b3e6d6696fb33d051c1ca4b341d21cf?autoplay=1&volume=1&controls=1&title=1&share=1&open_playlist=0&random=0"
                   className="absolute top-0 left-0 w-full h-full border-0"
-                  title="Live Trading Stream"
+                  title="Trade Hybrid TV"
+                  frameBorder="0"
                   allowFullScreen
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 ></iframe>
@@ -68,11 +71,14 @@ function LiveStream() {
               <PopupContainer padding className="h-full">
                 <h3 className="font-semibold mb-4">Live Chat</h3>
                 <div className="bg-slate-800 rounded-lg p-4 h-[500px]">
-                  <iframe 
-                    src="https://www.youtube.com/live_chat?v=live_stream&embed_domain=trade-hybrid.replit.app"
-                    className="w-full h-full border-0"
-                    title="Live Chat"
-                  ></iframe>
+                  <div className="flex flex-col h-full">
+                    <div className="bg-slate-700 rounded p-3 mb-3">
+                      <p className="text-sm">Live chat is available during broadcasts</p>
+                    </div>
+                    <div className="flex-grow flex items-center justify-center">
+                      <p className="text-slate-400 text-center">Join the conversation during the next live broadcast!</p>
+                    </div>
+                  </div>
                 </div>
               </PopupContainer>
             </div>
@@ -81,11 +87,9 @@ function LiveStream() {
           {(showChat && isFullscreen) && (
             <div className="absolute right-0 top-0 bottom-0 w-80 bg-black p-4">
               <h3 className="font-semibold mb-4 text-white">Live Chat</h3>
-              <iframe 
-                src="https://www.youtube.com/live_chat?v=live_stream&embed_domain=trade-hybrid.replit.app"
-                className="w-full h-[calc(100%-40px)] border-0"
-                title="Live Chat"
-              ></iframe>
+              <div className="bg-slate-800/50 h-[calc(100%-40px)] rounded flex items-center justify-center">
+                <p className="text-slate-400 text-center">Join the conversation during the next live broadcast!</p>
+              </div>
             </div>
           )}
         </div>

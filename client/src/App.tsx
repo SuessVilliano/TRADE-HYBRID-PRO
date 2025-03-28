@@ -120,7 +120,7 @@ function AppContent() {
               <Link to="/thc-staking" className="hover:text-blue-400 transition-colors">Stake & Bake</Link>
               <Link to="/metaverse" className="hover:text-blue-400 transition-colors">Metaverse</Link>
               <Link to="/news" className="hover:text-blue-400 transition-colors">News</Link>
-              <Link to="/live-stream" className="hover:text-blue-400 transition-colors">Live Stream</Link>
+              <Link to="/live-stream" className="hover:text-blue-400 transition-colors">TV</Link>
               <Link to="/trade-journal" className="hover:text-blue-400 transition-colors">Journal</Link>
               <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Trade Runner</Link>
               <Link to="/marketplace" className="hover:text-blue-400 transition-colors">NFTs</Link>
@@ -304,7 +304,7 @@ function AppContent() {
               <div className="flex items-center justify-center h-screen">
                 <div className="text-center">
                   <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <p className="text-slate-300">Loading Live Stream...</p>
+                  <p className="text-slate-300">Loading TV Channel...</p>
                 </div>
               </div>
             }>
@@ -386,7 +386,7 @@ function Home() {
           linkTo="/thc-staking"
         />
         <FeatureCard 
-          title="Live Stream"
+          title="TV"
           description="Watch live trading sessions, market analysis, and educational content from our expert traders."
           linkTo="/live-stream"
         />
