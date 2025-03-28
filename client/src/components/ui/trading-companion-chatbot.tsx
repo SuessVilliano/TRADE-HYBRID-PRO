@@ -4,9 +4,8 @@ import { Button } from './button';
 import { Textarea } from './textarea';
 import { Separator } from './separator';
 import { ScrollArea } from './scroll-area';
-import { Avatar } from './avatar';
-import { AvatarFallback } from './avatar';
-import { AvatarImage } from './avatar';
+// Use our custom Avatar components
+import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 import { cn } from '@/lib/utils';
 
