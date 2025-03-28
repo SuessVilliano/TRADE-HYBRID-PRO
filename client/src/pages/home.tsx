@@ -131,9 +131,9 @@ function HomeContent() {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-background/90">
+    <div className="min-h-screen overflow-y-auto w-full bg-gradient-to-b from-background to-background/90" style={{height: 'auto', overflowY: 'auto', paddingBottom: '60px'}}>
       {/* Hero Section */}
-      <div className="relative overflow-hidden pb-20">
+      <div className="relative pb-20">
         <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/20 via-background to-background"></div>
         
         <div className="container relative z-10 mx-auto px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
@@ -169,7 +169,7 @@ function HomeContent() {
       </div>
       
       {/* Features Grid */}
-      <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8 bg-gradient-to-b from-background/80 to-background rounded-lg shadow-inner">
+      <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8 bg-gradient-to-b from-background/80 to-background rounded-lg shadow-inner mb-10">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold tracking-tight text-primary">Key Features</h2>
           <p className="mt-4 text-lg text-muted-foreground">
@@ -296,7 +296,7 @@ function HomeContent() {
       
       {/* Interactive Guided Features Section */}
       {showGuidedFeatures && (
-        <div className="container mx-auto px-4 py-16 sm:px-6 lg:px-8 bg-primary/5 rounded-lg">
+        <div className="container mx-auto px-4 py-16 sm:px-6 lg:px-8 bg-primary/5 rounded-lg my-10">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold tracking-tight">Explore Our Features</h2>
             <p className="mt-4 text-lg text-muted-foreground">
@@ -322,7 +322,7 @@ function HomeContent() {
       )}
 
       {/* CTA Section */}
-      <div className="bg-primary/5 py-16">
+      <div className="bg-primary/5 py-16 my-10 rounded-lg">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold tracking-tight">Ready to Trade in the Metaverse?</h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
