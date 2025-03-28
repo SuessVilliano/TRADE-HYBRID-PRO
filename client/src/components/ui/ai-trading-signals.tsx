@@ -6,10 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, RefreshCw, Bell, Check, BellOff, TrendingUp, TrendingDown, BarChart2, PieChart, BrainCircuit, InfoIcon } from 'lucide-react';
+import { Loader2, RefreshCw, Bell, Check, BellOff, TrendingUp, TrendingDown, BarChart2, PieChart, BrainCircuit, InfoIcon, Search, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/components/ui/use-toast';
 import { TRADING_SYMBOLS } from '@/lib/constants';
+import { Input } from '@/components/ui/input';
 
 interface TradingSignal {
   id: string;
@@ -59,6 +60,7 @@ export function AiTradingSignals({
   const [loading, setLoading] = useState(true);
   const [signals, setSignals] = useState<TradingSignal[]>([]);
   const [filteredSignals, setFilteredSignals] = useState<TradingSignal[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState(defaultCategory);
   const [timeframe, setTimeframe] = useState('all');
   const [subscription, setSubscription] = useState<'free' | 'premium'>('free');
@@ -115,10 +117,20 @@ export function AiTradingSignals({
       filtered = filtered.filter(signal => signal.timeframe === timeframe);
     }
     
+    // Filter by search term
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(signal => 
+        signal.symbol.toLowerCase().includes(term) || 
+        signal.reason.toLowerCase().includes(term) ||
+        (signal.indicators && signal.indicators.some(i => i.name.toLowerCase().includes(term)))
+      );
+    }
+    
     // Limit number of signals based on subscription
     const limit = subscription === 'premium' ? maxSignals : 5;
     setFilteredSignals(filtered.slice(0, limit));
-  }, [signals, category, timeframe, subscription, maxSignals]);
+  }, [signals, category, timeframe, subscription, maxSignals, searchTerm]);
   
   // Refresh signals
   const handleRefresh = () => {
@@ -265,11 +277,33 @@ export function AiTradingSignals({
                   </SelectContent>
                 </Select>
                 
+                <div className="relative flex-grow">
+                  <Input
+                    placeholder="Search signals..."
+                    className="w-full"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  {searchTerm && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7"
+                      onClick={() => setSearchTerm('')}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {!searchTerm && (
+                    <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  )}
+                </div>
+                
                 {subscription === 'free' && (
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="ml-auto text-xs" 
+                    className="ml-auto text-xs shrink-0" 
                     onClick={handleUpgradeClick}
                   >
                     Upgrade to Premium
@@ -279,29 +313,51 @@ export function AiTradingSignals({
             )}
             
             {compact && (
-              <div className="flex justify-between items-center mb-3">
-                <Select value={category} onValueChange={setCategory} className="w-[120px]">
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Filter" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Signals</SelectItem>
-                    <SelectItem value="buy">Buy Only</SelectItem>
-                    <SelectItem value="sell">Sell Only</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                  </SelectContent>
-                </Select>
+              <>
+                <div className="flex justify-between items-center mb-3">
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger className="h-8 text-xs w-[120px]">
+                      <SelectValue placeholder="Filter" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Signals</SelectItem>
+                      <SelectItem value="buy">Buy Only</SelectItem>
+                      <SelectItem value="sell">Sell Only</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="h-8 px-2"
+                    onClick={handleRefresh}
+                    disabled={loading}
+                  >
+                    {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                  </Button>
+                </div>
                 
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="h-8 px-2"
-                  onClick={handleRefresh}
-                  disabled={loading}
-                >
-                  {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
-                </Button>
-              </div>
+                <div className="relative mb-3">
+                  <Input
+                    placeholder="Search signals..."
+                    className="w-full h-8 text-xs pl-8"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                  {searchTerm && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6"
+                      onClick={() => setSearchTerm('')}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              </>
             )}
             
             {loading ? (
@@ -344,8 +400,21 @@ export function AiTradingSignals({
                 )}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No signals found for the selected criteria.</p>
+              <div className="text-center py-6">
+                <p className="text-muted-foreground mb-3">No signals found for the selected criteria.</p>
+                {(searchTerm || category !== 'all' || timeframe !== 'all') && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setCategory('all');
+                      setTimeframe('all');
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                )}
               </div>
             )}
           </>

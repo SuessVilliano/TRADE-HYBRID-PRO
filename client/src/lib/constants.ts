@@ -90,7 +90,7 @@ export const TRADING_SYMBOLS = {
   crypto: ['BTC/USD', 'ETH/USD', 'SOL/USD', 'BNB/USD', 'ADA/USD', 'DOT/USD', 'XRP/USD'],
   stocks: ['AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META', 'TSLA', 'NVDA', 'JPM', 'V', 'DIS'],
   forex: ['EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD', 'USD/CAD', 'USD/CHF', 'NZD/USD'],
-  futures: ['ES', 'NQ', 'YM', 'RTY', 'CL', 'GC', 'SI', 'ZB', 'ZN', 'ZF']
+  futures: ['ES', 'NQ', 'MNQ', 'YM', 'RTY', 'CL', 'GC', 'SI', 'ZB', 'ZN', 'ZF']
 };
 
 // Combined list of all trading symbols
