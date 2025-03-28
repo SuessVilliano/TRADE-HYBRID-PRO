@@ -15,6 +15,7 @@ import {
 import { Physics, useBox, usePlane } from '@react-three/cannon';
 import * as THREE from 'three';
 import { useControlsStore } from '@/lib/stores/useControlsStore';
+import { useAudio } from '@/lib/stores/useAudio';
 import THCCoinDisplay from './THCCoinDisplay';
 import BadgeTriggerZone from './BadgeTriggerZone';
 
@@ -610,6 +611,21 @@ export default function TradeHouse() {
   const [isJumping, setIsJumping] = useState(false);
   const [isSprinting, setIsSprinting] = useState(false);
   const { controlsEnabled } = useControlsStore();
+  
+  // Set that we're in the metaverse for audio context
+  useEffect(() => {
+    const audioStore = useAudio.getState();
+    audioStore.setInMetaverse(true);
+    
+    // If in metaverse mode, try to play music
+    audioStore.playMusic();
+    
+    // Clean up on unmount
+    return () => {
+      audioStore.setInMetaverse(false);
+      audioStore.pauseMusic();
+    };
+  }, []);
   
   // Detect mobile device
   useEffect(() => {

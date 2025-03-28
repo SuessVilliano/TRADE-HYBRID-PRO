@@ -19,12 +19,47 @@ export function AudioInitializer() {
         const successSound = new Audio('/sounds/success.mp3');
         successSound.volume = 0.5;
         
+        // Initialize music tracks (if not already initialized)
+        const audioStore = useAudio.getState();
+        const tracks = audioStore.musicTracks;
+        
+        // Pre-load all music tracks
+        const updatedTracks = [...tracks];
+        tracks.forEach((track, index) => {
+          if (!track.element) {
+            const audio = new Audio(track.path);
+            audio.loop = true;
+            audio.volume = audioStore.musicVolume;
+            
+            // Update the track in our array
+            updatedTracks[index] = {
+              ...track,
+              element: audio
+            };
+            
+            // First track becomes the background music
+            if (index === 0) {
+              backgroundMusic.src = track.path;
+            }
+          }
+        });
+        
+        // Save the updated tracks to state
+        if (updatedTracks.some((track, i) => track !== tracks[i])) {
+          useAudio.setState({ musicTracks: updatedTracks });
+        }
+        
         // Store audio elements in global state
-        useAudio.getState().setBackgroundMusic(backgroundMusic);
-        useAudio.getState().setHitSound(hitSound);
-        useAudio.getState().setSuccessSound(successSound);
+        audioStore.setBackgroundMusic(backgroundMusic);
+        audioStore.setHitSound(hitSound);
+        audioStore.setSuccessSound(successSound);
         
         console.log('Audio assets initialized successfully');
+        
+        // Check if we need to start playing music (if in metaverse)
+        if (audioStore.inMetaverse && !audioStore.isMuted) {
+          audioStore.playMusic();
+        }
       } catch (error) {
         console.error('Error initializing audio assets:', error);
       }

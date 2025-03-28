@@ -21,6 +21,7 @@ import { MicroTradingTipTrigger } from "@/components/ui/micro-trading-tip-trigge
 import { MobileSidebarToggle } from "@/components/ui/mobile-sidebar-toggle";
 import { MobileMenu } from "@/components/ui/mobile-menu";
 import { ScreenSharing } from "@/components/ui/screen-sharing";
+import { MusicPlayer } from "@/components/ui/music-player";
 import { ArrowLeft, LayoutGrid, Maximize2, Minimize2, X, Info, Sparkles, Bot, BookOpen, BarChart2, Activity, BrainCircuit, Users, Coins, Cast } from "lucide-react";
 import { useMarketData } from "@/lib/stores/useMarketData";
 import { useNews } from "@/lib/stores/useNews";
@@ -164,21 +165,18 @@ function TradingSpaceContent() {
     fetchLeaderboard();
     fetchBots();
     
-    // Start background music when entering trading space
-    const { backgroundMusic, isMuted } = useAudio.getState();
-    if (backgroundMusic && !isMuted) {
-      backgroundMusic.play().catch(error => {
-        console.log("Background music play prevented:", error);
-      });
-    }
+    // Set that we're in the metaverse for contextual music playing
+    const audioStore = useAudio.getState();
+    audioStore.setInMetaverse(true);
+    
+    // If in metaverse mode, try to play music
+    audioStore.playMusic();
     
     // Clean up on unmount
     return () => {
-      const { backgroundMusic } = useAudio.getState();
-      if (backgroundMusic) {
-        backgroundMusic.pause();
-        backgroundMusic.currentTime = 0;
-      }
+      const audioStore = useAudio.getState();
+      audioStore.setInMetaverse(false);
+      audioStore.pauseMusic();
     };
   }, [fetchMarketData, fetchNews, fetchTrades, fetchLeaderboard, fetchBots, locationParam]);
   
@@ -1059,6 +1057,8 @@ function TradingSpaceContent() {
       
       {/* Game HUD */}
       <HUD className="z-20" />
+      {/* Music Player */}
+      <MusicPlayer className="fixed bottom-4 right-4 z-20" showInTrading={true} />
       
       {/* Screen Sharing */}
       <ScreenSharing 

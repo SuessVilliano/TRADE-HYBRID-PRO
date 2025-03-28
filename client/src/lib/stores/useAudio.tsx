@@ -1,5 +1,13 @@
 import { create } from "zustand";
 
+interface MusicTrack {
+  id: string;
+  title: string;
+  artist: string;
+  path: string;
+  element?: HTMLAudioElement;
+}
+
 interface AudioState {
   backgroundMusic: HTMLAudioElement | null;
   hitSound: HTMLAudioElement | null;
@@ -11,6 +19,13 @@ interface AudioState {
   audioContext: AudioContext | null;
   playerSpeakers: Map<string, MediaStreamAudioSourceNode>;
   
+  // Music player state
+  musicTracks: MusicTrack[];
+  currentTrackIndex: number;
+  musicIsPlaying: boolean;
+  musicVolume: number;
+  inMetaverse: boolean;
+  
   // Setter functions
   setBackgroundMusic: (music: HTMLAudioElement) => void;
   setHitSound: (sound: HTMLAudioElement) => void;
@@ -20,6 +35,14 @@ interface AudioState {
   toggleMute: () => void;
   playHit: () => void;
   playSuccess: () => void;
+  
+  // Music control functions
+  playMusic: () => void;
+  pauseMusic: () => void;
+  nextTrack: () => void;
+  previousTrack: () => void;
+  setMusicVolume: (volume: number) => void;
+  setInMetaverse: (inMetaverse: boolean) => void;
   
   // Voice chat functions
   enableVoiceChat: () => Promise<boolean>;
@@ -40,6 +63,32 @@ export const useAudio = create<AudioState>((set, get) => ({
   audioPanners: new Map(),
   audioContext: null,
   playerSpeakers: new Map(),
+  
+  // Music player state
+  musicTracks: [
+    {
+      id: 'track1',
+      title: 'Trade Hybrid Theme',
+      artist: 'Metaverse Beats',
+      path: '/sounds/background.mp3'
+    },
+    {
+      id: 'track2',
+      title: 'Crypto Trading',
+      artist: 'Digital Assets',
+      path: '/sounds/crypto.mp3'
+    },
+    {
+      id: 'track3',
+      title: 'Market Pulse',
+      artist: 'Trading Vibes',
+      path: '/sounds/market.mp3'
+    }
+  ],
+  currentTrackIndex: 0,
+  musicIsPlaying: false,
+  musicVolume: 0.7,
+  inMetaverse: false,
   
   setBackgroundMusic: (music) => {
     set({ backgroundMusic: music });
@@ -325,6 +374,181 @@ export const useAudio = create<AudioState>((set, get) => ({
         (position[1] - listenerPosition[1]) * volumeFactor,
         rotatedZ * volumeFactor
       );
+    }
+  },
+  
+  // Music player functions
+  playMusic: () => {
+    const { backgroundMusic, isMuted, musicTracks, currentTrackIndex, inMetaverse, musicVolume } = get();
+    
+    // Only play in metaverse mode if configured
+    if (!inMetaverse) {
+      console.log("Music not playing: not in metaverse");
+      return;
+    }
+    
+    // Don't play if muted
+    if (isMuted) {
+      console.log("Music not playing: audio muted");
+      return;
+    }
+    
+    // If we have an existing audio element, use it
+    if (backgroundMusic) {
+      backgroundMusic.volume = musicVolume;
+      backgroundMusic.play().catch(error => {
+        console.log("Music play prevented:", error);
+      });
+      set({ musicIsPlaying: true });
+      return;
+    }
+    
+    // Otherwise initialize the current track
+    const currentTrack = musicTracks[currentTrackIndex];
+    if (currentTrack) {
+      if (!currentTrack.element) {
+        const audio = new Audio(currentTrack.path);
+        audio.loop = true;
+        audio.volume = musicVolume;
+        currentTrack.element = audio;
+        
+        // Update the track in our tracks array
+        const updatedTracks = [...musicTracks];
+        updatedTracks[currentTrackIndex] = currentTrack;
+        set({ musicTracks: updatedTracks });
+      }
+      
+      currentTrack.element.play().catch(error => {
+        console.log("Music play prevented:", error);
+      });
+      
+      set({ 
+        backgroundMusic: currentTrack.element,
+        musicIsPlaying: true 
+      });
+    }
+  },
+  
+  pauseMusic: () => {
+    const { backgroundMusic } = get();
+    if (backgroundMusic) {
+      backgroundMusic.pause();
+      set({ musicIsPlaying: false });
+    }
+  },
+  
+  nextTrack: () => {
+    const { musicTracks, currentTrackIndex, backgroundMusic, musicIsPlaying, musicVolume } = get();
+    
+    // Pause current track if playing
+    if (backgroundMusic) {
+      backgroundMusic.pause();
+    }
+    
+    // Calculate next track index (with wrapping)
+    const nextIndex = (currentTrackIndex + 1) % musicTracks.length;
+    
+    // Get the next track
+    const nextTrack = musicTracks[nextIndex];
+    if (!nextTrack.element) {
+      const audio = new Audio(nextTrack.path);
+      audio.loop = true;
+      audio.volume = musicVolume;
+      nextTrack.element = audio;
+      
+      // Update the track in our tracks array
+      const updatedTracks = [...musicTracks];
+      updatedTracks[nextIndex] = nextTrack;
+      set({ musicTracks: updatedTracks });
+    }
+    
+    // If we were playing, start the new track
+    if (musicIsPlaying && !get().isMuted) {
+      nextTrack.element.play().catch(error => {
+        console.log("Music play prevented:", error);
+      });
+    }
+    
+    set({
+      currentTrackIndex: nextIndex,
+      backgroundMusic: nextTrack.element
+    });
+  },
+  
+  previousTrack: () => {
+    const { musicTracks, currentTrackIndex, backgroundMusic, musicIsPlaying, musicVolume } = get();
+    
+    // Pause current track if playing
+    if (backgroundMusic) {
+      backgroundMusic.pause();
+    }
+    
+    // Calculate previous track index (with wrapping)
+    const prevIndex = (currentTrackIndex - 1 + musicTracks.length) % musicTracks.length;
+    
+    // Get the previous track
+    const prevTrack = musicTracks[prevIndex];
+    if (!prevTrack.element) {
+      const audio = new Audio(prevTrack.path);
+      audio.loop = true;
+      audio.volume = musicVolume;
+      prevTrack.element = audio;
+      
+      // Update the track in our tracks array
+      const updatedTracks = [...musicTracks];
+      updatedTracks[prevIndex] = prevTrack;
+      set({ musicTracks: updatedTracks });
+    }
+    
+    // If we were playing, start the new track
+    if (musicIsPlaying && !get().isMuted) {
+      prevTrack.element.play().catch(error => {
+        console.log("Music play prevented:", error);
+      });
+    }
+    
+    set({
+      currentTrackIndex: prevIndex,
+      backgroundMusic: prevTrack.element
+    });
+  },
+  
+  setMusicVolume: (volume: number) => {
+    const { backgroundMusic } = get();
+    
+    // Clamp volume to valid range
+    const clampedVolume = Math.max(0, Math.min(1, volume));
+    
+    // Update volume of current track if playing
+    if (backgroundMusic) {
+      backgroundMusic.volume = clampedVolume;
+    }
+    
+    // Store the new volume
+    set({ musicVolume: clampedVolume });
+  },
+  
+  setInMetaverse: (inMetaverse: boolean) => {
+    const { musicIsPlaying, backgroundMusic } = get();
+    
+    // Update our state
+    set({ inMetaverse });
+    
+    // Handle music autoplay/pause based on context
+    if (inMetaverse) {
+      // In metaverse, we want to play if not muted
+      if (!get().isMuted && !musicIsPlaying && backgroundMusic) {
+        backgroundMusic.play().catch(error => {
+          console.log("Music play prevented:", error);
+        });
+        set({ musicIsPlaying: true });
+      }
+    } else {
+      // Out of metaverse, we want to pause
+      if (musicIsPlaying && backgroundMusic) {
+        backgroundMusic.pause();
+        set({ musicIsPlaying: false });
+      }
     }
   }
 }));
