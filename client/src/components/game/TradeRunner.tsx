@@ -550,7 +550,7 @@ const TradeRunner: React.FC = () => {
       {/* Welcome Screen */}
       {showWelcome && (
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-slate-900/95 p-6 border-2 border-fuchsia-500 rounded-lg text-center w-11/12 max-w-md">
-          <h1 className="text-3xl font-bold mb-2 text-cyan-500">Bulls vs Bears Runner</h1>
+          <h1 className="text-3xl font-bold mb-2 text-cyan-500">Trade Runner</h1>
           <p className="text-gray-300 mb-4">Navigate the markets, avoid order blocks, collect profits!</p>
           
           <div className="bg-slate-800 rounded-lg p-4 mb-4 text-left">

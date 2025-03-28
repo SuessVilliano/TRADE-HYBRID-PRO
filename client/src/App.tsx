@@ -9,7 +9,8 @@ import { TradingTipsButton } from './components/ui/trading-tips-button';
 import { useUserStore } from './lib/stores/useUserStore';
 
 // Lazy load the Trade Runner page
-const BullsVsBears = lazy(() => import('./pages/bulls-vs-bears-new'));
+const TradeRunner = lazy(() => import('./pages/trade-runner'));
+const BullsVsBears = lazy(() => import('./pages/bulls-vs-bears-new')); // Legacy reference
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -72,7 +73,7 @@ function AppContent() {
               <Link to="/" className="hover:text-blue-400 transition-colors">Home</Link>
               <Link to="/trading" className="hover:text-blue-400 transition-colors">Trading</Link>
               <Link to="/metaverse" className="hover:text-blue-400 transition-colors">Metaverse</Link>
-              <Link to="/bulls-vs-bears" className="hover:text-blue-400 transition-colors">Trade Runner</Link>
+              <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Trade Runner</Link>
               <Link to="/marketplace" className="hover:text-blue-400 transition-colors">NFT Marketplace</Link>
               <Link to="/learn" className="hover:text-blue-400 transition-colors">Learn</Link>
             </nav>
@@ -127,6 +128,19 @@ function AppContent() {
           <Route path="/marketplace" element={<NFTMarketplace />} />
           <Route path="/trading" element={<TradingPlaceholder />} />
           <Route path="/metaverse" element={<MetaversePlaceholder />} />
+          <Route path="/trade-runner" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading the Trade Runner game...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <TradeRunner />}
+            </Suspense>
+          } />
+          {/* Legacy route for backward compatibility */}
           <Route path="/bulls-vs-bears" element={
             <Suspense fallback={
               <div className="flex items-center justify-center h-screen">
@@ -187,7 +201,7 @@ function Home() {
         <FeatureCard 
           title="Trade Runner"
           description="Test your trading skills in our gamified trading simulator. Compete on the leaderboard and earn rewards."
-          linkTo="/bulls-vs-bears"
+          linkTo="/trade-runner"
         />
         <FeatureCard 
           title="NFT Marketplace"
