@@ -314,12 +314,14 @@ function TradingPlaceholder() {
   const [selectedSymbol, setSelectedSymbol] = useState('BITSTAMP:BTCUSD');
   const [brokerModalOpen, setBrokerModalOpen] = useState(false);
   
-  const cryptoSymbols = [
+  const tradingSymbols = [
     { value: 'BITSTAMP:BTCUSD', label: 'Bitcoin (BTC/USD)' },
     { value: 'BINANCE:ETHUSDT', label: 'Ethereum (ETH/USDT)' },
-    { value: 'BINANCE:BNBUSDT', label: 'Binance Coin (BNB/USDT)' },
     { value: 'BINANCE:SOLUSDT', label: 'Solana (SOL/USDT)' },
-    { value: 'BINANCE:ADAUSDT', label: 'Cardano (ADA/USDT)' },
+    { value: 'CME:MNQ1!', label: 'MNQ (Micro E-mini Nasdaq)' },
+    { value: 'OANDA:XAUUSD', label: 'Gold (XAU/USD)' },
+    { value: 'COMEX:GC1!', label: 'Gold Futures' },
+    { value: 'FOREXCOM:NSDX', label: 'Nasdaq 100 (Nas100)' },
   ];
   
   const handleSymbolChange = (newSymbol: string) => {
@@ -341,7 +343,7 @@ function TradingPlaceholder() {
               onChange={(e) => handleSymbolChange(e.target.value)}
               className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
-              {cryptoSymbols.map(symbol => (
+              {tradingSymbols.map(symbol => (
                 <option key={symbol.value} value={symbol.value}>{symbol.label}</option>
               ))}
             </select>
