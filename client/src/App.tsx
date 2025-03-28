@@ -147,9 +147,9 @@ function AppContent() {
                 </div>
               </>
             ) : (
-              <div className="flex items-center gap-3">
-                <WalletMultiButton />
-                <div className="border-r border-slate-600 h-8" />
+              <div className="flex flex-wrap items-center gap-3">
+                <WalletMultiButton className="wallet-adapter-button-custom max-w-[200px] text-sm px-2 py-1 overflow-hidden text-ellipsis whitespace-nowrap" />
+                <div className="border-r border-slate-600 h-8 hidden sm:block" />
                 {showLoginForm ? (
                   <form onSubmit={handleLogin} className="flex gap-2">
                     <input
@@ -407,13 +407,13 @@ function FeatureCard({ title, description, linkTo }: { title: string, descriptio
 
 function TradingPlaceholder() {
   const ControlCenterLazy = React.lazy(() => import('./components/ui/control-center'));
-  const [selectedSymbol, setSelectedSymbol] = useState('BITSTAMP:BTCUSD');
+  const [selectedSymbol, setSelectedSymbol] = useState('BINANCE:SOLUSDT');
   const [brokerModalOpen, setBrokerModalOpen] = useState(false);
   
   const tradingSymbols = [
+    { value: 'BINANCE:SOLUSDT', label: 'Solana (SOL/USDT)' },
     { value: 'BITSTAMP:BTCUSD', label: 'Bitcoin (BTC/USD)' },
     { value: 'BINANCE:ETHUSDT', label: 'Ethereum (ETH/USDT)' },
-    { value: 'BINANCE:SOLUSDT', label: 'Solana (SOL/USDT)' },
     { value: 'CME:MNQ!', label: 'MNQ (Micro E-mini Nasdaq)' },
     { value: 'OANDA:XAUUSD', label: 'Gold (XAU/USD)' },
     { value: 'COMEX:GC1!', label: 'Gold Futures' },

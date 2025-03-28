@@ -210,4 +210,30 @@ html, body, #root {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 1rem;
   }
+  
+  /* Wallet button mobile optimization */
+  .wallet-adapter-button-custom {
+    font-size: 0.75rem !important;
+    padding: 0.25rem 0.5rem !important;
+    max-width: 150px !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* Wallet button customizations */
+.wallet-adapter-button-custom {
+  background-color: rgba(var(--primary), 0.8) !important;
+  color: white !important;
+  border-radius: 0.375rem !important;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease !important;
+  font-family: inherit !important;
+  font-weight: 500 !important;
+  box-shadow: 0 0 5px rgba(var(--primary), 0.5) !important;
+}
+
+.wallet-adapter-button-custom:hover {
+  background-color: rgba(var(--primary), 1) !important;
+  box-shadow: 0 0 10px rgba(var(--primary), 0.7) !important;
 }
