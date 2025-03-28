@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#F3BA2F"/>
+  <path d="M100 40L76 64L64 52L100 16L136 52L124 64L100 40Z" fill="white"/>
+  <path d="M136 88L148 100L136 112L124 100L136 88Z" fill="white"/>
+  <path d="M100 76L124 100L100 124L76 100L100 76Z" fill="white"/>
+  <path d="M64 88L76 100L64 112L52 100L64 88Z" fill="white"/>
+  <path d="M100 136L124 112L136 124L100 160L64 124L76 112L100 136Z" fill="white"/>
+</svg>

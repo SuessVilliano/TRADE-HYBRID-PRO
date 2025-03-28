@@ -2,6 +2,10 @@
 // This service handles integration with multiple brokers through ABATEV technology
 
 import { THC_TOKEN } from '../constants';
+import { BinanceService } from './binance-service';
+import { TastyWorksService } from './tastyworks-service';
+import { IBKRService } from './ibkr-service';
+import { BrokerService } from './broker-service';
 
 // List of supported brokers
 export const SUPPORTED_BROKERS = [
@@ -42,6 +46,15 @@ export const SUPPORTED_BROKERS = [
     url: 'https://www.kraken.com'
   },
   {
+    id: 'binance',
+    name: 'Binance',
+    description: 'Leading global cryptocurrency exchange',
+    logo: '/images/brokers/binance.svg',
+    supportedMarkets: ['crypto'],
+    demoSupported: true,
+    url: 'https://www.binance.com'
+  },
+  {
     id: 'ironbeam',
     name: 'IronBeam',
     description: 'Futures trading and clearing services',
@@ -58,6 +71,24 @@ export const SUPPORTED_BROKERS = [
     supportedMarkets: ['crypto'],
     demoSupported: true,
     url: 'https://exchange.tradehybrid.co'
+  },
+  {
+    id: 'ibkr',
+    name: 'Interactive Brokers',
+    description: 'Global electronic trading platform',
+    logo: '/images/brokers/ibkr.svg',
+    supportedMarkets: ['stocks', 'forex', 'futures', 'options', 'bonds', 'crypto'],
+    demoSupported: true,
+    url: 'https://www.interactivebrokers.com'
+  },
+  {
+    id: 'tastyworks',
+    name: 'TastyWorks',
+    description: 'Options-focused trading platform',
+    logo: '/images/brokers/tastyworks.svg',
+    supportedMarkets: ['stocks', 'options', 'futures'],
+    demoSupported: true,
+    url: 'https://www.tastyworks.com'
   }
 ];
 
@@ -197,6 +228,9 @@ export class BrokerAggregatorService {
   /**
    * Authenticate with the selected broker
    */
+  // Instance of the broker service
+  private brokerService: BrokerService | null = null;
+
   private async authenticateWithBroker(credentials: BrokerCredentials): Promise<{
     success: boolean;
     token?: string;
@@ -210,6 +244,49 @@ export class BrokerAggregatorService {
       // Handle TradeLocker authentication specifically
       if (credentials.brokerId === 'tradelocker') {
         return this.authenticateWithTradeLocker(credentials);
+      }
+      
+      // Initialize the appropriate broker service based on broker ID
+      switch (credentials.brokerId) {
+        case 'binance':
+          this.brokerService = new BinanceService(
+            credentials.apiKey,
+            credentials.apiSecret,
+            credentials.demoMode
+          );
+          break;
+        case 'tastyworks':
+          this.brokerService = new TastyWorksService(
+            credentials.apiKey,
+            credentials.apiSecret,
+            credentials.demoMode
+          );
+          break;
+        case 'ibkr':
+          this.brokerService = new IBKRService(
+            credentials.apiKey,
+            credentials.apiSecret,
+            credentials.demoMode
+          );
+          break;
+        default:
+          // For other brokers, continue with existing ABATEV integration
+          break;
+      }
+      
+      // If we have a direct broker service, connect to it
+      if (this.brokerService) {
+        try {
+          await this.brokerService.connect();
+          console.log(`Successfully connected to ${credentials.brokerId} broker service`);
+        } catch (error: any) {
+          console.error(`Failed to connect to ${credentials.brokerId} broker service:`, error);
+          const errorMessage = error && error.message ? error.message : 'Unknown error';
+          return {
+            success: false,
+            message: `Failed to connect to ${credentials.brokerId}: ${errorMessage}`
+          };
+        }
       }
       
       // Handle regular broker authentication
@@ -284,8 +361,61 @@ export class BrokerAggregatorService {
     }
     
     try {
-      // In a real implementation, this would be an API call to the broker
-      // For now, return simulated account info
+      // If we have a direct broker service, use it
+      if (this.brokerService) {
+        const balance = await this.brokerService.getBalance();
+        const positions = await this.brokerService.getPositions();
+        
+        // Map broker positions to our internal format
+        const mappedPositions: Position[] = positions.map(pos => {
+          // Determine side based on quantity (negative is short)
+          const side = pos.quantity >= 0 ? 'long' : 'short';
+          const absQuantity = Math.abs(pos.quantity);
+          
+          // Determine market type from symbol
+          let market: 'crypto' | 'forex' | 'futures' | 'stocks' = 'stocks';
+          if (pos.symbol.includes('USD') || pos.symbol.includes('BTC') || pos.symbol.includes('ETH')) {
+            market = 'crypto';
+          } else if (
+            pos.symbol === 'EURUSD' || 
+            pos.symbol === 'USDJPY' || 
+            pos.symbol === 'GBPUSD'
+          ) {
+            market = 'forex';
+          } else if (
+            pos.symbol === 'ES' || 
+            pos.symbol === 'NQ' || 
+            pos.symbol === 'CL'
+          ) {
+            market = 'futures';
+          }
+          
+          // Calculate unrealized PnL and percentage
+          const unrealizedPnL = (pos.currentPrice - pos.averagePrice) * absQuantity * (side === 'long' ? 1 : -1);
+          const pnlPercentage = (unrealizedPnL / (pos.averagePrice * absQuantity)) * 100;
+          
+          return {
+            symbol: pos.symbol,
+            side,
+            quantity: absQuantity,
+            entryPrice: pos.averagePrice,
+            currentPrice: pos.currentPrice,
+            unrealizedPnL,
+            pnlPercentage: Number(pnlPercentage.toFixed(2)),
+            market
+          };
+        });
+        
+        return {
+          balance: balance.total,
+          equity: balance.total,
+          marginAvailable: balance.cash,
+          marginUsed: balance.positions,
+          positions: mappedPositions
+        };
+      }
+      
+      // Fallback to simulated account info for ABATEV brokers
       return {
         balance: 10000,
         equity: 10250,
@@ -423,7 +553,60 @@ export class BrokerAggregatorService {
     }
     
     try {
-      // Simulate placing an order with the broker
+      // If we have a broker service instance, use it directly
+      if (this.brokerService) {
+        try {
+          console.log(`Using ${this.credentials.brokerId} broker service to place order`);
+          
+          // Map our OrderRequest format to the broker service format
+          // The broker service only supports 'market' and 'limit' order types
+          let orderType: 'market' | 'limit' = order.type === 'market' ? 'market' : 'limit';
+          
+          const brokerOrder: {
+            symbol: string;
+            side: 'buy' | 'sell';
+            quantity: number;
+            type: 'market' | 'limit';
+            limitPrice?: number;
+          } = {
+            symbol: order.symbol,
+            side: order.side,
+            quantity: order.quantity,
+            type: orderType,
+            limitPrice: order.price
+          };
+          
+          // Place the order with the broker service
+          const orderId = await this.brokerService.placeOrder(brokerOrder);
+          
+          // Assume market orders are filled immediately, limit orders are pending
+          if (order.type === 'market') {
+            return {
+              orderId,
+              status: 'filled',
+              filledQuantity: order.quantity,
+              averagePrice: order.price || this.getBasePrice(order.symbol),
+              transactionId: `tx-${Date.now()}`
+            };
+          } else {
+            return {
+              orderId,
+              status: 'pending',
+              message: `${order.type.toUpperCase()} order placed successfully`
+            };
+          }
+        } catch (error: any) {
+          console.error(`Error placing order with ${this.credentials.brokerId} broker service:`, error);
+          const errorMessage = error && error.message ? error.message : 'Unknown error';
+          return {
+            orderId: '',
+            status: 'rejected',
+            message: `Order placement failed: ${errorMessage}`
+          };
+        }
+      }
+      
+      // For ABATEV brokers or as a fallback, use simulated order placement
       console.log(`Placing ${order.side} order for ${order.quantity} ${order.symbol} at ${order.price || 'market'} price`);
       
       // Generate a random order ID
@@ -605,6 +788,13 @@ export class BrokerAggregatorService {
    * Logout/disconnect from the broker
    */
   public logout(): void {
+    // Clean up any market data subscriptions if we have a broker service
+    if (this.brokerService) {
+      // Since we don't track subscriptions directly here, there's no direct cleanup needed
+      this.brokerService = null;
+    }
+    
+    // Reset authentication state
     this.credentials = null;
     this.authenticated = false;
     this.authToken = '';

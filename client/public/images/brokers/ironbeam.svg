@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#333333"/>
+  <path d="M50 50H150V70H50V50Z" fill="#CD3E37"/>
+  <path d="M50 85H150V105H50V85Z" fill="#CD3E37"/>
+  <path d="M50 120H150V140H50V120Z" fill="#CD3E37"/>
+  <polygon points="175,150 150,150 160,180 185,180" fill="#CD3E37"/>
+  <polygon points="145,150 120,150 130,180 155,180" fill="#CD3E37"/>
+  <polygon points="115,150 90,150 100,180 125,180" fill="#CD3E37"/>
+  <polygon points="85,150 60,150 70,180 95,180" fill="#CD3E37"/>
+  <polygon points="55,150 30,150 40,180 65,180" fill="#CD3E37"/>
+</svg>
