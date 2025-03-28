@@ -13,19 +13,23 @@ const TradeRunner = lazy(() => import('./pages/trade-runner'));
 const BullsVsBears = lazy(() => import('./pages/bulls-vs-bears-new')); // Legacy reference
 const NewsDashboard = lazy(() => import('./pages/news-dashboard'));
 const TradeJournalPage = lazy(() => import('./pages/trade-journal'));
+const SolanaTrading = lazy(() => import('./pages/solana-trading'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
 import { MicroLearningTipRenderer } from './components/ui/micro-learning-tip-renderer';
+import { ToastProvider } from './components/ui/toaster';
 
 // Light wrapper with providers
 function AppWithProviders() {
   return (
     <Router>
-      <MicroLearningProvider>
-        <AppContent />
-        <MicroLearningTipRenderer />
-      </MicroLearningProvider>
+      <ToastProvider>
+        <MicroLearningProvider>
+          <AppContent />
+          <MicroLearningTipRenderer />
+        </MicroLearningProvider>
+      </ToastProvider>
     </Router>
   );
 }
@@ -74,6 +78,7 @@ function AppContent() {
             <nav className="hidden md:flex gap-4">
               <Link to="/" className="hover:text-blue-400 transition-colors">Home</Link>
               <Link to="/trading" className="hover:text-blue-400 transition-colors">Trading</Link>
+              <Link to="/solana-trading" className="hover:text-blue-400 transition-colors">Solana DEX</Link>
               <Link to="/metaverse" className="hover:text-blue-400 transition-colors">Metaverse</Link>
               <Link to="/news" className="hover:text-blue-400 transition-colors">News</Link>
               <Link to="/trade-journal" className="hover:text-blue-400 transition-colors">Journal</Link>
@@ -131,6 +136,18 @@ function AppContent() {
           <Route path="/" element={<Home />} />
           <Route path="/marketplace" element={<NFTMarketplace />} />
           <Route path="/trading" element={<TradingPlaceholder />} />
+          <Route path="/solana-trading" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading Solana DEX trading...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <SolanaTrading />}
+            </Suspense>
+          } />
           <Route path="/metaverse" element={<MetaversePlaceholder />} />
           <Route path="/news" element={
             <Suspense fallback={
@@ -220,6 +237,11 @@ function Home() {
           title="Trading"
           description="Trade with AI-powered insights, real-time market data, and advanced charting tools."
           linkTo="/trading"
+        />
+        <FeatureCard 
+          title="Solana DEX"
+          description="Trade directly on Solana decentralized exchanges with lower fees using THC token."
+          linkTo="/solana-trading"
         />
         <FeatureCard 
           title="Metaverse"
