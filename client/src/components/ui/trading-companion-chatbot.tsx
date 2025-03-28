@@ -209,26 +209,26 @@ export function TradingCompanionChatbot({ selectedSymbol = 'BITSTAMP:BTCUSD' }: 
   ];
 
   return (
-    <div className="flex flex-col h-full bg-slate-900 rounded-md overflow-hidden">
+    <div className="flex flex-col h-full rounded-md overflow-hidden border border-secondary/30 shadow-[0_0_10px_rgba(var(--secondary),0.15)]">
       {/* Chat header */}
-      <div className="bg-slate-800 p-3 flex justify-between items-center border-b border-slate-700">
+      <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-3 flex justify-between items-center border-b border-secondary/30">
         <div className="flex items-center">
           <Avatar className="h-8 w-8 mr-2">
             <AvatarImage src="/assistant-avatar.png" alt="AI Trading Assistant" />
-            <AvatarFallback className="bg-blue-600">
+            <AvatarFallback className="bg-gradient-to-r from-primary/90 to-secondary/90">
               <Bot size={16} />
             </AvatarFallback>
           </Avatar>
           <div>
-            <h3 className="font-medium text-sm">Trading Companion</h3>
-            <p className="text-xs text-slate-400">Powered by AI</p>
+            <h3 className="font-medium text-sm text-slate-100">Trading Companion</h3>
+            <p className="text-xs text-secondary/80">Powered by AI</p>
           </div>
         </div>
         <div className="flex items-center space-x-1">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={clearConversation} className="h-7 w-7">
+                <Button variant="ghost" size="icon" onClick={clearConversation} className="h-7 w-7 text-slate-300 hover:text-white hover:bg-slate-800">
                   <Trash size={14} />
                 </Button>
               </TooltipTrigger>
@@ -241,7 +241,7 @@ export function TradingCompanionChatbot({ selectedSymbol = 'BITSTAMP:BTCUSD' }: 
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={downloadConversation} className="h-7 w-7">
+                <Button variant="ghost" size="icon" onClick={downloadConversation} className="h-7 w-7 text-slate-300 hover:text-white hover:bg-slate-800">
                   <Download size={14} />
                 </Button>
               </TooltipTrigger>
@@ -254,7 +254,7 @@ export function TradingCompanionChatbot({ selectedSymbol = 'BITSTAMP:BTCUSD' }: 
       </div>
       
       {/* Chat messages */}
-      <ScrollArea ref={scrollAreaRef} className="flex-1 p-3">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 p-3 bg-slate-900/95">
         <div className="space-y-4">
           {messages.map((message) => (
             <div 
@@ -268,13 +268,13 @@ export function TradingCompanionChatbot({ selectedSymbol = 'BITSTAMP:BTCUSD' }: 
                 className={cn(
                   "max-w-[80%] rounded-lg p-3",
                   message.role === 'user' 
-                    ? "bg-blue-600 text-white" 
-                    : "bg-slate-800 border border-slate-700"
+                    ? "bg-gradient-to-r from-primary/90 to-primary/80 text-white border border-primary/50 shadow-[0_0_8px_rgba(var(--primary),0.3)]" 
+                    : "bg-gradient-to-r from-slate-800 to-slate-900 border border-secondary/30 shadow-[0_0_8px_rgba(var(--secondary),0.15)]"
                 )}
               >
                 <div className="flex items-center mb-1">
                   {message.role === 'assistant' ? (
-                    <Bot size={14} className="mr-1" />
+                    <Bot size={14} className="mr-1 text-secondary" />
                   ) : (
                     <User size={14} className="mr-1" />
                   )}
@@ -293,15 +293,15 @@ export function TradingCompanionChatbot({ selectedSymbol = 'BITSTAMP:BTCUSD' }: 
           
           {isThinking && (
             <div className="flex justify-start">
-              <div className="max-w-[80%] rounded-lg p-3 bg-slate-800 border border-slate-700">
+              <div className="max-w-[80%] rounded-lg p-3 bg-gradient-to-r from-slate-800 to-slate-900 border border-secondary/30">
                 <div className="flex items-center mb-1">
-                  <Bot size={14} className="mr-1" />
+                  <Bot size={14} className="mr-1 text-secondary" />
                   <span className="text-xs font-medium">Assistant</span>
                 </div>
                 <div className="flex space-x-1 items-center h-6">
-                  <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-secondary animate-pulse" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-secondary animate-pulse" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-secondary animate-pulse" style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             </div>
@@ -310,13 +310,13 @@ export function TradingCompanionChatbot({ selectedSymbol = 'BITSTAMP:BTCUSD' }: 
       </ScrollArea>
       
       {/* Suggested questions */}
-      <div className="px-3 py-2 bg-slate-800/50 border-t border-slate-700">
+      <div className="px-3 py-2 bg-gradient-to-r from-slate-900 to-slate-800 border-t border-secondary/30">
         <div 
           className="flex justify-between items-center cursor-pointer mb-2" 
           onClick={() => setExpandedOptions(!expandedOptions)}
         >
-          <span className="text-xs font-medium text-slate-400">Suggested Questions</span>
-          <Button variant="ghost" size="icon" className="h-5 w-5 text-slate-400">
+          <span className="text-xs font-medium text-secondary/80">Suggested Questions</span>
+          <Button variant="ghost" size="icon" className="h-5 w-5 text-secondary/80 hover:text-secondary hover:bg-transparent">
             {expandedOptions ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </Button>
         </div>
@@ -328,7 +328,7 @@ export function TradingCompanionChatbot({ selectedSymbol = 'BITSTAMP:BTCUSD' }: 
                 key={index}
                 variant="outline"
                 size="sm"
-                className="justify-start h-auto py-1.5 text-xs text-left bg-slate-800 border-slate-700"
+                className="justify-start h-auto py-1.5 text-xs text-left bg-slate-800/80 border-secondary/30 hover:border-secondary/60 hover:bg-slate-800 transition-colors"
                 onClick={() => {
                   setInput(question);
                   if (inputRef.current) {
@@ -344,7 +344,7 @@ export function TradingCompanionChatbot({ selectedSymbol = 'BITSTAMP:BTCUSD' }: 
       </div>
       
       {/* Input area */}
-      <div className="p-3 bg-slate-800 border-t border-slate-700">
+      <div className="p-3 bg-gradient-to-r from-slate-900 to-slate-800 border-t border-secondary/30">
         <div className="flex items-end space-x-2">
           <Textarea
             ref={inputRef}
@@ -352,13 +352,13 @@ export function TradingCompanionChatbot({ selectedSymbol = 'BITSTAMP:BTCUSD' }: 
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder="Ask me anything about trading..."
-            className="min-h-[60px] max-h-[150px] bg-slate-900 border-slate-700 resize-none"
+            className="min-h-[60px] max-h-[150px] bg-slate-900 border-slate-700 resize-none focus:border-secondary/50 focus:ring-secondary/30"
           />
           <Button 
             onClick={handleSendMessage} 
             disabled={input.trim() === '' || isThinking}
             size="icon"
-            className="h-[36px] w-[36px] rounded-full flex-shrink-0"
+            className="h-[36px] w-[36px] rounded-full flex-shrink-0 bg-primary hover:bg-primary/90 shadow-[0_0_10px_rgba(var(--primary),0.3)] disabled:shadow-none"
           >
             <Send size={16} />
           </Button>

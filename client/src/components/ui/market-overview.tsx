@@ -38,18 +38,19 @@ export function MarketOverview({
   showChart = true,
   locale = 'en',
   largeChartUrl = '',
-  isTransparent = false,
+  isTransparent = true, // Making transparent so we can style container ourselves
   showSymbolLogo = true,
-  showFloatingTooltip = false,
-  plotLineColorGrowing = 'rgba(41, 98, 255, 1)',
-  plotLineColorFalling = 'rgba(41, 98, 255, 1)',
-  gridLineColor = 'rgba(42, 46, 57, 0)',
-  scaleFontColor = 'rgba(106, 109, 120, 1)',
-  belowLineFillColorGrowing = 'rgba(41, 98, 255, 0.12)',
-  belowLineFillColorFalling = 'rgba(41, 98, 255, 0.12)',
-  belowLineFillColorGrowingBottom = 'rgba(41, 98, 255, 0)',
-  belowLineFillColorFallingBottom = 'rgba(41, 98, 255, 0)',
-  symbolActiveColor = 'rgba(41, 98, 255, 0.12)',
+  showFloatingTooltip = true,
+  // Cyberpunk-themed colors (purple and aqua blue) for growing/falling
+  plotLineColorGrowing = 'rgba(147, 51, 234, 1)', // Purple
+  plotLineColorFalling = 'rgba(6, 182, 212, 1)', // Aqua blue
+  gridLineColor = 'rgba(30, 30, 40, 0.5)', // Dark grid lines
+  scaleFontColor = 'rgba(248, 250, 252, 0.8)', // Lighter text for better visibility
+  belowLineFillColorGrowing = 'rgba(147, 51, 234, 0.15)', // Transparent purple
+  belowLineFillColorFalling = 'rgba(6, 182, 212, 0.15)', // Transparent aqua
+  belowLineFillColorGrowingBottom = 'rgba(147, 51, 234, 0)', // Fade to transparent
+  belowLineFillColorFallingBottom = 'rgba(6, 182, 212, 0)', // Fade to transparent
+  symbolActiveColor = 'rgba(147, 51, 234, 0.2)', // Active symbol highlight
   tabs = [
     {
       title: 'Indices',
@@ -232,15 +233,32 @@ export function MarketOverview({
   ]);
 
   return (
-    <div className="tradingview-widget-container" ref={containerRef}>
+    <div 
+      className="tradingview-widget-container rounded-md shadow-lg overflow-hidden border border-secondary/30 shadow-[0_0_10px_rgba(var(--secondary),0.15)]" 
+      ref={containerRef}
+      style={{
+        background: 'linear-gradient(to bottom, rgba(20, 20, 30, 0.95), rgba(15, 15, 20, 0.97))',
+      }}
+    >
       <div className="tradingview-widget-container__widget"></div>
       <div className="tradingview-widget-script-container"></div>
-      <div className="tradingview-widget-copyright" style={{ fontSize: '11px', padding: '4px 8px', textAlign: 'right' }}>
+      <div className="tradingview-widget-copyright" style={{ 
+        fontSize: '11px', 
+        padding: '4px 12px', 
+        textAlign: 'right',
+        borderTop: '1px solid rgba(6, 182, 212, 0.2)', // Light secondary border
+        background: 'rgba(10, 10, 15, 0.7)',
+      }}>
         <a 
           href="https://www.tradingview.com/" 
           rel="noopener noreferrer" 
           target="_blank"
-          style={{ color: colorTheme === 'dark' ? '#9db2bd' : '#2962FF', textDecoration: 'none' }}
+          style={{ 
+            color: 'rgba(6, 182, 212, 0.8)', // Secondary color
+            textDecoration: 'none',
+            fontWeight: 'bold'
+          }}
+          className="hover:text-secondary transition-colors"
         >
           <span className="blue-text">Track all markets on TradingView</span>
         </a>
