@@ -1,9 +1,10 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, Suspense } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useBox } from '@react-three/cannon';
 import { useGLTF, useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { useControlsStore } from '@/lib/stores/useControlsStore';
+import { GLTF } from 'three-stdlib';
 
 // Define our control keys
 enum Controls {
@@ -32,6 +33,9 @@ interface PlayerProps {
   // Add any other props as needed
 }
 
+// Preload the model
+useGLTF.preload('/models/trader_character.glb');
+
 export function Player({ position = [0, 1, 0], controlsEnabled: propControlsEnabled }: PlayerProps) {
   // Use the global controls store to properly integrate with the controls toggle system
   const { controlsEnabled: storeControlsEnabled } = useControlsStore();
@@ -50,7 +54,20 @@ export function Player({ position = [0, 1, 0], controlsEnabled: propControlsEnab
   // State for player movement
   const velocity = useRef<[number, number, number]>([0, 0, 0]);
   const positionRef = useRef<[number, number, number]>(position);
-  const [playerModel, setPlayerModel] = useState<THREE.Group | null>(null);
+  const [modelLoaded, setModelLoaded] = useState(false);
+  
+  // Load the character model
+  const { scene: characterModel } = useGLTF('/models/trader_character.glb') as GLTF & {
+    scene: THREE.Group
+  };
+  
+  // Update loading state when model is loaded
+  useEffect(() => {
+    if (characterModel) {
+      setModelLoaded(true);
+      console.log("Trader character model loaded successfully");
+    }
+  }, [characterModel]);
   
   // Get keyboard controls state (non-reactive for use in useFrame)
   const [, getKeys] = useKeyboardControls<Controls>();
@@ -121,10 +138,25 @@ export function Player({ position = [0, 1, 0], controlsEnabled: propControlsEnab
   
   return (
     <group>
-      <group ref={ref as any}>
-        {/* If we have a player model, use it, otherwise use a fallback */}
-        {playerModel ? (
-          <primitive object={playerModel} />
+      <group ref={ref as any} scale={[0.5, 0.5, 0.5]}>
+        {/* If the model is loaded, use it, otherwise use a fallback */}
+        {modelLoaded && characterModel ? (
+          <Suspense fallback={
+            <mesh castShadow>
+              <boxGeometry args={[1, 2, 1]} />
+              <meshStandardMaterial color="#43a7f0" />
+            </mesh>
+          }>
+            <primitive 
+              object={characterModel.clone()} 
+              castShadow 
+              receiveShadow 
+              position={[0, -1.7, 0]} // Adjust position to match physics body
+            />
+            
+            {/* Glow effect for better visibility */}
+            <pointLight position={[0, 1, 0]} intensity={0.5} color="#43a7f0" />
+          </Suspense>
         ) : (
           <>
             {/* Fallback player representation if model fails to load */}
