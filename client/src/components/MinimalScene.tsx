@@ -1,7 +1,8 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Grid, Environment, useKeyboardControls } from '@react-three/drei';
+import { OrbitControls, Grid, Environment, useKeyboardControls, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
+import { GLTF } from 'three-stdlib';
 
 // Define controls enum
 enum Controls {
@@ -10,6 +11,69 @@ enum Controls {
   left = 'left',
   right = 'right',
   jump = 'jump',
+}
+
+// Preload models
+useGLTF.preload('/models/trader_character.glb');
+useGLTF.preload('/models/tradehouse.glb');
+useGLTF.preload('/models/thc_coin_premium.glb');
+
+function TraderCharacter(props: any) {
+  const modelRef = useRef<THREE.Group>(null!);
+  const [hovered, setHover] = useState(false);
+  const [rotation, setRotation] = useState(0);
+  const [modelLoaded, setModelLoaded] = useState(false);
+  
+  // Load the character model
+  const { scene: characterModel } = useGLTF('/models/trader_character.glb') as GLTF & {
+    scene: THREE.Group
+  };
+  
+  // Track loading state
+  useEffect(() => {
+    if (characterModel) {
+      setModelLoaded(true);
+      console.log("Trader character model loaded successfully");
+    }
+  }, [characterModel]);
+  
+  useFrame(() => {
+    if (modelRef.current) {
+      modelRef.current.rotation.y = rotation;
+      setRotation(rotation + 0.01);
+    }
+  });
+  
+  return (
+    <group 
+      ref={modelRef}
+      {...props}
+      onPointerOver={() => setHover(true)}
+      onPointerOut={() => setHover(false)}
+      scale={[2.5, 2.5, 2.5]}
+    >
+      {modelLoaded && characterModel ? (
+        <Suspense fallback={
+          <mesh castShadow>
+            <boxGeometry args={[1, 1, 1]} />
+            <meshStandardMaterial color="#FFFFFF" />
+          </mesh>
+        }>
+          <primitive 
+            object={characterModel.clone()} 
+            castShadow 
+            receiveShadow 
+            scale={hovered ? [1.1, 1.1, 1.1] : [1, 1, 1]}
+          />
+        </Suspense>
+      ) : (
+        <mesh castShadow>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color="#5ecc89" />
+        </mesh>
+      )}
+    </group>
+  );
 }
 
 function AnimatedBox(props: any) {
@@ -73,6 +137,113 @@ function Lights() {
   );
 }
 
+function TradeHouseModel(props: any) {
+  const modelRef = useRef<THREE.Group>(null!);
+  const [hovered, setHover] = useState(false);
+  const [modelLoaded, setModelLoaded] = useState(false);
+  
+  // Load the tradehouse model
+  const { scene: houseModel } = useGLTF('/models/tradehouse.glb') as GLTF & {
+    scene: THREE.Group
+  };
+  
+  // Track loading state
+  useEffect(() => {
+    if (houseModel) {
+      setModelLoaded(true);
+      console.log("Trade house model loaded successfully");
+    }
+  }, [houseModel]);
+  
+  return (
+    <group 
+      ref={modelRef}
+      {...props}
+      onPointerOver={() => setHover(true)}
+      onPointerOut={() => setHover(false)}
+      scale={[2.5, 2.5, 2.5]}
+    >
+      {modelLoaded && houseModel ? (
+        <Suspense fallback={
+          <mesh castShadow>
+            <boxGeometry args={[5, 3, 5]} />
+            <meshStandardMaterial color="#555555" />
+          </mesh>
+        }>
+          <primitive 
+            object={houseModel.clone()} 
+            castShadow 
+            receiveShadow 
+          />
+        </Suspense>
+      ) : (
+        <mesh castShadow>
+          <boxGeometry args={[5, 3, 5]} />
+          <meshStandardMaterial color="#555555" />
+        </mesh>
+      )}
+    </group>
+  );
+}
+
+function THCCoinModel(props: any) {
+  const modelRef = useRef<THREE.Group>(null!);
+  const [hovered, setHover] = useState(false);
+  const [rotation, setRotation] = useState(0);
+  const [modelLoaded, setModelLoaded] = useState(false);
+  
+  // Load the coin model
+  const { scene: coinModel } = useGLTF('/models/thc_coin_premium.glb') as GLTF & {
+    scene: THREE.Group
+  };
+  
+  // Track loading state
+  useEffect(() => {
+    if (coinModel) {
+      setModelLoaded(true);
+      console.log("THC coin model loaded successfully");
+    }
+  }, [coinModel]);
+  
+  useFrame(() => {
+    if (modelRef.current) {
+      modelRef.current.rotation.y = rotation;
+      setRotation(rotation + 0.01);
+    }
+  });
+  
+  return (
+    <group 
+      ref={modelRef}
+      {...props}
+      onPointerOver={() => setHover(true)}
+      onPointerOut={() => setHover(false)}
+      scale={[1.5, 1.5, 1.5]}
+    >
+      {modelLoaded && coinModel ? (
+        <Suspense fallback={
+          <mesh castShadow>
+            <cylinderGeometry args={[1, 1, 0.2, 32]} />
+            <meshStandardMaterial color="#FFD700" />
+          </mesh>
+        }>
+          <primitive 
+            object={coinModel.clone()} 
+            castShadow 
+            receiveShadow 
+            scale={hovered ? [1.1, 1.1, 1.1] : [1, 1, 1]}
+          />
+        </Suspense>
+      ) : (
+        <mesh castShadow>
+          <cylinderGeometry args={[1, 1, 0.2, 32]} />
+          <meshStandardMaterial color="#FFD700" />
+        </mesh>
+      )}
+    </group>
+  );
+}
+
 function Floor() {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
@@ -93,6 +264,18 @@ function Floor() {
   );
 }
 
+function InfoPanel() {
+  return (
+    <group position={[0, 3, 0]}>
+      <mesh position={[0, 0, 0]}>
+        <boxGeometry args={[6, 2, 0.1]} />
+        <meshStandardMaterial color="#1e293b" opacity={0.9} transparent />
+      </mesh>
+      {/* Text would normally go here, but we're using a basic placeholder */}
+    </group>
+  );
+}
+
 export default function MinimalScene() {
   // Define key mappings for controls
   const keyMap = [
@@ -105,39 +288,59 @@ export default function MinimalScene() {
 
   return (
     <div className="h-full">
-      <Canvas shadows camera={{ position: [5, 5, 5], fov: 50 }}>
+      <Canvas shadows camera={{ position: [10, 8, 10], fov: 50 }}>
         <color attach="background" args={['#0f172a']} />
-        <fog attach="fog" args={['#0f172a', 10, 30]} />
+        <fog attach="fog" args={['#0f172a', 15, 35]} />
         
         <Lights />
         <Floor />
         
-        {/* Example objects */}
-        <AnimatedBox position={[-2, 0, 0]} />
-        <AnimatedSphere position={[2, 0, 0]} />
+        {/* Trading House elements */}
+        <Suspense fallback={null}>
+          {/* Trader character */}
+          <TraderCharacter position={[0, 0, 0]} />
+          
+          {/* Trade house building */}
+          <TradeHouseModel position={[8, 0, 0]} />
+          
+          {/* THC Coins */}
+          <THCCoinModel position={[0, 1.5, 3]} />
+          <THCCoinModel position={[3, 1.5, 0]} />
+          <THCCoinModel position={[-3, 1.5, -3]} />
+          
+          {/* Decorative elements */}
+          <AnimatedBox position={[-5, 0, 5]} />
+          <AnimatedSphere position={[5, 0, -5]} />
+        </Suspense>
         
-        {/* Info text - visualization */}
-        <group position={[0, 0.1, 0]}>
-          <mesh position={[0, 0.5, 0]}>
-            <boxGeometry args={[4, 0.2, 2]} />
-            <meshStandardMaterial color="#1e293b" />
-          </mesh>
-          <mesh position={[0, 0.7, 0]}>
-            <boxGeometry args={[3.8, 0.1, 1.8]} />
-            <meshStandardMaterial color="#334155" />
-          </mesh>
-        </group>
+        {/* Info panel */}
+        <InfoPanel />
         
         <OrbitControls 
           enablePan={true}
           enableZoom={true}
           enableRotate={true}
-          minDistance={3}
-          maxDistance={20}
+          minDistance={5}
+          maxDistance={30}
           maxPolarAngle={Math.PI / 2 - 0.1}
         />
         <Environment preset="city" />
       </Canvas>
+      
+      {/* Overlay instructions */}
+      <div className="absolute bottom-4 left-4 bg-black/70 text-white p-3 rounded-lg text-sm max-w-xs">
+        <h3 className="font-bold mb-1">Trade Hybrid Metaverse Preview</h3>
+        <p className="text-gray-300 text-xs mb-2">
+          This is a simplified preview of the full metaverse experience. The complete version will include:
+        </p>
+        <ul className="text-xs list-disc pl-4 text-gray-300">
+          <li>Full character movement</li>
+          <li>Interactive trade signals</li>
+          <li>Live market data</li>
+          <li>Multiplayer interaction</li>
+          <li>Voice communication</li>
+        </ul>
+      </div>
     </div>
   );
 }
