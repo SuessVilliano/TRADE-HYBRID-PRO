@@ -197,6 +197,12 @@ const BullsVsBears: React.FC = () => {
     animFrameRef.current = requestAnimationFrame(gameLoop);
   };
 
+  // Price data for chart background
+  const priceDataRef = useRef<{x: number, y: number}[]>([]);
+  const marketTrendRef = useRef<'up' | 'down' | 'sideways'>('up');
+  const trendDurationRef = useRef(0);
+  const maxTrendDuration = 100; // How long a trend lasts
+  
   // Update game state
   const updateGame = () => {
     if (!canvasRef.current || !playerRef.current) return;
@@ -256,9 +262,72 @@ const BullsVsBears: React.FC = () => {
       }
     });
     
-    // Spawn obstacles randomly
+    // Update market trend
+    trendDurationRef.current++;
+    if (trendDurationRef.current >= maxTrendDuration) {
+      // Change market trend randomly
+      const random = Math.random();
+      if (random < 0.4) {
+        marketTrendRef.current = 'up';
+      } else if (random < 0.8) {
+        marketTrendRef.current = 'down';
+      } else {
+        marketTrendRef.current = 'sideways';
+      }
+      trendDurationRef.current = 0;
+    }
+    
+    // Update price data for the chart
+    if (priceDataRef.current.length === 0) {
+      // Initialize with a starting point
+      priceDataRef.current.push({
+        x: 0,
+        y: canvas.height / 2
+      });
+    }
+    
+    // Add new price point
+    const lastPoint = priceDataRef.current[priceDataRef.current.length - 1];
+    let yChange = 0;
+    
+    // Determine price movement based on market trend
+    switch (marketTrendRef.current) {
+      case 'up':
+        yChange = -Math.random() * 3 - 0.5; // Trend up (negative y is up)
+        break;
+      case 'down':
+        yChange = Math.random() * 3 + 0.5; // Trend down
+        break;
+      case 'sideways':
+        yChange = (Math.random() - 0.5) * 3; // Sideways
+        break;
+    }
+    
+    // Add some randomness to avoid straight lines
+    yChange += (Math.random() - 0.5) * 2;
+    
+    // Keep price within canvas bounds
+    const newY = Math.max(50, Math.min(canvas.height - 100, lastPoint.y + yChange));
+    
+    priceDataRef.current.push({
+      x: lastPoint.x + 2,
+      y: newY
+    });
+    
+    // Remove old points if they're off screen
+    if (priceDataRef.current.length > canvas.width / 2) {
+      priceDataRef.current.shift();
+    }
+    
+    // Shift all price points left (simulate chart movement)
+    priceDataRef.current.forEach(point => {
+      point.x -= 1;
+    });
+    
+    // Spawn obstacles randomly, match with market trend
     if (Math.random() < 0.02) {
-      const isTop = Math.random() < 0.5;
+      // More obstacles at the bottom during uptrend and at the top during downtrend
+      const isTop = marketTrendRef.current === 'down' ? Math.random() < 0.7 : Math.random() < 0.3;
       obstaclesRef.current.push({
         x: canvas.width,
         y: isTop ? 0 : canvas.height - 100,
@@ -268,11 +337,16 @@ const BullsVsBears: React.FC = () => {
       });
     }
     
-    // Spawn coins randomly
+    // Spawn coins randomly, around the chart line
     if (Math.random() < 0.03) {
+      const lastPriceY = priceDataRef.current[priceDataRef.current.length - 1].y;
+      
+      // Position coins near the price line for more interesting gameplay
+      const coinY = lastPriceY + (Math.random() - 0.5) * 100;
+      
       coinsRef.current.push({
         x: canvas.width,
-        y: Math.random() * (canvas.height - 200) + 50,
+        y: Math.max(50, Math.min(canvas.height - 100, coinY)),
         width: 20,
         height: 20
       });
@@ -319,12 +393,61 @@ const BullsVsBears: React.FC = () => {
       ctx.stroke();
     }
     
+    // Draw price chart
+    if (priceDataRef.current.length > 1) {
+      // Draw price line
+      ctx.strokeStyle = marketTrendRef.current === 'up' ? '#00ff00' : 
+                        marketTrendRef.current === 'down' ? '#ff0000' : 
+                        '#ffff00';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(priceDataRef.current[0].x, priceDataRef.current[0].y);
+      
+      for (let i = 1; i < priceDataRef.current.length; i++) {
+        ctx.lineTo(priceDataRef.current[i].x, priceDataRef.current[i].y);
+      }
+      ctx.stroke();
+      
+      // Fill area under the chart
+      ctx.beginPath();
+      ctx.moveTo(priceDataRef.current[0].x, canvas.height);
+      for (let i = 0; i < priceDataRef.current.length; i++) {
+        ctx.lineTo(priceDataRef.current[i].x, priceDataRef.current[i].y);
+      }
+      ctx.lineTo(priceDataRef.current[priceDataRef.current.length - 1].x, canvas.height);
+      ctx.closePath();
+      
+      // Fill with gradient
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, marketTrendRef.current === 'up' ? 'rgba(0, 255, 0, 0.2)' :
+                              marketTrendRef.current === 'down' ? 'rgba(255, 0, 0, 0.2)' :
+                              'rgba(255, 255, 0, 0.2)');
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = gradient;
+      ctx.fill();
+      
+      // Label market trend
+      ctx.font = 'bold 16px Arial';
+      ctx.fillStyle = marketTrendRef.current === 'up' ? '#00ff00' : 
+                     marketTrendRef.current === 'down' ? '#ff0000' : 
+                     '#ffff00';
+      const trendText = marketTrendRef.current === 'up' ? 'BULLISH' : 
+                       marketTrendRef.current === 'down' ? 'BEARISH' : 
+                       'RANGING';
+      ctx.fillText(trendText, canvas.width - 100, 30);
+    }
+    
     // Draw player
     ctx.fillStyle = '#00ff88';
     ctx.fillRect(player.x, player.y, player.width, player.height);
     
+    // Draw player eyes - add detail
+    ctx.fillStyle = '#000';
+    ctx.fillRect(player.x + player.width - 15, player.y + 10, 5, 5);
+    
     // Draw player legs with animation
     const legOffset = [0, 5, 0, -5][player.frame];
+    ctx.fillStyle = '#00ff88';
     ctx.fillRect(player.x + 5, player.y + player.height, 10, 10 + legOffset);
     ctx.fillRect(player.x + player.width - 15, player.y + player.height, 10, 10 - legOffset);
     
@@ -342,10 +465,21 @@ const BullsVsBears: React.FC = () => {
       gradient.addColorStop(1, 'rgba(0, 0, 0, 0.2)');
       ctx.fillStyle = gradient;
       ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+      
+      // Label the obstacles
+      ctx.fillStyle = '#fff';
+      ctx.font = '12px Arial';
+      const text = obstacle.isTop ? 'SELL' : 'BUY';
+      const textWidth = ctx.measureText(text).width;
+      ctx.fillText(text, obstacle.x + (obstacle.width - textWidth) / 2, obstacle.y + obstacle.height / 2 + 4);
     });
     
     // Draw coins (profits)
     coinsRef.current.forEach(coin => {
+      // Glow effect
+      ctx.shadowColor = '#ffff00';
+      ctx.shadowBlur = 10;
+      
       ctx.fillStyle = '#ffd700';
       ctx.beginPath();
       ctx.arc(coin.x + coin.width/2, coin.y + coin.height/2, coin.width/2, 0, Math.PI * 2);
@@ -356,6 +490,9 @@ const BullsVsBears: React.FC = () => {
       ctx.beginPath();
       ctx.arc(coin.x + coin.width/3, coin.y + coin.height/3, coin.width/6, 0, Math.PI * 2);
       ctx.fill();
+      
+      // Reset shadow
+      ctx.shadowBlur = 0;
     });
     
     // Draw ground
@@ -365,10 +502,25 @@ const BullsVsBears: React.FC = () => {
     ctx.fillStyle = groundGradient;
     ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
     
-    // Draw score
+    // Draw score with shadow
+    ctx.shadowColor = '#00ffff';
+    ctx.shadowBlur = 5;
     ctx.fillStyle = '#00ffff';
     ctx.font = 'bold 24px Arial';
-    ctx.fillText('Profits: ' + scoreRef.current, 20, 40);
+    ctx.fillText('Profits: $' + scoreRef.current, 20, 40);
+    ctx.shadowBlur = 0;
+    
+    // Draw explanatory text for market trend
+    ctx.font = '14px Arial';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('Market Trend:', canvas.width - 100, 50);
+    
+    // Draw game instructions
+    if (scoreRef.current < 50) { // Only show for beginners
+      ctx.font = '14px Arial';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('SPACE to jump', canvas.width / 2 - 50, 30);
+    }
   };
 
   return (

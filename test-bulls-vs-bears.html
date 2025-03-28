@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bulls vs Bears Test</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #111927;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      display: block;
+      margin: 20px auto;
+      border: 2px solid cyan;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      color: cyan;
+    }
+    button {
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 5px;
+      margin: 10px;
+    }
+    button:hover {
+      background-color: #2563eb;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Bulls vs Bears Game</h1>
+    <p>A simple game to test the dynamic price chart and gameplay mechanics</p>
+    
+    <canvas id="gameCanvas" width="800" height="500"></canvas>
+    
+    <div>
+      <button id="startBtn">Start Game</button>
+      <button id="resetBtn">Reset Game</button>
+    </div>
+    
+    <div id="info">
+      <p>Use SPACE to jump. Avoid red blocks and collect coins.</p>
+      <p id="score">Score: 0</p>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const scoreDisplay = document.getElementById('score');
+    
+    // Game variables
+    let gameActive = false;
+    let player = {
+      x: 50,
+      y: canvas.height - 90,
+      width: 40,
+      height: 40,
+      dy: 0,
+      grounded: true,
+      frame: 0,
+      frameCount: 0
+    };
+    let obstacles = [];
+    let coins = [];
+    let gameSpeed = 5;
+    let score = 0;
+    let animFrame = null;
+    let isJumping = false;
+    let jumpStartTime = 0;
+    
+    // Price data for chart background
+    let priceData = [];
+    let marketTrend = 'up';
+    let trendDuration = 0;
+    const maxTrendDuration = 100;
+    
+    // Start game
+    startBtn.addEventListener('click', () => {
+      if (!gameActive) {
+        initGame();
+        gameActive = true;
+        gameLoop();
+      }
+    });
+    
+    // Reset game
+    resetBtn.addEventListener('click', () => {
+      gameActive = false;
+      if (animFrame) {
+        cancelAnimationFrame(animFrame);
+      }
+      clearGame();
+      initGame();
+    });
+    
+    // Key controls
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && gameActive && player.grounded) {
+        isJumping = true;
+        jumpStartTime = Date.now();
+        e.preventDefault();
+      }
+    });
+    
+    document.addEventListener('keyup', (e) => {
+      if (e.code === 'Space') {
+        isJumping = false;
+        e.preventDefault();
+      }
+    });
+    
+    // Touch controls
+    canvas.addEventListener('touchstart', () => {
+      if (gameActive && player.grounded) {
+        isJumping = true;
+        jumpStartTime = Date.now();
+      }
+    });
+    
+    canvas.addEventListener('touchend', () => {
+      isJumping = false;
+    });
+    
+    // Initialize game
+    function initGame() {
+      player = {
+        x: 50,
+        y: canvas.height - 90,
+        width: 40,
+        height: 40,
+        dy: 0,
+        grounded: true,
+        frame: 0,
+        frameCount: 0
+      };
+      obstacles = [];
+      coins = [];
+      priceData = [{x: 0, y: canvas.height / 2}];
+      gameSpeed = 5;
+      score = 0;
+      scoreDisplay.textContent = `Score: ${score}`;
+    }
+    
+    // Clear game state
+    function clearGame() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    
+    // Check collision
+    function collision(a, b) {
+      return a.x < b.x + b.width &&
+             a.x + a.width > b.x &&
+             a.y < b.y + b.height &&
+             a.y + a.height > b.y;
+    }
+    
+    // Game over
+    function gameOver() {
+      gameActive = false;
+      alert(`Game Over! Your score: ${score}`);
+      if (animFrame) {
+        cancelAnimationFrame(animFrame);
+      }
+    }
+    
+    // Game loop
+    function gameLoop() {
+      if (!gameActive) return;
+      
+      // Update
+      updateGame();
+      
+      // Draw
+      drawGame();
+      
+      // Continue loop
+      animFrame = requestAnimationFrame(gameLoop);
+    }
+    
+    // Update game state
+    function updateGame() {
+      // Jump handling
+      if (isJumping) {
+        const jumpDuration = Date.now() - jumpStartTime;
+        const maxJumpDuration = 500;
+        const jumpForce = Math.min(jumpDuration / maxJumpDuration, 1) * -15;
+        player.dy = jumpForce;
+      }
+      
+      // Apply gravity
+      player.dy += 0.6;
+      player.y += player.dy;
+      player.grounded = false;
+      
+      // Ground collision
+      if (player.y + player.height > canvas.height - 50) {
+        player.y = canvas.height - player.height - 50;
+        player.dy = 0;
+        player.grounded = true;
+      }
+      
+      // Update obstacles
+      obstacles.forEach((obstacle, index) => {
+        obstacle.x -= gameSpeed;
+        
+        // Remove if off screen
+        if (obstacle.x + obstacle.width < 0) {
+          obstacles.splice(index, 1);
+        }
+        
+        // Check collision with player
+        if (collision(player, obstacle)) {
+          gameOver();
+        }
+      });
+      
+      // Update coins
+      coins.forEach((coin, index) => {
+        coin.x -= gameSpeed;
+        
+        // Remove if off screen
+        if (coin.x + coin.width < 0) {
+          coins.splice(index, 1);
+        }
+        
+        // Check collision with player
+        if (collision(player, coin)) {
+          score += 10;
+          scoreDisplay.textContent = `Score: ${score}`;
+          coins.splice(index, 1);
+        }
+      });
+      
+      // Update market trend
+      trendDuration++;
+      if (trendDuration >= maxTrendDuration) {
+        // Change market trend randomly
+        const random = Math.random();
+        if (random < 0.4) {
+          marketTrend = 'up';
+        } else if (random < 0.8) {
+          marketTrend = 'down';
+        } else {
+          marketTrend = 'sideways';
+        }
+        trendDuration = 0;
+      }
+      
+      // Update price data for the chart
+      const lastPoint = priceData[priceData.length - 1];
+      let yChange = 0;
+      
+      // Determine price movement based on market trend
+      switch (marketTrend) {
+        case 'up':
+          yChange = -Math.random() * 3 - 0.5; // Trend up (negative y is up)
+          break;
+        case 'down':
+          yChange = Math.random() * 3 + 0.5; // Trend down
+          break;
+        case 'sideways':
+          yChange = (Math.random() - 0.5) * 3; // Sideways
+          break;
+      }
+      
+      // Add some randomness to avoid straight lines
+      yChange += (Math.random() - 0.5) * 2;
+      
+      // Keep price within canvas bounds
+      const newY = Math.max(50, Math.min(canvas.height - 100, lastPoint.y + yChange));
+      
+      priceData.push({
+        x: lastPoint.x + 2,
+        y: newY
+      });
+      
+      // Remove old points
+      if (priceData.length > canvas.width / 2) {
+        priceData.shift();
+      }
+      
+      // Shift all price points left
+      priceData.forEach(point => {
+        point.x -= 1;
+      });
+      
+      // Spawn obstacles randomly, match with market trend
+      if (Math.random() < 0.02) {
+        // More obstacles at the bottom during uptrend and at the top during downtrend
+        const isTop = marketTrend === 'down' ? Math.random() < 0.7 : Math.random() < 0.3;
+        obstacles.push({
+          x: canvas.width,
+          y: isTop ? 0 : canvas.height - 100,
+          width: 40,
+          height: Math.random() * 30 + 30,
+          isTop
+        });
+      }
+      
+      // Spawn coins randomly, around the chart line
+      if (Math.random() < 0.03) {
+        const lastPriceY = priceData[priceData.length - 1].y;
+        
+        // Position coins near the price line for more interesting gameplay
+        const coinY = lastPriceY + (Math.random() - 0.5) * 100;
+        
+        coins.push({
+          x: canvas.width,
+          y: Math.max(50, Math.min(canvas.height - 100, coinY)),
+          width: 20,
+          height: 20
+        });
+      }
+      
+      // Increase game speed gradually
+      gameSpeed += 0.001;
+      
+      // Update player animation
+      if (player.grounded) {
+        player.frameCount++;
+        if (player.frameCount > 5) {
+          player.frame = (player.frame + 1) % 4;
+          player.frameCount = 0;
+        }
+      }
+    }
+    
+    // Draw game
+    function drawGame() {
+      // Clear canvas
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw grid background
+      ctx.strokeStyle = '#113355';
+      ctx.lineWidth = 1;
+      const gridSize = 50;
+      for (let x = 0; x < canvas.width; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+      
+      // Draw price chart
+      if (priceData.length > 1) {
+        // Draw price line
+        ctx.strokeStyle = marketTrend === 'up' ? '#00ff00' : 
+                          marketTrend === 'down' ? '#ff0000' : 
+                          '#ffff00';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(priceData[0].x, priceData[0].y);
+        
+        for (let i = 1; i < priceData.length; i++) {
+          ctx.lineTo(priceData[i].x, priceData[i].y);
+        }
+        ctx.stroke();
+        
+        // Fill area under the chart
+        ctx.beginPath();
+        ctx.moveTo(priceData[0].x, canvas.height);
+        for (let i = 0; i < priceData.length; i++) {
+          ctx.lineTo(priceData[i].x, priceData[i].y);
+        }
+        ctx.lineTo(priceData[priceData.length - 1].x, canvas.height);
+        ctx.closePath();
+        
+        // Fill with gradient
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, marketTrend === 'up' ? 'rgba(0, 255, 0, 0.2)' :
+                            marketTrend === 'down' ? 'rgba(255, 0, 0, 0.2)' :
+                            'rgba(255, 255, 0, 0.2)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        
+        // Label market trend
+        ctx.font = 'bold 16px Arial';
+        ctx.fillStyle = marketTrend === 'up' ? '#00ff00' : 
+                      marketTrend === 'down' ? '#ff0000' : 
+                      '#ffff00';
+        const trendText = marketTrend === 'up' ? 'BULLISH' : 
+                        marketTrend === 'down' ? 'BEARISH' : 
+                        'RANGING';
+        ctx.fillText(trendText, canvas.width - 100, 30);
+      }
+      
+      // Draw player
+      ctx.fillStyle = '#00ff88';
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+      
+      // Draw player eyes - add detail
+      ctx.fillStyle = '#000';
+      ctx.fillRect(player.x + player.width - 15, player.y + 10, 5, 5);
+      
+      // Draw player legs with animation
+      const legOffset = [0, 5, 0, -5][player.frame];
+      ctx.fillStyle = '#00ff88';
+      ctx.fillRect(player.x + 5, player.y + player.height, 10, 10 + legOffset);
+      ctx.fillRect(player.x + player.width - 15, player.y + player.height, 10, 10 - legOffset);
+      
+      // Draw obstacles (order blocks)
+      obstacles.forEach(obstacle => {
+        ctx.fillStyle = obstacle.isTop ? '#ff3300' : '#ff0033';
+        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        
+        // Add gradient effect
+        const gradient = ctx.createLinearGradient(
+          obstacle.x, obstacle.y,
+          obstacle.x + obstacle.width, obstacle.y + obstacle.height
+        );
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.2)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        
+        // Label the obstacles
+        ctx.fillStyle = '#fff';
+        ctx.font = '12px Arial';
+        const text = obstacle.isTop ? 'SELL' : 'BUY';
+        const textWidth = ctx.measureText(text).width;
+        ctx.fillText(text, obstacle.x + (obstacle.width - textWidth) / 2, obstacle.y + obstacle.height / 2 + 4);
+      });
+      
+      // Draw coins (profits)
+      coins.forEach(coin => {
+        // Glow effect
+        ctx.shadowColor = '#ffff00';
+        ctx.shadowBlur = 10;
+        
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        ctx.arc(coin.x + coin.width/2, coin.y + coin.height/2, coin.width/2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Add shine effect
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(coin.x + coin.width/3, coin.y + coin.height/3, coin.width/6, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Reset shadow
+        ctx.shadowBlur = 0;
+      });
+      
+      // Draw ground
+      const groundGradient = ctx.createLinearGradient(0, canvas.height - 50, 0, canvas.height);
+      groundGradient.addColorStop(0, '#113355');
+      groundGradient.addColorStop(1, '#001133');
+      ctx.fillStyle = groundGradient;
+      ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+      
+      // Draw score with shadow
+      ctx.shadowColor = '#00ffff';
+      ctx.shadowBlur = 5;
+      ctx.fillStyle = '#00ffff';
+      ctx.font = 'bold 24px Arial';
+      ctx.fillText('Profits: $' + score, 20, 40);
+      ctx.shadowBlur = 0;
+      
+      // Draw explanatory text for market trend
+      ctx.font = '14px Arial';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('Market Trend:', canvas.width - 100, 50);
+      
+      // Draw game instructions
+      if (score < 50) { // Only show for beginners
+        ctx.font = '14px Arial';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('SPACE to jump', canvas.width / 2 - 50, 30);
+      }
+    }
+    
+    // Initial draw to show canvas before game starts
+    initGame();
+    drawGame();
+  </script>
+</body>
+</html>
