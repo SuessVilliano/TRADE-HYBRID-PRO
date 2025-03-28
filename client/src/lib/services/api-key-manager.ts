@@ -95,6 +95,18 @@ class ApiKeyManager {
       endpoints: ['/v1/chat/completions', '/v1/completions', '/v1/embeddings'],
       status: 'operational'
     });
+    
+    this.serviceConfigs.set('moralis', {
+      name: 'Moralis',
+      description: 'Web3 and blockchain data provider',
+      baseUrl: 'https://deep-index.moralis.io/api/v2',
+      authType: 'header',
+      keyParam: 'X-API-Key',
+      docsUrl: 'https://docs.moralis.io/web3-data-api',
+      logoUrl: '/images/api/moralis.png',
+      endpoints: ['/erc20/', '/nft/', '/block/', '/transaction/'],
+      status: 'operational'
+    });
   }
   
   /**
@@ -114,7 +126,8 @@ class ApiKeyManager {
         'OANDA_API_TOKEN',
         'BINANCE_API_KEY',
         'BINANCE_API_SECRET',
-        'OPENAI_API_KEY'
+        'OPENAI_API_KEY',
+        'MORALIS_API_KEY'
       ];
       
       const hasSecrets = await check_secrets(keyNames);
@@ -164,6 +177,20 @@ class ApiKeyManager {
             key: `Bearer ${process.env.OPENAI_API_KEY}`,
             isValid: true,
             tier: 'basic'
+          });
+        }
+        
+        // Set up Moralis key if available
+        if (process.env.MORALIS_API_KEY) {
+          this.apiKeys.set('moralis', {
+            key: process.env.MORALIS_API_KEY,
+            isValid: true,
+            tier: 'premium',
+            rateLimits: {
+              requestsPerMinute: 60,
+              requestsPerDay: 100000,
+              requestsRemaining: 100000
+            }
           });
         }
       }

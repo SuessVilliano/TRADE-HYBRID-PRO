@@ -1,6 +1,7 @@
 import { rapidApiService } from './rapid-api-service';
 import { cnbcService } from './cnbc-service';
 import { fidelityService } from './fidelity-service';
+import { moralisService } from './moralis-service';
 
 export interface MarketDataResponse {
   symbol: string;
@@ -76,7 +77,8 @@ export class MarketDataService {
         await Promise.all([
           rapidApiService.initialize(),
           cnbcService.initialize(),
-          fidelityService.initialize()
+          fidelityService.initialize(),
+          moralisService.initialize()
         ]);
         
         this.initialized = true;
@@ -146,6 +148,24 @@ export class MarketDataService {
     await this.ensureInitialized();
     
     try {
+      // Try to get data from Moralis first, which is faster and more reliable for mobile
+      const moralisData = await moralisService.getMarketData(undefined, limit);
+      
+      if (moralisData && moralisData.length > 0) {
+        console.log('Using Moralis for crypto data');
+        return moralisData.map(token => ({
+          symbol: token.symbol,
+          name: token.name,
+          price: token.usd_price || 0,
+          change: token.price_change_24h || 0,
+          marketCap: token.market_cap || 0,
+          volume: 0, // Not available from our basic implementation
+          rank: 0, // Not available from our basic implementation
+          iconUrl: `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${token.symbol.toLowerCase()}.png`
+        }));
+      }
+      
+      // Fall back to RapidAPI if Moralis fails
       const data = await rapidApiService.getCryptoData(limit);
       
       if (!data || !data.data || !data.data.coins) {
@@ -164,7 +184,29 @@ export class MarketDataService {
       })) || [];
     } catch (error) {
       console.error('Error fetching crypto data:', error);
-      return [];
+      
+      // Try RapidAPI as a backup if Moralis fails
+      try {
+        const data = await rapidApiService.getCryptoData(limit);
+        
+        if (!data || !data.data || !data.data.coins) {
+          return [];
+        }
+        
+        return data.data?.coins?.map((coin: any) => ({
+          symbol: coin.symbol,
+          name: coin.name,
+          price: parseFloat(coin.price),
+          change: parseFloat(coin.change),
+          marketCap: parseFloat(coin.marketCap),
+          volume: parseFloat(coin.volume24h || '0'),
+          rank: coin.rank,
+          iconUrl: coin.iconUrl
+        })) || [];
+      } catch (backupError) {
+        console.error('Both Moralis and RapidAPI failed for crypto data:', backupError);
+        return [];
+      }
     }
   }
 
