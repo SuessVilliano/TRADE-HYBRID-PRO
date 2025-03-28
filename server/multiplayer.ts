@@ -35,7 +35,7 @@ export class MultiplayerServer {
   constructor(server: Server) {
     this.wss = new WebSocketServer({ 
       server,
-      path: '/multiplayer'  // Set a specific path for our multiplayer WebSocket
+      path: '/ws'  // Updated path for our WebSocket server
     });
     this.initialize();
     

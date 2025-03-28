@@ -125,11 +125,13 @@ export class MultiplayerService {
     this.userCustomization = customization;
     
     // For Replit environment, we need to use a relative WebSocket URL
-    // This connects to the same host and port that served the page,
-    // which is what we want in the Replit environment
+    // This connects to the same host and port that served the page
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host; // Includes hostname and port
-    const wsUrl = `${protocol}//${host}/multiplayer`;
+    
+    // Use the absolute path without specifying subdirectory
+    // This ensures compatibility with Replit's URL structure
+    const wsUrl = `${protocol}//${host}/ws`;
     
     console.log(`Connecting to multiplayer server at ${wsUrl}`);
     
