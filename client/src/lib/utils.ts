@@ -74,6 +74,16 @@ export function formatCurrency(
   });
 }
 
+export function formatPercentage(
+  number: number,
+  decimals: number = 2
+) {
+  return formatNumber(number, {
+    style: "percent",
+    decimals,
+  });
+}
+
 export function formatCompactNumber(number: number) {
   const formatter = new Intl.NumberFormat("en-US", {
     notation: "compact",

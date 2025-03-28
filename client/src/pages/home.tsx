@@ -198,7 +198,7 @@ function HomeContent() {
               </p>
             </CardContent>
             <CardFooter className="text-xs text-muted-foreground">
-              {TRADING_SYMBOLS.CRYPTO.slice(0, 3).join(" • ")} and more
+              {TRADING_SYMBOLS.crypto.slice(0, 3).join(" • ")} and more
             </CardFooter>
           </Card>
           

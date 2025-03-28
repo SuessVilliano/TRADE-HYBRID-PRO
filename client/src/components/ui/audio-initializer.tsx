@@ -26,33 +26,16 @@ export function AudioInitializer() {
         // Pre-load all music tracks
         const updatedTracks = [...tracks];
         tracks.forEach((track, index) => {
-          if (!track.element) {
-            const audio = new Audio(track.path);
-            audio.loop = true;
-            audio.volume = audioStore.musicVolume;
-            
-            // Update the track in our array
-            updatedTracks[index] = {
-              ...track,
-              element: audio
-            };
-            
-            // First track becomes the background music
-            if (index === 0) {
-              backgroundMusic.src = track.path;
-            }
+          // First track becomes the background music
+          if (index === 0) {
+            backgroundMusic.src = track.url;
           }
         });
         
-        // Save the updated tracks to state
-        if (updatedTracks.some((track, i) => track !== tracks[i])) {
-          useAudio.setState({ musicTracks: updatedTracks });
-        }
-        
         // Store audio elements in global state
-        audioStore.setBackgroundMusic(backgroundMusic);
-        audioStore.setHitSound(hitSound);
-        audioStore.setSuccessSound(successSound);
+        audioStore.setBackgroundMusic(backgroundMusic.src);
+        audioStore.setHitSound(hitSound.src);
+        audioStore.setSuccessSound(successSound.src);
         
         console.log('Audio assets initialized successfully');
         

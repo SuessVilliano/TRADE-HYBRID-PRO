@@ -17,12 +17,13 @@ export function TradingTipsProvider({
   autoShowInterval = 300000, // 5 minutes by default
   currentPath = '/'
 }: TradingTipsProviderProps) {
-  const { fetchTips, showTip } = useTradingTips();
+  const { showTip } = useTradingTips();
   
-  // Fetch tips when the component mounts
+  // No need to fetch tips as they're already pre-loaded in the store
   useEffect(() => {
-    fetchTips();
-  }, [fetchTips]);
+    // Tips are already pre-loaded in the store
+    console.log("Trading tips provider initialized");
+  }, []);
   
   // Show a tip only on the first load - automatic intervals are removed
   useEffect(() => {
