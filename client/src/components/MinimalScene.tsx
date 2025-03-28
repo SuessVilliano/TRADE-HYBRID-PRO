@@ -1,8 +1,10 @@
 import React, { useRef, useState, useEffect, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Grid, Environment, useKeyboardControls, useGLTF } from '@react-three/drei';
+import { OrbitControls, Grid, Environment, useKeyboardControls, useGLTF, KeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { GLTF } from 'three-stdlib';
+import { useMultiplayer } from '../lib/stores/useMultiplayer';
+import OtherPlayers from './game/OtherPlayers';
 
 // Define controls enum
 enum Controls {
@@ -276,6 +278,163 @@ function InfoPanel() {
   );
 }
 
+// Player component that updates position with keyboard controls
+function Player() {
+  const modelRef = useRef<THREE.Group>(null!);
+  const [position, setPosition] = useState<[number, number, number]>([0, 0, 0]);
+  const [rotation, setRotation] = useState(0);
+  const [modelLoaded, setModelLoaded] = useState(false);
+  const [animation, setAnimation] = useState('idle');
+
+  // Get the multiplayer service functions
+  const { updatePlayerPosition, connected, clientId } = useMultiplayer();
+  
+  // Get keyboard controls
+  const [, getKeys] = useKeyboardControls<Controls>();
+  
+  // Load the character model
+  const { scene: characterModel } = useGLTF('/models/trader_character.glb') as GLTF & {
+    scene: THREE.Group
+  };
+  
+  // Track loading state
+  useEffect(() => {
+    if (characterModel) {
+      setModelLoaded(true);
+      console.log("Player character model loaded successfully");
+    }
+  }, [characterModel]);
+  
+  // Movement logic in the game loop
+  useFrame((_, delta) => {
+    if (!modelRef.current) return;
+    
+    // Get current key states
+    const { forward, back, left, right, jump } = getKeys();
+    
+    // Movement speed
+    const speed = 5 * delta;
+    let moved = false;
+    let newAnimation = 'idle';
+    
+    // Current position
+    const newPosition: [number, number, number] = [...position];
+    let newRotation = rotation;
+    
+    // Handle movement
+    if (forward) {
+      newPosition[2] -= speed;
+      newRotation = 0;
+      moved = true;
+      newAnimation = 'walking';
+    }
+    
+    if (back) {
+      newPosition[2] += speed;
+      newRotation = Math.PI;
+      moved = true;
+      newAnimation = 'walking';
+    }
+    
+    if (left) {
+      newPosition[0] -= speed;
+      newRotation = Math.PI / 2;
+      moved = true;
+      newAnimation = 'walking';
+    }
+    
+    if (right) {
+      newPosition[0] += speed;
+      newRotation = -Math.PI / 2;
+      moved = true;
+      newAnimation = 'walking';
+    }
+    
+    if (jump) {
+      // Simple jump animation
+      newAnimation = 'jumping';
+    }
+    
+    // Update position and rotation
+    if (moved) {
+      setPosition(newPosition);
+      setRotation(newRotation);
+      modelRef.current.position.set(...newPosition);
+      modelRef.current.rotation.y = newRotation;
+      
+      // Update animation state
+      if (animation !== newAnimation) {
+        setAnimation(newAnimation);
+      }
+      
+      // Send position update to multiplayer service
+      if (connected && clientId) {
+        updatePlayerPosition(newPosition, newRotation, newAnimation);
+      }
+    }
+  });
+  
+  return (
+    <group ref={modelRef} position={position} rotation={[0, rotation, 0]}>
+      {modelLoaded && characterModel ? (
+        <Suspense fallback={
+          <mesh castShadow>
+            <boxGeometry args={[1, 1, 1]} />
+            <meshStandardMaterial color="#5ecc89" />
+          </mesh>
+        }>
+          <primitive 
+            object={characterModel.clone()} 
+            castShadow 
+            receiveShadow 
+            scale={[2.5, 2.5, 2.5]}
+          />
+        </Suspense>
+      ) : (
+        <mesh castShadow>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color="#5ecc89" />
+        </mesh>
+      )}
+    </group>
+  );
+}
+
+// Connection component to handle multiplayer connection
+function MultiplayerConnection() {
+  const [playerName, setPlayerName] = useState("");
+  const [isConnecting, setIsConnecting] = useState(false);
+  const { connect, connected } = useMultiplayer();
+  
+  // Generate a random name if not set
+  useEffect(() => {
+    if (!playerName) {
+      const randomName = `Trader${Math.floor(Math.random() * 1000)}`;
+      setPlayerName(randomName);
+    }
+  }, [playerName]);
+  
+  // Connect to multiplayer on component mount
+  useEffect(() => {
+    if (!connected && !isConnecting && playerName) {
+      console.log("Connecting to multiplayer as:", playerName);
+      setIsConnecting(true);
+      
+      // Connect with basic customization
+      connect(playerName, {
+        bodyColor: `#${Math.floor(Math.random()*16777215).toString(16)}`, // Random color
+        eyeColor: "#ffffff",
+        hatColor: `#${Math.floor(Math.random()*16777215).toString(16)}` // Random color
+      });
+      
+      setIsConnecting(false);
+    }
+  }, [connect, connected, isConnecting, playerName]);
+  
+  // Render nothing visually
+  return null;
+}
+
 export default function MinimalScene() {
   // Define key mappings for controls
   const keyMap = [
@@ -286,60 +445,83 @@ export default function MinimalScene() {
     { name: Controls.jump, keys: ['Space'] },
   ];
 
+  // Setup multiplayer connection
+  const [multiplayerEnabled, setMultiplayerEnabled] = useState(true);
+
   return (
     <div className="h-full">
-      <Canvas shadows camera={{ position: [10, 8, 10], fov: 50 }}>
-        <color attach="background" args={['#0f172a']} />
-        <fog attach="fog" args={['#0f172a', 15, 35]} />
-        
-        <Lights />
-        <Floor />
-        
-        {/* Trading House elements */}
-        <Suspense fallback={null}>
-          {/* Trader character */}
-          <TraderCharacter position={[0, 0, 0]} />
+      {/* Setup multiplayer connection */}
+      {multiplayerEnabled && <MultiplayerConnection />}
+      
+      <KeyboardControls map={keyMap}>
+        <Canvas shadows camera={{ position: [10, 8, 10], fov: 50 }}>
+          <color attach="background" args={['#0f172a']} />
+          <fog attach="fog" args={['#0f172a', 15, 35]} />
           
-          {/* Trade house building */}
-          <TradeHouseModel position={[8, 0, 0]} />
+          <Lights />
+          <Floor />
           
-          {/* THC Coins */}
-          <THCCoinModel position={[0, 1.5, 3]} />
-          <THCCoinModel position={[3, 1.5, 0]} />
-          <THCCoinModel position={[-3, 1.5, -3]} />
+          {/* Trading House elements */}
+          <Suspense fallback={null}>
+            {/* Controllable Player (only in multiplayer mode) */}
+            {multiplayerEnabled ? <Player /> : <TraderCharacter position={[0, 0, 0]} />}
+            
+            {/* Other players from multiplayer */}
+            {multiplayerEnabled && <OtherPlayers />}
+            
+            {/* Trade house building */}
+            <TradeHouseModel position={[8, 0, 0]} />
+            
+            {/* THC Coins */}
+            <THCCoinModel position={[0, 1.5, 3]} />
+            <THCCoinModel position={[3, 1.5, 0]} />
+            <THCCoinModel position={[-3, 1.5, -3]} />
+            
+            {/* Decorative elements */}
+            <AnimatedBox position={[-5, 0, 5]} />
+            <AnimatedSphere position={[5, 0, -5]} />
+          </Suspense>
           
-          {/* Decorative elements */}
-          <AnimatedBox position={[-5, 0, 5]} />
-          <AnimatedSphere position={[5, 0, -5]} />
-        </Suspense>
-        
-        {/* Info panel */}
-        <InfoPanel />
-        
-        <OrbitControls 
-          enablePan={true}
-          enableZoom={true}
-          enableRotate={true}
-          minDistance={5}
-          maxDistance={30}
-          maxPolarAngle={Math.PI / 2 - 0.1}
-        />
-        <Environment preset="city" />
-      </Canvas>
+          {/* Info panel */}
+          <InfoPanel />
+          
+          <OrbitControls 
+            enablePan={true}
+            enableZoom={true}
+            enableRotate={true}
+            minDistance={5}
+            maxDistance={30}
+            maxPolarAngle={Math.PI / 2 - 0.1}
+          />
+          <Environment preset="city" />
+        </Canvas>
+      </KeyboardControls>
       
       {/* Overlay instructions */}
       <div className="absolute bottom-4 left-4 bg-black/70 text-white p-3 rounded-lg text-sm max-w-xs">
-        <h3 className="font-bold mb-1">Trade Hybrid Metaverse Preview</h3>
+        <h3 className="font-bold mb-1">Trade Hybrid Metaverse</h3>
         <p className="text-gray-300 text-xs mb-2">
-          This is a simplified preview of the full metaverse experience. The complete version will include:
+          Use the arrow keys or WASD to move your character. Space to jump.
         </p>
         <ul className="text-xs list-disc pl-4 text-gray-300">
-          <li>Full character movement</li>
-          <li>Interactive trade signals</li>
-          <li>Live market data</li>
-          <li>Multiplayer interaction</li>
-          <li>Voice communication</li>
+          <li>Other players will appear automatically when they join</li>
+          <li>Use voice chat in the Social Panel to communicate</li>
+          <li>Hover over other players to see interaction options</li>
+          <li>Visit the Trade House to access trading features</li>
         </ul>
+        
+        {/* Multiplayer toggle for testing */}
+        <div className="mt-2 pt-2 border-t border-gray-700">
+          <label className="flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={multiplayerEnabled}
+              onChange={(e) => setMultiplayerEnabled(e.target.checked)}
+              className="rounded"
+            />
+            Multiplayer Enabled
+          </label>
+        </div>
       </div>
     </div>
   );
