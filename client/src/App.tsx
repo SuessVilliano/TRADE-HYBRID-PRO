@@ -24,6 +24,7 @@ const SolanaDexEmbedded = lazy(() => import('./pages/solana-dex-embedded'));
 const LearnEmbedded = lazy(() => import('./pages/learn-embedded'));
 const StakeAndBake = lazy(() => import('./pages/thc-staking'));
 const LiveStream = lazy(() => import('./pages/live-stream'));
+const AIMarketAnalysisPage = lazy(() => import('./pages/ai-market-analysis-page'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -125,6 +126,7 @@ function AppContent() {
               <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Trade Runner</Link>
               <Link to="/marketplace" className="hover:text-blue-400 transition-colors">NFTs</Link>
               <Link to="/learn" className="hover:text-blue-400 transition-colors">Learn</Link>
+              <Link to="/ai-market-analysis" className="hover:text-blue-400 transition-colors">AI Analysis</Link>
             </nav>
           </div>
           
@@ -311,6 +313,18 @@ function AppContent() {
               {typeof window !== 'undefined' && <LiveStream />}
             </Suspense>
           } />
+          <Route path="/ai-market-analysis" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading AI Market Analysis...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <AIMarketAnalysisPage />}
+            </Suspense>
+          } />
         </Routes>
       </main>
       
@@ -389,6 +403,11 @@ function Home() {
           title="TV"
           description="Watch live trading sessions, market analysis, and educational content from our expert traders."
           linkTo="/live-stream"
+        />
+        <FeatureCard 
+          title="AI Analysis"
+          description="Get advanced AI-powered market analysis, trading suggestions, and risk assessment for any asset."
+          linkTo="/ai-market-analysis"
         />
       </div>
     </PopupContainer>

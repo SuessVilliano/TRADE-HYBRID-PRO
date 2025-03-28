@@ -20,7 +20,7 @@ function getPriceRange(symbol: string) {
 }
 
 // Generate deterministic but seemingly random price data for a given symbol
-function generateMarketData(symbol: string, timeframe: string, bars: number) {
+export function generateMarketData(symbol: string, timeframe: string, bars: number) {
   const range = getPriceRange(symbol);
   const seedValue = `${symbol}-${timeframe}`;
   const seed = crypto.createHash('md5').update(seedValue).digest('hex');

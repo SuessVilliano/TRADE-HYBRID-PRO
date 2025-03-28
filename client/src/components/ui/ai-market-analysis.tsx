@@ -1,615 +1,755 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from './button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
-import { Input } from './input';
-import { Label } from './label';
-import { ScrollArea } from './scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
-import { Sparkles, Loader2, ArrowRight, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, BarChart2, LineChart, BrainCircuit } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-is-mobile';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
+import { Loader2, BookOpen, AlertTriangle, TrendingUp, CheckCircle, XCircle, BarChart2, ArrowUpCircle, ArrowDownCircle, MinusCircle } from "lucide-react";
 
-// Trading suggestion interface
-interface TradingSuggestion {
-  id: string;
+// Types for AI Market Analysis API
+interface MarketAnalysisResponse {
   symbol: string;
-  type: 'entry' | 'exit' | 'alert';
-  direction: 'buy' | 'sell' | 'neutral';
-  price: number;
-  confidence: number;
   timeframe: string;
+  timestamp: number;
+  analysis: {
+    summary: string;
+    technicalAnalysis?: {
+      shortTerm: string;
+      mediumTerm: string;
+      longTerm: string;
+      keyIndicators: {
+        name: string;
+        value: string;
+        interpretation: string;
+      }[];
+    };
+    fundamentalAnalysis?: {
+      outlook: string;
+      keyFactors: {
+        factor: string;
+        impact: string;
+      }[];
+    };
+    sentimentAnalysis?: {
+      overall: string;
+      socialMedia: string;
+      newsFlow: string;
+    };
+    tradingSuggestions: {
+      direction: 'buy' | 'sell' | 'hold';
+      confidence: number;
+      reasoning: string;
+      riskLevel: 'low' | 'medium' | 'high';
+      targetPrice?: number;
+      stopLoss?: number;
+    };
+    riskAssessment: {
+      overallRisk: 'low' | 'medium' | 'high';
+      keyRisks: string[];
+    };
+  };
+}
+
+interface TradingSuggestion {
+  direction: 'buy' | 'sell' | 'hold';
+  entryPrice: string | number;
+  stopLoss: number | null;
+  takeProfit: (number | null)[];
+  positionSize: string;
+  riskRewardRatio: number;
   reasoning: string;
-  stopLoss?: number;
-  takeProfit?: number;
-  timestamp: Date;
-  signals: string[];
+  invalidation: string;
+  timeframe: string;
 }
 
-// Market analysis interface
-interface MarketAnalysis {
+interface TradingSuggestionsResponse {
   symbol: string;
-  sentiment: 'bullish' | 'bearish' | 'neutral';
-  strength: number;
-  summary: string;
-  keyLevels: {
-    support: number[];
-    resistance: number[];
-  };
-  indicators: {
-    name: string;
-    value: string;
-    signal: 'buy' | 'sell' | 'neutral';
-  }[];
-  patterns: {
-    name: string;
-    probability: number;
-    description: string;
-  }[];
-  newsImpact: {
-    score: number;
-    headlines: string[];
-  };
-  timestamp: Date;
+  timestamp: number;
+  suggestions: TradingSuggestion[];
 }
 
-// Mock data generators - would be replaced by real API calls
-function getMockSuggestions(): TradingSuggestion[] {
-  return [
-    {
-      id: '1',
-      symbol: 'BTCUSD',
-      type: 'entry',
-      direction: 'buy',
-      price: 78250,
-      confidence: 0.78,
-      timeframe: '4h',
-      reasoning: 'Strong bullish pattern emerging with increasing volume and positive funding rates. Key resistance level broken with 4-hour RSI showing strength without being overbought.',
-      stopLoss: 76200,
-      takeProfit: 82500,
-      timestamp: new Date(),
-      signals: ['Price action breakout', 'Volume increase', 'Funding rate positive', 'Whale accumulation']
-    },
-    {
-      id: '2',
-      symbol: 'ETHUSD',
-      type: 'entry',
-      direction: 'buy',
-      price: 3850,
-      confidence: 0.72,
-      timeframe: '1d',
-      reasoning: 'Following BTC momentum with technical breakout above 3800 resistance. ETH is showing strength relative to BTC with improving on-chain metrics.',
-      stopLoss: 3650,
-      takeProfit: 4200,
-      timestamp: new Date(),
-      signals: ['BTC correlation', 'Technical breakout', 'Improving on-chain metrics']
-    },
-    {
-      id: '3',
-      symbol: 'EURUSD',
-      type: 'alert',
-      direction: 'neutral',
-      price: 1.0845,
-      confidence: 0.65,
-      timeframe: '1d',
-      reasoning: 'Approaching key decision point at 1.0850 with ECB and Fed diverging policy paths. Watch for break of range between 1.0820-1.0880.',
-      timestamp: new Date(),
-      signals: ['Central bank divergence', 'Range consolidation', 'Volume decreasing']
-    }
-  ];
-}
+const timeframeOptions = [
+  { value: '1m', label: '1 Minute' },
+  { value: '5m', label: '5 Minutes' },
+  { value: '15m', label: '15 Minutes' },
+  { value: '1h', label: '1 Hour' },
+  { value: '4h', label: '4 Hours' },
+  { value: '1d', label: '1 Day' },
+  { value: '1w', label: '1 Week' },
+];
 
-function getMockAnalysis(symbol: string): MarketAnalysis {
-  const isBTC = symbol.includes('BTC');
-  
-  return {
-    symbol: symbol,
-    sentiment: isBTC ? 'bullish' : 'neutral',
-    strength: isBTC ? 0.75 : 0.55,
-    summary: isBTC 
-      ? 'Bitcoin showing strength with improving on-chain metrics and institutional inflows. Recent price consolidation above 75k suggests bullish continuation pattern.' 
-      : 'Consolidating within recent range with mixed signals from technical indicators. Watch for breakout direction.',
-    keyLevels: {
-      support: isBTC ? [76200, 73500, 70000] : [3650, 3400, 3200],
-      resistance: isBTC ? [80000, 83500, 85000] : [4000, 4200, 4500],
-    },
-    indicators: [
-      {
-        name: 'RSI (14)',
-        value: isBTC ? '62' : '48',
-        signal: isBTC ? 'buy' : 'neutral'
-      },
-      {
-        name: 'MACD',
-        value: isBTC ? 'Bullish crossover' : 'Neutral',
-        signal: isBTC ? 'buy' : 'neutral'
-      },
-      {
-        name: 'MA (200)',
-        value: isBTC ? 'Price above' : 'Price above',
-        signal: 'buy'
-      },
-      {
-        name: 'Bollinger Bands',
-        value: isBTC ? 'Upper band test' : 'Middle band',
-        signal: isBTC ? 'buy' : 'neutral'
-      }
-    ],
-    patterns: [
-      {
-        name: isBTC ? 'Bull Flag' : 'Rectangle',
-        probability: isBTC ? 0.82 : 0.65,
-        description: isBTC ? 'Consolidation after strong uptrend' : 'Trading range indicating indecision'
-      }
-    ],
-    newsImpact: {
-      score: isBTC ? 0.68 : 0.52,
-      headlines: [
-        isBTC ? 'Bitcoin ETF inflows continue to exceed expectations' : 'Ethereum developer activity increasing ahead of upgrade',
-        isBTC ? 'Major financial institution launches Bitcoin custody service' : 'Regulatory clarity improves for altcoins'
-      ]
-    },
-    timestamp: new Date()
-  };
-}
+const depthOptions = [
+  { value: 'basic', label: 'Basic' },
+  { value: 'advanced', label: 'Advanced' },
+  { value: 'expert', label: 'Expert' },
+];
 
-// AI Market Analysis Component
+const riskProfileOptions = [
+  { value: 'low', label: 'Conservative' },
+  { value: 'medium', label: 'Moderate' },
+  { value: 'high', label: 'Aggressive' },
+];
+
 export function AIMarketAnalysis() {
-  const isMobile = useIsMobile();
-  const [activeSymbol, setActiveSymbol] = useState('BTCUSD');
-  const [suggestions, setSuggestions] = useState<TradingSuggestion[]>([]);
-  const [analysis, setAnalysis] = useState<MarketAnalysis | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [userQuery, setUserQuery] = useState('');
-  const [aiResponse, setAiResponse] = useState('');
+  const [symbol, setSymbol] = useState("SOL/USDT");
+  const [timeframe, setTimeframe] = useState(timeframeOptions[5].value);
+  const [depth, setDepth] = useState(depthOptions[1].value);
+  const [riskProfile, setRiskProfile] = useState(riskProfileOptions[1].value);
+  
+  const [analysis, setAnalysis] = useState<MarketAnalysisResponse | null>(null);
+  const [suggestions, setSuggestions] = useState<TradingSuggestionsResponse | null>(null);
+  
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const [availableSymbols, setAvailableSymbols] = useState<{label: string, value: string}[]>([]);
+  const [activeTab, setActiveTab] = useState('analysis');
 
-  // Symbols list
-  const availableSymbols = ['BTCUSD', 'ETHUSD', 'EURUSD', 'XAUUSD', 'USDJPY'];
-
-  // Fetch trading suggestions and analysis on component mount or symbol change
+  // Fetch available symbols on component mount
   useEffect(() => {
-    async function fetchData() {
-      setIsLoading(true);
+    const fetchSymbols = async () => {
       try {
-        // For mock, we'd make API calls here
-        setTimeout(() => {
-          setSuggestions(getMockSuggestions());
-          setAnalysis(getMockAnalysis(activeSymbol));
-          setIsLoading(false);
-        }, 1000);
-      } catch (error) {
-        console.error('Error fetching AI analysis:', error);
-        setIsLoading(false);
+        const response = await axios.get('/api/market/symbols');
+        const allSymbols = response.data.all || [];
+        
+        // Map symbols to options format
+        const symbolOptions = allSymbols.map((s: string) => ({
+          value: s,
+          label: s
+        }));
+        
+        setAvailableSymbols(symbolOptions);
+      } catch (err) {
+        console.error('Failed to fetch symbols:', err);
+        setError('Failed to load available trading symbols');
       }
-    }
+    };
     
-    fetchData();
-  }, [activeSymbol]);
+    fetchSymbols();
+  }, []);
 
-  // Handle AI query submission
-  const handleSubmitQuery = () => {
-    if (!userQuery.trim()) return;
+  // Fetch market analysis
+  const fetchMarketAnalysis = async () => {
+    setLoadingAnalysis(true);
+    setError(null);
     
-    setAiResponse('');
-    setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      // Generate response based on query keywords for demo
-      let response = '';
+    try {
+      const response = await axios.get('/api/ai/market-analysis', {
+        params: {
+          symbol,
+          timeframe,
+          depth,
+          includeTechnicals: true,
+          includeFundamentals: true,
+          includeSentiment: true
+        }
+      });
       
-      if (userQuery.toLowerCase().includes('btc') || userQuery.toLowerCase().includes('bitcoin')) {
-        response = "Bitcoin analysis: Currently in a bullish trend with strong support at $76,200. On-chain metrics show accumulation from large wallets and decreasing exchange reserves, which historically precedes price increases. The recent consolidation above $75,000 suggests a potential continuation of the uptrend. Key resistance levels to watch are $80,000 and $83,500.";
-      } else if (userQuery.toLowerCase().includes('eth') || userQuery.toLowerCase().includes('ethereum')) {
-        response = "Ethereum analysis: Currently following Bitcoin's momentum with recent strength. The ETH/BTC ratio is improving, suggesting potential outperformance in the coming weeks. Watch the $4,000 level as a key psychological resistance. The upcoming network upgrade could serve as a catalyst for price action.";
-      } else if (userQuery.toLowerCase().includes('market') || userQuery.toLowerCase().includes('overview')) {
-        response = "Market overview: Crypto markets showing resilience despite broader macro uncertainties. Bitcoin dominance at 52%, suggesting continued confidence in the leading cryptocurrency. Altcoins showing mixed performance with Layer-2 solutions and AI-related tokens outperforming. Overall market sentiment is cautiously bullish with improving institutional involvement.";
-      } else {
-        response = `Analysis for your query "${userQuery}": Based on current market conditions, we're seeing mixed signals across asset classes. Crypto markets remain correlated to risk assets but have shown increasing resilience to broader market pullbacks. Focus on assets with strong fundamentals and clear technical setups to manage risk effectively in the current environment.`;
-      }
-      
-      setAiResponse(response);
-      setIsLoading(false);
-    }, 1500);
+      setAnalysis(response.data);
+    } catch (err) {
+      console.error('Error fetching market analysis:', err);
+      setError('Failed to fetch AI market analysis. Please try again later.');
+    } finally {
+      setLoadingAnalysis(false);
+    }
   };
 
-  // Render confidence score with appropriate color
-  const renderConfidence = (confidence: number) => {
-    let color = 'text-yellow-500';
-    if (confidence >= 0.7) color = 'text-green-500';
-    else if (confidence < 0.5) color = 'text-red-500';
+  // Fetch trading suggestions
+  const fetchTradingSuggestions = async () => {
+    setLoadingSuggestions(true);
+    setError(null);
     
-    return (
-      <span className={`font-semibold ${color}`}>
-        {Math.round(confidence * 100)}%
-      </span>
-    );
+    try {
+      const response = await axios.get('/api/ai/trading-suggestions', {
+        params: {
+          symbol,
+          riskProfile
+        }
+      });
+      
+      setSuggestions(response.data);
+    } catch (err) {
+      console.error('Error fetching trading suggestions:', err);
+      setError('Failed to fetch AI trading suggestions. Please try again later.');
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  // Format relative time from timestamp
+  const formatRelativeTime = (timestamp: number) => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} minutes ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} hours ago`;
+    return `${Math.floor(diff / 86400000)} days ago`;
+  };
+
+  // Get direction icon
+  const getDirectionIcon = (direction: 'buy' | 'sell' | 'hold') => {
+    switch (direction) {
+      case 'buy':
+        return <ArrowUpCircle className="h-5 w-5 text-green-500" />;
+      case 'sell':
+        return <ArrowDownCircle className="h-5 w-5 text-red-500" />;
+      case 'hold':
+        return <MinusCircle className="h-5 w-5 text-yellow-500" />;
+      default:
+        return null;
+    }
+  };
+
+  // Get risk color
+  const getRiskColor = (risk: 'low' | 'medium' | 'high') => {
+    switch (risk) {
+      case 'low':
+        return 'bg-green-100 text-green-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'high':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Get confidence bar color
+  const getConfidenceColor = (confidence: number) => {
+    if (confidence >= 0.8) return 'bg-green-500';
+    if (confidence >= 0.5) return 'bg-yellow-500';
+    return 'bg-red-500';
   };
 
   return (
-    <div className={`w-full max-w-[1200px] p-4 ${isMobile ? 'h-[calc(100vh-120px)]' : 'h-auto'}`}>
-      <div className="flex flex-col space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <BrainCircuit className="h-6 w-6 text-purple-500" />
-            <h2 className="text-2xl font-bold">AI Market Analysis</h2>
-          </div>
-          <div className="flex gap-2">
-            <select
-              className="bg-background border border-input rounded-md p-2 text-sm"
-              value={activeSymbol}
-              onChange={(e) => setActiveSymbol(e.target.value)}
-            >
-              {availableSymbols.map(symbol => (
-                <option key={symbol} value={symbol}>{symbol}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <Tabs defaultValue="suggestions" className="w-full">
-          <TabsList className="grid grid-cols-3">
-            <TabsTrigger value="suggestions">Trading Suggestions</TabsTrigger>
-            <TabsTrigger value="analysis">Technical Analysis</TabsTrigger>
-            <TabsTrigger value="assistant">AI Assistant</TabsTrigger>
-          </TabsList>
-
-          {/* Trading Suggestions Content */}
-          <TabsContent value="suggestions" className="mt-2">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <Sparkles className="h-5 w-5 text-yellow-500 mr-2" />
-                  Smart Trading Suggestions
-                </CardTitle>
-                <CardDescription>
-                  AI-generated trading ideas based on market analysis
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="flex justify-center items-center py-12">
-                    <Loader2 className="h-12 w-12 text-primary animate-spin" />
-                  </div>
-                ) : (
-                  <ScrollArea className={`${isMobile ? 'h-[calc(100vh-400px)]' : 'h-[500px]'} pr-4`}>
-                    <div className="space-y-4">
-                      {suggestions.map((suggestion) => (
-                        <Card key={suggestion.id} className="border-l-4 border-l-blue-500">
-                          <CardHeader className="pb-2 pt-4">
-                            <div className="flex justify-between items-center">
-                              <div className="flex items-center">
-                                <span className="text-lg font-bold mr-2">{suggestion.symbol}</span>
-                                <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${
-                                  suggestion.direction === 'buy'
-                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                    : suggestion.direction === 'sell'
-                                    ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                                    : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                                }`}>
-                                  {suggestion.direction === 'buy' 
-                                    ? 'BUY' 
-                                    : suggestion.direction === 'sell' 
-                                    ? 'SELL' 
-                                    : 'WATCH'}
-                                </span>
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                Confidence: {renderConfidence(suggestion.confidence)}
-                              </div>
-                            </div>
-                            <CardDescription className="mt-1">
-                              {suggestion.type === 'entry' ? 'Entry opportunity' : suggestion.type === 'exit' ? 'Exit signal' : 'Price alert'} • {suggestion.timeframe} timeframe
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent className="py-2">
-                            <div className="text-sm mb-3">{suggestion.reasoning}</div>
-                            
-                            {suggestion.stopLoss && suggestion.takeProfit && (
-                              <div className="grid grid-cols-3 gap-2 text-sm mb-3">
-                                <div className="flex flex-col">
-                                  <span className="text-muted-foreground">Entry</span>
-                                  <span className="font-medium">${suggestion.price.toLocaleString()}</span>
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="text-muted-foreground">Stop Loss</span>
-                                  <span className="font-medium text-red-500">${suggestion.stopLoss.toLocaleString()}</span>
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="text-muted-foreground">Take Profit</span>
-                                  <span className="font-medium text-green-500">${suggestion.takeProfit.toLocaleString()}</span>
-                                </div>
-                              </div>
-                            )}
-                            
-                            <div className="flex flex-wrap gap-1">
-                              {suggestion.signals.map((signal, index) => (
-                                <span 
-                                  key={index} 
-                                  className="text-xs px-2 py-0.5 bg-secondary text-secondary-foreground rounded-full"
-                                >
-                                  {signal}
-                                </span>
-                              ))}
-                            </div>
-                          </CardContent>
-                          <CardFooter className="py-2 flex justify-between">
-                            <div className="text-xs text-muted-foreground">
-                              Generated {new Date(suggestion.timestamp).toLocaleTimeString()}
-                            </div>
-                            <Button variant="ghost" size="sm" className="h-7 gap-1">
-                              <span className="text-xs">Open Trade</span>
-                              <ArrowRight className="h-3 w-3" />
-                            </Button>
-                          </CardFooter>
-                        </Card>
+    <div className="space-y-4 p-4">
+      <Card className="border-purple-200 bg-purple-50/30 dark:border-purple-800 dark:bg-purple-900/20">
+        <CardHeader>
+          <CardTitle className="flex items-center text-2xl text-purple-800 dark:text-purple-300">
+            <BookOpen className="mr-2 h-6 w-6" />
+            AI Market Analysis & Trading Intelligence
+          </CardTitle>
+          <CardDescription>
+            Advanced market analysis powered by AI. Get comprehensive insights on market trends, technical analysis, and trading suggestions.
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="analysis">Market Analysis</TabsTrigger>
+              <TabsTrigger value="suggestions">Trading Suggestions</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="analysis" className="space-y-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div>
+                  <label className="text-sm font-medium">Symbol</label>
+                  <Select value={symbol} onValueChange={setSymbol}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Symbol" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableSymbols.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
                       ))}
-                    </div>
-                  </ScrollArea>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Technical Analysis Content */}
-          <TabsContent value="analysis" className="mt-2">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <BarChart2 className="h-5 w-5 text-blue-500 mr-2" />
-                  Advanced Technical Analysis
-                </CardTitle>
-                <CardDescription>
-                  {activeSymbol} market analysis and key levels
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading || !analysis ? (
-                  <div className="flex justify-center items-center py-12">
-                    <Loader2 className="h-12 w-12 text-primary animate-spin" />
-                  </div>
-                ) : (
-                  <ScrollArea className={`${isMobile ? 'h-[calc(100vh-400px)]' : 'h-[500px]'} pr-4`}>
-                    <div className="space-y-6">
-                      {/* Summary Section */}
-                      <div>
-                        <h3 className="text-lg font-semibold mb-2 flex items-center">
-                          <span className={`h-4 w-4 rounded-full mr-2 ${
-                            analysis.sentiment === 'bullish' 
-                              ? 'bg-green-500' 
-                              : analysis.sentiment === 'bearish' 
-                              ? 'bg-red-500' 
-                              : 'bg-yellow-500'
-                          }`} />
-                          Market Sentiment: {analysis.sentiment.charAt(0).toUpperCase() + analysis.sentiment.slice(1)}
-                        </h3>
-                        <p className="text-muted-foreground">{analysis.summary}</p>
-                      </div>
-
-                      {/* Key Levels */}
-                      <div>
-                        <h3 className="text-md font-semibold mb-2">Key Price Levels</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="bg-background rounded-lg p-3 border">
-                            <h4 className="text-sm font-medium mb-2 text-green-600">Support Levels</h4>
-                            <ul className="space-y-1">
-                              {analysis.keyLevels.support.map((level, index) => (
-                                <li key={index} className="flex items-center text-sm">
-                                  <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
-                                  ${level.toLocaleString()}
-                                  {index === 0 && <span className="ml-1 text-xs text-green-600">(Strong)</span>}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                          <div className="bg-background rounded-lg p-3 border">
-                            <h4 className="text-sm font-medium mb-2 text-red-600">Resistance Levels</h4>
-                            <ul className="space-y-1">
-                              {analysis.keyLevels.resistance.map((level, index) => (
-                                <li key={index} className="flex items-center text-sm">
-                                  <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-                                  ${level.toLocaleString()}
-                                  {index === 0 && <span className="ml-1 text-xs text-red-600">(Strong)</span>}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Technical Indicators */}
-                      <div>
-                        <h3 className="text-md font-semibold mb-2">Technical Indicators</h3>
-                        <div className="bg-background rounded-lg p-3 border">
-                          <div className="grid grid-cols-3 gap-2">
-                            {analysis.indicators.map((indicator, index) => (
-                              <div key={index} className="flex flex-col text-sm p-2">
-                                <span className="text-muted-foreground">{indicator.name}</span>
-                                <span className="font-medium">{indicator.value}</span>
-                                <span className={`text-xs mt-1 ${
-                                  indicator.signal === 'buy' 
-                                    ? 'text-green-500' 
-                                    : indicator.signal === 'sell' 
-                                    ? 'text-red-500' 
-                                    : 'text-yellow-500'
-                                }`}>
-                                  {indicator.signal === 'buy' 
-                                    ? 'BUY' 
-                                    : indicator.signal === 'sell' 
-                                    ? 'SELL' 
-                                    : 'NEUTRAL'}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Chart Patterns */}
-                      <div>
-                        <h3 className="text-md font-semibold mb-2">Chart Patterns</h3>
-                        <div className="space-y-3">
-                          {analysis.patterns.map((pattern, index) => (
-                            <div key={index} className="bg-background rounded-lg p-3 border">
-                              <div className="flex justify-between items-center mb-1">
-                                <h4 className="font-medium">{pattern.name}</h4>
-                                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                  pattern.probability > 0.7 
-                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                                    : pattern.probability > 0.5 
-                                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                                }`}>
-                                  {Math.round(pattern.probability * 100)}% probability
-                                </span>
-                              </div>
-                              <p className="text-sm text-muted-foreground">{pattern.description}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* News Impact */}
-                      <div>
-                        <h3 className="text-md font-semibold mb-2">News & Sentiment Impact</h3>
-                        <div className="bg-background rounded-lg p-3 border">
-                          <div className="flex items-center mb-2">
-                            <span className="text-sm mr-2">Sentiment Score:</span>
-                            <div className="h-2 w-32 bg-gray-200 dark:bg-gray-700 rounded-full">
-                              <div 
-                                className={`h-full rounded-full ${
-                                  analysis.newsImpact.score > 0.6 
-                                    ? 'bg-green-500' 
-                                    : analysis.newsImpact.score > 0.4 
-                                    ? 'bg-yellow-500' 
-                                    : 'bg-red-500'
-                                }`}
-                                style={{ width: `${analysis.newsImpact.score * 100}%` }}
-                              />
-                            </div>
-                            <span className="text-sm ml-2">{Math.round(analysis.newsImpact.score * 100)}%</span>
-                          </div>
-
-                          <h4 className="text-sm font-medium mb-1">Recent Headlines:</h4>
-                          <ul className="space-y-1">
-                            {analysis.newsImpact.headlines.map((headline, index) => (
-                              <li key={index} className="text-sm flex items-start">
-                                <span className="mr-1 mt-0.5">•</span>
-                                {headline}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  </ScrollArea>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* AI Assistant Content */}
-          <TabsContent value="assistant" className="mt-2">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <Sparkles className="h-5 w-5 text-purple-500 mr-2" />
-                  AI Trading Assistant
-                </CardTitle>
-                <CardDescription>
-                  Ask questions about market conditions and trading strategies
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium">Timeframe</label>
+                  <Select value={timeframe} onValueChange={setTimeframe}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Timeframe" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {timeframeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium">Analysis Depth</label>
+                  <Select value={depth} onValueChange={setDepth}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Depth" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {depthOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex items-end">
+                  <Button 
+                    onClick={fetchMarketAnalysis} 
+                    disabled={loadingAnalysis}
+                    className="w-full bg-purple-600 hover:bg-purple-700"
+                  >
+                    {loadingAnalysis ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      'Generate Analysis'
+                    )}
+                  </Button>
+                </div>
+              </div>
+              
+              {error && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              
+              {loadingAnalysis ? (
+                <Card>
+                  <CardHeader>
+                    <Skeleton className="h-8 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </CardContent>
+                </Card>
+              ) : analysis ? (
                 <div className="space-y-4">
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="query">Your Question</Label>
-                    <div className="flex space-x-2">
-                      <Input
-                        id="query"
-                        placeholder="Example: What's your analysis on Bitcoin's current trend?"
-                        value={userQuery}
-                        onChange={(e) => setUserQuery(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSubmitQuery();
-                        }}
-                      />
-                      <Button 
-                        onClick={handleSubmitQuery}
-                        disabled={isLoading || !userQuery.trim()}
-                      >
-                        {isLoading ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <ArrowRight className="h-4 w-4" />
+                  <Card>
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <CardTitle>{analysis.symbol} Analysis</CardTitle>
+                        <Badge variant="outline">{formatRelativeTime(analysis.timestamp)}</Badge>
+                      </div>
+                      <CardDescription>
+                        {analysis.timeframe} timeframe analysis summary
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-lg font-medium mb-4">{analysis.analysis.summary}</p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {analysis.analysis.technicalAnalysis && (
+                          <div className="space-y-2">
+                            <h3 className="text-md font-bold flex items-center">
+                              <BarChart2 className="mr-2 h-5 w-5" />
+                              Technical Analysis
+                            </h3>
+                            <div className="space-y-2 pl-7">
+                              <div>
+                                <span className="font-semibold">Short-term:</span> {analysis.analysis.technicalAnalysis.shortTerm}
+                              </div>
+                              <div>
+                                <span className="font-semibold">Medium-term:</span> {analysis.analysis.technicalAnalysis.mediumTerm}
+                              </div>
+                              <div>
+                                <span className="font-semibold">Long-term:</span> {analysis.analysis.technicalAnalysis.longTerm}
+                              </div>
+                            </div>
+                            
+                            <div className="mt-2 space-y-2">
+                              <h4 className="font-semibold">Key Indicators:</h4>
+                              <div className="grid grid-cols-1 gap-2 pl-4">
+                                {analysis.analysis.technicalAnalysis.keyIndicators.map((indicator, i) => (
+                                  <div key={i} className="border-l-2 border-purple-300 pl-2">
+                                    <div className="font-medium">{indicator.name}: {indicator.value}</div>
+                                    <div className="text-sm text-gray-600 dark:text-gray-400">{indicator.interpretation}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
                         )}
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <ScrollArea className={`${isMobile ? 'h-[calc(100vh-450px)]' : 'h-[380px]'} border rounded-md p-4`}>
-                    {aiResponse ? (
+                        
+                        {analysis.analysis.fundamentalAnalysis && (
+                          <div className="space-y-2">
+                            <h3 className="text-md font-bold">Fundamental Analysis</h3>
+                            <p>{analysis.analysis.fundamentalAnalysis.outlook}</p>
+                            
+                            <div className="mt-2">
+                              <h4 className="font-semibold">Key Factors:</h4>
+                              <ul className="list-disc pl-5 space-y-1">
+                                {analysis.analysis.fundamentalAnalysis.keyFactors.map((factor, i) => (
+                                  <li key={i}>
+                                    <span className="font-medium">{factor.factor}:</span> {factor.impact}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {analysis.analysis.sentimentAnalysis && (
+                        <div className="mt-6">
+                          <h3 className="text-md font-bold mb-2">Sentiment Analysis</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                              <div className="font-semibold">Overall Sentiment</div>
+                              <div>{analysis.analysis.sentimentAnalysis.overall}</div>
+                            </div>
+                            <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                              <div className="font-semibold">Social Media</div>
+                              <div>{analysis.analysis.sentimentAnalysis.socialMedia}</div>
+                            </div>
+                            <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                              <div className="font-semibold">News Flow</div>
+                              <div>{analysis.analysis.sentimentAnalysis.newsFlow}</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <Separator className="my-6" />
+                      
                       <div className="space-y-4">
-                        <div className="bg-accent/40 rounded-lg p-3">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">Question</span>
-                            <span className="text-sm font-medium">{userQuery}</span>
+                        <h3 className="text-lg font-bold flex items-center">
+                          <TrendingUp className="mr-2 h-5 w-5" />
+                          Trading Suggestion
+                        </h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="border rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="font-semibold">Direction</div>
+                              <div className="flex items-center">
+                                {getDirectionIcon(analysis.analysis.tradingSuggestions.direction)}
+                                <span className="ml-1 font-bold capitalize">
+                                  {analysis.analysis.tradingSuggestions.direction}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="border rounded-lg p-4">
+                            <div className="font-semibold mb-1">Confidence</div>
+                            <div className="flex items-center justify-between">
+                              <Progress 
+                                value={analysis.analysis.tradingSuggestions.confidence * 100} 
+                                className={`${getConfidenceColor(analysis.analysis.tradingSuggestions.confidence)}`}
+                              />
+                              <span className="ml-2 font-bold">
+                                {Math.round(analysis.analysis.tradingSuggestions.confidence * 100)}%
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="border rounded-lg p-4">
+                            <div className="font-semibold">Risk Level</div>
+                            <div>
+                              <Badge className={`${getRiskColor(analysis.analysis.tradingSuggestions.riskLevel)}`}>
+                                {analysis.analysis.tradingSuggestions.riskLevel.toUpperCase()}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                         
-                        <div className="bg-primary/10 rounded-lg p-3">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <span className="bg-purple-500 text-white text-xs px-2 py-0.5 rounded-full">AI Response</span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {analysis.analysis.tradingSuggestions.targetPrice && (
+                            <div className="border rounded-lg p-4">
+                              <div className="font-semibold">Target Price</div>
+                              <div className="text-lg font-bold text-green-600">
+                                ${analysis.analysis.tradingSuggestions.targetPrice}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {analysis.analysis.tradingSuggestions.stopLoss && (
+                            <div className="border rounded-lg p-4">
+                              <div className="font-semibold">Stop Loss</div>
+                              <div className="text-lg font-bold text-red-600">
+                                ${analysis.analysis.tradingSuggestions.stopLoss}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="border rounded-lg p-4">
+                          <div className="font-semibold mb-2">Reasoning</div>
+                          <p>{analysis.analysis.tradingSuggestions.reasoning}</p>
+                        </div>
+                        
+                        <div className="border rounded-lg p-4">
+                          <div className="font-semibold mb-2">Risk Assessment</div>
+                          <div className="mb-2">
+                            <span className="font-medium">Overall Risk: </span>
+                            <Badge className={`${getRiskColor(analysis.analysis.riskAssessment.overallRisk)}`}>
+                              {analysis.analysis.riskAssessment.overallRisk.toUpperCase()}
+                            </Badge>
                           </div>
-                          <p className="text-sm whitespace-pre-line">{aiResponse}</p>
+                          <div>
+                            <span className="font-medium">Key Risks:</span>
+                            <ul className="list-disc pl-5 mt-1">
+                              {analysis.analysis.riskAssessment.keyRisks.map((risk, i) => (
+                                <li key={i}>{risk}</li>
+                              ))}
+                            </ul>
+                          </div>
                         </div>
                       </div>
-                    ) : (
-                      <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
-                        <BrainCircuit className="h-12 w-12 text-muted-foreground/50" />
-                        <div>
-                          <p className="text-lg font-medium">Ask me anything about trading</p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            I can analyze market conditions, explain strategies, and provide trading insights
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 max-w-md mt-4">
-                          <Button
-                            variant="outline"
-                            className="text-xs h-auto py-2 justify-start"
-                            onClick={() => setUserQuery("What's your analysis on Bitcoin's current trend?")}
-                          >
-                            What's your analysis on Bitcoin's current trend?
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="text-xs h-auto py-2 justify-start"
-                            onClick={() => setUserQuery("Should I be concerned about the current market conditions?")}
-                          >
-                            Should I be concerned about the current market conditions?
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="text-xs h-auto py-2 justify-start"
-                            onClick={() => setUserQuery("What key levels should I watch for Ethereum?")}
-                          >
-                            What key levels should I watch for Ethereum?
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="text-xs h-auto py-2 justify-start"
-                            onClick={() => setUserQuery("Explain the best risk management strategies for crypto trading")}
-                          >
-                            Explain the best risk management strategies for crypto trading
-                          </Button>
-                        </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-between">
+                      <div className="text-sm text-gray-500">
+                        AI-generated analysis for educational purposes only.
                       </div>
-                    )}
-                  </ScrollArea>
+                      <Button 
+                        variant="outline" 
+                        onClick={fetchMarketAnalysis}
+                        disabled={loadingAnalysis}
+                      >
+                        Refresh
+                      </Button>
+                    </CardFooter>
+                  </Card>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+              ) : (
+                <Card className="bg-gray-50 dark:bg-gray-900 border-dashed">
+                  <CardContent className="pt-6 text-center">
+                    <div className="flex flex-col items-center space-y-2">
+                      <BookOpen className="h-12 w-12 text-gray-400" />
+                      <h3 className="text-lg font-medium">AI Market Analysis</h3>
+                      <p className="text-gray-500 text-sm">
+                        Generate an in-depth AI-powered analysis for any market. Configure your parameters and click Generate Analysis.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="suggestions" className="space-y-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-sm font-medium">Symbol</label>
+                  <Select value={symbol} onValueChange={setSymbol}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Symbol" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableSymbols.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium">Risk Profile</label>
+                  <Select value={riskProfile} onValueChange={setRiskProfile}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Risk Profile" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {riskProfileOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex items-end">
+                  <Button 
+                    onClick={fetchTradingSuggestions} 
+                    disabled={loadingSuggestions}
+                    className="w-full bg-purple-600 hover:bg-purple-700"
+                  >
+                    {loadingSuggestions ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      'Get Trading Ideas'
+                    )}
+                  </Button>
+                </div>
+              </div>
+              
+              {error && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              
+              {loadingSuggestions ? (
+                <div className="space-y-6">
+                  {[1, 2, 3].map(i => (
+                    <Card key={i}>
+                      <CardHeader>
+                        <Skeleton className="h-8 w-1/2" />
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : suggestions ? (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-bold">
+                      Trading Ideas for {suggestions.symbol}
+                    </h3>
+                    <Badge variant="outline">
+                      {formatRelativeTime(suggestions.timestamp)}
+                    </Badge>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {suggestions.suggestions.map((suggestion, i) => (
+                      <Card key={i} className={`
+                        ${suggestion.direction === 'buy' ? 'border-green-300 dark:border-green-800' : ''}
+                        ${suggestion.direction === 'sell' ? 'border-red-300 dark:border-red-800' : ''}
+                        ${suggestion.direction === 'hold' ? 'border-yellow-300 dark:border-yellow-800' : ''}
+                      `}>
+                        <CardHeader className={`
+                          ${suggestion.direction === 'buy' ? 'bg-green-50 dark:bg-green-900/20' : ''}
+                          ${suggestion.direction === 'sell' ? 'bg-red-50 dark:bg-red-900/20' : ''}
+                          ${suggestion.direction === 'hold' ? 'bg-yellow-50 dark:bg-yellow-900/20' : ''}
+                        `}>
+                          <CardTitle className="flex items-center text-lg">
+                            {getDirectionIcon(suggestion.direction)}
+                            <span className="ml-2 capitalize">{suggestion.direction} {suggestions.symbol}</span>
+                          </CardTitle>
+                          <CardDescription>
+                            Trading Idea #{i + 1} - {suggestion.timeframe} timeframe
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-4 space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <div className="text-sm text-gray-500">Entry</div>
+                              <div className="font-bold">{suggestion.entryPrice}</div>
+                            </div>
+                            
+                            <div>
+                              <div className="text-sm text-gray-500">Stop Loss</div>
+                              <div className="font-bold text-red-600">
+                                {suggestion.stopLoss ? `$${suggestion.stopLoss}` : 'N/A'}
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <div className="text-sm text-gray-500">Take Profit</div>
+                              <div className="font-bold text-green-600">
+                                {suggestion.takeProfit && suggestion.takeProfit.length > 0 && suggestion.takeProfit[0] 
+                                  ? suggestion.takeProfit.map(tp => tp ? `$${tp}` : 'N/A').join(', ')
+                                  : 'N/A'}
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <div className="text-sm text-gray-500">Risk/Reward</div>
+                              <div className="font-bold">{suggestion.riskRewardRatio}:1</div>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <div className="text-sm text-gray-500">Position Size</div>
+                            <div>{suggestion.positionSize}</div>
+                          </div>
+                          
+                          <Separator />
+                          
+                          <div>
+                            <div className="text-sm text-gray-500 mb-1">Reasoning</div>
+                            <p className="text-sm">{suggestion.reasoning}</p>
+                          </div>
+                          
+                          <div>
+                            <div className="text-sm text-gray-500 mb-1">Invalidation</div>
+                            <p className="text-sm">{suggestion.invalidation}</p>
+                          </div>
+                        </CardContent>
+                        <CardFooter className="flex justify-end">
+                          <Button 
+                            size="sm"
+                            variant={suggestion.direction === 'buy' ? 'default' : 'destructive'}
+                            className={suggestion.direction === 'buy' ? 'bg-green-600 hover:bg-green-700' : ''}
+                          >
+                            {suggestion.direction === 'buy' ? (
+                              <CheckCircle className="mr-1 h-4 w-4" />
+                            ) : (
+                              <XCircle className="mr-1 h-4 w-4" />
+                            )}
+                            Place {suggestion.direction.toUpperCase()} Order
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    ))}
+                  </div>
+                  
+                  <div className="text-sm text-gray-500">
+                    <AlertTriangle className="inline h-4 w-4 mr-1" />
+                    These suggestions are for educational purposes only. Always do your own research.
+                  </div>
+                </div>
+              ) : (
+                <Card className="bg-gray-50 dark:bg-gray-900 border-dashed">
+                  <CardContent className="pt-6 text-center">
+                    <div className="flex flex-col items-center space-y-2">
+                      <TrendingUp className="h-12 w-12 text-gray-400" />
+                      <h3 className="text-lg font-medium">AI Trading Suggestions</h3>
+                      <p className="text-gray-500 text-sm">
+                        Get AI-powered trading ideas tailored to your risk profile. Select your preferences and click Get Trading Ideas.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }

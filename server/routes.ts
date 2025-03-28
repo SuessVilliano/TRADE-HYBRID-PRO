@@ -8,6 +8,7 @@ import { getBots, getBot, createBot, updateBot, deleteBot, runBot, stopBot } fro
 import { getSignals, receiveWebhook } from "./api/signals";
 import { getGameLeaderboard, getGamePlayer, submitGameScore } from "./api/game-leaderboard";
 import { getRssFeed, getAvailableSources, getEconomicCalendar } from "./api/rss-feeds";
+import { getAIMarketAnalysis, getTradingSuggestions } from "./api/ai-market-analysis";
 import { MultiplayerServer } from "./multiplayer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -51,6 +52,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/rss-feeds/feed/:sourceId", getRssFeed);
   app.get("/api/rss-feeds/sources", getAvailableSources);
   app.get("/api/rss-feeds/economic-calendar", getEconomicCalendar);
+  
+  // AI Market Analysis routes
+  app.get("/api/ai/market-analysis", getAIMarketAnalysis);
+  app.get("/api/ai/trading-suggestions", getTradingSuggestions);
   
   // News route using default source (bloomberg)
   app.get("/api/rss-feeds/news", (req, res) => {
