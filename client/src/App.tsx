@@ -26,6 +26,7 @@ const StakeAndBake = lazy(() => import('./pages/thc-staking'));
 const LiveStream = lazy(() => import('./pages/live-stream'));
 const AIMarketAnalysisPage = lazy(() => import('./pages/ai-market-analysis-page'));
 const TradingSignalsPage = lazy(() => import('./pages/trading-signals'));
+const EmbeddedAppPage = lazy(() => import('./pages/embedded-app'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -129,6 +130,7 @@ function AppContent() {
               <Link to="/learn" className="hover:text-blue-400 transition-colors">Learn</Link>
               <Link to="/ai-market-analysis" className="hover:text-blue-400 transition-colors">AI Analysis</Link>
               <Link to="/trading-signals" className="hover:text-blue-400 transition-colors">Signals</Link>
+              <Link to="/app" className="hover:text-blue-400 transition-colors">App</Link>
             </nav>
           </div>
           
@@ -339,6 +341,19 @@ function AppContent() {
               {typeof window !== 'undefined' && <TradingSignalsPage />}
             </Suspense>
           } />
+          
+          <Route path="/app" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading App...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <EmbeddedAppPage />}
+            </Suspense>
+          } />
         </Routes>
       </main>
       
@@ -427,6 +442,11 @@ function Home() {
           title="Trading Signals"
           description="Stay ahead with AI-generated trading signals, price alerts, and personalized notification settings."
           linkTo="/trading-signals"
+        />
+        <FeatureCard 
+          title="App"
+          description="Access the Trade Hybrid app directly within the platform with our embedded web browser experience."
+          linkTo="/app"
         />
       </div>
     </PopupContainer>
