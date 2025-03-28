@@ -22,6 +22,28 @@ interface Position {
   pnlPercentage: number;
 }
 
+export interface Trade {
+  id: string;
+  symbol: string;
+  side: 'buy' | 'sell';
+  quantity: number;
+  entryPrice: number;
+  exitPrice: number;
+  timestamp: number;
+  profit: number;
+}
+
+export interface TradeStats {
+  winRate: number;
+  netPnL: number;
+  profitFactor: number;
+  avgWin: number;
+  avgLoss: number;
+  largestWin: number;
+  largestLoss: number;
+  totalTrades: number;
+}
+
 interface TraderState {
   accountBalance: number;
   equity: number;
@@ -30,6 +52,9 @@ interface TraderState {
   positions: Position[];
   orderHistory: OrderHistory[];
   isLoading: boolean;
+  trades: Trade[];
+  tradeStats: TradeStats;
+  loading: boolean;
   
   // Actions
   placeTrade: (
@@ -52,6 +77,8 @@ export const useTrader = create<TraderState>((set, get) => ({
   equity: 105200,
   availableMargin: 90000,
   usedMargin: 10000,
+  isLoading: false,
+  loading: false,
   positions: [
     {
       symbol: 'BTCUSD',
@@ -123,7 +150,58 @@ export const useTrader = create<TraderState>((set, get) => ({
       created: '2025-03-26T09:45:00Z'
     }
   ],
-  isLoading: false,
+  trades: [
+    {
+      id: 'trade-1',
+      symbol: 'BTCUSD',
+      side: 'buy',
+      quantity: 0.5,
+      entryPrice: 68500,
+      exitPrice: 72800,
+      timestamp: Date.now() - 86400000 * 3, // 3 days ago
+      profit: 2150
+    },
+    {
+      id: 'trade-2',
+      symbol: 'ETHUSD',
+      side: 'buy',
+      quantity: 5,
+      entryPrice: 3100,
+      exitPrice: 3300,
+      timestamp: Date.now() - 86400000 * 2, // 2 days ago
+      profit: 1000
+    },
+    {
+      id: 'trade-3',
+      symbol: 'EURUSD',
+      side: 'sell',
+      quantity: 20000,
+      entryPrice: 1.112,
+      exitPrice: 1.095,
+      timestamp: Date.now() - 86400000, // 1 day ago
+      profit: 340
+    },
+    {
+      id: 'trade-4',
+      symbol: 'XAUUSD',
+      side: 'buy',
+      quantity: 2,
+      entryPrice: 2160,
+      exitPrice: 2140,
+      timestamp: Date.now() - 43200000, // 12 hours ago
+      profit: -40
+    }
+  ],
+  tradeStats: {
+    winRate: 75,
+    netPnL: 3450,
+    profitFactor: 3.8,
+    avgWin: 1163.33,
+    avgLoss: -40,
+    largestWin: 2150,
+    largestLoss: -40,
+    totalTrades: 4
+  },
   
   placeTrade: async (symbol, side, quantity, orderType, price, takeProfitPrice, stopLossPrice) => {
     set({ isLoading: true });

@@ -43,4 +43,17 @@ const ScrollBar = React.forwardRef<
 ))
 ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName
 
-export { ScrollArea, ScrollBar }
+// Adding a ScrollableContent component that includes fixed dimensions for better scrolling support
+const ScrollableContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, children, ...props }, ref) => (
+  <ScrollArea className={cn("h-[400px] max-h-[60vh] w-full", className)}>
+    <div ref={ref} className="p-1" {...props}>
+      {children}
+    </div>
+  </ScrollArea>
+))
+ScrollableContent.displayName = "ScrollableContent"
+
+export { ScrollArea, ScrollBar, ScrollableContent }

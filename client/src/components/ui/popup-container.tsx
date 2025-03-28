@@ -12,6 +12,7 @@ interface PopupContainerProps {
   className?: string;
   icon?: ReactNode;
   fullWidth?: boolean;
+  contentClassName?: string;
 }
 
 export function PopupContainer({ 
@@ -20,6 +21,7 @@ export function PopupContainer({
   onClose, 
   onMinimize, 
   className,
+  contentClassName,
   icon,
   fullWidth = false
 }: PopupContainerProps) {
@@ -29,6 +31,7 @@ export function PopupContainer({
     <div className={cn(
       "bg-background border rounded-lg shadow-lg overflow-hidden flex flex-col",
       fullWidth ? "w-full" : "w-[90%] md:w-auto md:min-w-[500px] max-w-[95vw]", 
+      "h-[85vh] max-h-[85vh]",
       className
     )}>
       {/* Header */}
@@ -51,8 +54,8 @@ export function PopupContainer({
         </div>
       </div>
       
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 max-h-[80vh]">
+      {/* Content - removing overflow-y-auto to prevent conflicts with ScrollArea */}
+      <div className={cn("flex-1 p-4 h-full overflow-hidden", contentClassName)}>
         {children}
       </div>
       

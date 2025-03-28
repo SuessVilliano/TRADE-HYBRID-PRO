@@ -1,15 +1,14 @@
 import { useEffect, useState } from 'react';
-import { ScrollArea } from './scroll-area';
+import { ScrollArea, ScrollableContent } from './scroll-area';
 import { X, Download, Upload, Mic, MicOff } from 'lucide-react';
 import { Button } from './button';
-import { useTrader } from '@/lib/stores/useTrader';
+import { useTrader, Trade } from '@/lib/stores/useTrader';
 import { Textarea } from './textarea';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import { Switch } from './switch';
 import { cn } from '@/lib/utils';
 import { Input } from './input';
 import { PopupContainer } from './popup-container';
-import { Trade } from '@/lib/types';
 
 // Same journal entry interface from ai-assistant.tsx
 interface JournalEntry {
@@ -151,7 +150,7 @@ export function TradeJournalPopup({
         const lines = csvContent.split('\n');
         
         // Skip header row and create trades from CSV data
-        const importedTrades: Trade[] = [];
+        const importedTrades: any[] = [];
         const csvJournalEntries: JournalEntry[] = [];
         
         // Generate an entry for this import
@@ -304,10 +303,10 @@ export function TradeJournalPopup({
             </div>
           </div>
           
-          <ScrollArea className="flex-1">
+          <ScrollableContent className="flex-1 h-[300px]">
             <div className="space-y-2">
               {trades && trades.length > 0 ? (
-                trades.map((trade) => (
+                trades.map((trade: Trade) => (
                   <div key={trade.id} className="border rounded-md p-3 text-sm">
                     <div className="flex items-center justify-between">
                       <span className="font-medium">{trade.symbol}</span>
@@ -341,7 +340,7 @@ export function TradeJournalPopup({
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </ScrollableContent>
           
           <div className="mt-4 flex justify-between">
             <div>
@@ -437,7 +436,7 @@ export function TradeJournalPopup({
             </Button>
           </div>
           
-          <ScrollArea className="flex-1">
+          <ScrollableContent className="flex-1 h-[300px]">
             <div className="space-y-4">
               {journalEntries.length > 0 ? (
                 journalEntries.map((entry) => (
@@ -453,7 +452,7 @@ export function TradeJournalPopup({
                     <div className="flex items-center justify-between">
                       <span className="font-medium">{entry.symbol}</span>
                       <span className="text-xs text-muted-foreground">
-                        {formatDate(entry.date.toString())}
+                        {formatDate(new Date(entry.date).getTime())}
                       </span>
                     </div>
                     
@@ -507,7 +506,7 @@ export function TradeJournalPopup({
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </ScrollableContent>
         </div>
       </div>
     </PopupContainer>
