@@ -20,7 +20,8 @@ useGLTF.preload('/models/trader_character.glb');
 useGLTF.preload('/models/tradehouse.glb');
 useGLTF.preload('/models/thc_coin_premium.glb');
 
-function TraderCharacter(props: any) {
+// Optimize TraderCharacter with React.memo for performance
+const TraderCharacter = React.memo(function TraderCharacter(props: any) {
   const modelRef = useRef<THREE.Group>(null!);
   const [hovered, setHover] = useState(false);
   const [rotation, setRotation] = useState(0);
@@ -78,7 +79,8 @@ function TraderCharacter(props: any) {
   );
 }
 
-function AnimatedBox(props: any) {
+// Optimize with React.memo for better performance
+const AnimatedBox = React.memo(function AnimatedBox(props: any) {
   const meshRef = useRef<THREE.Mesh>(null!);
   const [hovered, setHover] = useState(false);
   const [rotation, setRotation] = useState(0);
@@ -101,9 +103,10 @@ function AnimatedBox(props: any) {
       <meshStandardMaterial color={hovered ? '#5ecc89' : '#88c'} />
     </mesh>
   );
-}
+});
 
-function AnimatedSphere(props: any) {
+// Optimize sphere component
+const AnimatedSphere = React.memo(function AnimatedSphere(props: any) {
   const meshRef = useRef<THREE.Mesh>(null!);
   const [hovered, setHover] = useState(false);
   const [position, setPosition] = useState(0);
@@ -126,7 +129,7 @@ function AnimatedSphere(props: any) {
       <meshStandardMaterial color={hovered ? '#e667c0' : '#c88'} />
     </mesh>
   );
-}
+});
 
 function Lights() {
   return (
@@ -139,7 +142,8 @@ function Lights() {
   );
 }
 
-function TradeHouseModel(props: any) {
+// Optimize TradeHouseModel with React.memo
+const TradeHouseModel = React.memo(function TradeHouseModel(props: any) {
   const modelRef = useRef<THREE.Group>(null!);
   const [hovered, setHover] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
@@ -186,9 +190,10 @@ function TradeHouseModel(props: any) {
       )}
     </group>
   );
-}
+});
 
-function THCCoinModel(props: any) {
+// Optimize THCCoinModel with React.memo for better performance
+const THCCoinModel = React.memo(function THCCoinModel(props: any) {
   const modelRef = useRef<THREE.Group>(null!);
   const [hovered, setHover] = useState(false);
   const [rotation, setRotation] = useState(0);
@@ -244,7 +249,7 @@ function THCCoinModel(props: any) {
       )}
     </group>
   );
-}
+});
 
 function Floor() {
   return (

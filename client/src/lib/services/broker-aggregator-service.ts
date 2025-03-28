@@ -430,6 +430,21 @@ export type BrokerCredentials = {
   apiSecret: string;
 };
 
+// Types for broker comparison
+export interface BrokerPrice {
+  brokerId: string;
+  price: number;
+  spread: number;
+  latency?: number;
+  score?: number;
+}
+
+export interface BrokerComparison {
+  symbol: string;
+  timestamp: number;
+  prices: BrokerPrice[];
+}
+
 export const brokerAggregatorService = {
   async comparePrices(symbol: string) {
     // Implement price comparison logic
@@ -439,5 +454,58 @@ export const brokerAggregatorService = {
   async connect(broker: string, credentials: BrokerCredentials) {
     // Implement broker connection logic
     return true;
+  },
+  
+  async getBrokerPriceComparisons(symbol: string): Promise<BrokerComparison[]> {
+    // In a real app, this would fetch data from actual brokers
+    // For now, we'll generate realistic test data
+    try {
+      console.log(`Fetching price comparisons for ${symbol}`);
+      
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Determine base price for the symbol
+      let basePrice = 0;
+      if (symbol.includes('BTC')) basePrice = 53420 + (Math.random() * 1000 - 500);
+      else if (symbol.includes('ETH')) basePrice = 2890 + (Math.random() * 200 - 100);
+      else if (symbol === 'AAPL') basePrice = 172.5 + (Math.random() * 2 - 1);
+      else if (symbol === 'MSFT') basePrice = 415.8 + (Math.random() * 3 - 1.5);
+      else if (symbol.includes('EUR/USD')) basePrice = 1.0920 + (Math.random() * 0.005 - 0.0025);
+      else basePrice = 100 + (Math.random() * 10 - 5);
+      
+      // Generate broker prices with realistic variations
+      const brokers = ['alpaca', 'binance', 'oanda', 'ironbeam', 'kraken', 'coinbase'];
+      const prices: BrokerPrice[] = brokers.map(broker => {
+        // Different brokers have slightly different prices
+        const variation = (Math.random() * 0.02 - 0.01); // -1% to +1%
+        const price = basePrice * (1 + variation);
+        
+        // Different brokers have different spreads
+        let spread;
+        if (symbol.includes('BTC') || symbol.includes('ETH')) {
+          spread = price * (0.001 + Math.random() * 0.003); // 0.1% to 0.4%
+        } else if (symbol.includes('EUR/USD') || symbol.includes('GBP/USD')) {
+          spread = price * (0.0001 + Math.random() * 0.0004); // 0.01% to 0.05%
+        } else {
+          spread = price * (0.0005 + Math.random() * 0.001); // 0.05% to 0.15%
+        }
+        
+        return {
+          brokerId: broker,
+          price,
+          spread
+        };
+      });
+      
+      return [{
+        symbol,
+        timestamp: Date.now(),
+        prices
+      }];
+    } catch (error) {
+      console.error(`Error getting broker price comparisons for ${symbol}:`, error);
+      throw new Error('Failed to fetch broker comparison data');
+    }
   }
 };

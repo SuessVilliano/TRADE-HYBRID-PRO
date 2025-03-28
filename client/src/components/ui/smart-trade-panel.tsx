@@ -34,32 +34,64 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
   const allSymbols = Object.values(TRADING_SYMBOLS).flat();
   
   useEffect(() => {
+    // Clear error when switching symbols or tabs
+    setAbatevError('');
+    
     if (activeTab === 'abatev') {
-      fetchBrokerComparisons();
+      console.log(`Tab or symbol changed: fetching data for ${symbol}`);
+      // Reset the broker comparisons state to prevent stale data display
+      setBrokerComparisons([]);
+      // Set a slight delay to ensure UI updates properly before fetching data
+      const timer = setTimeout(() => {
+        fetchBrokerComparisons();
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
   }, [activeTab, symbol]);
   
   // Set up a periodic refresh for ABATEV data
   useEffect(() => {
     if (activeTab === 'abatev') {
+      console.log('Setting up periodic refresh for ABATEV data');
+      
+      // First refresh on tab selection
+      // fetchBrokerComparisons(); // Already done in the first useEffect
+      
+      // Then set up interval for periodic refresh
       const intervalId = setInterval(() => {
-        fetchBrokerComparisons();
+        // Only fetch if there's no loading or error being shown
+        if (!abatevLoading) {
+          console.log('Auto-refresh triggered');
+          fetchBrokerComparisons();
+        }
       }, 15000); // Refresh every 15 seconds
       
-      return () => clearInterval(intervalId);
+      return () => {
+        console.log('Clearing ABATEV refresh interval');
+        clearInterval(intervalId);
+      };
     }
-  }, [activeTab, symbol]);
+  }, [activeTab, symbol, abatevLoading]);
   
   const fetchBrokerComparisons = async () => {
+    console.log(`Fetching broker comparisons for ${symbol}`);
     setAbatevLoading(true);
     setAbatevError('');
+    
     try {
       // Use the broker aggregator service to get price comparisons
       const comparisons = await brokerAggregatorService.getBrokerPriceComparisons(symbol);
+      console.log('Broker comparisons received:', comparisons);
       
       if (comparisons && comparisons.length > 0) {
         // Process the comparisons to include evaluation metrics
         const processedComparisons = comparisons.map(comparison => {
+          if (!comparison.prices || comparison.prices.length === 0) {
+            console.warn('No prices in comparison data');
+            return comparison;
+          }
+          
           // Sort prices by lowest first for buy orders
           const sortedPrices = [...comparison.prices].sort((a, b) => a.price - b.price);
           
@@ -87,25 +119,34 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
             };
           });
           
-          // Find the best price based on score
-          const best = processedPrices.reduce((prev, current) => 
-            current.score > prev.score ? current : prev, processedPrices[0]);
-          
-          setBestPrice({
-            brokerId: best.brokerId,
-            price: best.price,
-            spread: best.spread
-          });
+          if (processedPrices.length > 0) {
+            // Find the best price based on score
+            const best = processedPrices.reduce((prev, current) => 
+              current.score > prev.score ? current : prev, processedPrices[0]);
+            
+            setBestPrice({
+              brokerId: best.brokerId,
+              price: best.price,
+              spread: best.spread
+            });
+            
+            return {
+              ...comparison,
+              prices: processedPrices,
+              bestPrice: best
+            };
+          }
           
           return {
             ...comparison,
-            prices: processedPrices,
-            bestPrice: best
+            prices: processedPrices
           };
         });
         
         setBrokerComparisons(processedComparisons);
+        console.log('Broker comparisons processed successfully');
       } else {
+        console.warn('No comparison data available');
         setBrokerComparisons([]);
         setAbatevError('No price data available for the selected symbol');
       }
@@ -140,8 +181,11 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
     return brokerIcons[brokerId.toLowerCase()] || '🏢';
   };
   
-  const handleRefresh = () => {
-    fetchBrokerComparisons();
+  const handleRefresh = async () => {
+    console.log("Manual refresh triggered");
+    // First clear the error state if any
+    setAbatevError('');
+    await fetchBrokerComparisons();
   };
   
   const renderTradeTab = () => (
