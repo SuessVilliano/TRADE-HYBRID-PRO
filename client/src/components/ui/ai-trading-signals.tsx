@@ -6,11 +6,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, RefreshCw, Bell, Check, BellOff, TrendingUp, TrendingDown, BarChart2, PieChart, BrainCircuit, InfoIcon, Search, X } from 'lucide-react';
+import { 
+  Loader2, RefreshCw, Bell, Check, BellOff, TrendingUp, TrendingDown, 
+  BarChart2, PieChart, BrainCircuit, InfoIcon, Search, X, BellPlus, AlertCircle 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/components/ui/use-toast';
 import { TRADING_SYMBOLS } from '@/lib/constants';
 import { Input } from '@/components/ui/input';
+import { notificationService } from '@/lib/services/notification-service';
+import { SavedSignal } from '@/components/ui/saved-signals';
+import useLocalStorage from '@/lib/hooks/useLocalStorage';
 
 interface TradingSignal {
   id: string;
@@ -431,17 +437,82 @@ interface SignalCardProps {
 
 function SignalCard({ signal, compact = false }: SignalCardProps) {
   const { toast } = useToast();
-  const [followed, setFollowed] = useState(false);
+  const [savedSignals, setSavedSignals] = useLocalStorage<SavedSignal[]>('saved-signals', []);
+  const [isSubscribed, setIsSubscribed] = useState(false);
   
-  const handleFollow = () => {
-    setFollowed(!followed);
-    
-    toast({
-      title: followed ? "Signal unfollowed" : "Signal followed",
-      description: followed 
-        ? `You will no longer receive updates for ${signal.symbol}` 
-        : `You will receive updates for ${signal.symbol}`,
-    });
+  // Check if signal is already saved/subscribed
+  useEffect(() => {
+    const isAlreadySaved = savedSignals.some(s => 
+      s.symbol === signal.symbol && 
+      s.entryPrice === signal.entryPrice && 
+      s.side === signal.side
+    );
+    setIsSubscribed(isAlreadySaved);
+  }, [signal.symbol, signal.entryPrice, signal.side, savedSignals]);
+  
+  // Subscribe/unsubscribe to signal
+  const handleSubscribe = () => {
+    if (isSubscribed) {
+      // Find the saved signal and remove it
+      const savedSignal = savedSignals.find(s => 
+        s.symbol === signal.symbol && 
+        s.entryPrice === signal.entryPrice && 
+        s.side === signal.side
+      );
+      
+      if (savedSignal) {
+        // Remove from local storage
+        setSavedSignals(savedSignals.filter(s => s.id !== savedSignal.id));
+        setIsSubscribed(false);
+        
+        toast({
+          title: "Signal unsubscribed",
+          description: `You will no longer receive notifications for ${signal.symbol} ${signal.side}.`,
+        });
+      }
+    } else {
+      // Create a new saved signal and save it
+      const newSavedSignal: SavedSignal = {
+        id: `signal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        symbol: signal.symbol,
+        market: signal.symbol.includes('BTC') || signal.symbol.includes('ETH') || signal.symbol.includes('SOL') 
+          ? 'crypto' 
+          : signal.symbol.includes('/') ? 'forex' : 'stocks',
+        side: signal.side,
+        entryPrice: signal.entryPrice,
+        stopLoss: signal.stopLoss,
+        takeProfit1: signal.takeProfit1,
+        takeProfit2: signal.takeProfit2,
+        timeframe: signal.timeframe,
+        confidence: signal.confidence,
+        createdAt: new Date(),
+        source: signal.source === 'technical' || signal.source === 'fundamental' || signal.source === 'sentiment' 
+          ? 'ai' 
+          : 'copy',
+        notes: signal.reason,
+        notificationsEnabled: true
+      };
+      
+      // Add to local storage
+      setSavedSignals([...savedSignals, newSavedSignal]);
+      setIsSubscribed(true);
+      
+      // Play notification sound and show browser notification
+      const audio = new Audio('/sounds/bell.mp3');
+      audio.volume = 0.7;
+      audio.play().catch(err => console.error('Error playing sound:', err));
+      
+      // Show a notification using the notification service
+      notificationService.notifySystem(
+        `Signal Added: ${signal.symbol}`,
+        `You'll receive notifications for ${signal.side.toUpperCase()} signals on ${signal.symbol}`
+      );
+      
+      toast({
+        title: "Signal subscribed",
+        description: `You will now receive notifications for ${signal.symbol} ${signal.side}.`,
+      });
+    }
   };
   
   // Format date to relative time
@@ -489,7 +560,7 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
   };
   
   return (
-    <div className={`border rounded-md overflow-hidden ${followed ? 'border-primary' : ''}`}>
+    <div className={`border rounded-md overflow-hidden ${isSubscribed ? 'border-primary' : ''}`}>
       <div className={`p-3 ${compact ? 'pb-2' : ''}`}>
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center gap-2">
@@ -522,9 +593,14 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6"
-                onClick={handleFollow}
+                onClick={handleSubscribe}
+                title={isSubscribed ? "Unsubscribe from signal" : "Subscribe to signal"}
               >
-                <Bell className={`h-3 w-3 ${followed ? 'text-primary' : 'text-muted-foreground'}`} />
+                {isSubscribed ? (
+                  <BellPlus className="h-3 w-3 text-primary" />
+                ) : (
+                  <Bell className="h-3 w-3 text-muted-foreground" />
+                )}
               </Button>
             )}
           </div>

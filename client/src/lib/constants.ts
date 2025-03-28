@@ -158,6 +158,9 @@ export const ASSETS = {
     TRADE_SUCCESS: '/sounds/trade_success.mp3',
     TRADE_FAIL: '/sounds/trade_fail.mp3',
     BACKGROUND_MUSIC: '/sounds/background_music.mp3',
+    TRADING_SIGNAL: '/sounds/trading-signal.mp3',
+    PRICE_ALERT: '/sounds/price-alert.mp3',
+    MESSAGE: '/sounds/message.mp3',
   },
   ICONS: {
     LOGO: '/icons/logo.svg',
