@@ -54,6 +54,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // News route using default source (bloomberg)
   app.get("/api/rss-feeds/news", (req, res) => {
+    // Create params object if it doesn't exist
+    req.params = req.params || {};
     req.params.sourceId = 'bloomberg'; // Set default source
     return getRssFeed(req, res);
   });

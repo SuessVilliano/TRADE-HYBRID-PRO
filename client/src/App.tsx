@@ -12,6 +12,7 @@ import { useUserStore } from './lib/stores/useUserStore';
 const TradeRunner = lazy(() => import('./pages/trade-runner'));
 const BullsVsBears = lazy(() => import('./pages/bulls-vs-bears-new')); // Legacy reference
 const NewsDashboard = lazy(() => import('./pages/news-dashboard'));
+const TradeJournalPage = lazy(() => import('./pages/trade-journal'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -75,6 +76,7 @@ function AppContent() {
               <Link to="/trading" className="hover:text-blue-400 transition-colors">Trading</Link>
               <Link to="/metaverse" className="hover:text-blue-400 transition-colors">Metaverse</Link>
               <Link to="/news" className="hover:text-blue-400 transition-colors">News</Link>
+              <Link to="/trade-journal" className="hover:text-blue-400 transition-colors">Journal</Link>
               <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Trade Runner</Link>
               <Link to="/marketplace" className="hover:text-blue-400 transition-colors">NFT Marketplace</Link>
               <Link to="/learn" className="hover:text-blue-400 transition-colors">Learn</Link>
@@ -140,6 +142,18 @@ function AppContent() {
               </div>
             }>
               {typeof window !== 'undefined' && <NewsDashboard />}
+            </Suspense>
+          } />
+          <Route path="/trade-journal" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading trade journal...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <TradeJournalPage />}
             </Suspense>
           } />
           <Route path="/trade-runner" element={

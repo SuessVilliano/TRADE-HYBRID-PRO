@@ -25,7 +25,7 @@ const newsSources: NewsSource[] = [
   {
     id: 'bloomberg',
     name: 'Bloomberg',
-    rssUrls: ['https://www.bloomberg.com/feed/podcast/market-minute']
+    rssUrls: ['https://finance.yahoo.com/news/rssindex']
   },
   {
     id: 'reuters',
