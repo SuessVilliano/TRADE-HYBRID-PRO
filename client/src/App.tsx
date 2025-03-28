@@ -8,7 +8,7 @@ import { ThemeToggle } from './components/ui/theme-toggle';
 import { useUserStore } from './lib/stores/useUserStore';
 
 // Lazy load the Bulls vs Bears page
-const BullsVsBears = lazy(() => import('./pages/bulls-vs-bears'));
+const BullsVsBears = lazy(() => import('./pages/bulls-vs-bears-new'));
 
 // Light wrapper with providers
 function AppWithProviders() {

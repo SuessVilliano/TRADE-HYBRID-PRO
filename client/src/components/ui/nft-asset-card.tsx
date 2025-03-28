@@ -63,6 +63,10 @@ export default function NFTAssetCard({
   
   const rarityClass = getRarityColor(asset.rarity);
   
+  // Ensure we have a placeholder if the image path is invalid
+  const defaultImage = '/placeholder-nft.png'; // Default fallback image
+  const imageUrl = asset.image || defaultImage;
+  
   return (
     <PopupContainer 
       className={`${sizeClasses[size]} cursor-pointer transition-transform hover:scale-[1.02] overflow-hidden flex flex-col`}
@@ -76,23 +80,34 @@ export default function NFTAssetCard({
         </div>
       )}
       
-      {/* Image */}
-      <div className="relative w-full aspect-square overflow-hidden">
+      {/* Image with gradient background fallback */}
+      <div className="relative w-full aspect-square overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600">
         <img 
-          src={asset.image}
+          src={imageUrl}
           alt={asset.name}
           className="w-full h-full object-cover"
           onError={(e) => {
-            // Fallback for broken images
-            (e.target as HTMLImageElement).src = '/images/nfts/placeholder.jpg';
+            // If the image fails to load, use a CSS background with the class name as text
+            const target = e.target as HTMLImageElement;
+            target.style.display = 'none';
+            
+            // The parent div already has a gradient background
+            const parent = target.parentElement;
+            if (parent) {
+              // Create a text element to show the first two letters of the NFT name
+              const textElement = document.createElement('div');
+              textElement.className = 'absolute inset-0 flex items-center justify-center text-4xl font-bold text-white opacity-80';
+              textElement.textContent = asset.name.substring(0, 2).toUpperCase();
+              parent.appendChild(textElement);
+            }
           }}
         />
       </div>
       
       {/* Content */}
-      <div className="p-4 flex-grow flex flex-col">
+      <div className="p-4 flex-grow flex flex-col bg-gray-800">
         <div className="flex justify-between items-start mb-2">
-          <h3 className="font-bold text-lg">{truncateString(asset.name, 18)}</h3>
+          <h3 className="font-bold text-lg text-white">{truncateString(asset.name, 18)}</h3>
           <span className={`text-xs rounded-full px-2 py-0.5 bg-opacity-20 bg-slate-500 ${rarityClass}`}>
             {asset.rarity.charAt(0).toUpperCase() + asset.rarity.slice(1)}
           </span>
@@ -103,7 +118,7 @@ export default function NFTAssetCard({
         <div className="mt-auto">
           <div className="flex justify-between items-center mb-3">
             <span className="text-xs text-slate-400">Price</span>
-            <span className="text-lg font-bold">{formatPrice(asset.price, { currency: 'THC' })}</span>
+            <span className="text-lg font-bold text-cyan-400">{formatPrice(asset.price, { currency: 'THC' })}</span>
           </div>
           
           {showActions && (
