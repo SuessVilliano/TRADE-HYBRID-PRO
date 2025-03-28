@@ -18,6 +18,7 @@ import { CopyTradePanel } from "@/components/ui/copy-trade-panel";
 import { ThcTokenInfo } from "@/components/ui/thc-token-info";
 import { ThcTradingPanel } from "@/components/ui/thc-trading-panel";
 import { MicroTradingTipTrigger } from "@/components/ui/micro-trading-tip-trigger";
+import { MobileSidebarToggle } from "@/components/ui/mobile-sidebar-toggle";
 import { ArrowLeft, LayoutGrid, Maximize2, Minimize2, X, Info, Sparkles, Bot, BookOpen, BarChart2, Activity, BrainCircuit, Users, Coins } from "lucide-react";
 import { useMarketData } from "@/lib/stores/useMarketData";
 import { useNews } from "@/lib/stores/useNews";
@@ -487,6 +488,7 @@ function TradingSpaceContent() {
           <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
             <div className="flex h-14 items-center justify-between px-4">
               <div className="flex items-center gap-2">
+                <MobileSidebarToggle className="h-8 w-8 mr-1" />
                 <Link to="/">
                   <Button variant="ghost" size="icon" className="h-8 w-8">
                     <ArrowLeft className="h-4 w-4" />

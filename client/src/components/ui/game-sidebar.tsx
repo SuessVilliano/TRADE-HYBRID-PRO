@@ -61,12 +61,33 @@ export function GameSidebar() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<string | null>(null);
   
-  // Auto-collapse sidebar on mobile
+  // Auto-collapse sidebar on mobile and handle touch events
   useEffect(() => {
     if (isMobile) {
       setIsExpanded(false);
+      
+      // Add handler for touch start outside sidebar to close it
+      const handleTouchOutside = (event: TouchEvent) => {
+        // Check if the sidebar is expanded and the touch is outside the sidebar
+        const sidebarElement = document.querySelector('[data-sidebar-element="game-sidebar"]');
+        
+        if (
+          isExpanded && 
+          sidebarElement && 
+          !sidebarElement.contains(event.target as Node) && 
+          !(event.target as Element)?.closest('[data-sidebar-toggle]')
+        ) {
+          setIsExpanded(false);
+        }
+      };
+      
+      document.addEventListener('touchstart', handleTouchOutside);
+      
+      return () => {
+        document.removeEventListener('touchstart', handleTouchOutside);
+      };
     }
-  }, [isMobile]);
+  }, [isMobile, isExpanded]);
   
   // Use our dummy functions instead of the real stores to avoid crashes
   const { openWebApp } = dummyWebApp;
@@ -188,20 +209,25 @@ export function GameSidebar() {
   };
 
   return (
-    <div className={`fixed left-0 top-16 h-[calc(100%-64px)] z-30 flex transition-all duration-300 ease-in-out ${isExpanded ? '' : 'transform -translate-x-[calc(100%-3.5rem)]'}`}>
+    <div 
+      className={`fixed left-0 top-16 h-[calc(100%-64px)] z-30 flex transition-all duration-300 ease-in-out ${isExpanded ? '' : 'transform -translate-x-[calc(100%-3.5rem)]'}`}
+    >
       {/* Mobile overlay - prevents sidebar from trapping the screen */}
       {isMobile && isExpanded && (
         <div 
           className="fixed inset-0 bg-black/30 z-20" 
           onClick={() => setIsExpanded(false)}
           aria-hidden="true"
+          data-sidebar-overlay="true"
         />
       )}
       
       {/* Sidebar container */}
-      <div className="relative flex h-full z-30">
+      <div className="relative flex h-full z-30" data-sidebar-element="game-sidebar">
         {/* Main sidebar */}
-        <div className={`bg-background/90 backdrop-blur-sm border-r flex flex-col h-full shadow-md transition-all duration-300 ${isExpanded ? 'w-64' : 'w-14'}`}>
+        <div 
+          className={`bg-background/90 backdrop-blur-sm border-r flex flex-col h-full shadow-md transition-all duration-300 ${isExpanded ? 'w-64' : 'w-14'}`}
+        >
           {/* Sidebar header */}
           <div className="p-3 border-b flex items-center justify-between">
             {isExpanded ? (
@@ -215,6 +241,7 @@ export function GameSidebar() {
                   size="icon"
                   className="h-7 w-7"
                   onClick={toggleSidebar}
+                  data-sidebar-toggle="collapse"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -225,6 +252,7 @@ export function GameSidebar() {
                 size="icon"
                 className="h-7 w-7 mx-auto"
                 onClick={toggleSidebar}
+                data-sidebar-toggle="expand"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
