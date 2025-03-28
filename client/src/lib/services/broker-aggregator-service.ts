@@ -2,10 +2,20 @@
 // This service handles integration with multiple brokers through ABATEV technology
 
 import { THC_TOKEN } from '../constants';
+import { AlpacaService } from './alpaca-service';
+import { OandaService } from './oanda-service';
 import { BinanceService } from './binance-service';
-import { TastyWorksService } from './tastyworks-service';
-import { IBKRService } from './ibkr-service';
 import { BrokerService } from './broker-service';
+
+// These are imported conditionally to avoid errors if not yet implemented
+let TastyWorksService: any;
+let IBKRService: any;
+try {
+  TastyWorksService = require('./tastyworks-service').TastyWorksService;
+  IBKRService = require('./ibkr-service').IBKRService;
+} catch (error) {
+  console.log('Some broker services are not yet implemented, will use fallbacks');
+}
 
 // List of supported brokers
 export const SUPPORTED_BROKERS = [
@@ -248,6 +258,20 @@ export class BrokerAggregatorService {
       
       // Initialize the appropriate broker service based on broker ID
       switch (credentials.brokerId) {
+        case 'alpaca':
+          this.brokerService = new AlpacaService(
+            credentials.apiKey,
+            credentials.apiSecret,
+            credentials.demoMode
+          );
+          break;
+        case 'oanda':
+          this.brokerService = new OandaService(
+            credentials.apiKey,
+            credentials.accountId,
+            credentials.demoMode
+          );
+          break;
         case 'binance':
           this.brokerService = new BinanceService(
             credentials.apiKey,
@@ -256,21 +280,30 @@ export class BrokerAggregatorService {
           );
           break;
         case 'tastyworks':
-          this.brokerService = new TastyWorksService(
-            credentials.apiKey,
-            credentials.apiSecret,
-            credentials.demoMode
-          );
+          if (TastyWorksService) {
+            this.brokerService = new TastyWorksService(
+              credentials.apiKey,
+              credentials.apiSecret,
+              credentials.demoMode
+            );
+          } else {
+            console.warn('TastyWorks service not implemented yet, using fallback');
+          }
           break;
         case 'ibkr':
-          this.brokerService = new IBKRService(
-            credentials.apiKey,
-            credentials.apiSecret,
-            credentials.demoMode
-          );
+          if (IBKRService) {
+            this.brokerService = new IBKRService(
+              credentials.apiKey,
+              credentials.apiSecret,
+              credentials.demoMode
+            );
+          } else {
+            console.warn('IBKR service not implemented yet, using fallback');
+          }
           break;
         default:
           // For other brokers, continue with existing ABATEV integration
+          console.log(`Using ABATEV integration for ${credentials.brokerId}`);
           break;
       }
       

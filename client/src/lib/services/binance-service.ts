@@ -1,130 +1,219 @@
 import { BrokerService, MarketData, AccountBalance, BrokerPosition, OrderHistory } from './broker-service';
+import { check_secrets } from '../utils';
 
 export class BinanceService implements BrokerService {
-  private baseUrl = 'https://api.binance.com/api/v3';
-  private websocketUrl = 'wss://stream.binance.com:9443/ws';
+  private baseUrl: string;
+  private apiKey: string;
+  private apiSecret: string;
   private webSocketConnections: Map<string, WebSocket> = new Map();
+  private authenticated: boolean = false;
   
   constructor(
-    private apiKey: string,
-    private apiSecret: string,
-    private isTestnet: boolean = false
+    apiKey: string = '',
+    apiSecret: string = '',
+    isTestnet: boolean = true
   ) {
+    this.apiKey = apiKey;
+    this.apiSecret = apiSecret;
+    
     if (isTestnet) {
-      this.baseUrl = 'https://testnet.binance.vision/api/v3';
-      this.websocketUrl = 'wss://testnet.binance.vision/ws';
+      this.baseUrl = 'https://testnet.binance.vision/api';
+    } else {
+      this.baseUrl = 'https://api.binance.com/api';
     }
   }
 
   async connect(): Promise<void> {
-    // Verify credentials by making a simple account request
-    await this.request('/account', 'GET', true);
+    // Check if API keys are available
+    if (!this.apiKey || !this.apiSecret) {
+      try {
+        const hasSecrets = await check_secrets(['BINANCE_API_KEY', 'BINANCE_API_SECRET']);
+        if (!hasSecrets) {
+          throw new Error('Binance API keys not found in environment variables');
+        }
+        this.apiKey = process.env.BINANCE_API_KEY || '';
+        this.apiSecret = process.env.BINANCE_API_SECRET || '';
+      } catch (error) {
+        console.error('Failed to retrieve Binance API keys:', error);
+        throw error;
+      }
+    }
+
+    try {
+      // Test connection by getting account information
+      await this.request('/v3/account', 'GET', {}, true);
+      console.log('Connected to Binance API successfully');
+      this.authenticated = true;
+    } catch (error) {
+      console.error('Failed to connect to Binance API:', error);
+      throw error;
+    }
   }
 
   private async request(
     endpoint: string, 
     method: 'GET' | 'POST' | 'DELETE' = 'GET', 
-    signed: boolean = false,
-    params: Record<string, any> = {}
-  ) {
-    let url = `${this.baseUrl}${endpoint}`;
+    params: Record<string, string> = {},
+    secured: boolean = false
+  ): Promise<any> {
+    const url = new URL(`${this.baseUrl}${endpoint}`);
     
-    // For signed endpoints, we need to include a timestamp and signature
-    if (signed) {
-      const timestamp = Date.now();
-      params = { ...params, timestamp };
-      
-      // Create the signature
-      const queryString = new URLSearchParams(params as Record<string, string>).toString();
-      const signature = this.createSignature(queryString);
-      url += `?${queryString}&signature=${signature}`;
-    } else if (Object.keys(params).length > 0) {
-      url += `?${new URLSearchParams(params as Record<string, string>).toString()}`;
+    // Add query parameters
+    if (Object.keys(params).length > 0) {
+      for (const key in params) {
+        url.searchParams.append(key, params[key]);
+      }
     }
 
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'X-MBX-APIKEY': this.apiKey,
-        'Content-Type': 'application/json'
-      }
-    });
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json'
+    };
 
+    // Add authentication for secured endpoints
+    if (secured) {
+      // Add timestamp parameter required by Binance
+      const timestamp = Date.now().toString();
+      url.searchParams.append('timestamp', timestamp);
+      
+      // Generate signature
+      const queryString = url.searchParams.toString();
+      const signature = await this.generateSignature(queryString);
+      url.searchParams.append('signature', signature);
+      
+      // Add API key to headers
+      headers['X-MBX-APIKEY'] = this.apiKey;
+    }
+
+    const options: RequestInit = {
+      method,
+      headers
+    };
+
+    const response = await fetch(url.toString(), options);
+    
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Binance API error: ${errorData.msg || response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`Binance API error: ${response.status} - ${errorText}`);
     }
 
     return response.json();
   }
 
-  private createSignature(queryString: string): string {
-    // In a real implementation, we would use a crypto library to create an HMAC SHA256 signature
-    // For this example, we'll return a mock signature
-    
-    console.log(`Would create HMAC signature for: ${queryString} using secret ${this.apiSecret.slice(0, 3)}...`);
-    
-    // In production, this would be:
-    // return crypto.createHmac('sha256', this.apiSecret).update(queryString).digest('hex');
-    
-    return 'mock-signature-for-development';
+  private async generateSignature(queryString: string): Promise<string> {
+    // For browser environment, use SubtleCrypto API
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(this.apiSecret);
+    const messageData = encoder.encode(queryString);
+
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+
+    const signature = await crypto.subtle.sign(
+      'HMAC',
+      cryptoKey,
+      messageData
+    );
+
+    // Convert to hex string
+    return Array.from(new Uint8Array(signature))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
   }
 
   async getBalance(): Promise<AccountBalance> {
-    const account = await this.request('/account', 'GET', true);
+    if (!this.authenticated) {
+      await this.connect();
+    }
+
+    const accountInfo = await this.request('/v3/account', 'GET', {}, true);
     
-    let total = 0;
-    const nonZeroBalances = account.balances.filter((b: any) => parseFloat(b.free) > 0 || parseFloat(b.locked) > 0);
-    
-    // In a real implementation, we would fetch the current price for each asset and calculate the total
-    // For simplicity, we'll assume we just want USD/USDT balances
-    const usdtBalance = nonZeroBalances.find((b: any) => b.asset === 'USDT');
-    const usdBalance = nonZeroBalances.find((b: any) => b.asset === 'BUSD');
-    
-    const cash = (usdtBalance ? parseFloat(usdtBalance.free) + parseFloat(usdtBalance.locked) : 0) +
-                (usdBalance ? parseFloat(usdBalance.free) + parseFloat(usdBalance.locked) : 0);
-    
-    // For non-stablecoin assets, we need their USD value
-    // In production, we would fetch current prices and calculate
-    const positionsValue = account.balances
-      .filter((b: any) => b.asset !== 'USDT' && b.asset !== 'BUSD' && (parseFloat(b.free) > 0 || parseFloat(b.locked) > 0))
-      .reduce((sum: number, b: any) => sum + parseFloat(b.free) + parseFloat(b.locked), 0) * 1000; // Mock conversion rate
+    // Calculate total balance in USDT
+    let totalBalance = 0;
+    let cashBalance = 0;
+    let positionsValue = 0;
+
+    for (const balance of accountInfo.balances) {
+      if (parseFloat(balance.free) > 0 || parseFloat(balance.locked) > 0) {
+        const total = parseFloat(balance.free) + parseFloat(balance.locked);
+        
+        if (balance.asset === 'USDT') {
+          // USDT balance is already in USD equivalent
+          cashBalance += total;
+        } else {
+          try {
+            // Get price in USDT
+            const ticker = await this.request('/v3/ticker/price', 'GET', { symbol: `${balance.asset}USDT` });
+            const usdtValue = total * parseFloat(ticker.price);
+            
+            // Count as positions if locked, otherwise as cash
+            if (parseFloat(balance.locked) > 0) {
+              positionsValue += usdtValue;
+            } else {
+              cashBalance += usdtValue;
+            }
+          } catch (error) {
+            console.warn(`Could not get price for ${balance.asset}USDT: ${error}`);
+          }
+        }
+      }
+    }
+
+    totalBalance = cashBalance + positionsValue;
     
     return {
-      total: cash + positionsValue,
-      cash,
+      total: totalBalance,
+      cash: cashBalance,
       positions: positionsValue
     };
   }
 
   async getPositions(): Promise<BrokerPosition[]> {
-    const account = await this.request('/account', 'GET', true);
-    const tickers = await this.request('/ticker/price');
+    if (!this.authenticated) {
+      await this.connect();
+    }
+
+    // Get open orders
+    const openOrders = await this.request('/v3/openOrders', 'GET', {}, true);
     
-    // Filter out zero balances and stablecoins
-    const positions = account.balances.filter((b: any) => 
-      (parseFloat(b.free) > 0 || parseFloat(b.locked) > 0) && 
-      b.asset !== 'USDT' && b.asset !== 'BUSD' && b.asset !== 'DAI'
-    );
+    // Get account information
+    const accountInfo = await this.request('/v3/account', 'GET', {}, true);
     
-    return positions.map((pos: any) => {
-      const symbol = `${pos.asset}USDT`;
-      const ticker = tickers.find((t: any) => t.symbol === symbol);
-      const currentPrice = ticker ? parseFloat(ticker.price) : 0;
-      const quantity = parseFloat(pos.free) + parseFloat(pos.locked);
+    const positions: BrokerPosition[] = [];
+    
+    // Add positions from balances (excluding USDT and very small balances)
+    for (const balance of accountInfo.balances) {
+      const total = parseFloat(balance.free) + parseFloat(balance.locked);
       
-      // In a real implementation, we would fetch the average purchase price
-      // For this example, we'll use a mock value
-      const averagePrice = currentPrice * 0.9; // Mock: assume 10% profit on average
-      
-      return {
-        symbol,
-        quantity,
-        averagePrice,
-        currentPrice,
-        pnl: quantity * (currentPrice - averagePrice)
-      };
-    });
+      if (total > 0.001 && balance.asset !== 'USDT') {
+        try {
+          // Get current price
+          const ticker = await this.request('/v3/ticker/price', 'GET', { symbol: `${balance.asset}USDT` });
+          const currentPrice = parseFloat(ticker.price);
+          
+          // Find average entry price - this is a simplification as Binance doesn't provide average entry
+          // In a real-world scenario, you'd track this from trade history
+          let averagePrice = currentPrice;
+          
+          // Add the position
+          positions.push({
+            symbol: `${balance.asset}USDT`,
+            quantity: total,
+            averagePrice,
+            currentPrice,
+            pnl: total * (currentPrice - averagePrice) // Approximate P&L
+          });
+        } catch (error) {
+          console.warn(`Could not get price for ${balance.asset}USDT: ${error}`);
+        }
+      }
+    }
+    
+    return positions;
   }
 
   async placeOrder(order: {
@@ -134,101 +223,45 @@ export class BinanceService implements BrokerService {
     type: 'market' | 'limit';
     limitPrice?: number;
   }): Promise<string> {
-    const params: Record<string, any> = {
+    if (!this.authenticated) {
+      await this.connect();
+    }
+
+    const params: Record<string, string> = {
       symbol: order.symbol,
       side: order.side.toUpperCase(),
-      type: order.type.toUpperCase(),
-      quantity: order.quantity,
+      quantity: order.quantity.toString(),
+      type: order.type.toUpperCase()
     };
-    
+
     if (order.type === 'limit' && order.limitPrice) {
-      params.price = order.limitPrice;
-      params.timeInForce = 'GTC'; // Good Till Cancelled
+      params.timeInForce = 'GTC';
+      params.price = order.limitPrice.toString();
     }
-    
-    const response = await this.request('/order', 'POST', true, params);
-    return response.orderId;
-  }
 
-  subscribeToMarketData(symbol: string, callback: (data: MarketData) => void): void {
-    // Close existing connection if any
-    this.unsubscribeFromMarketData(symbol);
-    
-    // Normalize symbol for Binance (remove USD, add USDT)
-    const binanceSymbol = symbol.replace('USD', '').toUpperCase() + 'USDT';
-    
-    // Create a WebSocket connection
-    const ws = new WebSocket(`${this.websocketUrl}/${binanceSymbol.toLowerCase()}@trade`);
-    
-    ws.onopen = () => {
-      console.log(`Binance WebSocket connected for ${binanceSymbol}`);
-    };
-    
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      callback({
-        symbol,
-        price: parseFloat(data.p),
-        timestamp: data.T,
-        volume: parseFloat(data.q)
-      });
-    };
-    
-    ws.onerror = (error) => {
-      console.error(`Binance WebSocket error for ${binanceSymbol}:`, error);
-    };
-    
-    ws.onclose = () => {
-      console.log(`Binance WebSocket connection closed for ${binanceSymbol}`);
-    };
-    
-    this.webSocketConnections.set(symbol, ws);
-  }
-
-  unsubscribeFromMarketData(symbol: string): void {
-    const ws = this.webSocketConnections.get(symbol);
-    if (ws) {
-      ws.close();
-      this.webSocketConnections.delete(symbol);
-      console.log(`Unsubscribed from ${symbol} market data`);
-    }
+    const response = await this.request('/v3/order', 'POST', params, true);
+    return response.orderId.toString();
   }
 
   async getOrderHistory(): Promise<OrderHistory[]> {
-    // Get all orders for all symbols
-    // In production, we would need to query multiple symbols
-    // For simplicity, we'll just query a few common ones
-    const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'DOGEUSDT'];
-    
-    const allOrders: OrderHistory[] = [];
-    
-    for (const symbol of symbols) {
-      try {
-        const params = {
-          symbol,
-          limit: 50 // Get last 50 orders
-        };
-        
-        const orders = await this.request('/allOrders', 'GET', true, params);
-        
-        const mappedOrders: OrderHistory[] = orders.map((order: any) => ({
-          orderId: order.orderId.toString(),
-          symbol: symbol.replace('USDT', 'USD'), // Normalize back to our format
-          side: order.side.toLowerCase(),
-          quantity: parseFloat(order.origQty),
-          price: parseFloat(order.price) || parseFloat(order.cummulativeQuoteQty) / parseFloat(order.executedQty),
-          status: this.mapOrderStatus(order.status),
-          timestamp: order.time,
-          broker: 'Binance'
-        }));
-        
-        allOrders.push(...mappedOrders);
-      } catch (error) {
-        console.error(`Error fetching orders for ${symbol}:`, error);
-      }
+    if (!this.authenticated) {
+      await this.connect();
     }
+
+    // Get all orders for all symbols (this is a simplification)
+    // In a real app, you might want to query by specific symbols
+    const allOrders = await this.request('/v3/allOrders', 'GET', {}, true);
     
-    return allOrders.sort((a, b) => b.timestamp - a.timestamp);
+    return allOrders.map((order: any) => ({
+      orderId: order.orderId.toString(),
+      symbol: order.symbol,
+      side: order.side.toLowerCase(),
+      quantity: parseFloat(order.origQty),
+      price: parseFloat(order.price),
+      status: this.mapOrderStatus(order.status),
+      timestamp: order.time,
+      broker: 'Binance'
+    }));
   }
 
   private mapOrderStatus(binanceStatus: string): 'filled' | 'pending' | 'cancelled' {
@@ -241,6 +274,69 @@ export class BinanceService implements BrokerService {
         return 'cancelled';
       default:
         return 'pending';
+    }
+  }
+
+  async getQuote(symbol: string): Promise<{ bid: number; ask: number } | null> {
+    try {
+      const bookTicker = await this.request('/v3/ticker/bookTicker', 'GET', { symbol });
+      
+      return {
+        bid: parseFloat(bookTicker.bidPrice),
+        ask: parseFloat(bookTicker.askPrice)
+      };
+    } catch (error) {
+      console.error(`Error fetching quote for ${symbol}:`, error);
+      return null;
+    }
+  }
+
+  subscribeToMarketData(symbol: string, callback: (data: MarketData) => void): void {
+    // Close existing connection if any
+    this.unsubscribeFromMarketData(symbol);
+    
+    // Standard lowercase for Binance websocket
+    const lowerSymbol = symbol.toLowerCase();
+    
+    // Connect to Binance WebSocket
+    const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${lowerSymbol}@trade`);
+    
+    ws.onopen = () => {
+      console.log(`Binance WebSocket connected for ${symbol}`);
+    };
+    
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        callback({
+          symbol: symbol.toUpperCase(), // Ensure consistent casing
+          price: parseFloat(data.p),
+          timestamp: data.E, // Event time
+          volume: parseFloat(data.q) // Quantity
+        });
+      } catch (error) {
+        console.error('Error processing Binance WebSocket data:', error);
+      }
+    };
+    
+    ws.onerror = (error) => {
+      console.error(`Binance WebSocket error for ${symbol}:`, error);
+    };
+    
+    ws.onclose = () => {
+      console.log(`Binance WebSocket connection closed for ${symbol}`);
+    };
+    
+    this.webSocketConnections.set(symbol, ws);
+  }
+
+  unsubscribeFromMarketData(symbol: string): void {
+    const ws = this.webSocketConnections.get(symbol);
+    if (ws) {
+      ws.close();
+      this.webSocketConnections.delete(symbol);
+      console.log(`Unsubscribed from ${symbol} market data`);
     }
   }
 }

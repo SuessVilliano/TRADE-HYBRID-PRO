@@ -1,73 +1,150 @@
 import { BrokerService, MarketData, AccountBalance, BrokerPosition, OrderHistory } from './broker-service';
+import { check_secrets } from '../utils';
+
+// Interface for OANDA API responses
+interface OandaAccountResponse {
+  account: {
+    id: string;
+    balance: string;
+    currency: string;
+    unrealizedPL: string;
+    marginUsed: string;
+    marginAvailable: string;
+    openTradeCount: number;
+    openPositionCount: number;
+    pendingOrderCount: number;
+  };
+}
+
+interface OandaPositionResponse {
+  positions: Array<{
+    instrument: string;
+    long: {
+      units: string;
+      averagePrice: string;
+      unrealizedPL: string;
+    };
+    short: {
+      units: string;
+      averagePrice: string;
+      unrealizedPL: string;
+    };
+  }>;
+}
+
+interface OandaOrderResponse {
+  orders: Array<{
+    id: string;
+    createTime: string;
+    state: string;
+    instrument: string;
+    units: string;
+    price: string;
+    type: string;
+  }>;
+}
+
+interface OandaPriceResponse {
+  prices: Array<{
+    instrument: string;
+    time: string;
+    bids: Array<{ price: string }>;
+    asks: Array<{ price: string }>;
+  }>;
+}
 
 export class OandaService implements BrokerService {
-  private token: string | null = null;
-  private baseUrl = 'https://api-fxpractice.oanda.com';
-  private streamingUrl = 'https://stream-fxpractice.oanda.com';
-  private subscriptions = new Map<string, number>();
-  private accountId: string | null = null;
-
+  private baseUrl: string;
+  private streamUrl: string;
+  private apiToken: string;
+  private accountId: string;
+  private webSocketConnections: Map<string, WebSocket> = new Map();
+  private authenticated: boolean = false;
+  
   constructor(
-    private apiToken: string,
-    private isDemo: boolean = true
+    apiToken: string = '',
+    accountId: string = '',
+    isDemo: boolean = true
   ) {
-    if (!isDemo) {
+    this.apiToken = apiToken;
+    this.accountId = accountId;
+    
+    if (isDemo) {
+      this.baseUrl = 'https://api-fxpractice.oanda.com';
+      this.streamUrl = 'https://stream-fxpractice.oanda.com';
+    } else {
       this.baseUrl = 'https://api-fxtrade.oanda.com';
-      this.streamingUrl = 'https://stream-fxtrade.oanda.com';
+      this.streamUrl = 'https://stream-fxtrade.oanda.com';
     }
   }
 
   async connect(): Promise<void> {
-    try {
-      console.log('Connecting to OANDA API...');
-      
-      // Authenticate and get account information
-      const response = await fetch(`${this.baseUrl}/v3/accounts`, {
-        method: 'GET',
-        headers: { 
-          'Authorization': `Bearer ${this.apiToken}`,
-          'Content-Type': 'application/json'
+    // Check if API token is available
+    if (!this.apiToken) {
+      try {
+        const hasToken = await check_secrets(['OANDA_API_TOKEN']);
+        if (!hasToken) {
+          throw new Error('OANDA API token not found in environment variables');
         }
-      });
-
-      if (!response.ok) {
-        console.error('Failed to connect to OANDA API:', await response.text());
-        throw new Error(`Failed to connect to OANDA: ${response.statusText}`);
+        this.apiToken = process.env.OANDA_API_TOKEN || '';
+      } catch (error) {
+        console.error('Failed to retrieve OANDA API token:', error);
+        throw error;
       }
+    }
 
-      const data = await response.json();
-      // Store the first account ID for future requests
-      if (data.accounts && data.accounts.length > 0) {
-        this.accountId = data.accounts[0].id;
-        console.log(`Successfully connected to OANDA API with account ID: ${this.accountId}`);
-      } else {
-        throw new Error('No accounts found for this OANDA API token');
+    // Check if account ID is available
+    if (!this.accountId) {
+      try {
+        const hasAccountId = await check_secrets(['OANDA_ACCOUNT_ID']);
+        if (!hasAccountId) {
+          // Try to get the account ID from the API
+          const accounts = await this.request('/v3/accounts');
+          if (accounts && accounts.accounts && accounts.accounts.length > 0) {
+            this.accountId = accounts.accounts[0].id;
+            console.log(`Retrieved OANDA account ID: ${this.accountId}`);
+          } else {
+            throw new Error('No OANDA account ID found');
+          }
+        } else {
+          this.accountId = process.env.OANDA_ACCOUNT_ID || '';
+        }
+      } catch (error) {
+        console.error('Failed to retrieve OANDA account ID:', error);
+        throw error;
       }
-      
-      this.token = this.apiToken; // Store the token for future requests
+    }
+
+    try {
+      // Test connection by getting account details
+      await this.request(`/v3/accounts/${this.accountId}`);
+      console.log(`Connected to OANDA API successfully for account ${this.accountId}`);
+      this.authenticated = true;
     } catch (error) {
-      console.error('Error connecting to OANDA:', error);
+      console.error('Failed to connect to OANDA API:', error);
       throw error;
     }
   }
 
-  private async request(endpoint: string, options: RequestInit = {}) {
-    if (!this.token) {
-      throw new Error('Not connected to OANDA API');
-    }
-
+  private async request(endpoint: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET', data?: any): Promise<any> {
     const url = `${this.baseUrl}${endpoint}`;
-    const headers = {
-      'Authorization': `Bearer ${this.token}`,
+    const headers: HeadersInit = {
+      'Authorization': `Bearer ${this.apiToken}`,
       'Content-Type': 'application/json',
-      ...options.headers
+      'Accept-Datetime-Format': 'RFC3339'
     };
 
-    const response = await fetch(url, {
-      ...options,
+    const options: RequestInit = {
+      method,
       headers
-    });
+    };
 
+    if (data) {
+      options.body = JSON.stringify(data);
+    }
+
+    const response = await fetch(url, options);
+    
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`OANDA API error: ${response.status} - ${errorText}`);
@@ -77,39 +154,70 @@ export class OandaService implements BrokerService {
   }
 
   async getBalance(): Promise<AccountBalance> {
-    if (!this.accountId) {
-      throw new Error('Account ID not available. Connect to OANDA first.');
+    if (!this.authenticated) {
+      await this.connect();
     }
-    
-    const data = await this.request(`/v3/accounts/${this.accountId}/summary`);
+
+    const accountDetails: OandaAccountResponse = await this.request(`/v3/accounts/${this.accountId}`);
     
     return {
-      total: parseFloat(data.account.balance),
-      cash: parseFloat(data.account.balance) - parseFloat(data.account.marginUsed),
-      positions: parseFloat(data.account.marginUsed)
+      total: parseFloat(accountDetails.account.balance) + parseFloat(accountDetails.account.unrealizedPL),
+      cash: parseFloat(accountDetails.account.marginAvailable),
+      positions: parseFloat(accountDetails.account.marginUsed)
     };
   }
 
   async getPositions(): Promise<BrokerPosition[]> {
-    if (!this.accountId) {
-      throw new Error('Account ID not available. Connect to OANDA first.');
+    if (!this.authenticated) {
+      await this.connect();
     }
-    
-    const data = await this.request(`/v3/accounts/${this.accountId}/positions`);
-    
-    return data.positions.map((position: any) => {
-      // Get the details from long or short position based on which one has units
-      const details = Math.abs(parseFloat(position.long.units)) > 0 ? position.long : position.short;
-      const side = Math.abs(parseFloat(position.long.units)) > 0 ? 'buy' : 'sell';
+
+    const positionsData: OandaPositionResponse = await this.request(`/v3/accounts/${this.accountId}/positions`);
+    const positions: BrokerPosition[] = [];
+
+    for (const position of positionsData.positions) {
+      // Convert OANDA's symbol format (e.g., EUR_USD) to standard format (EURUSD)
+      const symbol = position.instrument.replace('_', '');
       
-      return {
-        symbol: position.instrument,
-        quantity: Math.abs(parseFloat(details.units)),
-        averagePrice: parseFloat(details.averagePrice),
-        currentPrice: parseFloat(details.averagePrice), // We don't have current price in this response
-        pnl: parseFloat(details.unrealizedPL)
-      };
-    });
+      // Handle long positions
+      if (parseFloat(position.long.units) !== 0) {
+        positions.push({
+          symbol,
+          quantity: parseFloat(position.long.units),
+          averagePrice: parseFloat(position.long.averagePrice),
+          currentPrice: 0, // We'll update this from a separate price call
+          pnl: parseFloat(position.long.unrealizedPL)
+        });
+      }
+      
+      // Handle short positions (negative quantity)
+      if (parseFloat(position.short.units) !== 0) {
+        positions.push({
+          symbol,
+          quantity: parseFloat(position.short.units), // This will be negative
+          averagePrice: parseFloat(position.short.averagePrice),
+          currentPrice: 0, // We'll update this from a separate price call
+          pnl: parseFloat(position.short.unrealizedPL)
+        });
+      }
+    }
+
+    // Update current prices for all positions
+    for (let i = 0; i < positions.length; i++) {
+      try {
+        const formattedSymbol = positions[i].symbol.slice(0, 3) + '_' + positions[i].symbol.slice(3, 6);
+        const priceData = await this.request(`/v3/accounts/${this.accountId}/pricing?instruments=${formattedSymbol}`);
+        if (priceData.prices && priceData.prices.length > 0) {
+          // Average of bid and ask for mid price
+          positions[i].currentPrice = (parseFloat(priceData.prices[0].bids[0].price) + 
+            parseFloat(priceData.prices[0].asks[0].price)) / 2;
+        }
+      } catch (error) {
+        console.error(`Failed to get current price for ${positions[i].symbol}:`, error);
+      }
+    }
+
+    return positions;
   }
 
   async placeOrder(order: {
@@ -119,125 +227,177 @@ export class OandaService implements BrokerService {
     type: 'market' | 'limit';
     limitPrice?: number;
   }): Promise<string> {
-    if (!this.accountId) {
-      throw new Error('Account ID not available. Connect to OANDA first.');
+    if (!this.authenticated) {
+      await this.connect();
     }
-    
-    const units = order.side === 'buy' ? order.quantity : -order.quantity;
-    
-    const orderBody: any = {
+
+    // Format symbol for OANDA (e.g., EURUSD -> EUR_USD)
+    const formattedSymbol = order.symbol.slice(0, 3) + '_' + order.symbol.slice(3, 6);
+
+    // Construct order data
+    const orderData: any = {
       order: {
-        units: units.toString(),
-        instrument: order.symbol,
+        units: order.side === 'buy' ? order.quantity.toString() : (-order.quantity).toString(),
+        instrument: formattedSymbol,
         timeInForce: 'FOK',
         type: order.type === 'market' ? 'MARKET' : 'LIMIT',
         positionFill: 'DEFAULT'
       }
     };
-    
+
+    // Add price for limit orders
     if (order.type === 'limit' && order.limitPrice) {
-      orderBody.order.price = order.limitPrice.toString();
+      orderData.order.price = order.limitPrice.toString();
     }
-    
-    const data = await this.request(`/v3/accounts/${this.accountId}/orders`, {
-      method: 'POST',
-      body: JSON.stringify(orderBody)
-    });
-    
-    return data.orderCreateTransaction.id;
+
+    const response = await this.request(`/v3/accounts/${this.accountId}/orders`, 'POST', orderData);
+    return response.orderCreateTransaction.id;
   }
 
   async getOrderHistory(): Promise<OrderHistory[]> {
-    if (!this.accountId) {
-      throw new Error('Account ID not available. Connect to OANDA first.');
+    if (!this.authenticated) {
+      await this.connect();
     }
+
+    const orderData: OandaOrderResponse = await this.request(`/v3/accounts/${this.accountId}/orders`);
     
-    const data = await this.request(`/v3/accounts/${this.accountId}/orders`);
-    
-    return data.orders.map((order: any) => {
+    return orderData.orders.map(order => {
+      // Convert OANDA's symbol format (e.g., EUR_USD) to standard format (EURUSD)
+      const symbol = order.instrument.replace('_', '');
+      
       return {
         orderId: order.id,
-        symbol: order.instrument,
-        side: parseInt(order.units) > 0 ? 'buy' : 'sell',
-        quantity: Math.abs(parseInt(order.units)),
-        price: parseFloat(order.price || '0'),
+        symbol,
+        side: parseFloat(order.units) > 0 ? 'buy' : 'sell',
+        quantity: Math.abs(parseFloat(order.units)),
+        price: parseFloat(order.price),
         status: this.mapOrderStatus(order.state),
-        timestamp: new Date(order.createTime).getTime()
+        timestamp: new Date(order.createTime).getTime(),
+        broker: 'OANDA'
       };
     });
   }
 
   private mapOrderStatus(oandaStatus: string): 'filled' | 'pending' | 'cancelled' {
-    const statusMap: Record<string, 'filled' | 'pending' | 'cancelled'> = {
-      'FILLED': 'filled',
-      'PENDING': 'pending',
-      'CANCELLED': 'cancelled',
-      'TRIGGERED': 'pending',
-      'OPEN': 'pending'
-    };
-    
-    return statusMap[oandaStatus] || 'pending';
+    switch (oandaStatus) {
+      case 'FILLED':
+        return 'filled';
+      case 'CANCELLED':
+      case 'REJECTED':
+      case 'EXPIRED':
+        return 'cancelled';
+      default:
+        return 'pending';
+    }
+  }
+
+  async getQuote(symbol: string): Promise<{ bid: number; ask: number } | null> {
+    if (!this.authenticated) {
+      await this.connect();
+    }
+
+    try {
+      // Format symbol for OANDA (e.g., EURUSD -> EUR_USD)
+      const formattedSymbol = symbol.slice(0, 3) + '_' + symbol.slice(3, 6);
+      
+      const priceData: OandaPriceResponse = await this.request(`/v3/accounts/${this.accountId}/pricing?instruments=${formattedSymbol}`);
+      
+      if (priceData.prices && priceData.prices.length > 0) {
+        return {
+          bid: parseFloat(priceData.prices[0].bids[0].price),
+          ask: parseFloat(priceData.prices[0].asks[0].price)
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error(`Error fetching quote for ${symbol}:`, error);
+      return null;
+    }
   }
 
   subscribeToMarketData(symbol: string, callback: (data: MarketData) => void): void {
-    // Check if we're already subscribed
-    if (this.subscriptions.has(symbol)) {
-      return;
-    }
+    // Close existing connection if any
+    this.unsubscribeFromMarketData(symbol);
     
-    console.log(`Subscribing to OANDA market data for ${symbol}`);
+    // Format symbol for OANDA (e.g., EURUSD -> EUR_USD)
+    const formattedSymbol = symbol.slice(0, 3) + '_' + symbol.slice(3, 6);
     
-    // For real implementation, we'd use OANDA's streaming API
-    // For now, simulate with an interval to fetch prices
-    const interval = setInterval(async () => {
-      try {
-        if (!this.accountId) {
-          console.error('Account ID not available. Connect to OANDA first.');
-          return;
-        }
-        
-        const response = await fetch(`${this.baseUrl}/v3/instruments/${symbol}/candles?count=1&granularity=S5`, {
-          headers: { 
-            'Authorization': `Bearer ${this.token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (!response.ok) {
-          console.error(`Failed to get OANDA price for ${symbol}:`, await response.text());
-          return;
-        }
-        
-        const data = await response.json();
-        if (data.candles && data.candles.length > 0) {
-          const candle = data.candles[0];
-          const marketData: MarketData = {
-            symbol: symbol,
-            price: parseFloat(candle.mid.c),
-            timestamp: new Date(candle.time).getTime(),
-            open: parseFloat(candle.mid.o),
-            high: parseFloat(candle.mid.h),
-            low: parseFloat(candle.mid.l),
-            close: parseFloat(candle.mid.c),
-            volume: candle.volume
-          };
-          
-          callback(marketData);
-        }
-      } catch (error) {
-        console.error(`Error fetching OANDA data for ${symbol}:`, error);
+    // Initialize streaming connection
+    const url = `${this.streamUrl}/v3/accounts/${this.accountId}/pricing/stream?instruments=${formattedSymbol}`;
+    
+    fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${this.apiToken}`,
+        'Accept-Datetime-Format': 'RFC3339'
       }
-    }, 5000); // Every 5 seconds
-    
-    this.subscriptions.set(symbol, interval as unknown as number);
+    })
+    .then(response => {
+      if (!response.body) {
+        throw new Error('No response body');
+      }
+
+      const reader = response.body.getReader();
+      let buffer = '';
+
+      // Process the stream
+      const processStream = () => {
+        reader.read().then(({ done, value }) => {
+          if (done) {
+            console.log(`OANDA stream for ${symbol} completed`);
+            return;
+          }
+
+          // Decode the chunk and add to buffer
+          buffer += new TextDecoder().decode(value);
+          
+          // Process complete lines in the buffer
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || ''; // Keep the last incomplete line in the buffer
+
+          // Process each complete line
+          for (const line of lines) {
+            if (line.trim() === '') continue;
+            
+            try {
+              const data = JSON.parse(line);
+              
+              // Process price data
+              if (data.type === 'PRICE') {
+                const price = (parseFloat(data.bids[0].price) + parseFloat(data.asks[0].price)) / 2;
+                
+                callback({
+                  symbol: data.instrument.replace('_', ''),
+                  price,
+                  timestamp: new Date(data.time).getTime(),
+                  volume: 0 // OANDA doesn't provide volume data in the stream
+                });
+              }
+            } catch (error) {
+              console.error('Error processing OANDA stream data:', error);
+            }
+          }
+          
+          // Continue reading
+          processStream();
+        }).catch(error => {
+          console.error(`Error reading OANDA stream for ${symbol}:`, error);
+        });
+      };
+
+      processStream();
+    })
+    .catch(error => {
+      console.error(`Failed to connect to OANDA stream for ${symbol}:`, error);
+    });
   }
 
   unsubscribeFromMarketData(symbol: string): void {
-    const interval = this.subscriptions.get(symbol);
-    if (interval) {
-      clearInterval(interval);
-      this.subscriptions.delete(symbol);
-      console.log(`Unsubscribed from OANDA market data for ${symbol}`);
+    const ws = this.webSocketConnections.get(symbol);
+    if (ws) {
+      ws.close();
+      this.webSocketConnections.delete(symbol);
+      console.log(`Unsubscribed from ${symbol} market data`);
     }
   }
 }

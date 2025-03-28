@@ -157,7 +157,7 @@ export class AlpacaService implements BrokerService {
         quantity,
         averagePrice,
         currentPrice,
-        pnl: parseFloat(position.unrealized_pl)
+        pnl: position.unrealized_pl
       };
     });
   }
