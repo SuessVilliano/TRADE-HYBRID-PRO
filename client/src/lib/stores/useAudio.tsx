@@ -35,6 +35,8 @@ interface AudioState {
   toggleMute: () => void;
   playHit: () => void;
   playSuccess: () => void;
+  playHitSound: () => void;
+  playSuccessSound: () => void;
   
   // Music control functions
   playMusic: () => void;
@@ -550,5 +552,14 @@ export const useAudio = create<AudioState>((set, get) => ({
         set({ musicIsPlaying: false });
       }
     }
+  },
+  
+  // Alias functions for compatibility
+  playHitSound: () => {
+    get().playHit();
+  },
+  
+  playSuccessSound: () => {
+    get().playSuccess();
   }
 }));

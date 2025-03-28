@@ -1,0 +1,185 @@
+Enhancing the Game with 3D Chart Rendering & Trade Hybrid Coin Integration
+
+To make the game visually appealing and integrate Trade Hybrid Coin (THC), we’ll:
+	1.	Render a 3D Chart in the Game – Using Three.js for real-time price movement.
+	2.	Integrate Trade Hybrid Coin (THC) – Using Solana smart contracts for staking, rewards, and in-game purchases.
+
+⸻
+
+1. 3D Chart Rendering with Three.js
+
+Install Three.js in Replit:
+In your Replit shell, run:
+
+npm install three
+
+
+
+⸻
+
+Modify index.html to Include a 3D Chart Canvas
+
+<body>
+    <canvas id="chartCanvas"></canvas>
+    <div id="controls">
+        <button onclick="placeTrade('buy')">BUY</button>
+        <button onclick="placeTrade('sell')">SELL</button>
+        <p id="score">Score: 0</p>
+    </div>
+    <script type="module" src="main.js"></script>
+</body>
+
+
+
+⸻
+
+Create a 3D Price Chart in chart3D.js
+
+This renders a real-time trading chart that moves like a snake or candlesticks.
+
+import * as THREE from 'three';
+
+class Chart3D {
+    constructor() {
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('chartCanvas') });
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        this.geometry = new THREE.BufferGeometry();
+        this.material = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+        this.points = [];
+        
+        this.initChart();
+    }
+
+    initChart() {
+        this.camera.position.z = 5;
+        requestAnimationFrame(() => this.animate());
+    }
+
+    updateChart(newPrice) {
+        let x = this.points.length * 0.1;
+        let y = newPrice / 100;
+        this.points.push(new THREE.Vector3(x, y, 0));
+
+        this.geometry.setFromPoints(this.points);
+        let line = new THREE.Line(this.geometry, this.material);
+        this.scene.add(line);
+    }
+
+    animate() {
+        requestAnimationFrame(() => this.animate());
+        this.renderer.render(this.scene, this.camera);
+    }
+}
+
+export const chart3D = new Chart3D();
+
+
+
+⸻
+
+Update main.js to Display Market Movement in 3D
+
+import { chart3D } from './chart3D.js';
+import { marketAI } from './marketAI.js';
+
+let score = 0;
+let lastTrade = null;
+
+function placeTrade(type) {
+    let currentPrice = marketAI.generateNextMove();
+    chart3D.updateChart(currentPrice);
+
+    if ((type === "buy" && currentPrice > lastTrade) ||
+        (type === "sell" && currentPrice < lastTrade)) {
+        score += 10;
+    } else {
+        score -= 5;
+    }
+    
+    lastTrade = currentPrice;
+    document.getElementById("score").innerText = "Score: " + score;
+}
+
+// Update AI market every second
+setInterval(() => {
+    let price = marketAI.generateNextMove();
+    chart3D.updateChart(price);
+}, 1000);
+
+
+
+⸻
+
+2. Trade Hybrid Coin (THC) Integration
+
+Steps to Add THC to the Game
+	1.	Create a Solana Wallet for Game Transactions.
+	2.	Use Solana’s Web3.js SDK to Connect Players’ Wallets.
+	3.	Implement THC-based Rewards & Fees.
+
+⸻
+
+Install Solana Web3.js
+
+npm install @solana/web3.js
+
+
+
+⸻
+
+Set Up a Solana Wallet Connection (wallet.js)
+
+import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
+
+const SOLANA_NETWORK = "devnet";
+const connection = new Connection(clusterApiUrl(SOLANA_NETWORK));
+
+export async function getWalletBalance(walletAddress) {
+    const publicKey = new PublicKey(walletAddress);
+    let balance = await connection.getBalance(publicKey);
+    return balance / 1e9; // Convert lamports to SOL
+}
+
+
+
+⸻
+
+Reward Players with THC for Winning Trades (rewards.js)
+
+import { getWalletBalance } from './wallet.js';
+
+async function rewardPlayer(walletAddress) {
+    let balance = await getWalletBalance(walletAddress);
+    
+    if (balance > 0.1) { // Check if player has funds
+        console.log(`Rewarding player with 10 THC...`);
+        // Smart contract call to send THC
+    } else {
+        console.log("Insufficient balance.");
+    }
+}
+
+
+
+⸻
+
+Add THC Staking for Game Entry (staking.js)
+
+async function stakeTokens(walletAddress, amount) {
+    console.log(`Staking ${amount} THC from ${walletAddress}...`);
+    // Solana contract logic for staking
+}
+
+
+
+⸻
+
+Final Steps
+	•	Test Multiplayer – Sync AI price movements across players.
+	•	Improve UI – Add candlestick patterns and trading indicators (e.g., moving averages).
+	•	Deploy to Replit – Ensure the game connects to Solana wallets and processes rewards.
+
+Would you like help setting up Solana smart contracts for THC transactions?

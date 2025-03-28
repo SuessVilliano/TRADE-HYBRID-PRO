@@ -11,6 +11,7 @@ import Scene from "./components/game/Scene";
 import GamePage from "./pages/game";
 import APIDemoPage from "./pages/api-demo-page";
 import NftMarketplacePage from "./pages/nft-marketplace";
+import BullsVsBears from "./pages/bulls-vs-bears";
 import { Suspense } from "react";
 import { GuideTourProvider, GuideTourLauncher } from "./components/ui/contextual-tooltip";
 import { TradingTipsProvider } from "./components/ui/trading-tips-provider";
@@ -37,6 +38,10 @@ const router = createBrowserRouter([
   {
     path: "/nft-marketplace",
     element: <NftMarketplacePage />
+  },
+  {
+    path: "/bulls-vs-bears",
+    element: <BullsVsBears />
   },
   {
     path: "*",
