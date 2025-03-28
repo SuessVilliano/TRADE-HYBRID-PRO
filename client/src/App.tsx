@@ -4,6 +4,7 @@ import { PopupContainer } from './components/ui/popup-container';
 import NFTMarketplace from './pages/nft-marketplace';
 import { Button } from './components/ui/button';
 import THCBalanceDisplay from './components/ui/thc-balance-display';
+import { ThemeToggle } from './components/ui/theme-toggle';
 import { useUserStore } from './lib/stores/useUserStore';
 
 // Lazy load the Bulls vs Bears page
@@ -19,7 +20,7 @@ function AppWithProviders() {
 }
 
 function AppContent() {
-  const { isLoggedIn, login, logout, user } = useUserStore();
+  const { isAuthenticated, login, logout, user } = useUserStore();
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -70,7 +71,9 @@ function AppContent() {
           </div>
           
           <div className="flex items-center gap-4">
-            {isLoggedIn ? (
+            <ThemeToggle className="mr-2" />
+            
+            {isAuthenticated ? (
               <>
                 <THCBalanceDisplay />
                 <div className="flex items-center gap-2">
@@ -202,10 +205,11 @@ function FeatureCard({ title, description, linkTo }: { title: string, descriptio
 function TradingPlaceholder() {
   // Use the JSX extension to properly import the TradingViewWidget
   const TradingViewWidgetLazy = React.lazy(() => import('./components/ui/TradingViewWidget.jsx'));
-  const AIAssistantLazy = React.lazy(() => import('./components/ui/AIAssistant'));
+  const AIAssistantLazy = React.lazy(() => import('./components/ui/ai-trade-assistant'));
   const TradingSignalsLazy = React.lazy(() => import('./components/ui/TradingSignals'));
   const CopyTradingLazy = React.lazy(() => import('./components/ui/CopyTrading'));
   const SmartTradePanelLazy = React.lazy(() => import('./components/ui/smart-trade-panel').then(module => ({ default: module.SmartTradePanel })));
+  const TradingBotsManagerLazy = React.lazy(() => import('./components/ui/trading-bots-manager').then(module => ({ default: module.TradingBotsManager })));
   
   const [selectedSymbol, setSelectedSymbol] = useState('BITSTAMP:BTCUSD');
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
@@ -253,6 +257,7 @@ function TradingPlaceholder() {
         <option value="signals">Signals</option>
         <option value="copy">Copy Trading</option>
         <option value="assistant">AI Assistant</option>
+        <option value="bots">Trading Bots</option>
       </select>
     </div>
   );

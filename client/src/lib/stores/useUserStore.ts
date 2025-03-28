@@ -1,353 +1,548 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export interface UserProfile {
+export interface Trade {
   id: string;
-  username: string;
-  email: string;
-  avatar: string;
-  createdAt: Date;
-  balance: {
-    USD: number;
-    THC: number;
-    ETH?: number;
-    USDT?: number;
-  };
-  wallet?: {
-    address: string;
-    type: string;
-    network: string;
-  };
-  tradingExperience: 'beginner' | 'intermediate' | 'advanced';
-  biography: string;
-  socialLinks: {
-    twitter?: string;
-    discord?: string;
-    telegram?: string;
-  };
-  preferences: {
-    darkMode: boolean;
-    notifications: boolean;
-    sounds: boolean;
-    showTutorials: boolean;
-  };
-  achievements: {
-    id: string;
-    name: string;
-    description: string;
-    unlockedAt: Date;
-    icon: string;
-  }[];
-  statistics: {
-    tradesCompleted: number;
-    winRate: number;
-    averageProfit: number;
-    largestWin: number;
-    largestLoss: number;
-    totalProfit: number;
-  };
-  favoriteSymbols: string[];
-  activeBots: string[];
-  badges: {
-    id: string;
-    name: string;
-    icon: string;
-  }[];
-  level: number;
-  experience: number;
-  nextLevelExperience: number;
-  isVerified: boolean;
-  roles: string[];
+  symbol: string;
+  type: 'buy' | 'sell';
+  entryPrice: number;
+  exitPrice?: number;
+  amount: number;
+  entryDate: string;
+  exitDate?: string;
+  status: 'open' | 'closed';
+  pnl?: number;
+  pnlPercentage?: number;
+  brokerId: string;
+  stopLoss?: number;
+  takeProfit?: number;
+  fees?: number;
+  notes?: string;
 }
 
-interface UserState {
-  user: UserProfile | null;
-  isLoggedIn: boolean;
-  isLoading: boolean;
-  error: string | null;
+export interface BrokerConnection {
+  id: string;
+  name: string;
+  apiKey: string;
+  secretKey?: string;
+  accountId?: string;
+  isConnected: boolean;
+  lastConnected?: string;
+  type: 'alpaca' | 'binance' | 'oanda' | 'ironbeam' | 'kraken' | 'coinbase';
+}
+
+export interface UserPreferences {
+  theme: 'light' | 'dark';
+  showRealTimeNotifications: boolean;
+  defaultTimeframe: string;
+  defaultLeverage: number;
+  defaultTradeSize: number;
+  riskPercentage: number;
+  defaultFees: number;
+  showDemoAccount: boolean;
+  showPnlInHeader: boolean;
+  enableAdvancedMode: boolean;
+  enableOneTapTrading: boolean;
+  autoABATEV: boolean;
+}
+
+export interface AccountBalance {
+  asset: string;
+  free: number;
+  locked: number;
+  total: number;
+}
+
+export interface UserState {
+  isAuthenticated: boolean;
+  user: {
+    id?: string;
+    username?: string;
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+    avatar?: string;
+    joinDate?: string;
+    lastLogin?: string;
+    role?: 'user' | 'premium' | 'admin';
+    apiKeys?: Record<string, string>;
+  };
+  demoBalances: AccountBalance[];
+  liveBalances: AccountBalance[];
+  tradeHistory: Trade[];
+  brokerConnections: BrokerConnection[];
+  preferences: UserPreferences;
+  notifications: {
+    id: string;
+    type: 'info' | 'warning' | 'success' | 'error';
+    message: string;
+    timestamp: string;
+    read: boolean;
+  }[];
+  watchlists: {
+    id: string;
+    name: string;
+    symbols: string[];
+  }[];
   
   // Actions
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, username: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
-  updateProfile: (data: Partial<UserProfile>) => Promise<void>;
-  fetchUserData: () => Promise<void>;
-  addFavoriteSymbol: (symbol: string) => void;
-  removeFavoriteSymbol: (symbol: string) => void;
-  updateBalance: (currency: 'USD' | 'THC', amount: number) => void;
-  awardAchievement: (achievement: UserProfile['achievements'][0]) => void;
-  addExperience: (amount: number) => void;
-  togglePreference: (preference: keyof UserProfile['preferences']) => void;
+  updateUser: (userData: Partial<UserState['user']>) => void;
+  updatePreferences: (preferences: Partial<UserPreferences>) => void;
+  addTrade: (trade: Omit<Trade, 'id'>) => string;
+  updateTrade: (id: string, tradeData: Partial<Trade>) => boolean;
+  closeTrade: (id: string, exitPrice: number, exitDate?: string) => boolean;
+  deleteTrade: (id: string) => boolean;
+  addBrokerConnection: (connection: Omit<BrokerConnection, 'id' | 'isConnected' | 'lastConnected'>) => string;
+  updateBrokerConnection: (id: string, data: Partial<BrokerConnection>) => boolean;
+  deleteBrokerConnection: (id: string) => boolean;
+  markNotificationAsRead: (id: string) => void;
+  clearNotifications: () => void;
+  addToWatchlist: (watchlistId: string, symbol: string) => boolean;
+  removeFromWatchlist: (watchlistId: string, symbol: string) => boolean;
+  createWatchlist: (name: string) => string;
+  deleteWatchlist: (id: string) => boolean;
 }
 
-// Mock initial user data for development purposes
-const mockUser: UserProfile = {
-  id: '1234567890',
-  username: 'crypto_trader',
-  email: 'trader@example.com',
-  avatar: '/images/avatars/default.png',
-  createdAt: new Date('2023-01-01'),
-  balance: {
-    USD: 10000,
-    THC: 5000,
-    ETH: 1.5,
-    USDT: 2500,
-  },
-  wallet: {
-    address: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
-    type: 'MetaMask',
-    network: 'Ethereum',
-  },
-  tradingExperience: 'intermediate',
-  biography: 'Passionate crypto trader focused on technical analysis and swing trading strategies.',
-  socialLinks: {
-    twitter: 'crypto_trader',
-    discord: 'crypto_trader#1234',
-  },
-  preferences: {
-    darkMode: true,
-    notifications: true,
-    sounds: true,
-    showTutorials: true,
-  },
-  achievements: [
-    {
-      id: 'first-trade',
-      name: 'First Trade',
-      description: 'Completed your first trade',
-      unlockedAt: new Date('2023-01-02'),
-      icon: '🎯',
-    },
-    {
-      id: 'profitable-week',
-      name: 'Profitable Week',
-      description: 'Achieved positive returns for an entire week',
-      unlockedAt: new Date('2023-01-09'),
-      icon: '📈',
-    },
-  ],
-  statistics: {
-    tradesCompleted: 42,
-    winRate: 0.68,
-    averageProfit: 320,
-    largestWin: 1250,
-    largestLoss: -550,
-    totalProfit: 5800,
-  },
-  favoriteSymbols: ['BTCUSD', 'ETHUSD', 'SOLUSDT'],
-  activeBots: ['momentum_bot', 'dca_bot'],
-  badges: [
-    {
-      id: 'verified_trader',
-      name: 'Verified Trader',
-      icon: '✅',
-    },
-    {
-      id: 'diamond_hands',
-      name: 'Diamond Hands',
-      icon: '💎',
-    },
-  ],
-  level: 5,
-  experience: 1250,
-  nextLevelExperience: 2000,
-  isVerified: true,
-  roles: ['trader', 'premium'],
+// Initial state for preferences
+const defaultPreferences: UserPreferences = {
+  theme: 'dark',
+  showRealTimeNotifications: true,
+  defaultTimeframe: '1h',
+  defaultLeverage: 1,
+  defaultTradeSize: 0.01,
+  riskPercentage: 1,
+  defaultFees: 0.1,
+  showDemoAccount: true,
+  showPnlInHeader: true,
+  enableAdvancedMode: false,
+  enableOneTapTrading: false,
+  autoABATEV: true
 };
+
+// Mock demo balances for demonstration
+const initialDemoBalances: AccountBalance[] = [
+  { asset: 'USD', free: 10000, locked: 0, total: 10000 },
+  { asset: 'BTC', free: 0.1, locked: 0, total: 0.1 },
+  { asset: 'ETH', free: 1.5, locked: 0, total: 1.5 }
+];
 
 export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
-      user: null, // Use null for initial state in production
-      isLoggedIn: false,
-      isLoading: false,
-      error: null,
-      
-      login: async (email, password) => {
-        set({ isLoading: true, error: null });
-        try {
-          // In a real app, we would call an API here
-          // For now, simulate a successful login with mock data
-          await new Promise(resolve => setTimeout(resolve, 800));
-          
-          set({ user: mockUser, isLoggedIn: true, isLoading: false });
-        } catch (error: any) {
-          set({ error: error.message, isLoading: false });
+      isAuthenticated: false,
+      user: {},
+      demoBalances: initialDemoBalances,
+      liveBalances: [],
+      tradeHistory: [],
+      brokerConnections: [],
+      preferences: defaultPreferences,
+      notifications: [],
+      watchlists: [
+        {
+          id: 'default',
+          name: 'Default Watchlist',
+          symbols: ['BTCUSD', 'ETHUSD', 'AAPLM', 'EURUSD']
         }
-      },
+      ],
       
-      register: async (email, username, password) => {
-        set({ isLoading: true, error: null });
+      // Authentication actions
+      login: async (username: string, password: string) => {
         try {
-          // In a real app, we would call an API here
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // In production, this would be an actual API call
+          // const response = await fetch('/api/auth/login', {
+          //   method: 'POST',
+          //   headers: { 'Content-Type': 'application/json' },
+          //   body: JSON.stringify({ username, password }),
+          // });
+          // const data = await response.json();
           
-          const newUser = { 
-            ...mockUser, 
-            email,
+          // Simulate successful login for demo
+          const mockUser = {
+            id: '123456789',
             username,
-            id: Math.random().toString(36).substring(2, 15),
-            createdAt: new Date(),
-            balance: { USD: 5000, THC: 100 },
-            achievements: [],
-            statistics: {
-              tradesCompleted: 0,
-              winRate: 0,
-              averageProfit: 0,
-              largestWin: 0,
-              largestLoss: 0,
-              totalProfit: 0,
-            },
-            level: 1,
-            experience: 0,
-            nextLevelExperience: 500,
+            email: `${username}@example.com`,
+            firstName: 'John',
+            lastName: 'Doe',
+            avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
+            joinDate: new Date().toISOString(),
+            lastLogin: new Date().toISOString(),
+            role: 'user' as const,
+            apiKeys: {}
           };
           
-          set({ user: newUser, isLoggedIn: true, isLoading: false });
-        } catch (error: any) {
-          set({ error: error.message, isLoading: false });
+          set({
+            isAuthenticated: true,
+            user: mockUser,
+            notifications: [
+              ...get().notifications,
+              {
+                id: Date.now().toString(),
+                type: 'success',
+                message: 'Successfully logged in. Welcome back!',
+                timestamp: new Date().toISOString(),
+                read: false
+              }
+            ]
+          });
+          
+          return true;
+        } catch (error) {
+          set({
+            notifications: [
+              ...get().notifications,
+              {
+                id: Date.now().toString(),
+                type: 'error',
+                message: 'Login failed. Please check your credentials and try again.',
+                timestamp: new Date().toISOString(),
+                read: false
+              }
+            ]
+          });
+          
+          return false;
         }
       },
       
       logout: () => {
-        set({ user: null, isLoggedIn: false });
+        set({
+          isAuthenticated: false,
+          user: {},
+          tradeHistory: [],
+          brokerConnections: [],
+          notifications: []
+        });
       },
       
-      updateProfile: async (data) => {
-        set({ isLoading: true, error: null });
-        try {
-          // In a real app, we would call an API here
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          const currentUser = get().user;
-          if (!currentUser) throw new Error('User not found');
-          
-          set({ 
-            user: { ...currentUser, ...data },
-            isLoading: false,
-          });
-        } catch (error: any) {
-          set({ error: error.message, isLoading: false });
-        }
+      updateUser: (userData) => {
+        set({ user: { ...get().user, ...userData } });
       },
       
-      fetchUserData: async () => {
-        set({ isLoading: true, error: null });
-        try {
-          // In a real app, we would call an API here
-          await new Promise(resolve => setTimeout(resolve, 800));
-          
-          // For demo, just refresh with mock data
-          if (get().isLoggedIn) {
-            set({ user: mockUser, isLoading: false });
+      updatePreferences: (preferences) => {
+        set({ preferences: { ...get().preferences, ...preferences } });
+        
+        // If theme was updated, apply it to the document
+        if (preferences.theme) {
+          if (preferences.theme === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.colorScheme = 'dark';
           } else {
-            set({ isLoading: false });
+            document.documentElement.classList.remove('dark');
+            document.documentElement.style.colorScheme = 'light';
           }
-        } catch (error: any) {
-          set({ error: error.message, isLoading: false });
         }
       },
       
-      addFavoriteSymbol: (symbol) => {
-        const currentUser = get().user;
-        if (!currentUser) return;
+      // Trade actions
+      addTrade: (trade) => {
+        const id = Date.now().toString();
+        const newTrade: Trade = {
+          id,
+          ...trade,
+          status: 'open'
+        };
         
-        if (!currentUser.favoriteSymbols.includes(symbol)) {
-          set({
-            user: {
-              ...currentUser,
-              favoriteSymbols: [...currentUser.favoriteSymbols, symbol],
-            },
-          });
-        }
-      },
-      
-      removeFavoriteSymbol: (symbol) => {
-        const currentUser = get().user;
-        if (!currentUser) return;
+        set({ tradeHistory: [...get().tradeHistory, newTrade] });
         
+        // Update balances
+        const balances = trade.brokerId === 'demo' ? [...get().demoBalances] : [...get().liveBalances];
+        // In a real app, you would update the balances here
+        
+        // Add notification
         set({
-          user: {
-            ...currentUser,
-            favoriteSymbols: currentUser.favoriteSymbols.filter(s => s !== symbol),
-          },
+          notifications: [
+            ...get().notifications,
+            {
+              id: Date.now().toString(),
+              type: 'success',
+              message: `New ${trade.type} trade opened for ${trade.symbol}`,
+              timestamp: new Date().toISOString(),
+              read: false
+            }
+          ]
         });
+        
+        return id;
       },
       
-      updateBalance: (currency, amount) => {
-        const currentUser = get().user;
-        if (!currentUser) return;
+      updateTrade: (id, tradeData) => {
+        const trades = get().tradeHistory;
+        const tradeIndex = trades.findIndex(t => t.id === id);
         
-        set({
-          user: {
-            ...currentUser,
-            balance: {
-              ...currentUser.balance,
-              [currency]: currentUser.balance[currency] + amount,
-            },
-          },
-        });
+        if (tradeIndex === -1) return false;
+        
+        const updatedTrades = [...trades];
+        updatedTrades[tradeIndex] = {
+          ...updatedTrades[tradeIndex],
+          ...tradeData
+        };
+        
+        set({ tradeHistory: updatedTrades });
+        return true;
       },
       
-      awardAchievement: (achievement) => {
-        const currentUser = get().user;
-        if (!currentUser) return;
+      closeTrade: (id, exitPrice, exitDate = new Date().toISOString()) => {
+        const trades = get().tradeHistory;
+        const tradeIndex = trades.findIndex(t => t.id === id);
         
-        const hasAchievement = currentUser.achievements.some(a => a.id === achievement.id);
-        if (hasAchievement) return;
+        if (tradeIndex === -1) return false;
         
-        set({
-          user: {
-            ...currentUser,
-            achievements: [...currentUser.achievements, achievement],
-          },
-        });
-      },
-      
-      addExperience: (amount) => {
-        const currentUser = get().user;
-        if (!currentUser) return;
+        const trade = trades[tradeIndex];
+        if (trade.status === 'closed') return false;
         
-        let newExperience = currentUser.experience + amount;
-        let newLevel = currentUser.level;
-        let newNextLevelExperience = currentUser.nextLevelExperience;
+        // Calculate P&L
+        const entryAmount = trade.amount * trade.entryPrice;
+        const exitAmount = trade.amount * exitPrice;
+        let pnl = 0;
         
-        // Level up if experience exceeds the requirement
-        while (newExperience >= newNextLevelExperience) {
-          newExperience -= newNextLevelExperience;
-          newLevel += 1;
-          // Each level needs 20% more experience than the previous
-          newNextLevelExperience = Math.floor(newNextLevelExperience * 1.2);
+        if (trade.type === 'buy') {
+          pnl = exitAmount - entryAmount;
+        } else if (trade.type === 'sell') {
+          pnl = entryAmount - exitAmount;
         }
         
+        // Calculate P&L percentage
+        const pnlPercentage = (pnl / entryAmount) * 100;
+        
+        const updatedTrade: Trade = {
+          ...trade,
+          exitPrice,
+          exitDate,
+          status: 'closed',
+          pnl,
+          pnlPercentage
+        };
+        
+        const updatedTrades = [...trades];
+        updatedTrades[tradeIndex] = updatedTrade;
+        
+        set({ tradeHistory: updatedTrades });
+        
+        // Add notification
         set({
-          user: {
-            ...currentUser,
-            experience: newExperience,
-            level: newLevel,
-            nextLevelExperience: newNextLevelExperience,
-          },
+          notifications: [
+            ...get().notifications,
+            {
+              id: Date.now().toString(),
+              type: pnl >= 0 ? 'success' : 'warning',
+              message: `Trade closed for ${trade.symbol}: ${pnl >= 0 ? 'Profit' : 'Loss'} of $${Math.abs(pnl).toFixed(2)} (${pnlPercentage.toFixed(2)}%)`,
+              timestamp: new Date().toISOString(),
+              read: false
+            }
+          ]
         });
+        
+        return true;
       },
       
-      togglePreference: (preference) => {
-        const currentUser = get().user;
-        if (!currentUser) return;
+      deleteTrade: (id) => {
+        const trades = get().tradeHistory;
+        const updatedTrades = trades.filter(t => t.id !== id);
         
-        set({
-          user: {
-            ...currentUser,
-            preferences: {
-              ...currentUser.preferences,
-              [preference]: !currentUser.preferences[preference],
-            },
-          },
-        });
+        if (updatedTrades.length === trades.length) return false;
+        
+        set({ tradeHistory: updatedTrades });
+        return true;
       },
+      
+      // Broker connection actions
+      addBrokerConnection: (connection) => {
+        const id = Date.now().toString();
+        const newConnection: BrokerConnection = {
+          id,
+          ...connection,
+          isConnected: true,
+          lastConnected: new Date().toISOString()
+        };
+        
+        set({ brokerConnections: [...get().brokerConnections, newConnection] });
+        
+        // Add notification
+        set({
+          notifications: [
+            ...get().notifications,
+            {
+              id: Date.now().toString(),
+              type: 'success',
+              message: `Connected to ${connection.name} successfully`,
+              timestamp: new Date().toISOString(),
+              read: false
+            }
+          ]
+        });
+        
+        return id;
+      },
+      
+      updateBrokerConnection: (id, data) => {
+        const connections = get().brokerConnections;
+        const connectionIndex = connections.findIndex(c => c.id === id);
+        
+        if (connectionIndex === -1) return false;
+        
+        const updatedConnections = [...connections];
+        updatedConnections[connectionIndex] = {
+          ...updatedConnections[connectionIndex],
+          ...data
+        };
+        
+        set({ brokerConnections: updatedConnections });
+        return true;
+      },
+      
+      deleteBrokerConnection: (id) => {
+        const connections = get().brokerConnections;
+        const updatedConnections = connections.filter(c => c.id !== id);
+        
+        if (updatedConnections.length === connections.length) return false;
+        
+        set({ brokerConnections: updatedConnections });
+        
+        // Add notification
+        set({
+          notifications: [
+            ...get().notifications,
+            {
+              id: Date.now().toString(),
+              type: 'info',
+              message: 'Broker connection removed',
+              timestamp: new Date().toISOString(),
+              read: false
+            }
+          ]
+        });
+        
+        return true;
+      },
+      
+      // Notification actions
+      markNotificationAsRead: (id) => {
+        const notifications = get().notifications;
+        const notificationIndex = notifications.findIndex(n => n.id === id);
+        
+        if (notificationIndex === -1) return;
+        
+        const updatedNotifications = [...notifications];
+        updatedNotifications[notificationIndex] = {
+          ...updatedNotifications[notificationIndex],
+          read: true
+        };
+        
+        set({ notifications: updatedNotifications });
+      },
+      
+      clearNotifications: () => {
+        set({ notifications: [] });
+      },
+      
+      // Watchlist actions
+      addToWatchlist: (watchlistId, symbol) => {
+        const watchlists = get().watchlists;
+        const watchlistIndex = watchlists.findIndex(w => w.id === watchlistId);
+        
+        if (watchlistIndex === -1) return false;
+        
+        const watchlist = watchlists[watchlistIndex];
+        if (watchlist.symbols.includes(symbol)) return true;
+        
+        const updatedWatchlists = [...watchlists];
+        updatedWatchlists[watchlistIndex] = {
+          ...watchlist,
+          symbols: [...watchlist.symbols, symbol]
+        };
+        
+        set({ watchlists: updatedWatchlists });
+        return true;
+      },
+      
+      removeFromWatchlist: (watchlistId, symbol) => {
+        const watchlists = get().watchlists;
+        const watchlistIndex = watchlists.findIndex(w => w.id === watchlistId);
+        
+        if (watchlistIndex === -1) return false;
+        
+        const watchlist = watchlists[watchlistIndex];
+        if (!watchlist.symbols.includes(symbol)) return true;
+        
+        const updatedWatchlists = [...watchlists];
+        updatedWatchlists[watchlistIndex] = {
+          ...watchlist,
+          symbols: watchlist.symbols.filter(s => s !== symbol)
+        };
+        
+        set({ watchlists: updatedWatchlists });
+        return true;
+      },
+      
+      createWatchlist: (name) => {
+        const id = Date.now().toString();
+        const newWatchlist = {
+          id,
+          name,
+          symbols: []
+        };
+        
+        set({ watchlists: [...get().watchlists, newWatchlist] });
+        return id;
+      },
+      
+      deleteWatchlist: (id) => {
+        // Don't allow deleting the default watchlist
+        if (id === 'default') return false;
+        
+        const watchlists = get().watchlists;
+        const updatedWatchlists = watchlists.filter(w => w.id !== id);
+        
+        if (updatedWatchlists.length === watchlists.length) return false;
+        
+        set({ watchlists: updatedWatchlists });
+        return true;
+      }
     }),
     {
-      name: 'user-storage', // Name for the persisted store in localStorage
-      partialize: (state) => ({ user: state.user, isLoggedIn: state.isLoggedIn }),
+      name: 'trade-hybrid-user-storage',
+      partialize: (state) => ({
+        // Don't persist sensitive information
+        isAuthenticated: state.isAuthenticated,
+        user: {
+          id: state.user.id,
+          username: state.user.username,
+          email: state.user.email,
+          firstName: state.user.firstName,
+          lastName: state.user.lastName,
+          avatar: state.user.avatar,
+          joinDate: state.user.joinDate,
+          lastLogin: state.user.lastLogin,
+          role: state.user.role
+        },
+        demoBalances: state.demoBalances,
+        tradeHistory: state.tradeHistory,
+        // Don't persist API keys and sensitive broker data
+        brokerConnections: state.brokerConnections.map(conn => ({
+          ...conn,
+          apiKey: '', // Clear sensitive data
+          secretKey: '',
+          accountId: ''
+        })),
+        preferences: state.preferences,
+        notifications: state.notifications,
+        watchlists: state.watchlists
+      })
     }
   )
 );
+
+// Export a hook to use the theme from anywhere
+export const useTheme = () => {
+  const theme = useUserStore(state => state.preferences.theme);
+  const updatePreferences = useUserStore(state => state.updatePreferences);
+  
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    updatePreferences({ theme: newTheme });
+  };
+  
+  return { theme, toggleTheme };
+};
