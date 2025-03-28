@@ -8,6 +8,8 @@ import { useMultiplayer } from "../../lib/stores/useMultiplayer";
 import { Button } from "../ui/button";
 import { useAudio } from "../../lib/stores/useAudio";
 import UserStatusIndicator from "./UserStatusIndicator";
+import { NameplateBadgeDisplay } from "../ui/profile-badges-display";
+import { cn } from "@/lib/utils";
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -111,22 +113,22 @@ export default function OtherPlayer({ player, onInteract }: OtherPlayerProps) {
         if (child.material instanceof THREE.MeshStandardMaterial) {
           child.material = child.material.clone();
           child.material.color.set(player.customization.bodyColor || '#1E88E5');
-          if (player.customization.bodyEmissive) {
-            child.material.emissive.set(player.customization.bodyEmissive);
-            child.material.emissiveIntensity = 0.5;
-          }
+          // Add subtle emissive effect
+          child.material.emissive.set(new THREE.Color(player.customization.bodyColor).multiplyScalar(0.2));
+          child.material.emissiveIntensity = 0.3;
         }
       }
       
-      // Apply head color to head parts
+      // Apply head/hat color to head parts
       if (headMeshes.some(part => child.name.includes(part))) {
         if (child.material instanceof THREE.MeshStandardMaterial) {
           child.material = child.material.clone();
-          child.material.color.set(player.customization.headColor || '#FFFFFF');
-          if (player.customization.headEmissive) {
-            child.material.emissive.set(player.customization.headEmissive);
-            child.material.emissiveIntensity = 0.5;
-          }
+          // Use hat color if available, otherwise use eye color for head
+          const headColor = player.customization.hatColor || player.customization.eyeColor || '#FFFFFF';
+          child.material.color.set(headColor);
+          // Add subtle emissive effect
+          child.material.emissive.set(new THREE.Color(headColor).multiplyScalar(0.2));
+          child.material.emissiveIntensity = 0.3;
         }
       }
     });
@@ -184,6 +186,11 @@ export default function OtherPlayer({ player, onInteract }: OtherPlayerProps) {
                   )}m
                 </div>
               )}
+            </div>
+            
+            {/* Player badges */}
+            <div className="mt-1">
+              <NameplateBadgeDisplay userId={player.id} maxBadges={3} />
             </div>
             
             {/* Social buttons - only show when hovering and not yourself */}
