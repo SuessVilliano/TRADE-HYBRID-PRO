@@ -15,6 +15,7 @@ import { Suspense } from "react";
 import { GuideTourProvider, GuideTourLauncher } from "./components/ui/contextual-tooltip";
 import { TradingTipsProvider } from "./components/ui/trading-tips-provider";
 import { MicroTradingTipProvider } from "./components/ui/micro-trading-tip-provider";
+import { AudioInitializer } from "./components/ui/audio-initializer";
 
 const router = createBrowserRouter([
   {
@@ -80,5 +81,11 @@ function AppWithProviders() {
 }
 
 export default function App() {
-  return <AppWithProviders />;
+  return (
+    <>
+      {/* Initialize audio assets at the app level */}
+      <AudioInitializer />
+      <AppWithProviders />
+    </>
+  );
 }
