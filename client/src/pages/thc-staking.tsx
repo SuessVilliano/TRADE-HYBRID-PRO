@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
@@ -23,9 +22,12 @@ import {
   Network,
   ChevronsUpDown,
   Sparkles,
-  Copy
+  Copy,
+  Link as LinkIcon,
+  CheckCircle2
 } from 'lucide-react';
 import { THC_TOKEN_CONFIG, calculateStakingRewards, calculateStakingApy } from '@/lib/contracts/thc-token-info';
+import { useAffiliateTracking, AffiliateService } from '@/lib/services/affiliate-service';
 
 export default function THCStaking() {
   const [activeTab, setActiveTab] = useState('staking');
@@ -38,9 +40,13 @@ export default function THCStaking() {
   const [referralCount, setReferralCount] = useState(5);
   const [referralAddress, setReferralAddress] = useState('');
   const [matrixTier, setMatrixTier] = useState(1);
-  const [referralLink, setReferralLink] = useState('https://tradehybrid.app/?ref=th89d726');
+  const [referralLink, setReferralLink] = useState('');
   const [linkCopied, setLinkCopied] = useState(false);
   const [hasCreatedMatrix, setHasCreatedMatrix] = useState(false);
+  const [referrerCode, setReferrerCode] = useState<string | null>(null);
+  
+  // Use the affiliate tracking hook
+  const { trackReferral, currentReferralCode, generateReferralLink, trackAction } = useAffiliateTracking();
   
   // For the matrix visualization
   const [matrixData, setMatrixData] = useState<any[]>([
@@ -61,10 +67,21 @@ export default function THCStaking() {
     }, 2000);
     
     // Generate random referral address
-    setReferralAddress('TH' + Math.random().toString(36).substring(2, 10).toUpperCase());
+    const generatedAddress = 'TH' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    setReferralAddress(generatedAddress);
+    
+    // Generate and set referral link based on address
+    setReferralLink(generateReferralLink(generatedAddress));
+    
+    // Check if the user was referred by someone
+    const storedReferralCode = AffiliateService.getStoredReferralCode();
+    if (storedReferralCode) {
+      setReferrerCode(storedReferralCode);
+      console.log(`User was referred by: ${storedReferralCode}`);
+    }
     
     return () => clearTimeout(timer);
-  }, []);
+  }, [generateReferralLink]);
   
   // Calculate estimated rewards
   const estimatedRewards = calculateStakingRewards(
@@ -79,10 +96,20 @@ export default function THCStaking() {
   const handleStake = () => {
     if (!connectedWallet) return;
     
+    const amount = parseFloat(stakeAmount);
+    
     // Update UI with staked amount
-    setStakedAmount(prev => prev + parseFloat(stakeAmount));
-    setThcBalance(prev => prev - parseFloat(stakeAmount));
+    setStakedAmount(prev => prev + amount);
+    setThcBalance(prev => prev - amount);
     setStakeAmount('');
+    
+    // Track staking action for affiliate rewards
+    trackAction('stake', amount);
+    
+    // Log referrer if exists
+    if (referrerCode) {
+      console.log(`Staking ${amount} THC with referral from: ${referrerCode}`);
+    }
     
     // Show success message or notification (would be implemented in the UI)
     console.log('Staked successfully');
@@ -91,7 +118,41 @@ export default function THCStaking() {
   // Handle matrix creation
   const handleCreateMatrix = () => {
     setHasCreatedMatrix(true);
+    
+    // Generate a realistic referral link
+    const host = window.location.host;
+    const newReferralLink = `https://${host}/?ref=${referralAddress}`;
+    setReferralLink(newReferralLink);
+    
+    // Update matrix with realistic data
+    updateMatrixData();
+    
+    // Track matrix creation for affiliate rewards (matrix activation fee would be 0.1 SOL)
+    trackAction('registration');
+    
+    // Log referrer if exists for matrix creation
+    if (referrerCode) {
+      console.log(`Matrix created with referral from: ${referrerCode}`);
+    }
+    
     // In a real implementation, this would make a contract call to initialize the matrix
+  };
+  
+  // Function to update matrix data (would be connected to blockchain in real implementation)
+  const updateMatrixData = () => {
+    // This simulates getting updated matrix data from a blockchain or database
+    const updatedMatrix = [
+      { id: 'you', level: 0, position: 0, filled: true, username: 'You', earnings: 0 },
+      // Level 1 (2 positions)
+      { id: 'L1P1', level: 1, position: 0, filled: true, username: 'trader92', earnings: 12.5 },
+      { id: 'L1P2', level: 1, position: 1, filled: true, username: 'cryptomaster', earnings: 12.5 },
+      // Level 2 (3 positions)
+      { id: 'L2P1', level: 2, position: 0, filled: true, username: 'hodlgang', earnings: 6.25 },
+      { id: 'L2P2', level: 2, position: 1, filled: true, username: 'moonshot', earnings: 6.25 },
+      { id: 'L2P3', level: 2, position: 2, filled: false, username: '', earnings: 0 },
+    ];
+    
+    setMatrixData(updatedMatrix);
   };
 
   // Handle copying of referral link
@@ -108,6 +169,13 @@ export default function THCStaking() {
         <p className="text-lg text-slate-300 max-w-3xl mx-auto">
           Stake your THC tokens to earn rewards and build your affiliate network through our 2x3 matrix system.
         </p>
+        
+        {referrerCode && (
+          <div className="mt-4 inline-flex items-center px-4 py-2 bg-indigo-100 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 rounded-full text-indigo-600 dark:text-indigo-300">
+            <LinkIcon size={16} className="mr-2" />
+            <span className="text-sm">You were referred by: {referrerCode}</span>
+          </div>
+        )}
       </div>
       
       <div className="max-w-6xl mx-auto">
@@ -180,7 +248,13 @@ export default function THCStaking() {
                       </div>
                       
                       <div className="flex items-center space-x-2">
-                        <Switch id="auto-compound" checked={autoCompound} onCheckedChange={setAutoCompound} />
+                        <input 
+                          type="checkbox" 
+                          id="auto-compound" 
+                          checked={autoCompound} 
+                          onChange={(e) => setAutoCompound(e.target.checked)} 
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                        />
                         <Label htmlFor="auto-compound">Auto-compound rewards (90+ day periods)</Label>
                       </div>
                     </div>

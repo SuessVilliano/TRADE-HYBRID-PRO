@@ -7,6 +7,7 @@ import THCBalanceDisplay from './components/ui/thc-balance-display';
 import { ThemeToggle } from './components/ui/theme-toggle';
 import { TradingTipsButton } from './components/ui/trading-tips-button';
 import { useUserStore } from './lib/stores/useUserStore';
+import { useAffiliateTracking } from './lib/services/affiliate-service';
 
 // Lazy load pages
 const TradeRunner = lazy(() => import('./pages/trade-runner'));
@@ -43,6 +44,18 @@ function AppContent() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  
+  // Initialize affiliate tracking
+  const { trackReferral, currentReferralCode } = useAffiliateTracking();
+  
+  // Check for referrals on initial load
+  useEffect(() => {
+    // Track any referral codes in the URL
+    const detectedReferralCode = trackReferral();
+    if (detectedReferralCode) {
+      console.log(`Affiliate referral detected: ${detectedReferralCode}`);
+    }
+  }, [trackReferral]);
 
   // Handle login
   const handleLogin = async (e: React.FormEvent) => {
