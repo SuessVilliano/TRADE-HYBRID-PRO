@@ -365,28 +365,64 @@ export class MultiplayerServer {
   }
   
   private handleVoiceData(clientId: string, data: any) {
-    // If target IDs are specified, send only to those targets
-    if (data.targetIds && Array.isArray(data.targetIds)) {
-      data.targetIds.forEach((targetId: string) => {
-        this.sendToClient(targetId, {
-          type: 'voice_data',
-          data: {
-            id: clientId,
-            audio: data.audio
+    try {
+      // Get player state for proximity calculations
+      const senderState = this.playerStates.get(clientId);
+      if (!senderState) return; // Ignore if player not found
+      
+      // If target IDs are specified, send only to those targets
+      if (data.targetIds && Array.isArray(data.targetIds)) {
+        data.targetIds.forEach((targetId: string) => {
+          const targetState = this.playerStates.get(targetId);
+          if (!targetState) return; // Skip if target not found
+          
+          this.sendToClient(targetId, {
+            type: 'voice_data',
+            data: {
+              id: clientId,
+              audio: data.audio,
+              timestamp: Date.now()
+            }
+          });
+        });
+      } else {
+        // Get all connected players
+        const allPlayers = Array.from(this.playerStates.entries());
+        
+        // Calculate distance-based voice transmission
+        // Players within 20 units can hear each other
+        const MAX_VOICE_DISTANCE = 20; 
+        
+        allPlayers.forEach(([receiverId, receiverState]) => {
+          // Skip sending to self
+          if (receiverId === clientId) return;
+          
+          // Calculate distance between sender and receiver
+          const dx = senderState.position[0] - receiverState.position[0];
+          const dy = senderState.position[1] - receiverState.position[1];
+          const dz = senderState.position[2] - receiverState.position[2];
+          const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+          
+          // Only send to players within hearing range
+          if (distance <= MAX_VOICE_DISTANCE) {
+            // Calculate volume based on distance (closer = louder)
+            const volumeFactor = Math.max(0, 1 - (distance / MAX_VOICE_DISTANCE));
+            
+            this.sendToClient(receiverId, {
+              type: 'voice_data',
+              data: {
+                id: clientId,
+                audio: data.audio,
+                timestamp: Date.now(),
+                distance, // Include distance info for client-side spatial audio
+                volumeFactor
+              }
+            });
           }
         });
-      });
-    } else {
-      // Broadcast to all nearby players (proximity-based voice chat)
-      // For now, we'll just broadcast to everyone except the sender
-      // In a more advanced implementation, we'd filter by proximity
-      this.broadcast({
-        type: 'voice_data',
-        data: {
-          id: clientId,
-          audio: data.audio
-        }
-      }, clientId);
+      }
+    } catch (error) {
+      log(`Error processing voice data: ${error}`, 'ws');
     }
   }
   

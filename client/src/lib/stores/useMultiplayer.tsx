@@ -135,23 +135,136 @@ export const useMultiplayer = create<MultiplayerState>((set, get) => {
     }
   });
   
+  // Audio context for voice playback
+  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const audioBuffers: { [key: string]: AudioBufferSourceNode[] } = {};
+  
+  // Voice data handling with proper audio processing
   service.addEventListener('voice_data', (data: { id: string, audio: string }) => {
-    // When we receive voice data, add the player to active speakers if not already there
-    set(state => {
-      if (state.activeSpeakers.includes(data.id)) {
-        return state; // Already in active speakers
+    try {
+      // When we receive voice data, add the player to active speakers if not already there
+      set(state => {
+        if (state.activeSpeakers.includes(data.id)) {
+          return state; // Already in active speakers
+        }
+        return {
+          activeSpeakers: [...state.activeSpeakers, data.id]
+        };
+      });
+      
+      // Get player state for spatial audio calculations
+      const state = get();
+      const mutedPlayers = state.mutedPlayers;
+      
+      // Skip playback for muted players
+      if (mutedPlayers.includes(data.id)) {
+        return;
       }
-      return {
-        activeSpeakers: [...state.activeSpeakers, data.id]
+      
+      // Convert base64 back to audio buffer
+      const binaryString = atob(data.audio);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      
+      // Convert Uint8Array to Int16Array (PCM format)
+      const pcmData = new Int16Array(bytes.buffer);
+      
+      // Convert Int16Array to Float32Array for audio playback
+      const floatData = new Float32Array(pcmData.length);
+      for (let i = 0; i < pcmData.length; i++) {
+        // Convert from 16-bit int to float (-1 to 1)
+        floatData[i] = pcmData[i] / 32768.0;
+      }
+      
+      // Create an audio buffer
+      const buffer = audioContext.createBuffer(1, floatData.length, 48000); // Assume 48kHz sample rate
+      buffer.getChannelData(0).set(floatData);
+      
+      // Create audio source
+      const source = audioContext.createBufferSource();
+      source.buffer = buffer;
+      
+      // Apply spatial audio if applicable
+      let finalNode = source;
+      
+      // If we have player positions, create spatial audio effect
+      const player = state.players.find(p => p.id === data.id);
+      const clientPlayer = state.players.find(p => p.id === state.clientId);
+      
+      if (player && clientPlayer) {
+        try {
+          // Create a panner node for spatial audio
+          const panner = audioContext.createPanner();
+          
+          // Calculate relative position based on player positions
+          const dx = player.position[0] - clientPlayer.position[0];
+          const dy = player.position[1] - clientPlayer.position[1];
+          const dz = player.position[2] - clientPlayer.position[2];
+          
+          // Set panner position
+          panner.positionX.value = dx;
+          panner.positionY.value = dy;
+          panner.positionZ.value = dz;
+          
+          // Connect source to panner
+          source.connect(panner);
+          
+          // Add to active audio sources for this player
+          if (!audioBuffers[data.id]) {
+            audioBuffers[data.id] = [];
+          }
+          audioBuffers[data.id].push(source);
+          
+          // Connect panner to destination
+          panner.connect(audioContext.destination);
+        } catch (error) {
+          console.error('Error setting up spatial audio:', error);
+          // Fall back to regular audio
+          source.connect(audioContext.destination);
+        }
+      } else {
+        // Regular non-spatial audio
+        source.connect(audioContext.destination);
+      }
+      
+      // Start playing the audio
+      source.start();
+      
+      // Clean up old sources to prevent memory leaks
+      source.onended = () => {
+        if (audioBuffers[data.id]) {
+          const index = audioBuffers[data.id].indexOf(source);
+          if (index !== -1) {
+            audioBuffers[data.id].splice(index, 1);
+          }
+          
+          // If this was the last buffer, consider the player silent
+          if (audioBuffers[data.id].length === 0) {
+            setTimeout(() => {
+              set(state => ({
+                activeSpeakers: state.activeSpeakers.filter(id => id !== data.id)
+              }));
+            }, 200);
+          }
+        }
       };
-    });
+    } catch (error) {
+      console.error('Error processing voice data:', error);
+    }
     
-    // After a short delay, remove the player from active speakers if no more voice data received
-    setTimeout(() => {
+    // Set a timeout to remove from active speakers if no more data received
+    const speakingTimeoutId = setTimeout(() => {
       set(state => ({
         activeSpeakers: state.activeSpeakers.filter(id => id !== data.id)
       }));
     }, 500); // 500ms of silence to consider someone stopped talking
+    
+    // Clear previous timeout to prevent removing too early
+    return () => clearTimeout(speakingTimeoutId);
   });
   
   service.addEventListener('friend_response', (data: FriendResponse) => {

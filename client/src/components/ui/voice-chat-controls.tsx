@@ -84,12 +84,26 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
           const audioData = inputBuffer.getChannelData(0);
           
           // Check if sound is above threshold (not silent)
-          const isSilent = audioData.every(sample => Math.abs(sample) < 0.01);
+          // Calculate RMS (Root Mean Square) to detect if there's actual audio
+          let rms = 0;
+          for (let i = 0; i < audioData.length; i++) {
+            rms += audioData[i] * audioData[i];
+          }
+          rms = Math.sqrt(rms / audioData.length);
+          
+          const isSilent = rms < 0.01; // Adjust this threshold as needed
           
           if (!isSilent) {
             // Convert to 16-bit PCM for more efficient transmission
             const pcmData = convertFloatToPCM(audioData);
-            sendVoiceData(pcmData.buffer);
+            
+            // Send chunks to avoid large packets
+            const CHUNK_SIZE = 1024; // Bytes per chunk
+            for (let offset = 0; offset < pcmData.length; offset += CHUNK_SIZE / 2) { // Divide by 2 because each Int16 is 2 bytes
+              const chunkLength = Math.min(CHUNK_SIZE / 2, pcmData.length - offset);
+              const chunk = pcmData.subarray(offset, offset + chunkLength);
+              sendVoiceData(chunk.buffer);
+            }
           }
         }
       };

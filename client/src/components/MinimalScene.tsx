@@ -441,6 +441,9 @@ function MultiplayerConnection() {
 }
 
 export default function MinimalScene() {
+  const [showInstructions, setShowInstructions] = useState(true);
+  const [multiplayerEnabled, setMultiplayerEnabled] = useState(true);
+  
   // Define key mappings for controls
   const keyMap = [
     { name: Controls.forward, keys: ['ArrowUp', 'KeyW'] },
@@ -449,9 +452,6 @@ export default function MinimalScene() {
     { name: Controls.right, keys: ['ArrowRight', 'KeyD'] },
     { name: Controls.jump, keys: ['Space'] },
   ];
-
-  // Setup multiplayer connection
-  const [multiplayerEnabled, setMultiplayerEnabled] = useState(true);
 
   return (
     <div className="h-full">
@@ -503,31 +503,60 @@ export default function MinimalScene() {
       </KeyboardControls>
       
       {/* Overlay instructions */}
-      <div className="absolute bottom-4 left-4 bg-black/70 text-white p-3 rounded-lg text-sm max-w-xs">
-        <h3 className="font-bold mb-1">Trade Hybrid Metaverse</h3>
-        <p className="text-gray-300 text-xs mb-2">
-          Use the arrow keys or WASD to move your character. Space to jump.
-        </p>
-        <ul className="text-xs list-disc pl-4 text-gray-300">
-          <li>Other players will appear automatically when they join</li>
-          <li>Use voice chat in the Social Panel to communicate</li>
-          <li>Hover over other players to see interaction options</li>
-          <li>Visit the Trade House to access trading features</li>
-        </ul>
-        
-        {/* Multiplayer toggle for testing */}
-        <div className="mt-2 pt-2 border-t border-gray-700">
-          <label className="flex items-center gap-2 text-xs">
-            <input
-              type="checkbox"
-              checked={multiplayerEnabled}
-              onChange={(e) => setMultiplayerEnabled(e.target.checked)}
-              className="rounded"
-            />
-            Multiplayer Enabled
-          </label>
+      {showInstructions && (
+        <div className="absolute bottom-4 left-4 bg-black/70 text-white p-3 rounded-lg text-sm max-w-xs">
+          <div className="flex justify-between items-center mb-1">
+            <h3 className="font-bold">Trade Hybrid Metaverse</h3>
+            <button 
+              className="text-gray-400 hover:text-white focus:outline-none" 
+              onClick={() => setShowInstructions(false)}
+              aria-label="Close instructions"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <p className="text-gray-300 text-xs mb-2">
+            Use the arrow keys or WASD to move your character. Space to jump.
+          </p>
+          <ul className="text-xs list-disc pl-4 text-gray-300">
+            <li>Other players will appear automatically when they join</li>
+            <li>Use voice chat in the Social Panel to communicate</li>
+            <li>Hover over other players to see interaction options</li>
+            <li>Visit the Trade House to access trading features</li>
+          </ul>
+          
+          {/* Multiplayer toggle for testing */}
+          <div className="mt-2 pt-2 border-t border-gray-700">
+            <label className="flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={multiplayerEnabled}
+                onChange={(e) => setMultiplayerEnabled(e.target.checked)}
+                className="rounded"
+              />
+              Multiplayer Enabled
+            </label>
+          </div>
         </div>
-      </div>
+      )}
+      
+      {/* Show instructions button when minimized */}
+      {!showInstructions && (
+        <button 
+          className="absolute bottom-4 left-4 bg-primary text-white p-2 rounded-lg text-xs flex items-center gap-1 hover:bg-primary/80"
+          onClick={() => setShowInstructions(true)}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          Controls
+        </button>
+      )}
     </div>
   );
 }

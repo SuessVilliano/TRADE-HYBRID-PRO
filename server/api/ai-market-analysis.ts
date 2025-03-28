@@ -1,11 +1,18 @@
 import { Request, Response } from "express";
 import OpenAI from "openai";
 import { generateMarketData } from "./market";
+import fetch from "node-fetch";
 
 // Initialize OpenAI with the API key
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+// Constants for API providers
+const API_PROVIDERS = {
+  OPENAI: 'openai',
+  GEMINI: 'gemini'
+};
 
 export interface MarketAnalysisRequest {
   symbol: string;
@@ -189,11 +196,6 @@ export const getTradingSuggestions = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Symbol is required' });
     }
     
-    if (!process.env.OPENAI_API_KEY) {
-      console.error('OpenAI API key is missing');
-      return res.status(500).json({ error: 'OpenAI API is not configured' });
-    }
-
     // Generate market data for the given symbol across timeframes
     const marketData = {
       hourly: generateMarketData(symbol as string, '1h', 48),
@@ -201,26 +203,60 @@ export const getTradingSuggestions = async (req: Request, res: Response) => {
       weekly: generateMarketData(symbol as string, '1w', 12),
     };
 
-    // Generate prompt for OpenAI
-    const prompt = generateTradingPrompt(
-      symbol as string, 
-      (riskProfile as string) || 'medium',
-      marketData
-    );
+    // Check if we have AI API access
+    const hasOpenAI = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.startsWith('sk-');
+    const hasGemini = !!process.env.GEMINI_API_KEY;
+    
+    if (!hasOpenAI && !hasGemini) {
+      console.warn('No AI API keys available, using demo suggestions');
+      
+      // Create demo suggestions
+      const demoSuggestions = createDemoTradingSuggestions(symbol as string, (riskProfile as string) || 'medium');
+      
+      const response: TradingSuggestionsResponse = {
+        symbol: symbol as string,
+        timestamp: Date.now(),
+        suggestions: demoSuggestions,
+      };
+      
+      return res.json(response);
+    }
 
-    // Call OpenAI API
-    const aiResponse = await generateAIAnalysis(prompt);
-    
-    // Format and return the response
-    const suggestions = formatTradingSuggestions(aiResponse);
-    
-    const response: TradingSuggestionsResponse = {
-      symbol: symbol as string,
-      timestamp: Date.now(),
-      suggestions,
-    };
-    
-    res.json(response);
+    try {
+      // Generate prompt for AI
+      const prompt = generateTradingPrompt(
+        symbol as string, 
+        (riskProfile as string) || 'medium',
+        marketData
+      );
+
+      // Call AI API (will try OpenAI first, then Gemini)
+      const aiResponse = await generateAIAnalysis(prompt);
+      
+      // Format and return the response
+      const suggestions = formatTradingSuggestions(aiResponse);
+      
+      const response: TradingSuggestionsResponse = {
+        symbol: symbol as string,
+        timestamp: Date.now(),
+        suggestions,
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error('Error generating AI trading suggestions:', error);
+      
+      // Create demo suggestions as fallback
+      const demoSuggestions = createDemoTradingSuggestions(symbol as string, (riskProfile as string) || 'medium');
+      
+      const response: TradingSuggestionsResponse = {
+        symbol: symbol as string,
+        timestamp: Date.now(),
+        suggestions: demoSuggestions,
+      };
+      
+      return res.json(response);
+    }
   } catch (error) {
     console.error('Error generating trading suggestions:', error);
     res.status(500).json({ error: 'Failed to generate trading suggestions' });
@@ -320,23 +356,180 @@ Format your response as a JSON array with these well-structured trading suggesti
 }
 
 /**
- * Call OpenAI API to generate analysis
+ * Create a demo analysis for when API keys are not available
+ */
+function createDemoAnalysis(symbol: string, timeframe: string): any {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString();
+  
+  // Generate random but plausible analysis
+  const isBullish = Math.random() > 0.4;  // 60% chance of bullish analysis for better UX
+  const direction = isBullish ? 'buy' : 'sell';
+  const confidence = Math.floor(Math.random() * 30 + 60) / 100;  // 0.6 - 0.9
+  const sentiment = isBullish ? 'generally positive' : 'somewhat cautious';
+  const momentum = isBullish ? 'showing upward momentum' : 'indicating possible downward pressure';
+  
+  // Generate key indicators with randomized but realistic values
+  const generateIndicator = (name: string, bullishValue: string, bearishValue: string, neutralInterpretation: string) => {
+    const value = isBullish ? bullishValue : bearishValue;
+    return {
+      name,
+      value,
+      interpretation: neutralInterpretation + (isBullish ? ' This suggests potential upside.' : ' This indicates possible downside risk.')
+    };
+  };
+  
+  return {
+    summary: `${symbol} on the ${timeframe} timeframe as of ${dateStr} is ${isBullish ? 'showing signs of strength with potential upside' : 'displaying some weakness with possible downside risk'}. Trading volumes have been ${Math.random() > 0.5 ? 'increasing' : 'stable'}, and market sentiment appears ${sentiment}.`,
+    
+    technicalAnalysis: {
+      shortTerm: isBullish ? `The short-term trend for ${symbol} is bullish with recent price action breaking above key resistance levels.` : `The short-term outlook for ${symbol} appears bearish with price action testing support levels.`,
+      mediumTerm: isBullish ? `Medium-term indicators suggest continued strength, with higher lows forming a potential ascending channel.` : `Medium-term analysis indicates a potential continuation of the downtrend, with lower highs establishing resistance.`,
+      longTerm: `Long-term outlook remains neutral to ${isBullish ? 'bullish' : 'bearish'} depending on broader market conditions and fundamental developments.`,
+      keyIndicators: [
+        generateIndicator('RSI', '65.3', '38.7', 'Relative Strength Index shows moderate momentum.'),
+        generateIndicator('MACD', '0.234 (Positive)', '-0.187 (Negative)', 'Moving Average Convergence Divergence shows recent momentum shift.'),
+        generateIndicator('MA Cross', '50-day above 200-day', '50-day below 200-day', 'Moving average positioning indicates current trend direction.'),
+        generateIndicator('Bollinger Bands', 'Price near upper band', 'Price approaching lower band', 'Current volatility and price position relative to recent range.'),
+        generateIndicator('Volume', 'Above average', 'Below average', 'Trading volume compared to 20-day average.')
+      ]
+    },
+    
+    fundamentalAnalysis: {
+      outlook: `The fundamental outlook for ${symbol} appears ${isBullish ? 'solid' : 'challenging'} based on recent developments.`,
+      keyFactors: [
+        {
+          factor: "Market Sentiment",
+          impact: `${isBullish ? 'Positive' : 'Negative'} - Overall market sentiment is ${sentiment}.`
+        },
+        {
+          factor: "Technical Positioning",
+          impact: `${isBullish ? 'Positive' : 'Negative'} - Price action is ${momentum}.`
+        },
+        {
+          factor: "Trading Volume",
+          impact: "Neutral - Volume patterns show typical activity without significant anomalies."
+        }
+      ]
+    },
+    
+    sentimentAnalysis: {
+      overall: `Overall sentiment for ${symbol} appears ${sentiment}.`,
+      socialMedia: `Social media sentiment leans ${isBullish ? 'positive' : 'negative'} with ${isBullish ? 'increasing' : 'decreasing'} mentions.`,
+      newsFlow: `Recent news coverage has been ${isBullish ? 'mostly positive' : 'mixed to negative'}.`
+    },
+    
+    tradingSuggestions: {
+      direction,
+      confidence,
+      reasoning: `Based on a combination of ${isBullish ? 'bullish technical indicators, positive sentiment, and favorable market conditions' : 'bearish technical signals, cautious sentiment, and challenging market conditions'}.`,
+      riskLevel: isBullish ? 'medium' : 'high',
+      targetPrice: isBullish ? 100 * (1 + Math.random() * 0.15) : 100 * (1 - Math.random() * 0.15),
+      stopLoss: isBullish ? 100 * (1 - Math.random() * 0.07) : 100 * (1 + Math.random() * 0.07)
+    },
+    
+    riskAssessment: {
+      overallRisk: isBullish ? 'medium' : 'high',
+      keyRisks: [
+        `Unexpected shift in market sentiment for ${symbol}`,
+        `Technical breakdown of key ${isBullish ? 'support' : 'resistance'} levels`,
+        "Broader market volatility affecting all assets",
+        "Note: This is a demo analysis as no API key is available"
+      ]
+    }
+  };
+}
+
+/**
+ * Call AI API to generate analysis, with fallback options
  */
 async function generateAIAnalysis(prompt: string): Promise<string> {
-  try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
-      messages: [
-        { role: "system", content: "You are an expert financial analyst and trader with deep knowledge of technical analysis, fundamental analysis, and market psychology. Provide data-driven, insightful market analysis and trading recommendations." },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.7,
-      max_tokens: 2048,
-    });
+  // First try OpenAI
+  if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.startsWith('sk-')) {
+    try {
+      console.log('Attempting to use OpenAI API...');
+      const response = await openai.chat.completions.create({
+        model: "gpt-4-turbo-preview",
+        messages: [
+          { role: "system", content: "You are an expert financial analyst and trader with deep knowledge of technical analysis, fundamental analysis, and market psychology. Provide data-driven, insightful market analysis and trading recommendations." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 2048,
+      });
 
-    return response.choices[0].message.content || '';
+      return response.choices[0].message.content || '';
+    } catch (error) {
+      console.error('Error calling OpenAI API:', error);
+      // If OpenAI fails, try Gemini
+      if (process.env.GEMINI_API_KEY) {
+        return await useGeminiAPI(prompt);
+      }
+      throw new Error('Both OpenAI and Gemini APIs failed. Please check your API keys.');
+    }
+  } 
+  // Try Gemini if OpenAI isn't available
+  else if (process.env.GEMINI_API_KEY) {
+    console.log('OpenAI API key not valid, attempting to use Gemini API...');
+    return await useGeminiAPI(prompt);
+  } else {
+    // Neither API is available
+    throw new Error('No valid AI API keys available. Please add OpenAI_API_KEY or GEMINI_API_KEY to your environment.');
+  }
+}
+
+/**
+ * Call Gemini API for analysis
+ */
+async function useGeminiAPI(prompt: string): Promise<string> {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error('Gemini API key is not configured');
+  }
+  
+  try {
+    const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+    const response = await fetch(`${apiUrl}?key=${process.env.GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: "You are an expert financial analyst and trader with deep knowledge of technical analysis, fundamental analysis, and market psychology. Provide data-driven, insightful market analysis and trading recommendations.\n\n" + prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2048,
+        }
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      console.error('Gemini API error:', data);
+      throw new Error(`Gemini API error: ${data.error?.message || 'Unknown error'}`);
+    }
+    
+    // Extract the generated text from the response
+    let generatedText = '';
+    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+      data.candidates[0].content.parts.forEach((part: any) => {
+        if (part.text) {
+          generatedText += part.text;
+        }
+      });
+    }
+    
+    if (!generatedText) {
+      throw new Error('Gemini API returned empty response');
+    }
+    
+    return generatedText;
   } catch (error) {
-    console.error('Error calling OpenAI API:', error);
+    console.error('Error calling Gemini API:', error);
     throw error;
   }
 }
@@ -386,6 +579,95 @@ function formatAnalysisResponse(rawResponse: string, symbol: string): any {
 }
 
 /**
+ * Create demo trading suggestions when APIs are not available
+ */
+function createDemoTradingSuggestions(symbol: string, riskProfile: string): any {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString();
+  
+  // Generate random price point around 100 for simplicity
+  const currentPrice = 100 + (Math.random() * 20 - 10);
+  
+  // Create suggestions based on risk profile
+  const suggestions = [];
+  
+  // Long-term bullish suggestion (more conservative)
+  if (riskProfile === 'low' || Math.random() > 0.3) {
+    suggestions.push({
+      direction: "buy",
+      entryPrice: currentPrice.toFixed(2),
+      stopLoss: (currentPrice * 0.95).toFixed(2),
+      takeProfit: [
+        (currentPrice * 1.05).toFixed(2),
+        (currentPrice * 1.10).toFixed(2),
+        (currentPrice * 1.15).toFixed(2)
+      ],
+      positionSize: riskProfile === 'low' ? "5%" : (riskProfile === 'medium' ? "10%" : "15%"),
+      riskRewardRatio: 3.0,
+      reasoning: `Long-term bullish outlook for ${symbol} based on overall market trend analysis and technical indicators showing potential continuation. The current price level appears to offer a favorable risk-reward setup for a position trade.`,
+      invalidation: `If price falls below the stop loss level or if overall market conditions shift to a bearish trend.`,
+      timeframe: "position"
+    });
+  }
+  
+  // Short-term bearish suggestion (more aggressive)
+  if (riskProfile === 'high' || Math.random() > 0.4) {
+    suggestions.push({
+      direction: "sell",
+      entryPrice: currentPrice.toFixed(2),
+      stopLoss: (currentPrice * 1.03).toFixed(2),
+      takeProfit: [
+        (currentPrice * 0.97).toFixed(2),
+        (currentPrice * 0.95).toFixed(2),
+        (currentPrice * 0.92).toFixed(2)
+      ],
+      positionSize: riskProfile === 'low' ? "3%" : (riskProfile === 'medium' ? "8%" : "12%"),
+      riskRewardRatio: 2.5,
+      reasoning: `Short-term indicators for ${symbol} suggest potential pullback within the next few trading sessions. RSI showing overbought conditions and potential resistance at current levels.`,
+      invalidation: `If price breaks above the stop loss level or if new positive developments occur.`,
+      timeframe: "swing"
+    });
+  }
+  
+  // Neutral/Hold suggestion
+  if (suggestions.length < 3 || Math.random() > 0.5) {
+    suggestions.push({
+      direction: "hold",
+      entryPrice: "N/A",
+      stopLoss: null,
+      takeProfit: [null],
+      positionSize: "0%",
+      riskRewardRatio: 0,
+      reasoning: `Current price action for ${symbol} is showing mixed signals with no clear directional bias. It's advisable to wait for more clarity before entering a new position.`,
+      invalidation: "N/A",
+      timeframe: "intraday to swing"
+    });
+  }
+  
+  // Add note that this is demo data
+  suggestions.forEach(suggestion => {
+    suggestion.reasoning = suggestion.reasoning + " (Demo suggestion - no API key available)";
+  });
+  
+  // Ensure we have at least one suggestion
+  if (suggestions.length === 0) {
+    suggestions.push({
+      direction: "hold",
+      entryPrice: "Current market price",
+      stopLoss: null,
+      takeProfit: [null],
+      positionSize: "0%",
+      riskRewardRatio: 0,
+      reasoning: `Insufficient data available for ${symbol} at this time to make an informed trading decision. (Demo data - no API key available)`,
+      invalidation: "N/A",
+      timeframe: "N/A"
+    });
+  }
+  
+  return suggestions;
+}
+
+/**
  * Format trading suggestions from AI response
  */
 function formatTradingSuggestions(rawResponse: string): any {
@@ -394,7 +676,7 @@ function formatTradingSuggestions(rawResponse: string): any {
     try {
       return JSON.parse(rawResponse);
     } catch (e) {
-      console.log('Failed to parse OpenAI response as JSON, using fallback formatting');
+      console.log('Failed to parse AI response as JSON, using fallback formatting');
     }
     
     // Fallback to a default structured response
