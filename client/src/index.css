@@ -2,22 +2,75 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Updated Cyberpunk Theme */
+.cyberpunk-glow {
+  box-shadow: 0 0 10px rgba(var(--primary), 0.5), 0 0 20px rgba(var(--secondary), 0.3);
+  transition: box-shadow 0.3s ease;
+}
+
+.cyberpunk-glow:hover {
+  box-shadow: 0 0 15px rgba(var(--primary), 0.7), 0 0 25px rgba(var(--secondary), 0.5);
+}
+
 :root {
-  --primary: 138, 43, 226;
-  --secondary: 0, 206, 209;
-  --accent: 255, 107, 107;
-  --background: 18, 18, 18;
-  --foreground: 255, 255, 255;
-  --success: 76, 175, 80;
-  --danger: 244, 67, 54;
-  --warning: 255, 193, 7;
-  --info: 33, 150, 243;
+  /* Cyberpunk palette - dark theme (default) */
+  --primary: 147, 51, 234; /* Purple #9333EA */
+  --secondary: 6, 182, 212; /* Aqua blue #06B6D4 */
+  --accent: 244, 63, 94; /* Neon pink #f43f5e */
+  --background: 19, 17, 28; /* Dark purple #13111C */
+  --foreground: 248, 250, 252; /* White text #f8fafc */
+  --success: 52, 211, 153; /* Teal green #34d399 */
+  --danger: 244, 67, 54; /* Red #f44336 */
+  --warning: 250, 204, 21; /* Yellow #facc15 */
+  --info: 96, 165, 250; /* Blue #60a5fa */
+  
+  /* Neon glow effects */
+  --purple-glow: 0 0 10px rgba(147, 51, 234, 0.5), 0 0 20px rgba(147, 51, 234, 0.3);
+  --blue-glow: 0 0 10px rgba(6, 182, 212, 0.5), 0 0 20px rgba(6, 182, 212, 0.3);
+  --pink-glow: 0 0 10px rgba(244, 63, 94, 0.5), 0 0 20px rgba(244, 63, 94, 0.3);
+}
+
+/* Light theme variables */
+.light {
+  --primary: 124, 58, 237; /* Lighter purple #7C3AED */
+  --secondary: 8, 145, 178; /* Darker aqua #0891B2 */
+  --accent: 225, 29, 72; /* Darker pink #e11d48 */
+  --background: 245, 243, 255; /* Light purple #F5F3FF */
+  --foreground: 30, 41, 59; /* Dark text #1e293b */
+  --success: 16, 185, 129; /* Darker green #10b981 */
+  --danger: 220, 38, 38; /* Darker red #dc2626 */
+  --warning: 234, 179, 8; /* Darker yellow #eab308 */
+  --info: 37, 99, 235; /* Darker blue #2563eb */
+  
+  /* Subdued glow effects for light theme */
+  --purple-glow: 0 0 8px rgba(124, 58, 237, 0.3), 0 0 16px rgba(124, 58, 237, 0.2);
+  --blue-glow: 0 0 8px rgba(8, 145, 178, 0.3), 0 0 16px rgba(8, 145, 178, 0.2);
+  --pink-glow: 0 0 8px rgba(225, 29, 72, 0.3), 0 0 16px rgba(225, 29, 72, 0.2);
 }
 
 @layer base {
   body {
-    @apply bg-slate-900 text-slate-50;
     font-feature-settings: "rlig" 1, "calt" 1;
+    background-color: rgba(var(--background));
+    color: rgba(var(--foreground));
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  /* Cyberpunk typography */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+  
+  /* Add neon effects to key UI elements */
+  .btn-primary, .btn-accent {
+    text-shadow: 0 0 2px rgba(var(--accent), 0.8);
+  }
+  
+  /* Custom focus styles */
+  a:focus, button:focus, input:focus, select:focus, textarea:focus {
+    outline: 2px solid rgba(var(--secondary), 0.6);
+    outline-offset: 2px;
   }
 }
 
@@ -31,23 +84,26 @@ html, body, #root {
   height: 100%;
 }
 
-/* Custom scrollbar for webkit browsers */
+/* Custom cyberpunk scrollbar for webkit browsers */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.8);
-}
-
-::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: rgba(var(--background), 0.8);
   border-radius: 4px;
 }
 
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(var(--primary), 0.8), rgba(var(--secondary), 0.8));
+  border-radius: 4px;
+  border: 1px solid rgba(var(--secondary), 0.3);
+}
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: linear-gradient(180deg, rgba(var(--secondary), 0.8), rgba(var(--primary), 0.8));
+  box-shadow: var(--blue-glow);
 }
 
 /* Custom styles for NFT cards and marketplace */

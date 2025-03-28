@@ -39,34 +39,62 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
     localStorage.setItem('th-theme', theme);
     updatePreferences({ theme });
     
-    // Apply theme to document
+    // Apply theme to document with cyberpunk colors
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
       document.documentElement.classList.remove('light');
       document.documentElement.style.colorScheme = 'dark';
       
-      // Make additional styling changes for dark mode
-      document.body.style.backgroundColor = '#0f172a'; // Match bg-slate-900
-      document.body.style.color = '#f8fafc'; // Match text-white
+      // Cyberpunk dark theme - dark purple background with neon accents
+      document.body.style.backgroundColor = '#13111C'; // Dark purple background
+      document.body.style.color = '#f8fafc'; // Light text
+      
+      // Add cyberpunk CSS variables
+      document.documentElement.style.setProperty('--primary-color', '#9333EA'); // Purple
+      document.documentElement.style.setProperty('--secondary-color', '#06B6D4'); // Aqua blue
+      document.documentElement.style.setProperty('--accent-color', '#f43f5e'); // Neon pink
+      document.documentElement.style.setProperty('--background-color', '#13111C'); // Dark purple
+      document.documentElement.style.setProperty('--text-color', '#f8fafc'); // Light text
     } else {
       document.documentElement.classList.remove('dark');
       document.documentElement.classList.add('light');
       document.documentElement.style.colorScheme = 'light';
       
-      // Make additional styling changes for light mode
-      document.body.style.backgroundColor = '#f8fafc'; // Light background
+      // Cyberpunk light theme - light purplish background with vivid accents
+      document.body.style.backgroundColor = '#F5F3FF'; // Light purple background
       document.body.style.color = '#1e293b'; // Dark text
+      
+      // Add cyberpunk CSS variables for light mode
+      document.documentElement.style.setProperty('--primary-color', '#7C3AED'); // Lighter purple
+      document.documentElement.style.setProperty('--secondary-color', '#0891B2'); // Aqua blue (slightly darker)
+      document.documentElement.style.setProperty('--accent-color', '#e11d48'); // Bright pink
+      document.documentElement.style.setProperty('--background-color', '#F5F3FF'); // Light purple
+      document.documentElement.style.setProperty('--text-color', '#1e293b'); // Dark text
     }
     
-    // Also update app container styles for more complete theme switching
+    // Update app container and other key elements with cyberpunk theme
     const appContainer = document.getElementById('root');
     if (appContainer) {
       if (theme === 'dark') {
-        appContainer.classList.add('bg-slate-900', 'text-white');
+        // Remove light mode classes
         appContainer.classList.remove('bg-white', 'text-slate-900');
+        
+        // Add dark cyberpunk classes
+        appContainer.classList.add('text-white');
+        appContainer.style.backgroundColor = '#13111C'; // Dark purple
+        
+        // Add subtle gradient background
+        appContainer.style.backgroundImage = 'radial-gradient(circle at top right, rgba(124, 58, 237, 0.1), transparent 65%)';
       } else {
-        appContainer.classList.remove('bg-slate-900', 'text-white');
-        appContainer.classList.add('bg-white', 'text-slate-900');
+        // Remove dark mode classes
+        appContainer.classList.remove('text-white');
+        
+        // Add light cyberpunk classes
+        appContainer.classList.add('text-slate-900');
+        appContainer.style.backgroundColor = '#F5F3FF'; // Light purple
+        
+        // Add subtle gradient background
+        appContainer.style.backgroundImage = 'radial-gradient(circle at top right, rgba(124, 58, 237, 0.1), transparent 65%)';
       }
     }
   }, [theme, mounted, updatePreferences]);

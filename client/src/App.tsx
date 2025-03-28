@@ -151,9 +151,9 @@ function AppContent() {
               <p>&copy; {new Date().getFullYear()} Trade Hybrid. All rights reserved.</p>
             </div>
             <div className="flex gap-6">
-              <Link to="/terms" className="hover:text-blue-400 transition-colors">Terms</Link>
-              <Link to="/privacy" className="hover:text-blue-400 transition-colors">Privacy</Link>
-              <Link to="/contact" className="hover:text-blue-400 transition-colors">Contact</Link>
+              <a href="https://www.tradehybrid.club/terms" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">Terms</a>
+              <a href="https://www.tradehybrid.club/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">Privacy</a>
+              <a href="https://www.tradehybrid.club/contact" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">Contact</a>
             </div>
           </div>
         </div>
@@ -212,38 +212,9 @@ function FeatureCard({ title, description, linkTo }: { title: string, descriptio
 }
 
 function TradingPlaceholder() {
-  // Use the JSX extension to properly import the TradingViewWidget
-  const TradingViewWidgetLazy = React.lazy(() => import('./components/ui/TradingViewWidget'));
-  const AIAssistantLazy = React.lazy(() => import('./components/ui/ai-trade-assistant'));
-  const TradingSignalsLazy = React.lazy(() => import('./components/ui/TradingSignals'));
-  const CopyTradingLazy = React.lazy(() => import('./components/ui/CopyTrading'));
-  const SmartTradePanelLazy = React.lazy(() => import('./components/ui/smart-trade-panel').then(module => ({ default: module.SmartTradePanel })));
-  const TradingBotsManagerLazy = React.lazy(() => import('./components/ui/trading-bots-manager').then(module => ({ default: module.TradingBotsManager })));
-  
+  const ControlCenterLazy = React.lazy(() => import('./components/ui/control-center'));
   const [selectedSymbol, setSelectedSymbol] = useState('BITSTAMP:BTCUSD');
-  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
-  const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState('chart');
-  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
-  
-  // Track window size for responsive layout
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const handleResize = () => {
-        setWindowWidth(window.innerWidth);
-        // Auto-close sidebars on small screens
-        if (window.innerWidth < 768) {
-          setLeftSidebarOpen(false);
-          setRightSidebarOpen(false);
-        }
-      };
-      
-      window.addEventListener('resize', handleResize);
-      handleResize(); // Initial check
-      
-      return () => window.removeEventListener('resize', handleResize);
-    }
-  }, []);
+  const [brokerModalOpen, setBrokerModalOpen] = useState(false);
   
   const cryptoSymbols = [
     { value: 'BITSTAMP:BTCUSD', label: 'Bitcoin (BTC/USD)' },
@@ -253,23 +224,9 @@ function TradingPlaceholder() {
     { value: 'BINANCE:ADAUSDT', label: 'Cardano (ADA/USDT)' },
   ];
   
-  // For smaller screens, we'll use a dropdown menu instead of tabs
-  const renderMobileNavigation = () => (
-    <div className="mb-4">
-      <select 
-        value={activeTab}
-        onChange={(e) => setActiveTab(e.target.value)}
-        className="w-full bg-slate-800 border border-slate-700 rounded-md p-2"
-      >
-        <option value="chart">Charts</option>
-        <option value="smart">ABATEV Smart Trading</option>
-        <option value="signals">Signals</option>
-        <option value="copy">Copy Trading</option>
-        <option value="assistant">AI Assistant</option>
-        <option value="bots">Trading Bots</option>
-      </select>
-    </div>
-  );
+  const handleSymbolChange = (newSymbol: string) => {
+    setSelectedSymbol(newSymbol);
+  };
   
   return (
     <div className="min-h-screen bg-slate-900">
@@ -278,30 +235,12 @@ function TradingPlaceholder() {
         <div className="container mx-auto flex flex-wrap justify-between items-center">
           <div className="flex items-center mb-2 sm:mb-0">
             <h1 className="text-lg font-bold mr-4">Trading Platform</h1>
-            
-            {/* Sidebar toggle buttons for desktop */}
-            <div className="hidden md:flex space-x-2">
-              <Button 
-                variant={leftSidebarOpen ? "default" : "outline"} 
-                size="sm"
-                onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}
-              >
-                {leftSidebarOpen ? "Hide" : "Show"} Signals
-              </Button>
-              <Button 
-                variant={rightSidebarOpen ? "default" : "outline"} 
-                size="sm"
-                onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
-              >
-                {rightSidebarOpen ? "Hide" : "Show"} Tools
-              </Button>
-            </div>
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
             <select 
               value={selectedSymbol}
-              onChange={(e) => setSelectedSymbol(e.target.value)}
+              onChange={(e) => handleSymbolChange(e.target.value)}
               className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
               {cryptoSymbols.map(symbol => (
@@ -309,162 +248,33 @@ function TradingPlaceholder() {
               ))}
             </select>
             
-            <Button size="sm" variant="outline">Connect Broker</Button>
-          </div>
-        </div>
-      </div>
-      
-      {/* Mobile tabs/navigation (only visible on small screens) */}
-      <div className="md:hidden container mx-auto px-4 py-3">
-        {renderMobileNavigation()}
-      </div>
-      
-      {/* Main content area with flexible layout */}
-      <div className="container mx-auto py-4 px-2 md:px-4 flex">
-        {/* Left Sidebar - Trading Signals */}
-        {(leftSidebarOpen || activeTab === 'signals') && (
-          <div className={`
-            ${(windowWidth >= 768 && leftSidebarOpen) ? 'w-[320px] mr-4' : windowWidth < 768 ? 'w-full' : 'hidden'}
-            ${windowWidth < 768 && activeTab !== 'signals' ? 'hidden' : ''}
-            flex-shrink-0
-          `}>
-            <React.Suspense fallback={
-              <div className="h-[600px] bg-slate-800 rounded-lg animate-pulse"></div>
-            }>
-              <TradingSignalsLazy />
-            </React.Suspense>
-          </div>
-        )}
-        
-        {/* Smart Trade Panel (Mobile) */}
-        {windowWidth < 768 && activeTab === 'smart' && (
-          <div className="w-full">
-            <React.Suspense fallback={
-              <div className="h-[500px] bg-slate-800 rounded-lg animate-pulse mb-4"></div>
-            }>
-              <SmartTradePanelLazy defaultSymbol={selectedSymbol.replace('BITSTAMP:', '').replace('BINANCE:', '')} />
-            </React.Suspense>
-          </div>
-        )}
-        
-        {/* Main Chart Area */}
-        <div className={`
-          flex-grow overflow-hidden
-          ${windowWidth < 768 && (activeTab !== 'chart' && activeTab !== 'smart') ? 'hidden' : ''}
-          ${windowWidth < 768 && activeTab === 'smart' ? 'hidden' : ''}
-          ${(windowWidth >= 768 && leftSidebarOpen && rightSidebarOpen) ? 'mx-4' : ''}
-        `}>
-          <PopupContainer className="h-[600px] mb-4" padding>
-            <React.Suspense fallback={
-              <div className="h-full flex items-center justify-center">
-                <div className="text-center">
-                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <p className="text-slate-300">Loading charts...</p>
-                </div>
-              </div>
-            }>
-              {typeof window !== 'undefined' && (
-                <TradingViewWidgetLazy 
-                  symbol={selectedSymbol} 
-                  theme="dark" 
-                  height="600px" 
-                />
-              )}
-            </React.Suspense>
-          </PopupContainer>
-          
-          {/* Trade Controls */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <Button size="lg" className="bg-green-600 hover:bg-green-700">
-              Buy / Long
-            </Button>
-            <Button size="lg" className="bg-red-600 hover:bg-red-700">
-              Sell / Short
+            <Button size="sm" onClick={() => setBrokerModalOpen(true)}>
+              Connect Broker
             </Button>
           </div>
-          
-          {/* Smart Trade Panel with ABATEV */}
-          <React.Suspense fallback={
-            <div className="h-[300px] bg-slate-800 rounded-lg animate-pulse mb-4"></div>
-          }>
-            <SmartTradePanelLazy defaultSymbol={selectedSymbol.replace('BITSTAMP:', '').replace('BINANCE:', '')} />
-          </React.Suspense>
         </div>
-        
-        {/* Right Sidebar - Trading Tools */}
-        {(rightSidebarOpen || activeTab === 'copy' || activeTab === 'assistant') && (
-          <div className={`
-            ${(windowWidth >= 768 && rightSidebarOpen) ? 'w-[320px] ml-4' : windowWidth < 768 ? 'w-full' : 'hidden'}
-            ${windowWidth < 768 && (activeTab !== 'copy' && activeTab !== 'assistant') ? 'hidden' : ''}
-            flex-shrink-0 space-y-4
-          `}>
-          
-            {/* AI Assistant */}
-            {(windowWidth >= 768 || activeTab === 'assistant') && (
-              <React.Suspense fallback={
-                <div className="h-[300px] bg-slate-800 rounded-lg animate-pulse"></div>
-              }>
-                <AIAssistantLazy />
-              </React.Suspense>
-            )}
-            
-            {/* Copy Trading */}
-            {(windowWidth >= 768 || activeTab === 'copy') && (
-              <React.Suspense fallback={
-                <div className="h-[300px] bg-slate-800 rounded-lg animate-pulse"></div>
-              }>
-                <CopyTradingLazy />
-              </React.Suspense>
-            )}
-          </div>
-        )}
       </div>
       
-      {/* Mobile Navigation for quick access to hidden features */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-800/95 border-t border-slate-700 p-2 backdrop-blur-sm">
-        <div className="grid grid-cols-5 gap-1">
-          <Button
-            variant={activeTab === 'chart' ? 'default' : 'ghost'}
-            className="h-auto py-2 flex flex-col items-center text-xs"
-            onClick={() => setActiveTab('chart')}
-          >
-            <div className="mb-1">📊</div>
-            Charts
-          </Button>
-          <Button
-            variant={activeTab === 'smart' ? 'default' : 'ghost'}
-            className="h-auto py-2 flex flex-col items-center text-xs"
-            onClick={() => setActiveTab('smart')}
-          >
-            <div className="mb-1">💼</div>
-            ABATEV
-          </Button>
-          <Button
-            variant={activeTab === 'signals' ? 'default' : 'ghost'}
-            className="h-auto py-2 flex flex-col items-center text-xs"
-            onClick={() => setActiveTab('signals')}
-          >
-            <div className="mb-1">🔔</div>
-            Signals
-          </Button>
-          <Button
-            variant={activeTab === 'copy' ? 'default' : 'ghost'}
-            className="h-auto py-2 flex flex-col items-center text-xs"
-            onClick={() => setActiveTab('copy')}
-          >
-            <div className="mb-1">👥</div>
-            Copy
-          </Button>
-          <Button
-            variant={activeTab === 'assistant' ? 'default' : 'ghost'}
-            className="h-auto py-2 flex flex-col items-center text-xs"
-            onClick={() => setActiveTab('assistant')}
-          >
-            <div className="mb-1">🤖</div>
-            AI
-          </Button>
-        </div>
+      {/* Main Trading Interface with ControlCenter */}
+      <div className="container mx-auto h-[calc(100vh-120px)] py-4 px-2 md:px-4">
+        <React.Suspense fallback={
+          <div className="h-full w-full flex items-center justify-center">
+            <div className="text-center">
+              <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+              <p className="text-slate-300">Loading trading dashboard...</p>
+            </div>
+          </div>
+        }>
+          <ControlCenterLazy 
+            selectedSymbol={selectedSymbol}
+            onChangeSymbol={handleSymbolChange}
+            initialPanels={['chart', 'signals', 'smart-trade', 'assistant', 'copy-trade']}
+            className="h-full"
+          />
+        </React.Suspense>
       </div>
+      
+      {/* Broker Connection Modal would go here */}
     </div>
   );
 }

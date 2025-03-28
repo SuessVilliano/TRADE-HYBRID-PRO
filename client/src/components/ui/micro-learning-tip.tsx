@@ -95,14 +95,7 @@ export const MicroLearningTip: React.FC<MicroLearningTipProps> = ({
     >
       <PopupContainer className="overflow-hidden shadow-xl" padding>
         <div className="relative">
-          {/* Close button */}
-          <button 
-            className="absolute top-0 right-0 p-2 text-white bg-red-500 hover:bg-red-600 transition-colors rounded-bl-md"
-            onClick={handleClose}
-            aria-label="Close tip"
-          >
-            <X size={18} />
-          </button>
+          {/* Close button removed from the top */}
 
           {/* Header with category and difficulty */}
           <div className="flex justify-between items-center mb-2">
