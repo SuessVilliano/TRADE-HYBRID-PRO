@@ -34,6 +34,18 @@ interface MarketAnalysisResponse {
   symbol: string;
   timeframe: string;
   timestamp: number;
+  hybridScore: {
+    value: number;         // 0-100 score representing overall trade quality
+    sentiment: number;     // 0-100 representing market sentiment
+    momentum: number;      // 0-100 representing price momentum
+    volatility: number;    // 0-100 representing current volatility level
+    timing: number;        // 0-100 representing entry timing quality
+    riskReward: number;    // 0-100 representing risk-reward ratio quality
+    strength: 'very weak' | 'weak' | 'neutral' | 'strong' | 'very strong'; // Verbal representation of score
+    direction: 'bullish' | 'bearish' | 'neutral'; // Market direction
+    confidence: number;    // 0-100 representing AI confidence in the score
+    components: string[];  // Factors that influenced the score
+  };
   analysis: {
     summary: string;
     technicalAnalysis?: {
@@ -245,6 +257,39 @@ export function AIMarketAnalysis() {
     if (confidence >= 0.5) return 'bg-yellow-500';
     return 'bg-red-500';
   };
+  
+  // Get hybrid score color
+  const getHybridScoreColor = (score: number) => {
+    if (score >= 80) return 'text-green-500';
+    if (score >= 65) return 'text-emerald-500';
+    if (score >= 50) return 'text-blue-500';
+    if (score >= 35) return 'text-yellow-500';
+    if (score >= 20) return 'text-orange-500';
+    return 'text-red-500';
+  };
+  
+  // Get hybrid score background color
+  const getHybridScoreBgColor = (score: number) => {
+    if (score >= 80) return 'bg-green-500';
+    if (score >= 65) return 'bg-emerald-500';
+    if (score >= 50) return 'bg-blue-500';
+    if (score >= 35) return 'bg-yellow-500';
+    if (score >= 20) return 'bg-orange-500';
+    return 'bg-red-500';
+  };
+  
+  // Get hybrid score direction color
+  const getDirectionColor = (direction: 'bullish' | 'bearish' | 'neutral') => {
+    switch (direction) {
+      case 'bullish':
+        return 'text-green-500';
+      case 'bearish':
+        return 'text-red-500';
+      case 'neutral':
+      default:
+        return 'text-blue-500';
+    }
+  };
 
   return (
     <div className="space-y-4 p-4">
@@ -368,6 +413,97 @@ export function AIMarketAnalysis() {
                     </CardHeader>
                     <CardContent>
                       <p className="text-lg font-medium mb-4">{analysis.analysis.summary}</p>
+                      
+                      {/* Hybrid Score Component */}
+                      <div className="mb-6 border-2 border-purple-500 rounded-lg p-4 bg-purple-50/30 dark:bg-purple-900/20">
+                        <h3 className="text-xl font-bold flex items-center mb-4">
+                          <TrendingUp className="mr-2 h-5 w-5 text-purple-500" />
+                          Hybrid Score™
+                        </h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {/* Left column: Main score and components */}
+                          <div>
+                            <div className="flex items-center gap-4 mb-6">
+                              <div className="relative w-28 h-28">
+                                <div className={`absolute inset-0 rounded-full flex items-center justify-center ${getHybridScoreBgColor(analysis.hybridScore.value)}`}>
+                                  <span className="text-white text-3xl font-bold">{analysis.hybridScore.value}</span>
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-2xl font-bold capitalize">
+                                  <span className={getHybridScoreColor(analysis.hybridScore.value)}>
+                                    {analysis.hybridScore.strength}
+                                  </span>
+                                </div>
+                                <div className="text-lg capitalize">
+                                  <span className={getDirectionColor(analysis.hybridScore.direction)}>
+                                    {analysis.hybridScore.direction} signal
+                                  </span>
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  AI Confidence: {Math.round(analysis.hybridScore.confidence * 100)}%
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <h4 className="font-medium text-gray-700 dark:text-gray-300">Score Components:</h4>
+                              <ul className="space-y-1 text-sm">
+                                {analysis.hybridScore.components.map((component, i) => (
+                                  <li key={i} className="flex items-center">
+                                    <span className="mr-2">•</span>
+                                    {component}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                          
+                          {/* Right column: Detailed factors */}
+                          <div className="space-y-3">
+                            <div>
+                              <div className="flex justify-between mb-1">
+                                <span className="text-sm font-medium">Sentiment</span>
+                                <span className="text-sm font-medium">{analysis.hybridScore.sentiment}%</span>
+                              </div>
+                              <Progress value={analysis.hybridScore.sentiment} className="h-2" />
+                            </div>
+                            
+                            <div>
+                              <div className="flex justify-between mb-1">
+                                <span className="text-sm font-medium">Momentum</span>
+                                <span className="text-sm font-medium">{analysis.hybridScore.momentum}%</span>
+                              </div>
+                              <Progress value={analysis.hybridScore.momentum} className="h-2" />
+                            </div>
+                            
+                            <div>
+                              <div className="flex justify-between mb-1">
+                                <span className="text-sm font-medium">Volatility</span>
+                                <span className="text-sm font-medium">{analysis.hybridScore.volatility}%</span>
+                              </div>
+                              <Progress value={analysis.hybridScore.volatility} className="h-2" />
+                            </div>
+                            
+                            <div>
+                              <div className="flex justify-between mb-1">
+                                <span className="text-sm font-medium">Entry Timing</span>
+                                <span className="text-sm font-medium">{analysis.hybridScore.timing}%</span>
+                              </div>
+                              <Progress value={analysis.hybridScore.timing} className="h-2" />
+                            </div>
+                            
+                            <div>
+                              <div className="flex justify-between mb-1">
+                                <span className="text-sm font-medium">Risk/Reward</span>
+                                <span className="text-sm font-medium">{analysis.hybridScore.riskReward}%</span>
+                              </div>
+                              <Progress value={analysis.hybridScore.riskReward} className="h-2" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {analysis.analysis.technicalAnalysis && (

@@ -28,6 +28,23 @@ export default function AIMarketAnalysisPage() {
           <p>
             The trading suggestions tab offers practical trade ideas based on your risk profile, complete with entry points, stop losses, take profits, and supporting rationale.
           </p>
+          <div className="mt-6 bg-purple-900/30 border border-purple-400 p-4 rounded-md">
+            <h3 className="font-bold text-purple-300 mb-2">About Hybrid Score™</h3>
+            <p className="text-slate-300 mb-3">
+              The Hybrid Score is an innovative proprietary trading metric that combines real-time market data with advanced AI intelligence to evaluate potential trades. This comprehensive score weighs multiple factors:
+            </p>
+            <ul className="list-disc pl-5 space-y-1 text-slate-300 mb-4">
+              <li><span className="font-semibold">Sentiment Analysis</span> - Gauges market sentiment from news, social media, and trader positioning</li>
+              <li><span className="font-semibold">Price Momentum</span> - Measures the strength and direction of price movement</li>
+              <li><span className="font-semibold">Volatility Factor</span> - Evaluates current market volatility to identify potential opportunities</li>
+              <li><span className="font-semibold">Entry Timing</span> - Determines optimal entry points based on technical indicators</li>
+              <li><span className="font-semibold">Risk/Reward Ratio</span> - Calculates potential return compared to risk exposure</li>
+            </ul>
+            <p className="text-slate-300">
+              The final score ranges from 0-100, with higher scores indicating more favorable trading conditions according to our AI analysis.
+            </p>
+          </div>
+          
           <div className="mt-6 bg-purple-900/30 border border-purple-800 p-4 rounded-md">
             <h3 className="font-bold text-purple-300 mb-2">Important Disclaimer</h3>
             <p className="text-sm">

@@ -20,6 +20,18 @@ export interface MarketAnalysisResponse {
   symbol: string;
   timeframe: string;
   timestamp: number;
+  hybridScore: {
+    value: number;         // 0-100 score representing overall trade quality
+    sentiment: number;     // 0-100 representing market sentiment
+    momentum: number;      // 0-100 representing price momentum
+    volatility: number;    // 0-100 representing current volatility level
+    timing: number;        // 0-100 representing entry timing quality
+    riskReward: number;    // 0-100 representing risk-reward ratio quality
+    strength: 'very weak' | 'weak' | 'neutral' | 'strong' | 'very strong'; // Verbal representation of score
+    direction: 'bullish' | 'bearish' | 'neutral'; // Market direction
+    confidence: number;    // 0-100 representing AI confidence in the score
+    components: string[];  // Factors that influenced the score
+  };
   analysis: {
     summary: string;
     technicalAnalysis?: {
@@ -112,10 +124,14 @@ export const getAIMarketAnalysis = async (req: Request, res: Response) => {
     // Format and return the response
     const formattedResponse = formatAnalysisResponse(aiResponse, symbol as string);
     
+    // Calculate the Hybrid Score
+    const hybridScore = calculateHybridScore(symbol as string, marketData, formattedResponse);
+    
     const response: MarketAnalysisResponse = {
       symbol: symbol as string,
       timeframe: timeframe as string,
       timestamp: Date.now(),
+      hybridScore,
       analysis: formattedResponse,
     };
     
@@ -362,5 +378,281 @@ function formatTradingSuggestions(rawResponse: string): any {
   } catch (error) {
     console.error('Error formatting trading suggestions:', error);
     throw error;
+  }
+}
+
+/**
+ * Calculate the Hybrid Score based on technical analysis, AI insights, and market data
+ */
+function calculateHybridScore(symbol: string, marketData: any, analysisData: any): any {
+  try {
+    // Default values if analysis data is incomplete
+    if (!analysisData) {
+      return {
+        value: 50,
+        sentiment: 50,
+        momentum: 50,
+        volatility: 50,
+        timing: 50,
+        riskReward: 50,
+        strength: 'neutral',
+        direction: 'neutral',
+        confidence: 0.5,
+        components: ['Insufficient data for comprehensive analysis']
+      };
+    }
+
+    const components: string[] = [];
+    
+    // Extract trading direction from analysis
+    let direction: 'bullish' | 'bearish' | 'neutral' = 'neutral';
+    if (analysisData.tradingSuggestions && analysisData.tradingSuggestions.direction) {
+      direction = analysisData.tradingSuggestions.direction === 'buy' ? 'bullish' : 
+                 (analysisData.tradingSuggestions.direction === 'sell' ? 'bearish' : 'neutral');
+    }
+    
+    // Calculate sentiment score based on analysis data
+    let sentimentScore = 50; // Default neutral
+    if (analysisData.sentimentAnalysis) {
+      const sentimentMapping: {[key: string]: number} = {
+        'very bearish': 10,
+        'bearish': 30,
+        'neutral': 50, 
+        'bullish': 70,
+        'very bullish': 90
+      };
+      
+      // If sentiment info is available, analyze text to extract sentiment
+      const sentimentText = analysisData.sentimentAnalysis.overall || '';
+      
+      if (sentimentText.includes('very bullish') || sentimentText.includes('strongly positive')) {
+        sentimentScore = 90;
+        components.push('Very positive market sentiment');
+      } else if (sentimentText.includes('bullish') || sentimentText.includes('positive')) {
+        sentimentScore = 70;
+        components.push('Positive market sentiment');
+      } else if (sentimentText.includes('very bearish') || sentimentText.includes('strongly negative')) {
+        sentimentScore = 10;
+        components.push('Very negative market sentiment');
+      } else if (sentimentText.includes('bearish') || sentimentText.includes('negative')) {
+        sentimentScore = 30;
+        components.push('Negative market sentiment');
+      } else {
+        sentimentScore = 50;
+        components.push('Neutral market sentiment');
+      }
+    }
+    
+    // Calculate momentum score by analyzing price action from market data
+    let momentumScore = 50;
+    if (marketData && marketData.length > 5) {
+      const recentPrices = marketData.slice(0, 10).map((bar: any) => bar.close);
+      
+      // Compare latest price with average of previous 10 candles
+      const latestPrice = recentPrices[0];
+      const avgPrice = recentPrices.reduce((a: number, b: number) => a + b, 0) / recentPrices.length;
+      
+      // Simple momentum calculation
+      if (latestPrice > avgPrice * 1.05) {
+        momentumScore = 80; // Strong upward momentum
+        components.push('Strong upward price momentum');
+      } else if (latestPrice > avgPrice) {
+        momentumScore = 65; // Moderate upward momentum
+        components.push('Moderate upward price momentum');
+      } else if (latestPrice < avgPrice * 0.95) {
+        momentumScore = 20; // Strong downward momentum
+        components.push('Strong downward price momentum');
+      } else if (latestPrice < avgPrice) {
+        momentumScore = 35; // Moderate downward momentum
+        components.push('Moderate downward price momentum');
+      } else {
+        momentumScore = 50; // Neutral momentum
+        components.push('Neutral price momentum');
+      }
+    }
+    
+    // Calculate volatility score
+    let volatilityScore = 50;
+    if (marketData && marketData.length > 10) {
+      const volatilityBars = marketData.slice(0, 20);
+      
+      // Calculate average percentage range of recent candles
+      const avgRange = volatilityBars.reduce((sum: number, bar: any) => {
+        const range = Math.abs(bar.high - bar.low) / bar.low;
+        return sum + range;
+      }, 0) / volatilityBars.length;
+      
+      // Scale volatility from 0-100
+      if (avgRange > 0.03) {
+        volatilityScore = 90; // Very high volatility
+        components.push('Extremely high market volatility');
+      } else if (avgRange > 0.02) {
+        volatilityScore = 75; // High volatility
+        components.push('High market volatility');
+      } else if (avgRange > 0.01) {
+        volatilityScore = 50; // Medium volatility
+        components.push('Moderate market volatility');
+      } else if (avgRange > 0.005) {
+        volatilityScore = 25; // Low volatility
+        components.push('Low market volatility');
+      } else {
+        volatilityScore = 10; // Very low volatility
+        components.push('Very low market volatility');
+      }
+    }
+    
+    // Calculate entry timing quality
+    let timingScore = 50;
+    if (analysisData.technicalAnalysis && analysisData.technicalAnalysis.keyIndicators) {
+      const indicators = analysisData.technicalAnalysis.keyIndicators;
+      
+      // Look for specific indicators that might suggest good entry timing
+      const hasBullishIndicator = indicators.some((indicator: any) => 
+        indicator.interpretation && 
+        (indicator.interpretation.includes('bullish') || 
+         indicator.interpretation.includes('oversold') ||
+         indicator.interpretation.includes('buy'))
+      );
+      
+      const hasBearishIndicator = indicators.some((indicator: any) => 
+        indicator.interpretation && 
+        (indicator.interpretation.includes('bearish') || 
+         indicator.interpretation.includes('overbought') ||
+         indicator.interpretation.includes('sell'))
+      );
+      
+      if (direction === 'bullish' && hasBullishIndicator) {
+        timingScore = 80;
+        components.push('Favorable bullish entry timing based on technical indicators');
+      } else if (direction === 'bearish' && hasBearishIndicator) {
+        timingScore = 80;
+        components.push('Favorable bearish entry timing based on technical indicators');
+      } else if ((direction === 'bullish' && hasBearishIndicator) || 
+                 (direction === 'bearish' && hasBullishIndicator)) {
+        timingScore = 20;
+        components.push('Poor entry timing - conflicting technical indicators');
+      } else {
+        timingScore = 50;
+        components.push('Neutral entry timing');
+      }
+    }
+    
+    // Calculate risk/reward quality
+    let riskRewardScore = 50;
+    if (analysisData.tradingSuggestions && 
+        typeof analysisData.tradingSuggestions.targetPrice === 'number' && 
+        typeof analysisData.tradingSuggestions.stopLoss === 'number') {
+      
+      const targetPrice = analysisData.tradingSuggestions.targetPrice;
+      const stopLoss = analysisData.tradingSuggestions.stopLoss;
+      const currentPrice = marketData && marketData.length ? marketData[0].close : 0;
+      
+      if (currentPrice && direction === 'bullish') {
+        const reward = Math.abs(targetPrice - currentPrice);
+        const risk = Math.abs(currentPrice - stopLoss);
+        const ratio = risk > 0 ? reward / risk : 0;
+        
+        if (ratio >= 3) {
+          riskRewardScore = 90;
+          components.push(`Excellent risk/reward ratio of ${ratio.toFixed(1)}:1`);
+        } else if (ratio >= 2) {
+          riskRewardScore = 75;
+          components.push(`Good risk/reward ratio of ${ratio.toFixed(1)}:1`);
+        } else if (ratio >= 1) {
+          riskRewardScore = 50;
+          components.push(`Acceptable risk/reward ratio of ${ratio.toFixed(1)}:1`);
+        } else {
+          riskRewardScore = 25;
+          components.push(`Poor risk/reward ratio of ${ratio.toFixed(1)}:1`);
+        }
+      } else if (currentPrice && direction === 'bearish') {
+        const reward = Math.abs(currentPrice - targetPrice);
+        const risk = Math.abs(stopLoss - currentPrice);
+        const ratio = risk > 0 ? reward / risk : 0;
+        
+        if (ratio >= 3) {
+          riskRewardScore = 90;
+          components.push(`Excellent risk/reward ratio of ${ratio.toFixed(1)}:1`);
+        } else if (ratio >= 2) {
+          riskRewardScore = 75;
+          components.push(`Good risk/reward ratio of ${ratio.toFixed(1)}:1`);
+        } else if (ratio >= 1) {
+          riskRewardScore = 50;
+          components.push(`Acceptable risk/reward ratio of ${ratio.toFixed(1)}:1`);
+        } else {
+          riskRewardScore = 25;
+          components.push(`Poor risk/reward ratio of ${ratio.toFixed(1)}:1`);
+        }
+      }
+    } else {
+      riskRewardScore = 50;
+      components.push('Unable to determine risk/reward ratio');
+    }
+    
+    // Get confidence score from AI analysis
+    let confidenceScore = 0.5;
+    if (analysisData.tradingSuggestions && typeof analysisData.tradingSuggestions.confidence === 'number') {
+      confidenceScore = analysisData.tradingSuggestions.confidence;
+    }
+    
+    // Calculate the overall hybrid score with weighted components
+    // Weights based on relative importance of each factor
+    const weights = {
+      sentiment: 0.15,
+      momentum: 0.25,
+      volatility: 0.15, 
+      timing: 0.25,
+      riskReward: 0.20
+    };
+    
+    const overallScore = (
+      sentimentScore * weights.sentiment +
+      momentumScore * weights.momentum +
+      volatilityScore * weights.volatility +
+      timingScore * weights.timing +
+      riskRewardScore * weights.riskReward
+    );
+    
+    // Determine the verbal strength based on the overall score
+    let strength: 'very weak' | 'weak' | 'neutral' | 'strong' | 'very strong';
+    if (overallScore >= 80) {
+      strength = 'very strong';
+    } else if (overallScore >= 65) {
+      strength = 'strong';
+    } else if (overallScore >= 35) {
+      strength = 'neutral';
+    } else if (overallScore >= 20) {
+      strength = 'weak';
+    } else {
+      strength = 'very weak';
+    }
+    
+    return {
+      value: Math.round(overallScore),
+      sentiment: Math.round(sentimentScore),
+      momentum: Math.round(momentumScore),
+      volatility: Math.round(volatilityScore),
+      timing: Math.round(timingScore),
+      riskReward: Math.round(riskRewardScore),
+      strength,
+      direction,
+      confidence: confidenceScore,
+      components
+    };
+  } catch (error) {
+    console.error('Error calculating Hybrid Score:', error);
+    // Return default neutral values if calculation fails
+    return {
+      value: 50,
+      sentiment: 50,
+      momentum: 50,
+      volatility: 50,
+      timing: 50,
+      riskReward: 50,
+      strength: 'neutral',
+      direction: 'neutral',
+      confidence: 0.5,
+      components: ['Error in score calculation']
+    };
   }
 }
