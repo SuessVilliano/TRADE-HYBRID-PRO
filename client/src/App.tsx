@@ -11,9 +11,11 @@ import { useUserStore } from './lib/stores/useUserStore';
 // Lazy load pages
 const TradeRunner = lazy(() => import('./pages/trade-runner'));
 const BullsVsBears = lazy(() => import('./pages/bulls-vs-bears-new')); // Legacy reference
-const NewsDashboard = lazy(() => import('./pages/news-dashboard'));
-const TradeJournalPage = lazy(() => import('./pages/trade-journal'));
+const NewsDashboardSimple = lazy(() => import('./pages/news-dashboard-simple'));
+const TradeJournalSimple = lazy(() => import('./pages/trade-journal-simple'));
+const NFTMarketplaceSimple = lazy(() => import('./pages/nft-marketplace-simple'));
 const SolanaDexEmbedded = lazy(() => import('./pages/solana-dex-embedded'));
+const LearnEmbedded = lazy(() => import('./pages/learn-embedded'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -134,7 +136,18 @@ function AppContent() {
       <main className="min-h-[calc(100vh-130px)]">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/marketplace" element={<NFTMarketplace />} />
+          <Route path="/marketplace" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading NFT marketplace...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <NFTMarketplaceSimple />}
+            </Suspense>
+          } />
           <Route path="/trading" element={<TradingPlaceholder />} />
           <Route path="/solana-trading" element={
             <Suspense fallback={
@@ -158,7 +171,7 @@ function AppContent() {
                 </div>
               </div>
             }>
-              {typeof window !== 'undefined' && <NewsDashboard />}
+              {typeof window !== 'undefined' && <NewsDashboardSimple />}
             </Suspense>
           } />
           <Route path="/trade-journal" element={
@@ -170,7 +183,7 @@ function AppContent() {
                 </div>
               </div>
             }>
-              {typeof window !== 'undefined' && <TradeJournalPage />}
+              {typeof window !== 'undefined' && <TradeJournalSimple />}
             </Suspense>
           } />
           <Route path="/trade-runner" element={
@@ -198,7 +211,18 @@ function AppContent() {
               {typeof window !== 'undefined' && <BullsVsBears />}
             </Suspense>
           } />
-          <Route path="/learn" element={<LearnPlaceholder />} />
+          <Route path="/learn" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading education content...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <LearnEmbedded />}
+            </Suspense>
+          } />
         </Routes>
       </main>
       
@@ -355,6 +379,7 @@ function TradingPlaceholder() {
 
 function MetaversePlaceholder() {
   const MinimalScene = React.lazy(() => import('./components/MinimalScene'));
+  const [minimized, setMinimized] = useState(false);
   
   return (
     <div className="container mx-auto py-12 px-4">
@@ -363,19 +388,33 @@ function MetaversePlaceholder() {
         <p className="text-xl text-slate-300">Experience our 3D trading world (Coming Soon)</p>
       </div>
       
-      <PopupContainer className="h-[500px] mb-8" padding>
-        <div className="h-full">
-          <React.Suspense fallback={
-            <div className="h-full flex items-center justify-center">
-              <div className="text-center">
-                <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                <p className="text-slate-300">Loading 3D Scene...</p>
-              </div>
-            </div>
-          }>
-            {typeof window !== 'undefined' && <MinimalScene />}
-          </React.Suspense>
+      <PopupContainer className={`${minimized ? 'h-14' : 'h-[500px]'} mb-8 transition-all duration-300`} padding>
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="font-semibold">3D Trading Metaverse</h3>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setMinimized(!minimized)}
+            className="p-1 h-8 w-8 rounded-full"
+          >
+            {minimized ? '▼' : '▲'}
+          </Button>
         </div>
+        
+        {!minimized && (
+          <div className="h-[calc(100%-2rem)]">
+            <React.Suspense fallback={
+              <div className="h-full flex items-center justify-center">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading 3D Scene...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <MinimalScene />}
+            </React.Suspense>
+          </div>
+        )}
       </PopupContainer>
       
       <div className="max-w-2xl mx-auto">
