@@ -17,6 +17,7 @@ import { SmartTradePanel } from "@/components/ui/smart-trade-panel";
 import { CopyTradePanel } from "@/components/ui/copy-trade-panel";
 import { ThcTokenInfo } from "@/components/ui/thc-token-info";
 import { ThcTradingPanel } from "@/components/ui/thc-trading-panel";
+import { MicroTradingTipTrigger } from "@/components/ui/micro-trading-tip-trigger";
 import { ArrowLeft, LayoutGrid, Maximize2, Minimize2, X, Info, Sparkles, Bot, BookOpen, BarChart2, Activity, BrainCircuit, Users, Coins } from "lucide-react";
 import { useMarketData } from "@/lib/stores/useMarketData";
 import { useNews } from "@/lib/stores/useNews";
@@ -220,7 +221,16 @@ function TradingSpaceContent() {
       case "market":
         return (
           <ErrorBoundary>
-            <MarketChart className="h-full" symbol={effectiveSymbol} />
+            <div className="relative h-full">
+              <div className="absolute top-2 right-2 z-10">
+                <MicroTradingTipTrigger 
+                  category="technical" 
+                  label="Chart Tips"
+                  className="bg-black/30 hover:bg-black/40 text-xs px-2 py-1 rounded"
+                />
+              </div>
+              <MarketChart className="h-full" symbol={effectiveSymbol} />
+            </div>
           </ErrorBoundary>
         );
       case "news":
@@ -228,38 +238,162 @@ function TradingSpaceContent() {
       case "trade":
         return (
           <div className="h-full flex flex-col space-y-4">
-            <div className="h-1/3">
+            <div className="h-1/3 relative">
+              <div className="absolute top-2 right-2 z-10">
+                <MicroTradingTipTrigger 
+                  category="stocks" 
+                  difficulty="intermediate"
+                  label="Smart Tips"
+                  className="bg-black/30 hover:bg-black/40 text-xs px-2 py-1 rounded"
+                />
+              </div>
               <SmartTradePanel className="h-full" defaultSymbol={effectiveSymbol} />
             </div>
-            <div className="h-1/3">
+            <div className="h-1/3 relative">
+              <div className="absolute top-2 right-2 z-10">
+                <MicroTradingTipTrigger 
+                  category="general" 
+                  difficulty="beginner"
+                  label="Trading Tips"
+                  className="bg-black/30 hover:bg-black/40 text-xs px-2 py-1 rounded"
+                />
+              </div>
               <TradingInterface className="h-full" symbol={effectiveSymbol} />
             </div>
-            <div className="h-1/3">
+            <div className="h-1/3 relative">
+              <div className="absolute top-2 right-2 z-10">
+                <MicroTradingTipTrigger 
+                  category="general" 
+                  difficulty="advanced"
+                  label="Copy Trading"
+                  className="bg-black/30 hover:bg-black/40 text-xs px-2 py-1 rounded"
+                />
+              </div>
               <CopyTradePanel />
             </div>
           </div>
         );
       case "journal":
-        return <TradeJournal className="h-full" />;
+        return (
+          <div className="h-full relative">
+            <div className="absolute top-2 right-2 z-10">
+              <MicroTradingTipTrigger 
+                category="fundamental" 
+                difficulty="intermediate"
+                label="Journal Tips"
+                className="bg-black/30 hover:bg-black/40 text-xs px-2 py-1 rounded"
+              />
+            </div>
+            <TradeJournal className="h-full" />
+          </div>
+        );
       case "leaderboard":
-        return <Leaderboard className="h-full" />;
+        return (
+          <div className="h-full relative">
+            <div className="absolute top-2 right-2 z-10">
+              <MicroTradingTipTrigger 
+                category="general" 
+                difficulty="beginner"
+                label="Leaderboard Tips"
+                className="bg-black/30 hover:bg-black/40 text-xs px-2 py-1 rounded"
+              />
+            </div>
+            <Leaderboard className="h-full" />
+          </div>
+        );
       case "assistant":
-        return <AIAssistant className="h-full" />;
+        return (
+          <div className="h-full relative">
+            <div className="absolute top-2 right-2 z-10">
+              <MicroTradingTipTrigger 
+                category="general" 
+                difficulty="beginner"
+                label="AI Assistant Tips"
+                className="bg-black/30 hover:bg-black/40 text-xs px-2 py-1 rounded"
+              />
+            </div>
+            <AIAssistant className="h-full" />
+          </div>
+        );
       case "ai-analysis":
-        return <AIMarketAnalysis />;
+        return (
+          <div className="h-full relative">
+            <div className="absolute top-2 right-2 z-10">
+              <MicroTradingTipTrigger 
+                category="technical" 
+                difficulty="intermediate"
+                label="Analysis Tips"
+                className="bg-black/30 hover:bg-black/40 text-xs px-2 py-1 rounded"
+              />
+            </div>
+            <AIMarketAnalysis />
+          </div>
+        );
       case "advanced-ai-analysis":
-        return <AdvancedAIAnalysis />;
+        return (
+          <div className="h-full relative">
+            <div className="absolute top-2 right-2 z-10">
+              <MicroTradingTipTrigger 
+                category="technical" 
+                difficulty="advanced"
+                label="Advanced Tips"
+                className="bg-black/30 hover:bg-black/40 text-xs px-2 py-1 rounded"
+              />
+            </div>
+            <AdvancedAIAnalysis />
+          </div>
+        );
       case "signals":
-        return <SignalsList className="h-full" />;
+        return (
+          <div className="h-full relative">
+            <div className="absolute top-2 right-2 z-10">
+              <MicroTradingTipTrigger 
+                category="technical" 
+                difficulty="intermediate"
+                label="Signal Tips"
+                className="bg-black/30 hover:bg-black/40 text-xs px-2 py-1 rounded"
+              />
+            </div>
+            <SignalsList className="h-full" />
+          </div>
+        );
       case "copy":
-        return <CopyTradePanel />;
+        return (
+          <div className="h-full relative">
+            <div className="absolute top-2 right-2 z-10">
+              <MicroTradingTipTrigger 
+                category="general" 
+                difficulty="intermediate"
+                label="Copy Trading Tips"
+                className="bg-black/30 hover:bg-black/40 text-xs px-2 py-1 rounded"
+              />
+            </div>
+            <CopyTradePanel />
+          </div>
+        );
       case "thc":
         return (
           <div className="h-full flex flex-col space-y-4 overflow-auto">
-            <div className="h-1/2">
+            <div className="h-1/2 relative">
+              <div className="absolute top-2 right-2 z-10">
+                <MicroTradingTipTrigger 
+                  category="crypto" 
+                  difficulty="beginner"
+                  label="THC Token"
+                  className="bg-black/30 hover:bg-black/40 text-xs px-2 py-1 rounded"
+                />
+              </div>
               <ThcTokenInfo className="h-full" />
             </div>
-            <div className="h-1/2">
+            <div className="h-1/2 relative">
+              <div className="absolute top-2 right-2 z-10">
+                <MicroTradingTipTrigger 
+                  category="crypto" 
+                  difficulty="intermediate"
+                  label="THC Trading"
+                  className="bg-black/30 hover:bg-black/40 text-xs px-2 py-1 rounded"
+                />
+              </div>
               <ThcTradingPanel className="h-full" />
             </div>
           </div>

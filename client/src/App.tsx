@@ -13,6 +13,7 @@ import APIDemoPage from "./pages/api-demo-page";
 import { Suspense } from "react";
 import { GuideTourProvider, GuideTourLauncher } from "./components/ui/contextual-tooltip";
 import { TradingTipsProvider } from "./components/ui/trading-tips-provider";
+import { MicroTradingTipProvider } from "./components/ui/micro-trading-tip-provider";
 
 const router = createBrowserRouter([
   {
@@ -47,25 +48,27 @@ function AppWithProviders() {
     <QueryClientProvider client={queryClient}>
       {/* TradingTipsProvider at the root application level */}
       <TradingTipsProvider autoShowInterval={300000}> {/* Show a tip every 5 minutes */}
-        <GuideTourProvider>
-          <RouterProvider 
-            router={router} 
-            future={{
-              v7_startTransition: true
-            }}
-          />
-          <Toaster 
-            position="top-right" 
-            toastOptions={{
-              // Adding global toast styling
-              style: {
-                background: 'var(--background)',
-                color: 'var(--foreground)',
-                border: '1px solid var(--border)'
-              }
-            }}
-          />
-        </GuideTourProvider>
+        <MicroTradingTipProvider>
+          <GuideTourProvider>
+            <RouterProvider 
+              router={router} 
+              future={{
+                v7_startTransition: true
+              }}
+            />
+            <Toaster 
+              position="top-right" 
+              toastOptions={{
+                // Adding global toast styling
+                style: {
+                  background: 'var(--background)',
+                  color: 'var(--foreground)',
+                  border: '1px solid var(--border)'
+                }
+              }}
+            />
+          </GuideTourProvider>
+        </MicroTradingTipProvider>
       </TradingTipsProvider>
     </QueryClientProvider>
   );

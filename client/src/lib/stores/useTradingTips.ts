@@ -9,6 +9,7 @@ interface TradingTip {
   category: 'crypto' | 'forex' | 'stocks' | 'general' | 'technical' | 'fundamental';
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   tags: string[];
+  isMicroTip?: boolean; // Flag to identify micro learning tips
 }
 
 interface TradingTipsState {
@@ -16,11 +17,16 @@ interface TradingTipsState {
   viewedTips: string[];
   currentTip: TradingTip | null;
   showingTip: boolean;
+  currentMicroTip: TradingTip | null;
+  showingMicroTip: boolean;
+  microTipPosition: { x: number, y: number } | null;
   isLoading: boolean;
   isFirstLoad: boolean;
   // Actions
   showTip: (category?: string, difficulty?: string, forceShow?: boolean) => void;
+  showMicroTip: (category?: string, difficulty?: string, position?: { x: number, y: number }) => void;
   closeTip: () => void;
+  closeMicroTip: () => void;
   markTipAsViewed: (tipId: string) => void;
   fetchTips: () => Promise<void>;
   setFirstLoadComplete: () => void;
@@ -33,8 +39,75 @@ export const useTradingTips = create<TradingTipsState>()(
       viewedTips: [],
       currentTip: null,
       showingTip: false,
+      currentMicroTip: null,
+      showingMicroTip: false,
+      microTipPosition: null,
       isLoading: false,
       isFirstLoad: true,
+      
+      showMicroTip: (category?: string, difficulty?: string, position?: { x: number, y: number }) => {
+        const { tips, viewedTips } = get();
+        
+        if (tips.length === 0) return;
+        
+        // First apply category and difficulty filters if provided
+        let filteredTips = [...tips];
+        
+        if (category) {
+          filteredTips = filteredTips.filter(
+            tip => tip.category === category
+          );
+        }
+        
+        if (difficulty) {
+          filteredTips = filteredTips.filter(
+            tip => tip.difficulty === difficulty
+          );
+        }
+        
+        // If no tips match the filters, use all tips
+        if (filteredTips.length === 0) {
+          filteredTips = [...tips];
+        }
+        
+        // Create micro tips by taking the title only or shorter content
+        const microTips = filteredTips.map(tip => ({
+          ...tip,
+          content: tip.title, // For micro tips, we'll just use the title as content
+          isMicroTip: true
+        }));
+        
+        // Prioritize unviewed tips
+        const unviewedTips = microTips.filter(
+          tip => !viewedTips.includes(tip.id)
+        );
+        
+        // Select a random tip, preferring unviewed ones
+        const tipsToSelectFrom = unviewedTips.length > 0 ? unviewedTips : microTips;
+        const randomIndex = Math.floor(Math.random() * tipsToSelectFrom.length);
+        const selectedTip = tipsToSelectFrom[randomIndex];
+        
+        // Use provided position or default to center
+        const defaultPosition = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+        
+        set({
+          currentMicroTip: selectedTip,
+          showingMicroTip: true,
+          microTipPosition: position || defaultPosition
+        });
+        
+        // Auto-close after 3 seconds
+        setTimeout(() => {
+          get().closeMicroTip();
+        }, 3000);
+        
+        // Mark tip as viewed
+        get().markTipAsViewed(selectedTip.id);
+      },
+      
+      closeMicroTip: () => {
+        set({ showingMicroTip: false, currentMicroTip: null, microTipPosition: null });
+      },
       
       showTip: (category?: string, difficulty?: string, forceShow: boolean = false) => {
         const { tips, viewedTips, isFirstLoad } = get();
