@@ -6,7 +6,7 @@ import { useMultiplayer } from "@/lib/stores/useMultiplayer";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { Button } from "./button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "./card";
-import { Share2, Eye, X, ChevronUp, ChevronDown, Copy, Users, CheckCircle2, ExternalLink, Coins, AlertTriangle } from "lucide-react";
+import { Share2, Eye, X, ChevronUp, ChevronDown, Copy, Users, CheckCircle2, ExternalLink, Coins, AlertTriangle, RefreshCw } from "lucide-react";
 import { createChart, ColorType, IChartApi } from "lightweight-charts";
 import { MarketChart } from "./market-chart";
 import TradingViewWidget from "./TradingViewWidget";
@@ -521,8 +521,8 @@ function SharedChart({ shareData }: { shareData: ScreenShareData }) {
     }
   }, []);
   
-  // Handle copy trade functionality
-  const handleCopyTrade = async (operation: 'buy' | 'sell') => {
+  // Show confirmation dialog for copy trade
+  const showCopyTradeConfirmation = (operation: 'buy' | 'sell') => {
     // Don't copy your own trades
     if (shareData.userId === clientId) {
       toast("Can't copy own trade", {
@@ -531,7 +531,19 @@ function SharedChart({ shareData }: { shareData: ScreenShareData }) {
       return;
     }
     
+    // Set pending trade side and show confirmation dialog
+    setPendingTradeSide(operation);
+    setShowConfirmDialog(true);
+  };
+  
+  // Execute the actual trade after confirmation
+  const executeCopyTrade = async () => {
+    if (!pendingTradeSide) return;
+    
     setCopyingTrade(true);
+    setShowConfirmDialog(false);
+    
+    const operation = pendingTradeSide;
     
     try {
       // Create a copy trade record
@@ -573,6 +585,7 @@ function SharedChart({ shareData }: { shareData: ScreenShareData }) {
       });
     } finally {
       setCopyingTrade(false);
+      setPendingTradeSide(null);
     }
   };
   
@@ -607,7 +620,7 @@ function SharedChart({ shareData }: { shareData: ScreenShareData }) {
               variant="default" 
               size="sm"
               className="flex-1 bg-green-600 hover:bg-green-700 h-8"
-              onClick={() => handleCopyTrade('buy')}
+              onClick={() => showCopyTradeConfirmation('buy')}
               disabled={copyingTrade}
             >
               Copy Buy
@@ -616,7 +629,7 @@ function SharedChart({ shareData }: { shareData: ScreenShareData }) {
               variant="default" 
               size="sm"
               className="flex-1 bg-red-600 hover:bg-red-700 h-8"
-              onClick={() => handleCopyTrade('sell')}
+              onClick={() => showCopyTradeConfirmation('sell')}
               disabled={copyingTrade}
             >
               Copy Sell
@@ -624,6 +637,64 @@ function SharedChart({ shareData }: { shareData: ScreenShareData }) {
           </div>
         )}
       </div>
+      
+      {/* Confirmation Dialog - Mobile */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              Confirm Trade Copy
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to {pendingTradeSide === 'buy' ? 'BUY' : 'SELL'} {quantity} {shareData.symbol} at {formatCurrency(currentPrice)}?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <div className="bg-muted/30 p-3 rounded-md text-sm space-y-1">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Side:</span>
+                <span className={pendingTradeSide === 'buy' ? 'text-green-500 font-medium' : 'text-red-500 font-medium'}>
+                  {pendingTradeSide?.toUpperCase()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Symbol:</span>
+                <span>{shareData.symbol}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Quantity:</span>
+                <span>{quantity}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Total:</span>
+                <span>{formatCurrency(currentPrice * Number(quantity))}</span>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="flex space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmDialog(false)}
+              className="h-8 text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant={pendingTradeSide === 'buy' ? 'default' : 'destructive'}
+              onClick={executeCopyTrade}
+              disabled={copyingTrade}
+              className="h-8 text-xs"
+            >
+              {copyingTrade ? (
+                <><RefreshCw className="h-3 w-3 mr-1 animate-spin" /> Processing...</>
+              ) : (
+                <>Confirm</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     );
   }
   
@@ -682,7 +753,7 @@ function SharedChart({ shareData }: { shareData: ScreenShareData }) {
               variant="default" 
               size="sm"
               className="flex-1 bg-green-600 hover:bg-green-700"
-              onClick={() => handleCopyTrade('buy')}
+              onClick={() => showCopyTradeConfirmation('buy')}
               disabled={copyingTrade}
             >
               <Coins className="h-3.5 w-3.5 mr-1" />
@@ -692,7 +763,7 @@ function SharedChart({ shareData }: { shareData: ScreenShareData }) {
               variant="default" 
               size="sm"
               className="flex-1 bg-red-600 hover:bg-red-700"
-              onClick={() => handleCopyTrade('sell')}
+              onClick={() => showCopyTradeConfirmation('sell')}
               disabled={copyingTrade}
             >
               <Coins className="h-3.5 w-3.5 mr-1" />
@@ -740,6 +811,73 @@ function SharedChart({ shareData }: { shareData: ScreenShareData }) {
           <span className="text-sm font-medium">{formatCurrency(Math.min(...shareData.marketData.map(d => d.low)))}</span>
         </div>
       </div>
+      
+      {/* Confirmation Dialog */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              Confirm Trade Copy
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to {pendingTradeSide === 'buy' ? 'BUY' : 'SELL'} {quantity} {shareData.symbol} at {formatCurrency(currentPrice)}?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-3">
+            <div className="text-sm mb-2">
+              <span className="font-medium">Trade Details:</span>
+            </div>
+            <div className="bg-muted/30 p-3 rounded-md text-sm space-y-1">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Side:</span>
+                <span className={pendingTradeSide === 'buy' ? 'text-green-500 font-medium' : 'text-red-500 font-medium'}>
+                  {pendingTradeSide?.toUpperCase()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Symbol:</span>
+                <span>{shareData.symbol}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Quantity:</span>
+                <span>{quantity}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Price:</span>
+                <span>{formatCurrency(currentPrice)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Total:</span>
+                <span>{formatCurrency(currentPrice * Number(quantity))}</span>
+              </div>
+              <div className="flex justify-between pt-1 border-t">
+                <span className="text-muted-foreground">Copied from:</span>
+                <span>{shareData.username}</span>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="flex space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant={pendingTradeSide === 'buy' ? 'default' : 'destructive'}
+              onClick={executeCopyTrade}
+              disabled={copyingTrade}
+            >
+              {copyingTrade ? (
+                <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Processing...</>
+              ) : (
+                <>Confirm Trade</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
