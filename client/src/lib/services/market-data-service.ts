@@ -1,4 +1,6 @@
 import { rapidApiService } from './rapid-api-service';
+import { cnbcService } from './cnbc-service';
+import { fidelityService } from './fidelity-service';
 
 export interface MarketDataResponse {
   symbol: string;
@@ -11,6 +13,18 @@ export interface MarketDataResponse {
   open: number;
   close: number;
   timestamp: number;
+}
+
+export interface EnhancedMarketData extends MarketDataResponse {
+  name?: string;
+  industry?: string;
+  sector?: string;
+  marketCap?: number;
+  peRatio?: number;
+  dividendYield?: number;
+  analystRating?: number;
+  targetPrice?: number;
+  dataProvider?: string;
 }
 
 export interface CryptoMarketData {
@@ -58,7 +72,13 @@ export class MarketDataService {
   async initialize(): Promise<boolean> {
     if (!this.initialized) {
       try {
-        await rapidApiService.initialize();
+        // Initialize all data service dependencies
+        await Promise.all([
+          rapidApiService.initialize(),
+          cnbcService.initialize(),
+          fidelityService.initialize()
+        ]);
+        
         this.initialized = true;
         return true;
       } catch (error) {
@@ -247,6 +267,134 @@ export class MarketDataService {
     } catch (error) {
       console.error(`Error fetching stock stats for ${symbol}:`, error);
       return null;
+    }
+  }
+
+  /**
+   * Get enhanced stock data from multiple sources
+   * Aggregates data from Alpha Vantage, CNBC, and Fidelity
+   */
+  async getEnhancedStockData(symbol: string): Promise<EnhancedMarketData | null> {
+    await this.ensureInitialized();
+    
+    try {
+      // First get basic stock data from Alpha Vantage
+      const basicData = await this.getStockData(symbol);
+      
+      if (!basicData) {
+        return null;
+      }
+      
+      // Create enhanced data object starting with basic data
+      const enhancedData: EnhancedMarketData = {
+        ...basicData,
+        dataProvider: 'Trade Hybrid Aggregated Data'
+      };
+      
+      // Run parallel requests to get additional data
+      const [cnbcData, fidelityData, fidelityResearch] = await Promise.allSettled([
+        cnbcService.getSymbolInfo(symbol),
+        fidelityService.getQuote(symbol),
+        fidelityService.getResearch(symbol)
+      ]);
+      
+      // Add CNBC data if available
+      if (cnbcData.status === 'fulfilled' && cnbcData.value) {
+        enhancedData.name = cnbcData.value.symbolDesc || cnbcData.value.securityName;
+        enhancedData.industry = cnbcData.value.industry;
+        enhancedData.sector = cnbcData.value.sector;
+      }
+      
+      // Add Fidelity quote data if available
+      if (fidelityData.status === 'fulfilled' && fidelityData.value) {
+        // If we couldn't get price from Alpha Vantage, use Fidelity data
+        if (!enhancedData.price && fidelityData.value.price) {
+          enhancedData.price = fidelityData.value.price;
+          enhancedData.change = fidelityData.value.change;
+          enhancedData.changePercent = fidelityData.value.percentChange;
+        }
+        
+        // Add additional Fidelity data points
+        enhancedData.marketCap = fidelityData.value.marketCap;
+        enhancedData.peRatio = fidelityData.value.peRatio;
+        enhancedData.dividendYield = fidelityData.value.dividendYield;
+        
+        // Override name if we don't have it yet
+        if (!enhancedData.name && fidelityData.value.name) {
+          enhancedData.name = fidelityData.value.name;
+        }
+      }
+      
+      // Add Fidelity research data if available
+      if (fidelityResearch.status === 'fulfilled' && fidelityResearch.value) {
+        enhancedData.analystRating = fidelityResearch.value.analystRating;
+        enhancedData.targetPrice = fidelityResearch.value.targetPrice;
+      }
+      
+      return enhancedData;
+    } catch (error) {
+      console.error(`Error fetching enhanced stock data for ${symbol}:`, error);
+      
+      // Try to return at least basic data if we have it
+      const basicData = await this.getStockData(symbol);
+      if (basicData) {
+        return {
+          ...basicData,
+          dataProvider: 'Alpha Vantage (Limited Data)'
+        };
+      }
+      
+      return null;
+    }
+  }
+  
+  /**
+   * Cross-reference and search for symbols
+   */
+  async searchSymbols(query: string): Promise<any[]> {
+    await this.ensureInitialized();
+    
+    try {
+      // Get results from multiple sources
+      const [cnbcResults, fidelityResults] = await Promise.allSettled([
+        cnbcService.searchSymbols(query),
+        fidelityService.autoComplete(query)
+      ]);
+      
+      const results: any[] = [];
+      
+      // Add CNBC results
+      if (cnbcResults.status === 'fulfilled' && cnbcResults.value) {
+        results.push(...cnbcResults.value.map((item: any) => ({
+          symbol: item.symbolName,
+          name: item.securityName,
+          type: item.securityType,
+          exchange: item.exchange,
+          source: 'CNBC'
+        })));
+      }
+      
+      // Add Fidelity results
+      if (fidelityResults.status === 'fulfilled' && fidelityResults.value) {
+        results.push(...fidelityResults.value.map((item: any) => ({
+          symbol: item.symbol,
+          name: item.name,
+          type: item.securityType,
+          exchange: item.exchange,
+          score: item.score,
+          source: 'Fidelity'
+        })));
+      }
+      
+      // Remove duplicates and sort by symbol
+      const uniqueResults = results.filter((item, index, self) => 
+        index === self.findIndex((t) => t.symbol === item.symbol)
+      );
+      
+      return uniqueResults.sort((a, b) => a.symbol.localeCompare(b.symbol));
+    } catch (error) {
+      console.error(`Error searching symbols for "${query}":`, error);
+      return [];
     }
   }
 }

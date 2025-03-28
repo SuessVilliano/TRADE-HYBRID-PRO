@@ -9,6 +9,7 @@ import TradingSpace from "./pages/trading-space";
 import NotFound from "./pages/not-found";
 import Scene from "./components/game/Scene";
 import GamePage from "./pages/game";
+import APIDemoPage from "./pages/api-demo-page";
 import { Suspense } from "react";
 import { GuideTourProvider, GuideTourLauncher } from "./components/ui/contextual-tooltip";
 import { TradingTipsProvider } from "./components/ui/trading-tips-provider";
@@ -25,6 +26,10 @@ const router = createBrowserRouter([
   {
     path: "/game",
     element: <GamePage />
+  },
+  {
+    path: "/api-demo",
+    element: <APIDemoPage />
   },
   {
     path: "*",

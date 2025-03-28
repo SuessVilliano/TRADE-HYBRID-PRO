@@ -160,7 +160,12 @@ function HomeContent() {
                   Play Trade Runner <Gamepad2 className="h-4 w-4" />
                 </Button>
               </Link>
-              <Button variant="outline" size="lg" onClick={toggleMute}>
+              <Link to="/api-demo">
+                <Button variant="outline" size="lg" className="gap-2">
+                  API Demo <BarChart2 className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Button variant="ghost" size="lg" onClick={toggleMute}>
                 {isMuted ? "Enable Audio" : "Disable Audio"}
               </Button>
             </div>
@@ -339,8 +344,13 @@ function HomeContent() {
                 Play Trade Runner Game
               </Button>
             </Link>
+            <Link to="/api-demo">
+              <Button size="lg" variant="outline">
+                Explore API Demo
+              </Button>
+            </Link>
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="lg" 
               onClick={() => {
                 setShowGuidedFeatures(true);
