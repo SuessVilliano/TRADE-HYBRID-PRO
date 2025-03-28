@@ -56,6 +56,17 @@ function AppContent() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   
+  // Auto-login with Solana when wallet is connected
+  useEffect(() => {
+    // This will check if a wallet is connected but user is not authenticated
+    if (!isAuthenticated && !isAuthenticatingWithSolana && !solanaAuthError) {
+      // Attempt to login with Solana
+      loginWithSolana().catch(error => {
+        console.log("Auto wallet login failed:", error);
+      });
+    }
+  }, [isAuthenticated, isAuthenticatingWithSolana, solanaAuthError, loginWithSolana]);
+  
   // Initialize affiliate tracking
   const { trackReferral, currentReferralCode } = useAffiliateTracking();
   
@@ -171,15 +182,6 @@ function AppContent() {
                   </form>
                 ) : (
                   <>
-                    <Button onClick={async () => {
-                      const success = await loginWithSolana();
-                      if (!success && solanaAuthError) {
-                        setLoginError(solanaAuthError);
-                      }
-                    }} disabled={isAuthenticatingWithSolana}>
-                      {isAuthenticatingWithSolana ? 'Connecting...' : 'Login with Wallet'}
-                    </Button>
-                    <span className="text-slate-500">or</span>
                     <Button onClick={() => setShowLoginForm(true)}>Password Login</Button>
                   </>
                 )}
