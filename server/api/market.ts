@@ -4,20 +4,20 @@ import { TRADING_SYMBOLS } from "@/lib/constants";
 
 // Simulates all available market symbols
 const availableSymbols = [
-  ...TRADING_SYMBOLS.CRYPTO,
-  ...TRADING_SYMBOLS.FOREX,
-  ...TRADING_SYMBOLS.STOCKS,
-  ...TRADING_SYMBOLS.INDICES,
-  ...TRADING_SYMBOLS.COMMODITIES
+  ...TRADING_SYMBOLS.crypto,
+  ...TRADING_SYMBOLS.forex,
+  ...TRADING_SYMBOLS.stocks,
+  ...TRADING_SYMBOLS.indices,
+  ...TRADING_SYMBOLS.commodities
 ];
 
 // Basic price range assumptions for different asset classes
 const priceRanges: Record<string, { min: number; max: number; precision: number }> = {
-  CRYPTO: { min: 100, max: 50000, precision: 2 },
-  FOREX: { min: 0.5, max: 2, precision: 5 },
-  STOCKS: { min: 10, max: 500, precision: 2 },
-  INDICES: { min: 1000, max: 40000, precision: 2 },
-  COMMODITIES: { min: 10, max: 2000, precision: 2 },
+  crypto: { min: 100, max: 50000, precision: 2 },
+  forex: { min: 0.5, max: 2, precision: 5 },
+  stocks: { min: 10, max: 500, precision: 2 },
+  indices: { min: 1000, max: 40000, precision: 2 },
+  commodities: { min: 10, max: 2000, precision: 2 },
 };
 
 // Get price range for a specific symbol
@@ -106,15 +106,15 @@ function generateSeededRandomPrice(seed: string, min: number, max: number) {
 
 // Different assets have different volatility
 function getVolatilityFactor(symbol: string) {
-  if (TRADING_SYMBOLS.CRYPTO.includes(symbol)) {
+  if (TRADING_SYMBOLS.crypto.includes(symbol)) {
     return 3.0; // Crypto is more volatile
-  } else if (TRADING_SYMBOLS.FOREX.includes(symbol)) {
+  } else if (TRADING_SYMBOLS.forex.includes(symbol)) {
     return 0.5; // Forex is less volatile
-  } else if (TRADING_SYMBOLS.STOCKS.includes(symbol)) {
+  } else if (TRADING_SYMBOLS.stocks.includes(symbol)) {
     return 1.5;
-  } else if (TRADING_SYMBOLS.INDICES.includes(symbol)) {
+  } else if (TRADING_SYMBOLS.indices.includes(symbol)) {
     return 1.0;
-  } else if (TRADING_SYMBOLS.COMMODITIES.includes(symbol)) {
+  } else if (TRADING_SYMBOLS.commodities.includes(symbol)) {
     return 2.0;
   }
   return 1.0;
@@ -174,11 +174,11 @@ export const getCurrentPrice = (req: Request, res: Response) => {
 export const getSymbols = (_req: Request, res: Response) => {
   try {
     res.json({
-      crypto: TRADING_SYMBOLS.CRYPTO,
-      forex: TRADING_SYMBOLS.FOREX,
-      stocks: TRADING_SYMBOLS.STOCKS,
-      indices: TRADING_SYMBOLS.INDICES,
-      commodities: TRADING_SYMBOLS.COMMODITIES
+      crypto: TRADING_SYMBOLS.crypto,
+      forex: TRADING_SYMBOLS.forex,
+      stocks: TRADING_SYMBOLS.stocks,
+      indices: TRADING_SYMBOLS.indices,
+      commodities: TRADING_SYMBOLS.commodities
     });
   } catch (error) {
     console.error("Error getting symbols:", error);

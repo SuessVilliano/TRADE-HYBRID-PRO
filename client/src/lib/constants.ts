@@ -1,167 +1,238 @@
-// News Sources
-export const NEWS_SOURCES = [
-  "TradingView",
-  "Bloomberg",
-  "Wall Street Journal",
-  "CNBC",
-  "Reuters",
-  "Financial Times",
-  "MarketWatch",
-  "Coindesk",
-  "The Economist",
-  "Trade Hybrid Insights",
-  "Barron's",
-  "Seeking Alpha"
-];
-
-// Trading Symbols
+// Trading symbols by category
 export const TRADING_SYMBOLS = {
-  CRYPTO: [
-    'BTCUSD',
-    'ETHUSD',
-    'THCUSD', // Trade Hybrid Coin
-    'SOLUSD',
-    'DOTUSD',
-    'ADAUSD',
-    'XRPUSD',
-    'LINKUSD',
-    'UNIUSD',
-    'DOGEUSD'
-  ],
-  FOREX: [
-    'EURUSD',
-    'GBPUSD',
-    'USDJPY',
-    'AUDUSD',
-    'USDCHF',
-    'USDCAD',
-    'NZDUSD',
-    'EURGBP',
-    'EURJPY',
-    'GBPJPY'
-  ],
-  STOCKS: [
-    'AAPL',
-    'MSFT',
-    'GOOGL',
-    'AMZN',
-    'META',
-    'TSLA',
-    'NVDA',
-    'NFLX',
-    'JPM',
-    'V'
-  ],
-  INDICES: [
-    'SPX500',
-    'NASDAQ',
-    'DJI',
-    'DAX',
-    'FTSE100',
-    'CAC40',
-    'NIKKEI',
-    'HSI',
-    'ASX200',
-    'IBEX35'
-  ],
-  COMMODITIES: [
-    'XAUUSD', // Gold
-    'XAGUSD', // Silver
-    'WTICOUSD', // Oil
-    'NATGASUSD', // Natural Gas
-    'COPPERUSD',
-    'CORNUSD',
-    'WHETUSD',
-    'SOYUSD',
-    'COALUSD',
-    'COTTOUSD'
-  ]
+  crypto: ['BTC/USD', 'ETH/USD', 'SOL/USD', 'ADA/USD', 'XRP/USD', 'DOT/USD', 'AVAX/USD', 'MATIC/USD', 'LINK/USD', 'UNI/USD', 'THC/USD'],
+  forex: ['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CAD', 'AUD/USD', 'NZD/USD', 'USD/CHF', 'EUR/GBP', 'EUR/JPY', 'GBP/JPY'],
+  stocks: ['AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META', 'TSLA', 'NVDA', 'JPM', 'V', 'WMT', 'DIS', 'NFLX'],
+  indices: ['SPX500', 'NASDAQ', 'DJ30', 'VIX', 'UK100', 'GER40', 'JPN225', 'AUS200'],
+  commodities: ['XAUUSD', 'XAGUSD', 'USOIL', 'UKOIL', 'NATGAS', 'COPPER', 'CORN', 'WHEAT', 'COTTON', 'SUGAR']
 };
 
-// Flatten all symbols into a single array
-export const ALL_TRADING_SYMBOLS = Object.values(TRADING_SYMBOLS).flat();
+// All trading symbols combined in one array for convenience
+export const ALL_TRADING_SYMBOLS = [
+  ...TRADING_SYMBOLS.crypto,
+  ...TRADING_SYMBOLS.forex,
+  ...TRADING_SYMBOLS.stocks,
+  ...TRADING_SYMBOLS.indices,
+  ...TRADING_SYMBOLS.commodities
+];
 
-// THC Token Details
+// Supported brokers
+export const SUPPORTED_BROKERS = [
+  {
+    id: 'alpaca',
+    name: 'Alpaca',
+    description: 'Commission-free stock trading API',
+    url: 'https://alpaca.markets',
+    assets: ['stocks', 'crypto'],
+    logoUrl: '/images/brokers/alpaca.svg',
+    apiKeyFields: [
+      { id: 'apiKey', label: 'API Key', type: 'password' },
+      { id: 'apiSecret', label: 'API Secret', type: 'password' }
+    ],
+    testnetSupported: true
+  },
+  {
+    id: 'oanda',
+    name: 'OANDA',
+    description: 'Forex and CFD trading platform',
+    url: 'https://www.oanda.com',
+    assets: ['forex', 'indices', 'commodities'],
+    logoUrl: '/images/brokers/oanda.svg',
+    apiKeyFields: [
+      { id: 'accountId', label: 'Account ID', type: 'text' },
+      { id: 'apiToken', label: 'API Token', type: 'password' }
+    ],
+    testnetSupported: true
+  },
+  {
+    id: 'binance',
+    name: 'Binance',
+    description: 'Cryptocurrency exchange',
+    url: 'https://www.binance.com',
+    assets: ['crypto'],
+    logoUrl: '/images/brokers/binance.svg',
+    apiKeyFields: [
+      { id: 'apiKey', label: 'API Key', type: 'password' },
+      { id: 'apiSecret', label: 'API Secret', type: 'password' }
+    ],
+    testnetSupported: true
+  },
+  {
+    id: 'tradehybrid',
+    name: 'Trade Hybrid',
+    description: 'All-in-one trading solution',
+    url: 'https://tradehybrid.io',
+    assets: ['stocks', 'forex', 'crypto', 'indices', 'commodities'],
+    logoUrl: '/images/brokers/tradehybrid.svg',
+    apiKeyFields: [
+      { id: 'apiKey', label: 'API Key', type: 'password' },
+      { id: 'accountId', label: 'Account ID', type: 'text' }
+    ],
+    testnetSupported: true,
+    isBrokerAggregator: true
+  }
+];
+
+// Game settings
+export const GAME_SETTINGS = {
+  // Bulls vs Bears game settings
+  bullsVsBears: {
+    difficultyLevels: ['beginner', 'intermediate', 'advanced', 'expert'],
+    defaultDifficulty: 'intermediate',
+    roundDuration: 180, // seconds
+    initialBalance: 10000,
+    scoreMultipliers: {
+      beginner: 1,
+      intermediate: 1.5,
+      advanced: 2,
+      expert: 3
+    },
+    aiStrategies: ['trend_follower', 'contrarian', 'swing_trader', 'day_trader', 'scalper'],
+    marketVolatility: {
+      beginner: 0.5,
+      intermediate: 1,
+      advanced: 1.5,
+      expert: 2
+    }
+  },
+  
+  // Avatar customization options
+  avatar: {
+    skins: ['default', 'bronze', 'silver', 'gold', 'diamond', 'dark', 'cyborg'],
+    outfits: ['suit', 'casual', 'formal', 'streetwear', 'futuristic', 'vintage', 'sporty'],
+    accessories: ['none', 'glasses', 'hat', 'tie', 'watch', 'backpack', 'briefcase'],
+    badges: ['none', 'beginner', 'intermediate', 'expert', 'master', 'diamond_hands', 'early_adopter']
+  },
+  
+  // Trade House zones and features
+  tradeHouse: {
+    floors: ['lobby', 'trading_floor', 'education_center', 'vip_lounge', 'social_hub', 'marketplace'],
+    specialEvents: ['market_crash', 'bull_run', 'earnings_season', 'economic_report', 'crypto_halving'],
+    npcTypes: ['broker', 'analyst', 'mentor', 'trader', 'market_maker', 'influencer', 'regulator']
+  }
+};
+
+// Chart timeframes
+export const CHART_TIMEFRAMES = [
+  { id: '1m', label: '1 minute' },
+  { id: '5m', label: '5 minutes' },
+  { id: '15m', label: '15 minutes' },
+  { id: '30m', label: '30 minutes' },
+  { id: '1h', label: '1 hour' },
+  { id: '4h', label: '4 hours' },
+  { id: 'D', label: 'Daily' },
+  { id: 'W', label: 'Weekly' },
+  { id: 'M', label: 'Monthly' }
+];
+
+// Trading tips categories
+export const TRADING_TIP_CATEGORIES = [
+  { id: 'general', label: 'General Trading' },
+  { id: 'technical', label: 'Technical Analysis' },
+  { id: 'fundamental', label: 'Fundamental Analysis' },
+  { id: 'psychology', label: 'Trading Psychology' },
+  { id: 'risk', label: 'Risk Management' },
+  { id: 'crypto', label: 'Cryptocurrency' },
+  { id: 'forex', label: 'Forex Trading' },
+  { id: 'stocks', label: 'Stock Market' }
+];
+
+// Trading tips experience levels
+export const TRADING_TIP_LEVELS = [
+  { id: 'beginner', label: 'Beginner' },
+  { id: 'intermediate', label: 'Intermediate' },
+  { id: 'advanced', label: 'Advanced' },
+  { id: 'expert', label: 'Expert' }
+];
+
+// WebSocket event types
+export const WS_EVENT_TYPES = {
+  // Player events
+  PLAYER_JOIN: 'player_join',
+  PLAYER_LEAVE: 'player_leave',
+  PLAYER_UPDATE: 'player_update',
+  PLAYER_CHAT: 'player_chat',
+  
+  // Trading events
+  TRADE_EXECUTED: 'trade_executed',
+  PRICE_UPDATE: 'price_update',
+  MARKET_ALERT: 'market_alert',
+  
+  // Social events
+  FRIEND_REQUEST: 'friend_request',
+  FRIEND_RESPONSE: 'friend_response',
+  SOCIAL_ACTIVITY: 'social_activity',
+  
+  // Voice chat events
+  VOICE_STATUS: 'voice_status',
+  VOICE_DATA: 'voice_data',
+  
+  // System events
+  SERVER_ANNOUNCEMENT: 'server_announcement',
+  PING: 'ping',
+  PONG: 'pong'
+};
+
+// Default avatar options for new users
+export const DEFAULT_AVATAR_OPTIONS = {
+  skin: 'default',
+  outfit: 'casual',
+  accessories: 'none',
+  badges: ['beginner']
+};
+
+// NFT categories for marketplace
+export const NFT_CATEGORIES = [
+  { id: 'avatar', label: 'Avatar Items' },
+  { id: 'badge', label: 'Achievement Badges' },
+  { id: 'property', label: 'Virtual Property' },
+  { id: 'tools', label: 'Trading Tools' },
+  { id: 'art', label: 'Digital Art' },
+  { id: 'collectible', label: 'Collectibles' }
+];
+
+// THC Token details
 export const THC_TOKEN = {
   name: 'Trade Hybrid Coin',
   symbol: 'THC',
-  address: '4Th5syNiCf4jfxBzfLZJLFkFrcmJmw4UoNGCTY1EXdHo', // Solana blockchain address
-  contractAddress: '4Th5syNiCf4jfxBzfLZJLFkFrcmJmw4UoNGCTY1EXdHo', // Alias for components
-  decimals: 9,
-  logo: '/images/thc-logo.png',
-  explorer: 'https://solscan.io/token/4Th5syNiCf4jfxBzfLZJLFkFrcmJmw4UoNGCTY1EXdHo',
-  price: 3.75, // Current price in USD
-  priceChange24h: 2.5, // 24h price change in percentage
-  marketCap: 37500000, // Market cap in USD
-  totalSupply: 10000000, // Total supply of tokens
-  circulatingSupply: 5000000, // Circulating supply of tokens
-  holderCount: 2850, // Number of token holders
-  stakingApy: 15.75, // Annual percentage yield for staking
-  tradingVolume24h: 1250000 // 24h trading volume in USD
+  decimals: 8,
+  totalSupply: 100000000,
+  contract: {
+    solana: 'THC1nJ4vgBBNV8uFZ7ZjnQwX9FMbL3JCbL9KzYZhX7Bj',
+    ethereum: '0xTHC1nJ4vgBBNV8uFZ7ZjnQwX9FMbL3JCbL9K'
+  },
+  logo: '/images/thc-logo.svg',
+  useCases: ['marketplace', 'tips', 'premium-features', 'governance', 'staking']
 };
 
-// Trading Chart Timeframes
-export const CHART_TIMEFRAMES = [
-  { value: '1m', label: '1 Minute' },
-  { value: '5m', label: '5 Minutes' },
-  { value: '15m', label: '15 Minutes' },
-  { value: '30m', label: '30 Minutes' },
-  { value: '1h', label: '1 Hour' },
-  { value: '4h', label: '4 Hours' },
-  { value: '1d', label: '1 Day' },
-  { value: '1w', label: '1 Week' },
-  { value: '1M', label: '1 Month' }
-];
-
-// Smart Trade Panel Settings
+// Smart Trade Panel default settings
 export const SMART_TRADE_PANEL_DEFAULT_SETTINGS = {
-  useABATEV: true,
-  defaultBroker: 'alpaca',
-  defaultRiskPercentage: 1,
-  defaultOrder: 'market',
-  defaultSymbol: 'BTCUSD'
-};
-
-// Risk Management Settings
-export const RISK_MANAGEMENT_SETTINGS = {
-  maxRiskPerTrade: 3, // Percent of account
-  defaultStopLoss: 1, // Percent from entry
-  defaultTakeProfit: 2, // Percent from entry
-  suggestedRiskReward: 1.5, // Minimum risk/reward ratio
-  maxDailyDrawdown: 5, // Percent of account
-  maxOpenPositions: 5 // Maximum number of open positions at once
-};
-
-// AI Assistant Settings
-export const AI_ASSISTANT_SETTINGS = {
-  defaultModel: 'gpt-3.5-turbo',
-  suggestedPrompts: [
-    'Analyze BTCUSD on the 4h timeframe',
-    'Generate a trading plan for a bullish EURUSD',
-    'What are the key support and resistance levels for AAPL?',
-    'Suggest entry and exit points for a THCUSD swing trade',
-    'Explain the current market conditions for crude oil'
-  ],
-  maxOutputTokens: 500,
-  temperature: 0.3
-};
-
-// Market Hours
-export const MARKET_HOURS = {
-  FOREX: {
-    open: true, // Forex markets are open 24/5
-    note: 'Open 24 hours, Sunday 5pm ET to Friday 5pm ET'
+  defaultSymbol: 'BTC/USD',
+  defaultTimeframe: '1h',
+  orderTypes: ['market', 'limit', 'stop', 'stop_limit'],
+  defaultOrderType: 'market',
+  defaultLeverage: 1,
+  maxLeverage: 10,
+  fees: {
+    maker: 0.001, // 0.1%
+    taker: 0.002, // 0.2%
   },
-  CRYPTO: {
-    open: true, // Crypto markets are open 24/7
-    note: 'Open 24/7'
+  riskLevels: {
+    low: 0.01, // 1% of account
+    medium: 0.02, // 2% of account
+    high: 0.05, // 5% of account
   },
-  US_STOCKS: {
-    open: true, // This would be determined by current time
-    note: 'Open Monday-Friday, 9:30am to 4:00pm ET'
+  defaultRiskLevel: 'medium',
+  autoTakeProfit: {
+    conservative: 0.03, // 3%
+    moderate: 0.05, // 5%
+    aggressive: 0.1, // 10%
   },
-  US_FUTURES: {
-    open: true,
-    note: 'Main session: Sunday-Friday 6:00pm to 5:00pm ET'
-  }
+  autoStopLoss: {
+    tight: 0.02, // 2%
+    medium: 0.05, // 5%
+    wide: 0.1, // 10%
+  },
+  chartIndicators: ['MA', 'EMA', 'RSI', 'MACD', 'Bollinger Bands'],
+  defaultTradeBroker: 'tradehybrid'
 };

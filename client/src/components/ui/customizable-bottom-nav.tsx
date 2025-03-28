@@ -1,238 +1,239 @@
-import { useState } from "react";
-import { useUserPreferences, TabId } from "@/lib/stores/useUserPreferences";
-import { 
-  BarChart2, Newspaper, Activity, BookOpen, Award, 
-  Bot, Bell, Copy, Coins, BrainCircuit, Zap, 
-  Settings, Check, X, MoveHorizontal
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import React, { useState } from 'react';
+import { useUserPreferences, TabConfig } from '@/lib/stores/useUserPreferences';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { GripVertical, X, Plus, Settings, Check } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import * as Icons from 'lucide-react';
+
+// Define type for dynamic icon component
+type IconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+
+// Map of all available icons
+const iconMap: Record<string, IconComponent> = Icons;
 
 interface CustomizableBottomNavProps {
-  activePanel: string;
-  onChange: (panel: string) => void;
+  className?: string;
 }
 
-// Map tab IDs to icons
-const iconMap: Record<string, React.ReactNode> = {
-  market: <BarChart2 size={20} />,
-  news: <Newspaper size={20} />,
-  trade: <Activity size={20} />,
-  journal: <BookOpen size={20} />,
-  leaderboard: <Award size={20} />,
-  assistant: <Bot size={20} />,
-  signals: <Bell size={20} />,
-  copy: <Copy size={20} />,
-  thc: <Coins size={20} />,
-  "ai-analysis": <BrainCircuit size={20} />,
-  bots: <Zap size={20} />
-};
+export function CustomizableBottomNav({ className = '' }: CustomizableBottomNavProps) {
+  const location = useLocation();
+  const currentPath = location.pathname;
 
-export function CustomizableBottomNav({ activePanel, onChange }: CustomizableBottomNavProps) {
-  const { selectedBottomTabs, availableTabs, setSelectedBottomTabs, resetToDefaults } = useUserPreferences();
-  const [isCustomizing, setIsCustomizing] = useState(false);
-  const [selectedTabs, setSelectedTabs] = useState<TabId[]>([...selectedBottomTabs]);
+  // Get tabs from user preferences
+  const { bottomNavTabs, toggleBottomNavTab, reorderBottomNavTabs, resetPreferences } = useUserPreferences();
   
-  // Get the label for a tab ID
-  const getTabLabel = (tabId: string) => {
-    const tab = availableTabs.find(t => t.id === tabId);
-    return tab ? tab.label : tabId;
+  // Filter tabs to only show active ones and sort by order
+  const visibleTabs = bottomNavTabs
+    .filter(t => t.active)
+    .sort((a, b) => a.order - b.order);
+  
+  // State for edit dialog
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableTabs, setEditableTabs] = useState<TabConfig[]>([]);
+  
+  // Open edit dialog
+  const handleOpenEditDialog = () => {
+    setEditableTabs([...bottomNavTabs].sort((a, b) => a.order - b.order));
+    setIsEditing(true);
   };
   
-  // Handle toggling a tab in customization mode
-  const toggleTab = (tabId: TabId) => {
-    if (selectedTabs.includes(tabId)) {
-      // Don't remove if it would leave no tabs
-      if (selectedTabs.length <= 1) return;
-      setSelectedTabs(selectedTabs.filter(id => id !== tabId));
-    } else {
-      // Don't add if at max tabs
-      if (selectedTabs.length >= 5) return;
-      setSelectedTabs([...selectedTabs, tabId]);
-    }
+  // Toggle tab visibility
+  const handleToggleTab = (tabId: string) => {
+    setEditableTabs(tabs => 
+      tabs.map(tab => tab.id === tabId ? { ...tab, active: !tab.active } : tab)
+    );
   };
   
-  // Save customization changes
-  const saveCustomization = () => {
-    if (selectedTabs.length > 0) {
-      setSelectedBottomTabs(selectedTabs);
-    }
-    setIsCustomizing(false);
+  // Reorder tabs with drag and drop
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return;
+    
+    const { source, destination } = result;
+    if (source.index === destination.index) return;
+    
+    const newTabs = [...editableTabs];
+    const [movedTab] = newTabs.splice(source.index, 1);
+    newTabs.splice(destination.index, 0, movedTab);
+    
+    // Update order property
+    const reorderedTabs = newTabs.map((tab, index) => ({
+      ...tab,
+      order: index
+    }));
+    
+    setEditableTabs(reorderedTabs);
   };
   
-  // Cancel customization
-  const cancelCustomization = () => {
-    setSelectedTabs([...selectedBottomTabs]);
-    setIsCustomizing(false);
+  // Save changes
+  const handleSaveChanges = () => {
+    // Update each tab in the user preferences store
+    editableTabs.forEach(tab => {
+      // Toggle tab if active state changed
+      if (tab.active !== bottomNavTabs.find(t => t.id === tab.id)?.active) {
+        toggleBottomNavTab(tab.id);
+      }
+      
+      // Reorder tab if order changed
+      if (tab.order !== bottomNavTabs.find(t => t.id === tab.id)?.order) {
+        reorderBottomNavTabs(tab.id, tab.order);
+      }
+    });
+    
+    setIsEditing(false);
   };
   
   // Reset to defaults
   const handleResetToDefaults = () => {
-    resetToDefaults();
-    setSelectedTabs([...useUserPreferences.getState().selectedBottomTabs]);
+    resetPreferences();
+    setIsEditing(false);
   };
   
-  // Swap tab positions
-  const swapTabs = (fromIndex: number, toIndex: number) => {
-    const tabs = [...selectedTabs];
-    const [removed] = tabs.splice(fromIndex, 1);
-    tabs.splice(toIndex, 0, removed);
-    setSelectedTabs(tabs);
+  // Dynamic icon component
+  const getIcon = (iconName: string) => {
+    // Fallback to 'Circle' if icon not found
+    const IconComponent = iconMap[iconName] || iconMap['Circle'];
+    return <IconComponent className="h-5 w-5" />;
   };
-
+  
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-40">
-      {isCustomizing ? (
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium">Customize Bottom Menu</h3>
-            <div className="flex gap-2">
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={handleResetToDefaults}
-                className="text-xs h-7 px-2"
-              >
-                Reset
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={cancelCustomization}
-                className="text-xs h-7 px-2"
-              >
-                <X size={14} className="mr-1" />
-                Cancel
-              </Button>
-              <Button 
-                size="sm" 
-                variant="default"
-                onClick={saveCustomization}
-                className="text-xs h-7 px-2"
-              >
-                <Check size={14} className="mr-1" />
-                Save
-              </Button>
-            </div>
-          </div>
+    <div className={`fixed bottom-0 left-0 right-0 z-50 bg-background border-t shadow-lg ${className}`}>
+      <div className="flex items-center justify-around px-2 py-2">
+        {/* Visible tabs */}
+        {visibleTabs.map((tab) => (
+          <Link 
+            key={tab.id} 
+            to={`/${tab.id === 'trading' ? 'trading-space' : tab.id}`}
+            className={`flex flex-col items-center justify-center flex-1 p-2 rounded-md transition-colors
+              ${currentPath.includes(tab.id) || (tab.id === 'trading' && currentPath.includes('trading-space')) 
+                ? 'text-primary bg-primary/10' 
+                : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+          >
+            {getIcon(tab.icon)}
+            <span className="text-xs mt-1">{tab.label}</span>
+          </Link>
+        ))}
+        
+        {/* Settings button */}
+        <Dialog open={isEditing} onOpenChange={setIsEditing}>
+          <DialogTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="flex flex-col items-center justify-center flex-1 p-2 rounded-md"
+              onClick={handleOpenEditDialog}
+            >
+              <Settings className="h-5 w-5" />
+              <span className="text-xs mt-1">Customize</span>
+            </Button>
+          </DialogTrigger>
           
-          {/* Selected tabs with drag handles */}
-          <div className="mb-4 bg-gray-100 dark:bg-gray-900 p-2 rounded-md">
-            <p className="text-xs text-gray-500 mb-2">
-              Selected tabs (max 5, drag to reorder):
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {selectedTabs.map((tabId, index) => (
-                <div 
-                  key={tabId}
-                  className="flex items-center bg-white dark:bg-gray-800 rounded-md shadow-sm border border-gray-200 dark:border-gray-700"
-                >
-                  <button
-                    className="flex items-center py-1 pl-2 pr-1"
-                    onClick={() => toggleTab(tabId)}
-                  >
-                    <span className="flex items-center gap-1 text-xs">
-                      {iconMap[tabId]} {getTabLabel(tabId)}
-                    </span>
-                    <X size={14} className="ml-1 text-gray-500" />
-                  </button>
-                  
-                  <div className="flex border-l border-gray-200 dark:border-gray-700">
-                    {index > 0 && (
-                      <button
-                        className="px-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                        onClick={() => swapTabs(index, index - 1)}
-                        title="Move left"
-                      >
-                        <MoveHorizontal size={14} className="transform -rotate-90" />
-                      </button>
-                    )}
-                    {index < selectedTabs.length - 1 && (
-                      <button
-                        className="px-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                        onClick={() => swapTabs(index, index + 1)}
-                        title="Move right"
-                      >
-                        <MoveHorizontal size={14} className="transform rotate-90" />
-                      </button>
-                    )}
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Customize Navigation</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-2">
+              <Tabs defaultValue="tabs">
+                <TabsList className="grid grid-cols-2 w-full">
+                  <TabsTrigger value="tabs">Tabs</TabsTrigger>
+                  <TabsTrigger value="order">Order</TabsTrigger>
+                </TabsList>
+                
+                {/* Tab visibility settings */}
+                <TabsContent value="tabs" className="space-y-4">
+                  <div className="grid grid-cols-1 gap-2">
+                    {editableTabs.map((tab) => (
+                      <div key={tab.id} className="flex items-center justify-between p-2 border rounded-md">
+                        <div className="flex items-center gap-2">
+                          {getIcon(tab.icon)}
+                          <span>{tab.label}</span>
+                        </div>
+                        <Switch 
+                          checked={tab.active} 
+                          onCheckedChange={() => handleToggleTab(tab.id)} 
+                        />
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ))}
+                </TabsContent>
+                
+                {/* Tab ordering */}
+                <TabsContent value="order" className="space-y-4">
+                  <DragDropContext onDragEnd={handleDragEnd}>
+                    <Droppable droppableId="tabs">
+                      {(provided) => (
+                        <div
+                          {...provided.droppableProps}
+                          ref={provided.innerRef}
+                          className="space-y-2"
+                        >
+                          {editableTabs.map((tab, index) => (
+                            <Draggable 
+                              key={tab.id} 
+                              draggableId={tab.id} 
+                              index={index}
+                              isDragDisabled={!tab.active}
+                            >
+                              {(provided) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  className={`flex items-center justify-between p-2 border rounded-md 
+                                    ${tab.active ? 'bg-background' : 'bg-muted/40 text-muted-foreground'}`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <div {...provided.dragHandleProps}>
+                                      <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                    {getIcon(tab.icon)}
+                                    <span>{tab.label}</span>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Label className={`text-xs ${tab.active ? '' : 'text-muted-foreground'}`}>
+                                      {tab.active ? 'Visible' : 'Hidden'}
+                                    </Label>
+                                  </div>
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
+                  <p className="text-xs text-muted-foreground">
+                    Drag and drop to reorder visible tabs. Hidden tabs won't appear in the navigation bar.
+                  </p>
+                </TabsContent>
+              </Tabs>
             </div>
-          </div>
-          
-          {/* Available tabs */}
-          <div>
-            <p className="text-xs text-gray-500 mb-2">
-              Available tabs (click to add):
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {availableTabs
-                .filter(tab => !selectedTabs.includes(tab.id))
-                .map(tab => (
-                  <button 
-                    key={tab.id}
-                    className="flex items-center gap-1 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 py-1 px-2 rounded-md"
-                    onClick={() => toggleTab(tab.id)}
-                    disabled={selectedTabs.length >= 5}
-                  >
-                    {iconMap[tab.id]} {tab.label}
-                  </button>
-                ))
-              }
-            </div>
-            {selectedTabs.length >= 5 && (
-              <p className="text-xs text-amber-500 mt-2">
-                Maximum of 5 tabs reached. Remove a tab to add another.
-              </p>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-5 h-16">
-          {selectedBottomTabs.map((tabId) => (
-            <button
-              key={tabId}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1",
-                activePanel === tabId 
-                  ? "text-primary" 
-                  : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-              )}
-              onClick={() => onChange(tabId)}
-            >
-              <div>
-                {iconMap[tabId]}
-              </div>
-              <span className="text-xs">{getTabLabel(tabId)}</span>
-            </button>
-          ))}
-          
-          {/* Only show the customize button if we have fewer than 5 tabs */}
-          {selectedBottomTabs.length < 5 && (
-            <button
-              className="flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-              onClick={() => setIsCustomizing(true)}
-            >
-              <div>
-                <Settings size={20} />
-              </div>
-              <span className="text-xs">Customize</span>
-            </button>
-          )}
-        </div>
-      )}
-      
-      {/* If we have 5 tabs, show a small customize button in the corner */}
-      {!isCustomizing && selectedBottomTabs.length === 5 && (
-        <button
-          className="absolute right-2 bottom-14 bg-primary text-white rounded-full p-2 shadow-lg"
-          onClick={() => setIsCustomizing(true)}
-        >
-          <Settings size={18} />
-        </button>
-      )}
+            
+            <DialogFooter className="flex flex-col sm:flex-row gap-2">
+              <Button 
+                variant="outline" 
+                onClick={handleResetToDefaults}
+                className="flex items-center gap-2"
+              >
+                <X className="h-4 w-4" />
+                Reset to Defaults
+              </Button>
+              <Button 
+                onClick={handleSaveChanges}
+                className="flex items-center gap-2"
+              >
+                <Check className="h-4 w-4" />
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }

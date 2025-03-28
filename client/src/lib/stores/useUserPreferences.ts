@@ -1,117 +1,240 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
-export type TabId = 
-  | 'market'
-  | 'news'
-  | 'trade'
-  | 'journal'
-  | 'leaderboard'
-  | 'assistant'
-  | 'signals'
-  | 'copy'
-  | 'thc'
-  | 'ai-analysis'
-  | 'bots';
-
-interface TabDefinition {
-  id: TabId;
-  icon: string;
+// Define tab configuration interface
+export interface TabConfig {
+  id: string;
   label: string;
+  icon: string;
+  active: boolean;
+  order: number;
 }
 
+// Define user preferences state interface
 interface UserPreferencesState {
-  // Bottom navigation tabs selected by the user (max 5)
-  selectedBottomTabs: TabId[];
+  // Theme preferences
+  theme: 'light' | 'dark' | 'system';
+  highContrastMode: boolean;
+  reducedMotion: boolean;
   
-  // All available tabs with their definitions
-  availableTabs: TabDefinition[];
+  // Chart preferences
+  defaultTimeframe: string;
+  defaultChartType: 'candles' | 'line' | 'bars' | 'area';
+  showVolume: boolean;
+  showGrid: boolean;
+  chartIndicators: string[];
+  
+  // UI preferences
+  showTradingTips: boolean;
+  showMicroTips: boolean;
+  sidebarCollapsed: boolean;
+  bottomNavTabs: TabConfig[];
+  defaultPage: string;
+  
+  // Notification preferences
+  enablePriceAlerts: boolean;
+  enableNewsAlerts: boolean;
+  enableTradeNotifications: boolean;
+  enableSocialNotifications: boolean;
+  notificationSound: boolean;
   
   // Actions
-  setSelectedBottomTabs: (tabs: TabId[]) => void;
-  addBottomTab: (tabId: TabId) => void;
-  removeBottomTab: (tabId: TabId) => void;
-  moveBottomTab: (fromIndex: number, toIndex: number) => void;
-  resetToDefaults: () => void;
+  setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  toggleHighContrastMode: () => void;
+  toggleReducedMotion: () => void;
+  setDefaultTimeframe: (timeframe: string) => void;
+  setDefaultChartType: (type: 'candles' | 'line' | 'bars' | 'area') => void;
+  toggleShowVolume: () => void;
+  toggleShowGrid: () => void;
+  addChartIndicator: (indicator: string) => void;
+  removeChartIndicator: (indicator: string) => void;
+  toggleTradingTips: () => void;
+  toggleMicroTips: () => void;
+  toggleSidebarCollapsed: () => void;
+  setBottomNavTabs: (tabs: TabConfig[]) => void;
+  toggleBottomNavTab: (tabId: string) => void;
+  reorderBottomNavTabs: (tabId: string, newOrder: number) => void;
+  setDefaultPage: (page: string) => void;
+  togglePriceAlerts: () => void;
+  toggleNewsAlerts: () => void;
+  toggleTradeNotifications: () => void;
+  toggleSocialNotifications: () => void;
+  toggleNotificationSound: () => void;
+  resetPreferences: () => void;
 }
 
-// Default tabs that will appear in the bottom navigation
-const DEFAULT_BOTTOM_TABS: TabId[] = ['market', 'trade', 'signals', 'assistant', 'thc'];
-
-// All available tabs with their icon and label definitions
-const ALL_AVAILABLE_TABS: TabDefinition[] = [
-  { id: 'market', icon: 'BarChart2', label: 'Charts' },
-  { id: 'news', icon: 'Newspaper', label: 'News' },
-  { id: 'trade', icon: 'Activity', label: 'Trade' },
-  { id: 'journal', icon: 'BookOpen', label: 'Journal' },
-  { id: 'leaderboard', icon: 'Award', label: 'Leaders' },
-  { id: 'assistant', icon: 'Bot', label: 'AI' },
-  { id: 'signals', icon: 'Bell', label: 'Signals' },
-  { id: 'copy', icon: 'Copy', label: 'Copy' },
-  { id: 'thc', icon: 'Coins', label: 'THC' },
-  { id: 'ai-analysis', icon: 'BrainCircuit', label: 'Analysis' },
-  { id: 'bots', icon: 'Zap', label: 'Bots' }
+// Default bottom nav tabs configuration
+const defaultBottomNavTabs: TabConfig[] = [
+  {
+    id: 'home',
+    label: 'Home',
+    icon: 'Home',
+    active: true,
+    order: 0
+  },
+  {
+    id: 'trading',
+    label: 'Trading',
+    icon: 'BarChart',
+    active: true,
+    order: 1
+  },
+  {
+    id: 'game',
+    label: 'Game',
+    icon: 'Gamepad2',
+    active: true,
+    order: 2
+  },
+  {
+    id: 'signals',
+    label: 'Signals',
+    icon: 'LineChart',
+    active: true,
+    order: 3
+  },
+  {
+    id: 'learn',
+    label: 'Learn',
+    icon: 'BookOpen',
+    active: true,
+    order: 4
+  },
+  {
+    id: 'portfolio',
+    label: 'Portfolio',
+    icon: 'BarChart3',
+    active: false,
+    order: 5
+  },
+  {
+    id: 'social',
+    label: 'Social',
+    icon: 'Users',
+    active: false,
+    order: 6
+  },
+  {
+    id: 'marketplace',
+    label: 'NFT Market',
+    icon: 'Store',
+    active: false,
+    order: 7
+  },
+  {
+    id: 'settings',
+    label: 'Settings',
+    icon: 'Settings',
+    active: false,
+    order: 8
+  }
 ];
 
-// Create the store with persistence
+// Default state for user preferences
+const defaultState = {
+  // Theme preferences
+  theme: 'system' as const,
+  highContrastMode: false,
+  reducedMotion: false,
+  
+  // Chart preferences
+  defaultTimeframe: '1h',
+  defaultChartType: 'candles' as const,
+  showVolume: true,
+  showGrid: true,
+  chartIndicators: ['ema', 'macd'],
+  
+  // UI preferences
+  showTradingTips: true,
+  showMicroTips: true,
+  sidebarCollapsed: false,
+  bottomNavTabs: defaultBottomNavTabs,
+  defaultPage: 'home',
+  
+  // Notification preferences
+  enablePriceAlerts: true,
+  enableNewsAlerts: true,
+  enableTradeNotifications: true,
+  enableSocialNotifications: true,
+  notificationSound: true,
+};
+
+// Create and export the store
 export const useUserPreferences = create<UserPreferencesState>()(
   persist(
     (set, get) => ({
-      // Initialize with default tabs
-      selectedBottomTabs: [...DEFAULT_BOTTOM_TABS],
-      availableTabs: ALL_AVAILABLE_TABS,
+      ...defaultState,
       
-      setSelectedBottomTabs: (tabs) => {
-        // Make sure we don't exceed the max number of tabs
-        const limitedTabs = tabs.slice(0, 5);
-        set({ selectedBottomTabs: limitedTabs });
-      },
+      // Theme actions
+      setTheme: (theme) => set({ theme }),
+      toggleHighContrastMode: () => set((state) => ({ highContrastMode: !state.highContrastMode })),
+      toggleReducedMotion: () => set((state) => ({ reducedMotion: !state.reducedMotion })),
       
-      addBottomTab: (tabId) => {
-        const { selectedBottomTabs } = get();
-        // Don't add if already exists or if we're at max tabs
-        if (selectedBottomTabs.includes(tabId) || selectedBottomTabs.length >= 5) return;
-        
-        set({ selectedBottomTabs: [...selectedBottomTabs, tabId] });
-      },
+      // Chart actions
+      setDefaultTimeframe: (timeframe) => set({ defaultTimeframe: timeframe }),
+      setDefaultChartType: (type) => set({ defaultChartType: type }),
+      toggleShowVolume: () => set((state) => ({ showVolume: !state.showVolume })),
+      toggleShowGrid: () => set((state) => ({ showGrid: !state.showGrid })),
+      addChartIndicator: (indicator) => set((state) => {
+        if (state.chartIndicators.includes(indicator)) return state;
+        return { chartIndicators: [...state.chartIndicators, indicator] };
+      }),
+      removeChartIndicator: (indicator) => set((state) => ({
+        chartIndicators: state.chartIndicators.filter(i => i !== indicator)
+      })),
       
-      removeBottomTab: (tabId) => {
-        const { selectedBottomTabs } = get();
-        // Don't remove if it's the last tab
-        if (selectedBottomTabs.length <= 1) return;
-        
-        set({ 
-          selectedBottomTabs: selectedBottomTabs.filter(id => id !== tabId) 
-        });
-      },
+      // UI actions
+      toggleTradingTips: () => set((state) => ({ showTradingTips: !state.showTradingTips })),
+      toggleMicroTips: () => set((state) => ({ showMicroTips: !state.showMicroTips })),
+      toggleSidebarCollapsed: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
       
-      moveBottomTab: (fromIndex, toIndex) => {
-        const { selectedBottomTabs } = get();
-        const tabs = [...selectedBottomTabs];
+      // Bottom nav actions
+      setBottomNavTabs: (tabs) => set({ bottomNavTabs: tabs }),
+      toggleBottomNavTab: (tabId) => set((state) => ({
+        bottomNavTabs: state.bottomNavTabs.map(tab => 
+          tab.id === tabId ? { ...tab, active: !tab.active } : tab
+        )
+      })),
+      reorderBottomNavTabs: (tabId, newOrder) => set((state) => {
+        // First, get the tab to be moved
+        const tabToMove = state.bottomNavTabs.find(tab => tab.id === tabId);
+        if (!tabToMove) return state;
         
-        // Make sure indices are valid
-        if (
-          fromIndex < 0 || 
-          fromIndex >= tabs.length || 
-          toIndex < 0 || 
-          toIndex >= tabs.length
-        ) {
-          return;
-        }
+        // Create a new array with the tab removed
+        const otherTabs = state.bottomNavTabs.filter(tab => tab.id !== tabId);
         
-        // Move the tab
-        const [tab] = tabs.splice(fromIndex, 1);
-        tabs.splice(toIndex, 0, tab);
+        // Update order numbers for all tabs
+        const updatedTabs = [
+          ...otherTabs.map(tab => {
+            // If the tab's order is greater than or equal to the new order,
+            // increment it to make room for the moved tab
+            if (tab.order >= newOrder) {
+              return { ...tab, order: tab.order + 1 };
+            }
+            return tab;
+          }),
+          // Add the moved tab with the new order
+          { ...tabToMove, order: newOrder }
+        ].sort((a, b) => a.order - b.order);
         
-        set({ selectedBottomTabs: tabs });
-      },
+        return { bottomNavTabs: updatedTabs };
+      }),
       
-      resetToDefaults: () => {
-        set({ selectedBottomTabs: [...DEFAULT_BOTTOM_TABS] });
-      }
+      setDefaultPage: (page) => set({ defaultPage: page }),
+      
+      // Notification actions
+      togglePriceAlerts: () => set((state) => ({ enablePriceAlerts: !state.enablePriceAlerts })),
+      toggleNewsAlerts: () => set((state) => ({ enableNewsAlerts: !state.enableNewsAlerts })),
+      toggleTradeNotifications: () => set((state) => ({ enableTradeNotifications: !state.enableTradeNotifications })),
+      toggleSocialNotifications: () => set((state) => ({ enableSocialNotifications: !state.enableSocialNotifications })),
+      toggleNotificationSound: () => set((state) => ({ notificationSound: !state.notificationSound })),
+      
+      // Reset all preferences to default
+      resetPreferences: () => set(defaultState),
     }),
     {
-      name: 'trade-hybrid-user-preferences',
+      name: 'trade-hybrid-preferences',
+      storage: createJSONStorage(() => localStorage)
     }
   )
 );

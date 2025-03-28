@@ -1,367 +1,265 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { nanoid } from 'nanoid';
+import { TRADING_TIP_CATEGORIES, TRADING_TIP_LEVELS } from '@/lib/constants';
 
 interface TradingTip {
   id: string;
   title: string;
   content: string;
-  category: 'crypto' | 'forex' | 'stocks' | 'general' | 'technical' | 'fundamental';
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  tags: string[];
-  isMicroTip?: boolean; // Flag to identify micro learning tips
+  category: string;
+  level: string;
+  source?: string;
+  link?: string;
 }
 
-interface TradingTipsState {
+interface TradingTipsStore {
   tips: TradingTip[];
-  viewedTips: string[];
-  currentTip: TradingTip | null;
-  showingTip: boolean;
-  currentMicroTip: TradingTip | null;
-  showingMicroTip: boolean;
-  microTipPosition: { x: number, y: number } | null;
-  isLoading: boolean;
-  isFirstLoad: boolean;
+  currentTipIndex: number;
+  showTipModal: boolean;
+  tipHistory: string[]; // IDs of tips that have been shown
+  selectedCategory: string | null;
+  selectedLevel: string | null;
+  
   // Actions
-  showTip: (category?: string, difficulty?: string, forceShow?: boolean) => void;
-  showMicroTip: (category?: string, difficulty?: string, position?: { x: number, y: number }) => void;
-  closeTip: () => void;
-  closeMicroTip: () => void;
-  markTipAsViewed: (tipId: string) => void;
-  fetchTips: () => Promise<void>;
-  setFirstLoadComplete: () => void;
+  showTip: (category?: string, level?: string) => void;
+  hideTip: () => void;
+  nextTip: () => void;
+  previousTip: () => void;
+  setCategory: (category: string | null) => void;
+  setLevel: (level: string | null) => void;
+  resetHistory: () => void;
 }
 
-export const useTradingTips = create<TradingTipsState>()(
-  persist(
-    (set, get) => ({
-      tips: [],
-      viewedTips: [],
-      currentTip: null,
-      showingTip: false,
-      currentMicroTip: null,
-      showingMicroTip: false,
-      microTipPosition: null,
-      isLoading: false,
-      isFirstLoad: true,
-      
-      showMicroTip: (category?: string, difficulty?: string, position?: { x: number, y: number }) => {
-        const { tips, viewedTips } = get();
-        
-        if (tips.length === 0) return;
-        
-        // First apply category and difficulty filters if provided
-        let filteredTips = [...tips];
-        
-        if (category) {
-          filteredTips = filteredTips.filter(
-            tip => tip.category === category
-          );
-        }
-        
-        if (difficulty) {
-          filteredTips = filteredTips.filter(
-            tip => tip.difficulty === difficulty
-          );
-        }
-        
-        // If no tips match the filters, use all tips
-        if (filteredTips.length === 0) {
-          filteredTips = [...tips];
-        }
-        
-        // Create micro tips by taking the title only or shorter content
-        const microTips = filteredTips.map(tip => ({
-          ...tip,
-          content: tip.title, // For micro tips, we'll just use the title as content
-          isMicroTip: true
-        }));
-        
-        // Prioritize unviewed tips
-        const unviewedTips = microTips.filter(
-          tip => !viewedTips.includes(tip.id)
-        );
-        
-        // Select a random tip, preferring unviewed ones
-        const tipsToSelectFrom = unviewedTips.length > 0 ? unviewedTips : microTips;
-        const randomIndex = Math.floor(Math.random() * tipsToSelectFrom.length);
-        const selectedTip = tipsToSelectFrom[randomIndex];
-        
-        // Use provided position or default to center
-        const defaultPosition = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-        
-        set({
-          currentMicroTip: selectedTip,
-          showingMicroTip: true,
-          microTipPosition: position || defaultPosition
-        });
-        
-        // Auto-close after 3 seconds
-        setTimeout(() => {
-          get().closeMicroTip();
-        }, 3000);
-        
-        // Mark tip as viewed
-        get().markTipAsViewed(selectedTip.id);
-      },
-      
-      closeMicroTip: () => {
-        set({ showingMicroTip: false, currentMicroTip: null, microTipPosition: null });
-      },
-      
-      showTip: (category?: string, difficulty?: string, forceShow: boolean = false) => {
-        const { tips, viewedTips, isFirstLoad } = get();
-        
-        // Only show tips on first load or when explicitly requested
-        if (!isFirstLoad && !forceShow) {
-          console.log('Skipping trading tip: not first load and not forced');
-          return;
-        }
-        
-        if (tips.length === 0) return;
-        
-        // First apply category and difficulty filters if provided
-        let filteredTips = [...tips];
-        
-        if (category) {
-          filteredTips = filteredTips.filter(
-            tip => tip.category === category
-          );
-        }
-        
-        if (difficulty) {
-          filteredTips = filteredTips.filter(
-            tip => tip.difficulty === difficulty
-          );
-        }
-        
-        // If no tips match the filters, use all tips
-        if (filteredTips.length === 0) {
-          filteredTips = [...tips];
-        }
-        
-        // Prioritize unviewed tips
-        const unviewedTips = filteredTips.filter(
-          tip => !viewedTips.includes(tip.id)
-        );
-        
-        // Select a random tip, preferring unviewed ones
-        const tipsToSelectFrom = unviewedTips.length > 0 ? unviewedTips : filteredTips;
-        const randomIndex = Math.floor(Math.random() * tipsToSelectFrom.length);
-        const selectedTip = tipsToSelectFrom[randomIndex];
-        
-        set({
-          currentTip: selectedTip,
-          showingTip: true
-        });
-        
-        // Mark tip as viewed
-        get().markTipAsViewed(selectedTip.id);
-        
-        // Mark first load as complete after showing the tip
-        if (isFirstLoad) {
-          get().setFirstLoadComplete();
-        }
-      },
-      
-      closeTip: () => {
-        set({ showingTip: false });
-      },
-      
-      markTipAsViewed: (tipId: string) => {
-        const { viewedTips } = get();
-        if (!viewedTips.includes(tipId)) {
-          set({ viewedTips: [...viewedTips, tipId] });
-        }
-      },
-      
-      setFirstLoadComplete: () => {
-        set({ isFirstLoad: false });
-      },
-      
-      fetchTips: async () => {
-        set({ isLoading: true });
-        
-        try {
-          // In a real app, this would fetch from an API
-          // For now, we'll use mock data
-          const mockTips: TradingTip[] = [
-            {
-              id: nanoid(),
-              title: "Understanding Candlestick Patterns",
-              content: "Candlestick patterns offer valuable insights into market sentiment. Doji patterns indicate indecision, while engulfing patterns suggest potential reversals. Learn to identify these patterns for better trade timing.",
-              category: "technical",
-              difficulty: "beginner",
-              tags: ["charting", "patterns", "price action"]
-            },
-            {
-              id: nanoid(),
-              title: "Effective Risk Management",
-              content: "Never risk more than 1-2% of your account on a single trade. This approach ensures you can survive a series of losing trades without significant damage to your account.",
-              category: "general",
-              difficulty: "beginner",
-              tags: ["risk", "account management", "trading rules"]
-            },
-            {
-              id: nanoid(),
-              title: "Using Multiple Timeframes",
-              content: "Analyze multiple timeframes for a complete market view. Higher timeframes show the overall trend, while lower timeframes help identify optimal entry and exit points.",
-              category: "technical",
-              difficulty: "intermediate",
-              tags: ["analysis", "timeframes", "strategy"]
-            },
-            {
-              id: nanoid(),
-              title: "Understanding Bitcoin Halving",
-              content: "Bitcoin halving events, occurring approximately every four years, reduce mining rewards by 50%. Historically, these events have preceded significant bull runs due to reduced supply inflation.",
-              category: "crypto",
-              difficulty: "beginner",
-              tags: ["bitcoin", "fundamentals", "market cycles"]
-            },
-            {
-              id: nanoid(),
-              title: "How Interest Rates Affect Forex",
-              content: "Central bank interest rate decisions significantly impact currency values. Higher rates typically strengthen a currency as they attract foreign capital seeking better returns.",
-              category: "forex",
-              difficulty: "intermediate",
-              tags: ["fundamentals", "central banks", "economic indicators"]
-            },
-            {
-              id: nanoid(),
-              title: "Earnings Reports Impact",
-              content: "Quarterly earnings reports can create significant stock price volatility. Stocks often move based not just on current performance but on whether results exceeded or missed market expectations.",
-              category: "stocks",
-              difficulty: "beginner",
-              tags: ["fundamentals", "earnings", "volatility"]
-            },
-            {
-              id: nanoid(),
-              title: "Understanding Market Sentiment",
-              content: "Market sentiment indicators like the VIX (fear index) or put/call ratios can provide valuable contrarian signals. Extreme readings often indicate potential market reversals.",
-              category: "general",
-              difficulty: "intermediate",
-              tags: ["psychology", "indicators", "contrarian"]
-            },
-            {
-              id: nanoid(),
-              title: "Trading With Fibonacci Retracements",
-              content: "Fibonacci retracement levels (38.2%, 50%, 61.8%) often act as support or resistance zones. Look for confluence with other technical indicators to improve reliability.",
-              category: "technical",
-              difficulty: "intermediate",
-              tags: ["fibonacci", "levels", "support resistance"]
-            },
-            {
-              id: nanoid(),
-              title: "Price Action Trading",
-              content: "Price action trading focuses on analyzing raw price movements without relying heavily on indicators. Key concepts include support/resistance, chart patterns, and candlestick formations.",
-              category: "technical",
-              difficulty: "advanced",
-              tags: ["price action", "naked trading", "charts"]
-            },
-            {
-              id: nanoid(),
-              title: "Understanding DeFi Protocols",
-              content: "Decentralized Finance (DeFi) protocols enable lending, borrowing, and trading without centralized intermediaries. Always research protocol security and audit status before committing significant funds.",
-              category: "crypto",
-              difficulty: "advanced",
-              tags: ["defi", "ethereum", "yield farming"]
-            },
-            {
-              id: nanoid(),
-              title: "Reading Economic Calendars",
-              content: "Economic calendars highlight upcoming data releases and their expected impact. High-impact events like non-farm payrolls, GDP, or central bank decisions can create significant market volatility.",
-              category: "fundamental",
-              difficulty: "beginner",
-              tags: ["economic data", "news trading", "planning"]
-            },
-            {
-              id: nanoid(),
-              title: "Hedging Strategies",
-              content: "Hedging involves opening positions that offset potential losses in existing trades. Common methods include options, futures, or simply taking opposing positions in correlated instruments.",
-              category: "general",
-              difficulty: "advanced",
-              tags: ["risk management", "portfolio", "protection"]
-            },
-            {
-              id: nanoid(),
-              title: "Correlation Between Markets",
-              content: "Understanding correlations between markets can improve your trading strategy. For example, USD strength typically has an inverse relationship with gold and commodity prices.",
-              category: "general",
-              difficulty: "intermediate",
-              tags: ["intermarket", "relationships", "diversification"]
-            },
-            {
-              id: nanoid(),
-              title: "Options Trading Basics",
-              content: "Options give the right, but not obligation, to buy or sell an asset at a specified price. Calls increase in value when prices rise, while puts increase in value when prices fall.",
-              category: "stocks",
-              difficulty: "intermediate",
-              tags: ["options", "derivatives", "leverage"]
-            },
-            {
-              id: nanoid(),
-              title: "Setting Stop Losses",
-              content: "Place stop losses at logical price levels, not arbitrary percentages. Good locations include just below support levels, beyond recent swing lows, or below key moving averages.",
-              category: "technical",
-              difficulty: "beginner",
-              tags: ["risk management", "trade planning", "execution"]
-            },
-            {
-              id: nanoid(),
-              title: "Understanding Market Phases",
-              content: "Markets cycle through accumulation, markup, distribution, and markdown phases. Each phase requires different trading strategies and position management approaches.",
-              category: "technical",
-              difficulty: "advanced",
-              tags: ["market cycles", "wyckoff", "smart money"]
-            },
-            {
-              id: nanoid(),
-              title: "Sector Rotation Strategy",
-              content: "Sector rotation involves moving investments between different market sectors based on economic cycles. Defensive sectors often outperform in downturns, while cyclicals lead during expansions.",
-              category: "stocks",
-              difficulty: "advanced",
-              tags: ["sectors", "business cycle", "portfolio"]
-            },
-            {
-              id: nanoid(),
-              title: "Cryptocurrency Security",
-              content: "Secure your crypto assets using hardware wallets, two-factor authentication, and unique passwords. Never share private keys and be vigilant against phishing attempts.",
-              category: "crypto",
-              difficulty: "beginner",
-              tags: ["security", "wallet", "private keys"]
-            },
-            {
-              id: nanoid(),
-              title: "Trading Journal Importance",
-              content: "Maintain a detailed trading journal recording entry/exit reasons, emotional state, and market conditions. Regular review helps identify strengths, weaknesses, and improvement opportunities.",
-              category: "general",
-              difficulty: "beginner",
-              tags: ["psychology", "improvement", "discipline"]
-            },
-            {
-              id: nanoid(),
-              title: "Understanding Leverage",
-              content: "Leverage amplifies both gains and losses. While 100x leverage might seem attractive, it significantly increases liquidation risk. Consider using lower leverage with wider stop losses for better survivability.",
-              category: "general",
-              difficulty: "intermediate",
-              tags: ["leverage", "margin", "risk"]
-            }
-          ];
-          
-          set({ tips: mockTips, isLoading: false });
-        } catch (error) {
-          console.error('Error fetching trading tips:', error);
-          set({ isLoading: false });
-        }
-      }
-    }),
-    {
-      name: 'trading-tips-storage',
-      // Persist viewed tips and first load status
-      partialize: (state) => ({ 
-        viewedTips: state.viewedTips,
-        isFirstLoad: state.isFirstLoad 
-      }),
+// Sample trading tips
+const tradingTips: TradingTip[] = [
+  // General tips
+  {
+    id: 'general-risk-1',
+    title: 'Risk Management',
+    content: 'Never risk more than 1-2% of your trading capital on a single trade. This helps protect your account from significant drawdowns.',
+    category: 'general',
+    level: 'beginner'
+  },
+  {
+    id: 'general-plan-1',
+    title: 'Trading Plan',
+    content: 'Always have a trading plan before entering a trade. Know your entry, exit, and stop loss levels before executing.',
+    category: 'general',
+    level: 'beginner'
+  },
+  {
+    id: 'general-emotion-1',
+    title: 'Emotional Control',
+    content: 'Keep emotions in check while trading. Fear and greed are two primary emotions that can lead to poor trading decisions.',
+    category: 'general',
+    level: 'beginner'
+  },
+  
+  // Technical analysis tips
+  {
+    id: 'technical-support-1',
+    title: 'Support and Resistance',
+    content: 'Price tends to bounce off support and resistance levels. Look for multiple touches of these levels for higher probability trades.',
+    category: 'technical',
+    level: 'beginner'
+  },
+  {
+    id: 'technical-trend-1',
+    title: 'Trend Following',
+    content: 'The trend is your friend. Trading in the direction of the overall trend typically increases your probability of success.',
+    category: 'technical',
+    level: 'beginner'
+  },
+  {
+    id: 'technical-indicators-1',
+    title: 'Indicator Confluence',
+    content: "Don't rely on a single indicator for trading decisions. Look for confluence between multiple indicators and price action.",
+    category: 'technical',
+    level: 'intermediate'
+  },
+  
+  // Psychology tips
+  {
+    id: 'psychology-loss-1',
+    title: 'Accept Losses',
+    content: 'Accept that losses are part of trading. Even the best traders have losing trades. What matters is your overall profitability.',
+    category: 'psychology',
+    level: 'beginner'
+  },
+  {
+    id: 'psychology-fomo-1',
+    title: 'Avoid FOMO',
+    content: "Don't enter trades due to Fear Of Missing Out (FOMO). There will always be another trading opportunity.",
+    category: 'psychology',
+    level: 'beginner'
+  },
+  {
+    id: 'psychology-journal-1',
+    title: 'Trading Journal',
+    content: 'Keep a trading journal to record your trades, emotions, and thought process. Review regularly to identify patterns and areas for improvement.',
+    category: 'psychology',
+    level: 'intermediate'
+  },
+  
+  // Crypto-specific tips
+  {
+    id: 'crypto-volatility-1',
+    title: 'Crypto Volatility',
+    content: 'Cryptocurrencies are highly volatile. Use smaller position sizes and wider stop losses compared to traditional markets.',
+    category: 'crypto',
+    level: 'beginner'
+  },
+  {
+    id: 'crypto-correlation-1',
+    title: 'Bitcoin Correlation',
+    content: 'Most altcoins have a high correlation with Bitcoin. Be aware of BTC movements even when trading other cryptocurrencies.',
+    category: 'crypto',
+    level: 'intermediate'
+  },
+  {
+    id: 'crypto-security-1',
+    title: 'Security First',
+    content: 'When trading crypto, security should be your top priority. Use hardware wallets for long-term storage and enable 2FA on all exchange accounts.',
+    category: 'crypto',
+    level: 'beginner'
+  },
+  
+  // Advanced trading tips
+  {
+    id: 'risk-advanced-1',
+    title: 'Position Sizing',
+    content: 'Adjust position sizes based on volatility. Use the Average True Range (ATR) to determine appropriate stop loss levels and position sizes.',
+    category: 'risk',
+    level: 'advanced'
+  },
+  {
+    id: 'technical-advanced-1',
+    title: 'Market Structure',
+    content: 'Focus on market structure (higher highs, lower lows) rather than indicators. Price action is the ultimate indicator.',
+    category: 'technical',
+    level: 'advanced'
+  },
+  {
+    id: 'psychology-advanced-1',
+    title: 'Cognitive Biases',
+    content: 'Be aware of cognitive biases like confirmation bias. Seek out information that contradicts your trading thesis to make more balanced decisions.',
+    category: 'psychology',
+    level: 'advanced'
+  }
+];
+
+export const useTradingTips = create<TradingTipsStore>((set, get) => ({
+  tips: tradingTips,
+  currentTipIndex: 0,
+  showTipModal: false,
+  tipHistory: [],
+  selectedCategory: null,
+  selectedLevel: null,
+  
+  showTip: (category?: string, level?: string) => {
+    const { tips, tipHistory } = get();
+    
+    // Filter tips based on category and level if provided
+    let eligibleTips = [...tips];
+    if (category) {
+      eligibleTips = eligibleTips.filter(tip => tip.category === category);
     }
-  )
-);
+    if (level) {
+      eligibleTips = eligibleTips.filter(tip => tip.level === level);
+    }
+    
+    // Filter out tips that have been shown recently unless we've seen them all
+    const unseenTips = eligibleTips.filter(tip => !tipHistory.includes(tip.id));
+    const tipPool = unseenTips.length > 0 ? unseenTips : eligibleTips;
+    
+    if (tipPool.length === 0) return; // No eligible tips
+    
+    // Select a random tip
+    const randomIndex = Math.floor(Math.random() * tipPool.length);
+    const selectedTip = tipPool[randomIndex];
+    
+    // Find the index of this tip in the full tips array
+    const fullIndex = tips.findIndex(tip => tip.id === selectedTip.id);
+    
+    // Update state
+    set(state => ({ 
+      currentTipIndex: fullIndex, 
+      showTipModal: true,
+      tipHistory: [...state.tipHistory, selectedTip.id].slice(-15) // Keep last 15 tips
+    }));
+  },
+  
+  hideTip: () => {
+    set({ showTipModal: false });
+  },
+  
+  nextTip: () => {
+    const { tips, currentTipIndex, selectedCategory, selectedLevel } = get();
+    
+    // Filter tips if category or level is selected
+    let eligibleTips = [...tips];
+    if (selectedCategory) {
+      eligibleTips = eligibleTips.filter(tip => tip.category === selectedCategory);
+    }
+    if (selectedLevel) {
+      eligibleTips = eligibleTips.filter(tip => tip.level === selectedLevel);
+    }
+    
+    if (eligibleTips.length === 0) return; // No eligible tips
+    
+    // Find the current tip in filtered list
+    const currentTip = tips[currentTipIndex];
+    const filteredIndex = eligibleTips.findIndex(tip => tip.id === currentTip.id);
+    
+    // Get next index, wrapping around if needed
+    const nextFilteredIndex = (filteredIndex + 1) % eligibleTips.length;
+    const nextTip = eligibleTips[nextFilteredIndex];
+    
+    // Find this tip in the full list
+    const fullIndex = tips.findIndex(tip => tip.id === nextTip.id);
+    
+    set(state => ({ 
+      currentTipIndex: fullIndex,
+      tipHistory: [...state.tipHistory, nextTip.id].slice(-15) // Keep last 15 tips
+    }));
+  },
+  
+  previousTip: () => {
+    const { tips, currentTipIndex, selectedCategory, selectedLevel } = get();
+    
+    // Filter tips if category or level is selected
+    let eligibleTips = [...tips];
+    if (selectedCategory) {
+      eligibleTips = eligibleTips.filter(tip => tip.category === selectedCategory);
+    }
+    if (selectedLevel) {
+      eligibleTips = eligibleTips.filter(tip => tip.level === selectedLevel);
+    }
+    
+    if (eligibleTips.length === 0) return; // No eligible tips
+    
+    // Find the current tip in filtered list
+    const currentTip = tips[currentTipIndex];
+    const filteredIndex = eligibleTips.findIndex(tip => tip.id === currentTip.id);
+    
+    // Get previous index, wrapping around if needed
+    const prevFilteredIndex = (filteredIndex - 1 + eligibleTips.length) % eligibleTips.length;
+    const prevTip = eligibleTips[prevFilteredIndex];
+    
+    // Find this tip in the full list
+    const fullIndex = tips.findIndex(tip => tip.id === prevTip.id);
+    
+    set({ currentTipIndex: fullIndex });
+  },
+  
+  setCategory: (category) => {
+    set({ selectedCategory: category });
+  },
+  
+  setLevel: (level) => {
+    set({ selectedLevel: level });
+  },
+  
+  resetHistory: () => {
+    set({ tipHistory: [] });
+  }
+}));
