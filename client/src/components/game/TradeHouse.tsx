@@ -15,6 +15,7 @@ import {
 import { Physics, useBox, usePlane } from '@react-three/cannon';
 import * as THREE from 'three';
 import { useControlsStore } from '@/lib/stores/useControlsStore';
+import THCCoinDisplay from './THCCoinDisplay';
 
 // Define control keys map
 const controlKeys = [
@@ -445,6 +446,59 @@ function TradingScreens() {
   );
 }
 
+// THC Coin displays placed throughout the trade house
+function THCCoins() {
+  // Handler for coin click events
+  const handleCoinClick = (location: string) => {
+    console.log(`THC Coin clicked at ${location}`);
+    // Could open THC token info panel here in the future
+  };
+  
+  return (
+    <group>
+      {/* Main lobby coin display - larger showcase */}
+      <THCCoinDisplay 
+        position={[0, 3, 0]} 
+        scale={[2, 2, 2]} 
+        animate={true}
+        onClick={() => handleCoinClick('Main Lobby')} 
+      />
+      
+      {/* Trading lounge coin */}
+      <THCCoinDisplay 
+        position={[0, 8, 15]} 
+        scale={[1.5, 1.5, 1.5]} 
+        animate={true}
+        onClick={() => handleCoinClick('Trading Lounge')} 
+      />
+      
+      {/* Executive suite premium display */}
+      <THCCoinDisplay 
+        position={[0, 18, 0]} 
+        scale={[2.5, 2.5, 2.5]} 
+        animate={true}
+        onClick={() => handleCoinClick('Executive Suite')} 
+      />
+      
+      {/* Training room coin for educational purposes */}
+      <THCCoinDisplay 
+        position={[-15, 8, -10]} 
+        scale={[1, 1, 1]} 
+        animate={true}
+        onClick={() => handleCoinClick('Training Room')} 
+      />
+      
+      {/* Conference room presentation coin */}
+      <THCCoinDisplay 
+        position={[0, 13, 0]} 
+        scale={[1.8, 1.8, 1.8]} 
+        animate={true}
+        onClick={() => handleCoinClick('Conference Room')} 
+      />
+    </group>
+  );
+}
+
 // Light sources
 function Lights() {
   const mainLightRef = useRef<THREE.DirectionalLight>(null);
@@ -541,6 +595,7 @@ export default function TradeHouse() {
             <TradeHouseStructure />
             <TradingScreens />
             <RoomLabels />
+            <THCCoins />
             
             {/* Player needs to be wrapped in Suspense since it uses dynamic imports */}
             <Suspense fallback={null}>
