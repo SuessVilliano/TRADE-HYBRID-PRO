@@ -107,12 +107,7 @@ export function debounce<T extends (...args: any[]) => any>(
     timeout = setTimeout(later, wait);
   };
 }
-export const formatCurrency = (value: number, currency: string = 'USD'): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency
-  }).format(value);
-};
+// This function is already defined above
 
 export const formatPercentage = (value: number): string => {
   return new Intl.NumberFormat('en-US', {
