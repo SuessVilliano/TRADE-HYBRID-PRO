@@ -10,6 +10,7 @@ import { getGameLeaderboard, getGamePlayer, submitGameScore } from "./api/game-l
 import { getRssFeed, getAvailableSources, getEconomicCalendar } from "./api/rss-feeds";
 import { getAIMarketAnalysis, getTradingSuggestions } from "./api/ai-market-analysis";
 import vapiRouter from "./routes/vapi";
+import geminiRouter from "./routes/gemini";
 import { MultiplayerServer } from "./multiplayer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -106,6 +107,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Vapi Voice Assistant routes
   app.use("/api/vapi", vapiRouter);
+  
+  // Gemini Vision AI routes
+  app.use("/api/gemini", geminiRouter);
   
   // News route using default source (bloomberg)
   app.get("/api/rss-feeds/news", (req, res) => {

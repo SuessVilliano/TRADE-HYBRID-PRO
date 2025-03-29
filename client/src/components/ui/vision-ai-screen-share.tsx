@@ -197,60 +197,89 @@ export function VisionAIScreenShare({ className }: VisionAIScreenShareProps) {
         // Convert to base64 for sending to AI service
         const screenshotBase64 = canvas.toDataURL('image/jpeg', 0.8);
         
-        // Here we would send the screenshot to the Vision AI service
-        // For now, just log that we captured a screenshot
-        console.log("Captured screenshot for AI analysis", screenshotBase64.slice(0, 50) + "...");
+        console.log("Captured screenshot for AI analysis");
+        
+        // Return the base64 image data
+        return screenshotBase64;
       }
     } catch (error) {
       console.error("Error capturing screenshot:", error);
     }
+    
+    return null;
   };
   
   // Capture screenshot on demand (for immediate analysis)
-  const captureAndAnalyzeNow = () => {
+  const captureAndAnalyzeNow = async () => {
     if (!videoRef.current || !isSharing) {
       toast.error("No screen is being shared. Start screen sharing first.");
       return;
     }
     
     try {
-      // Create a canvas element
-      const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
+      // Get screenshot from the screen
+      const screenshotBase64 = captureScreenshot();
       
-      // Draw the current video frame to the canvas
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      if (!screenshotBase64) {
+        toast.error("Failed to capture screenshot. Please try again.");
+        return;
+      }
+      
+      // Show generating state
+      setIsGenerating(true);
+      
+      // Create a prompt for the Gemini API
+      const prompt = "Analyze this trading chart. Identify key patterns, support and resistance levels, and potential trading opportunities. Mention any notable indicators visible on the chart. Provide a professional and concise analysis.";
+      
+      try {
+        // Call the Gemini Vision API through our backend
+        const response = await fetch('/api/gemini/analyze-image', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            image: screenshotBase64,
+            prompt: prompt
+          })
+        });
         
-        // Convert to base64 for sending to AI service
-        const screenshotBase64 = canvas.toDataURL('image/jpeg', 0.7);
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
         
-        // In a real implementation, we would send this to Gemini Vision API
-        // For now, simulate an AI response
-        setIsGenerating(true);
+        const data = await response.json();
         
-        // Simulate AI analysis time
-        setTimeout(() => {
-          // Add a simulated AI response about the chart
-          addMessage({
-            id: `assistant-${Date.now()}`,
-            role: "assistant",
-            content: "I've analyzed your chart and I notice a potential double bottom pattern forming. The price is testing a key support level at the current position. Volume is increasing on the recent upward move, which adds confirmation to the pattern. Consider watching for a breakout above the neckline before entering a long position.",
-            timestamp: new Date()
-          });
-          
-          setIsGenerating(false);
-        }, 2000);
+        // Add the AI response to the chat
+        addMessage({
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: data.analysis || "Sorry, I couldn't analyze the chart at this time. Please try again.",
+          timestamp: new Date()
+        });
+      } catch (error) {
+        console.error("Error calling Gemini API:", error);
+        
+        // Fallback to a generic message
+        addMessage({
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: "I'm sorry, I encountered an error analyzing your chart. This could be due to API limits or connectivity issues. Please try again in a moment.",
+          timestamp: new Date()
+        });
+        
+        toast.error("Failed to analyze screen. API error occurred.");
+      } finally {
+        setIsGenerating(false);
       }
     } catch (error) {
       console.error("Error capturing and analyzing screenshot:", error);
       toast.error("Failed to analyze screen. Please try again.");
+      setIsGenerating(false);
     }
   };
   
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!input.trim()) return;
     
     // Add user message
@@ -267,34 +296,70 @@ export function VisionAIScreenShare({ className }: VisionAIScreenShareProps) {
     // Generate AI response
     setIsGenerating(true);
     
-    // If screen is being shared, capture a screenshot for context
+    // Capture screenshot if screen is being shared
+    let screenshot = null;
     if (isSharing && videoRef.current) {
-      captureScreenshot();
+      screenshot = captureScreenshot();
     }
     
-    // Simulate AI thinking time
-    setTimeout(() => {
-      generateResponse(input);
+    try {
+      await generateResponse(input, screenshot);
+    } catch (error) {
+      console.error("Error generating response:", error);
+      // Fallback to local response
+      simulateLocalResponse(input);
+      toast.error("Failed to generate AI response. Using local fallback.");
+    } finally {
       setIsGenerating(false);
-    }, 1500);
+    }
   };
   
-  const generateResponse = (question: string) => {
-    // Check for Gemini API key in localStorage
-    const geminiKey = localStorage.getItem('gemini_api_key');
-    
-    if (geminiKey) {
-      // If we had actual integration with Gemini Vision API, we would use it here
-      // For now, simulate a response based on the question
-      simulateGeminiResponse(question);
-    } else {
-      // Simulate a response without API
+  const generateResponse = async (question: string, screenshot: string | null = null) => {
+    try {
+      if (screenshot) {
+        // We have a screenshot, use Gemini Vision API
+        const prompt = `Please analyze this trading chart and answer the following question: "${question}"`;
+        
+        const response = await fetch('/api/gemini/analyze-image', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            image: screenshot,
+            prompt: prompt
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Add the AI response to the chat
+        addMessage({
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: data.analysis || "Sorry, I couldn't analyze the chart at this time. Please try again.",
+          timestamp: new Date()
+        });
+      } else {
+        // No screenshot available, use text-only responses
+        if (process.env.NODE_ENV === 'development') {
+          // In development, fall back to simulated responses
+          simulateGeminiResponse(question);
+        } else {
+          // In production, try to use the API for text-only responses
+          // For now, we're still using simulated responses
+          simulateGeminiResponse(question);
+        }
+      }
+    } catch (error) {
+      console.error("Error in generateResponse:", error);
+      // Fall back to local simulated response
       simulateLocalResponse(question);
-      // Show notification to add API key
-      toast.info(
-        "For more advanced AI analysis, add your Gemini API key in settings.", 
-        { duration: 5000 }
-      );
+      throw error; // Re-throw to allow the caller to handle it
     }
   };
   
