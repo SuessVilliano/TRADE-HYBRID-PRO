@@ -82,6 +82,80 @@ export const SUPPORTED_BROKERS = [
       { key: 'accountId', label: 'Account ID', type: 'text' }
     ],
     description: 'Futures and options brokerage firm focused on institutional and professional traders'
+  },
+  {
+    id: 'kraken',
+    name: 'Kraken',
+    logo: '/logos/kraken.svg',
+    type: 'crypto',
+    url: 'https://www.kraken.com/sign-in',
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password' },
+      { key: 'secretKey', label: 'Private Key', type: 'password' }
+    ],
+    description: 'One of the largest and oldest cryptocurrency exchanges with advanced trading features'
+  },
+  {
+    id: 'coinbase',
+    name: 'Coinbase',
+    logo: '/logos/coinbase.svg',
+    type: 'crypto',
+    url: 'https://www.coinbase.com/signin',
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password' },
+      { key: 'secretKey', label: 'API Secret', type: 'password' },
+      { key: 'passphrase', label: 'Passphrase', type: 'password' }
+    ],
+    description: 'User-friendly cryptocurrency exchange with extensive asset listings and educational resources'
+  },
+  {
+    id: 'interactive_brokers',
+    name: 'Interactive Brokers',
+    logo: '/logos/interactive_brokers.svg',
+    type: 'multi-asset',
+    url: 'https://www.interactivebrokers.com/en/home.php',
+    credentialFields: [
+      { key: 'userId', label: 'User ID', type: 'text' },
+      { key: 'password', label: 'Password', type: 'password' },
+      { key: 'accountId', label: 'Account ID', type: 'text' }
+    ],
+    description: 'Global brokerage platform supporting stocks, options, futures, forex, bonds, and more with advanced trading tools'
+  },
+  {
+    id: 'tradingview',
+    name: 'TradingView',
+    logo: '/logos/tradingview.svg',
+    type: 'charting',
+    url: 'https://www.tradingview.com/accounts/signin/',
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password' },
+      { key: 'userId', label: 'User ID', type: 'text' }
+    ],
+    description: 'Popular charting platform with social networking features and broker integration capabilities'
+  },
+  {
+    id: 'fidelity',
+    name: 'Fidelity',
+    logo: '/logos/fidelity.svg',
+    type: 'stocks',
+    url: 'https://digital.fidelity.com/prgw/digital/login/full-page',
+    credentialFields: [
+      { key: 'accessToken', label: 'Access Token', type: 'password' },
+      { key: 'accountId', label: 'Account ID', type: 'text' }
+    ],
+    description: 'Major brokerage firm offering commission-free stock trading, retirement accounts, and wealth management services'
+  },
+  {
+    id: 'tradelocker',
+    name: 'Trade Locker',
+    logo: '/logos/tradelocker.svg',
+    type: 'multi-asset',
+    url: 'https://www.tradelocker.com',
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password' },
+      { key: 'clientId', label: 'Client ID', type: 'text' }
+    ],
+    description: 'Unified trading API allowing access to multiple exchanges and brokers through a single integration'
   }
 ];
 
