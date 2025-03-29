@@ -115,7 +115,10 @@ function AppContent() {
       <PopupContainer className="border-b border-slate-700 backdrop-blur-md sticky top-0 z-10 p-4" padding>
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-6">
-            <Link to="/" className="text-2xl font-bold text-blue-500">Trade Hybrid</Link>
+            <Link to="/" className="flex items-center gap-2">
+              <img src="/images/trade_hybrid_logo.png" alt="Trade Hybrid Logo" className="h-10 w-10" />
+              <span className="text-2xl font-bold text-blue-500">Trade Hybrid</span>
+            </Link>
             <nav className="hidden md:flex gap-4">
               <Link to="/" className="hover:text-blue-400 transition-colors">Home</Link>
               <Link to="/trading" className="hover:text-blue-400 transition-colors">Trading</Link>
@@ -381,6 +384,9 @@ function Home() {
   return (
     <PopupContainer className="container mx-auto py-12 px-4" padding>
       <div className="text-center mb-12">
+        <div className="flex justify-center mb-4">
+          <img src="/images/trade_hybrid_logo.png" alt="Trade Hybrid Logo" className="h-20 w-20" />
+        </div>
         <h1 className="text-5xl font-bold mb-4">Welcome to Trade Hybrid</h1>
         <p className="text-xl text-slate-300 max-w-3xl mx-auto">
           The ultimate AI-driven trading metaverse. Experience the future of trading with immersive visualization, real-time data, and social trading in a gamified environment.
