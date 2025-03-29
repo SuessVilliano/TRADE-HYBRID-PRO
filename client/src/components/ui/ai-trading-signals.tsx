@@ -72,23 +72,67 @@ export function AiTradingSignals({
   const [subscription, setSubscription] = useState<'free' | 'premium'>('free');
   const [alertsEnabled, setAlertsEnabled] = useState(true);
   
-  // Generate mock trading signals
+  // Fetch real trading signals from API
   useEffect(() => {
     if (!apiKeyStatus) {
       setLoading(false);
       return;
     }
     
-    // Simulate API loading delay
+    // Set loading state
     setLoading(true);
-    const timer = setTimeout(() => {
-      const mockSignals = generateMockSignals(25);
-      setSignals(mockSignals);
-      setLoading(false);
-    }, 1500);
     
-    return () => clearTimeout(timer);
-  }, [apiKeyStatus]);
+    // Fetch signals from the server
+    fetch('/api/signals')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch signals');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Format the received signals to match our component's expected format
+        const formattedSignals = data.map((signal: any) => ({
+          id: signal.id,
+          symbol: signal.symbol,
+          side: signal.action === 'buy' ? 'buy' : 'sell',
+          entryPrice: signal.entryPrice || signal.price || 0,
+          stopLoss: signal.stopLoss || 0,
+          takeProfit1: signal.takeProfit1 || 0,
+          takeProfit2: signal.takeProfit2 || 0,
+          timeframe: signal.timeframe || '1d',
+          confidence: signal.confidence || 50,
+          generatedAt: new Date(signal.timestamp),
+          expiresAt: new Date(new Date(signal.timestamp).getTime() + 24 * 60 * 60 * 1000), // 24 hours from now
+          reason: signal.message || `${signal.action.toUpperCase()} signal for ${signal.symbol}`,
+          status: 'active',
+          source: (signal.source || '').toLowerCase().includes('technical') ? 'technical' : 
+                 (signal.source || '').toLowerCase().includes('fundamental') ? 'fundamental' :
+                 (signal.source || '').toLowerCase().includes('sentiment') ? 'sentiment' : 'hybrid',
+          indicators: signal.indicators ? Object.entries(signal.indicators).map(([name, value]) => ({
+            name,
+            value: String(value),
+            bullish: String(value).toLowerCase().includes('bull') || 
+                    (signal.action === 'buy' && !String(value).toLowerCase().includes('bear'))
+          })) : []
+        }));
+        
+        console.log('Fetched signals:', formattedSignals);
+        setSignals(formattedSignals);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Error fetching signals:', error);
+        // Fallback to sample data if API fails
+        setSignals([]);
+        setLoading(false);
+        toast({
+          title: "Error loading signals",
+          description: "Could not load trading signals. Please try again later.",
+          variant: "destructive"
+        });
+      });
+  }, [apiKeyStatus, toast]);
   
   // Filter signals based on user selection
   useEffect(() => {
@@ -138,19 +182,63 @@ export function AiTradingSignals({
     setFilteredSignals(filtered.slice(0, limit));
   }, [signals, category, timeframe, subscription, maxSignals, searchTerm]);
   
-  // Refresh signals
+  // Refresh signals from the API
   const handleRefresh = () => {
     setLoading(true);
-    setTimeout(() => {
-      const mockSignals = generateMockSignals(25);
-      setSignals(mockSignals);
-      setLoading(false);
-      
-      toast({
-        title: "Signals refreshed",
-        description: "Latest AI trading signals have been loaded.",
+    
+    // Fetch signals from the server
+    fetch('/api/signals')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch signals');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Format the received signals to match our component's expected format
+        const formattedSignals = data.map((signal: any) => ({
+          id: signal.id,
+          symbol: signal.symbol,
+          side: signal.action === 'buy' ? 'buy' : 'sell',
+          entryPrice: signal.entryPrice || signal.price || 0,
+          stopLoss: signal.stopLoss || 0,
+          takeProfit1: signal.takeProfit1 || 0,
+          takeProfit2: signal.takeProfit2 || 0,
+          timeframe: signal.timeframe || '1d',
+          confidence: signal.confidence || 50,
+          generatedAt: new Date(signal.timestamp),
+          expiresAt: new Date(new Date(signal.timestamp).getTime() + 24 * 60 * 60 * 1000), // 24 hours from now
+          reason: signal.message || `${signal.action.toUpperCase()} signal for ${signal.symbol}`,
+          status: 'active',
+          source: (signal.source || '').toLowerCase().includes('technical') ? 'technical' : 
+                 (signal.source || '').toLowerCase().includes('fundamental') ? 'fundamental' :
+                 (signal.source || '').toLowerCase().includes('sentiment') ? 'sentiment' : 'hybrid',
+          indicators: signal.indicators ? Object.entries(signal.indicators).map(([name, value]) => ({
+            name,
+            value: String(value),
+            bullish: String(value).toLowerCase().includes('bull') || 
+                    (signal.action === 'buy' && !String(value).toLowerCase().includes('bear'))
+          })) : []
+        }));
+        
+        console.log('Refreshed signals:', formattedSignals);
+        setSignals(formattedSignals);
+        setLoading(false);
+        
+        toast({
+          title: "Signals refreshed",
+          description: "Latest trading signals have been loaded from the server.",
+        });
+      })
+      .catch(error => {
+        console.error('Error refreshing signals:', error);
+        setLoading(false);
+        toast({
+          title: "Error refreshing signals",
+          description: "Could not load fresh trading signals. Please try again later.",
+          variant: "destructive"
+        });
       });
-    }, 1500);
   };
   
   // Toggle notifications
@@ -564,7 +652,7 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
       <div className={`p-3 ${compact ? 'pb-2' : ''}`}>
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center gap-2">
-            <Badge variant={signal.side === 'buy' ? 'success' : 'destructive'} className="uppercase text-xs">
+            <Badge variant={signal.side === 'buy' ? 'secondary' : 'destructive'} className="uppercase text-xs">
               {signal.side}
             </Badge>
             <span className="font-medium">{signal.symbol}</span>
@@ -696,105 +784,4 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
   );
 }
 
-// Helper function to generate random trading signals
-function generateMockSignals(count: number): TradingSignal[] {
-  const signals: TradingSignal[] = [];
-  const timeframes = ['15m', '1h', '4h', 'D'];
-  const sources = ['technical', 'fundamental', 'sentiment', 'hybrid'] as const;
-  const statuses = ['active', 'completed', 'invalidated'] as const;
-  const performanceStatuses = ['profit', 'loss', 'open'] as const;
-  
-  // Flatten trading symbols
-  const allSymbols = Object.values(TRADING_SYMBOLS).flat();
-  
-  for (let i = 0; i < count; i++) {
-    const symbol = allSymbols[Math.floor(Math.random() * allSymbols.length)];
-    const side = Math.random() > 0.5 ? 'buy' : 'sell';
-    
-    // Generate random price
-    const basePrice = symbol.includes('BTC') ? 30000 + Math.random() * 10000 : 
-                     symbol.includes('ETH') ? 2000 + Math.random() * 500 :
-                     symbol.includes('SOL') ? 80 + Math.random() * 20 :
-                     symbol.includes('/USD') ? 1 + Math.random() * 0.2 : 
-                     100 + Math.random() * 50;
-    
-    const entryPrice = basePrice;
-    
-    // Calculate stop loss and take profit based on side
-    const volatility = symbol.includes('BTC') ? 0.03 : 
-                      symbol.includes('ETH') ? 0.04 :
-                      symbol.includes('SOL') ? 0.05 :
-                      0.02;
-    
-    const stopLoss = side === 'buy' 
-      ? entryPrice * (1 - volatility * (0.5 + Math.random() * 0.5))
-      : entryPrice * (1 + volatility * (0.5 + Math.random() * 0.5));
-    
-    const takeProfit1 = side === 'buy'
-      ? entryPrice * (1 + volatility * (1 + Math.random()))
-      : entryPrice * (1 - volatility * (1 + Math.random()));
-    
-    const takeProfit2 = side === 'buy'
-      ? takeProfit1 * 1.1
-      : takeProfit1 * 0.9;
-    
-    // Generate dates
-    const now = new Date();
-    const hoursAgo = Math.floor(Math.random() * 48);
-    const generatedAt = new Date(now.getTime() - hoursAgo * 60 * 60 * 1000);
-    const expiresAt = new Date(generatedAt.getTime() + 7 * 24 * 60 * 60 * 1000);
-    
-    // Generate performance data
-    const status = statuses[Math.floor(Math.random() * statuses.length)];
-    let performance = undefined;
-    
-    if (status !== 'active') {
-      const perfStatus = performanceStatuses[Math.floor(Math.random() * performanceStatuses.length)];
-      performance = {
-        pips: Math.floor(Math.random() * 100),
-        percentage: Math.random() * 10,
-        status: perfStatus
-      };
-    }
-    
-    // Generate indicators
-    const indicators = [
-      {
-        name: 'RSI',
-        value: Math.floor(Math.random() * 100).toString(),
-        bullish: Math.random() > 0.5
-      },
-      {
-        name: 'MACD',
-        value: Math.random() > 0.5 ? 'Bullish Crossover' : 'Bearish Crossover',
-        bullish: Math.random() > 0.5
-      },
-      {
-        name: 'MA',
-        value: Math.random() > 0.5 ? 'Above 200 MA' : 'Below 200 MA',
-        bullish: Math.random() > 0.5
-      }
-    ];
-    
-    signals.push({
-      id: `signal-${i}`,
-      symbol,
-      side,
-      entryPrice,
-      stopLoss,
-      takeProfit1,
-      takeProfit2,
-      timeframe: timeframes[Math.floor(Math.random() * timeframes.length)],
-      confidence: 50 + Math.floor(Math.random() * 50),
-      generatedAt,
-      expiresAt,
-      reason: `Signal based on ${sources[Math.floor(Math.random() * sources.length)]} analysis`,
-      status,
-      source: sources[Math.floor(Math.random() * sources.length)],
-      indicators,
-      performance
-    });
-  }
-  
-  return signals;
-}
+// Removed mock signal generation function since we're now using real API data
