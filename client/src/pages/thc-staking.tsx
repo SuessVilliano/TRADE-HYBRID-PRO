@@ -233,7 +233,7 @@ export default function StakeAndBake() {
           <TabsList className="grid grid-cols-3 mb-8">
             <TabsTrigger value="staking" className="text-lg py-3">
               <Coins className="mr-2 h-5 w-5" />
-              Stake & Bake
+              THC
             </TabsTrigger>
             <TabsTrigger value="matrix" className="text-lg py-3">
               <Network className="mr-2 h-5 w-5" />

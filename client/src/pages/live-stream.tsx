@@ -25,7 +25,7 @@ function LiveStream() {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-4">Trade Hybrid TV</h1>
+        <h1 className="text-4xl font-bold mb-4">TH TV</h1>
         <p className="text-xl text-slate-300 max-w-3xl mx-auto">
           Watch our live trading sessions, market analysis, and educational content.
         </p>
@@ -68,7 +68,7 @@ function LiveStream() {
                     <iframe 
                       src="https://player.viloud.tv/embed/channel/6b3e6d6696fb33d051c1ca4b341d21cf?autoplay=1&volume=1&controls=1&title=1&share=1&open_playlist=0&random=0"
                       className="absolute top-0 left-0 w-full h-full border-0"
-                      title="Trade Hybrid TV"
+                      title="TH TV"
                       frameBorder="0"
                       allowFullScreen
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

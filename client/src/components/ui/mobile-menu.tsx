@@ -117,7 +117,7 @@ export function MobileMenu({ isOpen, onClose, onItemClick }: MobileMenuProps) {
             onClick={() => handleItemClick('tv')}
           >
             <Tv className="h-5 w-5 text-red-500" />
-            <span>Trade Hybrid TV</span>
+            <span>TH TV</span>
           </button>
           
           <button

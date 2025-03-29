@@ -36,7 +36,7 @@ export function LivestreamTV({ className }: LivestreamTVProps) {
           <Card className="w-full max-w-4xl animate-in fade-in-50 zoom-in-95 duration-300">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Trade Hybrid TV</CardTitle>
+                <CardTitle>TH TV</CardTitle>
                 <CardDescription>
                   Watch live trading streams and educational content
                 </CardDescription>

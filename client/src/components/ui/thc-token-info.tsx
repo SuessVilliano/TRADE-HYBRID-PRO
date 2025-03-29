@@ -141,7 +141,7 @@ export function ThcTokenInfo({ className }: ThcTokenInfoProps) {
                 <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
                   <div className="flex items-center gap-2 mb-2">
                     <Award className="text-purple-500" size={20} />
-                    <h3 className="font-semibold">Stake & Bake Program</h3>
+                    <h3 className="font-semibold">THC Staking Program</h3>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-300">Earn passive income by staking your THC tokens and help secure the Trade Hybrid network.</p>
                   <div className="mt-3 flex items-center gap-2">
