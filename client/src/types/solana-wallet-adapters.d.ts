@@ -1,32 +1,73 @@
-declare module '@solana/wallet-adapter-phantom' {
-  import { WalletAdapter } from '@solana/wallet-adapter-base';
+// Define types for wallet adapters and expose for use with @solana wallet libraries.
+// These are mockups to help TypeScript compilation but allow the actual implementations
+// to be properly used at runtime.
+
+// Define a WalletName type to satisfy the type checker
+declare module '@solana/wallet-adapter-base' {
+  export type WalletName<T extends string = string> = T & { __brand__: 'WalletName' };
   
-  export class PhantomWalletAdapter implements WalletAdapter {
-    // Basic properties and methods
+  export interface WalletAdapterProps<Name extends string = string> {
+    name: WalletName<Name>;
+    url: string;
+    icon: string;
+    autoConnect?: boolean;
+  }
+  
+  export interface Adapter extends WalletAdapterProps<string> {
+    // Add any necessary Adapter properties
+    publicKey: any;
     connecting: boolean;
     connected: boolean;
     readyState: any;
-    publicKey: any;
-    name: string;
-    icon: string;
     
-    // Methods
     connect(): Promise<void>;
     disconnect(): Promise<void>;
-    sendTransaction(transaction: any, connection: any): Promise<string>;
+  }
+  
+  export interface SignerWalletAdapter extends Adapter {
     signTransaction(transaction: any): Promise<any>;
     signAllTransactions(transactions: any[]): Promise<any[]>;
+    signMessage?(message: Uint8Array): Promise<Uint8Array>;
+  }
+  
+  export interface MessageSignerWalletAdapter extends Adapter {
     signMessage(message: Uint8Array): Promise<Uint8Array>;
   }
 }
 
+// Define Phantom wallet adapter
+declare module '@solana/wallet-adapter-phantom' {
+  import { Adapter } from '@solana/wallet-adapter-base';
+  export class PhantomWalletAdapter implements Adapter {
+    // Implementation details will come from the actual library
+  }
+}
+
+// Define other wallet adapters
 declare module '@solana/wallet-adapter-wallets' {
-  import { WalletAdapter } from '@solana/wallet-adapter-base';
+  import { Adapter } from '@solana/wallet-adapter-base';
   
-  export class BackpackWalletAdapter implements WalletAdapter {}
-  export class SolflareWalletAdapter implements WalletAdapter {}
-  export class TorusWalletAdapter implements WalletAdapter {}
-  export class LedgerWalletAdapter implements WalletAdapter {}
-  export class SlopeWalletAdapter implements WalletAdapter {}
-  export class GlowWalletAdapter implements WalletAdapter {}
+  export class BackpackWalletAdapter implements Adapter {
+    // Implementation details will come from the actual library
+  }
+  
+  export class SolflareWalletAdapter implements Adapter {
+    // Implementation details will come from the actual library
+  }
+  
+  export class TorusWalletAdapter implements Adapter {
+    // Implementation details will come from the actual library
+  }
+  
+  export class LedgerWalletAdapter implements Adapter {
+    // Implementation details will come from the actual library
+  }
+  
+  export class SlopeWalletAdapter implements Adapter {
+    // Implementation details will come from the actual library
+  }
+  
+  export class GlowWalletAdapter implements Adapter {
+    // Implementation details will come from the actual library
+  }
 }

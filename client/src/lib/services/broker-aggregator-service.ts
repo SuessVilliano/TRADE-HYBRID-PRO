@@ -863,11 +863,6 @@ export const brokerAggregatorService = {
     return [];
   },
   
-  async connect(broker: string, credentials: BrokerCredentials) {
-    // Implement broker connection logic
-    return true;
-  },
-  
   async getBrokerPriceComparisons(symbol: string): Promise<BrokerComparison[]> {
     // In a real app, this would fetch data from actual brokers
     // For now, we'll generate realistic test data
@@ -929,6 +924,22 @@ export const brokerAggregatorService = {
     } catch (error) {
       console.error(`Error getting broker price comparisons for ${symbol}:`, error);
       throw new Error('Failed to fetch broker comparison data');
+    }
+  },
+  
+  // Store broker credentials and attempt connection
+  async storeBrokerCredentials(brokerId: string, credentials: any): Promise<boolean> {
+    try {
+      console.log(`Storing credentials for broker ${brokerId}`);
+      
+      // Store the API credentials
+      await brokerAggregator.setApiCredentials(brokerId, credentials);
+      
+      // Try to connect with the stored credentials
+      return await brokerAggregator.connectToBroker(brokerId);
+    } catch (error) {
+      console.error(`Error storing credentials for broker ${brokerId}:`, error);
+      return false;
     }
   }
 };

@@ -14,28 +14,6 @@ export const API_ENDPOINTS = {
 // Supported brokers with API integration details
 export const SUPPORTED_BROKERS = [
   {
-    id: 'gemini',
-    name: 'Gemini AI',
-    logo: '/logos/gemini.svg',
-    type: 'ai',
-    url: 'https://aistudio.google.com/app/apikey',
-    credentialFields: [
-      { key: 'apiKey', label: 'API Key', type: 'password' }
-    ],
-    description: 'Google\'s advanced AI model for natural language understanding and generation'
-  },
-  {
-    id: 'openai',
-    name: 'OpenAI',
-    logo: '/logos/openai.svg',
-    type: 'ai',
-    url: 'https://platform.openai.com/api-keys',
-    credentialFields: [
-      { key: 'apiKey', label: 'API Key', type: 'password' }
-    ],
-    description: 'Advanced language model capable of understanding and generating human-like text'
-  },
-  {
     id: 'alpaca',
     name: 'Alpaca',
     logo: '/logos/alpaca.svg',

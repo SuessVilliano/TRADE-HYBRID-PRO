@@ -53,8 +53,8 @@ export const BrokerConnectionModal: React.FC<BrokerConnectionModalProps> = ({
         throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
       }
       
-      // Attempt to connect to the broker
-      const success = await brokerAggregatorService.connectToBroker(selectedBrokerId);
+      // Store the API credentials and attempt connection
+      const success = await brokerAggregatorService.storeBrokerCredentials(selectedBrokerId, credentials);
       
       if (success) {
         setSuccess(`Successfully connected to ${selectedBroker?.name}`);
