@@ -1,7 +1,9 @@
-import { SUPPORTED_BROKERS as BROKER_CONFIG } from '@/lib/constants';
+import { SUPPORTED_BROKERS as BROKER_CONFIG, TRADING_CONFIG, ABATEV_CONFIG } from '@/lib/constants';
 import { BrokerService } from './broker-service';
 import { createTradeLockerService } from './tradelocker-service';
 import { createTradingViewService, TradingViewService } from './tradingview-service';
+import { createNinjaTraderService } from './ninjatrader-service';
+import { createTradovateService } from './tradovate-service';
 
 // Storage key for API credentials
 const API_KEYS_STORAGE_KEY = 'trade-hybrid-api-keys';
@@ -135,6 +137,43 @@ class BrokerAggregatorService {
           }
           break;
           
+        case 'ninjatrader':
+          if (credentials.apiKey && credentials.accountId) {
+            // Convert isTestnet to boolean with a default of true
+            const isTestnetValue = typeof credentials.isTestnet === 'string' ? 
+              credentials.isTestnet !== 'false' : 
+              credentials.isTestnet !== false;
+            console.log(`Connecting to NinjaTrader with ${isTestnetValue ? 'demo' : 'live'} mode`);
+            const ninjaTraderService = createNinjaTraderService(
+              credentials.apiKey,
+              credentials.accountId,
+              isTestnetValue
+            );
+            await ninjaTraderService.connect();
+            this.brokerServices.set(brokerId, ninjaTraderService);
+            success = true;
+          }
+          break;
+          
+        case 'tradovate':
+          if (credentials.apiKey && credentials.userId && credentials.password) {
+            // Convert isTestnet to boolean with a default of true
+            const isTestnetValue = typeof credentials.isTestnet === 'string' ? 
+              credentials.isTestnet !== 'false' : 
+              credentials.isTestnet !== false;
+            console.log(`Connecting to Tradovate with ${isTestnetValue ? 'demo' : 'live'} mode`);
+            const tradovateService = createTradovateService(
+              credentials.apiKey,
+              credentials.userId,
+              credentials.password,
+              isTestnetValue
+            );
+            await tradovateService.connect();
+            this.brokerServices.set(brokerId, tradovateService);
+            success = true;
+          }
+          break;
+          
         // Handle other broker types here as they are implemented
         // For now, succeed for any other brokers to maintain existing functionality
         default:
@@ -168,10 +207,10 @@ class BrokerAggregatorService {
           // No specific cleanup needed for TradingView service yet
           console.log(`Disconnected from TradingView service`);
         } 
-        // If it's a TradeLocker service with active market data subscriptions
-        else if (brokerId === 'tradelocker' && service) {
+        // If it's a BrokerService with active market data subscriptions
+        else if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate') && service) {
           const brokerService = service as BrokerService;
-          console.log(`Disconnected from TradeLocker service`);
+          console.log(`Disconnected from ${brokerId} service`);
         }
         
         // Remove from the broker services map
@@ -236,9 +275,10 @@ class BrokerAggregatorService {
       if (this.brokerServices.has(brokerId)) {
         const service = this.brokerServices.get(brokerId);
         
-        if (brokerId === 'tradelocker' && service) {
-          console.log(`Getting real account balances from TradeLocker`);
-          // Use the TradeLocker service to get balances
+        // For any broker service (TradeLocker, NinjaTrader, Tradovate)
+        if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate') && service) {
+          console.log(`Getting real account balances from ${brokerId}`);
+          // Use the broker service to get balances
           const brokerService = service as BrokerService;
           
           try {
@@ -272,7 +312,7 @@ class BrokerAggregatorService {
               }
             }
           } catch (e) {
-            console.error(`Error fetching TradeLocker balances:`, e);
+            console.error(`Error fetching ${brokerId} balances:`, e);
             // Fall back to mock data
           }
         }
@@ -306,9 +346,9 @@ class BrokerAggregatorService {
       if (this.brokerServices.has(brokerId)) {
         const service = this.brokerServices.get(brokerId);
         
-        if (brokerId === 'tradelocker' && service) {
-          console.log(`Getting market data from TradeLocker for ${symbol}`);
-          // Use the TradeLocker service to get market data
+        if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate') && service) {
+          console.log(`Getting market data from ${brokerId} for ${symbol}`);
+          // Use the broker service to get market data
           const brokerService = service as BrokerService;
           
           // Create an array to store the market data points
@@ -423,10 +463,10 @@ class BrokerAggregatorService {
       }
       
       // Check if we have a real service implementation for this broker
-      if (this.brokerServices.has(brokerId) && brokerId === 'tradelocker') {
+      if (this.brokerServices.has(brokerId) && (brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate')) {
         const service = this.brokerServices.get(brokerId) as BrokerService;
         
-        console.log(`Placing real order with TradeLocker for ${order.symbol}`);
+        console.log(`Placing real order with ${brokerId} for ${order.symbol}`);
         
         try {
           // Convert our order format to broker service format
@@ -454,7 +494,7 @@ class BrokerAggregatorService {
             fee: order.quantity * (order.price || this.getRandomPrice(order.symbol)) * 0.001
           };
         } catch (err) {
-          console.error(`Error placing TradeLocker order:`, err);
+          console.error(`Error placing ${brokerId} order:`, err);
           // Fall back to mock order if the real order fails
         }
       }
@@ -488,9 +528,9 @@ class BrokerAggregatorService {
       if (this.brokerServices.has(brokerId)) {
         const service = this.brokerServices.get(brokerId);
         
-        if (brokerId === 'tradelocker' && service) {
-          console.log(`Getting real positions from TradeLocker`);
-          // Use the TradeLocker service to get positions
+        if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate') && service) {
+          console.log(`Getting real positions from ${brokerId}`);
+          // Use the broker service to get positions
           const brokerService = service as BrokerService;
           
           try {
@@ -509,7 +549,7 @@ class BrokerAggregatorService {
               }));
             }
           } catch (e) {
-            console.error(`Error fetching TradeLocker positions:`, e);
+            console.error(`Error fetching ${brokerId} positions:`, e);
             // Fall back to mock data
           }
         }
@@ -543,9 +583,9 @@ class BrokerAggregatorService {
       if (this.brokerServices.has(brokerId)) {
         const service = this.brokerServices.get(brokerId);
         
-        if (brokerId === 'tradelocker' && service) {
-          console.log(`Getting real order history from TradeLocker`);
-          // Use the TradeLocker service to get order history
+        if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate') && service) {
+          console.log(`Getting real order history from ${brokerId}`);
+          // Use the broker service to get order history
           const brokerService = service as BrokerService;
           
           try {
@@ -571,7 +611,7 @@ class BrokerAggregatorService {
               }));
             }
           } catch (e) {
-            console.error(`Error fetching TradeLocker order history:`, e);
+            console.error(`Error fetching ${brokerId} order history:`, e);
             // Fall back to mock data
           }
         }
@@ -847,7 +887,7 @@ export const brokerAggregatorService = {
       else basePrice = 100 + (Math.random() * 10 - 5);
       
       // Generate broker prices with realistic variations
-      const brokers = ['alpaca', 'binance', 'oanda', 'ironbeam', 'kraken', 'coinbase'];
+      const brokers = ['alpaca', 'binance', 'oanda', 'ironbeam', 'kraken', 'coinbase', 'ninjatrader', 'tradovate'];
       const prices: BrokerPrice[] = brokers.map(broker => {
         // Different brokers have slightly different prices
         const variation = (Math.random() * 0.02 - 0.01); // -1% to +1%
@@ -863,10 +903,14 @@ export const brokerAggregatorService = {
           spread = price * (0.0005 + Math.random() * 0.001); // 0.05% to 0.15%
         }
         
+        // Get the broker reliability score
+        const reliabilityScore = ABATEV_CONFIG?.BROKER_RELIABILITY_SCORES?.[broker] || 85;
+        
         return {
           brokerId: broker,
           price,
-          spread
+          spread,
+          score: reliabilityScore
         };
       });
       

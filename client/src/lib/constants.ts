@@ -156,6 +156,33 @@ export const SUPPORTED_BROKERS = [
       { key: 'clientId', label: 'Client ID', type: 'text' }
     ],
     description: 'Unified trading API allowing access to multiple exchanges and brokers through a single integration'
+  },
+  {
+    id: 'ninjatrader',
+    name: 'NinjaTrader',
+    logo: '/logos/ninjatrader.svg', 
+    type: 'futures',
+    url: 'https://www.ninjatrader.com/',
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password' },
+      { key: 'accountId', label: 'Account ID', type: 'text' },
+      { key: 'isTestnet', label: 'Use Demo Account', type: 'checkbox' }
+    ],
+    description: 'Professional trading and market analysis platform for active traders with advanced charting and execution features'
+  },
+  {
+    id: 'tradovate',
+    name: 'Tradovate',
+    logo: '/logos/tradovate.svg',
+    type: 'futures',
+    url: 'https://tradovate.com/',
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password' },
+      { key: 'userId', label: 'User ID', type: 'text' },
+      { key: 'password', label: 'Password', type: 'password' },
+      { key: 'isTestnet', label: 'Use Demo Account', type: 'checkbox' }
+    ],
+    description: 'Modern futures trading platform with commission-free trading model and cloud-based technology'
   }
 ];
 
@@ -330,7 +357,7 @@ export const THC_TOKEN = {
 // ABATEV configuration (Advanced Broker Aggregation & Trade Execution View)
 export const ABATEV_CONFIG = {
   enabled: true,
-  supportedBrokers: ['alpaca', 'binance', 'oanda', 'ironbeam'],
+  supportedBrokers: ['alpaca', 'binance', 'oanda', 'ironbeam', 'ninjatrader', 'tradovate'],
   features: {
     priceComparison: true,
     smartRouting: true,
@@ -358,6 +385,8 @@ export const ABATEV_CONFIG = {
     'oanda': 90,
     'ironbeam': 85,
     'kraken': 87,
-    'coinbase': 89
+    'coinbase': 89,
+    'ninjatrader': 91,
+    'tradovate': 86
   }
 };
