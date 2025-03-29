@@ -55,21 +55,24 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
   const [isVapiSDKLoaded, setIsVapiSDKLoaded] = useState(false);
   const [isLoadingSDK, setIsLoadingSDK] = useState(false);
   
-  // Load Vapi SDK
-  useEffect(() => {
-    const loadVapiSDK = () => {
-      if ((window as any).VapiSDK || isLoadingSDK) return;
-      
-      console.log('Starting Vapi SDK loading process');
-      setIsLoadingSDK(true);
-      
-      // Try to remove old script if exists to avoid conflicts
-      const oldScript = document.getElementById('vapi-sdk-script');
-      if (oldScript) {
-        console.log('Removing old Vapi script');
-        oldScript.remove();
-      }
-      
+  // Load Vapi SDK on demand rather than automatically
+  const loadVapiSDK = () => {
+    if ((window as any).VapiSDK || isLoadingSDK) {
+      setIsVapiSDKLoaded(true);
+      return Promise.resolve();
+    }
+    
+    console.log('Starting Vapi SDK loading process');
+    setIsLoadingSDK(true);
+    
+    // Try to remove old script if exists to avoid conflicts
+    const oldScript = document.getElementById('vapi-sdk-script');
+    if (oldScript) {
+      console.log('Removing old Vapi script');
+      oldScript.remove();
+    }
+    
+    return new Promise<void>((resolve, reject) => {
       // Add script to page with a unique ID
       const script = document.createElement('script');
       script.id = 'vapi-sdk-script';
@@ -81,20 +84,22 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
         setTimeout(() => {
           setIsVapiSDKLoaded(true);
           setIsLoadingSDK(false);
+          resolve();
         }, 500);
       };
       script.onerror = (error) => {
         console.error('Failed to load Vapi SDK', error);
         toast.error('Failed to load voice assistant. Please refresh the page and try again.');
         setIsLoadingSDK(false);
+        reject(error);
       };
       
       document.body.appendChild(script);
-    };
-    
-    loadVapiSDK();
-    
-    // Cleanup
+    });
+  };
+  
+  // Cleanup on component unmount
+  useEffect(() => {
     return () => {
       const script = document.getElementById('vapi-sdk-script');
       if (script) {
@@ -162,18 +167,23 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
   const startCall = async () => {
     try {
       console.log("Starting Vapi call initialization");
+      toast.info("Loading voice assistant...");
       
-      // Check if SDK is loaded properly
+      // Load SDK if not already loaded
       if (!isVapiSDKLoaded) {
-        console.error("Vapi SDK not loaded yet");
-        toast.error("Voice assistant is still loading. Please wait a moment and try again.");
-        return;
+        try {
+          await loadVapiSDK();
+        } catch (error) {
+          console.error("Failed to load Vapi SDK", error);
+          toast.error("Failed to load voice assistant. Please try again.");
+          return;
+        }
       }
       
       // Check if the window object has the expected SDK properties
       if (!(window as any).vapi) {
         console.error("Vapi SDK object not found in window", window);
-        toast.error("Voice assistant SDK not properly initialized. Please refresh the page.");
+        toast.error("Voice assistant SDK not properly initialized. Please try refreshing the page.");
         return;
       }
       
@@ -426,9 +436,19 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
                 size="lg"
                 className="py-6 text-base flex items-center gap-2"
                 onClick={startCall}
+                disabled={isLoadingSDK}
               >
-                <Phone className="h-5 w-5" />
-                Call {selectedAgent.name}
+                {isLoadingSDK ? (
+                  <>
+                    <div className="h-5 w-5 animate-spin border-2 border-current border-t-transparent rounded-full mr-2" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <Phone className="h-5 w-5" />
+                    Call {selectedAgent.name}
+                  </>
+                )}
               </Button>
             )}
           </div>

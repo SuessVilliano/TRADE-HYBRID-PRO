@@ -770,12 +770,24 @@ export function AIAssistant({ className }: AIAssistantProps) {
                       className={cn(
                         "p-3 rounded-lg max-w-[80%]",
                         message.role === "user" 
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
+                          ? "bg-primary text-primary-foreground" 
+                          : "bg-muted dark:bg-slate-800 dark:text-white text-slate-900"
                       )}
                     >
-                      <p className="text-sm">{message.content}</p>
-                      <span className="text-xs opacity-70 block mt-1">
+                      <p className={cn(
+                        "text-sm",
+                        message.role === "user"
+                          ? "text-primary-foreground"
+                          : "dark:text-white text-slate-900"
+                      )}>
+                        {message.content}
+                      </p>
+                      <span className={cn(
+                        "text-xs block mt-1",
+                        message.role === "user"
+                          ? "text-primary-foreground/70"
+                          : "dark:text-white/70 text-slate-500"
+                      )}>
                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
