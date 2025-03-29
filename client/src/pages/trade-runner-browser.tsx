@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 
-export default function TradeRunnerBrowser() {
+export default function TradeRunnerWebBrowser() {
   return (
     <div className="container mx-auto py-4 px-4 min-h-screen">
       <div className="flex flex-col space-y-6 lg:space-y-0 lg:flex-row lg:space-x-6 w-full">
@@ -38,7 +38,7 @@ export default function TradeRunnerBrowser() {
               
               <TabsContent value="browser" className="h-full">
                 <EmbeddedWebBrowser 
-                  initialUrl="https://app.gettraderunner.com" 
+                  initialUrl="https://app.tradehybrid.club/51411/traderunners/" 
                   title="Trade Runner App"
                   height="calc(100vh - 280px)"
                 />

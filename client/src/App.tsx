@@ -23,7 +23,7 @@ import TestNotificationButton from './components/ui/test-notification-button';
 
 // Lazy load pages
 const TradeRunner = lazy(() => import('./pages/trade-runner'));
-const TradeRunnerBrowser = lazy(() => import('./pages/trade-runner-browser'));
+const TradeRunnerWebBrowser = lazy(() => import('./pages/trade-runner-browser'));
 const BullsVsBears = lazy(() => import('./pages/bulls-vs-bears')); // Bulls vs Bears game
 const NewsDashboardSimple = lazy(() => import('./pages/news-dashboard-simple'));
 const TradeJournalSimple = lazy(() => import('./pages/trade-journal-simple'));
@@ -361,7 +361,7 @@ function AppContent() {
                 </div>
               </div>
             }>
-              {typeof window !== 'undefined' && <TradeRunnerBrowser />}
+              {typeof window !== 'undefined' && <TradeRunnerWebBrowser />}
             </Suspense>
           } />
           {/* Bulls vs Bears Game */}
