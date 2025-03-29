@@ -6,6 +6,7 @@ import { createNinjaTraderService } from './ninjatrader-service';
 import { createTradovateService } from './tradovate-service';
 import { createTastyworksService } from './tastyworks-service';
 import { createTradeStationService } from './tradestation-service';
+import { KrakenService } from './kraken-service';
 
 // Storage key for API credentials
 const API_KEYS_STORAGE_KEY = 'trade-hybrid-api-keys';
@@ -175,6 +176,19 @@ class BrokerAggregatorService {
             success = true;
           }
           break;
+          
+        case 'kraken':
+          if (credentials.apiKey && credentials.privateKey) {
+            console.log('Connecting to Kraken API');
+            const krakenService = new KrakenService(
+              credentials.apiKey,
+              credentials.privateKey
+            );
+            await krakenService.connect();
+            this.brokerServices.set(brokerId, krakenService);
+            success = true;
+          }
+          break;
 
         case 'tastyworks':
           if (credentials.apiKey && credentials.accountId) {
@@ -248,7 +262,7 @@ class BrokerAggregatorService {
         } 
         // If it's a BrokerService with active market data subscriptions
         else if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate' || 
-                  brokerId === 'tastyworks' || brokerId === 'tradestation') && service) {
+                  brokerId === 'tastyworks' || brokerId === 'tradestation' || brokerId === 'kraken') && service) {
           const brokerService = service as BrokerService;
           console.log(`Disconnected from ${brokerId} service`);
         }
@@ -315,9 +329,9 @@ class BrokerAggregatorService {
       if (this.brokerServices.has(brokerId)) {
         const service = this.brokerServices.get(brokerId);
         
-        // For any broker service (TradeLocker, NinjaTrader, Tradovate, Tastyworks, TradeStation)
+        // For any broker service (TradeLocker, NinjaTrader, Tradovate, Tastyworks, TradeStation, Kraken)
         if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate' || 
-             brokerId === 'tastyworks' || brokerId === 'tradestation') && service) {
+             brokerId === 'tastyworks' || brokerId === 'tradestation' || brokerId === 'kraken') && service) {
           console.log(`Getting real account balances from ${brokerId}`);
           // Use the broker service to get balances
           const brokerService = service as BrokerService;
@@ -367,6 +381,8 @@ class BrokerAggregatorService {
         return this.getMockBinanceBalances();
       } else if (brokerId === 'oanda') {
         return this.getMockOandaBalances();
+      } else if (brokerId === 'kraken') {
+        return this.getMockKrakenBalances();
       } else {
         return [];
       }
@@ -388,7 +404,7 @@ class BrokerAggregatorService {
         const service = this.brokerServices.get(brokerId);
         
         if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate' || 
-             brokerId === 'tastyworks' || brokerId === 'tradestation') && service) {
+             brokerId === 'tastyworks' || brokerId === 'tradestation' || brokerId === 'kraken') && service) {
           console.log(`Getting market data from ${brokerId} for ${symbol}`);
           // Use the broker service to get market data
           const brokerService = service as BrokerService;
@@ -506,7 +522,7 @@ class BrokerAggregatorService {
       
       // Check if we have a real service implementation for this broker
       if (this.brokerServices.has(brokerId) && (brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate' ||
-          brokerId === 'tastyworks' || brokerId === 'tradestation')) {
+          brokerId === 'tastyworks' || brokerId === 'tradestation' || brokerId === 'kraken')) {
         const service = this.brokerServices.get(brokerId) as BrokerService;
         
         console.log(`Placing real order with ${brokerId} for ${order.symbol}`);
@@ -572,7 +588,7 @@ class BrokerAggregatorService {
         const service = this.brokerServices.get(brokerId);
         
         if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate' || 
-             brokerId === 'tastyworks' || brokerId === 'tradestation') && service) {
+             brokerId === 'tastyworks' || brokerId === 'tradestation' || brokerId === 'kraken') && service) {
           console.log(`Getting real positions from ${brokerId}`);
           // Use the broker service to get positions
           const brokerService = service as BrokerService;
@@ -607,6 +623,8 @@ class BrokerAggregatorService {
         return this.getMockBinancePositions();
       } else if (brokerId === 'oanda') {
         return this.getMockOandaPositions();
+      } else if (brokerId === 'kraken') {
+        return this.getMockKrakenPositions();
       } else {
         return [];
       }
@@ -628,7 +646,7 @@ class BrokerAggregatorService {
         const service = this.brokerServices.get(brokerId);
         
         if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate' || 
-             brokerId === 'tastyworks' || brokerId === 'tradestation') && service) {
+             brokerId === 'tastyworks' || brokerId === 'tradestation' || brokerId === 'kraken') && service) {
           console.log(`Getting real order history from ${brokerId}`);
           // Use the broker service to get order history
           const brokerService = service as BrokerService;
@@ -810,6 +828,17 @@ class BrokerAggregatorService {
     ];
   }
   
+  // Mock balance data for Kraken
+  private getMockKrakenBalances(): AccountBalance[] {
+    return [
+      { asset: 'USD', free: 7500, locked: 500, total: 8000 },
+      { asset: 'BTC', free: 0.25, locked: 0, total: 0.25 },
+      { asset: 'ETH', free: 3.75, locked: 0, total: 3.75 },
+      { asset: 'XRP', free: 1000, locked: 0, total: 1000 },
+      { asset: 'DOT', free: 150, locked: 0, total: 150 }
+    ];
+  }
+  
   // Mock position data for Alpaca
   private getMockAlpacaPositions(): TradePosition[] {
     return [
@@ -874,6 +903,39 @@ class BrokerAggregatorService {
         size: 5000,
         markPrice: 1.3523,
         unrealizedPnl: (1.3523 - 1.3456) * 5000
+      }
+    ];
+  }
+  
+  // Mock position data for Kraken
+  private getMockKrakenPositions(): TradePosition[] {
+    return [
+      {
+        symbol: 'XBT/USD', // Bitcoin on Kraken
+        side: 'long',
+        entryPrice: 52345.67,
+        size: 0.25,
+        markPrice: 53278.90,
+        unrealizedPnl: (53278.90 - 52345.67) * 0.25,
+        leverage: 1
+      },
+      {
+        symbol: 'ETH/USD',
+        side: 'long',
+        entryPrice: 2975.32,
+        size: 1.5,
+        markPrice: 3078.45,
+        unrealizedPnl: (3078.45 - 2975.32) * 1.5,
+        leverage: 1
+      },
+      {
+        symbol: 'DOT/USD',
+        side: 'long',
+        entryPrice: 18.25,
+        size: 75,
+        markPrice: 19.78,
+        unrealizedPnl: (19.78 - 18.25) * 75,
+        leverage: 1
       }
     ];
   }

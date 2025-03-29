@@ -38,6 +38,18 @@ export const SUPPORTED_BROKERS = [
     description: 'World\'s largest crypto exchange by trading volume'
   },
   {
+    id: 'kraken',
+    name: 'Kraken',
+    logo: '/logos/kraken.svg',
+    type: 'crypto',
+    url: 'https://www.kraken.com/u/security/api',
+    credentialFields: [
+      { key: 'apiKey', label: 'API Key', type: 'password' },
+      { key: 'privateKey', label: 'Private Key', type: 'password' }
+    ],
+    description: 'Secure cryptocurrency exchange with extensive trading options and advanced order types'
+  },
+  {
     id: 'oanda',
     name: 'OANDA',
     logo: '/logos/oanda.svg',
@@ -61,18 +73,7 @@ export const SUPPORTED_BROKERS = [
     ],
     description: 'Futures and options brokerage firm focused on institutional and professional traders'
   },
-  {
-    id: 'kraken',
-    name: 'Kraken',
-    logo: '/logos/kraken.svg',
-    type: 'crypto',
-    url: 'https://www.kraken.com/sign-in',
-    credentialFields: [
-      { key: 'apiKey', label: 'API Key', type: 'password' },
-      { key: 'secretKey', label: 'Private Key', type: 'password' }
-    ],
-    description: 'One of the largest and oldest cryptocurrency exchanges with advanced trading features'
-  },
+
   {
     id: 'coinbase',
     name: 'Coinbase',
