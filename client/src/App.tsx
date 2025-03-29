@@ -35,6 +35,7 @@ const LiveStream = lazy(() => import('./pages/live-stream'));
 const AIMarketAnalysisPage = lazy(() => import('./pages/ai-market-analysis-page'));
 const TradingSignalsPage = lazy(() => import('./pages/trading-signals'));
 const EmbeddedAppPage = lazy(() => import('./pages/embedded-app'));
+const NotificationSettingsPage = lazy(() => import('./pages/notification-settings'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -181,6 +182,14 @@ function AppContent() {
                       <THCMembershipDisplay />
                     </>
                   )}
+                  <Link to="/notification-settings">
+                    <Button variant="ghost" size="sm" className="p-1 h-8 w-8">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+                        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+                      </svg>
+                    </Button>
+                  </Link>
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -422,6 +431,18 @@ function AppContent() {
             </Suspense>
           } />
           
+          <Route path="/notification-settings" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading notification settings...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <NotificationSettingsPage />}
+            </Suspense>
+          } />
           <Route path="/app" element={
             <Suspense fallback={
               <div className="flex items-center justify-center h-screen">
@@ -469,13 +490,6 @@ function Home() {
         <p className="text-xl text-slate-300 max-w-3xl mx-auto">
           The ultimate AI-driven trading metaverse. Experience the future of trading with immersive visualization, real-time data, and social trading in a gamified environment.
         </p>
-      </div>
-      
-      {/* Notification Test Section */}
-      <div className="mb-12 p-4 bg-slate-800 rounded-lg max-w-xs mx-auto">
-        <h3 className="font-bold text-lg mb-3">Notification System Test</h3>
-        <p className="text-sm text-slate-300 mb-4">Click the buttons below to test the notification system:</p>
-        <TestNotificationButton />
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
