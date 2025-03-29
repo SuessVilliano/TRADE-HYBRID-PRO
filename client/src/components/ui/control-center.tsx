@@ -325,7 +325,35 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
 
   // State for tool carousel scrolling
   const [toolScrollIndex, setToolScrollIndex] = useState(0);
-  const toolsPerView = typeof window !== 'undefined' && window.innerWidth < 768 ? 3 : 5;
+  const [compactMode, setCompactMode] = useState<boolean>(
+    typeof window !== 'undefined' && window.innerWidth < 768 // Default to compact on small screens
+  );
+  
+  // Increase number of tools shown per device size
+  const toolsPerView = typeof window !== 'undefined' 
+    ? window.innerWidth < 500 
+      ? (compactMode ? 6 : 3) // Extra small devices
+    : window.innerWidth < 768 
+      ? (compactMode ? 8 : 5) // Small devices
+    : window.innerWidth < 1024 
+      ? (compactMode ? 12 : 8) // Medium devices
+    : (compactMode ? 15 : 10) // Large devices and up
+    : 8; // Server-side default
+  
+  // Add resize listener to adjust compact mode based on screen size
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const handleResize = () => {
+      if (window.innerWidth < 768 && !compactMode) {
+        setCompactMode(true);
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [compactMode]);
+  
   const panelsArray = Object.values(allPanels);
   
   // Scroll tools left
@@ -341,13 +369,13 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
   return (
     <div className={cn("flex flex-col h-full", className)}>
       {/* Toolbar */}
-      <div className="flex items-center justify-between bg-slate-800 border-b border-slate-700 p-2">
-        <div className="flex space-x-2">
+      <div className="flex items-center justify-between bg-slate-800 border-b border-slate-700 px-1.5 py-1">
+        <div className="flex space-x-1">
           <Button 
             variant={layout === 'grid' ? 'default' : 'outline'} 
             size="sm" 
             onClick={() => setLayout('grid')}
-            className="text-xs"
+            className="text-xs h-7 px-2 py-0.5"
           >
             Grid
           </Button>
@@ -355,44 +383,59 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
             variant={layout === 'vertical' ? 'default' : 'outline'} 
             size="sm" 
             onClick={() => setLayout('vertical')}
-            className="text-xs"
+            className="text-xs h-7 px-2 py-0.5"
           >
-            Vertical
+            Vert
           </Button>
           <Button 
             variant={layout === 'horizontal' ? 'default' : 'outline'} 
             size="sm" 
             onClick={() => setLayout('horizontal')}
-            className="text-xs"
+            className="text-xs h-7 px-2 py-0.5"
           >
-            Horizontal
+            Horiz
           </Button>
         </div>
         
-        <div className="flex items-center">
+        <div className="flex items-center flex-1 ml-2">
           {toolScrollIndex > 0 && (
             <Button 
               variant="ghost" 
-              size="sm" 
+              size="icon"
               onClick={scrollToolsLeft}
-              className="mr-1 p-1.5 h-8"
+              className="h-7 w-7 mr-0.5 p-0"
             >
-              <span className="text-lg">←</span>
+              <span className="text-sm">←</span>
             </Button>
           )}
           
-          <div className="flex space-x-2 overflow-hidden">
+          <div className="flex items-center ml-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCompactMode(!compactMode)}
+              className="text-xs h-7 px-2 py-0.5 mr-1"
+              title={compactMode ? "Show tool names" : "Hide tool names"}
+            >
+              {compactMode ? "+" : "-"}
+            </Button>
+          </div>
+          
+          <div className="flex space-x-1 overflow-hidden flex-1">
             {panelsArray.slice(toolScrollIndex, toolScrollIndex + toolsPerView).map(panel => (
               <Button
                 key={panel.id}
                 variant={activePanels.includes(panel.id) ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => togglePanel(panel.id)}
-                className="text-xs whitespace-nowrap"
+                className={cn(
+                  "text-xs whitespace-nowrap py-0.5 h-7",
+                  compactMode ? "px-1 w-8" : "px-1.5"
+                )}
                 title={panel.title}
               >
-                <span className="mr-1">{panel.icon}</span>
-                {panel.title}
+                <span className={compactMode ? "" : "mr-1"}>{panel.icon}</span>
+                {!compactMode && <span className="text-xs">{panel.title}</span>}
               </Button>
             ))}
           </div>
@@ -400,11 +443,11 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
           {toolScrollIndex < panelsArray.length - toolsPerView && (
             <Button 
               variant="ghost" 
-              size="sm" 
+              size="icon"
               onClick={scrollToolsRight}
-              className="ml-1 p-1.5 h-8"
+              className="h-7 w-7 ml-0.5 p-0"
             >
-              <span className="text-lg">→</span>
+              <span className="text-sm">→</span>
             </Button>
           )}
         </div>
