@@ -131,27 +131,45 @@ export default function LearnEmbedded() {
       <PopupContainer padding className="mb-8 bg-gradient-to-r from-purple-900/50 to-blue-900/50 border border-purple-500/40">
         <div className="flex flex-col md:flex-row gap-6 items-center">
           <div className="flex-1">
-            <h2 className="text-2xl font-bold mb-2">Personalized Crypto Learning Journey</h2>
+            <h2 className="text-2xl font-bold mb-2">Personalized Crypto Learning Roadmap</h2>
             <p className="text-slate-300 mb-4">
-              Discover our new personalized learning experience tailored to your knowledge level and trading goals.
-              Track your progress, earn certificates, and unlock advanced trading features.
+              Follow our structured roadmap tailored to your knowledge level and trading goals.
+              Track your progress through a visual learning path, unlock advanced modules, and earn your
+              Crypto Trading Mastery Certificate while building real-world crypto trading skills.
             </p>
+            <div className="flex flex-wrap gap-3 mb-4">
+              <div className="bg-purple-900/30 border border-purple-500/40 rounded-md px-3 py-2 flex-1 flex items-center text-sm">
+                <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                <span>Personalized learning path</span>
+              </div>
+              <div className="bg-purple-900/30 border border-purple-500/40 rounded-md px-3 py-2 flex-1 flex items-center text-sm">
+                <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                <span>Skill-based progression</span>
+              </div>
+              <div className="bg-purple-900/30 border border-purple-500/40 rounded-md px-3 py-2 flex-1 flex items-center text-sm">
+                <div className="w-2 h-2 bg-amber-400 rounded-full mr-2"></div>
+                <span>Visual achievement tracking</span>
+              </div>
+            </div>
             <Link to="/learn/journey">
               <Button className="bg-purple-600 hover:bg-purple-700">
-                Start Your Learning Journey
+                Explore Your Personalized Roadmap
               </Button>
             </Link>
           </div>
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 relative">
+            <div className="absolute -top-2 -right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full">
+              NEW
+            </div>
             <img src="/images/learning-journey-icon.png" alt="Learning Journey" 
-              className="w-32 h-32 object-contain rounded-full bg-purple-800/30 p-2 border border-purple-500/40" 
+              className="w-40 h-40 object-contain rounded-full bg-purple-800/30 p-2 border border-purple-500/40" 
               onError={(e) => {
                 // Fallback to a div with text if image doesn't load
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
                 const div = document.createElement('div');
-                div.className = 'w-32 h-32 rounded-full bg-purple-800/30 flex items-center justify-center text-center p-4 border border-purple-500/40';
-                div.textContent = 'Learning Journey';
+                div.className = 'w-40 h-40 rounded-full bg-purple-800/30 flex items-center justify-center text-center p-4 border border-purple-500/40';
+                div.textContent = 'Crypto Roadmap';
                 target.parentNode?.appendChild(div);
               }}
             />

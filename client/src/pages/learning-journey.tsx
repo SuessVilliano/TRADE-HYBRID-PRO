@@ -10,11 +10,12 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUserStore } from '@/lib/stores/useUserStore';
+import { CryptoLearningRoadmap } from '@/components/ui/crypto-learning-roadmap';
 
 export default function LearningJourney() {
   const navigate = useNavigate();
   const { isAuthenticated } = useUserStore();
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [activeTab, setActiveTab] = useState<string>('crypto-roadmap');
   const [showProfileSetup, setShowProfileSetup] = useState(false);
 
   // Learning journey store hooks
@@ -252,9 +253,17 @@ export default function LearningJourney() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-8">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="crypto-roadmap">Crypto Roadmap</TabsTrigger>
             <TabsTrigger value="my-journeys">My Learning Paths</TabsTrigger>
             <TabsTrigger value="discover">Discover Paths</TabsTrigger>
           </TabsList>
+
+          {/* Personalized Crypto Roadmap Tab */}
+          <TabsContent value="crypto-roadmap">
+            <CryptoLearningRoadmap onModuleSelect={(moduleId) => {
+              navigate(`/learn/module/${moduleId}`);
+            }} />
+          </TabsContent>
 
           {/* Dashboard Tab */}
           <TabsContent value="dashboard">

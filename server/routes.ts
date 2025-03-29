@@ -9,6 +9,7 @@ import { getSignals, receiveWebhook } from "./api/signals";
 import { getGameLeaderboard, getGamePlayer, submitGameScore } from "./api/game-leaderboard";
 import { getRssFeed, getAvailableSources, getEconomicCalendar } from "./api/rss-feeds";
 import { getAIMarketAnalysis, getTradingSuggestions } from "./api/ai-market-analysis";
+import vapiRouter from "./routes/vapi";
 import { MultiplayerServer } from "./multiplayer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -102,6 +103,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Market Analysis routes
   app.get("/api/ai/market-analysis", getAIMarketAnalysis);
   app.get("/api/ai/trading-suggestions", getTradingSuggestions);
+  
+  // Vapi Voice Assistant routes
+  app.use("/api/vapi", vapiRouter);
   
   // News route using default source (bloomberg)
   app.get("/api/rss-feeds/news", (req, res) => {

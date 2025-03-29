@@ -105,6 +105,9 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
     VapiSDK?: any;
   }
 
+  // Reference to store Vapi instance
+  const [vapiInstance, setVapiInstance] = useState<any>(null);
+
   const startCall = async () => {
     try {
       // Check if Vapi SDK is available in the global window object
@@ -114,15 +117,44 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
         return;
       }
       
-      // In a real implementation, we would initialize the Vapi SDK here
-      // For simulation purposes:
+      // Initialize the Vapi SDK with the API key from environment variables
+      const Vapi = (window as Window).VapiSDK;
+      
+      // Use our backend proxy to initialize Vapi with the API key
+      // This way we don't expose our API key in the frontend
+      const initResponse = await fetch('/api/vapi/init', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ assistantId: selectedAgentId })
+      });
+      
+      if (!initResponse.ok) {
+        const errorData = await initResponse.json();
+        throw new Error(`Failed to initialize Vapi: ${errorData.error || initResponse.statusText}`);
+      }
+      
+      const initData = await initResponse.json();
+      
+      // Create a new Vapi instance with the initialization data
+      const vapi = new Vapi({
+        assistantId: selectedAgentId,
+        conversationId: initData.conversationId,
+        // The API key is handled securely by our backend
+      });
+      
       console.log(`Starting call with agent ${selectedAgent.name} (ID: ${selectedAgentId})`);
       
-      // Simulate a call being established
-      setTimeout(() => {
-        setIsCallActive(true);
-        toast.success(`Connected to ${selectedAgent.name}`);
-      }, 1000);
+      // Store the instance for later use
+      setVapiInstance(vapi);
+      
+      // Start the call
+      await vapi.start();
+      
+      // Update UI
+      setIsCallActive(true);
+      toast.success(`Connected to ${selectedAgent.name}`);
       
     } catch (error) {
       console.error("Error starting call:", error);
@@ -131,19 +163,57 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
   };
   
   const endCall = () => {
-    // In a real implementation, we would end the call via the Vapi SDK
-    setIsCallActive(false);
-    toast.info(`Call with ${selectedAgent.name} ended`);
+    try {
+      // End call via the Vapi SDK if instance exists
+      if (vapiInstance) {
+        vapiInstance.stop();
+        setVapiInstance(null);
+      }
+      
+      // Update UI
+      setIsCallActive(false);
+      toast.info(`Call with ${selectedAgent.name} ended`);
+    } catch (error) {
+      console.error("Error ending call:", error);
+      setIsCallActive(false);
+    }
   };
   
   const toggleMute = () => {
-    setIsMuted(!isMuted);
-    // In a real implementation, we would mute/unmute via the Vapi SDK
+    try {
+      // Toggle mute status
+      setIsMuted(!isMuted);
+      
+      // Update Vapi SDK if instance exists
+      if (vapiInstance) {
+        if (!isMuted) {
+          vapiInstance.mute();
+        } else {
+          vapiInstance.unmute();
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling mute:", error);
+    }
   };
   
   const toggleSpeaker = () => {
-    setSpeakerEnabled(!speakerEnabled);
-    // In a real implementation, we would toggle the speaker via the Vapi SDK
+    try {
+      // Toggle speaker status
+      setSpeakerEnabled(!speakerEnabled);
+      
+      // Update Vapi SDK if instance exists
+      if (vapiInstance) {
+        // Adjust volume (as a way to simulate speaker on/off)
+        if (speakerEnabled) {
+          vapiInstance.setVolume(0); // Mute the speaker
+        } else {
+          vapiInstance.setVolume(1); // Restore volume
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling speaker:", error);
+    }
   };
 
   return (
