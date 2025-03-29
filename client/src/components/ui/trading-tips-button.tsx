@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LightbulbIcon } from 'lucide-react';
+import { LightbulbIcon, X } from 'lucide-react';
 import { Button } from './button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './dialog';
 import { TradingTipsSettings } from './micro-learning-tips';
@@ -43,8 +43,17 @@ export function TradingTipsButton({ className }: TradingTipsButtonProps) {
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
+          <DialogHeader className="flex flex-row items-center justify-between pr-0">
             <DialogTitle>Trading Tips Settings</DialogTitle>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 w-8 p-0 rounded-full"
+              onClick={() => setIsDialogOpen(false)}
+              aria-label="Close"
+            >
+              <X size={16} />
+            </Button>
           </DialogHeader>
           <div className="py-4">
             <TradingTipsSettings />
@@ -58,6 +67,12 @@ export function TradingTipsButton({ className }: TradingTipsButtonProps) {
               }}
             >
               Show Tip Now
+            </Button>
+            <Button 
+              variant="default" 
+              onClick={() => setIsDialogOpen(false)}
+            >
+              Close
             </Button>
           </div>
         </DialogContent>
