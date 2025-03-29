@@ -16,20 +16,30 @@ export function WalletStatusIndicator() {
   const [isPhantomDetected, setIsPhantomDetected] = useState(false);
   
   // Check if Phantom wallet is available in browser
+  // Check both window.phantom.solana (new method) and window.solana.isPhantom (Chrome extension)
   useEffect(() => {
-    // Safe check for window.solana with TypeScript
+    // Safe check for both Phantom wallet detection methods
     const solanaObj = window as any;
     const checkPhantomWallet = () => {
-      const isPhantomAvailable = 
-        solanaObj.solana && 
-        solanaObj.solana.isPhantom;
+      // Check both detection methods for Phantom wallet
+      const phantomNewExists = typeof window !== 'undefined' && 
+        'phantom' in window && 
+        !!(window as any).phantom?.solana;
+        
+      const phantomChromeExists = typeof window !== 'undefined' && 
+        'solana' in window && 
+        !!(window as any).solana?.isPhantom;
       
-      setIsPhantomDetected(!!isPhantomAvailable);
+      const isPhantomAvailable = phantomNewExists || phantomChromeExists;
+      
+      setIsPhantomDetected(isPhantomAvailable);
       
       // Log for debugging
       console.log("Phantom wallet availability check:", {
-        exists: !!isPhantomAvailable,
-        connectMethod: typeof solanaObj.solana?.connect
+        exists: isPhantomAvailable,
+        connectMethod: phantomNewExists 
+          ? typeof (window as any).phantom?.solana?.connect 
+          : (phantomChromeExists ? typeof (window as any).solana?.connect : 'undefined')
       });
     };
     

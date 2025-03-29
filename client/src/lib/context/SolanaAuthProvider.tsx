@@ -67,16 +67,25 @@ export const SolanaAuthProvider: FC<SolanaAuthProviderProps> = ({ children }) =>
   // Check for Phantom Wallet extension
   const [isPhantomAvailable, setIsPhantomAvailable] = useState<boolean>(false);
   
-  // Detect Phantom wallet
+  // Detect Phantom wallet - Check both window.phantom.solana (new method) and window.solana.isPhantom (Chrome extension)
   useEffect(() => {
     const checkPhantomAvailability = () => {
-      const phantomExists = typeof window !== 'undefined' && 
+      // Check both detection methods for Phantom wallet
+      const phantomNewExists = typeof window !== 'undefined' && 
         'phantom' in window && 
         !!(window as any).phantom?.solana;
+        
+      const phantomChromeExists = typeof window !== 'undefined' && 
+        'solana' in window && 
+        !!(window as any).solana?.isPhantom;
+      
+      const phantomExists = phantomNewExists || phantomChromeExists;
       
       console.log('Phantom wallet availability check:', { 
         exists: phantomExists,
-        connectMethod: phantomExists ? typeof (window as any).phantom?.solana?.connect : 'undefined'
+        connectMethod: phantomNewExists 
+          ? typeof (window as any).phantom?.solana?.connect 
+          : (phantomChromeExists ? typeof (window as any).solana?.connect : 'undefined')
       });
       
       setIsPhantomAvailable(phantomExists);
@@ -144,19 +153,36 @@ export const SolanaAuthProvider: FC<SolanaAuthProviderProps> = ({ children }) =>
   };
 
   // Try to connect using Phantom directly if wallet-adapter fails
+  // Check both window.phantom.solana (new method) and window.solana (Chrome extension)
   const tryPhantomDirectConnect = async (): Promise<PublicKey | null> => {
+    // First try the new method (phantom.solana)
     if (isPhantomAvailable && (window as any).phantom?.solana) {
       try {
-        console.log('Attempting direct Phantom connection');
+        console.log('Attempting direct Phantom connection via window.phantom.solana');
         const response = await (window as any).phantom.solana.connect();
         const phantomPublicKey = new PublicKey(response.publicKey.toString());
         console.log('Connected to Phantom directly:', phantomPublicKey.toString());
         return phantomPublicKey;
       } catch (error) {
-        console.error('Direct Phantom connection failed:', error);
+        console.error('Direct Phantom connection via window.phantom.solana failed:', error);
+        // Fall through to try the Chrome extension method
+      }
+    }
+    
+    // Try Chrome extension method (window.solana)
+    if (isPhantomAvailable && (window as any).solana?.isPhantom) {
+      try {
+        console.log('Attempting direct Phantom connection via window.solana (Chrome extension)');
+        const response = await (window as any).solana.connect();
+        const phantomPublicKey = new PublicKey(response.publicKey.toString());
+        console.log('Connected to Phantom Chrome extension directly:', phantomPublicKey.toString());
+        return phantomPublicKey;
+      } catch (error) {
+        console.error('Direct Phantom connection via Chrome extension failed:', error);
         return null;
       }
     }
+    
     return null;
   };
 
@@ -208,8 +234,20 @@ export const SolanaAuthProvider: FC<SolanaAuthProviderProps> = ({ children }) =>
       if (needsPhantomSignature && isPhantomAvailable) {
         console.log('Using direct Phantom signing');
         try {
-          const sigData = await (window as any).phantom.solana.signMessage(encodedMessage, 'utf8');
-          signatureBytes = new Uint8Array(sigData.signature);
+          // First try the new method (phantom.solana)
+          if ((window as any).phantom?.solana) {
+            console.log('Using phantom.solana.signMessage');
+            const sigData = await (window as any).phantom.solana.signMessage(encodedMessage, 'utf8');
+            signatureBytes = new Uint8Array(sigData.signature);
+          } 
+          // Then try Chrome extension method (window.solana)
+          else if ((window as any).solana?.isPhantom) {
+            console.log('Using solana.signMessage (Chrome extension)');
+            const sigData = await (window as any).solana.signMessage(encodedMessage, 'utf8');
+            signatureBytes = new Uint8Array(sigData.signature);
+          } else {
+            throw new Error('No Phantom signing method available');
+          }
         } catch (signError) {
           console.error('Phantom direct sign error:', signError);
           throw new Error('Failed to sign message with Phantom. Please try again.');

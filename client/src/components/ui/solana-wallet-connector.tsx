@@ -22,10 +22,23 @@ export const SolanaWalletConnector: FC = () => {
 
   // Log the current wallet connection state for debugging
   useEffect(() => {
+    // Check both detection methods for Phantom wallet
+    const phantomNewExists = typeof window !== 'undefined' && 
+      'phantom' in window && 
+      !!(window as any).phantom?.solana;
+      
+    const phantomChromeExists = typeof window !== 'undefined' && 
+      'solana' in window && 
+      !!(window as any).solana?.isPhantom;
+    
+    const isPhantomAvailable = phantomNewExists || phantomChromeExists;
+
     console.log('Wallet connection state:', { 
       connected, 
       publicKey: publicKey?.toString(),
-      isPhantomAvailable: typeof window !== 'undefined' && 'phantom' in window && !!(window as any).phantom?.solana
+      isPhantomAvailable,
+      phantomNewExists,
+      phantomChromeExists
     });
   }, [connected, publicKey]);
 
@@ -127,7 +140,9 @@ export const SolanaWalletConnector: FC = () => {
             <p className="mb-4 text-muted-foreground">
               Connect your wallet to view your balances and start trading with low fees.
             </p>
-            {typeof window !== 'undefined' && 'phantom' in window && !!(window as any).phantom?.solana ? (
+            {(typeof window !== 'undefined' && 
+              (('phantom' in window && !!(window as any).phantom?.solana) || 
+               ('solana' in window && !!(window as any).solana?.isPhantom))) ? (
               <p className="text-sm text-green-500">Phantom wallet detected!</p>
             ) : (
               <p className="text-sm text-yellow-500">No Phantom wallet detected. Please install the browser extension.</p>
