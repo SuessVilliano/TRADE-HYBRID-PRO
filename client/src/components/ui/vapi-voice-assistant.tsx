@@ -60,19 +60,31 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
     const loadVapiSDK = () => {
       if ((window as any).VapiSDK || isLoadingSDK) return;
       
+      console.log('Starting Vapi SDK loading process');
       setIsLoadingSDK(true);
       
-      // Add script to page
+      // Try to remove old script if exists to avoid conflicts
+      const oldScript = document.getElementById('vapi-sdk-script');
+      if (oldScript) {
+        console.log('Removing old Vapi script');
+        oldScript.remove();
+      }
+      
+      // Add script to page with a unique ID
       const script = document.createElement('script');
-      script.src = 'https://cdn.vapi.ai/sdk/latest/vapi.js';
+      script.id = 'vapi-sdk-script';
+      script.src = 'https://cdn.vapi.ai/web-sdk@latest/browser/index.browser.js';
       script.async = true;
       script.onload = () => {
         console.log('Vapi SDK loaded successfully');
-        setIsVapiSDKLoaded(true);
-        setIsLoadingSDK(false);
+        // Small delay to ensure the SDK is fully initialized
+        setTimeout(() => {
+          setIsVapiSDKLoaded(true);
+          setIsLoadingSDK(false);
+        }, 500);
       };
-      script.onerror = () => {
-        console.error('Failed to load Vapi SDK');
+      script.onerror = (error) => {
+        console.error('Failed to load Vapi SDK', error);
         toast.error('Failed to load voice assistant. Please refresh the page and try again.');
         setIsLoadingSDK(false);
       };
@@ -84,8 +96,9 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
     
     // Cleanup
     return () => {
-      const script = document.querySelector('script[src="https://cdn.vapi.ai/sdk/latest/vapi.js"]');
+      const script = document.getElementById('vapi-sdk-script');
       if (script) {
+        console.log('Cleaning up Vapi SDK script');
         script.remove();
       }
     };
@@ -148,18 +161,27 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
 
   const startCall = async () => {
     try {
-      // Check if Vapi SDK is available in the global window object
-      if (!(window as Window).VapiSDK) {
-        console.error("Vapi SDK not available");
-        toast.error("Vapi SDK not available. Please refresh the page and try again.");
+      console.log("Starting Vapi call initialization");
+      
+      // Check if SDK is loaded properly
+      if (!isVapiSDKLoaded) {
+        console.error("Vapi SDK not loaded yet");
+        toast.error("Voice assistant is still loading. Please wait a moment and try again.");
         return;
       }
       
-      // Initialize the Vapi SDK with the API key from environment variables
-      const Vapi = (window as Window).VapiSDK;
+      // Check if the window object has the expected SDK properties
+      if (!(window as any).vapi) {
+        console.error("Vapi SDK object not found in window", window);
+        toast.error("Voice assistant SDK not properly initialized. Please refresh the page.");
+        return;
+      }
+      
+      // Log SDK version for debugging
+      console.log("Vapi SDK version:", (window as any).vapi?.version || "unknown");
       
       // Use our backend proxy to initialize Vapi with the API key
-      // This way we don't expose our API key in the frontend
+      console.log("Initializing Vapi conversation with API");
       const initResponse = await fetch('/api/vapi/init', {
         method: 'POST',
         headers: {
@@ -170,25 +192,29 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
       
       if (!initResponse.ok) {
         const errorData = await initResponse.json();
+        console.error("Failed to initialize Vapi:", errorData);
         throw new Error(`Failed to initialize Vapi: ${errorData.error || initResponse.statusText}`);
       }
       
       const initData = await initResponse.json();
+      console.log("Vapi initialization successful:", initData);
       
-      // Create a new Vapi instance with the initialization data
-      const vapi = new Vapi({
+      // Use the latest SDK initialization pattern
+      const vapiClient = new (window as any).vapi.VapiClient({
+        apiKey: 'proxy', // This is a placeholder as we use backend proxy
         assistantId: selectedAgentId,
-        conversationId: initData.conversationId,
-        // The API key is handled securely by our backend
+        stream: true,
+        conversationId: initData.conversationId || undefined,
       });
       
-      console.log(`Starting call with agent ${selectedAgent.name} (ID: ${selectedAgentId})`);
+      console.log(`Creating Vapi instance for agent ${selectedAgent.name} (ID: ${selectedAgentId})`);
       
       // Store the instance for later use
-      setVapiInstance(vapi);
+      setVapiInstance(vapiClient);
       
       // Start the call
-      await vapi.start();
+      console.log("Starting Vapi call");
+      await vapiClient.start();
       
       // Update UI
       setIsCallActive(true);
@@ -202,9 +228,15 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
   
   const endCall = () => {
     try {
+      console.log("Ending Vapi call");
+      
       // End call via the Vapi SDK if instance exists
       if (vapiInstance) {
-        vapiInstance.stop();
+        try {
+          vapiInstance.stop();
+        } catch (err) {
+          console.error("Error stopping Vapi client:", err);
+        }
         setVapiInstance(null);
       }
       
@@ -219,15 +251,27 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
   
   const toggleMute = () => {
     try {
-      // Toggle mute status
+      // Toggle mute status first for immediate UI feedback
       setIsMuted(!isMuted);
       
       // Update Vapi SDK if instance exists
       if (vapiInstance) {
+        console.log("Toggling microphone mute state:", !isMuted ? "muted" : "unmuted");
+        
         if (!isMuted) {
-          vapiInstance.mute();
+          // Currently unmuted, so mute it
+          try {
+            vapiInstance.mute?.() || vapiInstance.toggleMute?.(true);
+          } catch (err) {
+            console.error("Error muting:", err);
+          }
         } else {
-          vapiInstance.unmute();
+          // Currently muted, so unmute it
+          try {
+            vapiInstance.unmute?.() || vapiInstance.toggleMute?.(false);
+          } catch (err) {
+            console.error("Error unmuting:", err);
+          }
         }
       }
     } catch (error) {
@@ -237,16 +281,24 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
   
   const toggleSpeaker = () => {
     try {
-      // Toggle speaker status
+      // Toggle speaker status first for immediate UI feedback
       setSpeakerEnabled(!speakerEnabled);
       
       // Update Vapi SDK if instance exists
       if (vapiInstance) {
+        console.log("Toggling speaker state:", !speakerEnabled ? "on" : "off");
+        
         // Adjust volume (as a way to simulate speaker on/off)
-        if (speakerEnabled) {
-          vapiInstance.setVolume(0); // Mute the speaker
-        } else {
-          vapiInstance.setVolume(1); // Restore volume
+        try {
+          if (speakerEnabled) {
+            // Currently on, turn it off
+            vapiInstance.setVolume?.(0) || vapiInstance.toggleSpeaker?.(false);
+          } else {
+            // Currently off, turn it on
+            vapiInstance.setVolume?.(1) || vapiInstance.toggleSpeaker?.(true);
+          }
+        } catch (err) {
+          console.error("Error toggling speaker:", err);
         }
       }
     } catch (error) {

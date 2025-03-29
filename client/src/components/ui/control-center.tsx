@@ -321,6 +321,21 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
     }
   };
 
+  // State for tool carousel scrolling
+  const [toolScrollIndex, setToolScrollIndex] = useState(0);
+  const toolsPerView = typeof window !== 'undefined' && window.innerWidth < 768 ? 3 : 5;
+  const panelsArray = Object.values(allPanels);
+  
+  // Scroll tools left
+  const scrollToolsLeft = () => {
+    setToolScrollIndex(prev => Math.max(0, prev - 1));
+  };
+  
+  // Scroll tools right
+  const scrollToolsRight = () => {
+    setToolScrollIndex(prev => Math.min(panelsArray.length - toolsPerView, prev + 1));
+  };
+  
   return (
     <div className={cn("flex flex-col h-full", className)}>
       {/* Toolbar */}
@@ -352,20 +367,44 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
           </Button>
         </div>
         
-        <div className="flex space-x-2">
-          {Object.values(allPanels).map(panel => (
-            <Button
-              key={panel.id}
-              variant={activePanels.includes(panel.id) ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => togglePanel(panel.id)}
-              className="text-xs"
-              title={panel.title}
+        <div className="flex items-center">
+          {toolScrollIndex > 0 && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={scrollToolsLeft}
+              className="mr-1 p-1.5 h-8"
             >
-              <span className="mr-1">{panel.icon}</span>
-              {panel.title}
+              <span className="text-lg">←</span>
             </Button>
-          ))}
+          )}
+          
+          <div className="flex space-x-2 overflow-hidden">
+            {panelsArray.slice(toolScrollIndex, toolScrollIndex + toolsPerView).map(panel => (
+              <Button
+                key={panel.id}
+                variant={activePanels.includes(panel.id) ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => togglePanel(panel.id)}
+                className="text-xs whitespace-nowrap"
+                title={panel.title}
+              >
+                <span className="mr-1">{panel.icon}</span>
+                {panel.title}
+              </Button>
+            ))}
+          </div>
+          
+          {toolScrollIndex < panelsArray.length - toolsPerView && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={scrollToolsRight}
+              className="ml-1 p-1.5 h-8"
+            >
+              <span className="text-lg">→</span>
+            </Button>
+          )}
         </div>
       </div>
       
