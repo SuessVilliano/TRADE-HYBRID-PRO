@@ -1,88 +1,52 @@
-import { FC, ReactNode, useMemo, createContext, useContext, useState } from 'react';
+import { 
+  FC, 
+  ReactNode, 
+  useMemo 
+} from 'react';
+import { 
+  ConnectionProvider, 
+  WalletProvider 
+} from '@solana/wallet-adapter-react';
+import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 
-// Create a mock context for Solana wallet
-interface SolanaWalletContextValue {
-  publicKey: string | null;
-  connected: boolean;
-  connecting: boolean;
-  connect: () => Promise<void>;
-  disconnect: () => Promise<void>;
-  signTransaction: (transaction: any) => Promise<any>;
-  signAllTransactions: (transactions: any[]) => Promise<any[]>;
-  signMessage: (message: Uint8Array) => Promise<Uint8Array>;
-}
+// Default styles for wallet adapter
+require('@solana/wallet-adapter-react-ui/styles.css');
 
-const SolanaWalletContext = createContext<SolanaWalletContextValue>({
-  publicKey: null,
-  connected: false,
-  connecting: false,
-  connect: async () => {},
-  disconnect: async () => {},
-  signTransaction: async (transaction) => transaction,
-  signAllTransactions: async (transactions) => transactions,
-  signMessage: async (message) => message
-});
+// Import the PhantomWalletAdapter directly from the node_modules
+import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
+import { clusterApiUrl } from '@solana/web3.js';
 
-export const useSolanaWallet = () => useContext(SolanaWalletContext);
+// Define adapter network values directly
+const ADAPTER_NETWORK = {
+  Mainnet: 'mainnet-beta',
+  Testnet: 'testnet',
+  Devnet: 'devnet'
+} as const;
 
 interface SolanaWalletProviderProps {
   children: ReactNode;
 }
 
 export const SolanaWalletProvider: FC<SolanaWalletProviderProps> = ({ children }) => {
-  const [publicKey, setPublicKey] = useState<string | null>(null);
-  const [connected, setConnected] = useState(false);
-  const [connecting, setConnecting] = useState(false);
+  // You can also provide a custom RPC endpoint
+  const network = ADAPTER_NETWORK.Devnet;
+  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
-  const connect = async () => {
-    try {
-      setConnecting(true);
-      // Mock connection logic
-      setPublicKey('11111111111111111111111111111111');
-      setConnected(true);
-      console.log("Mock wallet connected");
-    } catch (error) {
-      console.error("Error connecting wallet:", error);
-    } finally {
-      setConnecting(false);
-    }
-  };
-
-  const disconnect = async () => {
-    setPublicKey(null);
-    setConnected(false);
-    console.log("Mock wallet disconnected");
-  };
-
-  const signTransaction = async (transaction: any) => {
-    console.log("Mock transaction signing");
-    return transaction;
-  };
-
-  const signAllTransactions = async (transactions: any[]) => {
-    console.log("Mock signing all transactions");
-    return transactions;
-  };
-
-  const signMessage = async (message: Uint8Array) => {
-    console.log("Mock message signing");
-    return message;
-  };
-
-  const value = {
-    publicKey,
-    connected,
-    connecting,
-    connect,
-    disconnect,
-    signTransaction,
-    signAllTransactions,
-    signMessage
-  };
+  // Only include the PhantomWalletAdapter for now to simplify
+  const wallets = useMemo(
+    () => [
+      new PhantomWalletAdapter()
+    ],
+    []
+  );
 
   return (
-    <SolanaWalletContext.Provider value={value}>
-      {children}
-    </SolanaWalletContext.Provider>
+    <ConnectionProvider endpoint={endpoint}>
+      <WalletProvider wallets={wallets} autoConnect>
+        <WalletModalProvider>
+          {children}
+        </WalletModalProvider>
+      </WalletProvider>
+    </ConnectionProvider>
   );
 };
