@@ -71,12 +71,31 @@ export function VisionAIScreenShare({ className }: VisionAIScreenShareProps) {
     };
   }, []);
 
+  // Check if the device is mobile
+  const isMobile = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+
   const startScreenShare = async () => {
     try {
-      // TypeScript doesn't recognize the cursor property, but it's a valid option
+      // Check if this is a mobile device
+      if (isMobile()) {
+        // Show special instructions for mobile users
+        toast.info("Mobile screen sharing might be limited. For best results, use a desktop browser.");
+      }
+      
+      // TypeScript doesn't recognize all options, but these are valid in modern browsers
+      // We set optimized settings for both desktop and mobile
       const displayMedia = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: false
+        video: {
+          displaySurface: 'browser' as any, // Prefer browser tab on supported browsers
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 15 }, // Lower frame rate for better performance on mobile
+        },
+        audio: false,
+        // Note: Additional options below would be handled at the browser level 
+        // even though TypeScript doesn't recognize them
       });
       
       setStream(displayMedia);
@@ -102,9 +121,21 @@ export function VisionAIScreenShare({ className }: VisionAIScreenShareProps) {
         timestamp: new Date()
       });
       
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Error starting screen share:", err);
-      toast.error("Failed to start screen sharing. Please check permissions and try again.");
+      
+      // More helpful error message based on the error type
+      if (err instanceof Error) {
+        if (err.name === 'NotAllowedError') {
+          toast.error("Screen sharing permission denied. Please allow screen sharing in your browser settings.");
+        } else if (err.name === 'NotSupportedError' || err.name === 'NotFoundError') {
+          toast.error("Screen sharing is not supported on this device or browser. Try using a desktop browser like Chrome or Firefox.");
+        } else {
+          toast.error("Failed to start screen sharing. " + (isMobile() ? "Mobile devices have limited screen sharing support." : "Please check permissions and try again."));
+        }
+      } else {
+        toast.error("Failed to start screen sharing. Please check permissions and try again.");
+      }
     }
   };
   
@@ -433,18 +464,20 @@ export function VisionAIScreenShare({ className }: VisionAIScreenShareProps) {
                     size="sm" 
                     variant="destructive"
                     onClick={stopScreenShare}
+                    className="px-3 py-1 text-sm sm:text-base sm:px-4 sm:py-2"
                   >
-                    <StopCircle className="h-4 w-4 mr-1" />
-                    Stop Sharing
+                    <StopCircle className="h-4 w-4 mr-1 hidden sm:inline" />
+                    Stop
                   </Button>
                 ) : (
                   <Button 
                     size="sm" 
                     variant="default"
                     onClick={startScreenShare}
+                    className="px-3 py-1 text-sm sm:text-base sm:px-4 sm:py-2"
                   >
-                    <Share2 className="h-4 w-4 mr-1" />
-                    Start Sharing
+                    <Share2 className="h-4 w-4 mr-1 hidden sm:inline" />
+                    {isMobile() ? "Share Screen" : "Start Sharing"}
                   </Button>
                 )}
                 
@@ -453,8 +486,9 @@ export function VisionAIScreenShare({ className }: VisionAIScreenShareProps) {
                     size="sm" 
                     variant="secondary"
                     onClick={captureAndAnalyzeNow}
+                    className="px-3 py-1 text-sm sm:text-base sm:px-4 sm:py-2"
                   >
-                    Analyze Now
+                    Analyze
                   </Button>
                 )}
               </div>
@@ -471,7 +505,16 @@ export function VisionAIScreenShare({ className }: VisionAIScreenShareProps) {
               ) : (
                 <div className="text-center p-4 text-gray-400">
                   <Share2 className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                  <p>Click "Start Sharing" to share your trading charts for AI analysis</p>
+                  <p className="text-sm sm:text-base">
+                    {isMobile() 
+                      ? "Tap 'Share Screen' to share your trading charts for AI analysis. Note: Screen sharing works best on Chrome." 
+                      : "Click 'Start Sharing' to share your trading charts for AI analysis"}
+                  </p>
+                  {isMobile() && (
+                    <p className="text-xs mt-2 text-amber-400">
+                      On mobile, you may need to select "This tab" when prompted for what to share
+                    </p>
+                  )}
                 </div>
               )}
             </div>
