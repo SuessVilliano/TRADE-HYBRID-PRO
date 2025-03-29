@@ -118,6 +118,124 @@ export class MatrixContract {
   }
   
   /**
+   * Purchase a slot in the matrix
+   * 
+   * @param wallet The wallet of the user purchasing the slot
+   * @param slotNumber The slot number to purchase (1-12)
+   * @param currency The currency to use for purchase
+   * @returns Transaction signature
+   */
+  async purchaseSlot(
+    wallet: { publicKey: PublicKey, signTransaction: (tx: Transaction) => Promise<Transaction> },
+    slotNumber: number,
+    currency: 'THC' | 'SOL' | 'USDC' = 'THC'
+  ): Promise<string> {
+    if (!wallet.publicKey) {
+      throw new Error("Wallet not connected");
+    }
+    
+    if (slotNumber < 1 || slotNumber > 12) {
+      throw new Error("Invalid slot number. Must be between 1 and 12.");
+    }
+    
+    // Get the slot price
+    const slotPrice = MATRIX_CONFIG.slotPrices[slotNumber - 1];
+    
+    // Encode the instruction data
+    // 2 = purchase slot instruction, followed by slot number and currency
+    const currencyId = MATRIX_CONFIG.supportedCurrencies.indexOf(currency);
+    if (currencyId === -1) {
+      throw new Error(`Unsupported currency: ${currency}`);
+    }
+    
+    const data = Buffer.from([2, slotNumber, currencyId]);
+    
+    // Create the transaction instruction
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+      ],
+      programId: this.programId,
+      data
+    });
+    
+    // Create and send the transaction
+    const transaction = new Transaction().add(instruction);
+    transaction.feePayer = wallet.publicKey;
+    const blockHash = await this.connection.getRecentBlockhash();
+    transaction.recentBlockhash = blockHash.blockhash;
+    
+    const signed = await wallet.signTransaction(transaction);
+    const signature = await this.connection.sendRawTransaction(signed.serialize());
+    await this.connection.confirmTransaction(signature);
+    
+    console.log(`Purchased slot ${slotNumber} for ${slotPrice} ${currency}`);
+    
+    // In a real implementation, this would trigger the commission distribution
+    // and referral chain updates on-chain
+    await this.distributeCommissions(slotPrice, slotNumber, wallet.publicKey, currency);
+    
+    return signature;
+  }
+  
+  /**
+   * Recycle a slot to continue earning from it
+   * 
+   * @param wallet The wallet of the user recycling the slot
+   * @param slotNumber The slot number to recycle (1-12)
+   * @returns Transaction signature
+   */
+  async recycleSlot(
+    wallet: { publicKey: PublicKey, signTransaction: (tx: Transaction) => Promise<Transaction> },
+    slotNumber: number
+  ): Promise<string> {
+    if (!wallet.publicKey) {
+      throw new Error("Wallet not connected");
+    }
+    
+    if (slotNumber < 1 || slotNumber > 12) {
+      throw new Error("Invalid slot number. Must be between 1 and 12.");
+    }
+    
+    // Check if the user has this slot
+    const participant = await this.getUserMatrix(wallet.publicKey);
+    const slot = participant.activeSlots.find(s => s.slotNumber === slotNumber);
+    
+    if (!slot) {
+      throw new Error(`You don't have slot ${slotNumber}`);
+    }
+    
+    // Encode the instruction data
+    // 3 = recycle slot instruction, followed by slot number
+    const data = Buffer.from([3, slotNumber]);
+    
+    // Create the transaction instruction
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+      ],
+      programId: this.programId,
+      data
+    });
+    
+    // Create and send the transaction
+    const transaction = new Transaction().add(instruction);
+    transaction.feePayer = wallet.publicKey;
+    const blockHash = await this.connection.getRecentBlockhash();
+    transaction.recentBlockhash = blockHash.blockhash;
+    
+    const signed = await wallet.signTransaction(transaction);
+    const signature = await this.connection.sendRawTransaction(signed.serialize());
+    await this.connection.confirmTransaction(signature);
+    
+    console.log(`Recycled slot ${slotNumber}`);
+    
+    return signature;
+  }
+  
+  /**
    * Get the matrix data for a specific user
    * 
    * @param userAddress The address of the user
@@ -227,30 +345,76 @@ export class MatrixContract {
    * Distribute commissions to upline participants based on the matrix rules
    * 
    * @param amount The amount to distribute
+   * @param slotNumber The slot number that generated the commission (1-12)
    * @param participantAddress The address of the participant generating the commission
+   * @param currency The currency being used ('THC', 'SOL', 'USDC')
    * @returns Array of distribution transactions
    */
   async distributeCommissions(
-    amount: number, 
-    participantAddress: PublicKey
-  ): Promise<{ recipient: PublicKey, amount: number }[]> {
-    // This would be handled by the smart contract automatically
-    // For this example, we'll return a mock distribution
+    amount: number,
+    slotNumber: number,
+    participantAddress: PublicKey,
+    currency: 'THC' | 'SOL' | 'USDC' = 'THC'
+  ): Promise<{ 
+    recipient: PublicKey, 
+    amount: number,
+    reason: 'direct_referral' | 'upline' | 'company_pool'
+  }[]> {
+    // In a real implementation, this would be handled by the smart contract
+    // Following our distribution rules: 50% to direct referrer, 30% to upline, 20% to company
     
-    return [
-      { 
-        recipient: new PublicKey('44444444444444444444444444444444'), 
-        amount: amount * 0.05 // 5% to direct referrer
-      },
-      { 
-        recipient: new PublicKey('55555555555555555555555555555555'), 
-        amount: amount * 0.03 // 3% to level 2
-      },
-      { 
-        recipient: new PublicKey('66666666666666666666666666666666'), 
-        amount: amount * 0.02 // 2% to level 3
-      }
+    // Get the participant's referrer
+    const participant = await this.getUserMatrix(participantAddress);
+    
+    if (!participant.referrer) {
+      // If no referrer, everything goes to company pool
+      return [{ 
+        recipient: new PublicKey('CompanyPoolAddressXXXXXXXXXXXXXXXX'), 
+        amount: amount,
+        reason: 'company_pool'
+      }];
+    }
+    
+    // Get upline (referrer chain)
+    const directReferrer = participant.referrer;
+    
+    // Get upline referrers (would be fetched from chain in real implementation)
+    const uplineReferrers = [
+      new PublicKey('55555555555555555555555555555555'),
+      new PublicKey('66666666666666666666666666666666'),
+      new PublicKey('77777777777777777777777777777777')
     ];
+    
+    // Create the distribution
+    const distributions = [];
+    
+    // Direct referrer gets 50%
+    distributions.push({
+      recipient: directReferrer,
+      amount: amount * MATRIX_CONFIG.commissionDistribution.directReferrer,
+      reason: 'direct_referral' as const
+    });
+    
+    // Upline referrers split 30%
+    const uplineAmount = amount * MATRIX_CONFIG.commissionDistribution.uplineReferrers;
+    const uplineShare = uplineAmount / uplineReferrers.length;
+    
+    for (const referrer of uplineReferrers) {
+      distributions.push({
+        recipient: referrer,
+        amount: uplineShare,
+        reason: 'upline' as const
+      });
+    }
+    
+    // Company pool gets 20%
+    distributions.push({
+      recipient: new PublicKey('CompanyPoolAddressXXXXXXXXXXXXXXXX'),
+      amount: amount * MATRIX_CONFIG.commissionDistribution.companyPool,
+      reason: 'company_pool' as const
+    });
+    
+    return distributions;
   }
   
   /**
