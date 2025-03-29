@@ -52,6 +52,44 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [speakerEnabled, setSpeakerEnabled] = useState(true);
   const [callDuration, setCallDuration] = useState(0);
+  const [isVapiSDKLoaded, setIsVapiSDKLoaded] = useState(false);
+  const [isLoadingSDK, setIsLoadingSDK] = useState(false);
+  
+  // Load Vapi SDK
+  useEffect(() => {
+    const loadVapiSDK = () => {
+      if ((window as any).VapiSDK || isLoadingSDK) return;
+      
+      setIsLoadingSDK(true);
+      
+      // Add script to page
+      const script = document.createElement('script');
+      script.src = 'https://cdn.vapi.ai/sdk/latest/vapi.js';
+      script.async = true;
+      script.onload = () => {
+        console.log('Vapi SDK loaded successfully');
+        setIsVapiSDKLoaded(true);
+        setIsLoadingSDK(false);
+      };
+      script.onerror = () => {
+        console.error('Failed to load Vapi SDK');
+        toast.error('Failed to load voice assistant. Please refresh the page and try again.');
+        setIsLoadingSDK(false);
+      };
+      
+      document.body.appendChild(script);
+    };
+    
+    loadVapiSDK();
+    
+    // Cleanup
+    return () => {
+      const script = document.querySelector('script[src="https://cdn.vapi.ai/sdk/latest/vapi.js"]');
+      if (script) {
+        script.remove();
+      }
+    };
+  }, []);
   
   // Find the selected agent in the agents array
   useEffect(() => {

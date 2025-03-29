@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils';
 // Lazy load the components
 const TradingViewWidgetLazy = React.lazy(() => import('./TradingViewWidget'));
 const AIAssistantLazy = React.lazy(() => import('./ai-trade-assistant'));
-const AdvancedAIAssistantLazy = React.lazy(() => import('./enhanced-ai-trading-assistant').then(module => ({ default: module.EnhancedAITradingAssistant })));
 const TradingSignalsLazy = React.lazy(() => import('./TradingSignals'));
 const CopyTradingLazy = React.lazy(() => import('./CopyTrading'));
 const SmartTradePanelLazy = React.lazy(() => import('./smart-trade-panel').then(module => ({ default: module.SmartTradePanel })));
@@ -272,7 +271,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
       icon: <Sparkles size={16} />,
       component: (
         <React.Suspense fallback={<div className="h-full flex items-center justify-center">Loading AI Trading Assistant...</div>}>
-          <AdvancedAIAssistantLazy selectedSymbol={selectedSymbol} />
+          <AIAssistantLazy selectedSymbol={selectedSymbol} />
         </React.Suspense>
       ),
       defaultSize: { width: '400px', height: '600px' },

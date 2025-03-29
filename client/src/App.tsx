@@ -514,8 +514,8 @@ function AppContent() {
         </div>
       </footer>
       
-      {/* Footer */}
-      <PopupContainer className="border-t border-slate-700 p-4 text-sm" padding>
+      {/* Footer - non-sticky */}
+      <div className="border-t border-slate-700 p-4 text-sm">
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0 flex items-center gap-2">
@@ -529,7 +529,7 @@ function AppContent() {
             </div>
           </div>
         </div>
-      </PopupContainer>
+      </div>
     </div>
   );
 }
@@ -708,8 +708,8 @@ function TradePlaceholder() {
   
   return (
     <div className="min-h-screen bg-slate-900">
-      {/* Header with controls and symbol selector */}
-      <div className="border-b border-slate-700 bg-slate-800/95 backdrop-blur-sm sticky top-0 z-10 p-4">
+      {/* Header with controls and symbol selector - non-sticky on mobile */}
+      <div className="border-b border-slate-700 bg-slate-800/95 backdrop-blur-sm md:sticky relative top-0 z-10 p-4">
         <div className="container mx-auto flex flex-wrap justify-between items-center">
           <div className="flex items-center mb-2 sm:mb-0">
             <h1 className="text-lg font-bold mr-4">Trade Platform</h1>
