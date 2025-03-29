@@ -17,6 +17,7 @@ import { PerformanceOptimizationProvider } from './lib/context/PerformanceOptimi
 import { RegulatoryCompliance } from './components/ui/regulatory-compliance';
 import { WhopAuth } from './components/ui/whop-auth';
 import { THCMembershipDisplay } from './components/ui/thc-membership-display';
+import { WalletStatusIndicator } from './components/ui/wallet-status-indicator';
 
 // Lazy load pages
 const TradeRunner = lazy(() => import('./pages/trade-runner'));
@@ -192,7 +193,7 @@ function AppContent() {
               </>
             ) : (
               <div className="flex flex-wrap items-center gap-3">
-                <WalletMultiButton className="wallet-adapter-button-custom max-w-[200px] text-sm px-2 py-1 overflow-hidden text-ellipsis whitespace-nowrap" />
+                <WalletStatusIndicator />
                 <div className="border-r border-slate-600 h-8 hidden sm:block" />
                 <Button 
                   variant="outline" 

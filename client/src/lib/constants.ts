@@ -321,8 +321,11 @@ export const THC_TOKEN = {
   priceChange24h: 2.5, // 24h price change percentage
   marketCap: 175000, // Market cap in USD
   tradingVolume24h: 32500, // 24h trading volume in USD
+  volume24h: 32500, // 24h trading volume in USD (duplicated for UI display)
   circulatingSupply: 250000000, // Current circulating supply
   totalSupply: 1000000000, // Total supply
+  maxSupply: 1000000000, // Maximum supply (same as total supply for THC)
+  rank: 3421, // Market cap rank
   holderCount: 1250, // Number of token holders
   stakingApy: 12, // Current base APY percentage for staking
   features: {
@@ -371,6 +374,78 @@ export const THC_TOKEN = {
     tokenGatedFeatures: ['Trading', 'NFT Marketplace', 'Metaverse', 'AI Tools'] // Requires token ownership
   }
 };
+
+// Price history data for the THC token with 3 months of data - timestamps and prices
+export const THC_TOKEN_PRICE_HISTORY = (() => {
+  const data = [];
+  const now = new Date();
+  const startDate = new Date(now);
+  startDate.setMonth(now.getMonth() - 3); // 3 months ago
+  
+  // Starting price and some randomization parameters
+  let price = 0.000110; // Starting price
+  const volatility = 0.04; // Daily volatility factor
+  const uptrend = 0.0005; // Slight uptrend factor
+  
+  // Generate daily price points for 3 months (90 days)
+  for (let i = 0; i < 90; i++) {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + i);
+    
+    // Add some random price movement with slight uptrend and some volatility
+    const change = (Math.random() - 0.45) * volatility * price; // Slight bias toward positive moves
+    price = Math.max(0.000001, price + change + uptrend); // Ensure price doesn't go below 0.000001
+    
+    // Create 24 hourly entries for each day with smaller random fluctuations
+    for (let hour = 0; hour < 24; hour++) {
+      const hourlyDate = new Date(date);
+      hourlyDate.setHours(hour);
+      
+      const hourlyChange = (Math.random() - 0.5) * volatility * price * 0.2; // Smaller hourly fluctuations
+      const hourlyPrice = Math.max(0.000001, price + hourlyChange);
+      
+      data.push({
+        timestamp: hourlyDate.getTime(),
+        price: hourlyPrice,
+      });
+    }
+  }
+  
+  return data;
+})();
+
+// Trading volume data for the THC token
+export const THC_TOKEN_TRADING_VOLUME = (() => {
+  const data = [];
+  const now = new Date();
+  const startDate = new Date(now);
+  startDate.setMonth(now.getMonth() - 3); // 3 months ago
+  
+  // Base daily volume and randomization parameters
+  const baseVolume = 1500000; // Base daily trading volume
+  const volatilityFactor = 0.5; // Volume volatility factor
+  
+  // Generate daily volume points for 3 months (90 days)
+  for (let i = 0; i < 90; i++) {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + i);
+    
+    // Add some random volume movement
+    const randomFactor = 1 + (Math.random() - 0.5) * volatilityFactor;
+    const volume = Math.round(baseVolume * randomFactor);
+    
+    // Create occasional volume spikes for more realistic data
+    const isVolumeSpike = Math.random() < 0.1; // 10% chance of a volume spike
+    const volumeMultiplier = isVolumeSpike ? 2 + Math.random() * 3 : 1; // 2-5x spike
+    
+    data.push({
+      date: date.toISOString().split('T')[0], // Format as YYYY-MM-DD
+      volume: Math.round(volume * volumeMultiplier),
+    });
+  }
+  
+  return data;
+})();
 
 // ABATEV configuration (Advanced Broker Aggregation & Trade Execution View)
 export const ABATEV_CONFIG = {
