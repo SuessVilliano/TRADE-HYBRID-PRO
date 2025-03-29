@@ -6,6 +6,7 @@ import { Button } from './components/ui/button';
 import THCBalanceDisplay from './components/ui/thc-balance-display';
 import { ThemeToggle } from './components/ui/theme-toggle';
 import { TradingTipsButton } from './components/ui/trading-tips-button';
+import { SettingsPopup } from './components/ui/settings-popup';
 import { useUserStore } from './lib/stores/useUserStore';
 import { useAffiliateTracking } from './lib/services/affiliate-service';
 import { SolanaWalletProvider } from './lib/context/SolanaWalletProvider';
@@ -94,6 +95,7 @@ function AppContent() {
   const { loginWithSolana, isWalletAuthenticated, solanaAuthError, isAuthenticatingWithSolana, logoutFromSolana } = useSolanaAuth();
   const { userLevel } = useFeatureDisclosure();
   const [showWhopModal, setShowWhopModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   
   // Get user-friendly level name for display
   const getLevelName = () => {
@@ -131,6 +133,19 @@ function AppContent() {
       console.log(`Affiliate referral detected: ${detectedReferralCode}`);
     }
   }, [trackReferral]);
+  
+  // Listen for settings popup events
+  useEffect(() => {
+    const handleShowSettingsPopup = () => {
+      setShowSettingsModal(true);
+    };
+    
+    document.addEventListener('show-settings-popup', handleShowSettingsPopup);
+    
+    return () => {
+      document.removeEventListener('show-settings-popup', handleShowSettingsPopup);
+    };
+  }, []);
   
   // Handle logout
   const handleLogout = () => {
@@ -224,6 +239,11 @@ function AppContent() {
           </div>
         </div>
       </PopupContainer>
+      
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <SettingsPopup onClose={() => setShowSettingsModal(false)} />
+      )}
       
       {/* Whop Membership Modal */}
       {showWhopModal && (
@@ -457,6 +477,29 @@ function AppContent() {
           } />
         </Routes>
       </main>
+      
+      {/* Footer with Settings */}
+      <footer className="bg-slate-800 border-t border-slate-700 py-3">
+        <div className="container mx-auto flex justify-between items-center px-4">
+          <div className="text-sm text-slate-400">
+            &copy; {new Date().getFullYear()} Trade Hybrid. All rights reserved.
+          </div>
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setShowSettingsModal(true)}
+              className="flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              Settings
+            </Button>
+          </div>
+        </div>
+      </footer>
       
       {/* Footer */}
       <PopupContainer className="border-t border-slate-700 p-4 text-sm" padding>
