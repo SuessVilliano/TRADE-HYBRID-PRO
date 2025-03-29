@@ -141,7 +141,13 @@ const TradeRunner: React.FC = () => {
       return;
     }
     
+    // Force a resize to ensure canvas dimensions are correct
+    const width = Math.min(window.innerWidth * 0.8, 1200);
+    const height = Math.min(window.innerHeight - 100, 600);
+    
     const canvas = canvasRef.current;
+    canvas.width = width;
+    canvas.height = height;
     console.log("TradeRunner: Initializing game canvas dimensions:", canvas.width, canvas.height);
     
     // Set initial game speed based on difficulty
@@ -168,9 +174,30 @@ const TradeRunner: React.FC = () => {
     // Initialize empty arrays
     obstaclesRef.current = [];
     coinsRef.current = [];
-    priceDataRef.current = [];
+    
+    // Initialize price data with starting point
+    priceDataRef.current = [{
+      x: 0,
+      y: canvas.height / 2
+    }];
+    
+    // Set initial market trend
+    marketTrendRef.current = 'up';
+    trendDurationRef.current = 0;
+    
+    // Reset score
     scoreRef.current = 0;
     setScore(0);
+    
+    // Reset animation frame ref
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+    
+    // Reset jump state
+    isJumpingRef.current = false;
+    
     console.log("TradeRunner: Game state initialized successfully");
   };
 
@@ -185,8 +212,15 @@ const TradeRunner: React.FC = () => {
     // Delay the game loop slightly to ensure initialization is complete
     setTimeout(() => {
       console.log("TradeRunner: Starting game loop");
-      gameLoop();
-    }, 100);
+      if (gameActive && playerRef.current && canvasRef.current) {
+        gameLoop();
+      } else {
+        console.error("TradeRunner: Failed to start game loop - game is not active or references are null");
+        console.log("gameActive:", gameActive);
+        console.log("playerRef.current:", playerRef.current);
+        console.log("canvasRef.current:", canvasRef.current);
+      }
+    }, 500); // Increased timeout to ensure initialization completes
   };
 
   // Game over
@@ -221,11 +255,25 @@ const TradeRunner: React.FC = () => {
 
   // Main game loop
   const gameLoop = () => {
-    if (!gameActive || !canvasRef.current || !playerRef.current) return;
+    if (!gameActive || !canvasRef.current || !playerRef.current) {
+      console.error("TradeRunner: Game loop aborted - required references missing");
+      console.log("gameActive:", gameActive);
+      console.log("canvasRef.current:", canvasRef.current ? "exists" : "null");
+      console.log("playerRef.current:", playerRef.current ? "exists" : "null");
+      return;
+    }
     
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      console.error("TradeRunner: Failed to get canvas context");
+      return;
+    }
+    
+    // First frame only debug log
+    if (!animFrameRef.current) {
+      console.log("TradeRunner: Game loop started successfully");
+    }
     
     // Update
     updateGame();

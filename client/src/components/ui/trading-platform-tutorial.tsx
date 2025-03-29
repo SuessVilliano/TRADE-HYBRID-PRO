@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useFeatureDisclosure, UserExperienceLevel } from '@/lib/context/FeatureDisclosureProvider';
 import { TutorialButton } from './interactive-tutorial';
 import { Button } from './button';
-import { Info, HelpCircle } from 'lucide-react';
+import { Info, HelpCircle, X, ChevronDown, ChevronUp, MinusCircle } from 'lucide-react';
 
 // Create a custom tutorial step interface that allows for "center" placement
 interface TradingTutorialStep {
@@ -17,6 +17,8 @@ interface TradingTutorialStep {
 export function TradingPlatformTutorial() {
   const { completedTutorials, userLevel } = useFeatureDisclosure();
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
   
   // Check if this is the first time visiting the trading platform
   useEffect(() => {
@@ -25,7 +27,37 @@ export function TradingPlatformTutorial() {
       setShowWelcomeModal(true);
       localStorage.setItem('hasVisitedTrading', 'true');
     }
+    
+    // Check if tutorial panel was previously hidden or minimized
+    const tutorialHidden = localStorage.getItem('tutorialHidden') === 'true';
+    const tutorialMinimized = localStorage.getItem('tutorialMinimized') === 'true';
+    
+    if (tutorialHidden) {
+      setIsHidden(true);
+    } else if (tutorialMinimized) {
+      setIsMinimized(true);
+    }
   }, [completedTutorials]);
+  
+  // Save minimized/hidden state to localStorage
+  const toggleMinimize = () => {
+    const newState = !isMinimized;
+    setIsMinimized(newState);
+    localStorage.setItem('tutorialMinimized', newState.toString());
+  };
+  
+  const toggleHide = () => {
+    const newState = !isHidden;
+    setIsHidden(newState);
+    localStorage.setItem('tutorialHidden', newState.toString());
+  };
+  
+  const showTutorials = () => {
+    setIsHidden(false);
+    setIsMinimized(false);
+    localStorage.setItem('tutorialHidden', 'false');
+    localStorage.setItem('tutorialMinimized', 'false');
+  };
   
   const basicTutorialSteps: TradingTutorialStep[] = [
     {
@@ -185,43 +217,84 @@ export function TradingPlatformTutorial() {
   }
   
   // Tutorial buttons that will appear in the platform interface
+  if (isHidden) {
+    // Show just a small button to restore tutorials
+    return (
+      <div className="fixed bottom-4 right-4 z-30">
+        <Button 
+          size="sm"
+          variant="outline"
+          className="bg-slate-800/90 backdrop-blur-sm rounded-full h-8 w-8 p-0 flex items-center justify-center"
+          onClick={showTutorials}
+          title="Show Tutorials"
+        >
+          <HelpCircle className="h-4 w-4 text-blue-400" />
+        </Button>
+      </div>
+    );
+  }
+  
   return (
     <div className="tutorial-buttons fixed bottom-4 right-4 flex flex-col space-y-2 z-30">
       <div className="bg-slate-800/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-slate-700">
-        <div className="flex items-center gap-2 mb-3">
-          <HelpCircle className="h-4 w-4 text-blue-400" />
-          <h4 className="text-sm font-semibold">Platform Tutorials</h4>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <HelpCircle className="h-4 w-4 text-blue-400" />
+            <h4 className="text-sm font-semibold">Platform Tutorials</h4>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className="h-6 w-6 p-0" 
+              onClick={toggleMinimize}
+              title={isMinimized ? "Expand" : "Minimize"}
+            >
+              {isMinimized ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            </Button>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-900/20" 
+              onClick={toggleHide}
+              title="Hide Tutorials"
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
         
-        <div className="space-y-2">
-          <TutorialButton
-            tutorialId="trading-basics"
-            steps={basicTutorialSteps as any}
-            buttonText="Basic Trading Tutorial"
-            className="w-full text-xs justify-start"
-          />
-          
-          {userLevel === UserExperienceLevel.INTERMEDIATE || 
-           userLevel === UserExperienceLevel.ADVANCED || 
-           userLevel === UserExperienceLevel.EXPERT ? (
+        {!isMinimized && (
+          <div className="space-y-2">
             <TutorialButton
-              tutorialId="trading-advanced"
-              steps={advancedTutorialSteps as any}
-              buttonText="Advanced Trading Tutorial"
+              tutorialId="trading-basics"
+              steps={basicTutorialSteps as any}
+              buttonText="Basic Trading Tutorial"
               className="w-full text-xs justify-start"
             />
-          ) : null}
-          
-          {userLevel === UserExperienceLevel.ADVANCED || 
-           userLevel === UserExperienceLevel.EXPERT ? (
-            <TutorialButton
-              tutorialId="trading-ai"
-              steps={aiTutorialSteps as any}
-              buttonText="AI Assistant Tutorial"
-              className="w-full text-xs justify-start"
-            />
-          ) : null}
-        </div>
+            
+            {userLevel === UserExperienceLevel.INTERMEDIATE || 
+             userLevel === UserExperienceLevel.ADVANCED || 
+             userLevel === UserExperienceLevel.EXPERT ? (
+              <TutorialButton
+                tutorialId="trading-advanced"
+                steps={advancedTutorialSteps as any}
+                buttonText="Advanced Trading Tutorial"
+                className="w-full text-xs justify-start"
+              />
+            ) : null}
+            
+            {userLevel === UserExperienceLevel.ADVANCED || 
+             userLevel === UserExperienceLevel.EXPERT ? (
+              <TutorialButton
+                tutorialId="trading-ai"
+                steps={aiTutorialSteps as any}
+                buttonText="AI Assistant Tutorial"
+                className="w-full text-xs justify-start"
+              />
+            ) : null}
+          </div>
+        )}
       </div>
     </div>
   );

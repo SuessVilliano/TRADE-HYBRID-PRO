@@ -12,7 +12,7 @@ interface EconomicCalendarProps {
 
 export function EconomicCalendar({
   width = '100%',
-  height = '600px', // Increased default height to show more content
+  height = '800px', // Further increased height to show more content and prevent black space
   colorTheme = 'dark',
   isTransparent = true, // Make transparent to allow custom styling
   locale = 'en',
@@ -71,7 +71,7 @@ export function EconomicCalendar({
       ref={containerRef}
       style={{
         background: 'linear-gradient(to bottom, rgba(20, 20, 30, 0.95), rgba(15, 15, 20, 0.97))',
-        minHeight: '500px', // Ensure minimum height for content
+        minHeight: '760px', // Ensure minimum height for content, matching main height minus footer
       }}
     >
       <div className="tradingview-widget-container__widget" style={{ minHeight: '460px' }}></div>
