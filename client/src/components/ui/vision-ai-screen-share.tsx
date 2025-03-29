@@ -1,0 +1,561 @@
+import { useState, useRef, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Mic, X, Share2, StopCircle, Download, Send } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+
+interface VisionAIScreenShareProps {
+  className?: string;
+}
+
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+}
+
+export function VisionAIScreenShare({ className }: VisionAIScreenShareProps) {
+  // State for screen sharing
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
+  
+  // State for messages
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "system-1",
+      role: "assistant",
+      content: "Hello! I'm your AI trading assistant. Share your screen with me to get help with chart analysis, pattern recognition, or any other trading visuals.",
+      timestamp: new Date(),
+    }
+  ]);
+  
+  // State for input
+  const [input, setInput] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  // State for voice recording
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  
+  // Refs
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  
+  // Screen capture interval for AI analysis
+  const captureIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  }, [messages]);
+  
+  // Clean up when component unmounts
+  useEffect(() => {
+    return () => {
+      stopScreenShare();
+      if (captureIntervalRef.current) {
+        clearInterval(captureIntervalRef.current);
+      }
+    };
+  }, []);
+
+  const startScreenShare = async () => {
+    try {
+      // TypeScript doesn't recognize the cursor property, but it's a valid option
+      const displayMedia = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: false
+      });
+      
+      setStream(displayMedia);
+      setIsSharing(true);
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = displayMedia;
+      }
+      
+      // Set up a handler for when user stops sharing
+      displayMedia.getVideoTracks()[0].addEventListener('ended', () => {
+        stopScreenShare();
+      });
+      
+      // Start periodic screen captures for AI analysis
+      startCaptureInterval();
+      
+      // Add system message about screen sharing
+      addMessage({
+        id: `system-${Date.now()}`,
+        role: "assistant",
+        content: "Screen sharing started! I can now see your charts and trading interface. Feel free to ask questions about what's displayed.",
+        timestamp: new Date()
+      });
+      
+    } catch (err) {
+      console.error("Error starting screen share:", err);
+      toast.error("Failed to start screen sharing. Please check permissions and try again.");
+    }
+  };
+  
+  const stopScreenShare = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+      setIsSharing(false);
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+      
+      // Stop the capture interval
+      if (captureIntervalRef.current) {
+        clearInterval(captureIntervalRef.current);
+        captureIntervalRef.current = null;
+      }
+      
+      // Add system message about stopping screen sharing
+      addMessage({
+        id: `system-${Date.now()}`,
+        role: "assistant",
+        content: "Screen sharing stopped. I can no longer see your screen.",
+        timestamp: new Date()
+      });
+    }
+  };
+  
+  const startCaptureInterval = () => {
+    // Clear any existing interval
+    if (captureIntervalRef.current) {
+      clearInterval(captureIntervalRef.current);
+    }
+    
+    // Set up a new interval to capture screenshots for AI analysis
+    captureIntervalRef.current = setInterval(() => {
+      captureScreenshot();
+    }, 10000); // Every 10 seconds
+  };
+  
+  const captureScreenshot = () => {
+    if (!videoRef.current || !isSharing) return;
+    
+    try {
+      // Create a canvas element
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      
+      // Draw the current video frame to the canvas
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        
+        // Convert to base64 for sending to AI service
+        const screenshotBase64 = canvas.toDataURL('image/jpeg', 0.8);
+        
+        // Here we would send the screenshot to the Vision AI service
+        // For now, just log that we captured a screenshot
+        console.log("Captured screenshot for AI analysis", screenshotBase64.slice(0, 50) + "...");
+      }
+    } catch (error) {
+      console.error("Error capturing screenshot:", error);
+    }
+  };
+  
+  // Capture screenshot on demand (for immediate analysis)
+  const captureAndAnalyzeNow = () => {
+    if (!videoRef.current || !isSharing) {
+      toast.error("No screen is being shared. Start screen sharing first.");
+      return;
+    }
+    
+    try {
+      // Create a canvas element
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      
+      // Draw the current video frame to the canvas
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        
+        // Convert to base64 for sending to AI service
+        const screenshotBase64 = canvas.toDataURL('image/jpeg', 0.7);
+        
+        // In a real implementation, we would send this to Gemini Vision API
+        // For now, simulate an AI response
+        setIsGenerating(true);
+        
+        // Simulate AI analysis time
+        setTimeout(() => {
+          // Add a simulated AI response about the chart
+          addMessage({
+            id: `assistant-${Date.now()}`,
+            role: "assistant",
+            content: "I've analyzed your chart and I notice a potential double bottom pattern forming. The price is testing a key support level at the current position. Volume is increasing on the recent upward move, which adds confirmation to the pattern. Consider watching for a breakout above the neckline before entering a long position.",
+            timestamp: new Date()
+          });
+          
+          setIsGenerating(false);
+        }, 2000);
+      }
+    } catch (error) {
+      console.error("Error capturing and analyzing screenshot:", error);
+      toast.error("Failed to analyze screen. Please try again.");
+    }
+  };
+  
+  const sendMessage = () => {
+    if (!input.trim()) return;
+    
+    // Add user message
+    const userMessage: Message = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: input,
+      timestamp: new Date(),
+    };
+    
+    addMessage(userMessage);
+    setInput("");
+    
+    // Generate AI response
+    setIsGenerating(true);
+    
+    // If screen is being shared, capture a screenshot for context
+    if (isSharing && videoRef.current) {
+      captureScreenshot();
+    }
+    
+    // Simulate AI thinking time
+    setTimeout(() => {
+      generateResponse(input);
+      setIsGenerating(false);
+    }, 1500);
+  };
+  
+  const generateResponse = (question: string) => {
+    // Check for Gemini API key in localStorage
+    const geminiKey = localStorage.getItem('gemini_api_key');
+    
+    if (geminiKey) {
+      // If we had actual integration with Gemini Vision API, we would use it here
+      // For now, simulate a response based on the question
+      simulateGeminiResponse(question);
+    } else {
+      // Simulate a response without API
+      simulateLocalResponse(question);
+      // Show notification to add API key
+      toast.info(
+        "For more advanced AI analysis, add your Gemini API key in settings.", 
+        { duration: 5000 }
+      );
+    }
+  };
+  
+  const simulateGeminiResponse = (question: string) => {
+    const lowerQuestion = question.toLowerCase();
+    let response = "";
+    
+    if (isSharing) {
+      // If screen is being shared, pretend we're analyzing the chart
+      if (lowerQuestion.includes("pattern") || lowerQuestion.includes("see")) {
+        response = "Based on the chart you're sharing, I can see a consolidation pattern forming with decreasing volume. This often precedes a significant move. The key levels to watch are the resistance at the upper boundary and support at the lower boundary of the pattern.";
+      } 
+      else if (lowerQuestion.includes("indicator") || lowerQuestion.includes("rsi") || lowerQuestion.includes("macd")) {
+        response = "Looking at the indicators on your chart, the RSI is currently at 58, which is neutral but leaning bullish. The MACD shows a recent bullish crossover, indicating potential upward momentum. Consider waiting for confirmation before making trading decisions based on these signals.";
+      }
+      else if (lowerQuestion.includes("trend") || lowerQuestion.includes("direction")) {
+        response = "The overall trend on your chart appears to be bullish in the intermediate term, with higher lows forming. However, there's significant resistance overhead that could limit upside in the short term. The 200-day moving average is still supporting price action from below.";
+      }
+      else if (lowerQuestion.includes("support") || lowerQuestion.includes("resistance")) {
+        response = "I've identified these key levels on your chart: Support at the recent low (approximately at the bottom third of your chart), and resistance at the recent swing high (at the top quarter of your chart). There's also an intermediate resistance level at the midpoint where price has recently struggled to break through.";
+      }
+      else {
+        response = "I've analyzed your shared chart and notice that price is currently in a period of consolidation. Volume is decreasing during this consolidation, which often precedes a significant move. Keep an eye on a breakout from this range, as it could indicate the next directional move.";
+      }
+    } else {
+      // Generic responses if no screen is shared
+      if (lowerQuestion.includes("how") && lowerQuestion.includes("work")) {
+        response = "To use this feature, click the 'Start Screen Share' button above to share your trading charts or platform. Once shared, I can analyze patterns, indicators, and market structure to provide insights. You can ask specific questions about what you're seeing on the charts.";
+      }
+      else if (lowerQuestion.includes("pattern") || lowerQuestion.includes("chart")) {
+        response = "I'd be happy to analyze chart patterns for you, but I need to see your screen first. Click the 'Start Screen Share' button above to share your trading charts with me.";
+      }
+      else {
+        response = "I'm here to help analyze your trading charts and screens. To get started, click the 'Start Screen Share' button above so I can see what you're looking at. Then, I can provide specific insights about patterns, indicators, or trading opportunities.";
+      }
+    }
+    
+    const aiMessage: Message = {
+      id: `assistant-${Date.now()}`,
+      role: "assistant",
+      content: response,
+      timestamp: new Date(),
+    };
+    
+    addMessage(aiMessage);
+  };
+  
+  const simulateLocalResponse = (question: string) => {
+    const response = "To provide a detailed analysis of your charts and trading setup, I need access to the Gemini Vision API. You can add your API key in the settings to enable this feature. For now, I can offer general trading advice but cannot analyze specific visual elements from your screen.";
+    
+    const aiMessage: Message = {
+      id: `assistant-${Date.now()}`,
+      role: "assistant",
+      content: response,
+      timestamp: new Date(),
+    };
+    
+    addMessage(aiMessage);
+  };
+  
+  const addMessage = (message: Message) => {
+    setMessages(prev => [...prev, message]);
+  };
+  
+  const startVoiceRecording = async () => {
+    try {
+      // If already recording, stop it first
+      if (isRecording && mediaRecorderRef.current) {
+        stopVoiceRecording();
+        return;
+      }
+      
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
+      };
+      
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        // In a real implementation, we would send this to an STT service
+        // For now, simulate a successful transcription
+        
+        // Simulate successful transcription
+        setInput("Analyze the current chart pattern and key support/resistance levels");
+        
+        // Clean up
+        stream.getTracks().forEach(track => track.stop());
+        setIsRecording(false);
+      };
+      
+      mediaRecorder.start();
+      setIsRecording(true);
+      
+      // Automatically stop recording after 10 seconds
+      setTimeout(() => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+          stopVoiceRecording();
+        }
+      }, 10000);
+      
+    } catch (error) {
+      console.error("Error starting voice recording:", error);
+      toast.error("Failed to access microphone. Please check permissions.");
+      setIsRecording(false);
+    }
+  };
+  
+  const stopVoiceRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
+  };
+  
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+  
+  const exportConversation = () => {
+    const conversationText = messages
+      .map(msg => `${msg.role === "user" ? "You" : "AI"}: ${msg.content}`)
+      .join('\n\n');
+    
+    const blob = new Blob([conversationText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vision-ai-chat-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <Card className={cn("w-full h-full flex flex-col overflow-hidden", className)}>
+      <CardHeader className="px-4 py-3 border-b flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg">Vision AI Trading Assistant</CardTitle>
+          <div className="flex gap-2">
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={exportConversation}
+            >
+              <Download className="h-4 w-4 mr-1" />
+              Export
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col p-0 flex-grow overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 p-3 h-full">
+          {/* Screen Share Panel */}
+          <div className="relative flex flex-col border rounded-md overflow-hidden">
+            <div className="p-2 bg-slate-800 border-b flex items-center justify-between">
+              <h3 className="text-sm font-medium">Screen Share</h3>
+              <div className="flex gap-2">
+                {isSharing ? (
+                  <Button 
+                    size="sm" 
+                    variant="destructive"
+                    onClick={stopScreenShare}
+                  >
+                    <StopCircle className="h-4 w-4 mr-1" />
+                    Stop Sharing
+                  </Button>
+                ) : (
+                  <Button 
+                    size="sm" 
+                    variant="default"
+                    onClick={startScreenShare}
+                  >
+                    <Share2 className="h-4 w-4 mr-1" />
+                    Start Sharing
+                  </Button>
+                )}
+                
+                {isSharing && (
+                  <Button 
+                    size="sm" 
+                    variant="secondary"
+                    onClick={captureAndAnalyzeNow}
+                  >
+                    Analyze Now
+                  </Button>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex-grow bg-black flex items-center justify-center overflow-hidden">
+              {isSharing ? (
+                <video 
+                  ref={videoRef} 
+                  autoPlay 
+                  muted 
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <div className="text-center p-4 text-gray-400">
+                  <Share2 className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                  <p>Click "Start Sharing" to share your trading charts for AI analysis</p>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Chat Panel */}
+          <div className="flex flex-col border rounded-md overflow-hidden h-full">
+            <div className="p-2 bg-slate-800 border-b">
+              <h3 className="text-sm font-medium">AI Chat</h3>
+            </div>
+            
+            <ScrollArea ref={scrollAreaRef} className="flex-grow p-3">
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={cn(
+                      "flex items-start gap-3 rounded-lg p-3",
+                      message.role === "assistant" 
+                        ? "bg-slate-800/50" 
+                        : "bg-slate-700/30 ml-8"
+                    )}
+                  >
+                    {message.role === "assistant" && (
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-indigo-600 text-white">AI</AvatarFallback>
+                      </Avatar>
+                    )}
+                    <div className="flex-1">
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      <span className="text-xs text-slate-400 mt-1 block">
+                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                
+                {isGenerating && (
+                  <div className="flex items-start gap-3 rounded-lg p-3 bg-slate-800/50">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-indigo-600 text-white">AI</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex space-x-2 items-center">
+                        <div className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" />
+                        <div className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: "0.2s" }} />
+                        <div className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: "0.4s" }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+            
+            <div className="p-3 border-t mt-auto">
+              <div className="flex gap-2">
+                <Button
+                  size="icon"
+                  variant={isRecording ? "destructive" : "outline"}
+                  onClick={startVoiceRecording}
+                  className="flex-shrink-0"
+                >
+                  <Mic className="h-4 w-4" />
+                </Button>
+                <Input
+                  placeholder="Ask about your charts or trading setup..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  disabled={isGenerating}
+                />
+                <Button 
+                  size="icon"
+                  className="flex-shrink-0"
+                  onClick={sendMessage}
+                  disabled={!input.trim() || isGenerating}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

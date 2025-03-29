@@ -12,6 +12,7 @@ import { Leaderboard } from "@/components/ui/leaderboard";
 import { AIAssistant } from "@/components/ui/ai-assistant";
 import { AIMarketAnalysis } from "@/components/ui/ai-market-analysis";
 import { AdvancedAIAnalysis } from "@/components/ui/advanced-ai-analysis";
+import { EnhancedAIAssistant } from "@/components/ui/enhanced-ai-assistant";
 import { SignalsList } from "@/components/ui/signals-list";
 import { SmartTradePanel } from "@/components/ui/smart-trade-panel";
 import { CopyTradePanel } from "@/components/ui/copy-trade-panel";
@@ -333,6 +334,20 @@ function TradingSpaceContent() {
             <AIMarketAnalysis />
           </div>
         );
+      case "enhanced-ai":
+        return (
+          <div className="h-full relative">
+            <div className="absolute top-2 right-2 z-10">
+              <MicroTradingTipTrigger 
+                category="general" 
+                difficulty="advanced"
+                label="Enhanced AI Tips"
+                className="bg-black/30 hover:bg-black/40 text-xs px-2 py-1 rounded"
+              />
+            </div>
+            <EnhancedAIAssistant className="h-full" />
+          </div>
+        );
       case "signals":
         return (
           <div className="h-full relative">
@@ -592,6 +607,24 @@ function TradingSpaceContent() {
                     </div>
                   </Button>
                   
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="w-full justify-start text-left flex items-center gap-3 h-auto py-3"
+                    onClick={() => {
+                      setActivePanel("enhanced-ai");
+                      setShowAITools(false);
+                    }}
+                  >
+                    <div className="bg-indigo-100 dark:bg-indigo-900/30 p-2 rounded-full">
+                      <Sparkles size={18} className="text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div>
+                      <span className="block font-medium">Enhanced AI Assistant</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 block mt-0.5">AI with voice commands and screen sharing</span>
+                    </div>
+                  </Button>
+                  
 
                   
                   <Button 
@@ -765,6 +798,19 @@ function TradingSpaceContent() {
                 <div className="truncate">
                   <span className="block font-medium">Market Analysis</span>
                   <span className="text-xs text-gray-500 dark:text-gray-400 block">AI trading signals & analysis</span>
+                </div>
+              </Button>
+
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full justify-start text-left flex items-center gap-2"
+                onClick={() => setActivePanel("enhanced-ai")}
+              >
+                <Sparkles size={14} className="text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
+                <div className="truncate">
+                  <span className="block font-medium">Enhanced AI</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 block">Voice & screen sharing AI</span>
                 </div>
               </Button>
               
