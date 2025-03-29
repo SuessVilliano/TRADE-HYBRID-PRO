@@ -46,7 +46,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Other signal sources
   app.post("/api/v1/webhooks/Ec3lDNCfkpQtHNbWk16mA", receiveWebhook); // MNQ! - Hybrid AI - futures
-  app.post("/api/v1/webhooks/OXdqSQ0du1D7gFEEDBUsS", receiveWebhook); // EURUSD - Solaris AI - forex
+  
+  // Solaris AI forex signals
+  app.post("/api/v1/webhooks/OXdqSQ0du1D7gFEEDBUsS", receiveWebhook); // EURUSD & AUDUSD - Solaris AI - forex
   
   // Test webhooks for Cash Cow formats
   app.post("/api/test/webhook/cashcow", (req, res) => {

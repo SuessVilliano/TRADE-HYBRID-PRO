@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
 import { persist } from 'zustand/middleware';
-import { toast } from 'sonner';
+import { SignalNotificationService } from '../services/signal-notification-service';
 
 // Define the shape of a trading signal
 export interface TradingSignal {
@@ -29,10 +29,12 @@ interface SignalsState {
   loading: boolean;
   error: string | null;
   lastFetched: Date | null;
+  notificationsEnabled: boolean;
   fetchSignals: () => Promise<void>;
   markAsRead: (signalId: string) => void;
   markAllAsRead: () => void;
   clearSignals: () => void;
+  setNotificationsEnabled: (enabled: boolean) => void;
 }
 
 // Helper function to convert plain objects to class instances 
@@ -51,6 +53,7 @@ export const useSignals = create<SignalsState>()(
       loading: false,
       error: null,
       lastFetched: null,
+      notificationsEnabled: true, // Notifications enabled by default
       
       fetchSignals: async () => {
         set({ loading: true, error: null });
@@ -68,14 +71,16 @@ export const useSignals = create<SignalsState>()(
               !currentSignals.some(currentSignal => currentSignal.id === signal.id)
             );
             
-            // Show toast notification if there are new signals
-            if (newSignals.length > 0 && get().lastFetched !== null) {
-              toast.success(`${newSignals.length} new trading signal${newSignals.length === 1 ? '' : 's'} received`);
-              
-              // Optional: Play a notification sound for new signals
-              const audio = new Audio('/assets/sounds/notification.mp3');
-              audio.volume = 0.5;
-              audio.play().catch(err => console.log('Audio play failed:', err));
+            // Show toast notifications if there are new signals and notifications are enabled
+            if (newSignals.length > 0 && get().lastFetched !== null && get().notificationsEnabled) {
+              // If there's only one new signal, show a detailed notification
+              if (newSignals.length === 1) {
+                SignalNotificationService.showSignalNotification(newSignals[0]);
+              } 
+              // If there are multiple new signals, show a summary notification
+              else if (newSignals.length > 1) {
+                SignalNotificationService.showMultipleSignalsNotification(newSignals);
+              }
             }
             
             set({ 
@@ -113,13 +118,18 @@ export const useSignals = create<SignalsState>()(
       
       clearSignals: () => {
         set({ signals: [] });
+      },
+      
+      setNotificationsEnabled: (enabled: boolean) => {
+        set({ notificationsEnabled: enabled });
       }
     }),
     {
       name: 'trading-signals-storage',
       partialize: (state) => ({ 
         signals: state.signals,
-        lastFetched: state.lastFetched 
+        lastFetched: state.lastFetched,
+        notificationsEnabled: state.notificationsEnabled
       }),
     }
   )
@@ -146,4 +156,9 @@ export const useFilteredSignals = (
 export const useUnreadSignalCount = () => {
   const { signals } = useSignals();
   return signals.filter(signal => !signal.read).length;
+};
+
+// Helper function to show a signal notification manually
+export const showSignalNotification = (signal: TradingSignal) => {
+  SignalNotificationService.showSignalNotification(signal);
 };

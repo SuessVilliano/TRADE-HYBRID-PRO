@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { useAudio } from '@/lib/stores/useAudio';
 import { PopupContainer } from './popup-container';
 import { SignalTestButtons } from './signal-test-buttons';
+import { useSignals } from '@/lib/stores/useSignals';
 
 /**
  * Settings Popup Component
@@ -139,6 +140,9 @@ export function SettingsPopup({
     setMarketAlerts(true);
     setTradingUpdates(true);
     setCommunityMessages(true);
+    
+    // Signal Notifications
+    useSignals().setNotificationsEnabled(true);
   };
 
   // Save settings (simulation)
@@ -610,6 +614,20 @@ export function SettingsPopup({
                         checked={tradingUpdates} 
                         onCheckedChange={setTradingUpdates}
                         disabled={!notifications} 
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">Signal Notifications</p>
+                        <p className="text-sm text-muted-foreground">
+                          Real-time trade signal toasts
+                        </p>
+                      </div>
+                      <Switch 
+                        checked={useSignals().notificationsEnabled} 
+                        onCheckedChange={useSignals().setNotificationsEnabled}
+                        disabled={!notifications || !tradingUpdates} 
                       />
                     </div>
                     

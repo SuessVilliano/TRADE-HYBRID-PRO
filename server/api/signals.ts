@@ -200,12 +200,47 @@ function processCashCowSignal(payload: any, res: Response) {
       }
     }
     
-    // Set confidence level based on signal source
-    let confidence = 75; // Default confidence
+    // Set confidence level based on signal source and quality factors
+    // Default base confidence levels per source
+    let confidence = 75; // Default baseline
     
+    // Adjust base confidence by source
     if (source === 'Hybrid AI') {
-      confidence = 85; // Higher confidence for AI signals
+      confidence = 85; // Higher confidence for Hybrid AI signals
+    } else if (source === 'Paradox AI') {
+      confidence = 80; // Slightly higher confidence for Paradox AI
+    } else if (source === 'Solaris AI') {
+      confidence = 78; // Slightly higher confidence for Solaris AI forex signals
     }
+    
+    // Adjust confidence based on signal quality factors
+    
+    // 1. Presence of multiple take profit levels increases confidence
+    if (takeProfit1 > 0 && takeProfit2 > 0 && takeProfit3 > 0) {
+      confidence += 5; // All three take profits specified
+    } else if (takeProfit1 > 0 && takeProfit2 > 0) {
+      confidence += 3; // Two take profits specified
+    }
+    
+    // 2. Presence of stop loss increases confidence
+    if (stopLoss > 0) {
+      confidence += 3;
+    }
+    
+    // 3. Confidence boost for signals with risk-reward ratio data
+    if (indicators["Risk:Reward"]) {
+      const rr = parseFloat(indicators["Risk:Reward"]);
+      if (rr >= 3) {
+        confidence += 5; // Excellent R:R ratio
+      } else if (rr >= 2) {
+        confidence += 3; // Good R:R ratio
+      } else if (rr >= 1) {
+        confidence += 1; // Acceptable R:R ratio
+      }
+    }
+    
+    // Cap confidence at 95 (nothing is 100% certain in trading)
+    confidence = Math.min(confidence, 95);
     
     // Get timestamp from payload if available, otherwise use current time
     let timestamp = new Date();
@@ -303,8 +338,22 @@ export const receiveWebhook = (req: Request, res: Response) => {
       source = 'Hybrid AI';
       strategy = 'MNQ Futures Signals';
     } else if (url.includes('OXdqSQ0du1D7gFEEDBUsS')) {
+      // Solaris AI forex signals can include multiple currency pairs
       source = 'Solaris AI';
-      strategy = 'EURUSD Forex Signals';
+      
+      // Determine specific forex pair based on symbol in payload
+      if (payload.symbol) {
+        const symbol = payload.symbol.toUpperCase();
+        if (symbol.includes('EURUSD')) {
+          strategy = 'EURUSD Forex Signals';
+        } else if (symbol.includes('AUDUSD')) {
+          strategy = 'AUDUSD Forex Signals';
+        } else {
+          strategy = 'Forex Signals'; // Generic fallback
+        }
+      } else {
+        strategy = 'Forex Signals';
+      }
     } else if (url.includes('taskmagic') || url.includes('pabbly')) {
       // Generic sources
       source = payload.source || 'Cash Cow';
@@ -362,6 +411,81 @@ export const receiveWebhook = (req: Request, res: Response) => {
     );
     console.log(`Signal action: ${action}`);
 
+    // Calculate confidence score based on signal quality
+    // Start with a base confidence level based on the source
+    let confidence = 75; // Default baseline
+    
+    // Adjust base confidence by source
+    if (source === 'Hybrid AI') {
+      confidence = 85; // Higher confidence for Hybrid AI signals
+    } else if (source === 'Paradox AI') {
+      confidence = 80; // Slightly higher confidence for Paradox AI
+    } else if (source === 'Solaris AI') {
+      confidence = 78; // Slightly higher confidence for Solaris AI forex signals
+    }
+    
+    // If the payload already has a confidence value, use it as the base instead
+    if (payload.confidence !== undefined) {
+      const providedConfidence = parseFloat(payload.confidence);
+      if (!isNaN(providedConfidence)) {
+        confidence = providedConfidence;
+      }
+    }
+    
+    // Adjust confidence based on signal quality factors
+    
+    // 1. Presence of multiple take profit levels increases confidence
+    if (takeProfit1 > 0 && takeProfit2 > 0 && takeProfit3 > 0) {
+      confidence += 5; // All three take profits specified
+    } else if (takeProfit1 > 0 && takeProfit2 > 0) {
+      confidence += 3; // Two take profits specified
+    }
+    
+    // 2. Presence of stop loss increases confidence
+    if (stopLoss > 0) {
+      confidence += 3;
+    }
+    
+    // 3. Calculate risk:reward ratio if both SL and TP1 exist
+    if (stopLoss > 0 && takeProfit1 > 0 && entryPrice > 0) {
+      const indicators = payload.indicators || {};
+      
+      // Calculate and add R:R to indicators if not already present
+      if (!indicators["Risk:Reward"]) {
+        let riskPips = 0;
+        let rewardPips = 0;
+        
+        if (action === 'buy') {
+          riskPips = Math.abs(entryPrice - stopLoss);
+          rewardPips = Math.abs(takeProfit1 - entryPrice);
+        } else {
+          riskPips = Math.abs(stopLoss - entryPrice);
+          rewardPips = Math.abs(entryPrice - takeProfit1);
+        }
+        
+        if (riskPips > 0) {
+          const rr = (rewardPips / riskPips).toFixed(2);
+          indicators["Risk:Reward"] = rr;
+          
+          // Adjust confidence based on R:R
+          const rrValue = parseFloat(rr);
+          if (rrValue >= 3) {
+            confidence += 5; // Excellent R:R ratio
+          } else if (rrValue >= 2) {
+            confidence += 3; // Good R:R ratio
+          } else if (rrValue >= 1) {
+            confidence += 1; // Acceptable R:R ratio
+          }
+        }
+      }
+      
+      // Use the indicators object with potentially added R:R
+      payload.indicators = indicators;
+    }
+    
+    // Cap confidence at 95 (nothing is 100% certain in trading)
+    confidence = Math.min(confidence, 95);
+    
     // Create a new signal object with required fields
     const signal = {
       id: randomUUID(),
@@ -377,7 +501,7 @@ export const receiveWebhook = (req: Request, res: Response) => {
       source: payload.source || source,
       strategy: strategy,
       message: payload.message || `${action.toUpperCase()} signal on ${symbol}`,
-      confidence: parseFloat(payload.confidence || '50'),
+      confidence: confidence,
       timeframe: payload.timeframe || payload.interval || '1d',
       indicators: payload.indicators || {},
       read: false
