@@ -5,16 +5,13 @@ import { Input } from './input';
 import { Label } from './label';
 import { ContextualTooltip } from './contextual-tooltip';
 import { Share2, Copy, CheckCircle, ArrowUpRight, Users } from 'lucide-react';
-import { useWeb3React } from '@web3-react/core';
-import { Web3Provider } from '@ethersproject/providers';
+import { useSolanaAuth } from '@/lib/context/SolanaAuthProvider';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { AffiliateService } from '@/lib/services/affiliate-service';
 
 export function AffiliateSystem() {
-  const web3Context = useWeb3React<Web3Provider>();
-  const account = web3Context.account;
-  // The 'active' property might not exist on the type, but it could be available at runtime
-  // or we can use isActive, chainId or other properties to check connection status
-  const isConnected = web3Context.account && web3Context.chainId;
+  const { publicKey, connected } = useWallet();
+  const { isWalletAuthenticated, walletAddress } = useSolanaAuth();
   const [referralLink, setReferralLink] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [referrals, setReferrals] = useState<any[]>([]);
@@ -24,19 +21,20 @@ export function AffiliateSystem() {
 
   // Generate a referral link based on connected wallet or randomly
   useEffect(() => {
-    if (isConnected && account) {
+    if (connected && publicKey) {
       // Use the AffiliateService to generate consistent links with the proper domain
-      setReferralLink(AffiliateService.generateReferralLink(account.substring(2, 10)));
+      const pubKeyString = publicKey.toString();
+      setReferralLink(AffiliateService.generateReferralLink(pubKeyString.substring(0, 8)));
       
       // Simulate loading referral data
       // In a real implementation, you would fetch this from an API
-      loadReferralData(account);
+      loadReferralData(pubKeyString);
     } else {
       // Use a temporary random ID if not connected
       const randomId = Math.random().toString(36).substring(2, 10);
       setReferralLink(AffiliateService.generateReferralLink(randomId));
     }
-  }, [isConnected, account]);
+  }, [connected, publicKey]);
   
   // Show tooltip on first visit
   useEffect(() => {
