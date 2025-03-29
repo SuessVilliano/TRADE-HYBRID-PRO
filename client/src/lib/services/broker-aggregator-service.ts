@@ -4,6 +4,8 @@ import { createTradeLockerService } from './tradelocker-service';
 import { createTradingViewService, TradingViewService } from './tradingview-service';
 import { createNinjaTraderService } from './ninjatrader-service';
 import { createTradovateService } from './tradovate-service';
+import { createTastyworksService } from './tastyworks-service';
+import { createTradeStationService } from './tradestation-service';
 
 // Storage key for API credentials
 const API_KEYS_STORAGE_KEY = 'trade-hybrid-api-keys';
@@ -173,6 +175,43 @@ class BrokerAggregatorService {
             success = true;
           }
           break;
+
+        case 'tastyworks':
+          if (credentials.apiKey && credentials.accountId) {
+            // Convert isTestnet to boolean with a default of true
+            const isTestnetValue = typeof credentials.isTestnet === 'string' ? 
+              credentials.isTestnet !== 'false' : 
+              credentials.isTestnet !== false;
+            console.log(`Connecting to Tastyworks with ${isTestnetValue ? 'demo' : 'live'} mode`);
+            const tastyworksService = createTastyworksService(
+              credentials.apiKey,
+              credentials.accountId,
+              isTestnetValue
+            );
+            await tastyworksService.connect();
+            this.brokerServices.set(brokerId, tastyworksService);
+            success = true;
+          }
+          break;
+          
+        case 'tradestation':
+          if (credentials.apiKey && credentials.accessToken && credentials.accountId) {
+            // Convert isTestnet to boolean with a default of true
+            const isTestnetValue = typeof credentials.isTestnet === 'string' ? 
+              credentials.isTestnet !== 'false' : 
+              credentials.isTestnet !== false;
+            console.log(`Connecting to TradeStation with ${isTestnetValue ? 'simulation' : 'live'} mode`);
+            const tradestationService = createTradeStationService(
+              credentials.apiKey,
+              credentials.accessToken,
+              credentials.accountId,
+              isTestnetValue
+            );
+            await tradestationService.connect();
+            this.brokerServices.set(brokerId, tradestationService);
+            success = true;
+          }
+          break;
           
         // Handle other broker types here as they are implemented
         // For now, succeed for any other brokers to maintain existing functionality
@@ -208,7 +247,8 @@ class BrokerAggregatorService {
           console.log(`Disconnected from TradingView service`);
         } 
         // If it's a BrokerService with active market data subscriptions
-        else if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate') && service) {
+        else if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate' || 
+                  brokerId === 'tastyworks' || brokerId === 'tradestation') && service) {
           const brokerService = service as BrokerService;
           console.log(`Disconnected from ${brokerId} service`);
         }
@@ -275,8 +315,9 @@ class BrokerAggregatorService {
       if (this.brokerServices.has(brokerId)) {
         const service = this.brokerServices.get(brokerId);
         
-        // For any broker service (TradeLocker, NinjaTrader, Tradovate)
-        if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate') && service) {
+        // For any broker service (TradeLocker, NinjaTrader, Tradovate, Tastyworks, TradeStation)
+        if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate' || 
+             brokerId === 'tastyworks' || brokerId === 'tradestation') && service) {
           console.log(`Getting real account balances from ${brokerId}`);
           // Use the broker service to get balances
           const brokerService = service as BrokerService;
@@ -346,7 +387,8 @@ class BrokerAggregatorService {
       if (this.brokerServices.has(brokerId)) {
         const service = this.brokerServices.get(brokerId);
         
-        if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate') && service) {
+        if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate' || 
+             brokerId === 'tastyworks' || brokerId === 'tradestation') && service) {
           console.log(`Getting market data from ${brokerId} for ${symbol}`);
           // Use the broker service to get market data
           const brokerService = service as BrokerService;
@@ -463,7 +505,8 @@ class BrokerAggregatorService {
       }
       
       // Check if we have a real service implementation for this broker
-      if (this.brokerServices.has(brokerId) && (brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate')) {
+      if (this.brokerServices.has(brokerId) && (brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate' ||
+          brokerId === 'tastyworks' || brokerId === 'tradestation')) {
         const service = this.brokerServices.get(brokerId) as BrokerService;
         
         console.log(`Placing real order with ${brokerId} for ${order.symbol}`);
@@ -528,7 +571,8 @@ class BrokerAggregatorService {
       if (this.brokerServices.has(brokerId)) {
         const service = this.brokerServices.get(brokerId);
         
-        if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate') && service) {
+        if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate' || 
+             brokerId === 'tastyworks' || brokerId === 'tradestation') && service) {
           console.log(`Getting real positions from ${brokerId}`);
           // Use the broker service to get positions
           const brokerService = service as BrokerService;
@@ -583,7 +627,8 @@ class BrokerAggregatorService {
       if (this.brokerServices.has(brokerId)) {
         const service = this.brokerServices.get(brokerId);
         
-        if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate') && service) {
+        if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate' || 
+             brokerId === 'tastyworks' || brokerId === 'tradestation') && service) {
           console.log(`Getting real order history from ${brokerId}`);
           // Use the broker service to get order history
           const brokerService = service as BrokerService;

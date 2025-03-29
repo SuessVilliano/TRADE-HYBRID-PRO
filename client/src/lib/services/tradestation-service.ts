@@ -1,139 +1,279 @@
-import { BrokerService, MarketData, AccountBalance, BrokerPosition, OrderHistory } from './broker-service';
+/**
+ * TradeStation Service
+ * This service handles interactions with the TradeStation API for multi-asset trading
+ */
 
+import { MarketData, BrokerService, AccountBalance, BrokerPosition, OrderHistory } from './broker-service';
+
+// Interfaces for TradeStation
+interface TradeStationConfig {
+  apiKey: string;
+  accessToken: string;
+  accountId: string;
+  baseUrl: string;
+  isTestnet: boolean;
+}
+
+// Types for TradeStation-specific responses
+interface TradeStationOrderHistory {
+  orderId: string;
+  symbol: string;
+  side: 'buy' | 'sell';
+  quantity: number;
+  price: number;
+  timestamp: number;
+  status: string;
+}
+
+interface TradeStationAccountBalance {
+  cash: number;
+  positions: number;
+  buyingPower: number;
+  maintenanceMargin: number;
+}
+
+interface TradeStationBrokerPosition {
+  symbol: string;
+  quantity: number;
+  averagePrice: number;
+  currentPrice: number;
+  pnl: number;
+}
+
+/**
+ * TradeStation Service implementation for multi-asset trading
+ */
 export class TradeStationService implements BrokerService {
-  private token: string | null = null;
-  private refreshToken: string | null = null;
-  private baseUrl = 'https://api.tradestation.com/v3';
-  private subscriptions = new Map<string, number>();
-  private accountId: string | null = null;
+  private apiKey: string;
+  private accessToken: string;
+  private accountId: string;
+  private baseUrl: string = 'https://api.tradestation.com/v3';
+  private isConnected: boolean = false;
+  private headers: { [key: string]: string } = {};
+  private tokenExpiry: number = 0;
+  private isTestnet: boolean = true;
 
-  constructor(
-    private clientId: string,
-    private clientSecret: string,
-    private redirectUri: string = 'https://app.tradehybrid.co/auth/callback'
-  ) {}
+  constructor(apiKey: string, accessToken: string, accountId: string, isTestnet: boolean = true) {
+    this.apiKey = apiKey;
+    this.accessToken = accessToken;
+    this.accountId = accountId;
+    this.isTestnet = isTestnet;
 
+    // Set the base URL based on whether we're using the simulation mode or not
+    if (isTestnet) {
+      this.baseUrl = 'https://sim-api.tradestation.com/v3';
+    }
+
+    this.updateHeaders();
+  }
+
+  private updateHeaders(): void {
+    // Set up default headers for API requests
+    this.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.accessToken}`,
+      'Accept': 'application/json',
+      'X-TS-Client-ID': this.apiKey,
+    };
+  }
+
+  /**
+   * Connect to the TradeStation API
+   */
   async connect(): Promise<void> {
     try {
-      console.log('Connecting to TradeStation API...');
+      // Authenticate with the TradeStation API
+      console.log(`Connecting to TradeStation API, account ${this.accountId}, simulation: ${this.isTestnet ? 'yes' : 'no'}`);
       
-      // For a real implementation, this would use the OAuth2 flow
-      // Here we'll simulate it by directly setting tokens for demo purposes
-      
-      // Simplified for demo, in a real app you would:
-      // 1. Redirect user to TradeStation auth page
-      // 2. Get authorization code from redirect
-      // 3. Exchange code for tokens
-      
-      // Simulate token response
-      this.token = 'simulated_access_token';
-      this.refreshToken = 'simulated_refresh_token';
-      
-      // Get user accounts
-      const accountsResponse = await this.request('/brokerage/accounts');
-      if (accountsResponse.Accounts && accountsResponse.Accounts.length > 0) {
-        this.accountId = accountsResponse.Accounts[0].AccountID;
-        console.log(`Successfully connected to TradeStation API with account ID: ${this.accountId}`);
-      } else {
-        throw new Error('No accounts found for TradeStation user');
+      // Validate token and account
+      const tokenValidation = await this.validateToken();
+      if (!tokenValidation.valid) {
+        throw new Error('Invalid or expired TradeStation access token');
       }
+      
+      // Set token expiry
+      this.tokenExpiry = tokenValidation.expiresAt;
+      
+      // Validate account
+      const accountValid = await this.validateAccount();
+      if (!accountValid) {
+        throw new Error(`Invalid TradeStation account ID: ${this.accountId}`);
+      }
+
+      // Set connected state
+      this.isConnected = true;
+      console.log('Successfully connected to TradeStation API');
     } catch (error) {
       console.error('Error connecting to TradeStation:', error);
+      this.isConnected = false;
       throw error;
     }
   }
 
-  private async request(endpoint: string, options: RequestInit = {}) {
-    if (!this.token) {
-      throw new Error('Not connected to TradeStation API');
-    }
-
-    const url = `${this.baseUrl}${endpoint}`;
-    const headers = {
-      'Authorization': `Bearer ${this.token}`,
-      'Content-Type': 'application/json',
-      ...options.headers
-    };
-
-    const response = await fetch(url, {
-      ...options,
-      headers
-    });
-
-    // Handle token refresh if needed
-    if (response.status === 401 && this.refreshToken) {
-      await this.refreshAccessToken();
-      return this.request(endpoint, options);
-    }
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`TradeStation API error: ${response.status} - ${errorText}`);
-    }
-
-    return response.json();
-  }
-
-  private async refreshAccessToken() {
+  /**
+   * Validate the access token
+   */
+  private async validateToken(): Promise<{ valid: boolean; expiresAt: number }> {
     try {
-      const tokenUrl = 'https://api.tradestation.com/v3/Security/Authorize';
-      const response = await fetch(tokenUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          grant_type: 'refresh_token',
-          client_id: this.clientId,
-          client_secret: this.clientSecret,
-          refresh_token: this.refreshToken!,
-          redirect_uri: this.redirectUri
-        }).toString()
+      // Check if the token is valid
+      const response = await fetch(`${this.baseUrl}/users/me`, {
+        method: 'GET',
+        headers: this.headers
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to refresh token: ${response.statusText}`);
+        return { valid: false, expiresAt: 0 };
       }
 
-      const data = await response.json();
-      this.token = data.access_token;
-      this.refreshToken = data.refresh_token;
+      // Token is valid
+      // In a real implementation, you would extract the expiration time from the token or response
+      // For now, set it to expire in 1 hour
+      const expiresAt = Date.now() + 3600000;
+      return { valid: true, expiresAt };
     } catch (error) {
-      console.error('Error refreshing TradeStation token:', error);
+      console.error('Error validating TradeStation token:', error);
+      return { valid: false, expiresAt: 0 };
+    }
+  }
+
+  /**
+   * Validate the account ID
+   */
+  private async validateAccount(): Promise<boolean> {
+    try {
+      // Check if the account exists and is accessible
+      const response = await fetch(`${this.baseUrl}/brokerage/accounts/${this.accountId}`, {
+        method: 'GET',
+        headers: this.headers
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error('Error validating TradeStation account:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Ensure the token is valid, refresh if needed
+   */
+  private async ensureValidToken(): Promise<void> {
+    // Check if token is expired
+    if (Date.now() >= this.tokenExpiry) {
+      // In a real implementation, you would refresh the token here
+      throw new Error('TradeStation token expired and refresh not implemented');
+    }
+  }
+
+  /**
+   * Get order history from TradeStation
+   */
+  async getOrderHistory(): Promise<OrderHistory[]> {
+    this.ensureConnected();
+    await this.ensureValidToken();
+
+    try {
+      // Fetch order history from TradeStation
+      const response = await fetch(`${this.baseUrl}/brokerage/accounts/${this.accountId}/orders`, {
+        method: 'GET',
+        headers: this.headers
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to fetch order history: ${errorData.message || response.statusText}`);
+      }
+
+      // Convert TradeStation order data to our format
+      const tradestationOrders = await response.json();
+      return tradestationOrders.Orders.map((order: any) => ({
+        orderId: order.OrderID,
+        symbol: order.Symbol,
+        side: order.BuyOrSell.toLowerCase() as 'buy' | 'sell',
+        quantity: order.Quantity,
+        price: order.LimitPrice || order.StopPrice || order.ExecutedPrice || 0,
+        timestamp: new Date(order.DateTime).getTime(),
+        status: this.mapOrderStatus(order.Status),
+        broker: 'tradestation'
+      }));
+    } catch (error) {
+      console.error('Error fetching TradeStation order history:', error);
       throw error;
     }
   }
 
+  /**
+   * Get account balance from TradeStation
+   */
   async getBalance(): Promise<AccountBalance> {
-    if (!this.accountId) {
-      throw new Error('Account ID not available. Connect to TradeStation first.');
+    this.ensureConnected();
+    await this.ensureValidToken();
+
+    try {
+      // Fetch account balance from TradeStation
+      const response = await fetch(`${this.baseUrl}/brokerage/accounts/${this.accountId}/balances`, {
+        method: 'GET',
+        headers: this.headers
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to fetch account balance: ${errorData.message || response.statusText}`);
+      }
+
+      // Convert TradeStation balance data to our format
+      const tradestationBalance = await response.json();
+      const cash = tradestationBalance.CashBalance || 0;
+      const positions = (tradestationBalance.EquityValue || 0) - cash;
+      
+      return {
+        cash: cash,
+        positions: positions,
+        total: cash + positions
+      };
+    } catch (error) {
+      console.error('Error fetching TradeStation account balance:', error);
+      throw error;
     }
-    
-    const data = await this.request(`/brokerage/accounts/${this.accountId}/balances`);
-    
-    return {
-      total: data.BalancesForDisplay.AccountValue,
-      cash: data.BalancesForDisplay.CashBalance,
-      positions: data.BalancesForDisplay.AccountValue - data.BalancesForDisplay.CashBalance
-    };
   }
 
+  /**
+   * Get positions from TradeStation
+   */
   async getPositions(): Promise<BrokerPosition[]> {
-    if (!this.accountId) {
-      throw new Error('Account ID not available. Connect to TradeStation first.');
-    }
-    
-    const data = await this.request(`/brokerage/accounts/${this.accountId}/positions`);
-    
-    return data.Positions.map((position: any) => {
-      return {
+    this.ensureConnected();
+    await this.ensureValidToken();
+
+    try {
+      // Fetch positions from TradeStation
+      const response = await fetch(`${this.baseUrl}/brokerage/accounts/${this.accountId}/positions`, {
+        method: 'GET',
+        headers: this.headers
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to fetch positions: ${errorData.message || response.statusText}`);
+      }
+
+      // Convert TradeStation position data to our format
+      const tradestationPositions = await response.json();
+      return tradestationPositions.Positions.map((position: any) => ({
         symbol: position.Symbol,
-        quantity: Math.abs(position.Quantity),
+        quantity: position.Quantity,
         averagePrice: position.AveragePrice,
         currentPrice: position.LastPrice,
-        pnl: position.UnrealizedProfitLoss
-      };
-    });
+        pnl: position.UnrealizedPL
+      }));
+    } catch (error) {
+      console.error('Error fetching TradeStation positions:', error);
+      throw error;
+    }
   }
 
+  /**
+   * Place an order with TradeStation
+   */
   async placeOrder(order: {
     symbol: string;
     side: 'buy' | 'sell';
@@ -141,109 +281,155 @@ export class TradeStationService implements BrokerService {
     type: 'market' | 'limit';
     limitPrice?: number;
   }): Promise<string> {
-    if (!this.accountId) {
-      throw new Error('Account ID not available. Connect to TradeStation first.');
-    }
-    
-    const orderData = {
-      AccountID: this.accountId,
-      Symbol: order.symbol,
-      Quantity: order.quantity,
-      OrderType: order.type === 'market' ? 'Market' : 'Limit',
-      TradeAction: order.side === 'buy' ? 'Buy' : 'Sell',
-      TimeInForce: {
-        Duration: 'DAY'
-      }
-    };
-    
-    if (order.type === 'limit' && order.limitPrice) {
-      orderData['LimitPrice'] = order.limitPrice;
-    }
-    
-    const response = await this.request('/orders', {
-      method: 'POST',
-      body: JSON.stringify(orderData)
-    });
-    
-    return response.Orders[0].OrderID;
-  }
+    this.ensureConnected();
+    await this.ensureValidToken();
 
-  async getOrderHistory(): Promise<OrderHistory[]> {
-    if (!this.accountId) {
-      throw new Error('Account ID not available. Connect to TradeStation first.');
-    }
-    
-    const data = await this.request(`/brokerage/accounts/${this.accountId}/orders`);
-    
-    return data.Orders.map((order: any) => {
-      return {
-        orderId: order.OrderID,
-        symbol: order.Symbol,
-        side: order.OrderAction.toLowerCase(),
-        quantity: order.Quantity,
-        price: order.OrderType === 'Market' ? 0 : order.LimitPrice || 0,
-        status: this.mapOrderStatus(order.Status),
-        timestamp: new Date(order.EnteredDateTime).getTime()
+    try {
+      // Prepare the order payload for TradeStation
+      const orderPayload = {
+        AccountID: this.accountId,
+        Symbol: order.symbol,
+        Quantity: order.quantity,
+        OrderType: order.type === 'market' ? 'Market' : 'Limit',
+        TradeAction: order.side === 'buy' ? 'Buy' : 'Sell',
+        LimitPrice: order.type === 'limit' ? order.limitPrice : undefined,
+        Duration: 'Day'
       };
-    });
-  }
 
-  private mapOrderStatus(tsStatus: string): 'filled' | 'pending' | 'cancelled' {
-    const statusMap: Record<string, 'filled' | 'pending' | 'cancelled'> = {
-      'FLL': 'filled',
-      'PND': 'pending',
-      'CAN': 'cancelled',
-      'OUT': 'pending',
-      'REJ': 'cancelled',
-      'EXP': 'cancelled'
-    };
-    
-    return statusMap[tsStatus] || 'pending';
-  }
+      // Place the order with TradeStation
+      const response = await fetch(`${this.baseUrl}/brokerage/accounts/${this.accountId}/orders`, {
+        method: 'POST',
+        headers: this.headers,
+        body: JSON.stringify(orderPayload)
+      });
 
-  subscribeToMarketData(symbol: string, callback: (data: MarketData) => void): void {
-    // Check if we're already subscribed
-    if (this.subscriptions.has(symbol)) {
-      return;
-    }
-    
-    console.log(`Subscribing to TradeStation market data for ${symbol}`);
-    
-    // For real implementation, we'd use TradeStation's streaming API
-    // For now, simulate with an interval to fetch quotes
-    const interval = setInterval(async () => {
-      try {
-        const response = await this.request(`/marketdata/quotes/${symbol}`);
-        
-        if (response.Quotes && response.Quotes.length > 0) {
-          const quote = response.Quotes[0];
-          const marketData: MarketData = {
-            symbol: symbol,
-            price: (quote.Bid + quote.Ask) / 2, // Midpoint price
-            timestamp: new Date().getTime(),
-            open: quote.Open,
-            high: quote.High,
-            low: quote.Low,
-            close: quote.Last,
-            volume: quote.Volume
-          };
-          
-          callback(marketData);
-        }
-      } catch (error) {
-        console.error(`Error fetching TradeStation data for ${symbol}:`, error);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to place order: ${errorData.message || response.statusText}`);
       }
-    }, 5000); // Every 5 seconds
-    
-    this.subscriptions.set(symbol, interval as unknown as number);
-  }
 
-  unsubscribeFromMarketData(symbol: string): void {
-    const interval = this.subscriptions.get(symbol);
-    if (interval) {
-      clearInterval(interval);
-      this.subscriptions.delete(symbol);
-      console.log(`Unsubscribed from TradeStation market data for ${symbol}`);
+      // Get the order ID from the response
+      const orderResponse = await response.json();
+      return orderResponse.OrderID;
+    } catch (error) {
+      console.error('Error placing TradeStation order:', error);
+      throw error;
     }
   }
+
+  // Subscription mechanism for market data
+  private _marketDataSubscriptions: { [symbol: string]: NodeJS.Timeout } = {};
+
+  /**
+   * Subscribe to market data for a symbol
+   */
+  subscribeToMarketData(symbol: string, callback: (data: MarketData) => void): void {
+    // If already subscribed, clear the existing interval
+    if (this._marketDataSubscriptions[symbol]) {
+      clearInterval(this._marketDataSubscriptions[symbol]);
+    }
+
+    // Set up a subscription for market data
+    const intervalId = setInterval(async () => {
+      try {
+        const data = await this.fetchMarketData(symbol);
+        callback(data);
+      } catch (error) {
+        console.error(`Error fetching market data for ${symbol}:`, error);
+      }
+    }, 1000);
+
+    // Store the interval ID for cleanup
+    this._marketDataSubscriptions[symbol] = intervalId;
+  }
+
+  /**
+   * Unsubscribe from market data for a symbol
+   */
+  unsubscribeFromMarketData(symbol: string): void {
+    if (this._marketDataSubscriptions[symbol]) {
+      clearInterval(this._marketDataSubscriptions[symbol]);
+      delete this._marketDataSubscriptions[symbol];
+    }
+  }
+
+  /**
+   * Fetch market data for a symbol
+   */
+  private async fetchMarketData(symbol: string): Promise<MarketData> {
+    this.ensureConnected();
+    await this.ensureValidToken();
+
+    try {
+      // Fetch the latest quote for a symbol
+      const response = await fetch(`${this.baseUrl}/marketdata/quotes/${symbol}`, {
+        method: 'GET',
+        headers: this.headers
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch market data for ${symbol}`);
+      }
+
+      const quoteData = await response.json();
+      const quote = quoteData.Quotes[0];
+
+      return {
+        symbol: symbol,
+        price: quote.Last,
+        open: quote.Open,
+        high: quote.High,
+        low: quote.Low,
+        close: quote.Last,
+        volume: quote.Volume,
+        timestamp: new Date().getTime()
+      };
+    } catch (error) {
+      console.error(`Error fetching TradeStation market data for ${symbol}:`, error);
+      // Fallback to a simple data structure
+      return {
+        symbol: symbol,
+        price: 0,
+        timestamp: new Date().getTime()
+      };
+    }
+  }
+
+  /**
+   * Ensure that we're connected to the TradeStation API
+   */
+  private ensureConnected(): void {
+    if (!this.isConnected) {
+      throw new Error('Not connected to TradeStation API. Call connect() first.');
+    }
+  }
+
+  /**
+   * Map TradeStation order status to our status format
+   */
+  private mapOrderStatus(status: string): 'filled' | 'pending' | 'cancelled' {
+    switch (status.toLowerCase()) {
+      case 'filled':
+      case 'executed':
+        return 'filled';
+      case 'cancelled':
+      case 'canceled':
+      case 'rejected':
+        return 'cancelled';
+      default:
+        return 'pending';
+    }
+  }
+}
+
+/**
+ * Create a TradeStation service instance
+ */
+export function createTradeStationService(
+  apiKey: string,
+  accessToken: string,
+  accountId: string,
+  isTestnet: boolean = true
+): BrokerService {
+  return new TradeStationService(apiKey, accessToken, accountId, isTestnet);
 }

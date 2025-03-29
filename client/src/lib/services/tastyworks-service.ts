@@ -1,141 +1,208 @@
-import { BrokerService, MarketData, AccountBalance, BrokerPosition, OrderHistory } from './broker-service';
+/**
+ * Tastyworks Service - for options trading
+ * This service handles interactions with the Tastyworks API
+ */
 
-export class TastyWorksService implements BrokerService {
-  private baseUrl = 'https://api.tastyworks.com';
-  private authToken: string | null = null;
-  private refreshToken: string | null = null;
-  private accountNumber: string | null = null;
-  private sessionExpiry: number = 0;
-  private subscriptions = new Map<string, number>();
+import { MarketData, BrokerService, AccountBalance, BrokerPosition, OrderHistory } from './broker-service';
 
-  constructor(
-    private username: string,
-    private password: string,
-    private isDemo: boolean = false
-  ) {
-    if (isDemo) {
-      this.baseUrl = 'https://api.cert.tastyworks.com';
-    }
-  }
+// Interfaces for Tastyworks
+interface TastyworksConfig {
+  apiKey: string;
+  accountId: string;
+  baseUrl: string;
+  isTestnet: boolean;
+}
 
-  async connect(): Promise<void> {
-    try {
-      // In a real implementation, this would authenticate with TastyWorks API
-      // TastyWorks uses a session-based authentication system
-      console.log('Authenticating with TastyWorks...');
-      
-      // Simulate an authentication response
-      this.authToken = 'simulated-tastyworks-token';
-      this.refreshToken = 'simulated-refresh-token';
-      this.accountNumber = 'TW1234567';
-      this.sessionExpiry = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-      
-      // After authentication, we'd fetch account information
-      // For demo, we'll just log that we're connected
-      console.log(`Connected to TastyWorks with account number ${this.accountNumber}`);
-    } catch (error) {
-      console.error('Failed to connect to TastyWorks:', error);
-      throw error;
-    }
-  }
+// Types for Tastyworks-specific responses
+interface TastyworksOrderHistory {
+  orderId: string;
+  symbol: string;
+  side: 'buy' | 'sell';
+  quantity: number;
+  price: number;
+  timestamp: number;
+  status: string;
+}
 
-  private async request(endpoint: string, method: 'GET' | 'POST' | 'DELETE' = 'GET', body?: any) {
-    if (!this.authToken) {
-      throw new Error('Not authenticated with TastyWorks');
-    }
+interface TastyworksAccountBalance {
+  cash: number;
+  positions: number;
+  buyingPower: number;
+  maintenanceMargin: number;
+}
 
-    // Check if token needs refresh
-    if (Date.now() > this.sessionExpiry && this.refreshToken) {
-      await this.refreshSession();
-    }
+interface TastyworksBrokerPosition {
+  symbol: string;
+  quantity: number;
+  averagePrice: number;
+  currentPrice: number;
+  pnl: number;
+}
 
-    const url = `${this.baseUrl}${endpoint}`;
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Authorization': `Bearer ${this.authToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: body ? JSON.stringify(body) : undefined
-    });
+/**
+ * Tastyworks Service implementation for options trading
+ */
+export class TastyworksService implements BrokerService {
+  private apiKey: string;
+  private accountId: string;
+  private baseUrl: string = 'https://api.tastyworks.com/v1';
+  private isConnected: boolean = false;
+  private isTestnet: boolean = true;
+  private headers: { [key: string]: string } = {};
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`TastyWorks API error: ${response.status} - ${errorText}`);
+  constructor(apiKey: string, accountId: string, isTestnet: boolean = true) {
+    this.apiKey = apiKey;
+    this.accountId = accountId;
+    this.isTestnet = isTestnet;
+
+    // Set the base URL based on whether we're using the testnet or not
+    if (isTestnet) {
+      this.baseUrl = 'https://demo-api.tastyworks.com/v1';
     }
 
-    return response.json();
-  }
-
-  private async refreshSession() {
-    try {
-      // In a real implementation, this would make a refresh token request to TastyWorks
-      console.log('Refreshing TastyWorks session...');
-      
-      // Simulate a successful refresh
-      this.authToken = 'new-simulated-tastyworks-token';
-      this.sessionExpiry = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-      
-      console.log('TastyWorks session refreshed successfully');
-    } catch (error) {
-      console.error('Failed to refresh TastyWorks session:', error);
-      throw error;
-    }
-  }
-
-  async getBalance(): Promise<AccountBalance> {
-    if (!this.accountNumber) {
-      throw new Error('Account number not available. Connect to TastyWorks first.');
-    }
-    
-    // In a real implementation, this would fetch the balance from TastyWorks API
-    // For demo purposes, we return simulated data
-    return {
-      total: 35000,
-      cash: 20000,
-      positions: 15000
+    // Set up default headers for API requests
+    this.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.apiKey}`,
+      'Accept': 'application/json'
     };
   }
 
-  async getPositions(): Promise<BrokerPosition[]> {
-    if (!this.accountNumber) {
-      throw new Error('Account number not available. Connect to TastyWorks first.');
-    }
-    
-    // In a real implementation, this would fetch positions from TastyWorks API
-    // For demo purposes, we return simulated data for a mix of stocks and options
-    return [
-      {
-        symbol: 'SPY',
-        quantity: 100,
-        averagePrice: 430.25,
-        currentPrice: 435.50,
-        pnl: 525.00
-      },
-      {
-        symbol: 'AAPL',
-        quantity: 200,
-        averagePrice: 175.50,
-        currentPrice: 177.25,
-        pnl: 350.00
-      },
-      {
-        symbol: 'SPY 440C 04/19/24', // Option contract notation
-        quantity: 5,
-        averagePrice: 3.75,
-        currentPrice: 4.25,
-        pnl: 250.00
-      },
-      {
-        symbol: 'AAPL 180P 04/19/24', // Option contract notation
-        quantity: 3,
-        averagePrice: 4.50,
-        currentPrice: 3.90,
-        pnl: -180.00
+  /**
+   * Connect to the Tastyworks API
+   */
+  async connect(): Promise<void> {
+    try {
+      // Authenticate with the Tastyworks API
+      console.log(`Connecting to Tastyworks API, account ${this.accountId}, testnet: ${this.isTestnet ? 'demo' : 'live'}`);
+      
+      // Make a test request to validate the API key and account ID
+      const response = await fetch(`${this.baseUrl}/accounts/${this.accountId}/balances`, {
+        method: 'GET',
+        headers: this.headers
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to connect to Tastyworks: ${errorData.error || response.statusText}`);
       }
-    ];
+
+      // Set connected state
+      this.isConnected = true;
+      console.log('Successfully connected to Tastyworks API');
+    } catch (error) {
+      console.error('Error connecting to Tastyworks:', error);
+      this.isConnected = false;
+      throw error;
+    }
   }
 
+  /**
+   * Get order history from Tastyworks
+   */
+  async getOrderHistory(): Promise<OrderHistory[]> {
+    this.ensureConnected();
+
+    try {
+      // Fetch order history from Tastyworks
+      const response = await fetch(`${this.baseUrl}/accounts/${this.accountId}/orders`, {
+        method: 'GET',
+        headers: this.headers
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to fetch order history: ${errorData.error || response.statusText}`);
+      }
+
+      // Convert Tastyworks order data to our format
+      const tastyworksOrders = await response.json();
+      return tastyworksOrders.data.map((order: any) => ({
+        orderId: order.id,
+        symbol: order.symbol,
+        side: order.side as 'buy' | 'sell',
+        quantity: order.quantity,
+        price: order.price,
+        timestamp: new Date(order.created_at).getTime(),
+        status: this.mapOrderStatus(order.status),
+        broker: 'tastyworks'
+      }));
+    } catch (error) {
+      console.error('Error fetching Tastyworks order history:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get account balance from Tastyworks
+   */
+  async getBalance(): Promise<AccountBalance> {
+    this.ensureConnected();
+
+    try {
+      // Fetch account balance from Tastyworks
+      const response = await fetch(`${this.baseUrl}/accounts/${this.accountId}/balances`, {
+        method: 'GET',
+        headers: this.headers
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to fetch account balance: ${errorData.error || response.statusText}`);
+      }
+
+      // Convert Tastyworks balance data to our format
+      const tastyworksBalance = await response.json();
+      const cash = tastyworksBalance.cash || 0;
+      const positions = tastyworksBalance.positions_value || 0;
+      
+      return {
+        cash: cash,
+        positions: positions,
+        total: cash + positions
+      };
+    } catch (error) {
+      console.error('Error fetching Tastyworks account balance:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get positions from Tastyworks
+   */
+  async getPositions(): Promise<BrokerPosition[]> {
+    this.ensureConnected();
+
+    try {
+      // Fetch positions from Tastyworks
+      const response = await fetch(`${this.baseUrl}/accounts/${this.accountId}/positions`, {
+        method: 'GET',
+        headers: this.headers
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to fetch positions: ${errorData.error || response.statusText}`);
+      }
+
+      // Convert Tastyworks position data to our format
+      const tastyworksPositions = await response.json();
+      return tastyworksPositions.data.map((position: any) => ({
+        symbol: position.symbol,
+        quantity: position.quantity,
+        averagePrice: position.average_price,
+        currentPrice: position.current_price,
+        pnl: position.unrealized_pnl
+      }));
+    } catch (error) {
+      console.error('Error fetching Tastyworks positions:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Place an order with Tastyworks
+   */
   async placeOrder(order: {
     symbol: string;
     side: 'buy' | 'sell';
@@ -143,172 +210,143 @@ export class TastyWorksService implements BrokerService {
     type: 'market' | 'limit';
     limitPrice?: number;
   }): Promise<string> {
-    if (!this.accountNumber) {
-      throw new Error('Account number not available. Connect to TastyWorks first.');
-    }
-    
-    // In a real implementation, this would submit an order to TastyWorks API
-    console.log(`Placing ${order.side} order for ${order.quantity} ${order.symbol} at ${order.type === 'limit' ? order.limitPrice : 'market'} price`);
-    
-    // Generate a mock order ID
-    const orderId = `TW-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    
-    // In production, we would submit this to TastyWorks and get a real order ID
-    return orderId;
-  }
+    this.ensureConnected();
 
-  async getOrderHistory(): Promise<OrderHistory[]> {
-    if (!this.accountNumber) {
-      throw new Error('Account number not available. Connect to TastyWorks first.');
-    }
-    
-    // In a real implementation, this would fetch order history from TastyWorks API
-    // For demo purposes, we return simulated data
-    return [
-      {
-        orderId: 'TW-12345',
-        symbol: 'SPY',
-        side: 'buy',
-        quantity: 100,
-        price: 430.25,
-        status: 'filled',
-        timestamp: Date.now() - 86400000, // 1 day ago
-        broker: 'TastyWorks'
-      },
-      {
-        orderId: 'TW-12346',
-        symbol: 'AAPL',
-        side: 'buy',
-        quantity: 200,
-        price: 175.50,
-        status: 'filled',
-        timestamp: Date.now() - 172800000, // 2 days ago
-        broker: 'TastyWorks'
-      },
-      {
-        orderId: 'TW-12347',
-        symbol: 'SPY 440C 04/19/24',
-        side: 'buy',
-        quantity: 5,
-        price: 3.75,
-        status: 'filled',
-        timestamp: Date.now() - 259200000, // 3 days ago
-        broker: 'TastyWorks'
-      },
-      {
-        orderId: 'TW-12348',
-        symbol: 'AAPL 180P 04/19/24',
-        side: 'buy',
-        quantity: 3,
-        price: 4.50,
-        status: 'filled',
-        timestamp: Date.now() - 345600000, // 4 days ago
-        broker: 'TastyWorks'
-      },
-      {
-        orderId: 'TW-12349',
-        symbol: 'AMD',
-        side: 'buy',
-        quantity: 150,
-        price: 110.25,
-        status: 'cancelled',
-        timestamp: Date.now() - 432000000, // 5 days ago
-        broker: 'TastyWorks'
-      }
-    ];
-  }
-
-  subscribeToMarketData(symbol: string, callback: (data: MarketData) => void): void {
-    if (this.subscriptions.has(symbol)) {
-      return; // Already subscribed
-    }
-    
-    console.log(`Subscribing to TastyWorks market data for ${symbol}`);
-    
-    // In a real implementation, this would use TastyWorks streaming API
-    // For demo purposes, we'll simulate with a timer
-    const interval = setInterval(() => {
-      // Generate simulated market data
-      const basePrice = this.getBasePrice(symbol);
-      const variance = basePrice * 0.0015 * (Math.random() * 2 - 1); // +/- 0.15%
-      const currentPrice = basePrice + variance;
-      
-      // For options, calculate Greeks (delta, gamma, theta, vega)
-      const isOption = symbol.includes('C') || symbol.includes('P');
-      
-      const marketData: MarketData = {
-        symbol,
-        price: currentPrice,
-        timestamp: Date.now(),
-        volume: Math.floor(1000 + Math.random() * 10000),
-        high: basePrice + basePrice * 0.003,
-        low: basePrice - basePrice * 0.003,
-        open: basePrice - basePrice * 0.001,
-        close: currentPrice
+    try {
+      // Prepare the order payload for Tastyworks
+      const orderPayload = {
+        symbol: order.symbol,
+        side: order.side,
+        quantity: order.quantity,
+        order_type: order.type,
+        price: order.type === 'limit' ? order.limitPrice : undefined,
+        time_in_force: 'day'
       };
-      
-      callback(marketData);
-    }, 1000); // Update every second for more realistic streaming
-    
-    this.subscriptions.set(symbol, interval as unknown as number);
+
+      // Place the order with Tastyworks
+      const response = await fetch(`${this.baseUrl}/accounts/${this.accountId}/orders`, {
+        method: 'POST',
+        headers: this.headers,
+        body: JSON.stringify(orderPayload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to place order: ${errorData.error || response.statusText}`);
+      }
+
+      // Get the order ID from the response
+      const orderResponse = await response.json();
+      return orderResponse.order_id;
+    } catch (error) {
+      console.error('Error placing Tastyworks order:', error);
+      throw error;
+    }
   }
 
+  // Subscription mechanism for market data
+  private _marketDataSubscriptions: { [symbol: string]: NodeJS.Timeout } = {};
+
+  /**
+   * Subscribe to market data for a symbol
+   */
+  subscribeToMarketData(symbol: string, callback: (data: MarketData) => void): void {
+    // If already subscribed, clear the existing interval
+    if (this._marketDataSubscriptions[symbol]) {
+      clearInterval(this._marketDataSubscriptions[symbol]);
+    }
+
+    // Set up a subscription for market data
+    const intervalId = setInterval(async () => {
+      try {
+        const data = await this.fetchMarketData(symbol);
+        callback(data);
+      } catch (error) {
+        console.error(`Error fetching market data for ${symbol}:`, error);
+      }
+    }, 1000);
+
+    // Store the interval ID for cleanup
+    this._marketDataSubscriptions[symbol] = intervalId;
+  }
+
+  /**
+   * Unsubscribe from market data for a symbol
+   */
   unsubscribeFromMarketData(symbol: string): void {
-    const interval = this.subscriptions.get(symbol);
-    if (interval) {
-      clearInterval(interval);
-      this.subscriptions.delete(symbol);
-      console.log(`Unsubscribed from TastyWorks market data for ${symbol}`);
+    if (this._marketDataSubscriptions[symbol]) {
+      clearInterval(this._marketDataSubscriptions[symbol]);
+      delete this._marketDataSubscriptions[symbol];
     }
   }
 
-  // Helper to get baseline prices for common symbols
-  private getBasePrice(symbol: string): number {
-    // Handle option contracts
-    if (symbol.includes('C') || symbol.includes('P')) {
-      // Parse the underlying symbol from the option symbol
-      const parts = symbol.split(' ');
-      const underlyingSymbol = parts[0];
-      const isCall = symbol.includes('C');
-      
-      // Get base price of the underlying
-      const underlyingPrice = this.getStockPrice(underlyingSymbol);
-      
-      // Extract strike price from the symbol (e.g., '440C' -> 440)
-      let strikePrice = 0;
-      const strikePart = parts[1];
-      if (strikePart) {
-        strikePrice = parseFloat(strikePart.replace('C', '').replace('P', ''));
+  /**
+   * Fetch market data for a symbol
+   */
+  private async fetchMarketData(symbol: string): Promise<MarketData> {
+    this.ensureConnected();
+
+    try {
+      // Fetch the latest quote for a symbol
+      const response = await fetch(`${this.baseUrl}/market-data/quotes/${symbol}`, {
+        method: 'GET',
+        headers: this.headers
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch market data for ${symbol}`);
       }
-      
-      // Calculate option price based on a simple model
-      // For calls: higher price when underlying > strike
-      // For puts: higher price when underlying < strike
-      if (isCall) {
-        return Math.max(0.10, (underlyingPrice - strikePrice) * 0.1 + 1);
-      } else {
-        return Math.max(0.10, (strikePrice - underlyingPrice) * 0.1 + 1);
-      }
+
+      const quoteData = await response.json();
+      return {
+        symbol: symbol,
+        price: quoteData.last_price,
+        open: quoteData.open_price,
+        high: quoteData.high_price,
+        low: quoteData.low_price,
+        close: quoteData.last_price,
+        volume: quoteData.volume,
+        timestamp: new Date().getTime()
+      };
+    } catch (error) {
+      console.error(`Error fetching Tastyworks market data for ${symbol}:`, error);
+      // Fallback to a simple data structure
+      return {
+        symbol: symbol,
+        price: 0,
+        timestamp: new Date().getTime()
+      };
     }
-    
-    // Handle regular stocks
-    return this.getStockPrice(symbol);
   }
-  
-  private getStockPrice(symbol: string): number {
-    const stockPrices: Record<string, number> = {
-      'SPY': 435.50,
-      'QQQ': 380.25,
-      'AAPL': 177.25,
-      'MSFT': 330.50,
-      'AMZN': 170.75,
-      'GOOGL': 140.50,
-      'TSLA': 195.25,
-      'NVDA': 465.50,
-      'AMD': 112.75,
-      'META': 475.25
-    };
-    
-    return stockPrices[symbol] || 100.00; // Default price if symbol not found
+
+  /**
+   * Ensure that we're connected to the Tastyworks API
+   */
+  private ensureConnected(): void {
+    if (!this.isConnected) {
+      throw new Error('Not connected to Tastyworks API. Call connect() first.');
+    }
   }
+
+  /**
+   * Map Tastyworks order status to our status format
+   */
+  private mapOrderStatus(status: string): 'filled' | 'pending' | 'cancelled' {
+    switch (status.toLowerCase()) {
+      case 'filled':
+        return 'filled';
+      case 'cancelled':
+      case 'canceled':
+        return 'cancelled';
+      default:
+        return 'pending';
+    }
+  }
+}
+
+/**
+ * Create a Tastyworks service instance
+ */
+export function createTastyworksService(apiKey: string, accountId: string, isTestnet: boolean = true): BrokerService {
+  return new TastyworksService(apiKey, accountId, isTestnet);
 }
