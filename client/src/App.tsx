@@ -130,7 +130,7 @@ function AppContent() {
               <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Trade Runner</Link>
               <Link to="/marketplace" className="hover:text-blue-400 transition-colors">NFTs</Link>
               <Link to="/learn" className="hover:text-blue-400 transition-colors">Learn</Link>
-              <Link to="/ai-market-analysis" className="hover:text-blue-400 transition-colors">AI Analysis</Link>
+              <Link to="/ai-market-analysis" className="hover:text-blue-400 transition-colors">Market Buddy</Link>
               <Link to="/trading-signals" className="hover:text-blue-400 transition-colors">Signals</Link>
               <Link to="/app" className="hover:text-blue-400 transition-colors">App</Link>
             </nav>
@@ -440,7 +440,7 @@ function Home() {
           linkTo="/live-stream"
         />
         <FeatureCard 
-          title="AI Analysis"
+          title="Market Buddy"
           description="Get advanced AI-powered market analysis, trading suggestions, and risk assessment for any asset."
           linkTo="/ai-market-analysis"
         />

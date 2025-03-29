@@ -93,7 +93,7 @@ export function MobileMenu({ isOpen, onClose, onItemClick }: MobileMenuProps) {
             onClick={() => handleItemClick('ai-analysis')}
           >
             <Bot className="h-5 w-5 text-purple-500" />
-            <span>AI Market Analysis</span>
+            <span>Market Buddy</span>
           </button>
           
           <button
