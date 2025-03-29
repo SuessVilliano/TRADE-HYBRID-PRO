@@ -8,7 +8,7 @@ import { Check, ArrowRight } from 'lucide-react';
 
 // Types
 export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced';
-export type TopicInterest = 'trading' | 'defi' | 'nft' | 'blockchain' | 'tokenomics';
+export type TopicInterest = 'technical-analysis' | 'fundamental-analysis' | 'crypto' | 'stocks' | 'forex' | 'futures' | 'options' | 'risk-management' | 'trading-psychology';
 
 interface AssessmentQuestion {
   id: string;
@@ -40,57 +40,79 @@ interface LearningAssessmentProps {
 const knowledgeQuestions: AssessmentQuestion[] = [
   {
     id: 'q1',
-    question: 'How familiar are you with cryptocurrency concepts?',
+    question: 'How experienced are you with trading in financial markets?',
     options: [
-      { id: 'q1a', text: 'I\'m completely new to cryptocurrencies', experienceValue: 'beginner' },
-      { id: 'q1b', text: 'I understand the basics and have made a few trades', experienceValue: 'intermediate' },
-      { id: 'q1c', text: 'I\'m very familiar and have been trading regularly', experienceValue: 'advanced' }
+      { id: 'q1a', text: 'I\'m completely new to trading', experienceValue: 'beginner' },
+      { id: 'q1b', text: 'I have some experience and have made a few trades', experienceValue: 'intermediate' },
+      { id: 'q1c', text: 'I\'ve been trading actively for more than a year', experienceValue: 'advanced' }
     ]
   },
   {
     id: 'q2',
-    question: 'Have you used decentralized exchanges before?',
+    question: 'How comfortable are you with reading financial charts?',
     options: [
-      { id: 'q2a', text: 'No, I\'ve never used one', experienceValue: 'beginner' },
-      { id: 'q2b', text: 'Yes, but only a few times', experienceValue: 'intermediate' },
-      { id: 'q2c', text: 'Yes, I use them frequently', experienceValue: 'advanced' }
+      { id: 'q2a', text: 'Not comfortable at all', experienceValue: 'beginner' },
+      { id: 'q2b', text: 'I understand basic patterns and indicators', experienceValue: 'intermediate' },
+      { id: 'q2c', text: 'Very comfortable, I use technical analysis regularly', experienceValue: 'advanced' }
     ]
   },
   {
     id: 'q3',
-    question: 'Do you understand how blockchain transactions work?',
+    question: 'Have you used leverage or margin in your trading?',
     options: [
-      { id: 'q3a', text: 'Not really', experienceValue: 'beginner' },
-      { id: 'q3b', text: 'I have a basic understanding', experienceValue: 'intermediate' },
-      { id: 'q3c', text: 'Yes, I understand the technical details', experienceValue: 'advanced' }
+      { id: 'q3a', text: 'No, I haven\'t used leverage', experienceValue: 'beginner' },
+      { id: 'q3b', text: 'Yes, with small positions and conservative leverage', experienceValue: 'intermediate' },
+      { id: 'q3c', text: 'Yes, I regularly use leverage and understand the risks', experienceValue: 'advanced' }
     ]
   },
   {
     id: 'q4',
-    question: 'Have you participated in staking or yield farming?',
+    question: 'How would you describe your knowledge of fundamental analysis?',
     options: [
-      { id: 'q4a', text: 'No, I don\'t know what those are', experienceValue: 'beginner' },
-      { id: 'q4b', text: 'I\'ve tried basic staking on exchanges', experienceValue: 'intermediate' },
-      { id: 'q4c', text: 'Yes, I actively use DeFi platforms for yield', experienceValue: 'advanced' }
+      { id: 'q4a', text: 'I don\'t know much about it', experienceValue: 'beginner' },
+      { id: 'q4b', text: 'I understand the basics (P/E ratios, earnings, etc.)', experienceValue: 'intermediate' },
+      { id: 'q4c', text: 'I regularly analyze financial statements and economic data', experienceValue: 'advanced' }
     ]
   },
   {
     id: 'q5',
-    question: 'How comfortable are you with reading price charts?',
+    question: 'Do you have experience with risk management strategies?',
     options: [
-      { id: 'q5a', text: 'Not comfortable at all', experienceValue: 'beginner' },
-      { id: 'q5b', text: 'I understand some basic patterns', experienceValue: 'intermediate' },
-      { id: 'q5c', text: 'Very comfortable, I use technical analysis regularly', experienceValue: 'advanced' }
+      { id: 'q5a', text: 'No, I haven\'t implemented risk management', experienceValue: 'beginner' },
+      { id: 'q5b', text: 'I use basic stop losses and position sizing', experienceValue: 'intermediate' },
+      { id: 'q5c', text: 'Yes, I have a comprehensive risk management system', experienceValue: 'advanced' }
+    ]
+  },
+  {
+    id: 'q6',
+    question: 'How familiar are you with cryptocurrency trading?',
+    options: [
+      { id: 'q6a', text: 'I\'m completely new to cryptocurrencies', experienceValue: 'beginner' },
+      { id: 'q6b', text: 'I\'ve made some crypto trades on exchanges', experienceValue: 'intermediate' },
+      { id: 'q6c', text: 'I actively trade crypto and understand the market cycles', experienceValue: 'advanced' }
+    ]
+  },
+  {
+    id: 'q7',
+    question: 'Have you traded forex (foreign exchange) markets?',
+    options: [
+      { id: 'q7a', text: 'No, I haven\'t traded forex', experienceValue: 'beginner' },
+      { id: 'q7b', text: 'I\'ve made some forex trades', experienceValue: 'intermediate' },
+      { id: 'q7c', text: 'Yes, I regularly trade currency pairs', experienceValue: 'advanced' }
     ]
   }
 ];
 
 const topicOptions: TopicInterestOption[] = [
-  { id: 'trading', title: 'Trading Strategies', description: 'Learn technical analysis, chart patterns, and trading psychology', selected: false },
-  { id: 'defi', title: 'DeFi & Yield Farming', description: 'Explore decentralized finance, lending, borrowing, and yield optimization', selected: false },
-  { id: 'nft', title: 'NFTs & Digital Assets', description: 'Understand NFT markets, collections, and digital ownership', selected: false },
-  { id: 'blockchain', title: 'Blockchain Fundamentals', description: 'Study the technology behind cryptocurrencies', selected: false },
-  { id: 'tokenomics', title: 'Tokenomics', description: 'Learn about token design, utility, and economic models', selected: false }
+  { id: 'technical-analysis', title: 'Technical Analysis', description: 'Learn chart patterns, indicators, and price action strategies', selected: false },
+  { id: 'fundamental-analysis', title: 'Fundamental Analysis', description: 'Analyze financial statements, economic data, and company valuations', selected: false },
+  { id: 'crypto', title: 'Cryptocurrency Trading', description: 'Learn about blockchain assets, DeFi, NFTs, and tokenomics', selected: false },
+  { id: 'stocks', title: 'Stock Market', description: 'Equity trading, market sectors, and company analysis', selected: false },
+  { id: 'forex', title: 'Forex Trading', description: 'Currency pairs, central bank policies, and global economics', selected: false },
+  { id: 'futures', title: 'Futures Trading', description: 'Commodity markets, contract specifications, and rollover strategies', selected: false },
+  { id: 'options', title: 'Options Trading', description: 'Calls, puts, spreads, and volatility strategies', selected: false },
+  { id: 'risk-management', title: 'Risk Management', description: 'Position sizing, stop losses, and portfolio diversification', selected: false },
+  { id: 'trading-psychology', title: 'Trading Psychology', description: 'Emotional control, discipline, and mindset optimization', selected: false }
 ];
 
 const timeOptions = [
@@ -187,10 +209,10 @@ export function LearningAssessment({ onComplete }: LearningAssessmentProps) {
       .filter(topic => topic.selected)
       .map(topic => topic.id);
     
-    // If no topics selected, default to all
+    // If no topics selected, default to some basics
     const topicInterests = selectedTopics.length > 0 
       ? selectedTopics 
-      : ['trading', 'blockchain']; // Default topics
+      : ['technical-analysis', 'risk-management'] as TopicInterest[]; // Default topics
     
     onComplete({
       experienceLevel,
@@ -207,7 +229,7 @@ export function LearningAssessment({ onComplete }: LearningAssessmentProps) {
       <CardHeader>
         <CardTitle>Learning Assessment</CardTitle>
         <CardDescription>
-          Let's personalize your crypto learning journey
+          Let's personalize your trading learning journey
         </CardDescription>
         <Progress value={progressPercentage} className="h-2 mt-2" />
       </CardHeader>
