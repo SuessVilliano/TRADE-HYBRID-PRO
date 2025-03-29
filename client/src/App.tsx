@@ -125,14 +125,14 @@ function AppContent() {
               <Link to="/thc-staking" className="hover:text-blue-400 transition-colors">Stake & Bake</Link>
               <Link to="/metaverse" className="hover:text-blue-400 transition-colors">Metaverse</Link>
               <Link to="/news" className="hover:text-blue-400 transition-colors">News</Link>
-              <Link to="/live-stream" className="hover:text-blue-400 transition-colors">TV</Link>
+              <Link to="/live-stream" className="hover:text-blue-400 transition-colors">Trade Hybrid TV</Link>
               <Link to="/trade-journal" className="hover:text-blue-400 transition-colors">Journal</Link>
-              <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Trade Runner</Link>
               <Link to="/marketplace" className="hover:text-blue-400 transition-colors">NFTs</Link>
               <Link to="/learn" className="hover:text-blue-400 transition-colors">Learn</Link>
               <Link to="/ai-market-analysis" className="hover:text-blue-400 transition-colors">Market Buddy</Link>
               <Link to="/trading-signals" className="hover:text-blue-400 transition-colors">Signals</Link>
               <Link to="/app" className="hover:text-blue-400 transition-colors">App</Link>
+              <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Trade Runner</Link>
             </nav>
           </div>
           
@@ -415,11 +415,6 @@ function Home() {
           linkTo="/news"
         />
         <FeatureCard 
-          title="Trade Runner"
-          description="Test your trading skills in our gamified trading simulator. Compete on the leaderboard and earn rewards."
-          linkTo="/trade-runner"
-        />
-        <FeatureCard 
           title="NFT Marketplace"
           description="Buy, sell, and trade unique NFTs including trading strategies, virtual properties, and more."
           linkTo="/marketplace"
@@ -435,7 +430,7 @@ function Home() {
           linkTo="/thc-staking"
         />
         <FeatureCard 
-          title="TV"
+          title="Trade Hybrid TV"
           description="Watch live trading sessions, market analysis, and educational content from our expert traders."
           linkTo="/live-stream"
         />
@@ -453,6 +448,11 @@ function Home() {
           title="App"
           description="Access the Trade Hybrid app directly within the platform with our embedded web browser experience."
           linkTo="/app"
+        />
+        <FeatureCard 
+          title="Trade Runner"
+          description="Test your trading skills in our gamified trading simulator. Compete on the leaderboard and earn rewards."
+          linkTo="/trade-runner"
         />
       </div>
     </PopupContainer>

@@ -114,6 +114,14 @@ export function MobileMenu({ isOpen, onClose, onItemClick }: MobileMenuProps) {
           
           <button
             className="flex w-full items-center gap-3 rounded-md p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+            onClick={() => handleItemClick('tv')}
+          >
+            <Tv className="h-5 w-5 text-red-500" />
+            <span>Trade Hybrid TV</span>
+          </button>
+          
+          <button
+            className="flex w-full items-center gap-3 rounded-md p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
             onClick={() => handleItemClick('thc')}
           >
             <Coins className="h-5 w-5 text-yellow-500" />
@@ -134,6 +142,14 @@ export function MobileMenu({ isOpen, onClose, onItemClick }: MobileMenuProps) {
           >
             <Globe className="h-5 w-5 text-blue-500" />
             <span>Web App</span>
+          </button>
+          
+          <button
+            className="flex w-full items-center gap-3 rounded-md p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+            onClick={() => handleItemClick('trade-runner')}
+          >
+            <Gamepad2 className="h-5 w-5 text-green-500" />
+            <span>Trade Runner</span>
           </button>
 
           <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
