@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { BullsVsBearsGame } from '../components/game/bulls-vs-bears-game';
 import { MarketChart } from '../components/ui/market-chart';
 import { useBullsVsBearsStore } from '../lib/stores/useBullsVsBearsStore';
@@ -14,7 +14,9 @@ export default function BullsVsBears() {
     pauseGame, 
     resumeGame, 
     endGame, 
-    resetGame 
+    resetGame,
+    advanceRound,
+    generateNextPrice 
   } = useBullsVsBearsStore();
   
   const [showGameSettings, setShowGameSettings] = useState(!gameState.isGameStarted);
@@ -23,6 +25,9 @@ export default function BullsVsBears() {
   const [selectedAsset, setSelectedAsset] = useState('BTC');
   const [selectedTimeFrame, setSelectedTimeFrame] = useState('5m');
   const [aiPlayersCount, setAiPlayersCount] = useState(3);
+  
+  // Timer for price updates
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize the game on component mount if not already initialized
   useEffect(() => {
@@ -38,6 +43,45 @@ export default function BullsVsBears() {
       });
     }
   }, [gameState.gameId, initializeGame]);
+  
+  // Game loop to update prices and advance rounds
+  useEffect(() => {
+    // Clear any existing timers
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
+    // Only start timer if game is started and not paused or finished
+    if (gameState.isGameStarted && !gameState.isGamePaused && !gameState.isGameOver) {
+      console.log('Starting price update interval...');
+      
+      // Update price every 2 seconds
+      timerRef.current = setInterval(() => {
+        console.log('Updating price...');
+        
+        // Call advanceRound to update game state
+        advanceRound();
+        
+        // For immediate visual feedback, also generate a new price
+        generateNextPrice();
+      }, 2000);
+    }
+    
+    // Cleanup interval on unmount or when game state changes
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [
+    gameState.isGameStarted,
+    gameState.isGamePaused, 
+    gameState.isGameOver,
+    advanceRound,
+    generateNextPrice
+  ]);
 
   // Handle game initialization with settings
   const handleStartGame = () => {

@@ -899,6 +899,34 @@ function LearnPlaceholder() {
   );
 }
 
+// Chat widget script
+const ChatWidgetScript = () => {
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.innerHTML = `
+      (function(d, s, id){
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = 'https://api.anychat.one/widget/99358feb-2d70-4f03-bfff-fcefc55f7572?r=' + encodeURIComponent(window.location);
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'contactus-jssdk'));
+    `;
+    document.body.appendChild(script);
+    
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+  
+  return null;
+};
+
 export default function App() {
-  return <AppWithProviders />;
+  return (
+    <>
+      <AppWithProviders />
+      <ChatWidgetScript />
+    </>
+  );
 }

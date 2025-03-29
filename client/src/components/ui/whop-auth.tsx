@@ -100,7 +100,7 @@ export function WhopAuth({ onStatusChange }: WhopAuthProps) {
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-1">Membership Verification</h2>
         <p className="text-slate-300 mb-4">
-          Verify your Whop membership to unlock full platform access
+          Verify your Trade Hybrid membership to unlock full platform access
         </p>
       </div>
       
@@ -116,14 +116,14 @@ export function WhopAuth({ onStatusChange }: WhopAuthProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="whopId" className="block text-sm font-medium mb-1">
-              Whop User ID or Email
+              User ID or Email
             </label>
             <Input
               id="whopId"
               type="text"
               value={whopId}
               onChange={(e) => setWhopId(e.target.value)}
-              placeholder="Enter your Whop ID or email"
+              placeholder="Enter your Trade Hybrid ID or email"
               className="w-full"
               disabled={isLoading}
             />
@@ -169,12 +169,12 @@ export function WhopAuth({ onStatusChange }: WhopAuthProps) {
             <AlertTitle>Don't have a membership?</AlertTitle>
             <AlertDescription>
               <a 
-                href="https://whop.com" 
+                href="https://www.tradehybrid.club" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-blue-400 hover:text-blue-300 underline"
               >
-                Sign up on Whop.com
+                Sign up on TradeHybrid.club
               </a>
             </AlertDescription>
           </Alert>
