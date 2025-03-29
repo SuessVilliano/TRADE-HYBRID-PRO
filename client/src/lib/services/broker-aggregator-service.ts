@@ -904,7 +904,14 @@ export const brokerAggregatorService = {
         }
         
         // Get the broker reliability score
-        const reliabilityScore = ABATEV_CONFIG?.BROKER_RELIABILITY_SCORES?.[broker] || 85;
+        // Define supported broker IDs for type safety
+        const isSupportedBroker = (brokerId: string): brokerId is keyof typeof ABATEV_CONFIG.BROKER_RELIABILITY_SCORES => {
+          return brokerId in ABATEV_CONFIG.BROKER_RELIABILITY_SCORES;
+        };
+        
+        const reliabilityScore = isSupportedBroker(broker) 
+          ? ABATEV_CONFIG.BROKER_RELIABILITY_SCORES[broker]
+          : 85; // Default score for unknown brokers
         
         return {
           brokerId: broker,
