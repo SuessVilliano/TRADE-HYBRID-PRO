@@ -63,7 +63,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
   selectedSymbol,
   onChangeSymbol,
   className = '',
-  initialPanels = ['chart', 'signals', 'smart-trade', 'scanner', 'companion', 'advanced-ai', 'economic-calendar', 'market-overview', 'stock-heatmap', 'crypto-heatmap', 'zen'],
+  initialPanels = ['chart', 'signals', 'smart-trade', 'scanner', 'advanced-ai', 'economic-calendar', 'market-overview', 'stock-heatmap', 'crypto-heatmap', 'zen'],
 }) => {
   // State to track active panels and their layout
   const [activePanels, setActivePanels] = useState<string[]>([]);
@@ -137,7 +137,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
           <SmartTradePanelLazy defaultSymbol={selectedSymbol.replace('BITSTAMP:', '').replace('BINANCE:', '')} />
         </React.Suspense>
       ),
-      defaultSize: { width: '100%', height: '400px' },
+      defaultSize: { width: '100%', height: '500px' },
       defaultPosition: { x: 0, y: 510 }
     },
     'copy-trade': {
@@ -251,8 +251,8 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
           />
         </React.Suspense>
       ),
-      defaultSize: { width: '100%', height: '400px' },
-      defaultPosition: { x: 0, y: 1530 }
+      defaultSize: { width: '100%', height: '500px' },
+      defaultPosition: { x: 0, y: 1020 }
     },
     'market-overview': {
       id: 'market-overview',
@@ -270,7 +270,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
         </React.Suspense>
       ),
       defaultSize: { width: '100%', height: '400px' },
-      defaultPosition: { x: 0, y: 1940 }
+      defaultPosition: { x: 0, y: 1530 }
     },
     'advanced-ai': {
       id: 'advanced-ai',
@@ -304,7 +304,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
         </React.Suspense>
       ),
       defaultSize: { width: '100%', height: '500px' },
-      defaultPosition: { x: 0, y: 2350 }
+      defaultPosition: { x: 0, y: 1940 }
     },
     'crypto-heatmap': {
       id: 'crypto-heatmap',
@@ -325,7 +325,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
         </React.Suspense>
       ),
       defaultSize: { width: '100%', height: '500px' },
-      defaultPosition: { x: 0, y: 2860 }
+      defaultPosition: { x: 0, y: 2450 }
     },
     'zen': {
       id: 'zen',
@@ -338,7 +338,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
         </React.Suspense>
       ),
       defaultSize: { width: '100%', height: '600px' },
-      defaultPosition: { x: 0, y: 3370 }
+      defaultPosition: { x: 0, y: 2960 }
     }
   };
 
