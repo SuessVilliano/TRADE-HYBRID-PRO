@@ -1,229 +1,135 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { createChart, ColorType, IChartApi, SeriesType } from 'lightweight-charts';
-// Using type assertion to work around the TypeScript definition limitations in the library
-type ExtendedChartApi = IChartApi & {
-  addCandlestickSeries: (options?: any) => any;
-};
-import { cn } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useMarketData } from "@/lib/stores/useMarketData";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatCurrency } from "@/lib/utils";
+import React, { useEffect, useRef } from 'react';
+import { createChart, IChartApi, ISeriesApi, CandlestickData, LineData } from 'lightweight-charts';
+import { useBullsVsBearsStore } from '@/lib/stores/useBullsVsBearsStore';
 
-interface MarketChartProps {
-  className?: string;
-  symbol?: string;
-}
-
-export function MarketChart({ 
-  className, 
-  symbol = "BTCUSD" 
-}: MarketChartProps) {
+export function MarketChart() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
-  const chart = useRef<any>(null);
-  const candleSeries = useRef<any>(null);
-  const { 
-    marketData, 
-    fetchMarketData, 
-    subscribeToRealTimeData,
-    unsubscribeFromRealTimeData,
-    currentPrice,
-    loading,
-    connected
-  } = useMarketData();
+  const chart = useRef<IChartApi | null>(null);
+  const candleSeries = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const volumeSeries = useRef<ISeriesApi<'Histogram'> | null>(null);
   
-  // Track if the chart is already initialized with data
-  const [isChartInitialized, setIsChartInitialized] = useState(false);
+  const gameState = useBullsVsBearsStore(state => state.gameState);
   
-  // Initialize chart
+  // Initialize the chart
   useEffect(() => {
-    if (chartContainerRef.current) {
-      // Clear existing chart if it exists
-      if (chart.current) {
-        chart.current.remove();
-      }
-      
-      // Create a new chart
-      const newChart = createChart(chartContainerRef.current, {
+    if (chartContainerRef.current && !chart.current) {
+      const chartOptions = {
         layout: {
-          background: { type: ColorType.Solid, color: 'transparent' },
-          textColor: '#D9D9D9',
+          background: { color: '#1e293b' },
+          textColor: '#d1d5db',
         },
         grid: {
-          vertLines: { color: 'rgba(42, 46, 57, 0.5)' },
-          horzLines: { color: 'rgba(42, 46, 57, 0.5)' },
+          vertLines: { color: '#334155' },
+          horzLines: { color: '#334155' },
         },
-        width: chartContainerRef.current.clientWidth,
-        height: 300,
         timeScale: {
+          borderColor: '#475569',
           timeVisible: true,
-          secondsVisible: false,
-        }
+        },
+        crosshair: {
+          vertLine: {
+            color: '#64748b',
+            width: 1,
+            style: 0,
+            visible: true,
+            labelVisible: true,
+          },
+          horzLine: {
+            color: '#64748b',
+            width: 1,
+            style: 0,
+            visible: true,
+            labelVisible: true,
+          },
+          mode: 1,
+        },
+      };
+      
+      chart.current = createChart(chartContainerRef.current, chartOptions);
+      
+      // Add candlestick series
+      candleSeries.current = chart.current.addCandlestickSeries({
+        upColor: '#4ade80',
+        downColor: '#ef4444',
+        borderUpColor: '#4ade80',
+        borderDownColor: '#ef4444',
+        wickUpColor: '#4ade80',
+        wickDownColor: '#ef4444',
       });
       
-      // Adjust chart size on window resize
+      // Add volume series
+      volumeSeries.current = chart.current.addHistogramSeries({
+        color: '#60a5fa',
+        priceFormat: {
+          type: 'volume',
+        },
+        priceScaleId: '',
+        scaleMargins: {
+          top: 0.8,
+          bottom: 0,
+        },
+      });
+      
+      // Handle resize
       const handleResize = () => {
-        if (chartContainerRef.current && newChart) {
-          newChart.applyOptions({ 
-            width: chartContainerRef.current.clientWidth 
+        if (chartContainerRef.current && chart.current) {
+          chart.current.applyOptions({
+            width: chartContainerRef.current.clientWidth,
+            height: chartContainerRef.current.clientHeight,
           });
         }
       };
       
       window.addEventListener('resize', handleResize);
-      chart.current = newChart;
+      handleResize();
       
-      // Clean up on unmount
       return () => {
         window.removeEventListener('resize', handleResize);
         if (chart.current) {
           chart.current.remove();
+          chart.current = null;
         }
       };
     }
   }, []);
   
-  // Update data when marketData changes
+  // Update chart data when game state changes
   useEffect(() => {
-    if (chart.current && marketData.length > 0) {
-      try {
-        // If we haven't initialized the chart with data yet
-        if (!isChartInitialized) {
-          // Create a new series for the price data
-          // Use type assertion to cast to our extended interface type
-          const mainSeries = (chart.current as any).addCandlestickSeries({
-            upColor: '#26a69a',
-            downColor: '#ef5350',
-            borderVisible: false,
-            wickUpColor: '#26a69a',
-            wickDownColor: '#ef5350',
-          });
-          
-          // Store the series reference for later updates
-          candleSeries.current = mainSeries;
-          
-          // Format the market data for the chart
-          const formattedData = marketData.map(candle => ({
-            time: candle.time,
-            open: candle.open,
-            high: candle.high,
-            low: candle.low,
-            close: candle.close
-          }));
-          
-          // Add the initial data
-          mainSeries.setData(formattedData);
-          
-          // Fit content to ensure all data is visible
-          chart.current.timeScale().fitContent();
-          
-          // Mark chart as initialized
-          setIsChartInitialized(true);
-          console.log('Chart initialized with data:', formattedData.length, 'candles');
-        } 
-        // If we already have a chart with data, just update the last candle
-        else if (candleSeries.current) {
-          // Get the latest data point
-          const latestPoint = marketData[marketData.length - 1];
-          
-          // Update the last candle with the latest data
-          candleSeries.current.update({
-            time: latestPoint.time,
-            open: latestPoint.open,
-            high: latestPoint.high,
-            low: latestPoint.low,
-            close: latestPoint.close
-          });
-        }
-      } catch (error) {
-        console.error('Error updating chart:', error);
+    if (candleSeries.current && volumeSeries.current && gameState.priceHistory.length > 0) {
+      // Convert price history to candlestick data
+      const candleData: CandlestickData[] = gameState.priceHistory.map(price => ({
+        time: Math.floor(price.time / 1000) as any,
+        open: price.open,
+        high: price.high,
+        low: price.low,
+        close: price.close,
+      }));
+      
+      // Convert price history to volume data
+      const volumeData: LineData[] = gameState.priceHistory.map(price => ({
+        time: Math.floor(price.time / 1000) as any,
+        value: price.volume,
+        color: price.close >= price.open ? '#4ade80' : '#ef4444',
+      }));
+      
+      // Update chart data
+      candleSeries.current.setData(candleData);
+      volumeSeries.current.setData(volumeData);
+      
+      // Set visible range
+      if (chart.current && gameState.priceHistory.length > 0) {
+        const firstTime = Math.floor(gameState.priceHistory[0].time / 1000);
+        const lastTime = Math.floor(gameState.priceHistory[gameState.priceHistory.length - 1].time / 1000);
         
-        // If there's an error with the chart, try to recreate it
-        if (chartContainerRef.current && chart.current) {
-          chart.current.remove();
-          
-          const newChart = createChart(chartContainerRef.current, {
-            layout: {
-              background: { type: ColorType.Solid, color: 'transparent' },
-              textColor: '#D9D9D9',
-            },
-            grid: {
-              vertLines: { color: 'rgba(42, 46, 57, 0.5)' },
-              horzLines: { color: 'rgba(42, 46, 57, 0.5)' },
-            },
-            width: chartContainerRef.current.clientWidth,
-            height: 300,
-            timeScale: {
-              timeVisible: true,
-              secondsVisible: false,
-            }
-          });
-          
-          chart.current = newChart;
-          setIsChartInitialized(false);
-        }
+        chart.current.timeScale().setVisibleRange({
+          from: firstTime,
+          to: lastTime,
+        });
       }
     }
-  }, [marketData, isChartInitialized]);
-  
-  // Fetch data for the selected symbol and manage real-time subscriptions
-  useEffect(() => {
-    console.log(`Setting up data for symbol: ${symbol}`);
-    
-    // Initial fetch of historical data
-    fetchMarketData(symbol);
-    
-    // When the component unmounts or symbol changes, unsubscribe from updates
-    return () => {
-      if (connected) {
-        console.log(`Unsubscribing from ${symbol} updates`);
-        unsubscribeFromRealTimeData(mapSymbolToIronBeam(symbol));
-      }
-    };
-  }, [symbol, fetchMarketData, unsubscribeFromRealTimeData, connected]);
-  
-  // Helper function to map symbols to IronBeam format
-  function mapSymbolToIronBeam(symbol: string): string {
-    switch (symbol) {
-      case "BTCUSD": return "BTC/USD";
-      case "ETHUSD": return "ETH/USD";
-      case "EURUSD": return "EUR/USD";
-      default: return symbol;
-    }
-  }
+  }, [gameState.priceHistory]);
   
   return (
-    <Card className={cn("w-full", className)}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-medium flex justify-between items-center">
-          <div className="flex flex-col">
-            <span>Market Data - {symbol}</span>
-            {currentPrice > 0 && (
-              <span className="text-xl font-bold mt-1">
-                {formatCurrency(currentPrice)}
-                {connected && (
-                  <span className="ml-2 text-xs px-2 py-1 bg-green-500/20 text-green-500 rounded-full">
-                    Live
-                  </span>
-                )}
-              </span>
-            )}
-          </div>
-          {loading && <span className="text-sm text-muted-foreground">Loading...</span>}
-        </CardTitle>
-        <Tabs defaultValue="1d">
-          <TabsList className="grid w-full grid-cols-5 h-8">
-            <TabsTrigger value="1h">1H</TabsTrigger>
-            <TabsTrigger value="4h">4H</TabsTrigger>
-            <TabsTrigger value="1d">1D</TabsTrigger>
-            <TabsTrigger value="1w">1W</TabsTrigger>
-            <TabsTrigger value="1m">1M</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </CardHeader>
-      <CardContent>
-        <div ref={chartContainerRef} className="w-full h-[300px]" />
-      </CardContent>
-    </Card>
+    <div ref={chartContainerRef} className="w-full h-full" />
   );
 }
