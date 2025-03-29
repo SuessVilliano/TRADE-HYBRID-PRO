@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { toast } from 'sonner';
 import { Loader2, Plus, X, CheckCircle, Search, Filter, ChevronDown, ChevronUp, RefreshCw, BookOpen, Code, BarChart2, Star, Clock, Tag, Trash } from 'lucide-react';
 import { useSolanaAuth } from '../lib/context/SolanaAuthProvider';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import '@solana/wallet-adapter-react-ui/styles.css';
 import { calculateTradingFee } from '../lib/contracts/thc-token-info';
 import { nftService, type NFTItem, type NFTAttribute } from '../lib/services/nft-service';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
@@ -77,12 +79,23 @@ export default function NFTMarketplace() {
 
   // Initialize wallet connection and fetch NFTs on mount
   useEffect(() => {
-    // Set sample wallet for demonstration purposes
-    const sampleWallet = auth.isWalletAuthenticated && auth.walletAddress ? 
-      auth.walletAddress :
-      '0x1234567890abcdef1234567890abcdef12345678';
+    console.log('NFT Marketplace: Auth state changed', { 
+      isAuthenticated: auth.isWalletAuthenticated, 
+      walletAddress: auth.walletAddress,
+      isPhantomAvailable: typeof window !== 'undefined' && 'phantom' in window && !!(window as any).phantom?.solana
+    });
     
-    nftService.setUserWallet(sampleWallet);
+    // Use real wallet address if authenticated, otherwise use a temporary placeholder
+    // that clearly shows it's not a real address, avoiding mock data
+    if (auth.isWalletAuthenticated && auth.walletAddress) {
+      console.log('Using authenticated wallet address:', auth.walletAddress);
+      nftService.setUserWallet(auth.walletAddress);
+    } else {
+      console.log('No wallet authenticated, using placeholder wallet ID');
+      // The wallet will be updated when authentication happens
+      nftService.setUserWallet("not-connected");
+    }
+    
     nftService.setThcBalance(thcBalance);
     
     // Load NFTs
@@ -1030,9 +1043,16 @@ export default function NFTMarketplace() {
               </Button>
             </div>
           ) : (
-            <Button onClick={auth.loginWithSolana}>
-              Connect Wallet
-            </Button>
+            <div className="flex flex-col gap-2 items-center">
+              <div className="wallet-adapter-dropdown">
+                <WalletMultiButton className="wallet-adapter-button wallet-adapter-button-trigger bg-primary hover:bg-primary/90 text-white rounded-md px-4 py-2" />
+              </div>
+              {typeof window !== 'undefined' && 'phantom' in window && !!(window as any).phantom?.solana && (
+                <Button variant="ghost" size="sm" onClick={auth.loginWithSolana} className="mt-2">
+                  Sign & Verify
+                </Button>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -1198,9 +1218,16 @@ export default function NFTMarketplace() {
               <p className="text-muted-foreground max-w-md mb-4">
                 You need to connect your wallet to view your NFT collection.
               </p>
-              <Button onClick={auth.loginWithSolana}>
-                Connect Wallet
-              </Button>
+              <div className="flex flex-col gap-2 items-center">
+                <div className="wallet-adapter-dropdown">
+                  <WalletMultiButton className="wallet-adapter-button wallet-adapter-button-trigger bg-primary hover:bg-primary/90 text-white rounded-md px-4 py-2" />
+                </div>
+                {typeof window !== 'undefined' && 'phantom' in window && !!(window as any).phantom?.solana && (
+                  <Button variant="ghost" size="sm" onClick={auth.loginWithSolana} className="mt-2">
+                    Sign & Verify
+                  </Button>
+                )}
+              </div>
             </div>
           ) : isLoading ? (
             <div className="flex justify-center items-center py-16">
@@ -1237,9 +1264,16 @@ export default function NFTMarketplace() {
               <p className="text-muted-foreground max-w-md mb-4">
                 You need to connect your wallet to view your created NFTs.
               </p>
-              <Button onClick={auth.loginWithSolana}>
-                Connect Wallet
-              </Button>
+              <div className="flex flex-col gap-2 items-center">
+                <div className="wallet-adapter-dropdown">
+                  <WalletMultiButton className="wallet-adapter-button wallet-adapter-button-trigger bg-primary hover:bg-primary/90 text-white rounded-md px-4 py-2" />
+                </div>
+                {typeof window !== 'undefined' && 'phantom' in window && !!(window as any).phantom?.solana && (
+                  <Button variant="ghost" size="sm" onClick={auth.loginWithSolana} className="mt-2">
+                    Sign & Verify
+                  </Button>
+                )}
+              </div>
             </div>
           ) : isLoading ? (
             <div className="flex justify-center items-center py-16">
@@ -1276,9 +1310,16 @@ export default function NFTMarketplace() {
               <p className="text-muted-foreground max-w-md mb-4">
                 You need to connect your wallet to create NFTs on the marketplace.
               </p>
-              <Button onClick={auth.loginWithSolana}>
-                Connect Wallet
-              </Button>
+              <div className="flex flex-col gap-2 items-center">
+                <div className="wallet-adapter-dropdown">
+                  <WalletMultiButton className="wallet-adapter-button wallet-adapter-button-trigger bg-primary hover:bg-primary/90 text-white rounded-md px-4 py-2" />
+                </div>
+                {typeof window !== 'undefined' && 'phantom' in window && !!(window as any).phantom?.solana && (
+                  <Button variant="ghost" size="sm" onClick={auth.loginWithSolana} className="mt-2">
+                    Sign & Verify
+                  </Button>
+                )}
+              </div>
             </div>
           ) : (
             renderCreateNFTForm()

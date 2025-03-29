@@ -12,6 +12,7 @@ interface SolanaAuthContextProps {
   solanaAuthError: string | null;
   isWalletAuthenticated: boolean;
   walletAddress?: string;
+  isPhantomAvailable?: boolean;
 }
 
 const SolanaAuthContext = createContext<SolanaAuthContextProps>({
@@ -21,6 +22,7 @@ const SolanaAuthContext = createContext<SolanaAuthContextProps>({
   solanaAuthError: null,
   isWalletAuthenticated: false,
   walletAddress: undefined,
+  isPhantomAvailable: false,
 });
 
 interface SolanaAuthProviderProps {
@@ -35,21 +37,75 @@ export const SolanaAuthProvider: FC<SolanaAuthProviderProps> = ({ children }) =>
   const [isWalletAuthenticated, setIsWalletAuthenticated] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | undefined>(undefined);
 
+  // Check for Phantom Wallet extension
+  const [isPhantomAvailable, setIsPhantomAvailable] = useState<boolean>(false);
+  
+  // Detect Phantom wallet
+  useEffect(() => {
+    const checkPhantomAvailability = () => {
+      const phantomExists = typeof window !== 'undefined' && 
+        'phantom' in window && 
+        !!(window as any).phantom?.solana;
+      
+      console.log('Phantom wallet availability check:', { 
+        exists: phantomExists,
+        connectMethod: phantomExists ? typeof (window as any).phantom?.solana?.connect : 'undefined'
+      });
+      
+      setIsPhantomAvailable(phantomExists);
+    };
+    
+    // Check immediately and also set up listener for changes
+    checkPhantomAvailability();
+    
+    // Listen for phantom object appearing (sometimes it loads after page)
+    const phantomCheckInterval = setInterval(checkPhantomAvailability, 1000);
+    
+    return () => {
+      clearInterval(phantomCheckInterval);
+    };
+  }, []);
+
   // Check if the current user is authenticated with Solana
   useEffect(() => {
-    if (isAuthenticated && user.walletAddress && connected && publicKey) {
+    console.log('Checking wallet authentication state:', {
+      isAuthenticated,
+      userWalletAddress: user.walletAddress,
+      connected,
+      publicKey: publicKey?.toString(),
+      isPhantomAvailable
+    });
+
+    // Auto-authenticate if conditions are right
+    if (connected && publicKey && !isWalletAuthenticated) {
       const currentWalletAddress = publicKey.toString();
       setWalletAddress(currentWalletAddress);
-      if (currentWalletAddress === user.walletAddress) {
-        setIsWalletAuthenticated(true);
+      
+      if (isAuthenticated && user.walletAddress) {
+        // If user already has a wallet address, check if it matches the connected one
+        if (currentWalletAddress === user.walletAddress) {
+          console.log('Wallet addresses match, setting isWalletAuthenticated to true');
+          setIsWalletAuthenticated(true);
+        } else {
+          console.log('Wallet addresses do not match:', { 
+            currentWalletAddress, 
+            userWalletAddress: user.walletAddress 
+          });
+          // Could prompt user to update their wallet address here
+        }
       } else {
-        setIsWalletAuthenticated(false);
+        // User connected wallet but hasn't signed message yet
+        console.log('Wallet connected but not authenticated. Ready for sign & verify.');
       }
-    } else {
+    } else if (!connected || !publicKey) {
+      console.log('No wallet connected:', { 
+        connected, 
+        hasPublicKey: !!publicKey
+      });
       setIsWalletAuthenticated(false);
       setWalletAddress(undefined);
     }
-  }, [isAuthenticated, user.walletAddress, connected, publicKey]);
+  }, [isAuthenticated, user.walletAddress, connected, publicKey, isPhantomAvailable]);
 
   // Verify the signed message
   const verifySignature = (message: Uint8Array, signature: Uint8Array, publicKey: PublicKey): boolean => {
@@ -60,9 +116,48 @@ export const SolanaAuthProvider: FC<SolanaAuthProviderProps> = ({ children }) =>
     );
   };
 
+  // Try to connect using Phantom directly if wallet-adapter fails
+  const tryPhantomDirectConnect = async (): Promise<PublicKey | null> => {
+    if (isPhantomAvailable && (window as any).phantom?.solana) {
+      try {
+        console.log('Attempting direct Phantom connection');
+        const response = await (window as any).phantom.solana.connect();
+        const phantomPublicKey = new PublicKey(response.publicKey.toString());
+        console.log('Connected to Phantom directly:', phantomPublicKey.toString());
+        return phantomPublicKey;
+      } catch (error) {
+        console.error('Direct Phantom connection failed:', error);
+        return null;
+      }
+    }
+    return null;
+  };
+
   const loginWithSolana = async (): Promise<boolean> => {
-    if (!connected || !publicKey || !signMessage) {
-      setSolanaAuthError('Wallet not connected. Please connect your Solana wallet first.');
+    console.log('loginWithSolana called with state:', { 
+      connected, 
+      publicKeyExists: !!publicKey, 
+      signMessageExists: !!signMessage,
+      isPhantomAvailable,
+      walletAddress: walletAddress
+    });
+
+    let walletPubKey = publicKey;
+    let needsPhantomSignature = false;
+
+    // If wallet-adapter isn't connected but Phantom is available, try direct connection
+    if ((!connected || !publicKey) && isPhantomAvailable) {
+      const phantomKey = await tryPhantomDirectConnect();
+      if (phantomKey) {
+        walletPubKey = phantomKey;
+        needsPhantomSignature = true;
+        console.log("Using Phantom directly since wallet-adapter isn't connected");
+      }
+    }
+
+    if (!walletPubKey) {
+      console.log('No wallet public key available, cannot proceed');
+      setSolanaAuthError('No wallet connected. Please connect your Solana wallet first.');
       return false;
     }
 
@@ -71,15 +166,39 @@ export const SolanaAuthProvider: FC<SolanaAuthProviderProps> = ({ children }) =>
       setSolanaAuthError(null);
 
       // Create a challenge message that includes the wallet address
-      const walletAddress = publicKey.toString();
-      const message = `Sign this message to verify your wallet ownership: ${walletAddress}`;
+      const currentWalletAddress = walletPubKey.toString();
+      setWalletAddress(currentWalletAddress);
+      console.log('Proceeding with wallet address:', currentWalletAddress);
+      
+      const message = `Sign this message to verify your wallet ownership: ${currentWalletAddress}`;
       const encodedMessage = new TextEncoder().encode(message);
 
-      // Request signature from wallet
-      const signatureBytes = await signMessage(encodedMessage);
+      console.log('Requesting signature from wallet...');
+      
+      // Request signature from wallet - either via adapter or directly
+      let signatureBytes: Uint8Array;
+      
+      if (needsPhantomSignature && isPhantomAvailable) {
+        console.log('Using direct Phantom signing');
+        try {
+          const sigData = await (window as any).phantom.solana.signMessage(encodedMessage, 'utf8');
+          signatureBytes = new Uint8Array(sigData.signature);
+        } catch (signError) {
+          console.error('Phantom direct sign error:', signError);
+          throw new Error('Failed to sign message with Phantom. Please try again.');
+        }
+      } else if (signMessage) {
+        // Use wallet adapter
+        signatureBytes = await signMessage(encodedMessage);
+      } else {
+        throw new Error('No signing method available');
+      }
+      
+      console.log('Signature received, verifying...');
       
       // Verify signature
-      const isValid = verifySignature(encodedMessage, signatureBytes, publicKey);
+      const isValid = verifySignature(encodedMessage, signatureBytes, walletPubKey);
+      console.log('Signature validation result:', isValid);
 
       if (!isValid) {
         throw new Error('Invalid signature. Authentication failed.');
@@ -93,23 +212,28 @@ export const SolanaAuthProvider: FC<SolanaAuthProviderProps> = ({ children }) =>
 
       // Create or update user profile
       const walletUser = {
-        username: `sol_${walletAddress.substring(0, 6)}`,
-        walletAddress,
+        username: `sol_${currentWalletAddress.substring(0, 6)}`,
+        walletAddress: currentWalletAddress,
         walletSignature: signatureBase58,
         // Keep any existing user data if already logged in
         ...(isAuthenticated ? user : {}),
       };
 
+      console.log('Created wallet user:', walletUser);
+
       // Update user store
       if (isAuthenticated) {
+        console.log('User already authenticated, updating user data');
         updateUser(walletUser);
       } else {
+        console.log('Logging in user with wallet auth');
         // Login with a blank password since we've verified via wallet
         await login(walletUser.username, 'wallet-auth');
         updateUser(walletUser);
       }
 
       setIsWalletAuthenticated(true);
+      console.log('Wallet authentication successful');
       
       return true;
     } catch (error) {
@@ -146,7 +270,8 @@ export const SolanaAuthProvider: FC<SolanaAuthProviderProps> = ({ children }) =>
         isAuthenticatingWithSolana,
         solanaAuthError,
         isWalletAuthenticated,
-        walletAddress
+        walletAddress,
+        isPhantomAvailable
       }}
     >
       {children}

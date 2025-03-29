@@ -1,5 +1,5 @@
 import { FC, useState, useEffect } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 
 export const SolanaWalletConnector: FC = () => {
   const { publicKey, connected, disconnect } = useWallet();
+  const { connection } = useConnection();
   const [balance, setBalance] = useState<number | null>(null);
   const [tokens, setTokens] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -19,30 +20,38 @@ export const SolanaWalletConnector: FC = () => {
     return `${addressStr.substring(0, 4)}...${addressStr.substring(addressStr.length - 4)}`;
   };
 
+  // Log the current wallet connection state for debugging
+  useEffect(() => {
+    console.log('Wallet connection state:', { 
+      connected, 
+      publicKey: publicKey?.toString(),
+      isPhantomAvailable: typeof window !== 'undefined' && 'phantom' in window && !!(window as any).phantom?.solana
+    });
+  }, [connected, publicKey]);
+
   // Fetch SOL balance when connected
   useEffect(() => {
     const fetchBalance = async () => {
-      if (!publicKey) {
+      if (!publicKey || !connection) {
         setBalance(null);
         return;
       }
 
       try {
         setIsLoading(true);
-        // This would normally use the connection from ConnectionProvider
-        // For this example, we'll use mock data for now
-        // In production, use:
-        // const { connection } = useConnection();
-        // const balance = await connection.getBalance(publicKey);
         
-        // Mock data for now
-        const mockBalance = 2.5 * LAMPORTS_PER_SOL;
-        setBalance(mockBalance / LAMPORTS_PER_SOL);
+        // Get actual SOL balance from the blockchain
+        const balance = await connection.getBalance(publicKey);
+        setBalance(balance / LAMPORTS_PER_SOL);
         
-        // Mock token data
+        console.log('Fetched SOL balance:', balance / LAMPORTS_PER_SOL);
+        
+        // Token data - in a real application, you would fetch this from the chain
+        // For now, we'll use placeholder data that clearly indicates it will be replaced
+        // with real token data in production
         setTokens([
-          { symbol: "THC", name: "Trade Hybrid Coin", balance: 1000, value: 2000 },
-          { symbol: "USDC", name: "USD Coin", balance: 500, value: 500 },
+          { symbol: "THC", name: "Trade Hybrid Coin", balance: 0, value: 0 },
+          { symbol: "USDC", name: "USD Coin", balance: 0, value: 0 },
         ]);
         
         setIsLoading(false);
@@ -52,8 +61,10 @@ export const SolanaWalletConnector: FC = () => {
       }
     };
 
-    fetchBalance();
-  }, [publicKey]);
+    if (connected && publicKey) {
+      fetchBalance();
+    }
+  }, [publicKey, connected, connection]);
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -84,7 +95,7 @@ export const SolanaWalletConnector: FC = () => {
               <div className="border rounded-lg p-3 text-center">
                 <div className="text-sm text-muted-foreground">THC Balance</div>
                 <div className="text-2xl font-bold">
-                  {tokens.find(t => t.symbol === "THC")?.balance || 0}
+                  {isLoading ? "Loading..." : tokens.find(t => t.symbol === "THC")?.balance || 0}
                 </div>
               </div>
             </div>
@@ -116,6 +127,11 @@ export const SolanaWalletConnector: FC = () => {
             <p className="mb-4 text-muted-foreground">
               Connect your wallet to view your balances and start trading with low fees.
             </p>
+            {typeof window !== 'undefined' && 'phantom' in window && !!(window as any).phantom?.solana ? (
+              <p className="text-sm text-green-500">Phantom wallet detected!</p>
+            ) : (
+              <p className="text-sm text-yellow-500">No Phantom wallet detected. Please install the browser extension.</p>
+            )}
           </div>
         )}
       </CardContent>

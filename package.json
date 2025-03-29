@@ -46,6 +46,7 @@
     "@react-three/fiber": "^8.18.0",
     "@react-three/postprocessing": "^2.19.1",
     "@solana/wallet-adapter-base": "^0.9.24",
+    "@solana/wallet-adapter-phantom": "^0.9.25",
     "@solana/wallet-adapter-react": "^0.15.36",
     "@solana/wallet-adapter-react-ui": "^0.9.36",
     "@tanstack/react-query": "^5.60.5",

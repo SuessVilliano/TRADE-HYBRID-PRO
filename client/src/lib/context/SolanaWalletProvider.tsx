@@ -8,40 +8,32 @@ import {
   WalletProvider 
 } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-
-// Default styles for wallet adapter
-require('@solana/wallet-adapter-react-ui/styles.css');
-
-// Direct imports for each wallet adapter
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
+import { Adapter } from '@solana/wallet-adapter-base';
 import { clusterApiUrl } from '@solana/web3.js';
 
-// Define adapter network values directly
-const ADAPTER_NETWORK = {
-  Mainnet: 'mainnet-beta',
-  Testnet: 'testnet',
-  Devnet: 'devnet'
-} as const;
+// Default styles for wallet adapter
+import '@solana/wallet-adapter-react-ui/styles.css';
 
 interface SolanaWalletProviderProps {
   children: ReactNode;
 }
 
 export const SolanaWalletProvider: FC<SolanaWalletProviderProps> = ({ children }) => {
-  // You can also provide a custom RPC endpoint
-  const network = ADAPTER_NETWORK.Devnet;
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  // Set the network to Devnet
+  const endpoint = useMemo(() => clusterApiUrl('devnet'), []);
 
-  // Only include the PhantomWalletAdapter for now
+  // Initialize the PhantomWalletAdapter
   const wallets = useMemo(
     () => {
-      // Check if we're in a browser environment and phantom exists
-      if (typeof window !== 'undefined' && window.phantom) {
-        return [new PhantomWalletAdapter()];
-      }
+      console.log('Initializing wallets, Phantom available:', 
+        typeof window !== 'undefined' && 
+        'phantom' in window && 
+        (window as any).phantom?.solana !== undefined
+      );
       
-      // Fallback empty array if phantom is not available (for SSR compatibility)
-      return [new PhantomWalletAdapter()];
+      // Cast to Adapter[] to satisfy TypeScript
+      return [new PhantomWalletAdapter()] as Adapter[];
     },
     []
   );
