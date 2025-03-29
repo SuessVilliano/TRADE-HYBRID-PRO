@@ -1,159 +1,83 @@
 # Trade Hybrid Platform Overview
 
-## Executive Summary
-Trade Hybrid is a cutting-edge decentralized trading platform that combines blockchain technology, 3D visualization, real-time trading capabilities, and social features into a comprehensive ecosystem for modern traders. The platform leverages the Solana blockchain for cryptocurrency exchanges with advanced interactive features that blend technology, gamification, and user-centric design.
+Trade Hybrid is an immersive AI-driven trading metaverse that combines cutting-edge technologies to create a revolutionary trading experience. The platform offers a comprehensive suite of tools and features for traders of all levels, integrating social features, educational resources, and advanced trading capabilities in one unified environment.
 
-## Core Technical Stack
-- **Frontend**: React with TypeScript and Tailwind CSS
-- **3D Rendering**: Three.js with React Three Fiber
-- **Blockchain Integration**: Solana Web3.js for wallet interactions
-- **State Management**: Zustand for global state
-- **Real-time Data**: WebSockets for market data and user interactions
-- **UI Components**: Custom UI library with Radix UI primitives
+## Core Features
 
-## Main Features and Modules
+### Trading
 
-### 1. Trading Platform
-- **Real-time Charts**: TradingView integration with support for multiple instruments including crypto, futures, forex, and commodities
-- **Smart Trade Execution**: Advanced order types with risk management tools
-- **Economic Calendar**: Financial events calendar with adjustable height and improved visibility
-- **Multi-broker Connectivity**: Support for connecting to various brokers for executing trades
+- **Multi-Market Trading**: Access to Cryptocurrency, Futures, Forex, and Stock markets
+- **Real-Time Data**: Live market data and advanced charting tools
+- **AI-Powered Analysis**: Market insights and trading suggestions powered by AI
+- **Smart Trade Interface**: Advanced order types and risk management tools
 
-### 2. DEX Trading (Decentralized Exchange)
-- **Solana Integration**: Direct trading on Solana DEX with low fees
-- **THC Token Utility**: Using THC token for reduced trading fees
-- **Wallet Authentication**: Secure authentication through Solana wallet signatures
+### Blockchain Integration
 
-### 3. AI-Powered Trading Assistant
-- **Market Buddy**: Advanced market analysis through AI with natural language interface
-- **Trade Suggestions**: AI-generated trade signals with risk assessment
-- **Strategy Testing**: Backtest trading strategies using historical data
-- **Hybrid Score**: Proprietary scoring system for potential trades combining multiple data points
+- **THC Token Utility**: Native token with staking, governance, and fee reduction benefits
+- **Cryptocurrency DEX**: Direct trading on Solana decentralized exchanges
+- **NFT Marketplace**: Trade unique NFTs including trading strategies and virtual properties
+- **Wallet Integration**: Seamless connection with Solana wallets for transactions
 
-### 4. Metaverse Experience
-- **3D Social Environment**: Interactive 3D space where traders can meet and interact
-- **Proximity Voice Chat**: Spatial audio system for realistic voice communication
-- **Screen Sharing**: Display your trading charts to other users nearby
-- **Custom Avatars**: Personalized representation in the metaverse
+### Metaverse Experience
 
-### 5. NFT Marketplace
-- **THC-Based Marketplace**: Buy, sell, and create NFTs using THC tokens
-- **Trading Strategy NFTs**: Package and sell successful trading strategies as NFTs
-- **Virtual Real Estate**: Own spaces in the Trade Hybrid metaverse
-- **Advanced Filtering**: Search and filter NFTs by multiple criteria
-- **Tiered Fee Structure**: Reduced fees based on THC token holdings
-- **Verification System**: Official verified NFTs with special badging
+- **3D Trading World**: Immersive environment for visualizing market data
+- **Social Interaction**: Connect with other traders in virtual trading floors
+- **Proximity Voice Chat**: Real-time audio communication with nearby traders
+- **Customizable Avatars**: Personalize your presence in the metaverse
 
-### 6. THC Token Ecosystem
-- **Stake & Bake**: Staking mechanism for earning rewards
-- **Fee Reduction**: Hold more THC to receive trading fee discounts
-- **Affiliate Matrix**: 2x3 multi-level marketing structure for referral commissions
-- **Governance**: Voting rights for THC token holders on platform decisions
+### Trading Education
 
-### 7. Educational Hub
-- **Learning Resources**: Comprehensive educational content for traders
-- **Micro-Learning Tips**: Configurable trading tips delivered at user-defined intervals
-- **Strategy Library**: Collection of trading strategies with explanations
-- **Trade Hybrid TV**: Live streaming of trading sessions and educational content
+- **Personalized Learning Paths**: Customized educational journeys for different trading markets
+- **Interactive Tutorials**: Learn-by-doing approach to trading concepts
+- **Skill Assessment**: Track your progress and identify areas for improvement
+- **Community Learning**: Learn from experienced traders through social features
 
-### 8. News and Information
-- **Real-time News**: Financial news aggregation with filtering capabilities
-- **Sentiment Analysis**: AI-powered analysis of market sentiment
-- **Trading Signals**: Curated trading signals with notifications
-- **Market Commentary**: Expert insights on current market conditions
+### Community Features
 
-### 9. Trade Runner Game
-- **Gamified Trading**: Test trading skills in a game environment
-- **Leaderboards**: Compete with other traders for rankings
-- **Reward System**: Earn rewards based on performance
-- **Skill Development**: Practice trading strategies in a zero-risk environment
+- **Trade Hybrid TV**: Live streaming of market analysis and educational content
+- **Copy Trading**: Follow and automatically copy trades from successful traders
+- **Social Signals**: Community-driven trading signals and ideas
+- **Leaderboards**: Competitive rankings based on trading performance
 
-### 10. Social Features
-- **Trader Profiles**: User profiles showing trading history and reputation
-- **Copy Trading**: Follow and copy successful traders' positions
-- **Chat System**: Global and private messaging functionality
-- **Community Leaderboards**: Rankings based on trading performance
+### AI Companions
 
-### 11. Mobile Optimization
-- **Responsive Design**: Full functionality across desktop and mobile devices
-- **Push Notifications**: Real-time alerts for important events and signals
-- **Touch Controls**: Intuitive touch interface for the metaverse on mobile
+- **Market Buddy**: Personalized AI assistant for market analysis
+- **Trade Signals**: AI-generated trading opportunities
+- **Risk Assessment**: AI analysis of portfolio risk and opportunity
 
-### 12. Security and Authentication
-- **Wallet-based Authentication**: Secure login using cryptographic signatures
-- **Transaction Security**: Blockchain-powered security for all trades and transfers
-- **Data Privacy**: End-to-end encryption for sensitive information
+### Mobile & Accessibility
 
-### 13. Embedded Applications
-- **Web Browser**: Native browser integration for accessing external resources
-- **Discord Integration**: Embedded Discord for community interaction
-- **API Connectivity**: Integration with various trading APIs and data sources
+- **Cross-Platform Access**: Use on desktop, tablet, or mobile devices
+- **Progressive Web App**: Install directly to home screen without app stores
+- **Notification System**: Customizable alerts for market events and trade signals
 
-## Technical Innovations
-- **Spatial Audio System**: Proximity-based voice chat using WebRTC
-- **Multi-AI Integration**: System that combines multiple AI models for trading insights
-- **Blockchain-Powered Reputation**: On-chain tracking of trader reputation and credentials
-- **Performance Optimization**: Memoized 3D components for efficient rendering
-- **Hybrid Storage System**: Combination of on-chain and off-chain data storage
+## Membership Tiers
 
-## Competitive Advantages
-1. **All-in-One Platform**: Combines trading, social, educational, and gaming elements in one ecosystem
-2. **Blockchain Integration**: Uses Solana for fast, low-cost transactions and secure authentication
-3. **AI-Powered Analysis**: Advanced market analysis and trading suggestions using AI technology
-4. **Gamified Trading Experience**: Makes trading more engaging and accessible
-5. **Strategy Marketplace**: Allows successful traders to monetize their strategies
-6. **Community Focus**: Built-in social features create a supportive trading community
-7. **Mobile-First Approach**: Optimized for both desktop and mobile usage
-8. **Innovative Token Utility**: THC token provides tangible benefits within the ecosystem
+1. **Free**: Basic access to platform features and educational content
+2. **Paid**: Enhanced access to advanced trading tools and AI features
+3. **PRO**: Full access to all platform features including premium trading tools
 
-## Platform Enhancement Roadmap
+## THC Token Economics
 
-To elevate Trade Hybrid to a perfect 10/10 rating, the following enhancements are being implemented:
+- **Trading Fee Reduction**: Hold THC tokens to reduce transaction fees
+- **Staking Rewards**: Earn passive income by staking THC tokens
+- **Membership Benefits**: Token holdings determine membership tier access
+- **Affiliate System**: 2x3 matrix program for commission earnings
 
-### 1. Enhanced User Onboarding & Experience
-- **Progressive Feature Disclosure**: Tiered onboarding that gradually introduces advanced features
-- **Interactive Tutorials**: In-app interactive walkthroughs for each major feature
-- **Personalized Dashboard**: AI-driven customization that adapts based on user behavior
-- **User Experience Testing**: Comprehensive UX testing with traders of varying experience levels
+## Getting Started
 
-### 2. Performance Optimization
-- **Progressive Loading**: Advanced loading techniques for the 3D metaverse
-- **Load Balancing**: Distributed computational tasks between client and server
-- **WebGL Optimization**: Level-of-detail techniques for scaling visual complexity
-- **Lazy Loading**: Component-level lazy loading throughout the application
+1. Create an account or connect your Solana wallet
+2. Complete your trader profile and set preferences
+3. Take the onboarding tutorial to learn platform navigation
+4. Choose your starting learning path (Crypto, Futures, Forex, or Stocks)
+5. Set up your notification preferences
+6. Start exploring markets and engaging with the community
 
-### 3. Mobile-First Refinements
-- **Gesture Controls**: Intuitive touch gestures for trading actions
-- **Responsive Charting**: Specialized chart interactions optimized for touch
-- **Mobile 3D Optimization**: Mobile-specific 3D rendering settings
-- **Offline Capabilities**: Features for low-connectivity environments
+## Recent Updates
 
-### 4. Enhanced Security Measures
-- **Third-Party Audit Program**: Regular security audits by independent firms
-- **Bug Bounty Program**: Public program to incentivize security research
-- **Hardware Wallet Integration**: Expanded hardware wallet support
-- **Advanced Encryption**: End-to-end encryption for all sensitive data
-
-### 5. AI and Data Improvements
-- **Explainable AI**: Transparent AI trading suggestions with explanations
-- **Personalized Risk Management**: AI-driven risk assessment based on trading history
-- **Cross-Market Intelligence**: Detection of correlations between different market assets
-- **Predictive Analytics Dashboard**: Visual representation of AI insights with confidence levels
-
-### 6. Community Building Features
-- **Reputation System**: Transparent, blockchain-based trader reputation system
-- **Community Governance**: Allowing THC holders to vote on platform features
-- **Expert Verification**: Verification system for professional traders and analysts
-- **In-Platform Events**: Virtual trading competitions and educational seminars
-
-### 7. Regulatory Compliance Framework
-- **Geo-Fencing System**: Automatically adjusting features based on user location
-- **Compliance Documentation**: Comprehensive legal documentation for each jurisdiction
-- **KYC/AML Integration**: Partnership with reputable KYC/AML providers
-- **Regulatory Advisory Board**: Team of compliance experts monitoring changing regulations
-
-The Trade Hybrid platform represents a unique fusion of traditional trading tools, decentralized finance, immersive virtual environments, and AI-powered analysis – creating a comprehensive ecosystem for modern traders.
-
----
-
-© Trade Hybrid - All Rights Reserved
+- Enhanced notification system with customizable settings
+- Improved Solana wallet integration with THC token recognition
+- Added personalized learning journeys for different market types
+- Streamlined user interface for better navigation
+- Bulls vs Bears game for hands-on market simulation
+- New market data visualizations and trading tools
