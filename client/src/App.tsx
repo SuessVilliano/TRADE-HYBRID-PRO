@@ -13,6 +13,8 @@ import { SolanaAuthProvider } from './lib/context/SolanaAuthProvider';
 import { useSolanaAuth } from './lib/context/SolanaAuthProvider';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import '@solana/wallet-adapter-react-ui/styles.css';
+import { PerformanceOptimizationProvider } from './lib/context/PerformanceOptimizationProvider';
+import { RegulatoryCompliance } from './components/ui/regulatory-compliance';
 
 // Lazy load pages
 const TradeRunner = lazy(() => import('./pages/trade-runner'));
@@ -38,17 +40,34 @@ import { RouteGated } from './components/ui/feature-gated';
 
 // Light wrapper with providers
 function AppWithProviders() {
+  const [showComplianceModal, setShowComplianceModal] = useState(false);
+  
+  // Show compliance modal after a short delay on first visit
+  useEffect(() => {
+    const hasSeenCompliance = localStorage.getItem('hasSeenCompliance');
+    if (!hasSeenCompliance) {
+      const timer = setTimeout(() => {
+        setShowComplianceModal(true);
+        localStorage.setItem('hasSeenCompliance', 'true');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+  
   return (
     <Router>
       <ToastProvider>
         <SolanaWalletProvider>
           <SolanaAuthProvider>
             <FeatureDisclosureProvider>
-              <MicroLearningProvider>
-                <AppContent />
-                <MicroLearningTipRenderer />
-                <ExperienceLevelSelector />
-              </MicroLearningProvider>
+              <PerformanceOptimizationProvider>
+                <MicroLearningProvider>
+                  <AppContent />
+                  <MicroLearningTipRenderer />
+                  <ExperienceLevelSelector />
+                  <RegulatoryCompliance isOpen={showComplianceModal} onClose={() => setShowComplianceModal(false)} />
+                </MicroLearningProvider>
+              </PerformanceOptimizationProvider>
             </FeatureDisclosureProvider>
           </SolanaAuthProvider>
         </SolanaWalletProvider>
