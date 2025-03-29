@@ -43,6 +43,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/workflow/sendwebhookdata/IjU3NjUwNTY4MDYzNjA0MzQ1MjZhNTUzMTUxMzci_pc", receiveWebhook); // Solana signals
   app.post("/api/v1/webhooks/tUOebm12d8na01WofspmU", receiveWebhook); // Bitcoin and Ether signals
   
+  // Test webhooks for Cash Cow formats
+  app.post("/api/test/webhook/cashcow", (req, res) => {
+    // Create a sample Cash Cow signal based on the requested type
+    const signalType = req.query.type || 'forex';
+    let payload = { content: '' };
+    
+    switch (signalType) {
+      case 'forex':
+        payload.content = `Cash Cow SELL ALERT Symbol: USDJPY Entry: 150.532 Stop Loss: 150.61 - 7.8 pips Take Profit: 150.142 - 39 pips DO NOT RISK MORE THAN 0.25-1%`;
+        payload.channel_name = 'forex-signals';
+        break;
+      case 'futures':
+        payload.content = `Cash Cow BUY ALERT Symbol: MGC1! Entry: 2738 Stop Loss: 2731.7 - 63 pips Take Profit: 2769.5 - 315 pips DO NOT RISK MORE THAN 0.25-1%`;
+        payload.channel_name = 'futures-signals';
+        break;
+      case 'hybrid':
+        payload.content = `Cash Cow SELL ALERT Symbol: NQ1! Entry: 20135.25 Stop Loss: 20152.36 (+17.11 points) TP1: 20101.04 (-34.21 points) R:R = 2 TP2: 20083.93 (-51.32 points) R:R = 3 TP3: 20066.82 (-68.43 points) R:R = 4 DO NOT RISK MORE THAN 0.25-1%`;
+        payload.channel_name = 'hybridai-signals';
+        break;
+      default:
+        payload.content = `Cash Cow BUY ALERT Symbol: BTCUSDT Entry: 67500 Stop Loss: 66950 - 550 pips Take Profit: 68600 - 1100 pips DO NOT RISK MORE THAN 0.25-1%`;
+        payload.channel_name = 'crypto-signals';
+    }
+    
+    // Pass the payload to the webhook processor
+    req.body = payload;
+    return receiveWebhook(req, res);
+  });
+  
   // Game leaderboard routes
   app.get("/api/games/:gameId/leaderboard", getGameLeaderboard);
   app.get("/api/games/:gameId/players/:playerId", getGamePlayer);
