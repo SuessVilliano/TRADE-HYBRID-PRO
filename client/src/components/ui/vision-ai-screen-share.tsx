@@ -9,6 +9,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+// Using simpler approach for TypeScript compatibility
+// We'll just use 'any' for the speech recognition types to avoid complex type issues
+
 interface VisionAIScreenShareProps {
   className?: string;
 }
@@ -356,48 +359,97 @@ export function VisionAIScreenShare({ className }: VisionAIScreenShareProps) {
     setMessages(prev => [...prev, message]);
   };
   
+  // Speech recognition reference - using any type to avoid TS errors
+  const speechRecognitionRef = useRef<any>(null);
+  
+  // Check if SpeechRecognition is available in the browser
+  const isSpeechRecognitionAvailable = () => {
+    return 'webkitSpeechRecognition' in window || 
+           'SpeechRecognition' in window;
+  };
+
+  // Initialize speech recognition
+  const initSpeechRecognition = () => {
+    if (!isSpeechRecognitionAvailable()) {
+      toast.error("Speech recognition is not supported in your browser");
+      return null;
+    }
+    
+    // Get appropriate SpeechRecognition API based on browser
+    // Using any type to avoid TypeScript errors with the Web Speech API
+    const SpeechRecognitionAPI = (window as any).webkitSpeechRecognition || 
+                                (window as any).SpeechRecognition;
+    
+    // Create a new instance
+    const recognition = new SpeechRecognitionAPI();
+    
+    // Configure the recognition
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+    
+    // Set up event handlers
+    recognition.onresult = (event: any) => {
+      // Extract transcript from results
+      const transcript = Array.from(event.results)
+        .map((result: any) => result[0])
+        .map((result: any) => result.transcript)
+        .join('');
+      
+      console.log("Speech recognized:", transcript);
+      
+      // Update the input field with the recognized text
+      if (event.results[0].isFinal) {
+        setInput(transcript);
+      }
+    };
+    
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error', event.error);
+      toast.error(`Speech recognition error: ${event.error}`);
+      setIsRecording(false);
+    };
+    
+    recognition.onend = () => {
+      console.log("Speech recognition ended");
+      setIsRecording(false);
+    };
+    
+    return recognition;
+  };
+  
   const startVoiceRecording = async () => {
     try {
-      // If already recording, stop it first
-      if (isRecording && mediaRecorderRef.current) {
+      // If already recording, stop it
+      if (isRecording) {
         stopVoiceRecording();
         return;
       }
       
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioChunksRef.current = [];
+      // First ensure we have microphone permissions
+      await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
+      // Initialize speech recognition if not already done
+      if (!speechRecognitionRef.current) {
+        const recognition = initSpeechRecognition();
+        if (!recognition) return;
+        speechRecognitionRef.current = recognition;
+      }
       
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          audioChunksRef.current.push(e.data);
-        }
-      };
-      
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        // In a real implementation, we would send this to an STT service
-        // For now, simulate a successful transcription
-        
-        // Simulate successful transcription
-        setInput("Analyze the current chart pattern and key support/resistance levels");
-        
-        // Clean up
-        stream.getTracks().forEach(track => track.stop());
-        setIsRecording(false);
-      };
-      
-      mediaRecorder.start();
+      // Start speech recognition
+      // Using '!' assertion to tell TypeScript the reference is definitely not null at this point
+      speechRecognitionRef.current!.start();
       setIsRecording(true);
       
-      // Automatically stop recording after 10 seconds
+      // Show toast for user feedback
+      toast.info("Listening... Speak now", { duration: 2000 });
+      
+      // Automatically stop after 10 seconds if still recording
       setTimeout(() => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+        if (isRecording) {
           stopVoiceRecording();
         }
-      }, 10000);
+      }, 15000);
       
     } catch (error) {
       console.error("Error starting voice recording:", error);
@@ -407,9 +459,14 @@ export function VisionAIScreenShare({ className }: VisionAIScreenShareProps) {
   };
   
   const stopVoiceRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-      mediaRecorderRef.current.stop();
+    if (speechRecognitionRef.current) {
+      try {
+        speechRecognitionRef.current.stop();
+      } catch (error) {
+        console.error("Error stopping speech recognition:", error);
+      }
     }
+    setIsRecording(false);
   };
   
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
