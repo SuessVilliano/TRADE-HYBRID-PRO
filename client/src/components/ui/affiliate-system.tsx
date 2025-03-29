@@ -7,6 +7,7 @@ import { ContextualTooltip } from './contextual-tooltip';
 import { Share2, Copy, CheckCircle, ArrowUpRight, Users } from 'lucide-react';
 import { useWeb3React } from '@web3-react/core';
 import { Web3Provider } from '@ethersproject/providers';
+import { AffiliateService } from '@/lib/services/affiliate-service';
 
 export function AffiliateSystem() {
   const { account, active } = useWeb3React<Web3Provider>();
@@ -19,9 +20,9 @@ export function AffiliateSystem() {
 
   // Generate a referral link based on connected wallet or randomly
   useEffect(() => {
-    const customDomain = 'https://pro.tradehybrid.club';
     if (active && account) {
-      setReferralLink(`${customDomain}?ref=${account.substring(2, 10)}`);
+      // Use the AffiliateService to generate consistent links with the proper domain
+      setReferralLink(AffiliateService.generateReferralLink(account.substring(2, 10)));
       
       // Simulate loading referral data
       // In a real implementation, you would fetch this from an API
@@ -29,7 +30,7 @@ export function AffiliateSystem() {
     } else {
       // Use a temporary random ID if not connected
       const randomId = Math.random().toString(36).substring(2, 10);
-      setReferralLink(`${customDomain}?ref=${randomId}`);
+      setReferralLink(AffiliateService.generateReferralLink(randomId));
     }
   }, [active, account]);
   

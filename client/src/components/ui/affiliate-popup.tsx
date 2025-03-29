@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 import { Input } from './input';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { PopupContainer } from './popup-container';
+import { AffiliateService } from '@/lib/services/affiliate-service';
 
 /**
  * Affiliate Program Popup Component
@@ -22,7 +23,7 @@ export function AffiliatePopup({
   onClose: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<'overview' | 'referrals' | 'earnings'>('overview');
-  const [affiliateLink, setAffiliateLink] = useState('https://pro.tradehybrid.club/?ref=trader123');
+  const [affiliateLink, setAffiliateLink] = useState(AffiliateService.generateReferralLink('trader123'));
   const [referralCode, setReferralCode] = useState('TRADER123');
   const [linkCopied, setLinkCopied] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);

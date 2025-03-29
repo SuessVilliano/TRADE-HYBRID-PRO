@@ -4,6 +4,7 @@ import { PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { FaUserPlus, FaCoins, FaUsers, FaNetworkWired } from 'react-icons/fa';
+import { AffiliateService } from '@/lib/services/affiliate-service';
 
 // Matrix Node represents a position in the spillover matrix
 interface MatrixNode {
@@ -287,8 +288,8 @@ export function SpilloverMatrix() {
   const getAffiliateLink = () => {
     if (!publicKey) return "";
     
-    const baseUrl = 'https://pro.tradehybrid.club';
-    return `${baseUrl}/register?ref=${publicKey.toString()}`;
+    // Use AffiliateService for consistent domain across the application
+    return AffiliateService.generateReferralLink(publicKey.toString());
   };
   
   const copyAffiliateLink = () => {
