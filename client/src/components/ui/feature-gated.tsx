@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { Lock, Info } from 'lucide-react';
-import { useFeatureDisclosure, FeatureCategory, UserExperienceLevel } from '@/lib/context/FeatureDisclosureProvider';
+import { 
+  useFeatureDisclosure, 
+  FeatureCategory, 
+  UserExperienceLevel
+} from '@/lib/context/FeatureDisclosureProvider';
 import { Button } from './button';
 import {
   Tooltip,
@@ -35,31 +39,42 @@ export const FeatureGated: React.FC<FeatureGatedProps> = ({
     return <>{children}</>;
   }
   
-  // Find the minimum level required for this feature
+  // Find the minimum membership tier required for this feature
   const findMinimumLevelRequired = (): UserExperienceLevel => {
-    const levels = [
-      UserExperienceLevel.BEGINNER,
-      UserExperienceLevel.INTERMEDIATE,
-      UserExperienceLevel.ADVANCED,
-      UserExperienceLevel.EXPERT
+    const membershipTiers = [
+      UserExperienceLevel.FREE,
+      UserExperienceLevel.PAID,
+      UserExperienceLevel.PRO
     ];
     
-    for (const level of levels) {
+    for (const tier of membershipTiers) {
       const { isFeatureEnabled } = new class {
         isFeatureEnabled(category: FeatureCategory) {
-          switch(level) {
-            case UserExperienceLevel.BEGINNER:
-              return [FeatureCategory.BASIC_TRADING, FeatureCategory.EDUCATION].includes(category);
-            case UserExperienceLevel.INTERMEDIATE:
-              return [FeatureCategory.BASIC_TRADING, FeatureCategory.EDUCATION, 
-                    FeatureCategory.SOCIAL, FeatureCategory.AI_FEATURES].includes(category);
-            case UserExperienceLevel.ADVANCED:
-              return [FeatureCategory.BASIC_TRADING, FeatureCategory.ADVANCED_TRADING,
-                    FeatureCategory.EDUCATION, FeatureCategory.SOCIAL, 
-                    FeatureCategory.AI_FEATURES, FeatureCategory.METAVERSE, 
-                    FeatureCategory.NFT].includes(category);
-            case UserExperienceLevel.EXPERT:
-              return true; // All features available to experts
+          switch(tier) {
+            // Free tier - basic features only
+            case UserExperienceLevel.FREE:
+              return [
+                FeatureCategory.BASIC_TRADING,
+                FeatureCategory.EDUCATION
+              ].includes(category);
+              
+            // Paid tier - most features except Market Buddy
+            case UserExperienceLevel.PAID:
+              return [
+                FeatureCategory.BASIC_TRADING,
+                FeatureCategory.ADVANCED_TRADING,
+                FeatureCategory.EDUCATION,
+                FeatureCategory.SOCIAL,
+                FeatureCategory.AI_FEATURES,
+                FeatureCategory.METAVERSE,
+                FeatureCategory.NFT,
+                FeatureCategory.BLOCKCHAIN
+              ].includes(category);
+              
+            // Pro tier - all features
+            case UserExperienceLevel.PRO:
+              return true; // All features available to pro members
+              
             default:
               return false;
           }
@@ -67,11 +82,11 @@ export const FeatureGated: React.FC<FeatureGatedProps> = ({
       };
       
       if (isFeatureEnabled(featureCategory)) {
-        return level;
+        return tier;
       }
     }
     
-    return UserExperienceLevel.EXPERT; // Default to expert if not found
+    return UserExperienceLevel.PRO; // Default to PRO if not found
   };
   
   const requiredLevel = findMinimumLevelRequired();
@@ -118,15 +133,18 @@ export const FeatureGated: React.FC<FeatureGatedProps> = ({
             </div>
             
             <p className="text-slate-300 mb-4">
-              This feature is currently locked based on your experience level. You need to upgrade
-              to <span className="text-emerald-400 font-semibold">{requiredLevel.charAt(0).toUpperCase() + requiredLevel.slice(1)}</span> level to access it.
+              This feature requires a <span className="text-emerald-400 font-semibold">{requiredLevel.toUpperCase()}</span> membership. 
+              {requiredLevel === UserExperienceLevel.PAID && "Upgrade your membership to access advanced trading features and the metaverse."}
+              {requiredLevel === UserExperienceLevel.PRO && "Upgrade to PRO to access our premium Market Buddy AI and all advanced features."}
             </p>
             
             <div className="bg-slate-800/50 rounded p-3 mb-4 flex items-start gap-2">
               <Info className="h-4 w-4 text-blue-400 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-slate-300">
-                Advancing your experience level will unlock more powerful features, but make sure
-                you're comfortable with the basics first. You can change your level at any time in settings.
+                {requiredLevel === UserExperienceLevel.PAID && 
+                  "PAID membership includes access to advanced trading tools, the metaverse, NFT marketplace, and most AI features."}
+                {requiredLevel === UserExperienceLevel.PRO && 
+                  "PRO membership includes all platform features including our advanced Market Buddy AI assistant and premium trading signals."}
               </p>
             </div>
             
@@ -163,19 +181,97 @@ export const RouteGated: React.FC<RouteGatedProps> = ({ children, route }) => {
     return <>{children}</>;
   }
   
+  // Find the minimum tier required for the route
+  const { getFeatureDescription, setUserLevel } = useFeatureDisclosure();
+  
+  // Map routes to feature categories
+  const getFeatureCategoryForRoute = (route: string): FeatureCategory | undefined => {
+    const routeMapping: Record<string, FeatureCategory> = {
+      '/': FeatureCategory.BASIC_TRADING,
+      '/trade-runner': FeatureCategory.BASIC_TRADING,
+      '/trade-journal': FeatureCategory.BASIC_TRADING,
+      '/news': FeatureCategory.BASIC_TRADING,
+      '/solana-dex': FeatureCategory.BLOCKCHAIN,
+      '/nft-marketplace': FeatureCategory.NFT,
+      '/learn': FeatureCategory.EDUCATION,
+      '/metaverse': FeatureCategory.METAVERSE,
+      '/thc-staking': FeatureCategory.BLOCKCHAIN,
+      '/live-stream': FeatureCategory.SOCIAL,
+      '/ai-market-analysis': FeatureCategory.AI_FEATURES,
+      '/trading-signals': FeatureCategory.AI_FEATURES,
+      '/market-buddy': FeatureCategory.MARKET_BUDDY,
+      '/app': FeatureCategory.ADVANCED_TRADING,
+      '/bulls-vs-bears': FeatureCategory.ADVANCED_TRADING
+    };
+    
+    return routeMapping[route];
+  };
+  
+  const featureCategory = getFeatureCategoryForRoute(route);
+  const featureDescription = featureCategory ? getFeatureDescription(featureCategory) : 'Restricted feature';
+  
+  // Find the required membership tier
+  const findRequiredTier = (): UserExperienceLevel => {
+    if (!featureCategory) return UserExperienceLevel.FREE;
+    
+    // Check which membership tier has access to this feature
+    if ([FeatureCategory.MARKET_BUDDY].includes(featureCategory)) {
+      return UserExperienceLevel.PRO;
+    } else if ([
+      FeatureCategory.ADVANCED_TRADING,
+      FeatureCategory.NFT, 
+      FeatureCategory.BLOCKCHAIN,
+      FeatureCategory.METAVERSE,
+      FeatureCategory.AI_FEATURES
+    ].includes(featureCategory)) {
+      return UserExperienceLevel.PAID;
+    }
+    
+    return UserExperienceLevel.FREE;
+  };
+  
+  const requiredTier = findRequiredTier();
+  
   return (
-    <div className="flex flex-col items-center justify-center h-screen p-4">
-      <div className="bg-purple-900/20 p-3 rounded-full mb-4">
-        <Lock className="h-8 w-8 text-purple-400" />
+    <div className="flex flex-col items-center justify-center h-screen p-4 bg-slate-900/95">
+      <div className="bg-purple-900/20 p-5 rounded-full mb-6">
+        <Lock className="h-10 w-10 text-purple-400" />
       </div>
-      <h2 className="text-2xl font-bold mb-2">Feature Not Available</h2>
-      <p className="text-slate-300 text-center mb-6 max-w-md">
-        This feature is not available at your current experience level. You can change your
-        experience level in settings to access more features.
+      <h2 className="text-2xl font-bold mb-2">Membership Required</h2>
+      <p className="text-slate-300 text-center mb-3 max-w-md">
+        This feature requires a <span className="text-emerald-400 font-bold">{requiredTier.toUpperCase()}</span> membership.
       </p>
-      <Button onClick={() => window.history.back()}>
-        Go Back
-      </Button>
+      <p className="text-slate-400 text-center mb-6 max-w-md text-sm">
+        {featureDescription}
+      </p>
+      
+      <div className="flex gap-4 mb-8">
+        <Button 
+          variant="outline" 
+          onClick={() => window.history.back()}
+        >
+          Go Back
+        </Button>
+        
+        <Button 
+          variant="default" 
+          onClick={() => {
+            setUserLevel(UserExperienceLevel.DEMO);
+            window.location.reload(); // Reload to apply the change
+          }}
+        >
+          Try Demo Access
+        </Button>
+      </div>
+      
+      <div className="bg-slate-800/70 rounded-lg p-4 max-w-md">
+        <div className="flex items-start gap-2">
+          <Info className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-slate-300">
+            <strong>Get Full Access:</strong> Visit <a href="https://tradehybrid.club" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">tradehybrid.club</a> to purchase a membership and unlock all platform features.
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

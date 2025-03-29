@@ -15,6 +15,7 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import '@solana/wallet-adapter-react-ui/styles.css';
 import { PerformanceOptimizationProvider } from './lib/context/PerformanceOptimizationProvider';
 import { RegulatoryCompliance } from './components/ui/regulatory-compliance';
+import { WhopAuth } from './components/ui/whop-auth';
 
 // Lazy load pages
 const TradeRunner = lazy(() => import('./pages/trade-runner'));
@@ -36,9 +37,11 @@ const EmbeddedAppPage = lazy(() => import('./pages/embedded-app'));
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
 import { MicroLearningTipRenderer } from './components/ui/micro-learning-tip-renderer';
 import { ToastProvider } from './components/ui/toaster';
-import { FeatureDisclosureProvider, useFeatureDisclosure } from './lib/context/FeatureDisclosureProvider';
+import { FeatureDisclosureProvider, useFeatureDisclosure, UserExperienceLevel } from './lib/context/FeatureDisclosureProvider';
 import { ExperienceLevelSelector } from './components/ui/interactive-tutorial';
 import { RouteGated } from './components/ui/feature-gated';
+
+
 
 // Light wrapper with providers
 function AppWithProviders() {
@@ -81,10 +84,26 @@ function AppWithProviders() {
 function AppContent() {
   const { isAuthenticated, login, logout, user } = useUserStore();
   const { loginWithSolana, isWalletAuthenticated, solanaAuthError, isAuthenticatingWithSolana, logoutFromSolana } = useSolanaAuth();
+  const { userLevel, setUserLevel } = useFeatureDisclosure();
   const [showLoginForm, setShowLoginForm] = useState(false);
+  const [showWhopModal, setShowWhopModal] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  
+  // Get user-friendly level name for display
+  const getLevelName = () => {
+    switch (userLevel) {
+      case UserExperienceLevel.PRO:
+        return 'Pro';
+      case UserExperienceLevel.PAID:
+        return 'Paid';
+      case UserExperienceLevel.DEMO:
+        return 'Demo';
+      default:
+        return 'Free';
+    }
+  };
   
   // Auto-login with Solana when wallet is connected
   useEffect(() => {
@@ -219,6 +238,17 @@ function AppContent() {
                 ) : (
                   <>
                     <Button onClick={() => setShowLoginForm(true)}>Password Login</Button>
+                    <div className="border-r border-slate-600 h-8 hidden sm:block" />
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setShowWhopModal(true)}
+                      className="flex items-center gap-1"
+                    >
+                      <span className={userLevel === UserExperienceLevel.FREE ? "text-slate-400" : "text-green-400"}>
+                        {getLevelName()} Membership
+                      </span>
+                    </Button>
                   </>
                 )}
               </div>
@@ -231,6 +261,28 @@ function AppContent() {
           </div>
         </div>
       </PopupContainer>
+      
+      {/* Whop Membership Modal */}
+      {showWhopModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-slate-900 border border-slate-700 rounded-lg w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Membership Verification</h2>
+              <button 
+                onClick={() => setShowWhopModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            
+            <WhopAuth onStatusChange={() => setShowWhopModal(false)} />
+          </div>
+        </div>
+      )}
       
       {/* Main Content */}
       <main className="min-h-[calc(100vh-130px)]">

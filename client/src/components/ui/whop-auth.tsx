@@ -1,0 +1,185 @@
+/**
+ * Whop Authentication Component
+ * Provides UI and functionality for authenticating with Whop
+ */
+
+import React, { useState, useEffect } from 'react';
+import { useFeatureDisclosure, UserExperienceLevel } from '@/lib/context/FeatureDisclosureProvider';
+import { Button } from './button';
+import { Input } from './input';
+import { Alert, AlertTitle, AlertDescription } from './alert';
+import { AlertCircle, CheckCircle, Info } from 'lucide-react';
+import { whopService } from '@/lib/services/whop-service';
+
+interface WhopAuthProps {
+  onStatusChange?: (isAuthenticated: boolean) => void;
+}
+
+export function WhopAuth({ onStatusChange }: WhopAuthProps) {
+  const [whopId, setWhopId] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const { setUserLevel } = useFeatureDisclosure();
+  
+  // Check for saved Whop ID in localStorage
+  useEffect(() => {
+    const savedWhopId = localStorage.getItem('whopUserId');
+    if (savedWhopId) {
+      setWhopId(savedWhopId);
+      verifyWhopMembership(savedWhopId);
+    }
+  }, []);
+  
+  // Verify membership and set user level accordingly
+  const verifyWhopMembership = async (userId: string) => {
+    setIsLoading(true);
+    setAuthError(null);
+    
+    try {
+      // Get appropriate user level from Whop service
+      const userLevel = await whopService.getUserExperienceLevel(userId);
+      
+      // If user is at least a BEGINNER, they're authenticated
+      const authenticated = userLevel !== undefined;
+      
+      // Set the new user level
+      setUserLevel(userLevel);
+      
+      // Update authentication state
+      setIsAuthenticated(authenticated);
+      
+      // Save user ID to localStorage if authenticated
+      if (authenticated) {
+        localStorage.setItem('whopUserId', userId);
+      }
+      
+      // Notify parent component of status change
+      if (onStatusChange) {
+        onStatusChange(authenticated);
+      }
+      
+      // Show appropriate messaging
+      if (userLevel === UserExperienceLevel.EXPERT) {
+        console.log('Whop premium member authenticated. Full access granted.');
+      }
+    } catch (error) {
+      console.error('Error verifying Whop membership:', error);
+      setAuthError('Failed to verify membership. Please try again.');
+      setIsAuthenticated(false);
+      
+      if (onStatusChange) {
+        onStatusChange(false);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Handle form submission
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (whopId.trim()) {
+      verifyWhopMembership(whopId.trim());
+    }
+  };
+  
+  // Special demo code for testing - sets user to expert level
+  const enableDemoAccess = () => {
+    setUserLevel(UserExperienceLevel.EXPERT);
+    setIsAuthenticated(true);
+    localStorage.setItem('userExperienceLevel', UserExperienceLevel.EXPERT);
+    
+    if (onStatusChange) {
+      onStatusChange(true);
+    }
+  };
+  
+  return (
+    <div className="w-full max-w-md mx-auto p-4 space-y-4">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold mb-1">Membership Verification</h2>
+        <p className="text-slate-300 mb-4">
+          Verify your Whop membership to unlock full platform access
+        </p>
+      </div>
+      
+      {isAuthenticated ? (
+        <Alert className="bg-green-900/20 border-green-800">
+          <CheckCircle className="h-4 w-4 text-green-500" />
+          <AlertTitle>Membership Verified</AlertTitle>
+          <AlertDescription>
+            You have full access to all platform features.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="whopId" className="block text-sm font-medium mb-1">
+              Whop User ID or Email
+            </label>
+            <Input
+              id="whopId"
+              type="text"
+              value={whopId}
+              onChange={(e) => setWhopId(e.target.value)}
+              placeholder="Enter your Whop ID or email"
+              className="w-full"
+              disabled={isLoading}
+            />
+          </div>
+          
+          {authError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{authError}</AlertDescription>
+            </Alert>
+          )}
+          
+          <Button
+            type="submit"
+            className="w-full"
+            variant="default"
+            disabled={isLoading || !whopId.trim()}
+          >
+            {isLoading ? 'Verifying...' : 'Verify Membership'}
+          </Button>
+          
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-slate-700" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-background px-2 text-slate-400">Or</span>
+            </div>
+          </div>
+          
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={enableDemoAccess}
+          >
+            Enable Demo Access
+          </Button>
+          
+          <Alert className="bg-blue-900/20 border-blue-800">
+            <Info className="h-4 w-4 text-blue-500" />
+            <AlertTitle>Don't have a membership?</AlertTitle>
+            <AlertDescription>
+              <a 
+                href="https://whop.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:text-blue-300 underline"
+              >
+                Sign up on Whop.com
+              </a>
+            </AlertDescription>
+          </Alert>
+        </form>
+      )}
+    </div>
+  );
+}

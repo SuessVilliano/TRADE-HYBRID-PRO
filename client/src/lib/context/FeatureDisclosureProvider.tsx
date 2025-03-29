@@ -1,11 +1,18 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Define user experience levels
+// Define membership levels (now aligned with Whop packages)
 export enum UserExperienceLevel {
-  BEGINNER = 'beginner',
-  INTERMEDIATE = 'intermediate',
-  ADVANCED = 'advanced',
-  EXPERT = 'expert'
+  // Main membership tiers aligned with Whop packages
+  FREE = 'free',                 // Free membership tier - limited access
+  PAID = 'paid',                 // Paid membership tier - access to most features
+  PRO = 'pro',                   // Pro membership tier - all features including AI
+  DEMO = 'demo',                 // Demo access - all features (for testing)
+  
+  // Legacy levels for backward compatibility
+  BEGINNER = 'beginner',     
+  INTERMEDIATE = 'intermediate', 
+  ADVANCED = 'advanced',     
+  EXPERT = 'expert'         
 }
 
 // Define feature categories
@@ -13,6 +20,7 @@ export enum FeatureCategory {
   BASIC_TRADING = 'basic_trading',
   ADVANCED_TRADING = 'advanced_trading',
   AI_FEATURES = 'ai_features',
+  MARKET_BUDDY = 'market_buddy',   // Pro-only AI assistant
   METAVERSE = 'metaverse',
   SOCIAL = 'social',
   NFT = 'nft',
@@ -20,38 +28,62 @@ export enum FeatureCategory {
   EDUCATION = 'education'
 }
 
-// Feature visibility configuration based on user level
-const FEATURE_VISIBILITY: Record<UserExperienceLevel, FeatureCategory[]> = {
-  [UserExperienceLevel.BEGINNER]: [
-    FeatureCategory.BASIC_TRADING,
-    FeatureCategory.EDUCATION
-  ],
+// Base feature sets for each tier
+const FREE_FEATURES = [
+  FeatureCategory.BASIC_TRADING,
+  FeatureCategory.EDUCATION
+];
+
+const PAID_FEATURES = [
+  ...FREE_FEATURES,
+  FeatureCategory.ADVANCED_TRADING,
+  FeatureCategory.SOCIAL,
+  FeatureCategory.AI_FEATURES,
+  FeatureCategory.METAVERSE, 
+  FeatureCategory.NFT,
+  FeatureCategory.BLOCKCHAIN
+];
+
+const PRO_FEATURES = [
+  ...PAID_FEATURES,
+  FeatureCategory.MARKET_BUDDY
+];
+
+// Feature visibility configuration based on membership level
+const FEATURE_VISIBILITY: Record<string, FeatureCategory[]> = {
+  // Main membership tiers
+  [UserExperienceLevel.FREE]: FREE_FEATURES,
+  [UserExperienceLevel.PAID]: PAID_FEATURES,
+  [UserExperienceLevel.PRO]: PRO_FEATURES,
+  [UserExperienceLevel.DEMO]: PRO_FEATURES,  // Demo access gets all features
+  
+  // Legacy mappings
+  [UserExperienceLevel.BEGINNER]: FREE_FEATURES,
   [UserExperienceLevel.INTERMEDIATE]: [
-    FeatureCategory.BASIC_TRADING,
-    FeatureCategory.EDUCATION,
-    FeatureCategory.SOCIAL,
-    FeatureCategory.AI_FEATURES
+    ...FREE_FEATURES,
+    FeatureCategory.SOCIAL
   ],
-  [UserExperienceLevel.ADVANCED]: [
-    FeatureCategory.BASIC_TRADING,
-    FeatureCategory.ADVANCED_TRADING,
-    FeatureCategory.EDUCATION,
-    FeatureCategory.SOCIAL,
-    FeatureCategory.AI_FEATURES,
-    FeatureCategory.METAVERSE,
-    FeatureCategory.NFT
-  ],
-  [UserExperienceLevel.EXPERT]: [
-    FeatureCategory.BASIC_TRADING,
-    FeatureCategory.ADVANCED_TRADING,
-    FeatureCategory.EDUCATION,
-    FeatureCategory.SOCIAL,
-    FeatureCategory.AI_FEATURES,
-    FeatureCategory.METAVERSE,
-    FeatureCategory.NFT,
-    FeatureCategory.BLOCKCHAIN
-  ]
+  [UserExperienceLevel.ADVANCED]: PAID_FEATURES,
+  [UserExperienceLevel.EXPERT]: PRO_FEATURES
 };
+
+// Helper function to convert legacy levels to membership tiers
+export function mapLegacyLevelToMembershipTier(level: UserExperienceLevel): UserExperienceLevel {
+  switch (level) {
+    case UserExperienceLevel.BEGINNER:
+    case UserExperienceLevel.INTERMEDIATE:
+      return UserExperienceLevel.FREE;
+      
+    case UserExperienceLevel.ADVANCED:
+      return UserExperienceLevel.PAID;
+      
+    case UserExperienceLevel.EXPERT:
+      return UserExperienceLevel.PRO;
+      
+    default:
+      return level; // Already a membership tier
+  }
+}
 
 // Map routes to feature categories
 export const ROUTE_TO_FEATURE_CATEGORY: Record<string, FeatureCategory> = {
@@ -67,7 +99,9 @@ export const ROUTE_TO_FEATURE_CATEGORY: Record<string, FeatureCategory> = {
   '/live-stream': FeatureCategory.SOCIAL,
   '/ai-market-analysis': FeatureCategory.AI_FEATURES,
   '/trading-signals': FeatureCategory.AI_FEATURES,
-  '/app': FeatureCategory.ADVANCED_TRADING
+  '/market-buddy': FeatureCategory.MARKET_BUDDY,  // Map Market Buddy to its own category
+  '/app': FeatureCategory.ADVANCED_TRADING,
+  '/bulls-vs-bears': FeatureCategory.ADVANCED_TRADING
 };
 
 // Feature descriptions for tooltips
@@ -75,6 +109,7 @@ export const FEATURE_DESCRIPTIONS: Record<FeatureCategory, string> = {
   [FeatureCategory.BASIC_TRADING]: 'Core trading functionality with charts and order placement.',
   [FeatureCategory.ADVANCED_TRADING]: 'Advanced trading tools including algorithmic strategies and custom indicators.',
   [FeatureCategory.AI_FEATURES]: 'AI-powered market analysis and trading signals.',
+  [FeatureCategory.MARKET_BUDDY]: 'Premium AI trading assistant with advanced market insights and portfolio management.',
   [FeatureCategory.METAVERSE]: '3D virtual environment to interact with other traders.',
   [FeatureCategory.SOCIAL]: 'Social features to connect with the trading community.',
   [FeatureCategory.NFT]: 'Buy, sell, and create NFTs in the marketplace.',
