@@ -10,7 +10,7 @@ import {
   TooltipTrigger 
 } from './tooltip';
 import { PopupContainer } from './popup-container';
-import { TradeRunner } from './trade-runner';
+import { TradeRunnerGame } from './trade-runner-game';
 
 interface TradeRunnerBrowserProps {
   onClose?: () => void;
@@ -223,8 +223,8 @@ export function TradeRunnerBrowser({
         {!isMinimized && (
           <CardContent className="p-0 flex-1 relative bg-slate-900">
             <div className="w-full h-full overflow-hidden">
-              {/* Use existing TradeRunner component */}
-              <TradeRunner className="w-full h-full" />
+              {/* Use TradeRunnerGame component with embedded mode */}
+              <TradeRunnerGame className="w-full h-full" embedded={true} />
             </div>
           </CardContent>
         )}

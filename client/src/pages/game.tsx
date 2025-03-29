@@ -101,9 +101,9 @@ function GameContent() {
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <TradeRunnerBrowser 
-                initialHeight={600} 
-                initialWidth={900}
-                isMinimizable={true}
+                initialHeight={Math.min(700, window.innerHeight - 150)} 
+                initialWidth={Math.min(1000, window.innerWidth - 80)}
+                isMinimizable={false}
                 isResizable={true}
                 className="w-full h-full"
               />
@@ -127,8 +127,8 @@ function GameContent() {
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
               <TradeRunnerBrowser 
                 onClose={handleCloseTradeRunnerBrowser}
-                initialHeight={600} 
-                initialWidth={900}
+                initialHeight={Math.min(700, window.innerHeight - 150)} 
+                initialWidth={Math.min(1000, window.innerWidth - 100)}
                 isMinimizable={true}
                 isResizable={true}
               />
