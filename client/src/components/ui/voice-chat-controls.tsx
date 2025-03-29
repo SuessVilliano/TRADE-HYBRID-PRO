@@ -55,58 +55,85 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
   // Initialize audio capture
   const setupVoiceCapture = async () => {
     try {
+      // First, initialize audio context to prevent browser issues
+      // Some browsers need user interaction before creating AudioContext
+      try {
+        audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      } catch (contextError) {
+        console.error("Error creating AudioContext:", contextError);
+        toast.error("Could not initialize audio system. Try clicking somewhere on the page first.");
+        return;
+      }
+      
       // Request microphone access
-      mediaStream.current = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-        video: false,
-      });
+      try {
+        mediaStream.current = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+          video: false,
+        });
+      } catch (micError) {
+        console.error("Microphone access denied:", micError);
+        toast.error("Microphone access denied. Voice chat disabled.");
+        toggleVoiceChat(false);
+        return;
+      }
       
-      // Initialize audio context
-      audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      
-      // Create audio processor to capture audio data
-      audioProcessor.current = audioContext.current.createScriptProcessor(2048, 1, 1);
-      
-      // Create source from microphone stream
-      const source = audioContext.current.createMediaStreamSource(mediaStream.current);
-      source.connect(audioProcessor.current);
-      audioProcessor.current.connect(audioContext.current.destination);
-      
-      // Process audio data
-      audioProcessor.current.onaudioprocess = (event) => {
-        // Only send when user is pressing the speak button or using push-to-talk
-        if (speaking) {
-          const inputBuffer = event.inputBuffer;
-          const audioData = inputBuffer.getChannelData(0);
-          
-          // Check if sound is above threshold (not silent)
-          // Calculate RMS (Root Mean Square) to detect if there's actual audio
-          let rms = 0;
-          for (let i = 0; i < audioData.length; i++) {
-            rms += audioData[i] * audioData[i];
-          }
-          rms = Math.sqrt(rms / audioData.length);
-          
-          const isSilent = rms < 0.01; // Adjust this threshold as needed
-          
-          if (!isSilent) {
-            // Convert to 16-bit PCM for more efficient transmission
-            const pcmData = convertFloatToPCM(audioData);
-            
-            // Send chunks to avoid large packets
-            const CHUNK_SIZE = 1024; // Bytes per chunk
-            for (let offset = 0; offset < pcmData.length; offset += CHUNK_SIZE / 2) { // Divide by 2 because each Int16 is 2 bytes
-              const chunkLength = Math.min(CHUNK_SIZE / 2, pcmData.length - offset);
-              const chunk = pcmData.subarray(offset, offset + chunkLength);
-              sendVoiceData(chunk.buffer);
+      // Create audio processor with safe fallbacks
+      try {
+        // Create audio processor to capture audio data
+        audioProcessor.current = audioContext.current.createScriptProcessor(2048, 1, 1);
+        
+        // Create source from microphone stream
+        const source = audioContext.current.createMediaStreamSource(mediaStream.current);
+        source.connect(audioProcessor.current);
+        audioProcessor.current.connect(audioContext.current.destination);
+        
+        // Process audio data
+        audioProcessor.current.onaudioprocess = (event) => {
+          // Only send when user is pressing the speak button or using push-to-talk
+          if (speaking) {
+            try {
+              const inputBuffer = event.inputBuffer;
+              const audioData = inputBuffer.getChannelData(0);
+              
+              // Check if sound is above threshold (not silent)
+              // Calculate RMS (Root Mean Square) to detect if there's actual audio
+              let rms = 0;
+              for (let i = 0; i < audioData.length; i++) {
+                rms += audioData[i] * audioData[i];
+              }
+              rms = Math.sqrt(rms / audioData.length);
+              
+              const isSilent = rms < 0.01; // Adjust this threshold as needed
+              
+              if (!isSilent && audioData && audioData.length > 0) {
+                // Convert to 16-bit PCM for more efficient transmission
+                const pcmData = convertFloatToPCM(audioData);
+                
+                // Send chunks to avoid large packets
+                const CHUNK_SIZE = 1024; // Bytes per chunk
+                for (let offset = 0; offset < pcmData.length; offset += CHUNK_SIZE / 2) { // Divide by 2 because each Int16 is 2 bytes
+                  const chunkLength = Math.min(CHUNK_SIZE / 2, pcmData.length - offset);
+                  const chunk = pcmData.subarray(offset, offset + chunkLength);
+                  if (chunk && chunk.buffer) {
+                    sendVoiceData(chunk.buffer);
+                  }
+                }
+              }
+            } catch (processError) {
+              console.error("Audio processing error:", processError);
+              // Don't show errors for every frame, just log it
             }
           }
-        }
-      };
+        };
+      } catch (processorError) {
+        console.error("Error setting up audio processor:", processorError);
+        toast.error("Could not initialize audio processing. Voice chat may not work correctly.");
+      }
       
       toast.success("Voice chat enabled");
     } catch (error) {
@@ -260,11 +287,11 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
                   "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2 transition-all",
                   speaking ? "bg-green-600 scale-110" : "bg-gray-700 hover:bg-gray-600"
                 )}
-                onMouseDown={() => handlePushToTalk(true)}
-                onMouseUp={() => handlePushToTalk(false)}
-                onMouseLeave={() => handlePushToTalk(false)}
-                onTouchStart={() => handlePushToTalk(true)}
-                onTouchEnd={() => handlePushToTalk(false)}
+                onMouseDown={(e) => { e.preventDefault(); handlePushToTalk(true); }}
+                onMouseUp={(e) => { e.preventDefault(); handlePushToTalk(false); }}
+                onMouseLeave={(e) => { e.preventDefault(); handlePushToTalk(false); }}
+                onTouchStart={(e) => { e.preventDefault(); handlePushToTalk(true); }}
+                onTouchEnd={(e) => { e.preventDefault(); handlePushToTalk(false); }}
               >
                 <Mic className={cn("h-6 w-6", speaking ? "animate-pulse" : "")} />
               </button>

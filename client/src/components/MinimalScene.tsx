@@ -525,7 +525,8 @@ export default function MinimalScene() {
               </svg>
             </button>
           </div>
-          <VoiceChatControls />
+          <VoiceChatControls minimized={false} 
+            onToggleMinimize={() => setShowVoiceControls(false)} />
         </div>
       )}
       
