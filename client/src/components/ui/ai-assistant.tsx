@@ -730,8 +730,8 @@ export function AIAssistant({ className }: AIAssistantProps) {
   };
   
   return (
-    <Card className={cn("w-full", className)}>
-      <CardHeader className="pb-2">
+    <Card className={cn("w-full flex flex-col h-full", className)}>
+      <CardHeader className="pb-2 flex-shrink-0">
         <CardTitle className="text-lg font-medium flex justify-between items-center">
           <span>
             <Sparkles className="inline mr-2 h-5 w-5 text-primary" />
@@ -739,16 +739,16 @@ export function AIAssistant({ className }: AIAssistantProps) {
           </span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="chat" value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
+      <CardContent className="flex-grow flex flex-col overflow-hidden">
+        <Tabs defaultValue="chat" value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="flex flex-col flex-grow">
           <TabsList className="grid w-full grid-cols-3 h-8 mb-4">
             <TabsTrigger value="chat">Chat</TabsTrigger>
             <TabsTrigger value="insights">Market Insights</TabsTrigger>
             <TabsTrigger value="journal">Journal</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="chat" className="space-y-4">
-            <ScrollArea className="h-[300px] pr-4" ref={scrollAreaRef}>
+          <TabsContent value="chat" className="space-y-4 flex-grow flex flex-col">
+            <ScrollArea className="h-[calc(100vh-280px)] pr-4 flex-grow" ref={scrollAreaRef}>
               <div className="space-y-4">
                 {messages.map((message) => (
                   <div 
@@ -851,8 +851,8 @@ export function AIAssistant({ className }: AIAssistantProps) {
             </div>
           </TabsContent>
           
-          <TabsContent value="insights">
-            <ScrollArea className="h-[330px]">
+          <TabsContent value="insights" className="flex-grow flex flex-col">
+            <ScrollArea className="h-[calc(100vh-280px)] flex-grow">
               <div className="space-y-4">
                 {insights.map((insight) => (
                   <Card key={insight.id} className="p-4">
@@ -915,8 +915,8 @@ export function AIAssistant({ className }: AIAssistantProps) {
             </ScrollArea>
           </TabsContent>
           
-          <TabsContent value="journal">
-            <div className="space-y-4">
+          <TabsContent value="journal" className="flex-grow flex flex-col">
+            <div className="space-y-4 flex-grow flex flex-col">
               <div className="mb-4">
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="text-sm font-semibold">Trading Journal</h3>
@@ -1018,7 +1018,7 @@ export function AIAssistant({ className }: AIAssistantProps) {
                 </div>
               </div>
               
-              <ScrollArea className="h-[220px]">
+              <ScrollArea className="h-[calc(100vh-380px)] flex-grow">
                 <div className="space-y-3">
                   {journalEntries
                     .filter(entry => sentimentFilter === "all" || entry.sentiment === sentimentFilter)
