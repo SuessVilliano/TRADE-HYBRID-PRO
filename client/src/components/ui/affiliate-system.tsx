@@ -10,7 +10,11 @@ import { Web3Provider } from '@ethersproject/providers';
 import { AffiliateService } from '@/lib/services/affiliate-service';
 
 export function AffiliateSystem() {
-  const { account, active } = useWeb3React<Web3Provider>();
+  const web3Context = useWeb3React<Web3Provider>();
+  const account = web3Context.account;
+  // The 'active' property might not exist on the type, but it could be available at runtime
+  // or we can use isActive, chainId or other properties to check connection status
+  const isConnected = web3Context.account && web3Context.chainId;
   const [referralLink, setReferralLink] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [referrals, setReferrals] = useState<any[]>([]);
@@ -20,7 +24,7 @@ export function AffiliateSystem() {
 
   // Generate a referral link based on connected wallet or randomly
   useEffect(() => {
-    if (active && account) {
+    if (isConnected && account) {
       // Use the AffiliateService to generate consistent links with the proper domain
       setReferralLink(AffiliateService.generateReferralLink(account.substring(2, 10)));
       
@@ -32,7 +36,7 @@ export function AffiliateSystem() {
       const randomId = Math.random().toString(36).substring(2, 10);
       setReferralLink(AffiliateService.generateReferralLink(randomId));
     }
-  }, [active, account]);
+  }, [isConnected, account]);
   
   // Show tooltip on first visit
   useEffect(() => {
