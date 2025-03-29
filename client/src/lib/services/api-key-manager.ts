@@ -96,6 +96,18 @@ class ApiKeyManager {
       status: 'operational'
     });
     
+    this.serviceConfigs.set('gemini', {
+      name: 'Gemini',
+      description: 'Google AI language model',
+      baseUrl: 'https://generativelanguage.googleapis.com',
+      authType: 'header',
+      keyParam: 'x-goog-api-key',
+      docsUrl: 'https://ai.google.dev/docs',
+      logoUrl: '/images/api/gemini.png',
+      endpoints: ['/v1beta/models/gemini-pro:generateContent'],
+      status: 'operational'
+    });
+    
     this.serviceConfigs.set('moralis', {
       name: 'Moralis',
       description: 'Web3 and blockchain data provider',
@@ -127,6 +139,7 @@ class ApiKeyManager {
         'BINANCE_API_KEY',
         'BINANCE_API_SECRET',
         'OPENAI_API_KEY',
+        'GEMINI_API_KEY',
         'MORALIS_API_KEY'
       ];
       
@@ -175,6 +188,15 @@ class ApiKeyManager {
         if (process.env.OPENAI_API_KEY) {
           this.apiKeys.set('openai', {
             key: `Bearer ${process.env.OPENAI_API_KEY}`,
+            isValid: true,
+            tier: 'basic'
+          });
+        }
+        
+        // Set up Gemini key if available
+        if (process.env.GEMINI_API_KEY) {
+          this.apiKeys.set('gemini', {
+            key: process.env.GEMINI_API_KEY,
             isValid: true,
             tier: 'basic'
           });

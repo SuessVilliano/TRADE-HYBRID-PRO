@@ -333,20 +333,6 @@ function TradingSpaceContent() {
             <AIMarketAnalysis />
           </div>
         );
-      case "advanced-ai-analysis":
-        return (
-          <div className="h-full relative">
-            <div className="absolute top-2 right-2 z-10">
-              <MicroTradingTipTrigger 
-                category="technical" 
-                difficulty="advanced"
-                label="Advanced Tips"
-                className="bg-black/30 hover:bg-black/40 text-xs px-2 py-1 rounded"
-              />
-            </div>
-            <AdvancedAIAnalysis />
-          </div>
-        );
       case "signals":
         return (
           <div className="h-full relative">
@@ -606,23 +592,7 @@ function TradingSpaceContent() {
                     </div>
                   </Button>
                   
-                  <Button 
-                    variant="outline" 
-                    size="lg" 
-                    className="w-full justify-start text-left flex items-center gap-3 h-auto py-3"
-                    onClick={() => {
-                      setActivePanel("advanced-ai-analysis");
-                      setShowAITools(false);
-                    }}
-                  >
-                    <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full">
-                      <BrainCircuit size={18} className="text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <span className="block font-medium">Advanced Analysis</span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400 block mt-0.5">In-depth AI market insights and predictions</span>
-                    </div>
-                  </Button>
+
                   
                   <Button 
                     variant="outline" 
@@ -798,18 +768,7 @@ function TradingSpaceContent() {
                 </div>
               </Button>
               
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full justify-start text-left flex items-center gap-2"
-                onClick={() => setActivePanel("advanced-ai-analysis")}
-              >
-                <BrainCircuit size={14} className="text-purple-600 dark:text-purple-400 flex-shrink-0" />
-                <div className="truncate">
-                  <span className="block font-medium">Advanced Analysis</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 block">In-depth AI market insights</span>
-                </div>
-              </Button>
+
               
               <Button 
                 variant="outline" 

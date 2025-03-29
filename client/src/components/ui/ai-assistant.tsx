@@ -9,6 +9,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useMarketData } from "@/lib/stores/useMarketData";
 import { toast } from "sonner";
+import { openAIService } from "@/lib/services/openai-service";
+import { geminiService } from "@/lib/services/gemini-service";
 
 interface AIAssistantProps {
   className?: string;
@@ -166,14 +168,12 @@ export function AIAssistant({ className }: AIAssistantProps) {
     }
   };
   
-  const generateGeminiResponse = (question: string) => {
-    // Simulate a Gemini request
+  const generateGeminiResponse = async (question: string) => {
     console.log("Sending request to Gemini API");
     
     // Add a timeout to prevent indefinite waiting
     const timeoutId = setTimeout(() => {
       console.log("Gemini request timed out, using fallback response");
-      // If Gemini request times out, use local response with a note
       const fallbackResponse = generateLocalResponseText(question) + 
         "\n\n[Note: Gemini API request timed out. Using fallback response.]";
       
@@ -186,12 +186,53 @@ export function AIAssistant({ className }: AIAssistantProps) {
       
       setMessages(prev => [...prev, aiMessage]);
       setIsGenerating(false);
-    }, 5000); // 5 second timeout
+    }, 10000); // 10 second timeout
     
     try {
-      // For now, still use our local responses but with a note about Gemini
-      const response = generateLocalResponseText(question) + 
-        "\n\n[Using Gemini-enhanced response. For better results, try specific questions about market trends or trading strategies.]";
+      // Initialize Gemini service
+      const initialized = await geminiService.initialize();
+      if (!initialized) {
+        throw new Error("Failed to initialize Gemini service");
+      }
+      
+      // Create a prompt with context about trading and the current market data
+      const prompt = `
+        I'm a trader looking at ${symbol} which is currently priced at ${currentPrice.toFixed(2)}.
+        The market is in a ${insights[0]?.type === "bullish" ? "bullish" : "bearish"} trend.
+        Current volatility is ${insights[1]?.type === "warning" ? "high" : "normal"}.
+        
+        My question is: ${question}
+        
+        Provide a helpful, concise response about trading. Include specific advice if appropriate.
+      `;
+      
+      // Make the API request
+      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': localStorage.getItem('gemini_api_key') || ''
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: prompt }]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 500
+          }
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Gemini API returned ${response.status}: ${response.statusText}`);
+      }
+      
+      const responseData = await response.json();
+      const content = responseData.candidates[0].content.parts[0].text.trim();
       
       // Clear timeout as we got a response
       clearTimeout(timeoutId);
@@ -199,25 +240,38 @@ export function AIAssistant({ className }: AIAssistantProps) {
       const aiMessage: Message = {
         id: `assistant-gemini-${Date.now()}`,
         role: "assistant",
-        content: response,
+        content: content,
         timestamp: new Date(),
       };
       
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
       console.error("Error with Gemini request:", error);
-      // Error is handled by the timeout fallback
+      
+      // Only add fallback response if the timeout hasn't fired yet
+      clearTimeout(timeoutId);
+      
+      const fallbackResponse = generateLocalResponseText(question) + 
+        "\n\n[Note: Gemini API error: " + String(error).substring(0, 100) + ". Using fallback response.]";
+      
+      const aiMessage: Message = {
+        id: `assistant-error-${Date.now()}`,
+        role: "assistant",
+        content: fallbackResponse,
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+      setIsGenerating(false);
     }
   };
 
-  const generateOpenAIResponse = (question: string) => {
-    // Simulate an OpenAI request
+  const generateOpenAIResponse = async (question: string) => {
     console.log("Sending request to OpenAI API");
     
     // Add a timeout to prevent indefinite waiting
     const timeoutId = setTimeout(() => {
       console.log("OpenAI request timed out, using fallback response");
-      // If OpenAI request times out, use local response with a note
       const fallbackResponse = generateLocalResponseText(question) + 
         "\n\n[Note: OpenAI request timed out. Using fallback response.]";
       
@@ -230,12 +284,52 @@ export function AIAssistant({ className }: AIAssistantProps) {
       
       setMessages(prev => [...prev, aiMessage]);
       setIsGenerating(false);
-    }, 5000); // 5 second timeout
+    }, 10000); // 10 second timeout
     
     try {
-      // For now, still use our local responses but with a note about OpenAI
-      const response = generateLocalResponseText(question) + 
-        "\n\n[Using OpenAI-enhanced response. For better results, try specific questions about market trends or trading strategies.]";
+      // Initialize OpenAI service
+      const initialized = await openAIService.initialize();
+      if (!initialized) {
+        throw new Error("Failed to initialize OpenAI service");
+      }
+      
+      // Make the API request
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('openai_api_key') || ''}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a financial trading assistant specialized in market analysis and trading strategies. 
+              The current market context:
+              - Symbol: ${symbol}
+              - Current Price: ${currentPrice.toFixed(2)}
+              - Market Trend: ${insights[0]?.type === "bullish" ? "bullish" : "bearish"}
+              - Volatility: ${insights[1]?.type === "warning" ? "high" : "normal"}
+              
+              Provide helpful, specific advice about trading. Keep responses direct and focused on the question.`
+            },
+            {
+              role: 'user',
+              content: question
+            }
+          ],
+          temperature: 0.4,
+          max_tokens: 500
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`OpenAI API returned ${response.status}: ${response.statusText}`);
+      }
+      
+      const responseData = await response.json();
+      const content = responseData.choices[0].message.content.trim();
       
       // Clear timeout as we got a response
       clearTimeout(timeoutId);
@@ -243,14 +337,29 @@ export function AIAssistant({ className }: AIAssistantProps) {
       const aiMessage: Message = {
         id: `assistant-openai-${Date.now()}`,
         role: "assistant",
-        content: response,
+        content: content,
         timestamp: new Date(),
       };
       
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
       console.error("Error with OpenAI request:", error);
-      // Error is handled by the timeout fallback
+      
+      // Only add fallback response if the timeout hasn't fired yet
+      clearTimeout(timeoutId);
+      
+      const fallbackResponse = generateLocalResponseText(question) + 
+        "\n\n[Note: OpenAI API error: " + String(error).substring(0, 100) + ". Using fallback response.]";
+      
+      const aiMessage: Message = {
+        id: `assistant-error-${Date.now()}`,
+        role: "assistant",
+        content: fallbackResponse,
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+      setIsGenerating(false);
     }
   };
   
