@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { PopupContainer } from '../components/ui/popup-container';
 import { Button } from '../components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { DiscordEmbed } from '../components/ui/discord-embed';
 
 function LiveStream() {
   const viloudEmbedCode = '<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe src="https://player.viloud.tv/embed/channel/6b3e6d6696fb33d051c1ca4b341d21cf?autoplay=1&volume=1&controls=1&title=1&share=1&open_playlist=0&random=0" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" frameborder="0" allow="autoplay" allowfullscreen></iframe></div>';
@@ -8,6 +10,7 @@ function LiveStream() {
   
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showChat, setShowChat] = useState(true);
+  const [activeTab, setActiveTab] = useState('livestream');
 
   // Function to handle fullscreen mode
   const toggleFullscreen = () => {
@@ -29,70 +32,116 @@ function LiveStream() {
       </div>
 
       <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-black' : ''}`}>
-        <div className={`${isFullscreen ? 'h-full flex flex-col' : 'grid grid-cols-1 lg:grid-cols-3 gap-4'}`}>
-          <div className={`${isFullscreen ? 'flex-grow' : 'lg:col-span-2'}`}>
-            <PopupContainer padding className="h-full">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-semibold">Live Broadcast</h3>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={toggleChat}>
-                    {showChat ? 'Hide Chat' : 'Show Chat'}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={toggleFullscreen}>
-                    {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-                  </Button>
-                </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="flex justify-between items-center mb-4">
+            <TabsList>
+              <TabsTrigger value="livestream">Live Stream</TabsTrigger>
+              <TabsTrigger value="discord">Discord Community</TabsTrigger>
+            </TabsList>
+            
+            {activeTab === 'livestream' && !isFullscreen && (
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={toggleChat}>
+                  {showChat ? 'Hide Chat' : 'Show Chat'}
+                </Button>
+                <Button variant="outline" size="sm" onClick={toggleFullscreen}>
+                  {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+                </Button>
               </div>
-              
-              <div className="relative pb-[56.25%] h-0 overflow-hidden rounded-lg">
-                <iframe 
-                  src="https://player.viloud.tv/embed/channel/6b3e6d6696fb33d051c1ca4b341d21cf?autoplay=1&volume=1&controls=1&title=1&share=1&open_playlist=0&random=0"
-                  className="absolute top-0 left-0 w-full h-full border-0"
-                  title="Trade Hybrid TV"
-                  frameBorder="0"
-                  allowFullScreen
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                ></iframe>
-              </div>
-
-              <div className="mt-4">
-                <h3 className="font-semibold">Stream Schedule</h3>
-                <ul className="list-disc pl-6 mt-2 space-y-1">
-                  <li>Monday 10:00 AM - Market Opening Analysis</li>
-                  <li>Wednesday 2:00 PM - Midweek Market Review</li>
-                  <li>Friday 3:30 PM - Weekly Wrap-up and Strategy Session</li>
-                </ul>
-              </div>
-            </PopupContainer>
+            )}
           </div>
           
-          {(showChat && !isFullscreen) && (
-            <div className="lg:col-span-1">
-              <PopupContainer padding className="h-full">
-                <h3 className="font-semibold mb-4">Live Chat</h3>
-                <div className="bg-slate-800 rounded-lg p-4 h-[500px]">
-                  <div className="flex flex-col h-full">
-                    <div className="bg-slate-700 rounded p-3 mb-3">
-                      <p className="text-sm">Live chat is available during broadcasts</p>
+          <TabsContent value="livestream" className="m-0">
+            <div className={`${isFullscreen ? 'h-full flex flex-col' : 'grid grid-cols-1 lg:grid-cols-3 gap-4'}`}>
+              <div className={`${isFullscreen ? 'flex-grow' : 'lg:col-span-2'}`}>
+                <PopupContainer padding className="h-full">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-semibold">Live Broadcast</h3>
+                    {isFullscreen && (
+                      <Button variant="outline" size="sm" onClick={toggleFullscreen}>
+                        Exit Fullscreen
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="relative pb-[56.25%] h-0 overflow-hidden rounded-lg">
+                    <iframe 
+                      src="https://player.viloud.tv/embed/channel/6b3e6d6696fb33d051c1ca4b341d21cf?autoplay=1&volume=1&controls=1&title=1&share=1&open_playlist=0&random=0"
+                      className="absolute top-0 left-0 w-full h-full border-0"
+                      title="Trade Hybrid TV"
+                      frameBorder="0"
+                      allowFullScreen
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    ></iframe>
+                  </div>
+
+                  <div className="mt-4">
+                    <h3 className="font-semibold">Stream Schedule</h3>
+                    <ul className="list-disc pl-6 mt-2 space-y-1">
+                      <li>Monday 10:00 AM - Market Opening Analysis</li>
+                      <li>Wednesday 2:00 PM - Midweek Market Review</li>
+                      <li>Friday 3:30 PM - Weekly Wrap-up and Strategy Session</li>
+                    </ul>
+                  </div>
+                </PopupContainer>
+              </div>
+              
+              {(showChat && !isFullscreen) && (
+                <div className="lg:col-span-1">
+                  <PopupContainer padding className="h-full">
+                    <h3 className="font-semibold mb-4">Live Chat</h3>
+                    <div className="bg-slate-800 rounded-lg p-4 h-[500px]">
+                      <div className="flex flex-col h-full">
+                        <div className="bg-slate-700 rounded p-3 mb-3">
+                          <p className="text-sm">Live chat is available during broadcasts</p>
+                        </div>
+                        <div className="flex-grow flex items-center justify-center">
+                          <p className="text-slate-400 text-center">Join the conversation during the next live broadcast!</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex-grow flex items-center justify-center">
-                      <p className="text-slate-400 text-center">Join the conversation during the next live broadcast!</p>
-                    </div>
+                  </PopupContainer>
+                </div>
+              )}
+              
+              {(showChat && isFullscreen) && (
+                <div className="absolute right-0 top-0 bottom-0 w-80 bg-black p-4">
+                  <h3 className="font-semibold mb-4 text-white">Live Chat</h3>
+                  <div className="bg-slate-800/50 h-[calc(100%-40px)] rounded flex items-center justify-center">
+                    <p className="text-slate-400 text-center">Join the conversation during the next live broadcast!</p>
                   </div>
                 </div>
-              </PopupContainer>
+              )}
             </div>
-          )}
+          </TabsContent>
           
-          {(showChat && isFullscreen) && (
-            <div className="absolute right-0 top-0 bottom-0 w-80 bg-black p-4">
-              <h3 className="font-semibold mb-4 text-white">Live Chat</h3>
-              <div className="bg-slate-800/50 h-[calc(100%-40px)] rounded flex items-center justify-center">
-                <p className="text-slate-400 text-center">Join the conversation during the next live broadcast!</p>
+          <TabsContent value="discord" className="m-0">
+            <PopupContainer padding className="h-full">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold">Discord Community - Live Trade Rooms</h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open('https://discord.gg/tradehybrid', '_blank')}
+                >
+                  Open in Discord App
+                </Button>
               </div>
-            </div>
-          )}
-        </div>
+              
+              <div className="h-[600px] rounded-lg overflow-hidden">
+                <DiscordEmbed serverId="1097524401769037947" theme="dark" />
+              </div>
+              
+              <div className="mt-4">
+                <h3 className="font-semibold">Join Our Discord Community</h3>
+                <p className="mt-2 text-slate-300">
+                  Connect with other traders, get live signals, and join our trade rooms for real-time market discussions. 
+                  Our Discord community is the perfect place to collaborate and learn from fellow traders.
+                </p>
+              </div>
+            </PopupContainer>
+          </TabsContent>
+        </Tabs>
       </div>
       
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">

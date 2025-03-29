@@ -120,7 +120,7 @@ function AppContent() {
             </Link>
             <nav className="hidden md:flex gap-4">
               <Link to="/" className="hover:text-blue-400 transition-colors">Home</Link>
-              <Link to="/trading" className="hover:text-blue-400 transition-colors">Trading</Link>
+              <Link to="/trading" className="hover:text-blue-400 transition-colors">Trade</Link>
               <Link to="/solana-trading" className="hover:text-blue-400 transition-colors">DEX</Link>
               <Link to="/thc-staking" className="hover:text-blue-400 transition-colors">Stake & Bake</Link>
               <Link to="/metaverse" className="hover:text-blue-400 transition-colors">Metaverse</Link>
@@ -220,7 +220,7 @@ function AppContent() {
               {typeof window !== 'undefined' && <NFTMarketplaceSimple />}
             </Suspense>
           } />
-          <Route path="/trading" element={<TradingPlaceholder />} />
+          <Route path="/trading" element={<TradePlaceholder />} />
           <Route path="/solana-trading" element={
             <Suspense fallback={
               <div className="flex items-center justify-center h-screen">
@@ -336,7 +336,7 @@ function AppContent() {
               <div className="flex items-center justify-center h-screen">
                 <div className="text-center">
                   <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <p className="text-slate-300">Loading Trading Signals...</p>
+                  <p className="text-slate-300">Loading Trade Signals...</p>
                 </div>
               </div>
             }>
@@ -395,7 +395,7 @@ function Home() {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
         <FeatureCard 
-          title="Trading"
+          title="Trade"
           description="Trade with AI-powered insights, real-time market data, and advanced charting tools."
           linkTo="/trading"
         />
@@ -440,8 +440,8 @@ function Home() {
           linkTo="/ai-market-analysis"
         />
         <FeatureCard 
-          title="Trading Signals"
-          description="Stay ahead with AI-generated trading signals, price alerts, and personalized notification settings."
+          title="Trade Signals"
+          description="Stay ahead with AI-generated trade signals, price alerts, and personalized notification settings."
           linkTo="/trading-signals"
         />
         <FeatureCard 
@@ -471,7 +471,7 @@ function FeatureCard({ title, description, linkTo }: { title: string, descriptio
   );
 }
 
-function TradingPlaceholder() {
+function TradePlaceholder() {
   const ControlCenterLazy = React.lazy(() => import('./components/ui/control-center'));
   const [selectedSymbol, setSelectedSymbol] = useState('BINANCE:SOLUSDT');
   const [brokerModalOpen, setBrokerModalOpen] = useState(false);
@@ -496,7 +496,7 @@ function TradingPlaceholder() {
       <div className="border-b border-slate-700 bg-slate-800/95 backdrop-blur-sm sticky top-0 z-10 p-4">
         <div className="container mx-auto flex flex-wrap justify-between items-center">
           <div className="flex items-center mb-2 sm:mb-0">
-            <h1 className="text-lg font-bold mr-4">Trading Platform</h1>
+            <h1 className="text-lg font-bold mr-4">Trade Platform</h1>
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
@@ -517,13 +517,13 @@ function TradingPlaceholder() {
         </div>
       </div>
       
-      {/* Main Trading Interface with ControlCenter */}
+      {/* Main Trade Interface with ControlCenter */}
       <div className="container mx-auto h-[calc(100vh-120px)] py-4 px-2 md:px-4">
         <React.Suspense fallback={
           <div className="h-full w-full flex items-center justify-center">
             <div className="text-center">
               <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-              <p className="text-slate-300">Loading trading dashboard...</p>
+              <p className="text-slate-300">Loading trade dashboard...</p>
             </div>
           </div>
         }>
@@ -554,7 +554,7 @@ function MetaversePlaceholder() {
       
       <PopupContainer className={`${minimized ? 'h-14' : 'h-[500px]'} mb-8 transition-all duration-300`} padding>
         <div className="flex justify-between items-center mb-2">
-          <h3 className="font-semibold">3D Trading Metaverse</h3>
+          <h3 className="font-semibold">3D Trade Metaverse</h3>
           <Button 
             variant="ghost" 
             size="sm" 
@@ -692,7 +692,7 @@ function LearnPlaceholder() {
         </div>
         
         <div>
-          <h2 className="text-2xl font-bold mb-6">Daily Trading Insights</h2>
+          <h2 className="text-2xl font-bold mb-6">Daily Trade Insights</h2>
           <PopupContainer padding className="h-full flex flex-col">
             <div className="bg-slate-700/50 rounded-md p-3 mb-4">
               <p className="text-xs text-slate-400 mb-1">MARKET ANALYSIS</p>

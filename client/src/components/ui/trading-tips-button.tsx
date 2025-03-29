@@ -1,46 +1,67 @@
 import React, { useState } from 'react';
 import { LightbulbIcon } from 'lucide-react';
 import { Button } from './button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './dialog';
+import { TradingTipsSettings } from './micro-learning-tips';
 import { useMicroLearning } from '../../lib/context/MicroLearningProvider';
-import { MicroLearningSettings } from './micro-learning-settings';
 
-const TradingTipsButton: React.FC = () => {
-  const { showTip } = useMicroLearning();
-  const [showSettings, setShowSettings] = useState(false);
-  
-  const handleShowTip = () => {
-    showTip('bottom-right');
+interface TradingTipsButtonProps {
+  className?: string;
+}
+
+export function TradingTipsButton({ className }: TradingTipsButtonProps) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { showTip, settings } = useMicroLearning();
+
+  // Determine the indicator color based on frequency setting
+  const getIndicatorColor = () => {
+    switch (settings.frequency) {
+      case 'high':
+        return 'text-green-500';
+      case 'medium':
+        return 'text-yellow-500';
+      case 'low':
+        return 'text-blue-500';
+      case 'off':
+        return 'text-slate-500';
+      default:
+        return 'text-yellow-500';
+    }
   };
-  
-  return (
-    <div className="relative">
-      {/* Trading Tips Button */}
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="relative flex items-center gap-2"
-        onClick={() => setShowSettings(true)}
-      >
-        <LightbulbIcon size={16} className="text-yellow-400" />
-        <span className="hidden sm:inline">Trading Tips</span>
-        <span className="absolute -top-1 -right-1 flex h-3 w-3">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-        </span>
-      </Button>
-      
-      {/* Dropdown Menu */}
-      {showSettings && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
-          <MicroLearningSettings 
-            onClose={() => setShowSettings(false)} 
-          />
-        </div>
-      )}
-    </div>
-  );
-};
 
-// Export both named and default export
-export { TradingTipsButton };
-export default TradingTipsButton;
+  return (
+    <>
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className={`flex items-center gap-2 ${className}`}
+        onClick={() => setIsDialogOpen(true)}
+        title="Trading Tips Settings"
+      >
+        <LightbulbIcon className={`h-4 w-4 ${getIndicatorColor()}`} />
+      </Button>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Trading Tips Settings</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <TradingTipsSettings />
+          </div>
+          <div className="flex justify-between mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsDialogOpen(false);
+                showTip(); // Show a tip immediately when closing settings
+              }}
+            >
+              Show Tip Now
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
