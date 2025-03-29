@@ -95,6 +95,12 @@ export const receiveWebhook = (req: Request, res: Response) => {
     const url = req.originalUrl || '';
     console.log('Webhook URL:', url);
 
+    // Parse Discord-style messages from Cash Cow or similar formats
+    // This handles messages like "SELL BTCUSDT Entry =95031.72 to 95031.72 SL =95992.79 TP1 =94070.65 TP2 =93109.58 TP3 =92148.51"
+    if (payload.content && typeof payload.content === 'string') {
+      return processCashCowSignal(payload, res);
+    }
+
     if (url.includes('IjU3NjUwNTY4MDYzNjA0MzQ1MjZhNTUzMTUxMzci')) {
       source = 'Paradox AI';
       strategy = 'Solana Signals';
@@ -202,6 +208,130 @@ export const getSignals = (_req: Request, res: Response) => {
 };
 
 // Utility function to normalize action values
+// Function to process Cash Cow or similar format signals
+// Example: "SELL BTCUSDT Entry =95031.72 to 95031.72 SL =95992.79 TP1 =94070.65 TP2 =93109.58 TP3 =92148.51"
+function processCashCowSignal(payload: any, res: Response) {
+  try {
+    console.log('Processing Cash Cow style signal:', payload.content);
+    
+    // Extract the message content
+    const content = payload.content.trim();
+    
+    // Basic validation
+    if (!content || content.length < 10) {
+      console.error('Invalid Cash Cow signal content (too short):', content);
+      return res.status(400).send({ error: 'Invalid signal content' });
+    }
+    
+    // Extract action and symbol - typically the first two words
+    const parts = content.split(/\s+/);
+    let action = 'neutral';
+    let symbol = 'UNKNOWN';
+    
+    // The first word is usually the action (BUY or SELL)
+    if (parts.length > 0) {
+      action = normalizeAction(parts[0]);
+    }
+    
+    // The second word is usually the symbol (like BTCUSDT)
+    if (parts.length > 1) {
+      symbol = parts[1].toUpperCase().trim();
+      // Remove any non-alphanumeric characters from the symbol
+      symbol = symbol.replace(/[^A-Z0-9]/g, '');
+    }
+    
+    // Extract price levels using regex
+    let entryPrice = 0;
+    let stopLoss = 0;
+    let takeProfit1 = 0;
+    let takeProfit2 = 0;
+    let takeProfit3 = 0;
+    
+    // Match Entry price
+    const entryMatch = content.match(/Entry\s*=\s*(\d+\.?\d*)/i) || 
+                       content.match(/Entry\s*(\d+\.?\d*)/i) ||
+                       content.match(/Entry\s*price\s*[=:]*\s*(\d+\.?\d*)/i);
+    if (entryMatch && entryMatch[1]) {
+      entryPrice = parseFloat(entryMatch[1]);
+    }
+    
+    // Match Stop Loss
+    const slMatch = content.match(/SL\s*=\s*(\d+\.?\d*)/i) || 
+                    content.match(/Stop\s*Loss\s*[=:]*\s*(\d+\.?\d*)/i) ||
+                    content.match(/Stop\s*[=:]*\s*(\d+\.?\d*)/i);
+    if (slMatch && slMatch[1]) {
+      stopLoss = parseFloat(slMatch[1]);
+    }
+    
+    // Match Take Profit levels
+    const tp1Match = content.match(/TP1\s*=\s*(\d+\.?\d*)/i) || 
+                     content.match(/Take\s*Profit\s*1\s*[=:]*\s*(\d+\.?\d*)/i) ||
+                     content.match(/TP\s*=\s*(\d+\.?\d*)/i);
+    if (tp1Match && tp1Match[1]) {
+      takeProfit1 = parseFloat(tp1Match[1]);
+    }
+    
+    const tp2Match = content.match(/TP2\s*=\s*(\d+\.?\d*)/i) || 
+                     content.match(/Take\s*Profit\s*2\s*[=:]*\s*(\d+\.?\d*)/i);
+    if (tp2Match && tp2Match[1]) {
+      takeProfit2 = parseFloat(tp2Match[1]);
+    }
+    
+    const tp3Match = content.match(/TP3\s*=\s*(\d+\.?\d*)/i) || 
+                     content.match(/Take\s*Profit\s*3\s*[=:]*\s*(\d+\.?\d*)/i);
+    if (tp3Match && tp3Match[1]) {
+      takeProfit3 = parseFloat(tp3Match[1]);
+    }
+    
+    console.log(`Extracted data - Symbol: ${symbol}, Action: ${action}`);
+    console.log(`Prices - Entry: ${entryPrice}, SL: ${stopLoss}, TP1: ${takeProfit1}, TP2: ${takeProfit2}, TP3: ${takeProfit3}`);
+    
+    // Set source and strategy based on the webhook content or URL
+    const source = payload.source || 'Cash Cow';
+    const strategy = payload.strategy || 'Premium Signals';
+    
+    // Create a new signal object
+    const signal = {
+      id: randomUUID(),
+      timestamp: new Date(),
+      symbol: symbol,
+      action: action,
+      price: entryPrice || 0,
+      entryPrice: entryPrice,
+      stopLoss: stopLoss,
+      takeProfit1: takeProfit1,
+      takeProfit2: takeProfit2,
+      takeProfit3: takeProfit3,
+      source: source,
+      strategy: strategy,
+      message: content,
+      confidence: 85, // Usually Cash Cow signals have high confidence
+      timeframe: '1h', // Default timeframe for Cash Cow signals
+      indicators: {},
+      read: false
+    };
+    
+    console.log('Created Cash Cow signal:', signal);
+    
+    // Add to signals store
+    signals.unshift(signal);
+    
+    // Keep only the last 100 signals
+    if (signals.length > 100) {
+      signals = signals.slice(0, 100);
+    }
+    
+    return res.status(200).send({ 
+      success: true, 
+      signalId: signal.id,
+      message: 'Cash Cow signal processed successfully'
+    });
+  } catch (error) {
+    console.error('Error processing Cash Cow signal:', error);
+    return res.status(500).send({ error: 'Failed to process Cash Cow signal' });
+  }
+}
+
 function normalizeAction(action: string): 'buy' | 'sell' | 'neutral' {
   if (!action || typeof action !== 'string') {
     console.log('Invalid action value received:', action);
