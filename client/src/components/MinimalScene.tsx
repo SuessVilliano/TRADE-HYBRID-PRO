@@ -5,6 +5,8 @@ import * as THREE from 'three';
 import { GLTF } from 'three-stdlib';
 import { useMultiplayer } from '../lib/stores/useMultiplayer';
 import OtherPlayers from './game/OtherPlayers';
+import { SocialPanel } from './ui/social-panel';
+import { VoiceChatControls } from './ui/voice-chat-controls';
 
 // Define controls enum
 enum Controls {
@@ -443,6 +445,8 @@ function MultiplayerConnection() {
 export default function MinimalScene() {
   const [showInstructions, setShowInstructions] = useState(true);
   const [multiplayerEnabled, setMultiplayerEnabled] = useState(true);
+  // Add state for voice chat controls
+  const [showVoiceControls, setShowVoiceControls] = useState(true);
   
   // Define key mappings for controls
   const keyMap = [
@@ -502,6 +506,29 @@ export default function MinimalScene() {
         </Canvas>
       </KeyboardControls>
       
+      {/* Add SocialPanel for voice chat */}
+      <SocialPanel />
+      
+      {/* Add dedicated Voice Chat Controls panel for better visibility */}
+      {showVoiceControls && (
+        <div className="absolute top-4 right-4 bg-black/70 text-white p-3 rounded-lg text-sm">
+          <div className="flex justify-between items-center mb-1">
+            <h3 className="font-bold">Voice Chat</h3>
+            <button 
+              className="text-gray-400 hover:text-white focus:outline-none" 
+              onClick={() => setShowVoiceControls(false)}
+              aria-label="Minimize voice controls"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <VoiceChatControls />
+        </div>
+      )}
+      
       {/* Overlay instructions */}
       {showInstructions && (
         <div className="absolute bottom-4 left-4 bg-black/70 text-white p-3 rounded-lg text-sm max-w-xs">
@@ -555,6 +582,22 @@ export default function MinimalScene() {
             <line x1="12" y1="8" x2="12.01" y2="8"></line>
           </svg>
           Controls
+        </button>
+      )}
+      
+      {/* Show voice controls button when minimized */}
+      {!showVoiceControls && (
+        <button 
+          className="absolute top-4 right-4 bg-purple-600 text-white p-2 rounded-lg text-xs flex items-center gap-1 hover:bg-purple-700"
+          onClick={() => setShowVoiceControls(true)}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+          Voice Chat
         </button>
       )}
     </div>
