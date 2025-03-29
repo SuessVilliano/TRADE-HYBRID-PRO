@@ -115,9 +115,8 @@ function AppContent() {
       <PopupContainer className="border-b border-slate-700 backdrop-blur-md sticky top-0 z-10 p-4" padding>
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-6">
-            <Link to="/" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center">
               <img src="/images/trade_hybrid_logo.png" alt="Trade Hybrid Logo" className="h-10 w-10" />
-              <span className="text-2xl font-bold text-blue-500">Trade Hybrid</span>
             </Link>
             <nav className="hidden md:flex gap-4">
               <Link to="/" className="hover:text-blue-400 transition-colors">Home</Link>
@@ -364,7 +363,8 @@ function AppContent() {
       <PopupContainer className="border-t border-slate-700 p-4 text-sm" padding>
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-4 md:mb-0">
+            <div className="mb-4 md:mb-0 flex items-center gap-2">
+              <img src="/images/trade_hybrid_logo.png" alt="Trade Hybrid Logo" className="h-6 w-6" />
               <p>&copy; {new Date().getFullYear()} Trade Hybrid. All rights reserved.</p>
             </div>
             <div className="flex gap-6">

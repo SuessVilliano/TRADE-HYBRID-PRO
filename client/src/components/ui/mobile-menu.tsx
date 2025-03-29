@@ -23,10 +23,9 @@ export function MobileMenu({ isOpen, onClose, onItemClick }: MobileMenuProps) {
       {/* Menu Content */}
       <div className="bg-white dark:bg-gray-800 w-72 h-full overflow-auto animate-in slide-in-from-left">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="font-semibold text-lg flex items-center gap-2">
-            <img src="/images/trade_hybrid_logo.png" alt="Trade Hybrid Logo" className="h-6 w-6" />
-            <span>Trade Hybrid</span>
-          </h2>
+          <div className="flex items-center">
+            <img src="/images/trade_hybrid_logo.png" alt="Trade Hybrid Logo" className="h-8 w-8" />
+          </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />
           </Button>
