@@ -39,6 +39,7 @@ const TradingSignalsPage = lazy(() => import('./pages/trading-signals'));
 const EmbeddedAppPage = lazy(() => import('./pages/embedded-app'));
 const NotificationSettingsPage = lazy(() => import('./pages/notification-settings'));
 const AffiliatePage = lazy(() => import('./pages/affiliate'));
+const EventsPage = lazy(() => import('./pages/events'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -174,6 +175,7 @@ function AppContent() {
               <Link to="/trade-journal" className="hover:text-blue-400 transition-colors">Journal</Link>
               <Link to="/marketplace" className="hover:text-blue-400 transition-colors">NFTs</Link>
               <Link to="/learn" className="hover:text-blue-400 transition-colors">Learn</Link>
+              <Link to="/events" className="hover:text-blue-400 transition-colors">Events</Link>
               <Link to="/ai-market-analysis" className="hover:text-blue-400 transition-colors">Market Buddy</Link>
               <Link to="/trading-signals" className="hover:text-blue-400 transition-colors">Signals</Link>
               <Link to="/app" className="hover:text-blue-400 transition-colors">App</Link>
@@ -490,6 +492,18 @@ function AppContent() {
               {typeof window !== 'undefined' && <EmbeddedAppPage />}
             </Suspense>
           } />
+          <Route path="/events" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading Events...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <EventsPage />}
+            </Suspense>
+          } />
           <Route path="/affiliate/*" element={
             <Suspense fallback={
               <div className="flex items-center justify-center h-screen">
@@ -594,6 +608,11 @@ function Home() {
           linkTo="/learn"
         />
         <FeatureCard 
+          title="Events"
+          description="Join virtual and in-person events, seminars, retreats, and masterminds with the Trade Hybrid community."
+          linkTo="/events"
+        />
+        <FeatureCard 
           title="THC"
           description="Stake THC tokens for rewards and build your network with our 2x3 affiliate matrix system."
           linkTo="/thc-staking"
@@ -647,6 +666,7 @@ function FeatureCard({ title, description, linkTo }: { title: string, descriptio
     '/news': 'basic_trading',
     '/marketplace': 'nft',
     '/learn': 'education',
+    '/events': 'social',
     '/thc-staking': 'blockchain',
     '/live-stream': 'social',
     '/ai-market-analysis': 'ai_features',
