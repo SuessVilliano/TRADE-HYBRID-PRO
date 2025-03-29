@@ -86,7 +86,7 @@ export function ApiKeyManager({
   };
   
   // Save API keys
-  const saveApiKeys = () => {
+  const saveApiKeys = async () => {
     if (!selectedBroker) {
       toast({
         title: "No broker selected",
@@ -125,16 +125,57 @@ export function ApiKeyManager({
         description: `Your ${getSelectedBrokerName()} API key has been saved and will be used for AI functionality.`
       });
     } else {
-      // Save to local storage
-      localStorage.setItem(SECRET_STORAGE_KEY, JSON.stringify(apiKeys));
-      
-      // Validate keys
-      validateApiKeys();
-      
-      toast({
-        title: "API keys saved",
-        description: `Your API keys for ${getSelectedBrokerName()} have been saved.`
-      });
+      try {
+        // Save to local storage
+        localStorage.setItem(SECRET_STORAGE_KEY, JSON.stringify(apiKeys));
+        
+        // Update broker aggregator with the new API keys
+        // Import dynamically to avoid circular dependencies
+        const { brokerAggregator } = await import('@/lib/services/broker-aggregator-service');
+        
+        // Directly set API credentials in broker aggregator
+        // This will ensure they're available to the service immediately
+        if (selectedBroker === 'tradelocker') {
+          await brokerAggregator.setApiCredentials(
+            selectedBroker, 
+            {
+              apiKey: brokerKeys.apiKey || '',
+              clientId: brokerKeys.clientId || '',
+              isTestnet: testMode
+            }
+          );
+        } else if (selectedBroker === 'tradingview') {
+          await brokerAggregator.setApiCredentials(
+            selectedBroker, 
+            {
+              apiKey: brokerKeys.apiKey || '',
+              userId: brokerKeys.userId || '',
+              isTestnet: testMode
+            }
+          );
+        } else {
+          // For other broker types
+          await brokerAggregator.setApiCredentials(
+            selectedBroker, 
+            { ...brokerKeys, isTestnet: testMode }
+          );
+        }
+        
+        // Validate keys automatically after saving
+        await validateApiKeys();
+        
+        toast({
+          title: "API keys saved",
+          description: `Your API keys for ${getSelectedBrokerName()} have been saved and will be used for trading functionality.`
+        });
+      } catch (error) {
+        console.error("Error saving API keys:", error);
+        toast({
+          title: "Error saving keys",
+          description: `There was a problem saving your API keys: ${(error as Error).message}`,
+          variant: "destructive"
+        });
+      }
     }
     
     // Notify parent component
@@ -189,7 +230,7 @@ export function ApiKeyManager({
   };
   
   // Validate API keys
-  const validateApiKeys = () => {
+  const validateApiKeys = async () => {
     if (!selectedBroker || !apiKeys[selectedBroker]) {
       toast({
         title: "No API keys found",
@@ -201,17 +242,18 @@ export function ApiKeyManager({
     
     setIsValidating(true);
     
-    // Simulate API validation (would be a real API call in production)
-    setTimeout(() => {
-      // 80% chance of success for demo purposes
-      const isValid = Math.random() > 0.2;
+    try {
+      // Use broker-aggregator-service to validate the API keys
+      // Import dynamically to avoid circular dependencies
+      const { brokerAggregator } = await import('@/lib/services/broker-aggregator-service');
+      
+      // Connect to the broker using the saved credentials
+      const isValid = await brokerAggregator.connectToBroker(selectedBroker);
       
       setValidationStatus(prev => ({
         ...prev,
         [selectedBroker]: isValid
       }));
-      
-      setIsValidating(false);
       
       if (isValid) {
         toast({
@@ -230,7 +272,27 @@ export function ApiKeyManager({
       if (onValidStatusChange) {
         onValidStatusChange(isValid);
       }
-    }, 1500);
+    } catch (error) {
+      console.error("API key validation error:", error);
+      
+      setValidationStatus(prev => ({
+        ...prev,
+        [selectedBroker]: false
+      }));
+      
+      toast({
+        title: "Validation error",
+        description: `An error occurred while validating your API keys: ${(error as Error).message}`,
+        variant: "destructive"
+      });
+      
+      // Notify parent component of failure
+      if (onValidStatusChange) {
+        onValidStatusChange(false);
+      }
+    } finally {
+      setIsValidating(false);
+    }
   };
   
   // Get the name of the selected broker

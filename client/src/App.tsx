@@ -82,14 +82,10 @@ function AppWithProviders() {
 }
 
 function AppContent() {
-  const { isAuthenticated, login, logout, user } = useUserStore();
+  const { isAuthenticated, logout, user } = useUserStore();
   const { loginWithSolana, isWalletAuthenticated, solanaAuthError, isAuthenticatingWithSolana, logoutFromSolana } = useSolanaAuth();
-  const { userLevel, setUserLevel } = useFeatureDisclosure();
-  const [showLoginForm, setShowLoginForm] = useState(false);
+  const { userLevel } = useFeatureDisclosure();
   const [showWhopModal, setShowWhopModal] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
   
   // Get user-friendly level name for display
   const getLevelName = () => {
@@ -127,28 +123,6 @@ function AppContent() {
       console.log(`Affiliate referral detected: ${detectedReferralCode}`);
     }
   }, [trackReferral]);
-
-  // Handle login
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginError('');
-    
-    if (!username || !password) {
-      setLoginError('Please enter both username and password');
-      return;
-    }
-    
-    try {
-      await login(username, password);
-      // If login doesn't throw an error, consider it successful
-      setShowLoginForm(false);
-      setUsername('');
-      setPassword('');
-    } catch (error) {
-      console.error('Login failed:', error);
-      setLoginError('Login failed. Please check your credentials.');
-    }
-  };
   
   // Handle logout
   const handleLogout = () => {
@@ -216,46 +190,16 @@ function AppContent() {
               <div className="flex flex-wrap items-center gap-3">
                 <WalletMultiButton className="wallet-adapter-button-custom max-w-[200px] text-sm px-2 py-1 overflow-hidden text-ellipsis whitespace-nowrap" />
                 <div className="border-r border-slate-600 h-8 hidden sm:block" />
-                {showLoginForm ? (
-                  <form onSubmit={handleLogin} className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Username"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm"
-                    />
-                    <input
-                      type="password"
-                      placeholder="Password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm"
-                    />
-                    <Button type="submit" size="sm">Login</Button>
-                    <Button type="button" variant="outline" size="sm" onClick={() => setShowLoginForm(false)}>Cancel</Button>
-                  </form>
-                ) : (
-                  <>
-                    <Button onClick={() => setShowLoginForm(true)}>Password Login</Button>
-                    <div className="border-r border-slate-600 h-8 hidden sm:block" />
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setShowWhopModal(true)}
-                      className="flex items-center gap-1"
-                    >
-                      <span className={userLevel === UserExperienceLevel.FREE ? "text-slate-400" : "text-green-400"}>
-                        {getLevelName()} Membership
-                      </span>
-                    </Button>
-                  </>
-                )}
-              </div>
-            )}
-            {loginError && (
-              <div className="absolute top-16 right-4 bg-red-900/90 text-white p-2 rounded text-sm">
-                {loginError}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowWhopModal(true)}
+                  className="flex items-center gap-1"
+                >
+                  <span className={userLevel === UserExperienceLevel.FREE ? "text-slate-400" : "text-green-400"}>
+                    {getLevelName()} Membership
+                  </span>
+                </Button>
               </div>
             )}
           </div>
