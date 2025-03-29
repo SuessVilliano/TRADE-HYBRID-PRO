@@ -40,14 +40,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/webhooks/signals", receiveWebhook);
   
   // New signal webhook endpoints from user
-  app.post("/workflow/sendwebhookdata/IjU3NjUwNTY4MDYzNjA0MzQ1MjZhNTUzMTUxMzci_pc", receiveWebhook); // Solana signals
-  app.post("/api/v1/webhooks/tUOebm12d8na01WofspmU", receiveWebhook); // Bitcoin and Ether signals
+  // Paradox AI signals
+  app.post("/workflow/sendwebhookdata/IjU3NjUwNTY4MDYzNjA0MzQ1MjZhNTUzMTUxMzci_pc", receiveWebhook); // SOLUSDT - Paradox AI - crypto
+  app.post("/api/v1/webhooks/tUOebm12d8na01WofspmU", receiveWebhook); // BTCUSDT and ETHUSDT - Paradox AI - crypto
+  
+  // Other signal sources
+  app.post("/api/v1/webhooks/Ec3lDNCfkpQtHNbWk16mA", receiveWebhook); // MNQ! - Hybrid AI - futures
+  app.post("/api/v1/webhooks/OXdqSQ0du1D7gFEEDBUsS", receiveWebhook); // EURUSD - Solaris AI - forex
   
   // Test webhooks for Cash Cow formats
   app.post("/api/test/webhook/cashcow", (req, res) => {
     // Create a sample Cash Cow signal based on the requested type
     const signalType = req.query.type || 'forex';
-    let payload = { content: '' };
+    
+    // Define a proper interface for the payload
+    interface CashCowPayload {
+      content: string;
+      channel_name: string;
+    }
+    
+    let payload: CashCowPayload = { 
+      content: '',
+      channel_name: ''
+    };
     
     switch (signalType) {
       case 'forex':
@@ -88,10 +103,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // News route using default source (bloomberg)
   app.get("/api/rss-feeds/news", (req, res) => {
-    // Create params object if it doesn't exist
-    req.params = req.params || {};
-    req.params.sourceId = 'bloomberg'; // Set default source
-    return getRssFeed(req, res);
+    // Create a modified request with the sourceId parameter
+    const modifiedReq = Object.create(req);
+    
+    // Define proper type for the params
+    interface RequestParams {
+      sourceId: string;
+      [key: string]: string;
+    }
+    
+    // Create params object with correct type
+    modifiedReq.params = { 
+      ...(req.params || {}), 
+      sourceId: 'bloomberg' 
+    } as RequestParams;
+    
+    return getRssFeed(modifiedReq, res);
   });
   
   // Trader routes - Mock trading functionality

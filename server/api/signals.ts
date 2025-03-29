@@ -284,14 +284,29 @@ export const receiveWebhook = (req: Request, res: Response) => {
     const url = req.originalUrl || '';
     console.log('Webhook URL:', url);
 
-    // Determine if it's from Paradox AI or other sources
+    // Determine source based on URL
     if (url.includes('IjU3NjUwNTY4MDYzNjA0MzQ1MjZhNTUzMTUxMzci')) {
       source = 'Paradox AI';
-      strategy = 'Solana Signals';
+      strategy = 'SOLUSDT Signals';
     } else if (url.includes('tUOebm12d8na01WofspmU')) {
       source = 'Paradox AI';
-      strategy = payload.symbol && payload.symbol.includes('BTC') ? 'Bitcoin Signals' : 'Ethereum Signals';
-    } else if (url.includes('taskmagic')) {
+      strategy = 'BTC/ETH Signals';
+      // Try to determine if it's BTC or ETH based on the payload
+      if (payload.symbol) {
+        if (payload.symbol.toUpperCase().includes('BTC')) {
+          strategy = 'BTCUSDT Signals';
+        } else if (payload.symbol.toUpperCase().includes('ETH')) {
+          strategy = 'ETHUSDT Signals';
+        }
+      }
+    } else if (url.includes('Ec3lDNCfkpQtHNbWk16mA')) {
+      source = 'Hybrid AI';
+      strategy = 'MNQ Futures Signals';
+    } else if (url.includes('OXdqSQ0du1D7gFEEDBUsS')) {
+      source = 'Solaris AI';
+      strategy = 'EURUSD Forex Signals';
+    } else if (url.includes('taskmagic') || url.includes('pabbly')) {
+      // Generic sources
       source = payload.source || 'Cash Cow';
       strategy = payload.strategy || 'Premium Signals';
     }

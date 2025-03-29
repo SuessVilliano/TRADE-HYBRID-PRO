@@ -643,6 +643,10 @@ export function SettingsPopup({
                       <Switch defaultChecked={true} />
                     </div>
                   </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Developer Tools</h3>
                   
                   {/* Signal Testing Tools */}
                   <SignalTestButtons className="mt-6" />
@@ -662,7 +666,6 @@ export function SettingsPopup({
                       Export My Data
                     </Button>
                   </div>
-                </div>
                 </div>
               </div>
             </TabsContent>
