@@ -16,7 +16,7 @@ import '@solana/wallet-adapter-react-ui/styles.css';
 
 // Lazy load pages
 const TradeRunner = lazy(() => import('./pages/trade-runner'));
-const BullsVsBears = lazy(() => import('./pages/bulls-vs-bears-new')); // Legacy reference
+const BullsVsBears = lazy(() => import('./pages/bulls-vs-bears')); // Bulls vs Bears game
 const NewsDashboardSimple = lazy(() => import('./pages/news-dashboard-simple'));
 const TradeJournalSimple = lazy(() => import('./pages/trade-journal-simple'));
 const NFTMarketplaceSimple = lazy(() => import('./pages/nft-marketplace-simple'));
@@ -32,6 +32,9 @@ const EmbeddedAppPage = lazy(() => import('./pages/embedded-app'));
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
 import { MicroLearningTipRenderer } from './components/ui/micro-learning-tip-renderer';
 import { ToastProvider } from './components/ui/toaster';
+import { FeatureDisclosureProvider, useFeatureDisclosure } from './lib/context/FeatureDisclosureProvider';
+import { ExperienceLevelSelector } from './components/ui/interactive-tutorial';
+import { RouteGated } from './components/ui/feature-gated';
 
 // Light wrapper with providers
 function AppWithProviders() {
@@ -40,10 +43,13 @@ function AppWithProviders() {
       <ToastProvider>
         <SolanaWalletProvider>
           <SolanaAuthProvider>
-            <MicroLearningProvider>
-              <AppContent />
-              <MicroLearningTipRenderer />
-            </MicroLearningProvider>
+            <FeatureDisclosureProvider>
+              <MicroLearningProvider>
+                <AppContent />
+                <MicroLearningTipRenderer />
+                <ExperienceLevelSelector />
+              </MicroLearningProvider>
+            </FeatureDisclosureProvider>
           </SolanaAuthProvider>
         </SolanaWalletProvider>
       </ToastProvider>
@@ -133,6 +139,7 @@ function AppContent() {
               <Link to="/trading-signals" className="hover:text-blue-400 transition-colors">Signals</Link>
               <Link to="/app" className="hover:text-blue-400 transition-colors">App</Link>
               <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Trade Runner</Link>
+              <Link to="/bulls-vs-bears" className="hover:text-blue-400 transition-colors">Bulls vs Bears</Link>
             </nav>
           </div>
           
@@ -234,18 +241,24 @@ function AppContent() {
           } />
           <Route path="/trading" element={<TradePlaceholder />} />
           <Route path="/solana-trading" element={
-            <Suspense fallback={
-              <div className="flex items-center justify-center h-screen">
-                <div className="text-center">
-                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <p className="text-slate-300">Loading DEX trading...</p>
+            <RouteGated route="/solana-dex">
+              <Suspense fallback={
+                <div className="flex items-center justify-center h-screen">
+                  <div className="text-center">
+                    <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                    <p className="text-slate-300">Loading DEX trading...</p>
+                  </div>
                 </div>
-              </div>
-            }>
-              {typeof window !== 'undefined' && <SolanaDexEmbedded />}
-            </Suspense>
+              }>
+                {typeof window !== 'undefined' && <SolanaDexEmbedded />}
+              </Suspense>
+            </RouteGated>
           } />
-          <Route path="/metaverse" element={<MetaversePlaceholder />} />
+          <Route path="/metaverse" element={
+            <RouteGated route="/metaverse">
+              <MetaversePlaceholder />
+            </RouteGated>
+          } />
           <Route path="/news" element={
             <Suspense fallback={
               <div className="flex items-center justify-center h-screen">
@@ -282,13 +295,13 @@ function AppContent() {
               {typeof window !== 'undefined' && <TradeRunner />}
             </Suspense>
           } />
-          {/* Legacy route for backward compatibility */}
+          {/* Bulls vs Bears Game */}
           <Route path="/bulls-vs-bears" element={
             <Suspense fallback={
               <div className="flex items-center justify-center h-screen">
                 <div className="text-center">
                   <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <p className="text-slate-300">Loading the Trade Runner game...</p>
+                  <p className="text-slate-300">Loading the Bulls vs Bears game...</p>
                 </div>
               </div>
             }>
@@ -332,16 +345,18 @@ function AppContent() {
             </Suspense>
           } />
           <Route path="/ai-market-analysis" element={
-            <Suspense fallback={
-              <div className="flex items-center justify-center h-screen">
-                <div className="text-center">
-                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <p className="text-slate-300">Loading AI Market Analysis...</p>
+            <RouteGated route="/ai-market-analysis">
+              <Suspense fallback={
+                <div className="flex items-center justify-center h-screen">
+                  <div className="text-center">
+                    <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                    <p className="text-slate-300">Loading AI Market Analysis...</p>
+                  </div>
                 </div>
-              </div>
-            }>
-              {typeof window !== 'undefined' && <AIMarketAnalysisPage />}
-            </Suspense>
+              }>
+                {typeof window !== 'undefined' && <AIMarketAnalysisPage />}
+              </Suspense>
+            </RouteGated>
           } />
           <Route path="/trading-signals" element={
             <Suspense fallback={
@@ -466,25 +481,74 @@ function Home() {
           description="Test your trading skills in our gamified trading simulator. Compete on the leaderboard and earn rewards."
           linkTo="/trade-runner"
         />
+        <FeatureCard 
+          title="Bulls vs Bears"
+          description="Join the epic battle between bulls and bears in this immersive 3D trading game. Trade with the trend and win!"
+          linkTo="/bulls-vs-bears"
+        />
       </div>
     </PopupContainer>
   );
 }
 
 function FeatureCard({ title, description, linkTo }: { title: string, description: string, linkTo: string }) {
+  // Map route to feature category
+  const routeToFeatureMap: Record<string, string> = {
+    '/trading': 'basic_trading',
+    '/solana-trading': 'blockchain',
+    '/metaverse': 'metaverse',
+    '/news': 'basic_trading',
+    '/marketplace': 'nft',
+    '/learn': 'education',
+    '/thc-staking': 'blockchain',
+    '/live-stream': 'social',
+    '/ai-market-analysis': 'ai_features',
+    '/trading-signals': 'ai_features',
+    '/app': 'advanced_trading',
+    '/trade-runner': 'basic_trading',
+    '/bulls-vs-bears': 'basic_trading',
+  };
+  
+  const { isRouteEnabled } = useFeatureDisclosure();
+  const route = routeToFeatureMap[linkTo] ? linkTo : '/';
+  const featureEnabled = isRouteEnabled(route);
+  
   return (
-    <PopupContainer className="h-full flex flex-col p-6 border border-slate-700 rounded-lg" padding>
+    <PopupContainer className="h-full flex flex-col p-6 border border-slate-700 rounded-lg relative" padding>
+      {!featureEnabled && (
+        <div className="absolute top-3 right-3">
+          <div className="bg-slate-800/80 backdrop-blur-sm p-1.5 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400">
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+        </div>
+      )}
+      
       <h2 className="text-2xl font-bold mb-4">{title}</h2>
-      <p className="text-slate-300 mb-6 flex-grow">{description}</p>
-      <Link to={linkTo}>
-        <Button className="w-full">Explore {title}</Button>
-      </Link>
+      <p className={`text-slate-300 mb-6 flex-grow ${!featureEnabled ? 'opacity-70' : ''}`}>{description}</p>
+      
+      {featureEnabled ? (
+        <Link to={linkTo}>
+          <Button className="w-full">Explore {title}</Button>
+        </Link>
+      ) : (
+        <Button className="w-full opacity-70" disabled>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          Locked
+        </Button>
+      )}
     </PopupContainer>
   );
 }
 
 function TradePlaceholder() {
   const ControlCenterLazy = React.lazy(() => import('./components/ui/control-center'));
+  const TradingPlatformTutorial = React.lazy(() => import('./components/ui/trading-platform-tutorial').then(module => ({ default: module.TradingPlatformTutorial })));
   const [selectedSymbol, setSelectedSymbol] = useState('BINANCE:SOLUSDT');
   const [brokerModalOpen, setBrokerModalOpen] = useState(false);
   
@@ -521,7 +585,7 @@ function TradePlaceholder() {
             <select 
               value={selectedSymbol}
               onChange={(e) => handleSymbolChange(e.target.value)}
-              className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 symbol-selector"
             >
               {tradingSymbols.map(symbol => (
                 <option key={symbol.value} value={symbol.value}>{symbol.label}</option>
@@ -545,14 +609,21 @@ function TradePlaceholder() {
             </div>
           </div>
         }>
-          <ControlCenterLazy 
-            selectedSymbol={selectedSymbol}
-            onChangeSymbol={handleSymbolChange}
-            initialPanels={['chart', 'signals', 'smart-trade', 'companion', 'economic-calendar', 'market-overview']}
-            className="h-full"
-          />
+          <div className="trading-chart h-full">
+            <ControlCenterLazy 
+              selectedSymbol={selectedSymbol}
+              onChangeSymbol={handleSymbolChange}
+              initialPanels={['chart', 'signals', 'smart-trade', 'companion', 'economic-calendar', 'market-overview']}
+              className="h-full"
+            />
+          </div>
         </React.Suspense>
       </div>
+      
+      {/* Interactive Tutorial */}
+      <React.Suspense fallback={null}>
+        <TradingPlatformTutorial />
+      </React.Suspense>
       
       {/* Broker Connection Modal would go here */}
     </div>
