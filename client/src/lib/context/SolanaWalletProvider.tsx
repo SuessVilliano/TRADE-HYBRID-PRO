@@ -12,7 +12,7 @@ import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 // Default styles for wallet adapter
 require('@solana/wallet-adapter-react-ui/styles.css');
 
-// Import the PhantomWalletAdapter directly from the node_modules
+// Direct imports for each wallet adapter
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
 import { clusterApiUrl } from '@solana/web3.js';
 
@@ -32,11 +32,17 @@ export const SolanaWalletProvider: FC<SolanaWalletProviderProps> = ({ children }
   const network = ADAPTER_NETWORK.Devnet;
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
-  // Only include the PhantomWalletAdapter for now to simplify
+  // Only include the PhantomWalletAdapter for now
   const wallets = useMemo(
-    () => [
-      new PhantomWalletAdapter()
-    ],
+    () => {
+      // Check if we're in a browser environment and phantom exists
+      if (typeof window !== 'undefined' && window.phantom) {
+        return [new PhantomWalletAdapter()];
+      }
+      
+      // Fallback empty array if phantom is not available (for SSR compatibility)
+      return [new PhantomWalletAdapter()];
+    },
     []
   );
 
