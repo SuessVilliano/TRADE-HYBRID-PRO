@@ -17,10 +17,10 @@ export function SimpleAffiliateSystem() {
 
   // Generate a referral link when component mounts
   useEffect(() => {
-    const baseUrl = window.location.origin;
+    const customDomain = 'https://pro.tradehybrid.club';
     // Use a temporary random ID for the referral link
     const randomId = Math.random().toString(36).substring(2, 10);
-    setReferralLink(`${baseUrl}?ref=${randomId}`);
+    setReferralLink(`${customDomain}?ref=${randomId}`);
     
     // Show tooltip on first visit
     const hasSeenAffiliateTooltip = localStorage.getItem('hasSeenAffiliateTooltip');

@@ -22,7 +22,7 @@ export function AffiliatePopup({
   onClose: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<'overview' | 'referrals' | 'earnings'>('overview');
-  const [affiliateLink, setAffiliateLink] = useState('https://app.tradehybrid.co/r/trader123');
+  const [affiliateLink, setAffiliateLink] = useState('https://pro.tradehybrid.club/?ref=trader123');
   const [referralCode, setReferralCode] = useState('TRADER123');
   const [linkCopied, setLinkCopied] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);

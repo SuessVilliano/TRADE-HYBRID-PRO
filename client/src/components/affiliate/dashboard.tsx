@@ -59,7 +59,7 @@ export function AffiliateDashboard() {
   const getAffiliateLink = () => {
     if (!publicKey) return "";
     
-    const baseUrl = window.location.origin;
+    const baseUrl = 'https://pro.tradehybrid.club';
     return `${baseUrl}/affiliate/register?ref=${publicKey.toString()}`;
   };
   

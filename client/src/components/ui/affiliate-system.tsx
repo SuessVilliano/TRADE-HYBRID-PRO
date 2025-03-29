@@ -19,9 +19,9 @@ export function AffiliateSystem() {
 
   // Generate a referral link based on connected wallet or randomly
   useEffect(() => {
-    const baseUrl = window.location.origin;
+    const customDomain = 'https://pro.tradehybrid.club';
     if (active && account) {
-      setReferralLink(`${baseUrl}?ref=${account.substring(2, 10)}`);
+      setReferralLink(`${customDomain}?ref=${account.substring(2, 10)}`);
       
       // Simulate loading referral data
       // In a real implementation, you would fetch this from an API
@@ -29,7 +29,7 @@ export function AffiliateSystem() {
     } else {
       // Use a temporary random ID if not connected
       const randomId = Math.random().toString(36).substring(2, 10);
-      setReferralLink(`${baseUrl}?ref=${randomId}`);
+      setReferralLink(`${customDomain}?ref=${randomId}`);
     }
   }, [active, account]);
   

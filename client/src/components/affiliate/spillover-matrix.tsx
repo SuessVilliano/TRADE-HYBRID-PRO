@@ -287,7 +287,7 @@ export function SpilloverMatrix() {
   const getAffiliateLink = () => {
     if (!publicKey) return "";
     
-    const baseUrl = window.location.origin;
+    const baseUrl = 'https://pro.tradehybrid.club';
     return `${baseUrl}/register?ref=${publicKey.toString()}`;
   };
   

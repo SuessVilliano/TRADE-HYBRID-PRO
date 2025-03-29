@@ -695,13 +695,14 @@ export default function StakeAndBake() {
                       <div className="flex">
                         <Input 
                           id="affiliate-link" 
-                          value={`${window.location.origin}?ref=${referralAddress || 'THC' + Math.random().toString(36).substring(2, 8)}`} 
+                          value={`https://pro.tradehybrid.club?ref=${referralAddress || 'THC' + Math.random().toString(36).substring(2, 8)}`} 
                           readOnly 
                           className="flex-1 rounded-r-none"
                         />
                         <Button 
                           onClick={() => {
-                            navigator.clipboard.writeText(`${window.location.origin}?ref=${referralAddress || 'THC' + Math.random().toString(36).substring(2, 8)}`);
+                            const customDomain = 'https://pro.tradehybrid.club';
+                            navigator.clipboard.writeText(`${customDomain}?ref=${referralAddress || 'THC' + Math.random().toString(36).substring(2, 8)}`);
                             toast({
                               title: "Copied!",
                               description: "Affiliate link copied to clipboard",
@@ -722,7 +723,8 @@ export default function StakeAndBake() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            window.open(`https://twitter.com/intent/tweet?text=Join%20Trade%20Hybrid%20and%20earn%20with%20me!&url=${encodeURIComponent(`${window.location.origin}?ref=${referralAddress || 'default'}`)}`, '_blank');
+                            const customDomain = 'https://pro.tradehybrid.club';
+                            window.open(`https://twitter.com/intent/tweet?text=Join%20Trade%20Hybrid%20and%20earn%20with%20me!&url=${encodeURIComponent(`${customDomain}?ref=${referralAddress || 'default'}`)}`, '_blank');
                           }}
                         >
                           <svg className="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
@@ -734,7 +736,8 @@ export default function StakeAndBake() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${window.location.origin}?ref=${referralAddress || 'default'}`)}`, '_blank');
+                            const customDomain = 'https://pro.tradehybrid.club';
+                            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${customDomain}?ref=${referralAddress || 'default'}`)}`, '_blank');
                           }}
                         >
                           <svg className="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
@@ -746,7 +749,8 @@ export default function StakeAndBake() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            window.open(`https://t.me/share/url?url=${encodeURIComponent(`${window.location.origin}?ref=${referralAddress || 'default'}`)}&text=Join%20Trade%20Hybrid%20and%20earn%20with%20me!`, '_blank');
+                            const customDomain = 'https://pro.tradehybrid.club';
+                            window.open(`https://t.me/share/url?url=${encodeURIComponent(`${customDomain}?ref=${referralAddress || 'default'}`)}&text=Join%20Trade%20Hybrid%20and%20earn%20with%20me!`, '_blank');
                           }}
                         >
                           <svg className="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
