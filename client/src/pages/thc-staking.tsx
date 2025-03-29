@@ -237,7 +237,7 @@ export default function StakeAndBake() {
             </TabsTrigger>
             <TabsTrigger value="matrix" className="text-lg py-3">
               <Network className="mr-2 h-5 w-5" />
-              2x3 Affiliate Matrix
+              Infinite Spillover Matrix
             </TabsTrigger>
             <TabsTrigger value="acquire" className="text-lg py-3">
               <Rocket className="mr-2 h-5 w-5" />
@@ -451,10 +451,10 @@ export default function StakeAndBake() {
                   <CardHeader>
                     <CardTitle className="flex items-center">
                       <Network className="mr-2 h-5 w-5 text-indigo-500" />
-                      2x3 Matrix System
+                      Infinite Spillover Matrix System
                     </CardTitle>
                     <CardDescription>
-                      Build your affiliate network and earn passive income through our 2x3 matrix structure.
+                      Build your affiliate network and earn passive income through our infinite spillover matrix structure.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
@@ -462,7 +462,7 @@ export default function StakeAndBake() {
                       <div className="space-y-4">
                         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4 rounded-md">
                           <p className="text-sm">
-                            Create your 2x3 matrix to start earning affiliate commissions. This requires a one-time 
+                            Create your infinite spillover matrix to start earning affiliate commissions. This requires a one-time 
                             activation fee of 0.1 SOL, which covers the smart contract initialization.
                           </p>
                         </div>
@@ -472,7 +472,7 @@ export default function StakeAndBake() {
                           <ul className="space-y-2 text-sm">
                             <li className="flex items-start gap-2">
                               <ArrowRight size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
-                              <span>You occupy the top position in your personal 2x3 matrix</span>
+                              <span>You occupy the top position in your personal infinite spillover matrix</span>
                             </li>
                             <li className="flex items-start gap-2">
                               <ArrowRight size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
@@ -494,7 +494,7 @@ export default function StakeAndBake() {
                           disabled={!connectedWallet}
                           className="w-full"
                         >
-                          {!connectedWallet ? 'Connect Wallet to Create Matrix' : 'Create Your 2x3 Matrix (0.1 SOL)'}
+                          {!connectedWallet ? 'Connect Wallet to Create Matrix' : 'Create Your Infinite Spillover Matrix (0.1 SOL)'}
                         </Button>
                       </div>
                     ) : (
@@ -505,7 +505,7 @@ export default function StakeAndBake() {
                             <span className="font-medium">Matrix Active</span>
                           </div>
                           <p className="text-sm mt-2">
-                            Your 2x3 matrix is active and ready to receive referrals. Share your referral link to start building your network!
+                            Your infinite spillover matrix is active and ready to receive referrals. Share your referral link to start building your network!
                           </p>
                         </div>
                         
@@ -583,7 +583,7 @@ export default function StakeAndBake() {
                       Your Matrix Visualization
                     </CardTitle>
                     <CardDescription>
-                      Visual representation of your 2x3 matrix structure and positions.
+                      Visual representation of your infinite spillover matrix structure and positions.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -591,7 +591,7 @@ export default function StakeAndBake() {
                       <div className="flex flex-col items-center justify-center h-[400px] bg-slate-100 dark:bg-slate-800 rounded-lg">
                         <Network size={48} className="text-slate-400 mb-4" />
                         <p className="text-slate-500 dark:text-slate-400 text-center max-w-xs">
-                          Create your 2x3 matrix to view your network structure and track referral earnings.
+                          Create your infinite spillover matrix to view your network structure and track referral earnings.
                         </p>
                       </div>
                     ) : (

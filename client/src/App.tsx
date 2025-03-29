@@ -38,6 +38,7 @@ const AIMarketAnalysisPage = lazy(() => import('./pages/ai-market-analysis-page'
 const TradingSignalsPage = lazy(() => import('./pages/trading-signals'));
 const EmbeddedAppPage = lazy(() => import('./pages/embedded-app'));
 const NotificationSettingsPage = lazy(() => import('./pages/notification-settings'));
+const AffiliatePage = lazy(() => import('./pages/affiliate'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -176,6 +177,7 @@ function AppContent() {
               <Link to="/ai-market-analysis" className="hover:text-blue-400 transition-colors">Market Buddy</Link>
               <Link to="/trading-signals" className="hover:text-blue-400 transition-colors">Signals</Link>
               <Link to="/app" className="hover:text-blue-400 transition-colors">App</Link>
+              <Link to="/affiliate" className="hover:text-blue-400 transition-colors">Affiliate</Link>
               <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Trade Runner</Link>
               <Link to="/bulls-vs-bears" className="hover:text-blue-400 transition-colors">Bulls vs Bears</Link>
             </nav>
@@ -486,6 +488,18 @@ function AppContent() {
               </div>
             }>
               {typeof window !== 'undefined' && <EmbeddedAppPage />}
+            </Suspense>
+          } />
+          <Route path="/affiliate/*" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading affiliate dashboard...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <AffiliatePage />}
             </Suspense>
           } />
         </Routes>
