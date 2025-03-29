@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { TradeRunner as TradeRunner2D } from '@/components/ui/trade-runner';
 import TradeRunner3D from '@/components/games/TradeRunner';
+import { TradeRunnerBrowser } from '@/components/ui/trade-runner-browser';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Maximize2, Minimize2 } from 'lucide-react';
+import { ArrowLeft, Maximize2, Minimize2, Layout } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTradingTips } from '@/lib/stores/useTradingTips';
 
@@ -25,11 +26,20 @@ export default function GamePage() {
 }
 
 function GameContent() {
-  const [gameMode, setGameMode] = useState<'3d' | '2d'>('3d');
+  const [gameMode, setGameMode] = useState<'3d' | '2d' | 'browser'>('3d');
   const [fullscreen, setFullscreen] = useState(false);
+  const [showTradeRunnerBrowser, setShowTradeRunnerBrowser] = useState(false);
 
   const toggleFullscreen = () => {
     setFullscreen(!fullscreen);
+  };
+
+  const toggleTradeRunnerBrowser = () => {
+    setShowTradeRunnerBrowser(!showTradeRunnerBrowser);
+  };
+
+  const handleCloseTradeRunnerBrowser = () => {
+    setShowTradeRunnerBrowser(false);
   };
 
   return (
@@ -47,20 +57,35 @@ function GameContent() {
           </div>
           
           <div className="flex items-center space-x-2">
-            <Tabs value={gameMode} onValueChange={(value) => setGameMode(value as '3d' | '2d')}>
+            <Tabs value={gameMode} onValueChange={(value) => setGameMode(value as '3d' | '2d' | 'browser')}>
               <TabsList>
                 <TabsTrigger value="3d">3D Mode</TabsTrigger>
                 <TabsTrigger value="2d">2D Mode</TabsTrigger>
+                <TabsTrigger value="browser">Browser Mode</TabsTrigger>
               </TabsList>
             </Tabs>
             
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={toggleFullscreen}
-            >
-              {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-            </Button>
+            {gameMode !== 'browser' && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={toggleFullscreen}
+              >
+                {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              </Button>
+            )}
+            
+            {gameMode !== 'browser' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleTradeRunnerBrowser}
+                className="bg-purple-900/50 border-purple-700 hover:bg-purple-800/70"
+              >
+                <Layout className="h-4 w-4 mr-2" />
+                Open Trade Runner
+              </Button>
+            )}
           </div>
         </div>
       )}
@@ -71,8 +96,18 @@ function GameContent() {
             <div className="w-full h-full">
               <TradeRunner3D />
             </div>
-          ) : (
+          ) : gameMode === '2d' ? (
             <TradeRunner2D className="w-full shadow-lg" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <TradeRunnerBrowser 
+                initialHeight={600} 
+                initialWidth={900}
+                isMinimizable={true}
+                isResizable={true}
+                className="w-full h-full"
+              />
+            </div>
           )}
           
           {fullscreen && (
@@ -85,6 +120,19 @@ function GameContent() {
               <Minimize2 className="h-4 w-4 mr-2" />
               Exit Fullscreen
             </Button>
+          )}
+          
+          {/* Overlay TradeRunnerBrowser when button is clicked */}
+          {showTradeRunnerBrowser && gameMode !== 'browser' && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+              <TradeRunnerBrowser 
+                onClose={handleCloseTradeRunnerBrowser}
+                initialHeight={600} 
+                initialWidth={900}
+                isMinimizable={true}
+                isResizable={true}
+              />
+            </div>
           )}
         </div>
       </div>
