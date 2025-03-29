@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { PanelContainer } from './panel-container';
-import { LineChart, BarChart3, Signal, Bot, HelpCircle, BookOpen, Users, Cpu, MessageSquare, Calendar, BarChart } from 'lucide-react';
+import { LineChart, BarChart3, Signal, Bot, HelpCircle, BookOpen, Users, Cpu, MessageSquare, Calendar, BarChart, Sparkles } from 'lucide-react';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
 
 // Lazy load the components
 const TradingViewWidgetLazy = React.lazy(() => import('./TradingViewWidget'));
 const AIAssistantLazy = React.lazy(() => import('./ai-trade-assistant'));
+const AdvancedAIAssistantLazy = React.lazy(() => import('./enhanced-ai-trading-assistant').then(module => ({ default: module.EnhancedAITradingAssistant })));
 const TradingSignalsLazy = React.lazy(() => import('./TradingSignals'));
 const CopyTradingLazy = React.lazy(() => import('./CopyTrading'));
 const SmartTradePanelLazy = React.lazy(() => import('./smart-trade-panel').then(module => ({ default: module.SmartTradePanel })));
@@ -28,7 +29,8 @@ export type PanelType =
   | 'education'
   | 'companion'
   | 'economic-calendar'
-  | 'market-overview';
+  | 'market-overview'
+  | 'advanced-ai';
 
 // Panel definition with its metadata
 interface PanelDefinition {
@@ -55,7 +57,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
   selectedSymbol,
   onChangeSymbol,
   className = '',
-  initialPanels = ['chart', 'signals', 'smart-trade', 'companion', 'economic-calendar', 'market-overview'],
+  initialPanels = ['chart', 'signals', 'smart-trade', 'companion', 'advanced-ai', 'economic-calendar', 'market-overview'],
 }) => {
   // State to track active panels and their layout
   const [activePanels, setActivePanels] = useState<string[]>([]);
@@ -262,6 +264,19 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
       ),
       defaultSize: { width: '100%', height: '400px' },
       defaultPosition: { x: 0, y: 1940 }
+    },
+    'advanced-ai': {
+      id: 'advanced-ai',
+      type: 'advanced-ai',
+      title: 'AI Trading Assistant',
+      icon: <Sparkles size={16} />,
+      component: (
+        <React.Suspense fallback={<div className="h-full flex items-center justify-center">Loading AI Trading Assistant...</div>}>
+          <AdvancedAIAssistantLazy selectedSymbol={selectedSymbol} />
+        </React.Suspense>
+      ),
+      defaultSize: { width: '400px', height: '600px' },
+      defaultPosition: { x: 760, y: 510 }
     }
   };
 
