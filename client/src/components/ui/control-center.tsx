@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PanelContainer } from './panel-container';
-import { LineChart, BarChart3, Signal, Bot, HelpCircle, BookOpen, Users, Cpu, MessageSquare, Calendar, BarChart, Sparkles } from 'lucide-react';
+import { LineChart, BarChart3, Signal, Bot, HelpCircle, BookOpen, Users, Cpu, MessageSquare, Calendar, BarChart, Sparkles, Grid, Activity, Waves } from 'lucide-react';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +15,9 @@ const TradingCompanionChatbotLazy = React.lazy(() => import('./trading-companion
 const EconomicCalendarLazy = React.lazy(() => import('./economic-calendar'));
 const MarketOverviewLazy = React.lazy(() => import('./market-overview'));
 const MarketScannerLazy = React.lazy(() => import('./market-scanner'));
+const StockHeatmapLazy = React.lazy(() => import('./stock-heatmap'));
+const CryptoHeatmapLazy = React.lazy(() => import('./crypto-heatmap'));
+const ZenMeditationModeLazy = React.lazy(() => import('./zen-meditation-mode').then(module => ({ default: module.ZenMeditationMode })));
 
 // Define the panel types
 export type PanelType = 
@@ -30,7 +33,10 @@ export type PanelType =
   | 'companion'
   | 'economic-calendar'
   | 'market-overview'
-  | 'advanced-ai';
+  | 'advanced-ai'
+  | 'stock-heatmap'
+  | 'crypto-heatmap'
+  | 'zen';
 
 // Panel definition with its metadata
 interface PanelDefinition {
@@ -57,7 +63,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
   selectedSymbol,
   onChangeSymbol,
   className = '',
-  initialPanels = ['chart', 'signals', 'smart-trade', 'scanner', 'companion', 'advanced-ai', 'economic-calendar', 'market-overview'],
+  initialPanels = ['chart', 'signals', 'smart-trade', 'scanner', 'companion', 'advanced-ai', 'economic-calendar', 'market-overview', 'stock-heatmap', 'crypto-heatmap', 'zen'],
 }) => {
   // State to track active panels and their layout
   const [activePanels, setActivePanels] = useState<string[]>([]);
@@ -278,6 +284,61 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
       ),
       defaultSize: { width: '400px', height: '600px' },
       defaultPosition: { x: 760, y: 510 }
+    },
+    'stock-heatmap': {
+      id: 'stock-heatmap',
+      type: 'stock-heatmap',
+      title: 'Stock Heatmap',
+      icon: <Grid size={16} />,
+      component: (
+        <React.Suspense fallback={<div className="h-full flex items-center justify-center">Loading Stock Heatmap...</div>}>
+          {typeof window !== 'undefined' && (
+            <StockHeatmapLazy
+              dataSource="SPX500"
+              colorTheme="dark"
+              showTopBar={true}
+              height="100%"
+              width="100%"
+            />
+          )}
+        </React.Suspense>
+      ),
+      defaultSize: { width: '100%', height: '500px' },
+      defaultPosition: { x: 0, y: 2350 }
+    },
+    'crypto-heatmap': {
+      id: 'crypto-heatmap',
+      type: 'crypto-heatmap',
+      title: 'Crypto Heatmap',
+      icon: <Activity size={16} />,
+      component: (
+        <React.Suspense fallback={<div className="h-full flex items-center justify-center">Loading Crypto Heatmap...</div>}>
+          {typeof window !== 'undefined' && (
+            <CryptoHeatmapLazy
+              dataSource="Crypto"
+              colorTheme="dark"
+              showTopBar={true}
+              height="100%"
+              width="100%"
+            />
+          )}
+        </React.Suspense>
+      ),
+      defaultSize: { width: '100%', height: '500px' },
+      defaultPosition: { x: 0, y: 2860 }
+    },
+    'zen': {
+      id: 'zen',
+      type: 'zen',
+      title: 'Zen Meditation',
+      icon: <Waves size={16} />,
+      component: (
+        <React.Suspense fallback={<div className="h-full flex items-center justify-center">Loading Zen Meditation Mode...</div>}>
+          <ZenMeditationModeLazy />
+        </React.Suspense>
+      ),
+      defaultSize: { width: '100%', height: '600px' },
+      defaultPosition: { x: 0, y: 3370 }
     }
   };
 
