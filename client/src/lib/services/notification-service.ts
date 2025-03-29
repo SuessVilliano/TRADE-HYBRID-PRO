@@ -12,7 +12,7 @@ export interface NotificationOptions {
   requireInteraction?: boolean;
   actions?: { action: string; title: string; icon?: string }[];
   data?: any;
-  vibrate?: number[];
+  // vibrate?: number[]; // Vibration API not available in all browsers
 }
 
 export type NotificationType = 
@@ -75,9 +75,9 @@ const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   stopLoss: true,
   technicalPattern: false,
   
-  alertSound: 'ping',
-  successSound: 'cash',
-  warningSound: 'alert',
+  alertSound: 'price-alert',
+  successSound: 'success',
+  warningSound: 'trading-signal',
   
   priorityLevel: 3,
   
@@ -372,7 +372,7 @@ export class NotificationService {
             badge: options.badge,
             tag,
             data: options.data,
-            vibrate: options.vibrate,
+            // vibrate: options.vibrate, // Vibration API not available in all browsers
             requireInteraction: options.requireInteraction,
             silent: !settings.sound, // Don't play the default sound
           });
@@ -435,7 +435,7 @@ export class NotificationService {
         title,
         body,
         tag: `price-alert-${symbol}-${targetPrice}`,
-        sound: 'ping',
+        sound: 'price-alert',
         priority: 'high',
         requireInteraction: true,
         data: { symbol, price, direction, targetPrice, market }
@@ -465,7 +465,7 @@ export class NotificationService {
         title,
         body,
         tag: `signal-entry-${symbol}-${side}-${Date.now()}`,
-        sound: 'bell',
+        sound: 'trading-signal',
         priority: 'high',
         requireInteraction: true,
         data: { symbol, side, entryPrice, stopLoss, takeProfit, market, confidence }
@@ -492,7 +492,7 @@ export class NotificationService {
         title,
         body,
         tag: `take-profit-${symbol}-${Date.now()}`,
-        sound: 'cash',
+        sound: 'success',
         priority: 'normal',
         data: { symbol, price, profit, market }
       },
@@ -518,7 +518,7 @@ export class NotificationService {
         title,
         body,
         tag: `stop-loss-${symbol}-${Date.now()}`,
-        sound: 'alert',
+        sound: 'trading-signal',
         priority: 'high',
         data: { symbol, price, loss, market }
       },
@@ -539,7 +539,7 @@ export class NotificationService {
         title,
         body,
         tag: `system-${Date.now()}`,
-        sound: 'ping',
+        sound: 'message',
         priority: 'high',
         data: { type: 'system' }
       },

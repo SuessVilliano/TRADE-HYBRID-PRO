@@ -18,6 +18,7 @@ import { RegulatoryCompliance } from './components/ui/regulatory-compliance';
 import { WhopAuth } from './components/ui/whop-auth';
 import { THCMembershipDisplay } from './components/ui/thc-membership-display';
 import { WalletStatusIndicator } from './components/ui/wallet-status-indicator';
+import TestNotificationButton from './components/ui/test-notification-button';
 
 // Lazy load pages
 const TradeRunner = lazy(() => import('./pages/trade-runner'));
@@ -39,6 +40,8 @@ const EmbeddedAppPage = lazy(() => import('./pages/embedded-app'));
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
 import { MicroLearningTipRenderer } from './components/ui/micro-learning-tip-renderer';
 import { ToastProvider } from './components/ui/toaster';
+import Toaster from './components/ui/toaster';
+import { NotificationListener } from './components/ui/notification-listener';
 import { FeatureDisclosureProvider, useFeatureDisclosure, UserExperienceLevel } from './lib/context/FeatureDisclosureProvider';
 import { ExperienceLevelSelector } from './components/ui/interactive-tutorial';
 import { RouteGated } from './components/ui/feature-gated';
@@ -73,6 +76,8 @@ function AppWithProviders() {
                   <MicroLearningTipRenderer />
                   <ExperienceLevelSelector />
                   <RegulatoryCompliance isOpen={showComplianceModal} onClose={() => setShowComplianceModal(false)} />
+                  <Toaster />
+                  <NotificationListener />
                 </MicroLearningProvider>
               </PerformanceOptimizationProvider>
             </FeatureDisclosureProvider>
@@ -464,6 +469,13 @@ function Home() {
         <p className="text-xl text-slate-300 max-w-3xl mx-auto">
           The ultimate AI-driven trading metaverse. Experience the future of trading with immersive visualization, real-time data, and social trading in a gamified environment.
         </p>
+      </div>
+      
+      {/* Notification Test Section */}
+      <div className="mb-12 p-4 bg-slate-800 rounded-lg max-w-xs mx-auto">
+        <h3 className="font-bold text-lg mb-3">Notification System Test</h3>
+        <p className="text-sm text-slate-300 mb-4">Click the buttons below to test the notification system:</p>
+        <TestNotificationButton />
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
