@@ -1,6 +1,6 @@
 import React from 'react';
 import { useUserStore } from '../../lib/stores/useUserStore';
-import { formatCurrency } from '../../lib/utils';
+import { formatCurrency, formatCompactNumber } from '../../lib/utils';
 import { NFT_CONFIG } from '../../lib/constants';
 
 interface THCBalanceDisplayProps {
@@ -16,19 +16,22 @@ export default function THCBalanceDisplay({
   compact = false,
   className = '',
 }: THCBalanceDisplayProps) {
-  const { user } = useUserStore();
+  const { user, demoBalances } = useUserStore();
   
-  // Ensure user and balance exist before rendering
-  if (!user || !user.balance) return null;
+  // Ensure user exists before rendering
+  if (!user) return null;
   
-  // Safe access to THC balance
-  const thcBalance = user.balance.THC || 0;
+  // Find THC balance in demo balances array, this replaces the direct user.balance property access
+  const thcAsset = demoBalances.find(asset => asset.asset === 'THC');
+  const thcBalance = thcAsset?.total || 0;
   
   // For display purposes, format the balance with the appropriate currency symbol
-  const formattedBalance = formatCurrency(thcBalance, { 
-    currency: 'THC',
-    notation: compact ? 'compact' : 'standard',
-  });
+  let formattedBalance: string;
+  if (compact) {
+    formattedBalance = formatCompactNumber(thcBalance) + ' THC';
+  } else {
+    formattedBalance = formatCurrency(thcBalance, 'THC');
+  }
   
   return (
     <div className={`flex items-center gap-2 ${className}`}>

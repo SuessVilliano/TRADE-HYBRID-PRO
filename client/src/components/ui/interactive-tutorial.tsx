@@ -291,24 +291,42 @@ export const TutorialButton: React.FC<TutorialButtonProps> = ({
   
   const isTutorialCompleted = completedTutorials.includes(tutorialId);
   
+  // Handle button click with error protection
+  const handleOpenTutorial = () => {
+    try {
+      console.log("Opening tutorial:", tutorialId);
+      // Validate that steps is an array
+      if (!Array.isArray(steps) || steps.length === 0) {
+        console.error("Tutorial steps invalid or empty:", steps);
+        return;
+      }
+      
+      setIsTutorialOpen(true);
+    } catch (error) {
+      console.error("Error opening tutorial:", error);
+    }
+  };
+  
   return (
     <>
       <Button 
         variant={variant}
         size="sm"
-        onClick={() => setIsTutorialOpen(true)}
+        onClick={handleOpenTutorial}
         className={`${className} ${isTutorialCompleted ? 'opacity-60' : ''}`}
       >
         {buttonText}
         {isTutorialCompleted && <CheckCircle className="ml-1 h-3 w-3 text-green-500" />}
       </Button>
       
-      <InteractiveTutorial
-        tutorialId={tutorialId}
-        steps={steps}
-        isOpen={isTutorialOpen}
-        onClose={() => setIsTutorialOpen(false)}
-      />
+      {Array.isArray(steps) && steps.length > 0 && (
+        <InteractiveTutorial
+          tutorialId={tutorialId}
+          steps={steps}
+          isOpen={isTutorialOpen}
+          onClose={() => setIsTutorialOpen(false)}
+        />
+      )}
     </>
   );
 };

@@ -3,6 +3,7 @@ import { Card } from '../components/ui/card';
 import { PopupContainer } from '../components/ui/popup-container';
 import { Button } from '../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Link } from 'react-router-dom';
 
 export default function LearnEmbedded() {
   const [isEmbedOpen, setIsEmbedOpen] = useState(false);
@@ -126,6 +127,37 @@ export default function LearnEmbedded() {
           </ul>
         </PopupContainer>
       </div>
+      
+      <PopupContainer padding className="mb-8 bg-gradient-to-r from-purple-900/50 to-blue-900/50 border border-purple-500/40">
+        <div className="flex flex-col md:flex-row gap-6 items-center">
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold mb-2">Personalized Crypto Learning Journey</h2>
+            <p className="text-slate-300 mb-4">
+              Discover our new personalized learning experience tailored to your knowledge level and trading goals.
+              Track your progress, earn certificates, and unlock advanced trading features.
+            </p>
+            <Link to="/learn/journey">
+              <Button className="bg-purple-600 hover:bg-purple-700">
+                Start Your Learning Journey
+              </Button>
+            </Link>
+          </div>
+          <div className="flex-shrink-0">
+            <img src="/images/learning-journey-icon.png" alt="Learning Journey" 
+              className="w-32 h-32 object-contain rounded-full bg-purple-800/30 p-2 border border-purple-500/40" 
+              onError={(e) => {
+                // Fallback to a div with text if image doesn't load
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const div = document.createElement('div');
+                div.className = 'w-32 h-32 rounded-full bg-purple-800/30 flex items-center justify-center text-center p-4 border border-purple-500/40';
+                div.textContent = 'Learning Journey';
+                target.parentNode?.appendChild(div);
+              }}
+            />
+          </div>
+        </div>
+      </PopupContainer>
       
       <PopupContainer padding className="mb-8">
         <h2 className="text-2xl font-bold mb-4">Additional Educational Resources</h2>

@@ -151,7 +151,7 @@ export const useUserStore = create<UserState>()(
       ],
       
       // Authentication actions
-      login: async (username: string, password: string) => {
+      login: async (username: string, password: string): Promise<boolean> => {
         try {
           // In production, this would be an actual API call
           // const response = await fetch('/api/auth/login', {
@@ -160,8 +160,41 @@ export const useUserStore = create<UserState>()(
           //   body: JSON.stringify({ username, password }),
           // });
           // const data = await response.json();
+
+          // Special demo admin account for unlocking all features
+          if (username === 'demo' && password === 'password') {
+            const demoAdminUser = {
+              id: 'demo-admin-123',
+              username: 'demo',
+              email: 'demo@tradehybrid.com',
+              firstName: 'Demo',
+              lastName: 'Admin',
+              avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
+              joinDate: new Date().toISOString(),
+              lastLogin: new Date().toISOString(),
+              role: 'admin' as const,
+              apiKeys: {},
+              balance: {
+                THC: 10000,
+                USD: 100000,
+                BTC: 5,
+                ETH: 50
+              },
+              isDemoAccount: true
+            };
+            
+            set({
+              isAuthenticated: true,
+              user: demoAdminUser,
+            });
+            
+            // Store demo user level as EXPERT to unlock all features
+            localStorage.setItem('userExperienceLevel', 'expert');
+            
+            return true;
+          }
           
-          // Simulate successful login for demo
+          // Regular user simulation for demo
           const mockUser = {
             id: '123456789',
             username,

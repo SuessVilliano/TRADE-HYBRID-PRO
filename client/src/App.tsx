@@ -24,6 +24,8 @@ const TradeJournalSimple = lazy(() => import('./pages/trade-journal-simple'));
 const NFTMarketplaceSimple = lazy(() => import('./pages/nft-marketplace-simple'));
 const SolanaDexEmbedded = lazy(() => import('./pages/solana-dex-embedded'));
 const LearnEmbedded = lazy(() => import('./pages/learn-embedded'));
+const LearningJourney = lazy(() => import('./pages/learning-journey'));
+const LearningModuleDetail = lazy(() => import('./pages/learning-module-detail'));
 const StakeAndBake = lazy(() => import('./pages/thc-staking'));
 const LiveStream = lazy(() => import('./pages/live-stream'));
 const AIMarketAnalysisPage = lazy(() => import('./pages/ai-market-analysis-page'));
@@ -337,6 +339,30 @@ function AppContent() {
               </div>
             }>
               {typeof window !== 'undefined' && <LearnEmbedded />}
+            </Suspense>
+          } />
+          <Route path="/learn/journey" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading learning journey...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <LearningJourney />}
+            </Suspense>
+          } />
+          <Route path="/learn/module/:moduleId" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading module content...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <LearningModuleDetail />}
             </Suspense>
           } />
           <Route path="/thc-staking" element={
