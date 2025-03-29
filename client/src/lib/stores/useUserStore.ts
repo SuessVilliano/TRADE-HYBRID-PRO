@@ -128,7 +128,8 @@ const defaultPreferences: UserPreferences = {
 const initialDemoBalances: AccountBalance[] = [
   { asset: 'USD', free: 10000, locked: 0, total: 10000 },
   { asset: 'BTC', free: 0.1, locked: 0, total: 0.1 },
-  { asset: 'ETH', free: 1.5, locked: 0, total: 1.5 }
+  { asset: 'ETH', free: 1.5, locked: 0, total: 1.5 },
+  { asset: 'THC', free: 5000, locked: 0, total: 5000 }
 ];
 
 export const useUserStore = create<UserState>()(
@@ -174,22 +175,39 @@ export const useUserStore = create<UserState>()(
               lastLogin: new Date().toISOString(),
               role: 'admin' as const,
               apiKeys: {},
-              balance: {
-                THC: 10000,
-                USD: 100000,
-                BTC: 5,
-                ETH: 50
-              },
               isDemoAccount: true
             };
+            
+            // Set a custom demo balance with higher amounts
+            const demoAdminBalances: AccountBalance[] = [
+              { asset: 'USD', free: 100000, locked: 0, total: 100000 },
+              { asset: 'BTC', free: 5, locked: 0, total: 5 },
+              { asset: 'ETH', free: 50, locked: 0, total: 50 },
+              { asset: 'THC', free: 10000, locked: 0, total: 10000 }
+            ];
             
             set({
               isAuthenticated: true,
               user: demoAdminUser,
+              demoBalances: demoAdminBalances
             });
             
             // Store demo user level as EXPERT to unlock all features
             localStorage.setItem('userExperienceLevel', 'expert');
+            
+            // Show success notification for demo login
+            set({
+              notifications: [
+                ...get().notifications,
+                {
+                  id: Date.now().toString(),
+                  type: 'success',
+                  message: 'Demo mode activated! All features are now unlocked.',
+                  timestamp: new Date().toISOString(),
+                  read: false
+                }
+              ]
+            });
             
             return true;
           }
@@ -243,9 +261,14 @@ export const useUserStore = create<UserState>()(
       },
       
       logout: () => {
+        // Reset user experience level to beginner when logging out
+        localStorage.setItem('userExperienceLevel', 'beginner');
+        
+        // Reset to initial demo balances
         set({
           isAuthenticated: false,
           user: {},
+          demoBalances: initialDemoBalances,
           tradeHistory: [],
           brokerConnections: [],
           notifications: []
