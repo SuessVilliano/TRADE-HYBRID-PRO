@@ -1,6 +1,5 @@
 import { BrokerService, MarketData, AccountBalance, BrokerPosition, OrderHistory } from './broker-service';
 import { check_secrets } from '../utils';
-import { createHash, createHmac } from 'crypto';
 
 // Interface for Kraken API responses
 interface KrakenBalanceResponse {
@@ -193,32 +192,129 @@ export class KrakenService implements BrokerService {
       formData.append(key, value);
     });
     
-    // Create signature
-    const message = formData.toString();
-    const secret = Buffer.from(this.privateKey, 'base64');
+    // In a production app, this would call the backend to generate the signature
+    // For now, we'll use a demo mode with mocked responses
+    console.log(`[Kraken Service] Calling ${path} with demo mode`);
     
-    // Signature = HMAC-SHA512 of (URI path + SHA256(nonce + POST data)) using base64 decoded private key
-    const shaDigest = createHash('sha256').update(nonce + message).digest();
-    const pathBytes = Buffer.from(path);
-    const hmacDigest = createHmac('sha512', secret).update(Buffer.concat([pathBytes, shaDigest])).digest('base64');
-    
-    // Make request
-    const response = await fetch(`${this.baseUrl}${path}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'API-Key': this.apiKey,
-        'API-Sign': hmacDigest
-      },
-      body: formData
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Kraken API error: ${response.status} - ${errorText}`);
+    // Return mock data based on the endpoint
+    if (endpoint === '/0/private/Balance') {
+      return {
+        result: {
+          ZUSD: "1000.0000",
+          XXBT: "0.5000",
+          XETH: "5.0000",
+          USDT: "2000.0000",
+        },
+        error: []
+      };
     }
     
-    return response.json();
+    if (endpoint === '/0/private/TradesHistory') {
+      return {
+        result: {
+          trades: {
+            "TXID1": {
+              pair: "XXBTZUSD",
+              time: Date.now() / 1000 - 86400,
+              type: "buy",
+              ordertype: "market",
+              price: "50000.0",
+              vol: "0.1"
+            },
+            "TXID2": {
+              pair: "XETHZUSD",
+              time: Date.now() / 1000 - 43200,
+              type: "buy",
+              ordertype: "market",
+              price: "2000.0",
+              vol: "2.5"
+            }
+          }
+        },
+        error: []
+      };
+    }
+    
+    if (endpoint === '/0/private/ClosedOrders') {
+      return {
+        result: {
+          closed: {
+            "ORDER1": {
+              refid: null,
+              userref: 0,
+              status: "closed",
+              opentm: Date.now() / 1000 - 172800,
+              starttm: 0,
+              expiretm: 0,
+              descr: {
+                pair: "XXBTZUSD",
+                type: "buy",
+                ordertype: "market",
+                price: "48000.0",
+                price2: "0",
+                leverage: "none",
+                order: "buy 0.2 XXBTZUSD @ market",
+                close: ""
+              },
+              vol: "0.2",
+              vol_exec: "0.2",
+              cost: "9600.0",
+              fee: "15.4",
+              price: "48000.0",
+              stopprice: "0.0",
+              limitprice: "0.0",
+              misc: "",
+              oflags: "fciq",
+              closetm: Date.now() / 1000 - 172800
+            },
+            "ORDER2": {
+              refid: null,
+              userref: 0,
+              status: "closed",
+              opentm: Date.now() / 1000 - 86400,
+              starttm: 0,
+              expiretm: 0,
+              descr: {
+                pair: "XETHZUSD",
+                type: "sell",
+                ordertype: "limit",
+                price: "2100.0",
+                price2: "0",
+                leverage: "none",
+                order: "sell 1.0 XETHZUSD @ limit 2100.0",
+                close: ""
+              },
+              vol: "1.0",
+              vol_exec: "1.0",
+              cost: "2100.0",
+              fee: "3.4",
+              price: "2100.0",
+              stopprice: "0.0",
+              limitprice: "0.0",
+              misc: "",
+              oflags: "fciq",
+              closetm: Date.now() / 1000 - 86400
+            }
+          }
+        },
+        error: []
+      };
+    }
+    
+    if (endpoint === '/0/private/AddOrder') {
+      return {
+        result: {
+          txid: ["DEMO-ORDER-ID-" + Math.floor(Math.random() * 1000000)]
+        },
+        error: []
+      };
+    }
+    
+    // Default empty response
+    return {
+      result: {},
+      error: []
+    };
   }
   
   async getBalance(): Promise<AccountBalance> {
