@@ -356,7 +356,18 @@ function AppContent() {
               {typeof window !== 'undefined' && <TradeRunner />}
             </Suspense>
           } />
-          {/* Removed Trade Runner Browser route - consolidated with Trade Runner */}
+          <Route path="/trade-runner-browser" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading Trade Runner Browser...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <TradeRunnerWebBrowserPage />}
+            </Suspense>
+          } />
           {/* Bulls vs Bears Game */}
           <Route path="/bulls-vs-bears" element={
             <Suspense fallback={
@@ -632,6 +643,11 @@ function Home() {
           linkTo="/trade-runner"
         />
         <FeatureCard 
+          title="Trade Runner Browser"
+          description="Access the Trade Runner web app directly within our platform through a secure embedded browser."
+          linkTo="/trade-runner-browser"
+        />
+        <FeatureCard 
           title="Bulls vs Bears"
           description="Join the epic battle between bulls and bears in this immersive 3D trading game. Trade with the trend and win!"
           linkTo="/bulls-vs-bears"
@@ -657,6 +673,7 @@ function FeatureCard({ title, description, linkTo }: { title: string, descriptio
     '/trading-signals': 'ai_features',
     '/app': 'advanced_trading',
     '/trade-runner': 'basic_trading',
+    '/trade-runner-browser': 'basic_trading',
     '/bulls-vs-bears': 'basic_trading',
   };
   
