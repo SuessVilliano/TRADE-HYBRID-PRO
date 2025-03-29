@@ -336,7 +336,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
   );
   
   const renderAbatevTab = () => (
-    <div className="space-y-4">
+    <div className="space-y-4 h-full flex flex-col">
       <div className="flex justify-between items-center mb-4">
         <div>
           <h3 className="text-lg font-bold">ABATEV™ Analysis</h3>
@@ -613,7 +613,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
   );
   
   return (
-    <div className="bg-slate-900 border border-slate-700 rounded-lg overflow-hidden mb-4">
+    <div className="bg-slate-900 border border-slate-700 rounded-lg overflow-hidden mb-4 h-full flex flex-col">
       {/* Tab Navigation */}
       <div className="flex border-b border-slate-700">
         <button
@@ -658,7 +658,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
       </div>
       
       {/* Tab Content */}
-      <div className="p-4">
+      <div className="p-4 h-[calc(100%-48px)] overflow-auto">
         {activeTab === 'trade' && renderTradeTab()}
         {activeTab === 'abatev' && renderAbatevTab()}
         {activeTab === 'settings' && renderSettingsTab()}

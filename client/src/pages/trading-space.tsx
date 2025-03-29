@@ -255,7 +255,7 @@ function TradingSpaceContent() {
       case "trade":
         return (
           <div className="h-full flex flex-col space-y-4">
-            <div className="h-1/3 relative">
+            <div className="h-1/2 relative">
               <div className="absolute top-2 right-2 z-10">
                 <MicroTradingTipTrigger 
                   category="stocks" 
@@ -266,7 +266,7 @@ function TradingSpaceContent() {
               </div>
               <SmartTradePanel className="h-full" defaultSymbol={effectiveSymbol} />
             </div>
-            <div className="h-1/3 relative">
+            <div className="h-1/4 relative">
               <div className="absolute top-2 right-2 z-10">
                 <MicroTradingTipTrigger 
                   category="general" 
@@ -277,7 +277,7 @@ function TradingSpaceContent() {
               </div>
               <TradingInterface className="h-full" symbol={effectiveSymbol} />
             </div>
-            <div className="h-1/3 relative">
+            <div className="h-1/4 relative">
               <div className="absolute top-2 right-2 z-10">
                 <MicroTradingTipTrigger 
                   category="general" 
