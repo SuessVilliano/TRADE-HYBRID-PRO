@@ -57,7 +57,9 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
   
   // Load Vapi SDK on demand rather than automatically
   const loadVapiSDK = () => {
-    if ((window as any).VapiSDK || isLoadingSDK) {
+    // Check if SDK is already loaded or loading in progress
+    if ((window as any).vapi || (window as any).VapiSDK || isLoadingSDK) {
+      console.log('Vapi SDK already loaded or loading in progress');
       setIsVapiSDKLoaded(true);
       return Promise.resolve();
     }
@@ -76,17 +78,29 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
       // Add script to page with a unique ID
       const script = document.createElement('script');
       script.id = 'vapi-sdk-script';
-      script.src = 'https://cdn.vapi.ai/web-sdk@latest/browser/index.browser.js';
+      script.src = 'https://cdn.vapi.ai/web-sdk@1.3.0/browser/index.browser.js'; // Use a specific version instead of 'latest'
       script.async = true;
+      
       script.onload = () => {
         console.log('Vapi SDK loaded successfully');
-        // Small delay to ensure the SDK is fully initialized
-        setTimeout(() => {
-          setIsVapiSDKLoaded(true);
+        
+        // Verify the SDK is actually loaded
+        if ((window as any).vapi || (window as any).VapiSDK) {
+          console.log('Vapi SDK object available:', (window as any).vapi || (window as any).VapiSDK);
+          
+          // Longer delay to ensure the SDK is fully initialized
+          setTimeout(() => {
+            setIsVapiSDKLoaded(true);
+            setIsLoadingSDK(false);
+            resolve();
+          }, 1000);
+        } else {
+          console.error('SDK script loaded but global object not found');
           setIsLoadingSDK(false);
-          resolve();
-        }, 500);
+          reject(new Error('SDK loaded but global object not found'));
+        }
       };
+      
       script.onerror = (error) => {
         console.error('Failed to load Vapi SDK', error);
         toast.error('Failed to load voice assistant. Please refresh the page and try again.');
@@ -180,15 +194,32 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
         }
       }
       
-      // Check if the window object has the expected SDK properties
-      if (!(window as any).vapi) {
+      // Check for both potential SDK object locations
+      const vapiSDK = (window as any).vapi || (window as any).VapiSDK;
+      
+      if (!vapiSDK) {
         console.error("Vapi SDK object not found in window", window);
-        toast.error("Voice assistant SDK not properly initialized. Please try refreshing the page.");
-        return;
+        
+        // Try forcing a reload of the SDK
+        try {
+          await loadVapiSDK();
+        } catch (error) {
+          console.error("Failed to reload Vapi SDK", error);
+          toast.error("Voice assistant SDK not properly initialized. Please refresh the page and try again.");
+          return;
+        }
+        
+        // Check again after reload attempt
+        if (!(window as any).vapi && !(window as any).VapiSDK) {
+          toast.error("Voice assistant SDK still not available. Please refresh the page.");
+          return;
+        }
       }
       
-      // Log SDK version for debugging
-      console.log("Vapi SDK version:", (window as any).vapi?.version || "unknown");
+      // Log SDK version and object for debugging
+      const sdkObject = (window as any).vapi || (window as any).VapiSDK;
+      console.log("Vapi SDK object:", sdkObject);
+      console.log("Vapi SDK version:", sdkObject?.version || "unknown");
       
       // Use our backend proxy to initialize Vapi with the API key
       console.log("Initializing Vapi conversation with API");
@@ -209,13 +240,43 @@ export function VapiVoiceAssistant({ className }: VapiVoiceAssistantProps) {
       const initData = await initResponse.json();
       console.log("Vapi initialization successful:", initData);
       
-      // Use the latest SDK initialization pattern
-      const vapiClient = new (window as any).vapi.VapiClient({
-        apiKey: 'proxy', // This is a placeholder as we use backend proxy
-        assistantId: selectedAgentId,
-        stream: true,
-        conversationId: initData.conversationId || undefined,
-      });
+      // Use the appropriate SDK initialization pattern based on what's available
+      let vapiClient;
+      
+      try {
+        // Try the newer initialization pattern first
+        if ((window as any).vapi?.VapiClient) {
+          console.log("Using new VapiClient initialization");
+          vapiClient = new (window as any).vapi.VapiClient({
+            apiKey: 'proxy', // This is a placeholder as we use backend proxy
+            assistantId: selectedAgentId,
+            stream: true,
+            conversationId: initData.conversationId || undefined,
+          });
+        } 
+        // Fall back to older initialization pattern if needed
+        else if ((window as any).VapiSDK) {
+          console.log("Using legacy VapiSDK initialization");
+          vapiClient = new (window as any).VapiSDK({
+            apiKey: 'proxy',
+            assistantId: selectedAgentId,
+            stream: true,
+            conversationId: initData.conversationId || undefined,
+          });
+        }
+        else {
+          throw new Error("No valid Vapi constructor found");
+        }
+      } catch (error) {
+        console.error("Error initializing Vapi client:", error);
+        toast.error("Failed to initialize voice assistant. Please try again later.");
+        return;
+      }
+      
+      if (!vapiClient) {
+        toast.error("Failed to create voice assistant client");
+        return;
+      }
       
       console.log(`Creating Vapi instance for agent ${selectedAgent.name} (ID: ${selectedAgentId})`);
       
