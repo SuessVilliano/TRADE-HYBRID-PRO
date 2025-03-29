@@ -69,6 +69,9 @@ export interface UserState {
     walletAddress?: string;
     walletSignature?: string;
     walletAuthEnabled?: boolean;
+    whopId?: string;
+    whopMemberSince?: string;
+    whopPlanId?: string;
   };
   demoBalances: AccountBalance[];
   liveBalances: AccountBalance[];

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Coins, Users, LineChart, ArrowUpRight, ExternalLink, Award, Lock } from "lucide-react";
+import { Coins, Users, LineChart, ArrowUpRight, ExternalLink, Award, Lock, Rocket, Layers } from "lucide-react";
 import { THC_TOKEN } from "@/lib/constants";
 
 interface ThcTokenInfoProps {
@@ -110,12 +110,28 @@ export function ThcTokenInfo({ className }: ThcTokenInfoProps) {
                   <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg">
                     <div className="text-sm text-gray-500 dark:text-gray-400">Token Contract</div>
                     <div className="font-semibold mt-1 flex items-center gap-1 text-blue-500 text-sm truncate">
-                      <a href={`https://solscan.io/token/${THC_TOKEN.contractAddress}`} target="_blank" rel="noopener noreferrer" className="truncate flex items-center gap-1">
+                      <a href={`${THC_TOKEN.explorerUrl}${THC_TOKEN.contractAddress}`} target="_blank" rel="noopener noreferrer" className="truncate flex items-center gap-1">
                         <ExternalLink size={14} />
                         {THC_TOKEN.contractAddress.substring(0, 8)}...
                       </a>
                     </div>
                   </div>
+                </div>
+
+                <div className="mt-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Rocket className="text-purple-600" size={18} />
+                    <h3 className="font-semibold">Trade on pump.fun</h3>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                    THC is now available for trading on pump.fun, the premier Solana meme token platform.
+                  </p>
+                  <Button asChild size="sm" className="w-full bg-purple-600 hover:bg-purple-700">
+                    <a href={THC_TOKEN.pumpFunUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2">
+                      <Layers size={16} />
+                      Buy THC on pump.fun
+                    </a>
+                  </Button>
                 </div>
               </div>
             </TabsContent>

@@ -16,6 +16,7 @@ import '@solana/wallet-adapter-react-ui/styles.css';
 import { PerformanceOptimizationProvider } from './lib/context/PerformanceOptimizationProvider';
 import { RegulatoryCompliance } from './components/ui/regulatory-compliance';
 import { WhopAuth } from './components/ui/whop-auth';
+import { THCMembershipDisplay } from './components/ui/thc-membership-display';
 
 // Lazy load pages
 const TradeRunner = lazy(() => import('./pages/trade-runner'));
@@ -167,9 +168,12 @@ function AppContent() {
                 <div className="flex items-center gap-2">
                   <span>Welcome, {user?.username}</span>
                   {user?.walletAddress && (
-                    <div className="text-xs text-slate-400">
-                      Wallet: {user.walletAddress.substring(0, 4)}...{user.walletAddress.substring(user.walletAddress.length - 4)}
-                    </div>
+                    <>
+                      <div className="text-xs text-slate-400">
+                        Wallet: {user.walletAddress.substring(0, 4)}...{user.walletAddress.substring(user.walletAddress.length - 4)}
+                      </div>
+                      <THCMembershipDisplay />
+                    </>
                   )}
                   <Button 
                     variant="outline" 

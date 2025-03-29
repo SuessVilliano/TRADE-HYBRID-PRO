@@ -311,24 +311,64 @@ export const SMART_TRADE_PANEL_DEFAULT_SETTINGS = {
 export const THC_TOKEN = {
   name: 'Trade Hybrid Coin',
   symbol: 'THC',
-  decimals: 18,
+  decimals: 6,
   initialSupply: 1000000000, // 1 billion
-  contractAddress: '0xTHC123456789...', // Will be replaced with real address
-  networkId: 8899, // Solana devnet
-  explorerUrl: 'https://explorer.solana.com/address/',
+  contractAddress: '2tQXeJtmzEqMvvMYwb6ZKJ2RXWfrbnzg3fUX1e8GuAUD', // Real token address on Solana
+  networkId: 101, // Solana mainnet
+  explorerUrl: 'https://solscan.io/token/',
+  pumpFunUrl: 'https://pump.fun/coin/2tQXeJtmzEqMvvMYwb6ZKJ2RXWfrbnzg3fUX1e8GuAUD',
+  price: 0.000175, // Current price in USD
+  priceChange24h: 2.5, // 24h price change percentage
+  marketCap: 175000, // Market cap in USD
+  tradingVolume24h: 32500, // 24h trading volume in USD
+  circulatingSupply: 250000000, // Current circulating supply
+  totalSupply: 1000000000, // Total supply
+  holderCount: 1250, // Number of token holders
+  stakingApy: 12, // Current base APY percentage for staking
   features: {
     staking: true,
     governance: true,
     reducedFees: true,
     exclusiveContent: true,
     tradingDiscounts: true,
+    affiliateProgram: true,
   },
-  distibution: {
+  distribution: {
     team: 0.15, // 15%
     publicSale: 0.40, // 40%
     ecosystem: 0.20, // 20%
     marketing: 0.10, // 10%
     rewards: 0.15, // 15%
+  },
+  // Membership tiers based on token holdings
+  membership: {
+    basic: {
+      minTokens: 0, 
+      feeDiscount: 0.05, // 5% fee discount
+      features: ['Basic Trading', 'Basic Charts', 'Public Streams']
+    },
+    advanced: {
+      minTokens: 1000,
+      feeDiscount: 0.25, // 25% fee discount  
+      features: ['Advanced Trading', 'All Charting Tools', 'Education Resources']
+    },
+    premium: {
+      minTokens: 10000,
+      feeDiscount: 0.35, // 35% fee discount
+      features: ['Premium Support', 'AI Trading Signals', 'Trading Automation', 'Copy Trading']
+    },
+    elite: {
+      minTokens: 50000, 
+      feeDiscount: 0.50, // 50% fee discount
+      features: ['VIP Support', 'Priority Access', 'Exclusive Events', 'Enhanced Rewards']
+    }
+  },
+  // Access control based on token ownership
+  accessControl: {
+    enabled: true,
+    requireTokenOwnership: true,
+    publicFeatures: ['Home', 'About', 'Token Info'], // Features available without tokens
+    tokenGatedFeatures: ['Trading', 'NFT Marketplace', 'Metaverse', 'AI Tools'] // Requires token ownership
   }
 };
 

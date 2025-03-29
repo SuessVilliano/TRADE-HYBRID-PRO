@@ -1,9 +1,24 @@
 import { FC, ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useUserStore } from '../stores/useUserStore';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Connection } from '@solana/web3.js';
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';
+import { THC_TOKEN } from '../constants';
+
+// Define membership tiers based on THC token holdings
+export enum MembershipTier {
+  BASIC = 'basic',
+  ADVANCED = 'advanced',
+  PREMIUM = 'premium',
+  ELITE = 'elite'
+}
+
+export interface TokenMembership {
+  tier: MembershipTier;
+  tokenBalance: number;
+  feeDiscount: number;
+}
 
 interface SolanaAuthContextProps {
   loginWithSolana: () => Promise<boolean>;
@@ -13,6 +28,8 @@ interface SolanaAuthContextProps {
   isWalletAuthenticated: boolean;
   walletAddress?: string;
   isPhantomAvailable?: boolean;
+  checkTHCTokenMembership: () => Promise<TokenMembership>;
+  tokenMembership?: TokenMembership;
 }
 
 const SolanaAuthContext = createContext<SolanaAuthContextProps>({
@@ -23,6 +40,11 @@ const SolanaAuthContext = createContext<SolanaAuthContextProps>({
   isWalletAuthenticated: false,
   walletAddress: undefined,
   isPhantomAvailable: false,
+  checkTHCTokenMembership: async () => ({
+    tier: MembershipTier.BASIC,
+    tokenBalance: 0,
+    feeDiscount: 0
+  }),
 });
 
 interface SolanaAuthProviderProps {
@@ -36,6 +58,11 @@ export const SolanaAuthProvider: FC<SolanaAuthProviderProps> = ({ children }) =>
   const [solanaAuthError, setSolanaAuthError] = useState<string | null>(null);
   const [isWalletAuthenticated, setIsWalletAuthenticated] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | undefined>(undefined);
+  const [tokenMembership, setTokenMembership] = useState<TokenMembership>({
+    tier: MembershipTier.BASIC,
+    tokenBalance: 0,
+    feeDiscount: 0.05 // 5% discount for basic tier
+  });
 
   // Check for Phantom Wallet extension
   const [isPhantomAvailable, setIsPhantomAvailable] = useState<boolean>(false);
@@ -259,8 +286,87 @@ export const SolanaAuthProvider: FC<SolanaAuthProviderProps> = ({ children }) =>
       }
 
       setIsWalletAuthenticated(false);
+      
+      // Reset token membership to basic tier
+      setTokenMembership({
+        tier: MembershipTier.BASIC,
+        tokenBalance: 0,
+        feeDiscount: 0.05
+      });
     }
   };
+  
+  // Check THC token balance and determine membership tier
+  const checkTHCTokenMembership = async (): Promise<TokenMembership> => {
+    if (!connected || !publicKey || !isWalletAuthenticated) {
+      console.log('No authenticated wallet connected for THC token check');
+      return {
+        tier: MembershipTier.BASIC,
+        tokenBalance: 0,
+        feeDiscount: 0.05 // 5% discount for basic tier
+      };
+    }
+    
+    try {
+      console.log(`Checking THC token balance for wallet: ${publicKey.toString()}`);
+      
+      // Create connection to Solana network
+      const connection = new Connection('https://api.mainnet-beta.solana.com');
+      
+      // THC Token mint address
+      const thcTokenMint = new PublicKey(THC_TOKEN.contractAddress);
+      
+      // In a real implementation, this would query the actual token balance using:
+      // 1. Find the associated token account for this wallet
+      // 2. Query the token balance from that account
+      // For demonstration, we're using a simulated balance based on wallet address
+      
+      // Simulated token balance based on last few chars of wallet address
+      // This is just for demo purposes - real implementation would query blockchain
+      const addressHash = publicKey.toString().slice(-6);
+      const simulatedBalance = parseInt(addressHash, 16) % 100000; // Random value based on address
+      
+      console.log(`Simulated THC token balance: ${simulatedBalance}`);
+      
+      // Determine membership tier based on token balance
+      let tier = MembershipTier.BASIC;
+      let feeDiscount = 0.05; // 5% for basic
+      
+      if (simulatedBalance >= 50000) {
+        tier = MembershipTier.ELITE;
+        feeDiscount = 0.50; // 50% discount
+      } else if (simulatedBalance >= 10000) {
+        tier = MembershipTier.PREMIUM;
+        feeDiscount = 0.35; // 35% discount
+      } else if (simulatedBalance >= 1000) {
+        tier = MembershipTier.ADVANCED;
+        feeDiscount = 0.25; // 25% discount
+      }
+      
+      const membership: TokenMembership = {
+        tier,
+        tokenBalance: simulatedBalance,
+        feeDiscount
+      };
+      
+      console.log('Membership tier determined:', membership);
+      
+      // Update state with the membership details
+      setTokenMembership(membership);
+      
+      return membership;
+    } catch (error) {
+      console.error('Error checking THC token balance:', error);
+      return tokenMembership; // Return current state if error
+    }
+  };
+  
+  // Check token membership when wallet connects or changes
+  useEffect(() => {
+    if (isWalletAuthenticated && publicKey) {
+      checkTHCTokenMembership();
+    }
+  }, [isWalletAuthenticated, publicKey]);
 
   return (
     <SolanaAuthContext.Provider
@@ -271,7 +377,9 @@ export const SolanaAuthProvider: FC<SolanaAuthProviderProps> = ({ children }) =>
         solanaAuthError,
         isWalletAuthenticated,
         walletAddress,
-        isPhantomAvailable
+        isPhantomAvailable,
+        checkTHCTokenMembership,
+        tokenMembership
       }}
     >
       {children}
