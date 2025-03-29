@@ -122,11 +122,18 @@ const defaultBottomNavTabs: TabConfig[] = [
     order: 7
   },
   {
+    id: 'affiliate',
+    label: 'Affiliate',
+    icon: 'Share2',
+    active: true,
+    order: 8
+  },
+  {
     id: 'settings',
     label: 'Settings',
     icon: 'Settings',
     active: false,
-    order: 8
+    order: 9
   }
 ];
 
