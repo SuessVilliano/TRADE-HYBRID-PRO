@@ -12,7 +12,7 @@ import { Leaderboard } from "@/components/ui/leaderboard";
 import { AIAssistant } from "@/components/ui/ai-assistant";
 import { AIMarketAnalysis } from "@/components/ui/ai-market-analysis";
 import { AdvancedAIAnalysis } from "@/components/ui/advanced-ai-analysis";
-import { EnhancedAIAssistant } from "@/components/ui/enhanced-ai-assistant";
+import { AITradingAssistant } from "@/components/ui/ai-trading-assistant";
 import { SignalsList } from "@/components/ui/signals-list";
 import { SmartTradePanel } from "@/components/ui/smart-trade-panel";
 import { CopyTradePanel } from "@/components/ui/copy-trade-panel";
@@ -341,11 +341,11 @@ function TradingSpaceContent() {
               <MicroTradingTipTrigger 
                 category="general" 
                 difficulty="advanced"
-                label="Enhanced AI Tips"
+                label="AI Trading Tips"
                 className="bg-black/30 hover:bg-black/40 text-xs px-2 py-1 rounded"
               />
             </div>
-            <EnhancedAIAssistant className="h-full" />
+            <AITradingAssistant className="h-full" />
           </div>
         );
       case "signals":
@@ -620,7 +620,7 @@ function TradingSpaceContent() {
                       <Sparkles size={18} className="text-indigo-600 dark:text-indigo-400" />
                     </div>
                     <div>
-                      <span className="block font-medium">Enhanced AI Assistant</span>
+                      <span className="block font-medium">AI Trading Assistant</span>
                       <span className="text-xs text-gray-500 dark:text-gray-400 block mt-0.5">AI with voice commands and screen sharing</span>
                     </div>
                   </Button>
@@ -809,7 +809,7 @@ function TradingSpaceContent() {
               >
                 <Sparkles size={14} className="text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
                 <div className="truncate">
-                  <span className="block font-medium">Enhanced AI</span>
+                  <span className="block font-medium">AI Trading Assistant</span>
                   <span className="text-xs text-gray-500 dark:text-gray-400 block">Voice & screen sharing AI</span>
                 </div>
               </Button>
