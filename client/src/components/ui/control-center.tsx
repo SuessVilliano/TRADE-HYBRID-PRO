@@ -14,6 +14,7 @@ const TradingBotsManagerLazy = React.lazy(() => import('./trading-bots-manager')
 const TradingCompanionChatbotLazy = React.lazy(() => import('./trading-companion-chatbot'));
 const EconomicCalendarLazy = React.lazy(() => import('./economic-calendar'));
 const MarketOverviewLazy = React.lazy(() => import('./market-overview'));
+const MarketScannerLazy = React.lazy(() => import('./market-scanner'));
 
 // Define the panel types
 export type PanelType = 
@@ -56,7 +57,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
   selectedSymbol,
   onChangeSymbol,
   className = '',
-  initialPanels = ['chart', 'signals', 'smart-trade', 'companion', 'advanced-ai', 'economic-calendar', 'market-overview'],
+  initialPanels = ['chart', 'signals', 'smart-trade', 'scanner', 'companion', 'advanced-ai', 'economic-calendar', 'market-overview'],
 }) => {
   // State to track active panels and their layout
   const [activePanels, setActivePanels] = useState<string[]>([]);
@@ -95,10 +96,11 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
       component: (
         <React.Suspense fallback={<div className="h-full flex items-center justify-center">Loading Scanner...</div>}>
           {typeof window !== 'undefined' && (
-            <iframe
-              src="https://s.tradingview.com/screener/"
-              style={{ width: '100%', height: '100%', border: 'none' }}
-              title="TradingView Scanner"
+            <MarketScannerLazy
+              theme="dark"
+              height="100%"
+              defaultScreener="crypto"
+              defaultMarket="crypto"
             />
           )}
         </React.Suspense>
