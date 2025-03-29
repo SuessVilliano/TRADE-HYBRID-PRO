@@ -21,6 +21,7 @@ import { ThcTradingPanel } from "@/components/ui/thc-trading-panel";
 import { MicroTradingTipTrigger } from "@/components/ui/micro-trading-tip-trigger";
 import { MobileSidebarToggle } from "@/components/ui/mobile-sidebar-toggle";
 import { AmbientMusicPlayer } from "@/components/ui/ambient-music-player";
+import { ZenMeditationMode } from "@/components/ui/zen-meditation-mode";
 import { MobileMenu } from "@/components/ui/mobile-menu";
 import { ScreenSharing } from "@/components/ui/screen-sharing";
 import { MusicPlayer } from "@/components/ui/music-player";
@@ -235,6 +236,21 @@ function TradingSpaceContent() {
       "BTCUSD";
       
     switch (activePanel) {
+      case "zen":
+        return (
+          <ErrorBoundary>
+            <div className="relative h-full">
+              <div className="absolute top-2 right-2 z-10">
+                <MicroTradingTipTrigger 
+                  category="general" 
+                  label="Zen Tips"
+                  className="bg-black/30 hover:bg-black/40 text-xs px-2 py-1 rounded"
+                />
+              </div>
+              <ZenMeditationMode className="h-full" />
+            </div>
+          </ErrorBoundary>
+        );
       case "market":
         return (
           <ErrorBoundary>
