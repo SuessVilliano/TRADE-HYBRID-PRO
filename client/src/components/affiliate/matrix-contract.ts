@@ -8,6 +8,9 @@ import {
   sendAndConfirmTransaction
 } from '@solana/web3.js';
 
+// Company wallet address for Trade Hybrid
+export const COMPANY_WALLET = new PublicKey('G41txkaT1pwuGjkRy1PfoGiCE8LmrJNTBxFvHHV8Fx2n');
+
 // Interface for tiered matrix participant
 export interface Participant {
   address: PublicKey;
@@ -232,6 +235,9 @@ export class MatrixContract {
     
     console.log(`Recycled slot ${slotNumber}`);
     
+    // After successfully recycling, check if any other slots need recycling
+    this.checkAndRecycleFilledSlots(wallet);
+    
     return signature;
   }
   
@@ -369,7 +375,7 @@ export class MatrixContract {
     if (!participant.referrer) {
       // If no referrer, everything goes to company pool
       return [{ 
-        recipient: new PublicKey('CompanyPoolAddressXXXXXXXXXXXXXXXX'), 
+        recipient: COMPANY_WALLET, 
         amount: amount,
         reason: 'company_pool'
       }];
@@ -379,25 +385,23 @@ export class MatrixContract {
     const directReferrer = participant.referrer;
     
     // Get upline referrers (would be fetched from chain in real implementation)
-    const uplineReferrers = [
-      new PublicKey('55555555555555555555555555555555'),
-      new PublicKey('66666666666666666666666666666666'),
-      new PublicKey('77777777777777777777777777777777')
-    ];
+    // In a real implementation, this would traverse the referrer chain upwards
+    const uplineReferrers = await this.getUplineReferrers(directReferrer);
     
     // Create the distribution
     const distributions = [];
     
     // Direct referrer gets 50%
+    const directReferrerAmount = amount * MATRIX_CONFIG.commissionDistribution.directReferrer;
     distributions.push({
       recipient: directReferrer,
-      amount: amount * MATRIX_CONFIG.commissionDistribution.directReferrer,
+      amount: directReferrerAmount,
       reason: 'direct_referral' as const
     });
     
     // Upline referrers split 30%
     const uplineAmount = amount * MATRIX_CONFIG.commissionDistribution.uplineReferrers;
-    const uplineShare = uplineAmount / uplineReferrers.length;
+    const uplineShare = uplineReferrers.length > 0 ? uplineAmount / uplineReferrers.length : 0;
     
     for (const referrer of uplineReferrers) {
       distributions.push({
@@ -408,11 +412,15 @@ export class MatrixContract {
     }
     
     // Company pool gets 20%
+    const companyAmount = amount * MATRIX_CONFIG.commissionDistribution.companyPool;
     distributions.push({
-      recipient: new PublicKey('CompanyPoolAddressXXXXXXXXXXXXXXXX'),
-      amount: amount * MATRIX_CONFIG.commissionDistribution.companyPool,
+      recipient: COMPANY_WALLET,
+      amount: companyAmount,
       reason: 'company_pool' as const
     });
+    
+    // Process immediate wallet payments for each recipient in the distribution
+    await this.processDirectPayments(distributions, participantAddress, currency);
     
     return distributions;
   }
@@ -477,6 +485,109 @@ export class MatrixContract {
         { address: new PublicKey('99999999999999999999999999999999'), earnings: 7600 }
       ]
     };
+  }
+  
+  /**
+   * Get the upline referrers for a specific participant
+   * 
+   * @param participantAddress The address of the participant
+   * @returns Array of upline referrer public keys
+   */
+  private async getUplineReferrers(participantAddress: PublicKey): Promise<PublicKey[]> {
+    // In a real implementation, this would fetch the referrer chain from the blockchain
+    // by traversing the referrer pointers in each participant account
+    
+    // For this example, we'll return a few mock upline referrers
+    return [
+      new PublicKey('55555555555555555555555555555555'),
+      new PublicKey('66666666666666666666666666666666'),
+      new PublicKey('77777777777777777777777777777777')
+    ];
+  }
+  
+  /**
+   * Generate an affiliate link for a participant
+   * 
+   * @param walletAddress The public key of the participant
+   * @returns The affiliate link
+   */
+  async generateAffiliateLink(walletAddress: PublicKey): Promise<string> {
+    const encodedAddress = encodeURIComponent(walletAddress.toString());
+    return `https://pro.tradehybrid.club/affiliate?ref=${encodedAddress}`;
+  }
+  
+  /**
+   * Process direct wallet payments to all recipients in a distribution
+   * 
+   * @param distributions Array of distribution objects with recipient, amount, and reason
+   * @param senderAddress The address of the sender making the payments
+   * @param currency The currency being used for payments
+   * @returns Array of transaction signatures
+   */
+  private async processDirectPayments(
+    distributions: { recipient: PublicKey, amount: number, reason: string }[],
+    senderAddress: PublicKey,
+    currency: 'THC' | 'SOL' | 'USDC'
+  ): Promise<string[]> {
+    // In a real implementation, this would create and submit transactions
+    // to transfer funds from the participant to each recipient
+    
+    const transactionSignatures: string[] = [];
+    
+    // Log the payments for debugging
+    console.log(`Processing direct payments from ${senderAddress.toString()}:`);
+    
+    for (const dist of distributions) {
+      // Create a simulated transaction signature
+      const txSignature = `sim_payment_${Math.random().toString(36).substring(2, 15)}`;
+      
+      // Log the payment information
+      console.log(`  - ${dist.amount} ${currency} to ${dist.recipient.toString()} (${dist.reason})`);
+      
+      // In a real implementation, this would use the appropriate token program
+      // based on the currency to transfer the funds
+      
+      // Add the transaction signature to the array
+      transactionSignatures.push(txSignature);
+    }
+    
+    return transactionSignatures;
+  }
+
+  /**
+   * Check if any slots are filled and need recycling
+   * 
+   * @param wallet The wallet of the user
+   * @returns Array of slot numbers that were recycled
+   */
+  private async checkAndRecycleFilledSlots(
+    wallet: { publicKey: PublicKey, signTransaction: (tx: Transaction) => Promise<Transaction> }
+  ): Promise<number[]> {
+    if (!wallet.publicKey) {
+      throw new Error("Wallet not connected");
+    }
+    
+    // Get the participant's matrix data
+    const participant = await this.getUserMatrix(wallet.publicKey);
+    
+    // Find slots that are filled (have maximum referrals) and need recycling
+    const recycledSlots: number[] = [];
+    
+    for (const slot of participant.activeSlots) {
+      // Check if this slot is filled (for simplicity, we'll consider 3 referrals as "filled")
+      if (slot.referrals.length >= 3) {
+        try {
+          // Automatically recycle the slot
+          console.log(`Slot ${slot.slotNumber} is filled, automatically recycling...`);
+          await this.recycleSlot(wallet, slot.slotNumber);
+          recycledSlots.push(slot.slotNumber);
+        } catch (error) {
+          console.error(`Error recycling slot ${slot.slotNumber}:`, error);
+        }
+      }
+    }
+    
+    return recycledSlots;
   }
 }
 
