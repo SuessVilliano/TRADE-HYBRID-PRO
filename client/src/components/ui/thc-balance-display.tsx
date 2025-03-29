@@ -18,10 +18,14 @@ export default function THCBalanceDisplay({
 }: THCBalanceDisplayProps) {
   const { user } = useUserStore();
   
-  if (!user) return null;
+  // Ensure user and balance exist before rendering
+  if (!user || !user.balance) return null;
+  
+  // Safe access to THC balance
+  const thcBalance = user.balance.THC || 0;
   
   // For display purposes, format the balance with the appropriate currency symbol
-  const formattedBalance = formatCurrency(user.balance.THC, { 
+  const formattedBalance = formatCurrency(thcBalance, { 
     currency: 'THC',
     notation: compact ? 'compact' : 'standard',
   });
