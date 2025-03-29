@@ -20,6 +20,7 @@ import { ThcTokenInfo } from "@/components/ui/thc-token-info";
 import { ThcTradingPanel } from "@/components/ui/thc-trading-panel";
 import { MicroTradingTipTrigger } from "@/components/ui/micro-trading-tip-trigger";
 import { MobileSidebarToggle } from "@/components/ui/mobile-sidebar-toggle";
+import { AmbientMusicPlayer } from "@/components/ui/ambient-music-player";
 import { MobileMenu } from "@/components/ui/mobile-menu";
 import { ScreenSharing } from "@/components/ui/screen-sharing";
 import { MusicPlayer } from "@/components/ui/music-player";
@@ -33,6 +34,7 @@ import { useBots } from "@/lib/stores/useBots";
 import { useAudio } from "@/lib/stores/useAudio";
 import { WebApp } from "@/components/ui/web-app";
 import { useWebApp } from "@/lib/stores/useWebApp";
+import { useMarketMood } from "@/lib/stores/useMarketMood";
 
 // Map of location parameters to appropriate default panels
 const LOCATION_TO_PANEL = {
@@ -167,18 +169,28 @@ function TradingSpaceContent() {
     fetchLeaderboard();
     fetchBots();
     
-    // Set that we're in the metaverse for contextual music playing
+    // Set that we're in trading space for contextual music playing
     const audioStore = useAudio.getState();
-    audioStore.setInMetaverse(true);
     
-    // If in metaverse mode, try to play music
-    audioStore.playMusic();
+    // Using traditional metaverse flag for backward compatibility
+    if (audioStore.setInMetaverse) {
+      audioStore.setInMetaverse(true);
+    }
+    
+    // Start ambient music if available
+    if (audioStore.playMusic) {
+      audioStore.playMusic();
+    }
     
     // Clean up on unmount
     return () => {
       const audioStore = useAudio.getState();
-      audioStore.setInMetaverse(false);
-      audioStore.pauseMusic();
+      if (audioStore.setInMetaverse) {
+        audioStore.setInMetaverse(false);
+      }
+      if (audioStore.pauseMusic) {
+        audioStore.pauseMusic();
+      }
     };
   }, [fetchMarketData, fetchNews, fetchTrades, fetchLeaderboard, fetchBots, locationParam]);
   
@@ -487,6 +499,8 @@ function TradingSpaceContent() {
     return (
       <div className="relative h-screen w-screen overflow-hidden bg-gray-100 dark:bg-gray-900">
         {/* Mobile-specific UI */}
+        {/* Ambient Music Player (Minimized for Mobile) */}
+        <AmbientMusicPlayer minimized={true} />
         <div className="flex flex-col h-full">
           {/* Top Navigation Bar */}
           <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
@@ -690,6 +704,9 @@ function TradingSpaceContent() {
   // Desktop UI
   return (
     <div className="relative h-screen w-screen overflow-hidden">
+      {/* Ambient Music Player */}
+      <AmbientMusicPlayer className="absolute right-4 bottom-4 z-50" />
+      
       {/* 3D Scene */}
       <div className="absolute inset-0 z-0">
         <Scene showStats={false} />

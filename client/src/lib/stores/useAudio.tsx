@@ -1,14 +1,15 @@
 import { create } from 'zustand';
 
-interface AudioTrack {
+export interface AudioTrack {
   id: string;
   title: string;
   artist: string;
   url: string;
   category: 'metaverse' | 'trading' | 'game';
+  mood?: 'bullish' | 'bearish' | 'neutral' | 'volatile' | 'calm';
 }
 
-interface AudioStore {
+export interface AudioStore {
   // Sound effects
   successSound: HTMLAudioElement | null;
   hitSound: HTMLAudioElement | null;
@@ -79,35 +80,83 @@ const defaultTracks: AudioTrack[] = [
     id: 'metaverse-1',
     title: 'Metaverse Exploration',
     artist: 'Digital Dreams',
-    url: '/sounds/background-music-1.mp3',
+    url: '/sounds/background.mp3',
     category: 'metaverse',
   },
   {
     id: 'metaverse-2',
     title: 'Virtual Reality',
     artist: 'Cyber Wave',
-    url: '/sounds/background-music-2.mp3',
+    url: '/sounds/background.mp3',
     category: 'metaverse',
   },
+  // Trading mood tracks - Bullish
   {
-    id: 'trading-1',
-    title: 'Market Analysis',
+    id: 'trading-bullish-1',
+    title: 'Bull Market Energy',
     artist: 'Trade Wizards',
-    url: '/sounds/trading-music-1.mp3',
+    url: '/sounds/background.mp3',
     category: 'trading',
+    mood: 'bullish'
   },
   {
-    id: 'trading-2',
-    title: 'Bull Run',
+    id: 'trading-bullish-2',
+    title: 'Upward Momentum',
     artist: 'Crypto Beats',
-    url: '/sounds/trading-music-2.mp3',
+    url: '/sounds/background.mp3',
     category: 'trading',
+    mood: 'bullish'
   },
+  // Trading mood tracks - Bearish
+  {
+    id: 'trading-bearish-1',
+    title: 'Bearish Trends',
+    artist: 'Market Analytics',
+    url: '/sounds/background.mp3',
+    category: 'trading',
+    mood: 'bearish'
+  },
+  {
+    id: 'trading-bearish-2',
+    title: 'Downward Pressure',
+    artist: 'Crypto Beats',
+    url: '/sounds/background.mp3',
+    category: 'trading',
+    mood: 'bearish'
+  },
+  // Trading mood tracks - Neutral
+  {
+    id: 'trading-neutral-1',
+    title: 'Market Equilibrium',
+    artist: 'Trading Sounds',
+    url: '/sounds/background.mp3',
+    category: 'trading',
+    mood: 'neutral'
+  },
+  // Trading mood tracks - Volatile
+  {
+    id: 'trading-volatile-1',
+    title: 'Market Volatility',
+    artist: 'Trading Sounds',
+    url: '/sounds/background.mp3',
+    category: 'trading',
+    mood: 'volatile'
+  },
+  // Trading mood tracks - Calm
+  {
+    id: 'trading-calm-1',
+    title: 'Market Serenity',
+    artist: 'Trading Sounds',
+    url: '/sounds/background.mp3',
+    category: 'trading',
+    mood: 'calm'
+  },
+  // Game tracks
   {
     id: 'game-1',
     title: 'Bull vs Bear Battle',
     artist: 'Market Mayhem',
-    url: '/sounds/game-music-1.mp3',
+    url: '/sounds/background.mp3',
     category: 'game',
   },
 ];
