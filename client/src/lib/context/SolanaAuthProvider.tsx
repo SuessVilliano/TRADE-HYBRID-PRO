@@ -11,6 +11,7 @@ interface SolanaAuthContextProps {
   isAuthenticatingWithSolana: boolean;
   solanaAuthError: string | null;
   isWalletAuthenticated: boolean;
+  walletAddress?: string;
 }
 
 const SolanaAuthContext = createContext<SolanaAuthContextProps>({
@@ -19,6 +20,7 @@ const SolanaAuthContext = createContext<SolanaAuthContextProps>({
   isAuthenticatingWithSolana: false,
   solanaAuthError: null,
   isWalletAuthenticated: false,
+  walletAddress: undefined,
 });
 
 interface SolanaAuthProviderProps {
@@ -31,11 +33,13 @@ export const SolanaAuthProvider: FC<SolanaAuthProviderProps> = ({ children }) =>
   const [isAuthenticatingWithSolana, setIsAuthenticatingWithSolana] = useState(false);
   const [solanaAuthError, setSolanaAuthError] = useState<string | null>(null);
   const [isWalletAuthenticated, setIsWalletAuthenticated] = useState(false);
+  const [walletAddress, setWalletAddress] = useState<string | undefined>(undefined);
 
   // Check if the current user is authenticated with Solana
   useEffect(() => {
     if (isAuthenticated && user.walletAddress && connected && publicKey) {
       const currentWalletAddress = publicKey.toString();
+      setWalletAddress(currentWalletAddress);
       if (currentWalletAddress === user.walletAddress) {
         setIsWalletAuthenticated(true);
       } else {
@@ -43,6 +47,7 @@ export const SolanaAuthProvider: FC<SolanaAuthProviderProps> = ({ children }) =>
       }
     } else {
       setIsWalletAuthenticated(false);
+      setWalletAddress(undefined);
     }
   }, [isAuthenticated, user.walletAddress, connected, publicKey]);
 
@@ -140,7 +145,8 @@ export const SolanaAuthProvider: FC<SolanaAuthProviderProps> = ({ children }) =>
         logoutFromSolana,
         isAuthenticatingWithSolana,
         solanaAuthError,
-        isWalletAuthenticated
+        isWalletAuthenticated,
+        walletAddress
       }}
     >
       {children}

@@ -217,6 +217,18 @@ function AppContent() {
                 </div>
               </div>
             }>
+              {typeof window !== 'undefined' && <NFTMarketplace />}
+            </Suspense>
+          } />
+          <Route path="/marketplace-simple" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading Simple NFT Marketplace...</p>
+                </div>
+              </div>
+            }>
               {typeof window !== 'undefined' && <NFTMarketplaceSimple />}
             </Suspense>
           } />
