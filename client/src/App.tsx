@@ -480,14 +480,20 @@ function TradePlaceholder() {
     { value: 'BINANCE:SOLUSDT', label: 'Solana (SOL/USDT)' },
     { value: 'BITSTAMP:BTCUSD', label: 'Bitcoin (BTC/USD)' },
     { value: 'BINANCE:ETHUSDT', label: 'Ethereum (ETH/USDT)' },
-    { value: 'CME:MNQ!', label: 'MNQ (Micro E-mini Nasdaq)' },
+    { value: 'CME:MNQ1!', label: 'MNQ (Micro E-mini Nasdaq)' }, // Updated for proper CME symbol format
     { value: 'OANDA:XAUUSD', label: 'Gold (XAU/USD)' },
     { value: 'COMEX:GC1!', label: 'Gold Futures' },
-    { value: 'CME:NQ!', label: 'Nasdaq 100 (Nas100)' },
+    { value: 'CME:NQ1!', label: 'Nasdaq 100 (Nas100)' }, // Updated for proper CME symbol format
   ];
   
   const handleSymbolChange = (newSymbol: string) => {
-    setSelectedSymbol(newSymbol);
+    // Properly format CME futures symbols to ensure they load correctly
+    let formattedSymbol = newSymbol;
+    
+    // Log the selected symbol for debugging
+    console.log(`Selected symbol: ${newSymbol}`);
+    
+    setSelectedSymbol(formattedSymbol);
   };
   
   return (

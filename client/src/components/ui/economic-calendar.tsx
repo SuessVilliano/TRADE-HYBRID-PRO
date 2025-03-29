@@ -7,31 +7,41 @@ interface EconomicCalendarProps {
   isTransparent?: boolean;
   locale?: string;
   importanceFilter?: string;
+  className?: string;
 }
 
 export function EconomicCalendar({
   width = '100%',
-  height = '100%',
+  height = '600px', // Increased default height to show more content
   colorTheme = 'dark',
   isTransparent = true, // Make transparent to allow custom styling
   locale = 'en',
-  importanceFilter = '-1,0,1'
+  importanceFilter = '-1,0,1',
+  className = ''
 }: EconomicCalendarProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Create script with specific configuration to improve display
     const script = document.createElement('script');
     script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-events.js';
     script.async = true;
     script.type = 'text/javascript';
-    script.innerHTML = JSON.stringify({
+    
+    // Configure the widget options
+    const widgetOptions = {
       width,
       height,
       colorTheme,
       isTransparent,
       locale,
-      importanceFilter
-    });
+      importanceFilter,
+      currencyFilter: "USD,EUR,JPY,GBP,AUD,CAD,CHF,CNY", // Add common currencies
+      fontSize: "12", // Slightly larger font for better readability
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, // Use user's timezone
+    };
+    
+    script.innerHTML = JSON.stringify(widgetOptions);
 
     if (containerRef.current) {
       // Clear any existing widgets
@@ -57,13 +67,14 @@ export function EconomicCalendar({
 
   return (
     <div 
-      className="tradingview-widget-container rounded-md shadow-lg overflow-hidden border border-primary/30 shadow-[0_0_10px_rgba(var(--primary),0.15)]" 
+      className={`tradingview-widget-container rounded-md shadow-lg overflow-hidden border border-primary/30 shadow-[0_0_10px_rgba(var(--primary),0.15)] ${className}`}
       ref={containerRef}
       style={{
         background: 'linear-gradient(to bottom, rgba(20, 20, 30, 0.95), rgba(15, 15, 20, 0.97))',
+        minHeight: '500px', // Ensure minimum height for content
       }}
     >
-      <div className="tradingview-widget-container__widget"></div>
+      <div className="tradingview-widget-container__widget" style={{ minHeight: '460px' }}></div>
       <div className="tradingview-widget-script-container"></div>
       <div 
         className="tradingview-widget-copyright" 

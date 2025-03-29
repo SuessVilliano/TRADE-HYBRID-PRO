@@ -1,13 +1,49 @@
 import React, { useEffect, useRef, memo } from 'react';
 
-function TradingViewWidget({ symbol = 'BITSTAMP:BTCUSD', theme = 'dark', width = '100%', height = '500px' }) {
-  const container = useRef();
+// Define the TradingView window interface
+declare global {
+  interface Window {
+    TradingView: {
+      widget: new (config: any) => any;
+    };
+  }
+}
+
+interface TradingViewWidgetProps {
+  symbol?: string;
+  theme?: 'light' | 'dark';
+  width?: string;
+  height?: string;
+  interval?: string;
+  allow_symbol_change?: boolean;
+  container_id?: string;
+}
+
+function TradingViewWidget({ 
+  symbol = 'BITSTAMP:BTCUSD', 
+  theme = 'dark', 
+  width = '100%', 
+  height = '500px', 
+  interval = "D",
+  allow_symbol_change = true 
+}: TradingViewWidgetProps) {
+  const container = useRef<HTMLDivElement>(null);
+  const widgetIdRef = useRef<string>(`tradingview_widget_${Math.floor(Math.random() * 1000000)}`);
 
   useEffect(() => {
+    if (!container.current) return;
+    
     // Clear any existing widgets if the component is re-rendering
-    if (container.current) {
-      container.current.innerHTML = '';
+    container.current.innerHTML = '';
+
+    // Format CME symbols correctly if needed
+    let formattedSymbol = symbol;
+    // If it's a futures symbol from CME but doesn't have the CME prefix, add it
+    if ((symbol.includes('MNQ') || symbol.includes('NQ')) && !symbol.includes('CME:')) {
+      formattedSymbol = `CME:${symbol.replace('!', '')}`;
     }
+    
+    console.log(`Loading chart with symbol: ${formattedSymbol}`);
 
     // Create and load the TradingView widget script
     const script = document.createElement("script");
@@ -15,35 +51,41 @@ function TradingViewWidget({ symbol = 'BITSTAMP:BTCUSD', theme = 'dark', width =
     script.async = true;
     script.onload = () => {
       if (window.TradingView && container.current) {
-        // Create new widget instance
-        new window.TradingView.widget({
-          autosize: true,
-          symbol: symbol,
-          interval: "D",
-          timezone: "Etc/UTC",
-          theme: theme,
-          style: "1",
-          locale: "en",
-          toolbar_bg: "#f1f3f6",
-          enable_publishing: false,
-          allow_symbol_change: true,
-          container_id: container.current.id,
-          hide_side_toolbar: false,
-          studies: [
-            "RSI@tv-basicstudies",
-            "MASimple@tv-basicstudies",
-            "MACD@tv-basicstudies"
-          ],
-          disabled_features: ["header_compare"],
-          enabled_features: ["use_localstorage_for_settings"],
-          overrides: {
-            "paneProperties.background": theme === "dark" ? "#0f172a" : "#ffffff",
-            "paneProperties.vertGridProperties.color": theme === "dark" ? "#334155" : "#e6e9ec",
-            "paneProperties.horzGridProperties.color": theme === "dark" ? "#334155" : "#e6e9ec",
-          }
-        });
+        try {
+          // Create new widget instance
+          new window.TradingView.widget({
+            autosize: true,
+            symbol: formattedSymbol,
+            interval: interval,
+            timezone: "Etc/UTC",
+            theme: theme,
+            style: "1",
+            locale: "en",
+            toolbar_bg: "#f1f3f6",
+            enable_publishing: false,
+            allow_symbol_change: allow_symbol_change,
+            container_id: widgetIdRef.current,
+            hide_side_toolbar: false,
+            studies: [
+              "RSI@tv-basicstudies",
+              "MASimple@tv-basicstudies",
+              "MACD@tv-basicstudies"
+            ],
+            disabled_features: ["header_compare"],
+            enabled_features: ["use_localstorage_for_settings"],
+            overrides: {
+              "paneProperties.background": theme === "dark" ? "#0f172a" : "#ffffff",
+              "paneProperties.vertGridProperties.color": theme === "dark" ? "#334155" : "#e6e9ec",
+              "paneProperties.horzGridProperties.color": theme === "dark" ? "#334155" : "#e6e9ec",
+            }
+          });
+          console.log("TradingView widget loaded successfully");
+        } catch (error) {
+          console.error("Error initializing TradingView widget:", error);
+        }
       }
     };
+    
     container.current.appendChild(script);
 
     // Clean up
@@ -52,12 +94,12 @@ function TradingViewWidget({ symbol = 'BITSTAMP:BTCUSD', theme = 'dark', width =
         container.current.innerHTML = '';
       }
     };
-  }, [symbol, theme]); // Rebuild widget when symbol or theme changes
+  }, [symbol, theme, interval, allow_symbol_change]); // Rebuild widget when parameters change
 
   return (
     <div className="tradingview-widget-container" style={{ height, width }}>
       <div 
-        id={`tradingview_widget_${Math.floor(Math.random() * 1000000)}`} 
+        id={widgetIdRef.current} 
         ref={container} 
         style={{ height: "100%", width: "100%" }}
       />
