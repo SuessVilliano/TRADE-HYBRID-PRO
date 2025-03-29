@@ -8,34 +8,59 @@ import {
   sendAndConfirmTransaction
 } from '@solana/web3.js';
 
-// Interface for matrix participant
+// Interface for tiered matrix participant
 export interface Participant {
   address: PublicKey;
   referrer: PublicKey | null;
   registrationTime: number;
-  matrixPositions: MatrixPosition[];
+  activeSlots: MatrixSlot[];  // All slots the user has activated
   directReferrals: PublicKey[];
   totalEarnings: number;
+  totalSlotsValue: number;  // Total value of all slots purchased
+  preferredCurrency: 'THC' | 'SOL' | 'USDC';
 }
 
-// Interface for a position in the matrix
-export interface MatrixPosition {
+// Interface for a slot in the matrix
+export interface MatrixSlot {
   id: string;
-  level: number;
-  position: number;
-  parentPosition: string | null;
-  children: string[];
+  slotNumber: number;  // 1-12 for the 12 slots
+  price: number;       // Price paid for this slot
+  currency: 'THC' | 'SOL' | 'USDC';
+  purchaseDate: number;
   isActive: boolean;
-  earningsFromPosition: number;
+  earningsFromSlot: number;
+  referrals: {
+    address: PublicKey;
+    slotFilled: number; // Which slot they filled in your matrix
+    earnings: number;   // How much you earned from this referral
+    date: number;       // When they joined
+  }[];
 }
 
 // Configuration values for the matrix
 export const MATRIX_CONFIG = {
-  registrationFee: 100, // In THC tokens
-  width: 2,  // Binary structure (2 positions per level)
-  depth: 3,  // Initial depth is 3 levels, but can expand infinitely
-  commissionRates: [0.05, 0.03, 0.02], // 5%, 3%, 2% for first 3 levels
-  additionalLevelRate: 0.01, // 1% for levels beyond the initial depth
+  slotPrices: [
+    25,     // Slot 1: $25
+    50,     // Slot 2: $50
+    100,    // Slot 3: $100
+    200,    // Slot 4: $200
+    400,    // Slot 5: $400
+    800,    // Slot 6: $800
+    1600,   // Slot 7: $1600
+    3200,   // Slot 8: $3200
+    6400,   // Slot 9: $6400
+    12800,  // Slot 10: $12800
+    25600,  // Slot 11: $25600
+    51200   // Slot 12: $51200
+  ],
+  supportedCurrencies: ['THC', 'SOL', 'USDC'],
+  // Commission distribution rates per level (must sum to 1)
+  commissionDistribution: {
+    directReferrer: 0.5,    // 50% to direct referrer
+    uplineReferrers: 0.3,   // 30% distributed among upline referrers
+    companyPool: 0.2        // 20% to company pool for platform development
+  },
+  spilloverMethod: 'balanced', // 'balanced' or 'first-available'
 };
 
 /**
@@ -96,42 +121,81 @@ export class MatrixContract {
    * Get the matrix data for a specific user
    * 
    * @param userAddress The address of the user
-   * @returns Participant object containing matrix positions and other data
+   * @returns Participant object containing active slots and other data
    */
   async getUserMatrix(userAddress: PublicKey): Promise<Participant> {
     // In a real implementation, this would fetch data from the program account
     // For this example, we'll generate mock data
     
     // This would be replaced with actual on-chain data in production
+    const now = Date.now();
     const mockParticipant: Participant = {
       address: userAddress,
       referrer: new PublicKey('11111111111111111111111111111111'),
-      registrationTime: Date.now(),
-      matrixPositions: [
+      registrationTime: now - 30 * 24 * 60 * 60 * 1000, // Joined 30 days ago
+      activeSlots: [
         {
           id: '1',
-          level: 0,
-          position: 0,
-          parentPosition: null,
-          children: ['2', '3'],
+          slotNumber: 1,
+          price: MATRIX_CONFIG.slotPrices[0],
+          currency: 'THC',
+          purchaseDate: now - 30 * 24 * 60 * 60 * 1000,
           isActive: true,
-          earningsFromPosition: 50
+          earningsFromSlot: 75,
+          referrals: [
+            {
+              address: new PublicKey('22222222222222222222222222222222'),
+              slotFilled: 1,
+              earnings: 12.5,
+              date: now - 25 * 24 * 60 * 60 * 1000
+            },
+            {
+              address: new PublicKey('33333333333333333333333333333333'),
+              slotFilled: 1,
+              earnings: 12.5,
+              date: now - 20 * 24 * 60 * 60 * 1000
+            },
+            {
+              address: new PublicKey('44444444444444444444444444444444'),
+              slotFilled: 1,
+              earnings: 12.5,
+              date: now - 15 * 24 * 60 * 60 * 1000
+            }
+          ]
         },
         {
-          id: '8',
-          level: 1,
-          position: 1,
-          parentPosition: '4',
-          children: [],
+          id: '2',
+          slotNumber: 2,
+          price: MATRIX_CONFIG.slotPrices[1],
+          currency: 'THC',
+          purchaseDate: now - 20 * 24 * 60 * 60 * 1000,
           isActive: true,
-          earningsFromPosition: 25
+          earningsFromSlot: 50,
+          referrals: [
+            {
+              address: new PublicKey('55555555555555555555555555555555'),
+              slotFilled: 2,
+              earnings: 25,
+              date: now - 10 * 24 * 60 * 60 * 1000
+            },
+            {
+              address: new PublicKey('66666666666666666666666666666666'),
+              slotFilled: 2,
+              earnings: 25,
+              date: now - 5 * 24 * 60 * 60 * 1000
+            }
+          ]
         }
       ],
       directReferrals: [
         new PublicKey('22222222222222222222222222222222'),
-        new PublicKey('33333333333333333333333333333333')
+        new PublicKey('33333333333333333333333333333333'),
+        new PublicKey('44444444444444444444444444444444'),
+        new PublicKey('55555555555555555555555555555555')
       ],
-      totalEarnings: 75
+      totalEarnings: 125,
+      totalSlotsValue: MATRIX_CONFIG.slotPrices[0] + MATRIX_CONFIG.slotPrices[1],
+      preferredCurrency: 'THC'
     };
     
     return mockParticipant;
