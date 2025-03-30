@@ -40,6 +40,7 @@ const EmbeddedAppPage = lazy(() => import('./pages/embedded-app'));
 const NotificationSettingsPage = lazy(() => import('./pages/notification-settings'));
 const AffiliatePage = lazy(() => import('./pages/affiliate'));
 const EventsPage = lazy(() => import('./pages/events'));
+const TradeSimulatorPage = lazy(() => import('./pages/trade-simulator'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -193,6 +194,7 @@ function AppContent() {
               <Link to="/affiliate" className="hover:text-blue-400 transition-colors">Affiliate</Link>
               <Link to="/trade-runner-browser" className="hover:text-blue-400 transition-colors">Trade Runner</Link>
               <Link to="/bulls-vs-bears" className="hover:text-blue-400 transition-colors">Bulls vs Bears</Link>
+              <Link to="/trade-simulator" className="hover:text-blue-400 transition-colors">Trade Simulator</Link>
             </nav>
           </div>
           
@@ -384,6 +386,7 @@ function AppContent() {
               {typeof window !== 'undefined' && <BullsVsBears />}
             </Suspense>
           } />
+
           <Route path="/learn" element={
             <Suspense fallback={
               <div className="flex items-center justify-center h-screen">
@@ -505,6 +508,18 @@ function AppContent() {
               </div>
             }>
               {typeof window !== 'undefined' && <EventsPage />}
+            </Suspense>
+          } />
+          <Route path="/trade-simulator" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading trade simulator...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <TradeSimulatorPage />}
             </Suspense>
           } />
           <Route path="/affiliate/*" element={
@@ -650,6 +665,11 @@ function Home() {
           description="Join the epic battle between bulls and bears in this immersive 3D trading game. Trade with the trend and win!"
           linkTo="/bulls-vs-bears"
         />
+        <FeatureCard 
+          title="Trade Simulator"
+          description="Practice trading with virtual money in a risk-free environment. Learn to trade various assets using real-time price charts."
+          linkTo="/trade-simulator"
+        />
       </div>
     </PopupContainer>
   );
@@ -673,6 +693,7 @@ function FeatureCard({ title, description, linkTo }: { title: string, descriptio
     '/trade-runner': 'basic_trading',
     '/trade-runner-browser': 'basic_trading',
     '/bulls-vs-bears': 'basic_trading',
+    '/trade-simulator': 'basic_trading',
   };
   
   const { isRouteEnabled } = useFeatureDisclosure();
