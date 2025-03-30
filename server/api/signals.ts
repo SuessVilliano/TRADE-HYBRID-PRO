@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { randomUUID } from 'crypto';
 import { sheetsService } from './sheets-service';
+import { getAIMarketAnalysis } from './ai-market-analysis';
+import { getCurrentPrice } from './market';
 
 interface SignalSource {
   id: string;
@@ -16,7 +18,7 @@ const SIGNAL_SOURCES: SignalSource[] = [
   },
   {
     id: '1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8',
-    range: 'Hybrid!A:Z', 
+    range: 'Hybrid!A:Z',
     type: 'futures'
   },
   {
@@ -197,7 +199,7 @@ function processCashCowSignal(payload: any, res: Response) {
     const indicators: Record<string, string> = {};
 
     const rr1Match = content.match(/R:R\s*=\s*(\d+)/i);
-    const rr2Match = content.match(/R:R\s*=\s*(\d+)/g); 
+    const rr2Match = content.match(/R:R\s*=\s*(\d+)/g);
 
     if (rr1Match && rr1Match[1]) {
       indicators["Risk:Reward"] = rr1Match[1];
@@ -307,8 +309,8 @@ function processCashCowSignal(payload: any, res: Response) {
       signals = signals.slice(0, 100);
     }
 
-    return res.status(200).send({ 
-      success: true, 
+    return res.status(200).send({
+      success: true,
       signalId: signal.id,
       message: 'Cash Cow signal processed successfully'
     });
@@ -319,7 +321,7 @@ function processCashCowSignal(payload: any, res: Response) {
 }
 
 // Add the webhook endpoint to receive signals from TradingView
-export const receiveWebhook = (req: Request, res: Response) => {
+export const receiveWebhook = async (req: Request, res: Response) => {
   try {
     const payload = req.body;
     console.log('Received webhook signal:', JSON.stringify(payload, null, 2));
@@ -340,7 +342,7 @@ export const receiveWebhook = (req: Request, res: Response) => {
     let source = 'Trade Hybrid';
     let strategy = payload.strategy || payload.name || 'Trade Hybrid';
 
-    // Check the URL path to determine the source 
+    // Check the URL path to determine the source
     const url = req.originalUrl || '';
     console.log('Webhook URL:', url);
 
@@ -427,124 +429,48 @@ export const receiveWebhook = (req: Request, res: Response) => {
 
     // Determine action type (buy, sell, etc.)
     const action = normalizeAction(
-      payload.action || 
-      payload.signal || 
-      payload.side || 
-      payload.direction || 
-      payload.type || 
+      payload.action ||
+      payload.signal ||
+      payload.side ||
+      payload.direction ||
+      payload.type ||
       'neutral'
     );
     console.log(`Signal action: ${action}`);
 
-    // Calculate confidence score based on signal quality
-    // Start with a base confidence level based on the source
-    let confidence = 75; // Default baseline
-
-    // Adjust base confidence by source
-    if (source === 'Hybrid AI') {
-      confidence = 85; // Higher confidence for Hybrid AI signals
-    } else if (source === 'Paradox AI') {
-      confidence = 80; // Slightly higher confidence for Paradox AI
-    } else if (source === 'Solaris AI') {
-      confidence = 78; // Slightly higher confidence for Solaris AI forex signals
-    }
-
-    // If the payload already has a confidence value, use it as the base instead
-    if (payload.confidence !== undefined) {
-      const providedConfidence = parseFloat(payload.confidence);
-      if (!isNaN(providedConfidence)) {
-        confidence = providedConfidence;
-      }
-    }
-
-    // Adjust confidence based on signal quality factors
-
-    // 1. Presence of multiple take profit levels increases confidence
-    if (takeProfit1 > 0 && takeProfit2 > 0 && takeProfit3 > 0) {
-      confidence += 5; // All three take profits specified
-    } else if (takeProfit1 > 0 && takeProfit2 > 0) {
-      confidence += 3; // Two take profits specified
-    }
-
-    // 2. Presence of stop loss increases confidence
-    if (stopLoss > 0) {
-      confidence += 3;
-    }
-
-    // 3. Calculate risk:reward ratio if both SL and TP1 exist
-    if (stopLoss > 0 && takeProfit1 > 0 && entryPrice > 0) {
-      const indicators = payload.indicators || {};
-
-      // Calculate and add R:R to indicators if not already present
-      if (!indicators["Risk:Reward"]) {
-        let riskPips = 0;
-        let rewardPips = 0;
-
-        if (action === 'buy') {
-          riskPips = Math.abs(entryPrice - stopLoss);
-          rewardPips = Math.abs(takeProfit1 - entryPrice);
-        } else {
-          riskPips = Math.abs(stopLoss - entryPrice);
-          rewardPips = Math.abs(entryPrice - takeProfit1);
-        }
-
-        if (riskPips > 0) {
-          const rr = (rewardPips / riskPips).toFixed(2);
-          indicators["Risk:Reward"] = rr;
-
-          // Adjust confidence based on R:R
-          const rrValue = parseFloat(rr);
-          if (rrValue >= 3) {
-            confidence += 5; // Excellent R:R ratio
-          } else if (rrValue >= 2) {
-            confidence += 3; // Good R:R ratio
-          } else if (rrValue >= 1) {
-            confidence += 1; // Acceptable R:R ratio
-          }
-        }
-      }
-
-      // Use the indicators object with potentially added R:R
-      payload.indicators = indicators;
-    }
-
-    // Cap confidence at 95 (nothing is 100% certain in trading)
-    confidence = Math.min(confidence, 95);
-
-    // Create a new signal object with required fields
-    const signal = {
+    // Process the signal using the new processSignal function
+    const processedSignal = await processSignal({
       id: randomUUID(),
       timestamp: new Date(),
       symbol: symbol,
       action: action,
-      price: parseFloat(payload.price) || entryPrice || 0,
+      price: entryPrice || 0,
       entryPrice: entryPrice,
       stopLoss: stopLoss,
       takeProfit1: takeProfit1,
       takeProfit2: takeProfit2,
       takeProfit3: takeProfit3,
-      source: payload.source || source,
+      source: source,
       strategy: strategy,
       message: payload.message || `${action.toUpperCase()} signal on ${symbol}`,
-      confidence: confidence,
+      confidence: payload.confidence,
       timeframe: payload.timeframe || payload.interval || '1d',
-      indicators: payload.indicators || {},
-      read: false
-    };
+      indicators: payload.indicators || {}
+    });
 
-    console.log('Created signal object:', signal);
+    console.log('Processed signal:', processedSignal);
 
     // Add to signals store
-    signals.unshift(signal);
+    signals.unshift(processedSignal);
 
     // Keep only the last 100 signals
     if (signals.length > 100) {
       signals = signals.slice(0, 100);
     }
 
-    return res.status(200).send({ 
-      success: true, 
-      signalId: signal.id,
+    return res.status(200).send({
+      success: true,
+      signalId: processedSignal.id,
       message: 'Signal processed successfully'
     });
   } catch (error) {
@@ -553,14 +479,84 @@ export const receiveWebhook = (req: Request, res: Response) => {
   }
 };
 
+
+interface SignalAnalysis {
+  confidence: number;
+  marketConditions: string;
+  recommendation: string;
+  suggestedBrokers: string[];
+  technicalFactors: string[];
+}
+
+export async function analyzeSignal(signal: any): Promise<SignalAnalysis> {
+  const marketData = await getCurrentPrice(signal.symbol);
+  const aiAnalysis = await getAIMarketAnalysis(signal.symbol);
+
+  let assetClass = '';
+  if (signal.source === 'HybridAI') assetClass = 'futures';
+  else if (signal.source === 'ParadoxAI') assetClass = 'crypto';
+  else if (signal.source === 'SolarisAI') assetClass = 'forex';
+
+  const suggestedBrokers = getBrokersByAssetClass(assetClass);
+
+  return {
+    confidence: calculateConfidence(signal, aiAnalysis, marketData),
+    marketConditions: aiAnalysis.marketConditions,
+    recommendation: aiAnalysis.recommendation,
+    suggestedBrokers,
+    technicalFactors: aiAnalysis.technicalFactors
+  };
+}
+
+function getBrokersByAssetClass(assetClass: string): string[] {
+  switch (assetClass) {
+    case 'futures':
+      return ['ninjatrader', 'tradovate', 'topstep'];
+    case 'crypto':
+      return ['alpaca', 'kraken'];
+    case 'forex':
+      return ['mt4', 'mt5', 'oanda'];
+    default:
+      return [];
+  }
+}
+
+function calculateConfidence(signal: any, aiAnalysis: any, marketData: any): number {
+  let confidence = 0.5; // Base confidence
+
+  // Adjust based on price alignment
+  const priceAlignment = Math.abs(signal.entryPrice - marketData.currentPrice) / marketData.currentPrice;
+  if (priceAlignment < 0.001) confidence += 0.2;
+
+  // Adjust based on AI recommendation alignment
+  if (signal.direction === aiAnalysis.recommendation) confidence += 0.2;
+
+  // Adjust based on market conditions
+  if (aiAnalysis.marketConditions === 'favorable') confidence += 0.1;
+
+  return Math.min(confidence, 1);
+}
+
+export async function processSignal(signal: any) {
+  const analysis = await analyzeSignal(signal);
+  return {
+    ...signal,
+    analysis,
+    takeProfits: signal.takeProfits?.filter(tp => tp !== null) || [signal.takeProfit1],
+    compatibleBrokers: analysis.suggestedBrokers,
+    aiConfidence: analysis.confidence,
+    aiRecommendation: analysis.recommendation
+  };
+}
+
 export async function getSignals(type?: 'crypto' | 'futures' | 'forex') {
   try {
-    const sources = type ? 
-      SIGNAL_SOURCES.filter(s => s.type === type) : 
+    const sources = type ?
+      SIGNAL_SOURCES.filter(s => s.type === type) :
       SIGNAL_SOURCES;
 
     const signals = await Promise.all(
-      sources.map(source => 
+      sources.map(source =>
         sheetsService.getSignals(source.id, source.range)
       )
     );
@@ -576,7 +572,7 @@ function formatSignal(rawSignal: any[]) {
   // Format based on your sheet structure
   return {
     symbol: rawSignal[0],
-    type: rawSignal[1], 
+    type: rawSignal[1],
     entry: rawSignal[2],
     stopLoss: rawSignal[3],
     takeProfit: rawSignal[4],
@@ -642,7 +638,7 @@ function normalizeAction(action: string): 'buy' | 'sell' | 'neutral' {
   if (['buy', 'long', 'bullish', 'call', 'purchase', 'up', 'enter long', 'open long', 'entry long'].some(term => normalized.includes(term))) {
     return 'buy';
   }
-  // Sell signals 
+  // Sell signals
   else if (['sell', 'short', 'bearish', 'put', 'down', 'enter short', 'open short', 'entry short'].some(term => normalized.includes(term))) {
     return 'sell';
   }

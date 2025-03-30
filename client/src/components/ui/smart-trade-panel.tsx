@@ -42,26 +42,63 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
     initializeBrokerConnection();
   }, [isAuthenticated, aggregator]);
 
-  const executeTrade = async () => {
-    if (!connectedBroker || !aggregator) {
-      toast.error('No broker connected');
+  const executeTrade = async (signal) => { // Updated executeTrade to accept signal
+    if (!signal || !signal.compatibleBrokers?.length) {
+      toast.error("No compatible brokers found for this signal");
       return;
     }
-    
+
+    // Filter connected brokers by compatibility
+    const compatibleConnectedBrokers = signal.compatibleBrokers.filter(
+      broker => brokerAggregatorService.isConnected(broker)
+    );
+
+    if (!compatibleConnectedBrokers.length) {
+      toast.error("Please connect to a compatible broker first");
+      return;
+    }
+
+    // Placeholder for AI analysis -  Replace with actual AI analysis logic
+    const aiAnalysis = {
+      confidence: Math.random(), // Placeholder confidence (0-1)
+      recommendation: Math.random() > 0.5 ? 'Buy' : 'Sell', // Placeholder recommendation
+      marketConditions: 'Neutral' // Placeholder market conditions
+    };
+
+    // Show AI analysis before execution
+    const confirmExecution = await Dialog.confirm({
+      title: "AI Signal Analysis",
+      content: `
+        Confidence: ${ (aiAnalysis.confidence * 100).toFixed(1) }%
+        Recommendation: ${ aiAnalysis.recommendation }
+        Market Conditions: ${ aiAnalysis.marketConditions }
+
+        Execute trade?
+      `
+    });
+
+    if (!confirmExecution) return;
+
+
+    const broker = compatibleConnectedBrokers[0]; // Select the first compatible broker
+
     try {
-      // Execute trade through broker
-      const tradeResult = await aggregator.executeTrade(orderState);
-      
+      // Execute trade through broker, using signal data.  Adapt as needed for your broker API.
+      const tradeResult = await aggregator.executeTrade({...orderState, ...signal, broker});
+
       // Log trade to database
       const trade = {
-        symbol: orderState.symbol,
-        side: orderState.side,
-        quantity: parseFloat(orderState.quantity),
-        entryPrice: parseFloat(orderState.price),
+        symbol: signal.symbol,
+        side: signal.side,
+        quantity: parseFloat(signal.quantity),
+        entryPrice: parseFloat(signal.price),
         leverage: 1,
-        active: true
+        active: true,
+        broker: broker,
+        aiConfidence: aiAnalysis.confidence,
+        aiRecommendation: aiAnalysis.recommendation
       };
-      
+
       await fetch('/api/journal/trades', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -72,18 +109,6 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
     } catch (error) {
       console.error('Trade execution failed:', error);
       toast.error('Failed to execute trade');
-    }
-
-    try {
-      const order = {
-        ...orderState,
-        broker: connectedBroker
-      };
-      
-      const result = await aggregator.submitOrder(order);
-      toast.success(`Order submitted: ${result.orderId}`);
-    } catch (error) {
-      toast.error('Trade execution failed: ' + error.message);
     }
   };
 

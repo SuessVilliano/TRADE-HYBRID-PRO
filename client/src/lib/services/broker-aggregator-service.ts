@@ -1,9 +1,25 @@
-
 import { toast } from 'sonner';
 
-class BrokerAggregatorService {
+export interface BrokerAssetSupport {
+  futures: boolean;
+  crypto: boolean;
+  forex: boolean;
+  dex: boolean;
+}
+
+export class BrokerAggregatorService {
   private connectedBrokers: Map<string, any> = new Map();
-  
+  private brokerAssetSupport: Map<string, BrokerAssetSupport> = new Map([
+    ['ninjatrader', { futures: true, crypto: false, forex: false, dex: false }],
+    ['tradovate', { futures: true, crypto: false, forex: false, dex: false }],
+    ['topstep', { futures: true, crypto: false, forex: false, dex: false }],
+    ['alpaca', { futures: false, crypto: true, forex: false, dex: false }],
+    ['kraken', { futures: false, crypto: true, forex: false, dex: false }],
+    ['mt4', { futures: false, crypto: false, forex: true, dex: false }],
+    ['mt5', { futures: false, crypto: false, forex: true, dex: false }],
+    ['oanda', { futures: false, crypto: false, forex: true, dex: false }]
+  ]);
+
   async connectBroker(brokerId: string) {
     try {
       // Implementation for broker connection
@@ -12,9 +28,9 @@ class BrokerAggregatorService {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ brokerId })
       });
-      
+
       if (!response.ok) throw new Error('Failed to connect broker');
-      
+
       const connection = await response.json();
       this.connectedBrokers.set(brokerId, connection);
       return true;
@@ -117,11 +133,21 @@ class BrokerAggregatorService {
   private apiCredentials: { [brokerId: string]: ApiCredentials } = {};
   private activeConnections: Set<string> = new Set();
   private isTestnet: boolean = true;
-  
+  private brokerAssetSupport: Map<string, BrokerAssetSupport> = new Map([
+    ['ninjatrader', { futures: true, crypto: false, forex: false, dex: false }],
+    ['tradovate', { futures: true, crypto: false, forex: false, dex: false }],
+    ['topstep', { futures: true, crypto: false, forex: false, dex: false }],
+    ['alpaca', { futures: false, crypto: true, forex: false, dex: false }],
+    ['kraken', { futures: false, crypto: true, forex: false, dex: false }],
+    ['mt4', { futures: false, crypto: false, forex: true, dex: false }],
+    ['mt5', { futures: false, crypto: false, forex: true, dex: false }],
+    ['oanda', { futures: false, crypto: false, forex: true, dex: false }]
+  ]);
+
   constructor() {
     this.loadCredentials();
   }
-  
+
   // Load credentials from storage
   private loadCredentials(): void {
     try {
@@ -133,32 +159,32 @@ class BrokerAggregatorService {
       console.error('Failed to load API credentials:', error);
     }
   }
-  
+
   // Check if we have credentials for a specific broker
   public hasCredentials(brokerId: string): boolean {
     return !!this.apiCredentials[brokerId];
   }
-  
+
   // Get available brokers that have credentials
   public getAvailableBrokers(): string[] {
     return Object.keys(this.apiCredentials);
   }
-  
+
   // Private broker service instances
   private brokerServices: Map<string, BrokerService | TradingViewService> = new Map();
-  
+
   // Connect to a broker
   public async connectToBroker(brokerId: string): Promise<boolean> {
     try {
       if (!this.hasCredentials(brokerId)) {
         throw new Error(`No credentials found for broker: ${brokerId}`);
       }
-      
+
       const credentials = this.apiCredentials[brokerId];
-      
+
       // Create appropriate broker service based on the broker ID
       let success = false;
-      
+
       switch (brokerId) {
         case 'tradelocker':
           if (credentials.apiKey && credentials.clientId) {
@@ -171,7 +197,7 @@ class BrokerAggregatorService {
             success = true;
           }
           break;
-          
+
         case 'tradingview':
           if (credentials.apiKey && credentials.userId) {
             const tradingViewService = createTradingViewService(
@@ -182,7 +208,7 @@ class BrokerAggregatorService {
             this.brokerServices.set(brokerId, tradingViewService);
           }
           break;
-          
+
         case 'ninjatrader':
           if (credentials.apiKey && credentials.accountId) {
             // Convert isTestnet to boolean with a default of true
@@ -200,7 +226,7 @@ class BrokerAggregatorService {
             success = true;
           }
           break;
-          
+
         case 'tradovate':
           if (credentials.apiKey && credentials.userId && credentials.password) {
             // Convert isTestnet to boolean with a default of true
@@ -219,7 +245,7 @@ class BrokerAggregatorService {
             success = true;
           }
           break;
-          
+
         case 'kraken':
           if (credentials.apiKey && credentials.privateKey) {
             console.log('Connecting to Kraken API');
@@ -250,7 +276,7 @@ class BrokerAggregatorService {
             success = true;
           }
           break;
-          
+
         case 'tradestation':
           if (credentials.apiKey && credentials.accessToken && credentials.accountId) {
             // Convert isTestnet to boolean with a default of true
@@ -269,7 +295,7 @@ class BrokerAggregatorService {
             success = true;
           }
           break;
-          
+
         // Handle other broker types here as they are implemented
         // For now, succeed for any other brokers to maintain existing functionality
         default:
@@ -277,7 +303,7 @@ class BrokerAggregatorService {
           success = true;
           break;
       }
-      
+
       if (success) {
         this.activeConnections.add(brokerId);
         return true;
@@ -289,7 +315,7 @@ class BrokerAggregatorService {
       return false;
     }
   }
-  
+
   // Disconnect from a broker
   public disconnectFromBroker(brokerId: string): void {
     try {
@@ -297,7 +323,7 @@ class BrokerAggregatorService {
       if (this.brokerServices.has(brokerId)) {
         // Get the service to clean up
         const service = this.brokerServices.get(brokerId);
-        
+
         // If it's a TradingView service with active subscriptions, handle that
         if (brokerId === 'tradingview') {
           // No specific cleanup needed for TradingView service yet
@@ -309,46 +335,46 @@ class BrokerAggregatorService {
           const brokerService = service as BrokerService;
           console.log(`Disconnected from ${brokerId} service`);
         }
-        
+
         // Remove from the broker services map
         this.brokerServices.delete(brokerId);
       }
-      
+
       // Remove from active connections
       this.activeConnections.delete(brokerId);
-      
+
       console.log(`Successfully disconnected from ${brokerId}`);
     } catch (error) {
       console.error(`Error disconnecting from ${brokerId}:`, error);
     }
   }
-  
+
   // Check if connected to a broker
   public isConnectedToBroker(brokerId: string): boolean {
     return this.activeConnections.has(brokerId);
   }
-  
+
   // Set testnet mode
   public setTestnetMode(isTestnet: boolean): void {
     this.isTestnet = isTestnet;
   }
-  
+
   // Set API credentials for a broker
   public async setApiCredentials(brokerId: string, credentials: Record<string, any>): Promise<void> {
     try {
       // Update the stored credentials
       this.apiCredentials[brokerId] = credentials;
-      
+
       // Save to local storage for persistence
       localStorage.setItem(API_KEYS_STORAGE_KEY, JSON.stringify(this.apiCredentials));
-      
+
       // Handle testnet mode if specified in credentials
       if ('isTestnet' in credentials) {
         this.setTestnetMode(!!credentials.isTestnet);
       }
-      
+
       console.log(`Updated API credentials for ${brokerId}`);
-      
+
       // If we're already connected to this broker, disconnect and reconnect with new credentials
       if (this.isConnectedToBroker(brokerId)) {
         console.log(`Reconnecting to ${brokerId} with updated credentials`);
@@ -360,33 +386,33 @@ class BrokerAggregatorService {
       throw error;
     }
   }
-  
+
   // Get account balances from a specific broker
   public async getAccountBalances(brokerId: string): Promise<AccountBalance[]> {
     try {
       if (!this.isConnectedToBroker(brokerId)) {
         await this.connectToBroker(brokerId);
       }
-      
+
       // Check if we have a real service implementation for this broker
       if (this.brokerServices.has(brokerId)) {
         const service = this.brokerServices.get(brokerId);
-        
+
         // For any broker service (TradeLocker, NinjaTrader, Tradovate, Tastyworks, TradeStation, Kraken)
         if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate' || 
              brokerId === 'tastyworks' || brokerId === 'tradestation' || brokerId === 'kraken') && service) {
           console.log(`Getting real account balances from ${brokerId}`);
           // Use the broker service to get balances
           const brokerService = service as BrokerService;
-          
+
           try {
             // Get balance from the broker service
             const brokerBalance = await brokerService.getBalance();
-            
+
             // Convert broker service balance to our AccountBalance format
             if (brokerBalance) {
               const balances: AccountBalance[] = [];
-              
+
               // Add USD/cash balance
               balances.push({
                 asset: 'USD',
@@ -394,7 +420,7 @@ class BrokerAggregatorService {
                 locked: 0,
                 total: brokerBalance.cash
               });
-              
+
               // If we have positions value, add it as a summarized entry
               if (brokerBalance.positions > 0) {
                 balances.push({
@@ -404,7 +430,7 @@ class BrokerAggregatorService {
                   total: brokerBalance.positions
                 });
               }
-              
+
               if (balances.length > 0) {
                 return balances;
               }
@@ -415,7 +441,7 @@ class BrokerAggregatorService {
           }
         }
       }
-      
+
       // If no real broker service or the call failed, return mock data
       console.log(`Using simulated account balances for ${brokerId}`);
       if (brokerId === 'alpaca') {
@@ -434,31 +460,31 @@ class BrokerAggregatorService {
       throw error;
     }
   }
-  
+
   // Get market data from a specific broker
   public async getMarketData(brokerId: string, symbol: string, timeframe: string): Promise<MarketData[]> {
     try {
       if (!this.isConnectedToBroker(brokerId)) {
         await this.connectToBroker(brokerId);
       }
-      
+
       // Check if we have a real service implementation for this broker
       if (this.brokerServices.has(brokerId)) {
         const service = this.brokerServices.get(brokerId);
-        
+
         if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate' || 
              brokerId === 'tastyworks' || brokerId === 'tradestation' || brokerId === 'kraken') && service) {
           console.log(`Getting market data from ${brokerId} for ${symbol}`);
           // Use the broker service to get market data
           const brokerService = service as BrokerService;
-          
+
           // Create an array to store the market data points
           const marketDataPoints: MarketData[] = [];
-          
+
           // Set up a temporary callback to collect the data
           await new Promise<void>((resolve) => {
             let dataReceived = false;
-            
+
             // Subscribe to market data
             brokerService.subscribeToMarketData(symbol, (data) => {
               // Convert broker service data to our MarketData format
@@ -471,18 +497,18 @@ class BrokerAggregatorService {
                 volume: data.volume || 0,
                 timestamp: data.timestamp
               });
-              
+
               dataReceived = true;
-              
+
               // After receiving some data, resolve the promise
               if (marketDataPoints.length >= 10 || dataReceived) {
                 resolve();
-                
+
                 // Unsubscribe after getting the data
                 brokerService.unsubscribeFromMarketData(symbol);
               }
             });
-            
+
             // Set a timeout in case no data is received
             setTimeout(() => {
               if (!dataReceived) {
@@ -491,7 +517,7 @@ class BrokerAggregatorService {
               }
             }, 5000);
           });
-          
+
           if (marketDataPoints.length > 0) {
             return marketDataPoints;
           }
@@ -501,17 +527,17 @@ class BrokerAggregatorService {
           console.log(`Getting market data from TradingView for ${symbol}`);
           // For TradingView, we use a different approach since it's not a BrokerService
           const tradingViewService = service as TradingViewService;
-          
+
           // Get chart data from TradingView
           const to = Math.floor(Date.now() / 1000);
           const from = to - (3600 * 24); // Last 24 hours
-          
+
           // Convert interval to TradingView format
           const resolution = this.convertTimeframeToResolution(timeframe);
-          
+
           try {
             const chartData = await tradingViewService.getChartData(symbol, resolution, from, to);
-            
+
             if (chartData && chartData.s === 'ok' && chartData.t && chartData.t.length > 0) {
               // Convert TradingView chart data to our format
               return chartData.t.map((timestamp: number, index: number) => ({
@@ -530,7 +556,7 @@ class BrokerAggregatorService {
           }
         }
       }
-      
+
       // If we don't have a real service or the service call failed, use mock data
       console.log(`Using mock market data for ${symbol} (${brokerId})`);
       return this.generateMockMarketData(symbol, 100);
@@ -539,7 +565,7 @@ class BrokerAggregatorService {
       throw error;
     }
   }
-  
+
   // Helper to convert our timeframe format to TradingView resolution format
   private convertTimeframeToResolution(timeframe: string): string {
     switch (timeframe.toLowerCase()) {
@@ -555,21 +581,21 @@ class BrokerAggregatorService {
       default: return '60'; // Default to 1 hour
     }
   }
-  
+
   // Place an order with a specific broker
   public async placeOrder(brokerId: string, order: OrderDetails): Promise<TradeUpdate> {
     try {
       if (!this.isConnectedToBroker(brokerId)) {
         await this.connectToBroker(brokerId);
       }
-      
+
       // Check if we have a real service implementation for this broker
       if (this.brokerServices.has(brokerId) && (brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate' ||
           brokerId === 'tastyworks' || brokerId === 'tradestation' || brokerId === 'kraken')) {
         const service = this.brokerServices.get(brokerId) as BrokerService;
-        
+
         console.log(`Placing real order with ${brokerId} for ${order.symbol}`);
-        
+
         try {
           // Convert our order format to broker service format
           const orderType = order.type === 'market' ? 'market' as const : 'limit' as const;
@@ -580,10 +606,10 @@ class BrokerAggregatorService {
             type: orderType,
             limitPrice: order.price
           };
-          
+
           // Place the order using the broker service
           const orderId = await service.placeOrder(brokerOrder);
-          
+
           // Return a success response with the order ID
           return {
             id: orderId,
@@ -600,7 +626,7 @@ class BrokerAggregatorService {
           // Fall back to mock order if the real order fails
         }
       }
-      
+
       // If no real broker service or the call failed, return mock data
       console.log(`Using simulated order for ${order.symbol} (${brokerId})`);
       return {
@@ -618,28 +644,28 @@ class BrokerAggregatorService {
       throw error;
     }
   }
-  
+
   // Get open positions from a specific broker
   public async getPositions(brokerId: string): Promise<TradePosition[]> {
     try {
       if (!this.isConnectedToBroker(brokerId)) {
         await this.connectToBroker(brokerId);
       }
-      
+
       // Check if we have a real service implementation for this broker
       if (this.brokerServices.has(brokerId)) {
         const service = this.brokerServices.get(brokerId);
-        
+
         if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate' || 
              brokerId === 'tastyworks' || brokerId === 'tradestation' || brokerId === 'kraken') && service) {
           console.log(`Getting real positions from ${brokerId}`);
           // Use the broker service to get positions
           const brokerService = service as BrokerService;
-          
+
           try {
             // Get positions from the broker service
             const brokerPositions = await brokerService.getPositions();
-            
+
             // Convert broker service positions to our TradePosition format
             if (brokerPositions && brokerPositions.length > 0) {
               return brokerPositions.map(pos => ({
@@ -657,7 +683,7 @@ class BrokerAggregatorService {
           }
         }
       }
-      
+
       // If no real broker service or the call failed, return mock data
       console.log(`Using simulated positions for ${brokerId}`);
       if (brokerId === 'alpaca') {
@@ -676,35 +702,35 @@ class BrokerAggregatorService {
       throw error;
     }
   }
-  
+
   // Get order history from a specific broker
   public async getOrderHistory(brokerId: string, symbol?: string): Promise<TradeUpdate[]> {
     try {
       if (!this.isConnectedToBroker(brokerId)) {
         await this.connectToBroker(brokerId);
       }
-      
+
       // Check if we have a real service implementation for this broker
       if (this.brokerServices.has(brokerId)) {
         const service = this.brokerServices.get(brokerId);
-        
+
         if ((brokerId === 'tradelocker' || brokerId === 'ninjatrader' || brokerId === 'tradovate' || 
              brokerId === 'tastyworks' || brokerId === 'tradestation' || brokerId === 'kraken') && service) {
           console.log(`Getting real order history from ${brokerId}`);
           // Use the broker service to get order history
           const brokerService = service as BrokerService;
-          
+
           try {
             // Get order history from the broker service
             const brokerOrders = await brokerService.getOrderHistory();
-            
+
             // Convert broker service orders to our TradeUpdate format
             if (brokerOrders && brokerOrders.length > 0) {
               // Filter by symbol if specified
               const filteredOrders = symbol 
                 ? brokerOrders.filter(order => order.symbol === symbol)
                 : brokerOrders;
-                
+
               return filteredOrders.map(order => ({
                 id: order.orderId,
                 symbol: order.symbol,
@@ -722,7 +748,7 @@ class BrokerAggregatorService {
           }
         }
       }
-      
+
       // If no real broker service or the call failed, return mock data
       console.log(`Using simulated order history for ${brokerId}`);
       return this.generateMockOrderHistory(symbol);
@@ -731,7 +757,7 @@ class BrokerAggregatorService {
       throw error;
     }
   }
-  
+
   // Helper to map broker order status to our status format
   private mapOrderStatus(brokerStatus: string): TradeUpdate['status'] {
     switch (brokerStatus.toLowerCase()) {
@@ -749,26 +775,26 @@ class BrokerAggregatorService {
         return 'pending';
     }
   }
-  
+
   // Helper to generate mock market data
   private generateMockMarketData(symbol: string, count: number): MarketData[] {
     const data: MarketData[] = [];
     let basePrice = this.getBasePrice(symbol);
-    
+
     for (let i = 0; i < count; i++) {
       const timestamp = Date.now() - (count - i) * 60000; // One minute intervals
       const volatility = this.getVolatility(symbol);
-      
+
       // Simulate price movement
       const change = basePrice * volatility * (Math.random() * 2 - 1);
       basePrice += change;
-      
+
       const open = basePrice;
       const close = basePrice + basePrice * volatility * (Math.random() * 0.5 - 0.25);
       const high = Math.max(open, close) + basePrice * volatility * Math.random();
       const low = Math.min(open, close) - basePrice * volatility * Math.random();
       const volume = Math.floor(Math.random() * 1000) + 100;
-      
+
       data.push({
         symbol,
         open,
@@ -779,15 +805,15 @@ class BrokerAggregatorService {
         timestamp
       });
     }
-    
+
     return data;
   }
-  
+
   // Helper to generate mock order history
   private generateMockOrderHistory(symbol?: string): TradeUpdate[] {
     const orders: TradeUpdate[] = [];
     const symbols = symbol ? [symbol] : ['BTC/USD', 'ETH/USD', 'AAPL', 'MSFT', 'EUR/USD'];
-    
+
     for (let i = 0; i < 10; i++) {
       const orderSymbol = symbols[Math.floor(Math.random() * symbols.length)];
       const side = Math.random() > 0.5 ? 'buy' : 'sell';
@@ -795,7 +821,7 @@ class BrokerAggregatorService {
       const quantity = parseFloat((Math.random() * 10).toFixed(2));
       const statuses: TradeUpdate['status'][] = ['filled', 'partial_fill', 'canceled', 'rejected'];
       const status = statuses[Math.floor(Math.random() * (statuses.length - 1))]; // Bias towards filled
-      
+
       orders.push({
         id: `order-${Date.now() - i * 1000000}`,
         symbol: orderSymbol,
@@ -807,15 +833,15 @@ class BrokerAggregatorService {
         fee: quantity * price * 0.001
       });
     }
-    
+
     return orders;
   }
-  
+
   // Get a random price for a symbol
   private getRandomPrice(symbol: string): number {
     return this.getBasePrice(symbol) * (1 + (Math.random() * 0.1 - 0.05));
   }
-  
+
   // Get a base price for a symbol
   private getBasePrice(symbol: string): number {
     if (symbol.includes('BTC')) return 50000 + Math.random() * 10000;
@@ -830,7 +856,7 @@ class BrokerAggregatorService {
     if (symbol.includes('USD/JPY')) return 150 + Math.random() * 5;
     return 100 + Math.random() * 50;
   }
-  
+
   // Get volatility for a symbol
   private getVolatility(symbol: string): number {
     if (symbol.includes('BTC')) return 0.03;
@@ -840,7 +866,7 @@ class BrokerAggregatorService {
     if (symbol.includes('EUR/USD') || symbol.includes('GBP/USD')) return 0.005;
     return 0.02;
   }
-  
+
   // Mock balance data for Alpaca
   private getMockAlpacaBalances(): AccountBalance[] {
     return [
@@ -850,7 +876,7 @@ class BrokerAggregatorService {
       { asset: 'TSLA', free: 3, locked: 0, total: 3 }
     ];
   }
-  
+
   // Mock balance data for Binance
   private getMockBinanceBalances(): AccountBalance[] {
     return [
@@ -860,7 +886,7 @@ class BrokerAggregatorService {
       { asset: 'SOL', free: 25, locked: 0, total: 25 }
     ];
   }
-  
+
   // Mock balance data for Oanda
   private getMockOandaBalances(): AccountBalance[] {
     return [
@@ -870,7 +896,7 @@ class BrokerAggregatorService {
       { asset: 'JPY', free: 0, locked: 0, total: 0 }
     ];
   }
-  
+
   // Mock balance data for Kraken
   private getMockKrakenBalances(): AccountBalance[] {
     return [
@@ -881,7 +907,7 @@ class BrokerAggregatorService {
       { asset: 'DOT', free: 150, locked: 0, total: 150 }
     ];
   }
-  
+
   // Mock position data for Alpaca
   private getMockAlpacaPositions(): TradePosition[] {
     return [
@@ -903,7 +929,7 @@ class BrokerAggregatorService {
       }
     ];
   }
-  
+
   // Mock position data for Binance
   private getMockBinancePositions(): TradePosition[] {
     return [
@@ -927,7 +953,7 @@ class BrokerAggregatorService {
       }
     ];
   }
-  
+
   // Mock position data for Oanda
   private getMockOandaPositions(): TradePosition[] {
     return [
@@ -949,7 +975,7 @@ class BrokerAggregatorService {
       }
     ];
   }
-  
+
   // Mock position data for Kraken
   private getMockKrakenPositions(): TradePosition[] {
     return [
@@ -1012,16 +1038,16 @@ export const brokerAggregatorService = {
     // Implement price comparison logic
     return [];
   },
-  
+
   async getBrokerPriceComparisons(symbol: string): Promise<BrokerComparison[]> {
     // In a real app, this would fetch data from actual brokers
     // For now, we'll generate realistic test data
     try {
       console.log(`Fetching price comparisons for ${symbol}`);
-      
+
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       // Determine base price for the symbol
       let basePrice = 0;
       if (symbol.includes('BTC')) basePrice = 53420 + (Math.random() * 1000 - 500);
@@ -1030,14 +1056,14 @@ export const brokerAggregatorService = {
       else if (symbol === 'MSFT') basePrice = 415.8 + (Math.random() * 3 - 1.5);
       else if (symbol.includes('EUR/USD')) basePrice = 1.0920 + (Math.random() * 0.005 - 0.0025);
       else basePrice = 100 + (Math.random() * 10 - 5);
-      
+
       // Generate broker prices with realistic variations
       const brokers = ['alpaca', 'binance', 'oanda', 'ironbeam', 'kraken', 'coinbase', 'ninjatrader', 'tradovate'];
       const prices: BrokerPrice[] = brokers.map(broker => {
         // Different brokers have slightly different prices
         const variation = (Math.random() * 0.02 - 0.01); // -1% to +1%
         const price = basePrice * (1 + variation);
-        
+
         // Different brokers have different spreads
         let spread;
         if (symbol.includes('BTC') || symbol.includes('ETH')) {
@@ -1047,17 +1073,17 @@ export const brokerAggregatorService = {
         } else {
           spread = price * (0.0005 + Math.random() * 0.001); // 0.05% to 0.15%
         }
-        
+
         // Get the broker reliability score
         // Define supported broker IDs for type safety
         const isSupportedBroker = (brokerId: string): brokerId is keyof typeof ABATEV_CONFIG.BROKER_RELIABILITY_SCORES => {
           return brokerId in ABATEV_CONFIG.BROKER_RELIABILITY_SCORES;
         };
-        
+
         const reliabilityScore = isSupportedBroker(broker) 
           ? ABATEV_CONFIG.BROKER_RELIABILITY_SCORES[broker]
           : 85; // Default score for unknown brokers
-        
+
         return {
           brokerId: broker,
           price,
@@ -1065,7 +1091,7 @@ export const brokerAggregatorService = {
           score: reliabilityScore
         };
       });
-      
+
       return [{
         symbol,
         timestamp: Date.now(),
@@ -1076,15 +1102,15 @@ export const brokerAggregatorService = {
       throw new Error('Failed to fetch broker comparison data');
     }
   },
-  
+
   // Store broker credentials and attempt connection
   async storeBrokerCredentials(brokerId: string, credentials: any): Promise<boolean> {
     try {
       console.log(`Storing credentials for broker ${brokerId}`);
-      
+
       // Store the API credentials
       await brokerAggregator.setApiCredentials(brokerId, credentials);
-      
+
       // Try to connect with the stored credentials
       return await brokerAggregator.connectToBroker(brokerId);
     } catch (error) {
