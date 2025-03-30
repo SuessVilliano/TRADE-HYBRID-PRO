@@ -147,9 +147,17 @@ export function WalletConnect() {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
+  import { useWeb3Modal } from '@web3modal/wagmi/react'
+import { useAccount, useDisconnect } from 'wagmi'
+
+export default function WalletConnect() {
+  const { open } = useWeb3Modal()
+  const { address, isConnected } = useAccount()
+  const { disconnect } = useDisconnect()
+  
   return (
     <div className="relative">
-      {connected && walletAddress ? (
+      {isConnected && address ? (
         // Connected state
         <ContextualTooltip
           id="wallet-connected-tooltip"
