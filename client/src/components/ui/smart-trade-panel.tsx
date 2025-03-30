@@ -47,6 +47,32 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
       toast.error('No broker connected');
       return;
     }
+    
+    try {
+      // Execute trade through broker
+      const tradeResult = await aggregator.executeTrade(orderState);
+      
+      // Log trade to database
+      const trade = {
+        symbol: orderState.symbol,
+        side: orderState.side,
+        quantity: parseFloat(orderState.quantity),
+        entryPrice: parseFloat(orderState.price),
+        leverage: 1,
+        active: true
+      };
+      
+      await fetch('/api/journal/trades', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(trade)
+      });
+
+      toast.success('Trade executed and logged successfully');
+    } catch (error) {
+      console.error('Trade execution failed:', error);
+      toast.error('Failed to execute trade');
+    }
 
     try {
       const order = {

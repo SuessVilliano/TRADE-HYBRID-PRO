@@ -1,33 +1,32 @@
 
-import { db } from '../storage';
-import type { Request, Response } from 'express';
-import { journalEntries, tradePerformance } from '../../shared/schema';
+import { trades } from '@shared/schema';
+import { db } from '../lib/db';
+import { Router } from 'express';
 
-export async function saveJournalEntry(req: Request, res: Response) {
+const router = Router();
+
+// Get all trades
+router.get('/trades', async (req, res) => {
   try {
-    const entry = req.body;
-    const result = await db.insert(journalEntries).values({
-      userId: req.user.id,
-      content: entry.content,
-      hybridScore: entry.hybridScore,
-      sentiment: entry.sentiment,
-      aiAnalysis: entry.aiAnalysis
-    }).returning();
-
-    res.json(result[0]);
+    const allTrades = await db.select().from(trades);
+    res.json(allTrades);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to save journal entry' });
+    res.status(500).json({ error: 'Failed to fetch trades' });
   }
-}
+});
 
-export async function getJournalEntries(req: Request, res: Response) {
+// Add new trade
+router.post('/trades', async (req, res) => {
   try {
-    const entries = await db.select().from(journalEntries)
-      .where(eq(journalEntries.userId, req.user.id))
-      .orderBy(desc(journalEntries.createdAt));
-    
-    res.json(entries);
+    const trade = await db.insert(trades).values({
+      ...req.body,
+      userId: req.user?.id || 1, // Default to user 1 if not authenticated
+      createdAt: new Date(),
+    });
+    res.json(trade);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch journal entries' });
+    res.status(500).json({ error: 'Failed to save trade' });
   }
-}
+});
+
+export default router;
