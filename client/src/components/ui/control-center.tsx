@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { ConnectBrokerModal } from '@/components/broker/connect-broker-modal';
 import { brokerService } from '@/lib/services/broker-service';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { useDashboardLayout, LayoutItem } from '@/lib/stores/useDashboardLayout';
 
 // Lazy load the components
 const TradingViewWidgetLazy = React.lazy(() => import('./TradingViewWidget'));
@@ -73,7 +74,8 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
   const [minimizedPanels, setMinimizedPanels] = useState<string[]>([]);
   const [maximizedPanel, setMaximizedPanel] = useState<string | null>(null);
   const [layout, setLayout] = useState<'grid' | 'vertical' | 'horizontal'>('grid');
-  
+  const { layouts, updateLayout } = useDashboardLayout();
+
   // Define all available panels
   const allPanels: Record<PanelType, PanelDefinition> = {
     'chart': {
@@ -345,31 +347,44 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
     }
   };
 
-  // Initialize active panels based on props
+  // Initialize active panels based on props and load from localStorage
   useEffect(() => {
-    setActivePanels(initialPanels.map(type => allPanels[type].id));
-  }, [initialPanels]);
+    const savedPanels = layouts;
+    if (savedPanels.length > 0) {
+      setActivePanels(savedPanels.map(item => item.type));
+    } else {
+      setActivePanels(initialPanels.map(type => allPanels[type].id));
+    }
+  }, [initialPanels, layouts]);
 
   // Handler to toggle panel visibility
   const togglePanel = (panelId: string) => {
-    if (activePanels.includes(panelId)) {
-      setActivePanels(activePanels.filter(id => id !== panelId));
+    const panelIndex = activePanels.indexOf(panelId);
+    const updatedPanels = [...activePanels];
+
+    if (panelIndex === -1) {
+      updatedPanels.push(panelId);
     } else {
-      setActivePanels([...activePanels, panelId]);
+      updatedPanels.splice(panelIndex, 1);
     }
+    setActivePanels(updatedPanels);
   };
 
   // Handler to minimize/restore panel
   const toggleMinimize = (panelId: string) => {
-    if (minimizedPanels.includes(panelId)) {
-      setMinimizedPanels(minimizedPanels.filter(id => id !== panelId));
+    const panelIndex = minimizedPanels.indexOf(panelId);
+    const updatedPanels = [...minimizedPanels];
+
+    if (panelIndex === -1) {
+      updatedPanels.push(panelId);
     } else {
-      setMinimizedPanels([...minimizedPanels, panelId]);
-      
-      // If this panel was maximized, un-maximize it
-      if (maximizedPanel === panelId) {
-        setMaximizedPanel(null);
-      }
+      updatedPanels.splice(panelIndex, 1);
+    }
+    setMinimizedPanels(updatedPanels);
+
+    // If this panel was maximized, un-maximize it
+    if (maximizedPanel === panelId) {
+      setMaximizedPanel(null);
     }
   };
 
@@ -379,14 +394,14 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
       setMaximizedPanel(null);
     } else {
       setMaximizedPanel(panelId);
-      
+
       // If this panel was minimized, un-minimize it
       if (minimizedPanels.includes(panelId)) {
         setMinimizedPanels(minimizedPanels.filter(id => id !== panelId));
       }
     }
   };
-  
+
   // Handle drag and drop reordering
   const onDragEnd = (result: any) => {
     // Dropped outside the list
@@ -407,7 +422,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
   const [compactMode, setCompactMode] = useState<boolean>(
     typeof window !== 'undefined' && window.innerWidth < 768 // Default to compact on small screens
   );
-  
+
   // Define brokers for the connect broker modal
   const brokers = [
     // Crypto brokers
@@ -434,7 +449,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
       type: 'stocks' as const,
     }
   ];
-  
+
   // Increase number of tools shown per device size
   const toolsPerView = typeof window !== 'undefined' 
     ? window.innerWidth < 500 
@@ -445,33 +460,33 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
       ? (compactMode ? 12 : 8) // Medium devices
     : (compactMode ? 15 : 10) // Large devices and up
     : 8; // Server-side default
-  
+
   // Add resize listener to adjust compact mode based on screen size
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     const handleResize = () => {
       if (window.innerWidth < 768 && !compactMode) {
         setCompactMode(true);
       }
     };
-    
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [compactMode]);
-  
+
   const panelsArray = Object.values(allPanels);
-  
+
   // Scroll tools left
   const scrollToolsLeft = () => {
     setToolScrollIndex(prev => Math.max(0, prev - 1));
   };
-  
+
   // Scroll tools right
   const scrollToolsRight = () => {
     setToolScrollIndex(prev => Math.min(panelsArray.length - toolsPerView, prev + 1));
   };
-  
+
   return (
     <div className={cn("flex flex-col h-full", className)}>
       {/* Toolbar */}
@@ -502,7 +517,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
             Horiz
           </Button>
         </div>
-        
+
         <div className="flex items-center flex-1 ml-2">
           {toolScrollIndex > 0 && (
             <Button 
@@ -514,7 +529,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
               <span className="text-sm">←</span>
             </Button>
           )}
-          
+
           <div className="flex items-center ml-1">
             <Button
               variant="outline"
@@ -526,7 +541,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
               {compactMode ? "+" : "-"}
             </Button>
           </div>
-          
+
           <div className="flex space-x-1 overflow-hidden flex-1">
             {panelsArray.slice(toolScrollIndex, toolScrollIndex + toolsPerView).map(panel => (
               <Button
@@ -545,7 +560,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
               </Button>
             ))}
           </div>
-          
+
           {toolScrollIndex < panelsArray.length - toolsPerView && (
             <Button 
               variant="ghost" 
@@ -556,7 +571,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
               <span className="text-sm">→</span>
             </Button>
           )}
-          
+
           {/* Broker Connection Button - placed at the end of the toolbar */}
           <div className="ml-auto flex items-center">
             <ConnectBrokerModal 
@@ -573,7 +588,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
           </div>
         </div>
       </div>
-      
+
       {/* Panels Container with Drag and Drop */}
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="droppable-panels" 
@@ -597,10 +612,10 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
               {activePanels.map((panelId, index) => {
                 const panel = Object.values(allPanels).find(p => p.id === panelId);
                 if (!panel) return null;
-                
+
                 // Skip rendering minimized panels in the main container
                 if (minimizedPanels.includes(panelId)) return null;
-                
+
                 // Don't make maximized panels draggable
                 if (maximizedPanel === panel.id) {
                   return (
@@ -623,7 +638,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
                     </div>
                   );
                 }
-                
+
                 return (
                   <Draggable key={panel.id} draggableId={panel.id} index={index}>
                     {(provided, snapshot) => (
@@ -668,14 +683,14 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
           )}
         </Droppable>
       </DragDropContext>
-      
+
       {/* Minimized Panels Bar */}
       {minimizedPanels.length > 0 && (
         <div className="flex space-x-2 bg-slate-800 border-t border-slate-700 p-2">
           {minimizedPanels.map(panelId => {
             const panel = Object.values(allPanels).find(p => p.id === panelId);
             if (!panel) return null;
-            
+
             return (
               <Button
                 key={panel.id}
