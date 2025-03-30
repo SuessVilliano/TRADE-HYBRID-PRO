@@ -1,6 +1,8 @@
 import React from 'react';
 import { PopupContainer } from '../components/ui/popup-container';
 import { AIMarketAnalysis } from '../components/ui/ai-market-analysis';
+import { TradeHybridAgentsIframe, TradeHybridAgentsModal } from '../components/ui/trade-hybrid-agents-iframe';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 
 export default function AIMarketAnalysisPage() {
   return (
@@ -8,13 +10,48 @@ export default function AIMarketAnalysisPage() {
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold mb-4">AI Agents</h1>
         <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-          Get advanced AI-powered market analysis and trading suggestions for any trading instrument.
+          Get advanced AI-powered market analysis, trading suggestions, and chat with our AI agents.
         </p>
       </div>
       
-      <PopupContainer padding>
-        <AIMarketAnalysis />
-      </PopupContainer>
+      <Tabs defaultValue="analysis" className="w-full mb-8">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="analysis">Market Analysis</TabsTrigger>
+          <TabsTrigger value="chat-agents">AI Chat Agents</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="analysis" className="mt-0">
+          <PopupContainer padding>
+            <AIMarketAnalysis />
+          </PopupContainer>
+        </TabsContent>
+        
+        <TabsContent value="chat-agents" className="mt-0">
+          <PopupContainer padding>
+            <div className="space-y-6">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold mb-2">Trade Hybrid AI Chat Agents</h2>
+                <p className="text-slate-300">
+                  Our AI Chat Agents provide personalized trading assistance, market insights, and answer your questions in real-time.
+                </p>
+              </div>
+              
+              <TradeHybridAgentsIframe />
+              
+              <div className="text-center mt-4">
+                <p className="text-sm text-slate-400 mb-2">
+                  Want a better experience? Open in full screen mode:
+                </p>
+                <TradeHybridAgentsModal />
+              </div>
+              
+              <p className="text-sm text-slate-400 text-center mt-2">
+                Or <a href="https://tradehybridagents.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">visit the site directly</a> in a new tab
+              </p>
+            </div>
+          </PopupContainer>
+        </TabsContent>
+      </Tabs>
       
       <div className="mt-8 max-w-3xl mx-auto">
         <h2 className="text-2xl font-bold mb-4">About AI Agents</h2>
