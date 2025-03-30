@@ -1,0 +1,15 @@
+https://openai.github.io/openai-agents-python/ for voice agents and commands we can use openai , https://platform.openai.com/docs/guides/voice-agents.
+
+I also want to add to our Learning are, We need to add a pop up that has an audio player that can be resized because we have a music platform where we want to share trade music and trade podcasts. Heres a podcast we want embedded https://wattbaa.profit-vibe.com/playlist/5/trading-for-freedom-podcast-series <iframe width="100%" height="450" scrolling="no" frameborder="no" allow="autoplay" src="https://wattbaa.profit-vibe.com/playlist/5/trading-for-freedom-podcast-series/embed"></iframe>. Then we have a music playlist https://wattbaa.profit-vibe.com/playlist/4/trade-music <iframe width="100%" height="450" scrolling="no" frameborder="no" allow="autoplay" src="https://wattbaa.profit-vibe.com/playlist/4/trade-music/embed"></iframe>
+
+3 hours ago
+JJ
+
+liv8ent
+Also I love the affiliate matrix but Ibelieve for It to be attractive 2.5 percent needs to be raised to getting 100 percent when someone opens up their board, then for the slots that pass up 100 percent passes up so ultimately our company will always get passed up payments bc we started It this will Incentivize people to build bc they are earning larger payouts, please Include any small fees or what we need In the smart contract to split payments directly to affilaites wallet and our companies
+
+3 hours ago
+JJ
+
+liv8ent
+Ive learned that we can use google sheets to receive the signals and for you to use for trade signals versus the webhook. We have 3 sheets for signals : Hybrid ai (futures) which Is our NQ ai bot Paradox (crypto), and Solaris (Forex) . Ive added my google sheet client Id and connected replit so you should see It. Ialso added google and open ai keys externally so we shouldnt have Issues with ai working I then app. We can use google sheets as a data base to store trades users enter so we can cross reference the data with brokers If ever we have any Isuess , also this will make It easy for our company to have one main account that enters trades on brokers from users entries that hit the google sheet , so ultimately users can trade using company funds but track It all Individually and we can use that for our trade journal and performance for traders
