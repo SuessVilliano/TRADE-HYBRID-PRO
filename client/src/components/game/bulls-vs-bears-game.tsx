@@ -48,6 +48,146 @@ function Floor() {
   );
 }
 
+// Trading Desk component
+function TradingDesk({ position }: { position: [number, number, number] }) {
+  const ref = useRef<THREE.Group>(null);
+  const [modelLoaded, setModelLoaded] = useState(false);
+  const { scene: deskModel } = useGLTF('/models/modern_trading_desk.glb') as GLTF & {
+    scene: THREE.Group
+  };
+  
+  useEffect(() => {
+    if (deskModel) {
+      setModelLoaded(true);
+      console.log("Trading desk model loaded successfully");
+    }
+  }, [deskModel]);
+  
+  return (
+    <group ref={ref} position={position} scale={[2.5, 2.5, 2.5]}>
+      {modelLoaded && deskModel ? (
+        <Suspense fallback={
+          <mesh castShadow>
+            <boxGeometry args={[1, 0.5, 1]} />
+            <meshStandardMaterial color="#4a4a4a" />
+          </mesh>
+        }>
+          <primitive 
+            object={deskModel.clone()} 
+            castShadow 
+            receiveShadow 
+          />
+        </Suspense>
+      ) : (
+        <mesh castShadow>
+          <boxGeometry args={[1, 0.5, 1]} />
+          <meshStandardMaterial color="#4a4a4a" />
+        </mesh>
+      )}
+    </group>
+  );
+}
+
+// Market Price Board component
+function MarketPriceBoard({ position, price }: { position: [number, number, number], price: number }) {
+  const ref = useRef<THREE.Group>(null);
+  const [modelLoaded, setModelLoaded] = useState(false);
+  const { scene: boardModel } = useGLTF('/models/market_price_board.glb') as GLTF & {
+    scene: THREE.Group
+  };
+  
+  useEffect(() => {
+    if (boardModel) {
+      setModelLoaded(true);
+      console.log("Market price board model loaded successfully");
+    }
+  }, [boardModel]);
+  
+  return (
+    <group ref={ref} position={position} scale={[2, 2, 2]}>
+      {modelLoaded && boardModel ? (
+        <Suspense fallback={
+          <mesh castShadow>
+            <boxGeometry args={[2, 1, 0.2]} />
+            <meshStandardMaterial color="#2c3e50" />
+          </mesh>
+        }>
+          <primitive 
+            object={boardModel.clone()} 
+            castShadow 
+            receiveShadow 
+          />
+        </Suspense>
+      ) : (
+        <mesh castShadow>
+          <boxGeometry args={[2, 1, 0.2]} />
+          <meshStandardMaterial color="#2c3e50" />
+        </mesh>
+      )}
+      <Text
+        position={[0, 0, 0.5]}
+        rotation={[0, 0, 0]}
+        fontSize={0.5}
+        color="white"
+        anchorX="center"
+        anchorY="middle"
+      >
+        ${price.toFixed(2)}
+      </Text>
+    </group>
+  );
+}
+
+// Trader Character component
+function TraderCharacter({ position }: { position: [number, number, number] }) {
+  const ref = useRef<THREE.Group>(null);
+  const [modelLoaded, setModelLoaded] = useState(false);
+  const { scene: traderModel } = useGLTF('/models/simple_trader.glb') as GLTF & {
+    scene: THREE.Group
+  };
+  
+  useEffect(() => {
+    if (traderModel) {
+      setModelLoaded(true);
+      console.log("Trader character model loaded successfully");
+    }
+  }, [traderModel]);
+  
+  return (
+    <group ref={ref} position={position} scale={[2, 2, 2]}>
+      {modelLoaded && traderModel ? (
+        <Suspense fallback={
+          <mesh castShadow>
+            <capsuleGeometry args={[0.3, 1, 8, 16]} />
+            <meshStandardMaterial color="#3498db" />
+          </mesh>
+        }>
+          <primitive 
+            object={traderModel.clone()} 
+            castShadow 
+            receiveShadow 
+          />
+        </Suspense>
+      ) : (
+        <mesh castShadow>
+          <capsuleGeometry args={[0.3, 1, 8, 16]} />
+          <meshStandardMaterial color="#3498db" />
+        </mesh>
+      )}
+      <Text
+        position={[0, 1.5, 0]}
+        rotation={[0, 0, 0]}
+        fontSize={0.3}
+        color="white"
+        anchorX="center"
+        anchorY="middle"
+      >
+        TRADER
+      </Text>
+    </group>
+  );
+}
+
 // Bull character
 function Bull({ position }: { position: [number, number, number] }) {
   const ref = useRef<THREE.Group>(null);
@@ -127,7 +267,7 @@ function GameScene() {
   
   // Position the camera on first render
   useEffect(() => {
-    camera.position.set(10, 10, 10);
+    camera.position.set(15, 15, 15);
     camera.lookAt(0, 0, 0);
   }, [camera]);
   
@@ -153,27 +293,27 @@ function GameScene() {
       {/* Floor */}
       <Floor />
       
+      {/* Trading desk at center */}
+      <TradingDesk position={[0, 0, 0]} />
+      
+      {/* Market price board above the desk */}
+      <MarketPriceBoard 
+        position={[0, 5, 0]} 
+        price={gameState.currentPrice} 
+      />
+      
+      {/* Trader character at the desk */}
+      <TraderCharacter position={[0, 0, 3]} />
+      
       {/* Market Trend Indicator */}
       <MarketTrendIndicator 
-        position={[0, 5, 0]} 
+        position={[0, 8, 0]} 
         color={indicatorColor} 
       />
       
       {/* Bull and Bear characters positioned on opposite sides */}
-      <Bull position={[5, 0, 0]} />
-      <Bear position={[-5, 0, 0]} />
-      
-      {/* Central price display */}
-      <Text
-        position={[0, 7, 0]}
-        rotation={[0, 0, 0]}
-        fontSize={1}
-        color="white"
-        anchorX="center"
-        anchorY="middle"
-      >
-        ${gameState.currentPrice.toFixed(2)}
-      </Text>
+      <Bull position={[8, 0, 0]} />
+      <Bear position={[-8, 0, 0]} />
       
       {/* Allow user to control camera */}
       <OrbitControls 
@@ -181,7 +321,7 @@ function GameScene() {
         enableZoom={true} 
         enableRotate={true} 
         minDistance={5}
-        maxDistance={20}
+        maxDistance={25}
       />
     </>
   );
@@ -192,6 +332,9 @@ export function BullsVsBearsGame() {
   // Preload 3D models
   useGLTF.preload('/models/bull_mascot.glb');
   useGLTF.preload('/models/bear_mascot.glb');
+  useGLTF.preload('/models/modern_trading_desk.glb');
+  useGLTF.preload('/models/market_price_board.glb');
+  useGLTF.preload('/models/simple_trader.glb');
 
   return (
     <div className="bulls-vs-bears-game-container" style={{ width: '100%', height: '80vh' }}>
