@@ -1,5 +1,6 @@
 import { BrokerService, MarketData, AccountBalance, BrokerPosition, OrderHistory } from './broker-service';
 import { check_secrets } from '../utils';
+import { config } from '../config';
 
 interface AlpacaQuote {
   symbol: string;
@@ -26,8 +27,8 @@ export class AlpacaService implements BrokerService {
   constructor(apiKey?: string, secretKey?: string) {
     this.baseUrl = 'https://paper-api.alpaca.markets/v2';
     this.headers = {
-      'APCA-API-KEY-ID': apiKey || process.env.ALPACA_API_KEY || '',
-      'APCA-API-SECRET-KEY': secretKey || process.env.ALPACA_API_SECRET || '',
+      'APCA-API-KEY-ID': apiKey || config.ALPACA_API_KEY || '',
+      'APCA-API-SECRET-KEY': secretKey || config.ALPACA_API_SECRET || '',
       'Content-Type': 'application/json'
     };
   }
@@ -158,8 +159,8 @@ export class HybridHoldingsService implements BrokerService {
         if (!hasSecrets) {
           throw new Error('Alpaca API keys not found in environment variables');
         }
-        this.apiKey = process.env.ALPACA_API_KEY || '';
-        this.apiSecret = process.env.ALPACA_API_SECRET || '';
+        this.apiKey = config.ALPACA_API_KEY || '';
+        this.apiSecret = config.ALPACA_API_SECRET || '';
       } catch (error) {
         console.error('Failed to retrieve Alpaca API keys:', error);
         throw error;

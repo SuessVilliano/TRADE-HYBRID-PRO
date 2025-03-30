@@ -130,8 +130,8 @@ export class KrakenService implements BrokerService {
         if (!hasKeys) {
           throw new Error('Kraken API credentials not found in environment variables');
         }
-        this.apiKey = process.env.KRAKEN_API_KEY || '';
-        this.privateKey = process.env.KRAKEN_PRIVATE_KEY || '';
+        this.apiKey = config.KRAKEN_API_KEY || '';
+        this.privateKey = config.KRAKEN_PRIVATE_KEY || '';
       } catch (error) {
         console.error('Failed to retrieve Kraken API credentials:', error);
         throw error;

@@ -5,6 +5,7 @@
 
 import axios from 'axios';
 import { UserExperienceLevel } from '../context/FeatureDisclosureProvider';
+import { config } from '../config';
 
 interface WhopMembershipStatus {
   isActive: boolean;
@@ -20,7 +21,7 @@ class WhopService {
   
   constructor() {
     // Use the provided API key from environment
-    this.apiKey = process.env.WHOP_API_KEY || 'ydROZr0J1kv7LZyMGepujMx7vNrZIC-chXf7lBWIJXE';
+    this.apiKey = config.WHOP_API_KEY || 'ydROZr0J1kv7LZyMGepujMx7vNrZIC-chXf7lBWIJXE';
     
     if (!this.apiKey) {
       console.error('Whop API key not configured properly');

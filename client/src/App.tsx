@@ -47,7 +47,7 @@ const LoginPage = lazy(() => import('./pages/login')); // Added import for Login
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
 import { MicroLearningTipRenderer } from './components/ui/micro-learning-tip-renderer';
-import { ToastProvider } from './components/ui/toaster';
+import { ToastProvider, default as Toaster } from './components/ui/toaster';
 import { NotificationListener } from './components/ui/notification-listener';
 import { FeatureDisclosureProvider, useFeatureDisclosure, UserExperienceLevel } from './lib/context/FeatureDisclosureProvider';
 import { ExperienceLevelSelector } from './components/ui/interactive-tutorial';
