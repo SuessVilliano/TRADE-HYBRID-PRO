@@ -6,7 +6,7 @@ export default function AIMarketAnalysisPage() {
   return (
     <div className="container mx-auto py-8 px-4 min-h-screen">
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-4">AI Market Analysis</h1>
+        <h1 className="text-4xl font-bold mb-4">AI Agents</h1>
         <p className="text-xl text-slate-300 max-w-3xl mx-auto">
           Get advanced AI-powered market analysis and trading suggestions for any trading instrument.
         </p>
@@ -17,7 +17,7 @@ export default function AIMarketAnalysisPage() {
       </PopupContainer>
       
       <div className="mt-8 max-w-3xl mx-auto">
-        <h2 className="text-2xl font-bold mb-4">About AI Market Analysis</h2>
+        <h2 className="text-2xl font-bold mb-4">About AI Agents</h2>
         <div className="space-y-4 text-slate-300">
           <p>
             Our AI Market Analysis tool provides deep insights into market conditions using advanced machine learning algorithms trained on millions of historical price patterns and market events.
