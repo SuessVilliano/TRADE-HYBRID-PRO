@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 export default function TradeRunnerWebBrowserPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [url, setUrl] = useState('https://tradehybrid.io/trade-runner');
+  const [url, setUrl] = useState('https://app.tradehybrid.club/51411/traderunners');
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export default function TradeRunnerWebBrowserPage() {
               <span className="ml-2">Trade Runner</span>
             </Link>
             <Link to="/trade-runner-browser" className="flex items-center px-3 py-2 text-white bg-blue-600 rounded-md">
-              <span className="ml-2">Trade Runner Browser</span>
+              <span className="ml-2">Trade Runner</span>
             </Link>
             <Link to="/bulls-vs-bears" className="flex items-center px-3 py-2 text-white hover:bg-slate-700 rounded-md">
               <span className="ml-2">Bulls vs Bears</span>
@@ -72,8 +72,8 @@ export default function TradeRunnerWebBrowserPage() {
           <PopupContainer padding>
             <Tabs defaultValue="browser" className="w-full">
               <TabsList className="mb-4">
-                <TabsTrigger value="browser">Browser</TabsTrigger>
-                <TabsTrigger value="info">About Trade Runner Browser</TabsTrigger>
+                <TabsTrigger value="browser">Trade Runner</TabsTrigger>
+                <TabsTrigger value="info">About Trade Runner</TabsTrigger>
               </TabsList>
               
               <TabsContent value="browser" className="h-full">
@@ -125,10 +125,10 @@ export default function TradeRunnerWebBrowserPage() {
               
               <TabsContent value="info">
                 <Card className="p-6">
-                  <h2 className="text-2xl font-bold mb-4">About Trade Runner Browser</h2>
+                  <h2 className="text-2xl font-bold mb-4">About Trade Runner</h2>
                   <p className="mb-4">
-                    Trade Runner Browser allows you to access the full Trade Runner application directly within 
-                    the Trade Hybrid platform. This embedded browser provides a seamless experience without 
+                    Trade Runner allows you to access the full Trade Runner application directly within 
+                    the Trade Hybrid platform. This provides a seamless experience without 
                     having to switch between different applications.
                   </p>
                   
@@ -142,7 +142,7 @@ export default function TradeRunnerWebBrowserPage() {
                   
                   <h3 className="text-xl font-semibold mt-6 mb-3">How To Use</h3>
                   <p className="mb-4">
-                    Simply navigate through the embedded browser just as you would with the standalone version. 
+                    Simply navigate through the Trade Runner interface just as you would with the standalone version. 
                     All features and functionality are preserved while maintaining integration with the Trade Hybrid 
                     ecosystem.
                   </p>

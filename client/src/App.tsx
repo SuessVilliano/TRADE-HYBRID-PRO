@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { PopupContainer } from './components/ui/popup-container';
 import NFTMarketplace from './pages/nft-marketplace';
 import { Button } from './components/ui/button';
@@ -50,6 +50,17 @@ import { NotificationListener } from './components/ui/notification-listener';
 import { FeatureDisclosureProvider, useFeatureDisclosure, UserExperienceLevel } from './lib/context/FeatureDisclosureProvider';
 import { ExperienceLevelSelector } from './components/ui/interactive-tutorial';
 import { RouteGated } from './components/ui/feature-gated';
+
+// Simple redirect component
+function RedirectComponent({ targetPath }: { targetPath: string }) {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.location.href = targetPath;
+    }
+  }, [targetPath]);
+  
+  return null;
+}
 
 
 
@@ -180,7 +191,7 @@ function AppContent() {
               <Link to="/trading-signals" className="hover:text-blue-400 transition-colors">Signals</Link>
               <Link to="/app" className="hover:text-blue-400 transition-colors">App</Link>
               <Link to="/affiliate" className="hover:text-blue-400 transition-colors">Affiliate</Link>
-              <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Trade Runner</Link>
+              <Link to="/trade-runner-browser" className="hover:text-blue-400 transition-colors">Trade Runner</Link>
               <Link to="/bulls-vs-bears" className="hover:text-blue-400 transition-colors">Bulls vs Bears</Link>
             </nav>
           </div>
@@ -344,17 +355,9 @@ function AppContent() {
               {typeof window !== 'undefined' && <TradeJournalSimple />}
             </Suspense>
           } />
+          {/* Redirect from /trade-runner to /trade-runner-browser */}
           <Route path="/trade-runner" element={
-            <Suspense fallback={
-              <div className="flex items-center justify-center h-screen">
-                <div className="text-center">
-                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <p className="text-slate-300">Loading the Trade Runner game...</p>
-                </div>
-              </div>
-            }>
-              {typeof window !== 'undefined' && <TradeRunner />}
-            </Suspense>
+            <Navigate to="/trade-runner-browser" replace />
           } />
           <Route path="/trade-runner-browser" element={
             <Suspense fallback={
@@ -640,11 +643,6 @@ function Home() {
         <FeatureCard 
           title="Trade Runner"
           description="Test your trading skills in our gamified trading simulator. Compete on the leaderboard and earn rewards."
-          linkTo="/trade-runner"
-        />
-        <FeatureCard 
-          title="Trade Runner Browser"
-          description="Access the Trade Runner web app directly within our platform through a secure embedded browser."
           linkTo="/trade-runner-browser"
         />
         <FeatureCard 
