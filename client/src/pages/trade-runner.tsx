@@ -1,10 +1,18 @@
 import React from 'react';
-import { PopupContainer } from '@/components/ui/popup-container';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
+import { PopupContainer } from '../components/ui/popup-container';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import TradeRunner from '../components/game/TradeRunner';
-import { BullsVsBearsGame } from '../components/game/bulls-vs-bears-game';
+
+function openTradeRunnerWindow() {
+  const width = 1200;
+  const height = 800;
+  const left = (window.screen.width - width) / 2;
+  const top = (window.screen.height - height) / 2;
+
+  window.open('/trade-runner-browser', 'TradeRunner', 
+    `width=${width},height=${height},left=${left},top=${top}`);
+}
 
 export default function GameCenterPage() {
   return (
@@ -16,84 +24,49 @@ export default function GameCenterPage() {
             <Link to="/trade-runner" className="flex items-center px-3 py-2 text-white bg-blue-600 rounded-md">
               <span className="ml-2">Trading Games</span>
             </Link>
+            <div className="ml-4 mt-2 space-y-1">
+              <button onClick={openTradeRunnerWindow} className="w-full text-left px-3 py-2 text-white hover:bg-slate-700 rounded-md">
+                Trade Runner
+              </button>
+              <Link to="/bulls-vs-bears" className="block px-3 py-2 text-white hover:bg-slate-700 rounded-md">
+                Bulls vs Bears
+              </Link>
+            </div>
             <Link to="/educational-games" className="flex items-center px-3 py-2 text-white hover:bg-slate-700 rounded-md">
               <span className="ml-2">Educational Games</span>
             </Link>
+            <div className="ml-4 mt-2">
+              <Link to="/trade-simulator" className="block px-3 py-2 text-white hover:bg-slate-700 rounded-md">
+                Trade Simulator
+              </Link>
+            </div>
           </nav>
         </div>
-        
+
         <div className="flex-1">
           <PopupContainer padding>
-            <Tabs defaultValue="trade-runner" className="w-full">
+            <Tabs defaultValue="info" className="w-full">
               <TabsList className="mb-4">
-                <TabsTrigger value="trade-runner">Trade Runner</TabsTrigger>
-                <TabsTrigger value="bulls-bears">Bulls vs Bears</TabsTrigger>
                 <TabsTrigger value="info">About Game Center</TabsTrigger>
                 <TabsTrigger value="tools">Trading Tools</TabsTrigger>
               </TabsList>
-              
-              <TabsContent value="trade-runner" className="h-full">
-                <TradeRunner />
-              </TabsContent>
-              
-              <TabsContent value="bulls-bears" className="h-full">
-                <BullsVsBearsGame />
-              </TabsContent>
-              
-              <TabsContent value="info">
-                <Card className="p-6">
-                  <h2 className="text-2xl font-bold mb-4">About Game Center</h2>
-                  <p className="mb-4">Game Center combines our immersive trading games in one place, helping you learn trading concepts while having fun. These gamified trading experiences provide realistic simulations with game elements to make learning engaging.</p>
-                  
-                  <h3 className="text-xl font-semibold mt-6 mb-3">Available Games</h3>
-                  <ul className="list-disc pl-5 space-y-2">
-                    <li><strong>Trade Runner</strong> - A gamified trading experience with real-time market data visualization and trading challenges</li>
-                    <li><strong>Bulls vs Bears</strong> - An immersive 3D trading game where you join the epic battle between market bulls and bears</li>
+
+              <TabsContent value="info" className="h-full">
+                <div className="prose prose-invert max-w-none">
+                  <h2>Welcome to the Game Center</h2>
+                  <p>Choose from our selection of trading games and educational tools to enhance your trading skills.</p>
+                  <ul>
+                    <li>Trade Runner - Practice real-time trading scenarios</li>
+                    <li>Bulls vs Bears - Test your market prediction skills</li>
+                    <li>Trade Simulator - Learn trading basics in a risk-free environment</li>
                   </ul>
-                  
-                  <h3 className="text-xl font-semibold mt-6 mb-3">Key Features</h3>
-                  <ul className="list-disc pl-5 space-y-2">
-                    <li>Real-time market data visualization</li>
-                    <li>Trading challenges with leaderboards</li>
-                    <li>Educational missions to improve trading skills</li>
-                    <li>Risk-free practice with virtual currency</li>
-                    <li>Social features to compete with friends</li>
-                  </ul>
-                  
-                  <h3 className="text-xl font-semibold mt-6 mb-3">Integration with Trade Hybrid</h3>
-                  <p>All games in the Game Center are fully integrated with the Trade Hybrid platform. Your progress, achievements, and learning path are synchronized across all platform components, providing a unified trading education experience.</p>
-                </Card>
+                </div>
               </TabsContent>
-              
-              <TabsContent value="tools">
-                <Card className="p-6">
-                  <h2 className="text-2xl font-bold mb-4">Trading Tools</h2>
-                  <p className="mb-4">Trade Runner offers several powerful tools to enhance your trading experience:</p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                    <div className="border rounded-lg p-4 bg-slate-50 dark:bg-slate-800 dark:border-slate-700">
-                      <h3 className="font-semibold text-lg mb-2">Pattern Recognition</h3>
-                      <p>Automatically identify common chart patterns to improve trade entry and exit points.</p>
-                    </div>
-                    
-                    <div className="border rounded-lg p-4 bg-slate-50 dark:bg-slate-800 dark:border-slate-700">
-                      <h3 className="font-semibold text-lg mb-2">Risk Calculator</h3>
-                      <p>Calculate position size based on your risk tolerance and account size.</p>
-                    </div>
-                    
-                    <div className="border rounded-lg p-4 bg-slate-50 dark:bg-slate-800 dark:border-slate-700">
-                      <h3 className="font-semibold text-lg mb-2">Trading Journal</h3>
-                      <p>Track your trades and analyze performance with detailed metrics.</p>
-                    </div>
-                    
-                    <div className="border rounded-lg p-4 bg-slate-50 dark:bg-slate-800 dark:border-slate-700">
-                      <h3 className="font-semibold text-lg mb-2">Market Scanner</h3>
-                      <p>Find trading opportunities based on your preferred strategies and indicators.</p>
-                    </div>
-                  </div>
-                  
-                  <p className="mt-6">Access these tools while playing the game to maximize your learning and trading performance.</p>
-                </Card>
+
+              <TabsContent value="tools" className="h-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Add trading tools here */}
+                </div>
               </TabsContent>
             </Tabs>
           </PopupContainer>
