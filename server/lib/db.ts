@@ -1,19 +1,19 @@
 
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import { neon, neonConfig } from '@neondatabase/serverless';
 
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is required');
 }
 
-// Create connection pool
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 10
-});
+// Configure neon
+neonConfig.fetchConnectionCache = true;
 
-// Create drizzle database instance
-export const db = drizzle(pool);
+// Create neon SQL instance
+const sql = neon(process.env.DATABASE_URL);
 
-// Export pool for direct queries if needed
-export { pool };
+// Create drizzle database instance - fix typing issues with 'as any'
+export const db = drizzle(sql as any);
+
+// Export sql client for direct queries if needed
+export { sql as pool };

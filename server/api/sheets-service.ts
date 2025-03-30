@@ -1,7 +1,23 @@
 import { google } from 'googleapis';
-import { prisma } from '../lib/db';
+import { db } from '../lib/db';
 import { BrokerService } from '../lib/services/broker-service';
-import { SheetsSignal, SignalSource } from '../types';
+
+// Define types locally since we can't import them
+export interface SheetsSignal {
+  symbol: string;
+  type: string;
+  entry: number;
+  stopLoss: number;
+  takeProfit: number;
+  timestamp: Date;
+}
+
+export interface SignalSource {
+  name: string;
+  sheetId: string;
+  range: string;
+  defaultBroker: string;
+}
 
 
 export class SheetsService {
@@ -56,5 +72,5 @@ export const SIGNAL_SOURCES: SignalSource[] = [
   }
 ];
 
-//This needs to be adapted or removed completely depending on how processSignals is used.
-//export const sheetsService = new SheetsService();
+//This is needed by the signals.ts module
+export const sheetsService = new SheetsService();
