@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { PanelContainer } from './panel-container';
-import { LineChart, BarChart3, Signal, Bot, HelpCircle, BookOpen, Users, Cpu, MessageSquare, Calendar, BarChart, Sparkles, Grid, Activity, Waves } from 'lucide-react';
+import { LineChart, BarChart3, Signal, Bot, HelpCircle, BookOpen, Users, Cpu, MessageSquare, Calendar, BarChart, Sparkles, Grid, Activity, Waves, Link2 } from 'lucide-react';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
+import { ConnectBrokerModal } from '@/components/broker/connect-broker-modal';
+import { brokerService } from '@/lib/services/broker-service';
 
 // Lazy load the components
 const TradingViewWidgetLazy = React.lazy(() => import('./TradingViewWidget'));
 const AIAssistantLazy = React.lazy(() => import('./ai-trade-assistant'));
-const TradingSignalsLazy = React.lazy(() => import('./TradingSignals'));
+const TradingSignalsLazy = React.lazy(() => import('@/components/trade/trade-signals-panel'));
 const CopyTradingLazy = React.lazy(() => import('./CopyTrading'));
-const SmartTradePanelLazy = React.lazy(() => import('./smart-trade-panel').then(module => ({ default: module.SmartTradePanel })));
+const SmartTradePanelLazy = React.lazy(() => import('@/components/trade/abatev-trade-panel'));
 const TradingBotsManagerLazy = React.lazy(() => import('./trading-bots-manager').then(module => ({ default: module.TradingBotsManager })));
 const TradingCompanionChatbotLazy = React.lazy(() => import('./trading-companion-chatbot'));
 const EconomicCalendarLazy = React.lazy(() => import('./economic-calendar'));
@@ -390,6 +392,33 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
     typeof window !== 'undefined' && window.innerWidth < 768 // Default to compact on small screens
   );
   
+  // Define brokers for the connect broker modal
+  const brokers = [
+    // Crypto brokers
+    {
+      id: 'binance',
+      name: 'Binance',
+      type: 'crypto' as const,
+    },
+    {
+      id: 'coinbase',
+      name: 'Coinbase',
+      type: 'crypto' as const,
+    },
+    // Forex brokers
+    {
+      id: 'oanda',
+      name: 'Oanda',
+      type: 'forex' as const,
+    },
+    // Stock brokers
+    {
+      id: 'alpaca',
+      name: 'Alpaca',
+      type: 'stocks' as const,
+    }
+  ];
+  
   // Increase number of tools shown per device size
   const toolsPerView = typeof window !== 'undefined' 
     ? window.innerWidth < 500 
@@ -511,6 +540,21 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
               <span className="text-sm">→</span>
             </Button>
           )}
+          
+          {/* Broker Connection Button - placed at the end of the toolbar */}
+          <div className="ml-auto flex items-center">
+            <ConnectBrokerModal 
+              onConnect={async (brokerId, credentials) => {
+                // Connect the broker using broker service
+                await brokerService.connectBroker(
+                  brokerId,
+                  brokers.find((b: {id: string}) => b.id === brokerId)?.name || "Unknown Broker",
+                  brokers.find((b: {id: string, type: string}) => b.id === brokerId)?.type || "crypto",
+                  credentials
+                );
+              }}
+            />
+          </div>
         </div>
       </div>
       
