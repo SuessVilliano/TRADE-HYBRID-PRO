@@ -80,10 +80,11 @@ interface AlpacaPosition {
   current_price: string;
 }
 
-export class AlpacaService implements BrokerService {
+export class HybridHoldingsService implements BrokerService {
   private baseUrl: string;
   private dataUrl: string;
   private websocketUrl: string;
+  private analytics: any = {};
   private webSocketConnections: Map<string, WebSocket> = new Map();
   private authenticated: boolean = false;
   

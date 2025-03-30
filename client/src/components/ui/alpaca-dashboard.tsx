@@ -5,9 +5,18 @@ import { DataTable } from "@/components/ui/data-table";
 import { useToast } from "@/components/ui/use-toast";
 import { AlpacaService } from '@/lib/services/alpaca-service';
 
-export const AlpacaDashboard = ({ isAdmin = false }) => {
+import { LineChart, BarChart } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+export const BrokerDashboard = ({ isAdmin = false }) => {
   const [accounts, setAccounts] = useState([]);
   const [positions, setPositions] = useState([]);
+  const [tradeStats, setTradeStats] = useState({
+    totalVolume: 0,
+    profitLoss: 0,
+    winRate: 0,
+    activeTraders: 0
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -40,9 +49,59 @@ export const AlpacaDashboard = ({ isAdmin = false }) => {
     <div className="container mx-auto p-4 space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>{isAdmin ? 'Broker Dashboard' : 'Trading Dashboard'}</CardTitle>
+          <CardTitle>{isAdmin ? 'Hybrid Holdings Broker Portal' : 'Hybrid Holdings Trading Portal'}</CardTitle>
+          <CardDescription>
+            {isAdmin ? 'Comprehensive broker oversight and analytics' : 'Your trading performance and analytics'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
+          <Tabs defaultValue="overview" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="reports">Reports</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">${tradeStats.totalVolume.toLocaleString()}</div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">P&L</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className={`text-2xl font-bold ${tradeStats.profitLoss >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      ${Math.abs(tradeStats.profitLoss).toLocaleString()}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">Win Rate</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{tradeStats.winRate}%</div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">Active Traders</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{tradeStats.activeTraders}</div>
+                  </CardContent>
+                </Card>
+              </div>
           {isAdmin ? (
             <DataTable
               data={accounts}
