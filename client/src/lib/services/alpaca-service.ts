@@ -10,6 +10,63 @@ interface AlpacaQuote {
   timestamp: number;
 }
 
+interface AlpacaTraderAccount {
+  account_id: string;
+  name: string;
+  balance: number;
+  pnl: number;
+  status: string;
+}
+
+// Enhanced AlpacaService with broker capabilities
+export class AlpacaService implements BrokerService {
+  private baseUrl: string;
+  private headers: { [key: string]: string };
+
+  constructor(apiKey?: string, secretKey?: string) {
+    this.baseUrl = 'https://paper-api.alpaca.markets/v2';
+    this.headers = {
+      'APCA-API-KEY-ID': apiKey || process.env.ALPACA_API_KEY || '',
+      'APCA-API-SECRET-KEY': secretKey || process.env.ALPACA_API_SECRET || '',
+      'Content-Type': 'application/json'
+    };
+  }
+
+  async getAllTraderAccounts(): Promise<AlpacaTraderAccount[]> {
+    const response = await fetch(`${this.baseUrl}/accounts`, {
+      headers: this.headers
+    });
+    return response.json();
+  }
+
+  async getAccountBalance(): Promise<AccountBalance> {
+    const response = await fetch(`${this.baseUrl}/account`, {
+      headers: this.headers
+    });
+    const data = await response.json();
+    return {
+      asset: 'USD',
+      free: parseFloat(data.cash),
+      locked: parseFloat(data.locked),
+      total: parseFloat(data.portfolio_value)
+    };
+  }
+
+  async getPositions(): Promise<TradePosition[]> {
+    const response = await fetch(`${this.baseUrl}/positions`, {
+      headers: this.headers
+    });
+    const data = await response.json();
+    return data.map((pos: any) => ({
+      symbol: pos.symbol,
+      side: pos.side as 'long' | 'short',
+      entryPrice: parseFloat(pos.avg_entry_price),
+      size: parseFloat(pos.qty),
+      markPrice: parseFloat(pos.current_price),
+      unrealizedPnl: parseFloat(pos.unrealized_pl)
+    }));
+  }
+
 interface AlpacaPosition {
   asset_id: string;
   symbol: string;
