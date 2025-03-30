@@ -71,6 +71,7 @@
     "express-session": "^1.18.1",
     "framer-motion": "^11.13.1",
     "gl-matrix": "^3.4.3",
+    "googleapis": "^148.0.0",
     "gsap": "^3.12.5",
     "howler": "^2.2.4",
     "input-otp": "^1.2.4",
