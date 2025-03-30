@@ -20,23 +20,78 @@ export class BrokerAggregatorService {
     ['oanda', { futures: false, crypto: false, forex: true, dex: false }]
   ]);
 
-  async connectBroker(brokerId: string) {
+  async connectBroker(brokerId: string, credentials?: any) {
     try {
-      // Implementation for broker connection
+      // First connect via TradingView if supported
+      if (this.isTradingViewSupported(brokerId)) {
+        const tvService = await this.getTradingViewService();
+        const tvConnection = await tvService.connectBroker(brokerId, credentials);
+        if (!tvConnection) {
+          throw new Error('TradingView connection failed');
+        }
+      }
+
+      // Then connect directly to broker API as backup
       const response = await fetch(`/api/broker/connect`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ brokerId })
+        body: JSON.stringify({ brokerId, credentials })
       });
 
       if (!response.ok) throw new Error('Failed to connect broker');
 
       const connection = await response.json();
-      this.connectedBrokers.set(brokerId, connection);
+      this.connectedBrokers.set(brokerId, {
+        ...connection,
+        tradingViewEnabled: this.isTradingViewSupported(brokerId)
+      });
+      
       return true;
     } catch (error) {
       console.error('Broker connection failed:', error);
       return false;
+    }
+  }
+
+  private isTradingViewSupported(brokerId: string): boolean {
+    const supportedBrokers = ['oanda', 'ninjatrader', 'tradovate', 'alpaca'];
+    return supportedBrokers.includes(brokerId.toLowerCase());
+  }
+
+  private async getTradingViewService(): Promise<any> {
+    if (!this.tradingViewService) {
+      // Initialize TradingView service with credentials
+      const tvCredentials = await this.getTradingViewCredentials();
+      this.tradingViewService = createTradingViewService(tvCredentials);
+      await this.tradingViewService.connect();
+    }
+    return this.tradingViewService;
+  }
+
+  async executeTrade(order: any) {
+    const broker = this.connectedBrokers.get(order.broker);
+    if (!broker) throw new Error('Broker not connected');
+
+    try {
+      // Try executing through TradingView first if supported
+      if (broker.tradingViewEnabled) {
+        const tvService = await this.getTradingViewService();
+        const tvResult = await tvService.executeTrade(order);
+        if (tvResult) return tvResult;
+      }
+
+      // Fallback to direct broker API
+      const response = await fetch('/api/broker/trade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order)
+      });
+
+      if (!response.ok) throw new Error('Order submission failed');
+      return await response.json();
+    } catch (error) {
+      console.error('Trade execution failed:', error);
+      throw error;
     }
   }
 
