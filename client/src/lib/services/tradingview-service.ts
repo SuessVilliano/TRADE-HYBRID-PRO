@@ -53,6 +53,67 @@ export class TradingViewService {
   private baseUrl: string = 'https://api.tradingview.com/v1';
   private isConnected: boolean = false;
   private headers: { [key: string]: string } = {};
+  private connectedBrokers: Set<string> = new Set();
+  
+  // Broker integration methods
+  async connectBroker(brokerName: string, credentials: any): Promise<boolean> {
+    try {
+      const response = await axios.post(`${this.baseUrl}/brokers/connect`, {
+        broker: brokerName,
+        credentials
+      }, {
+        headers: this.headers
+      });
+      
+      if (response.status === 200) {
+        this.connectedBrokers.add(brokerName);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error(`Failed to connect to broker ${brokerName}:`, error);
+      return false;
+    }
+  }
+
+  async executeTrade(order: {
+    broker: string,
+    symbol: string,
+    side: 'buy' | 'sell',
+    quantity: number,
+    type: 'market' | 'limit',
+    price?: number
+  }): Promise<boolean> {
+    if (!this.connectedBrokers.has(order.broker)) {
+      throw new Error(`Broker ${order.broker} not connected`);
+    }
+
+    try {
+      const response = await axios.post(`${this.baseUrl}/trading/execute`, order, {
+        headers: this.headers
+      });
+      return response.status === 200;
+    } catch (error) {
+      console.error('Trade execution failed:', error);
+      return false;
+    }
+  }
+
+  async getBrokerPositions(broker: string): Promise<any[]> {
+    if (!this.connectedBrokers.has(broker)) {
+      throw new Error(`Broker ${broker} not connected`);
+    }
+
+    try {
+      const response = await axios.get(`${this.baseUrl}/brokers/${broker}/positions`, {
+        headers: this.headers
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to fetch positions for ${broker}:`, error);
+      return [];
+    }
+  }
 
   constructor(apiKey: string, userId: string) {
     this.apiKey = apiKey;
