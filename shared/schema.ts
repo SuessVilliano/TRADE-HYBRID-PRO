@@ -2,6 +2,74 @@ import { pgTable, text, serial, integer, boolean, timestamp, real, jsonb } from 
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Learning Center Tables
+export const courses = pgTable("courses", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(), // crypto, forex, stocks, etc
+  level: text("level").notNull(), // beginner, intermediate, advanced
+  duration: integer("duration").notNull(), // in minutes
+  points: integer("points").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const lessons = pgTable("lessons", {
+  id: serial("id").primaryKey(),
+  courseId: integer("course_id").notNull().references(() => courses.id),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  videoUrl: text("video_url"),
+  order: integer("order").notNull(),
+  duration: integer("duration").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const quizzes = pgTable("quizzes", {
+  id: serial("id").primaryKey(),
+  lessonId: integer("lesson_id").notNull().references(() => lessons.id),
+  title: text("title").notNull(),
+  questions: jsonb("questions").notNull(),
+  passingScore: integer("passing_score").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const userProgress = pgTable("user_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  courseId: integer("course_id").notNull().references(() => courses.id),
+  lessonId: integer("lesson_id").notNull().references(() => lessons.id),
+  completed: boolean("completed").notNull().default(false),
+  quizScore: integer("quiz_score"),
+  lastAccessed: timestamp("last_accessed").notNull().defaultNow(),
+});
+
+export const certificates = pgTable("certificates", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  courseId: integer("course_id").notNull().references(() => courses.id),
+  issueDate: timestamp("issue_date").notNull().defaultNow(),
+  grade: text("grade").notNull(),
+  certificateUrl: text("certificate_url").notNull(),
+});
+
+export const badges = pgTable("badges", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(),
+  image: text("image").notNull(),
+  requirements: jsonb("requirements").notNull(),
+});
+
+export const userBadges = pgTable("user_badges", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  badgeId: integer("badge_id").notNull().references(() => badges.id),
+  earnedDate: timestamp("earned_date").notNull().defaultNow(),
+});
+
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
