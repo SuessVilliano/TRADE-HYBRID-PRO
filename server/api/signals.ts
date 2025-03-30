@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { sheetsService, SIGNAL_SOURCES } from './sheets-service';
 import { getAIMarketAnalysis } from './ai-market-analysis';
 import { getCurrentPrice } from './market';
-import { SheetsSignal, ProcessedSignal } from '../types';
+import { SheetsSignal, ProcessedSignal } from '../../shared/schema'; // Updated import path
 import { brokerAggregator } from '../lib/broker-aggregator';
 
 interface SignalSource {
@@ -496,6 +496,35 @@ interface SignalAnalysis {
   technicalFactors: string[];
 }
 
+//Import necessary types
+import { SheetsSignal, ProcessedSignal } from '../../shared/schema';
+
+// Function to calculate confidence based on signal direction
+function calculateConfidenceByDirection(signals: any[]): number {
+  const totalSignals = signals.length;
+  if (totalSignals === 0) return 0;
+
+  const positiveSignals = signals.filter(s => s.direction === 'buy').length;
+  return (positiveSignals / totalSignals) * 100;
+}
+
+// Function to calculate confidence with market data
+function calculateConfidenceWithMarketData(signal: any, aiAnalysis: any, marketData: any): number {
+  let confidence = 0.5; // Base confidence
+
+  // Adjust based on price alignment
+  const priceAlignment = Math.abs(signal.entryPrice - marketData.currentPrice) / marketData.currentPrice;
+  if (priceAlignment < 0.001) confidence += 0.2;
+
+  // Adjust based on AI recommendation alignment
+  if (signal.direction === aiAnalysis.recommendation) confidence += 0.2;
+
+  // Adjust based on market conditions
+  if (aiAnalysis.marketConditions === 'favorable') confidence += 0.1;
+
+  return Math.min(confidence, 1);
+}
+
 export async function analyzeSignal(signal: any): Promise<SignalAnalysis> {
   const marketData = await getCurrentPrice(signal.symbol);
   const aiAnalysis = await getAIMarketAnalysis(signal.symbol);
@@ -508,7 +537,7 @@ export async function analyzeSignal(signal: any): Promise<SignalAnalysis> {
   const suggestedBrokers = getBrokersByAssetClass(assetClass);
 
   return {
-    confidence: calculateConfidence(signal, aiAnalysis, marketData),
+    confidence: calculateConfidenceWithMarketData(signal, aiAnalysis, marketData),
     marketConditions: aiAnalysis.marketConditions,
     recommendation: aiAnalysis.recommendation,
     suggestedBrokers,
@@ -529,29 +558,16 @@ function getBrokersByAssetClass(assetClass: string): string[] {
   }
 }
 
-function calculateConfidence(signal: any, aiAnalysis: any, marketData: any): number {
-  let confidence = 0.5; // Base confidence
 
-  // Adjust based on price alignment
-  const priceAlignment = Math.abs(signal.entryPrice - marketData.currentPrice) / marketData.currentPrice;
-  if (priceAlignment < 0.001) confidence += 0.2;
+// Removed duplicate calculateConfidence function
 
-  // Adjust based on AI recommendation alignment
-  if (signal.direction === aiAnalysis.recommendation) confidence += 0.2;
-
-  // Adjust based on market conditions
-  if (aiAnalysis.marketConditions === 'favorable') confidence += 0.1;
-
-  return Math.min(confidence, 1);
-}
 
 export async function processSignal(signal: SheetsSignal): Promise<ProcessedSignal> {
-  const confidence = calculateConfidence(signal);
   const analysis = await analyzeSignal(signal);
 
   return {
     ...signal,
-    confidence,
+    confidence: analysis.confidence,
     analysis,
     compatibleBrokers: [signal.broker],
     processed: true,
@@ -607,24 +623,14 @@ export async function autoExecuteSignal(signal: ProcessedSignal, userId: number)
   }
 }
 
-function calculateConfidence(signal: SheetsSignal): number {
-  // Add your confidence calculation logic
-  return signal.confidence || 75;
-}
+// Removed duplicate calculateConfidence function
 
 function calculatePositionSize(signal: ProcessedSignal, brokerConnection: any): number {
   // Add your position sizing logic based on risk management rules
   return 1.0; // Default to 1 unit for now
 }
 
-async function analyzeSignal(signal: SheetsSignal) {
-  // Add your signal analysis logic
-  return {
-    recommendation: signal.action,
-    reason: `${signal.source} signal for ${signal.symbol}`,
-    riskLevel: 'medium'
-  };
-}
+// Removed duplicate analyzeSignal function
 
 export async function getSignals(type?: 'crypto' | 'futures' | 'forex') {
   try {
@@ -740,19 +746,5 @@ function normalizeAction(action: string): 'buy' | 'sell' | 'neutral' {
   }
 }
 
-function calculateConfidence(signals: any[]): number {
-  const totalSignals = signals.length;
-  if (totalSignals === 0) return 0;
-
-  const positiveSignals = signals.filter(s => s.direction === 'buy').length;
-  return (positiveSignals / totalSignals) * 100;
-}
-
-async function analyzeSignal(signal: any) {
-  const confidence = calculateConfidence([signal]);
-  return {
-    ...signal,
-    confidence,
-    timestamp: new Date().toISOString()
-  };
-}
+//Removed duplicate calculateConfidence function
+//Removed duplicate analyzeSignal function
