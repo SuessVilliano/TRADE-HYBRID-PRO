@@ -9,6 +9,7 @@ import { getSignals, receiveWebhook } from "./api/signals";
 import { getGameLeaderboard, getGamePlayer, submitGameScore } from "./api/game-leaderboard";
 import { getRssFeed, getAvailableSources, getEconomicCalendar } from "./api/rss-feeds";
 import { getAIMarketAnalysis, getTradingSuggestions } from "./api/ai-market-analysis";
+import { saveJournalEntry, getJournalEntries } from "./api/journal";
 import vapiRouter from "./routes/vapi";
 import geminiRouter from "./routes/gemini";
 import { MultiplayerServer } from "./multiplayer";
@@ -104,6 +105,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Market Analysis routes
   app.get("/api/ai/market-analysis", getAIMarketAnalysis);
   app.get("/api/ai/trading-suggestions", getTradingSuggestions);
+  
+  // Journal routes
+  app.post("/api/journal/entries", saveJournalEntry);
+  app.get("/api/journal/entries", getJournalEntries);
   
   // Vapi Voice Assistant routes
   app.use("/api/vapi", vapiRouter);

@@ -111,4 +111,32 @@ export type Bot = typeof bots.$inferSelect;
 export type InsertTradeHouse = z.infer<typeof insertTradeHouseSchema>;
 export type TradeHouse = typeof tradeHouses.$inferSelect;
 
+// Journal entries table
+export const journalEntries = pgTable("journal_entries", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  audioUrl: text("audio_url"),
+  sentiment: text("sentiment"),
+  aiAnalysis: text("ai_analysis"),
+  hybridScore: real("hybrid_score"),
+  tradeIds: integer("trade_ids").array(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const tradePerformance = pgTable("trade_performance", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  period: text("period").notNull(), // daily, weekly, monthly
+  hybridScore: real("hybrid_score").notNull(),
+  winRate: real("win_rate").notNull(),
+  profitFactor: real("profit_factor").notNull(),
+  sharpeRatio: real("sharpe_ratio").notNull(),
+  totalTrades: integer("total_trades").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export type LeaderboardEntry = typeof leaderboardEntries.$inferSelect;
+export type JournalEntry = typeof journalEntries.$inferSelect;
+export type TradePerformance = typeof tradePerformance.$inferSelect;

@@ -1,34 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './card';
-import { ScrollArea } from './scroll-area';
-import { Button } from './button';
-import { Mic, MicOff, Download, LineChart, BrainCircuit } from 'lucide-react';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ChartData
-} from 'chart.js';
 import { Line, Bar } from 'react-chartjs-2';
+import { Button } from './button';
+import { Input } from './input';
+import { Textarea } from './textarea';
+import { Card } from './card';
+import { ScrollArea } from './scroll-area';
+import { Download, Mic, MicOff, Upload } from 'lucide-react';
 import { useTrader } from '@/lib/stores/useTrader';
-
-// Register ChartJS components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 interface JournalEntry {
   id: string;
@@ -37,6 +16,7 @@ interface JournalEntry {
   audioUrl?: string;
   sentiment?: 'positive' | 'negative' | 'neutral';
   aiAnalysis?: string;
+  hybridScore?: number;
   tradeStats?: {
     pnl: number;
     winRate: number;
@@ -47,143 +27,138 @@ interface JournalEntry {
 export function TradeJournal() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [isRecording, setIsRecording] = useState(false);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [hybridScore, setHybridScore] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const { trades, stats } = useTrader();
 
-  // Performance chart data
-  const performanceData: ChartData<'line'> = {
-    labels: trades.map(t => new Date(t.timestamp).toLocaleDateString()),
-    datasets: [{
-      label: 'P&L',
-      data: trades.map(t => t.profit),
-      borderColor: 'rgb(75, 192, 192)',
-      tension: 0.1
-    }]
+  // Calculate Hybrid Score based on multiple factors
+  const calculateHybridScore = () => {
+    const winRateWeight = 0.3;
+    const profitFactorWeight = 0.3;
+    const riskRewardWeight = 0.2;
+    const consistencyWeight = 0.2;
+
+    const winRateScore = stats.winRate * 100;
+    const profitFactorScore = Math.min(stats.profitFactor * 20, 100);
+    const riskRewardScore = Math.min((stats.avgWin / stats.avgLoss) * 25, 100);
+    const consistencyScore = 100 - (Math.abs(stats.variance) * 100);
+
+    return (
+      (winRateScore * winRateWeight) +
+      (profitFactorScore * profitFactorWeight) +
+      (riskRewardScore * riskRewardWeight) +
+      (consistencyScore * consistencyWeight)
+    );
   };
 
-  // Win rate chart data
-  const winRateData: ChartData<'bar'> = {
-    labels: ['Wins', 'Losses'],
-    datasets: [{
-      label: 'Trade Outcomes',
-      data: [stats.winRate * 100, (1 - stats.winRate) * 100],
-      backgroundColor: ['rgba(75, 192, 192, 0.5)', 'rgba(255, 99, 132, 0.5)']
-    }]
+  // Generate PDF Report
+  const generatePDFReport = async () => {
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage();
+    const { width, height } = page.getSize();
+
+    // Add report content
+    page.drawText('Trading Performance Report', {
+      x: 50,
+      y: height - 50,
+      size: 20,
+      font: await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+    });
+
+    page.drawText(`Hybrid Score: ${hybridScore.toFixed(2)}`, {
+      x: 50,
+      y: height - 100,
+      size: 14,
+    });
+
+    // Add performance metrics
+    const metrics = [
+      `Win Rate: ${(stats.winRate * 100).toFixed(2)}%`,
+      `Profit Factor: ${stats.profitFactor.toFixed(2)}`,
+      `Total Trades: ${stats.totalTrades}`,
+      `Net P&L: $${stats.netPnL.toFixed(2)}`,
+    ];
+
+    metrics.forEach((metric, index) => {
+      page.drawText(metric, {
+        x: 50,
+        y: height - 150 - (index * 30),
+        size: 12,
+      });
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'trading-report.pdf';
+    link.click();
   };
 
-  // Handle voice recording
-  const startRecording = async () => {
+  // Save journal entry with performance data
+  const saveJournalEntry = async (content: string) => {
+    const newEntry: JournalEntry = {
+      id: Date.now().toString(),
+      date: new Date(),
+      content,
+      hybridScore: hybridScore,
+      tradeStats: {
+        pnl: stats.netPnL,
+        winRate: stats.winRate,
+        tradesCount: stats.totalTrades
+      }
+    };
+
+    // Save to database
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      const audioChunks: BlobPart[] = [];
+      const response = await fetch('/api/journal/entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newEntry)
+      });
 
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunks.push(event.data);
-      };
-
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-        setAudioBlob(audioBlob);
-        // Here you would typically upload the audio for transcription
-      };
-
-      mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (err) {
-      console.error('Error accessing microphone:', err);
+      if (response.ok) {
+        setEntries([newEntry, ...entries]);
+      }
+    } catch (error) {
+      console.error('Error saving journal entry:', error);
     }
   };
 
-  const stopRecording = () => {
-    mediaRecorderRef.current?.stop();
-    setIsRecording(false);
-  };
+  useEffect(() => {
+    setHybridScore(calculateHybridScore());
+  }, [stats]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Performance Analysis</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="h-[300px]">
-              <Line data={performanceData} options={{ maintainAspectRatio: false }} />
-            </div>
-            <div className="h-[200px]">
-              <Bar data={winRateData} options={{ maintainAspectRatio: false }} />
-            </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+      <Card className="p-4">
+        <h2 className="text-xl font-bold mb-4">Performance Metrics</h2>
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <span>Hybrid Score</span>
+            <span className="text-2xl font-bold">{hybridScore.toFixed(2)}</span>
           </div>
-        </CardContent>
+          <Button onClick={generatePDFReport}>
+            <Download className="w-4 h-4 mr-2" />
+            Export Report
+          </Button>
+        </div>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Trading Journal</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Button
-                onClick={isRecording ? stopRecording : startRecording}
-                variant={isRecording ? "destructive" : "default"}
-              >
-                {isRecording ? (
-                  <>
-                    <MicOff className="h-4 w-4 mr-2" />
-                    Stop Recording
-                  </>
-                ) : (
-                  <>
-                    <Mic className="h-4 w-4 mr-2" />
-                    Record Note
-                  </>
-                )}
-              </Button>
-              <Button variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                Export Journal
-              </Button>
+      <Card className="p-4">
+        <h2 className="text-xl font-bold mb-4">Journal Entries</h2>
+        <ScrollArea className="h-[400px]">
+          {entries.map((entry) => (
+            <div key={entry.id} className="border-b p-4">
+              <div className="flex justify-between">
+                <span>{new Date(entry.date).toLocaleDateString()}</span>
+                <span>Score: {entry.hybridScore?.toFixed(2)}</span>
+              </div>
+              <p className="mt-2">{entry.content}</p>
             </div>
-
-            <ScrollArea className="h-[400px]">
-              {entries.map((entry) => (
-                <div key={entry.id} className="mb-4 p-4 border rounded-lg">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="font-medium">
-                      {entry.date.toLocaleDateString()}
-                    </div>
-                    {entry.sentiment && (
-                      <div className={`text-sm px-2 py-1 rounded ${
-                        entry.sentiment === 'positive' ? 'bg-green-100 text-green-800' :
-                        entry.sentiment === 'negative' ? 'bg-red-100 text-red-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {entry.sentiment}
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-sm mb-2">{entry.content}</p>
-                  {entry.audioUrl && (
-                    <audio controls src={entry.audioUrl} className="w-full mb-2" />
-                  )}
-                  {entry.aiAnalysis && (
-                    <div className="bg-secondary/20 p-2 rounded-lg text-xs">
-                      <div className="flex items-center gap-1 mb-1">
-                        <BrainCircuit className="h-3 w-3" />
-                        <span className="font-medium">AI Analysis</span>
-                      </div>
-                      {entry.aiAnalysis}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </ScrollArea>
-          </div>
-        </CardContent>
+          ))}
+        </ScrollArea>
       </Card>
     </div>
   );
