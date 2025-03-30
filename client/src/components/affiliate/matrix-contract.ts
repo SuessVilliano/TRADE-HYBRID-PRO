@@ -58,7 +58,7 @@ export const MATRIX_CONFIG = {
 };
 
 import { PublicKey } from '@solana/web3.js';
-import { MATRIX_CONFIG } from './matrix-config'; // Adjust path if needed
+
 
 export class MatrixContract {
   // Matrix structure: 2x3 with pass-up slots
@@ -92,25 +92,25 @@ export class MatrixContract {
     return new PublicKey('sponsorAddressPlaceholder');
   }
 
-    private getLevelFromPosition(position: string): number {
-        // Replace with actual logic to determine level from position
-        return parseInt(position.split('_')[0]);
-    }
+  private getLevelFromPosition(position: string): number {
+    // Replace with actual logic to determine level from position
+    return parseInt(position.split('_')[0]);
+  }
 
-    private getSlotFromPosition(position: string): number {
-        // Replace with actual logic to determine slot from position
-        return parseInt(position.split('_')[1]);
-    }
+  private getSlotFromPosition(position: string): number {
+    // Replace with actual logic to determine slot from position
+    return parseInt(position.split('_')[1]);
+  }
 
-    private async isMatrixFull(purchaser: PublicKey): Promise<boolean> {
-        // Replace with actual logic to check if matrix is full for purchaser
-        return false; // Placeholder: Matrix not full
-    }
+  private async isMatrixFull(purchaser: PublicKey): Promise<boolean> {
+    // Replace with actual logic to check if matrix is full for purchaser
+    return false; // Placeholder: Matrix not full
+  }
 
-    private async getRecycleCount(wallet: PublicKey): Promise<number> {
-        // Replace with actual logic to get recycle count for the wallet
-        return 0; // Placeholder: No recycle count
-    }
+  private async getRecycleCount(wallet: PublicKey): Promise<number> {
+    // Replace with actual logic to get recycle count for the wallet
+    return 0; // Placeholder: No recycle count
+  }
 
 
   /**
@@ -209,15 +209,13 @@ export class MatrixContract {
   /**
    * Calculate placement in matrix
    */
-   private async calculatePlacement(purchaser: PublicKey): Promise<string> {
+  private async calculatePlacement(purchaser: PublicKey): Promise<string> {
     //Simplified placement logic - replace with more robust algorithm
     let position = "1_1"; // Default to level 1, slot 1
     return position;
   }
 }
 
-// Create a singleton instance that can be imported throughout the app
-// Note: Replace the program ID with the actual deployed program in production
 let matrixContractInstance: MatrixContract | null = null;
 
 export const getMatrixContract = (provider: any): MatrixContract => { // provider needs definition
