@@ -41,6 +41,7 @@ const NotificationSettingsPage = lazy(() => import('./pages/notification-setting
 const AffiliatePage = lazy(() => import('./pages/affiliate'));
 const EventsPage = lazy(() => import('./pages/events'));
 const TradeSimulatorPage = lazy(() => import('./pages/trade-simulator'));
+const ShopPage = lazy(() => import('./pages/shop'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -194,6 +195,7 @@ function AppContent() {
               <Link to="/affiliate" className="hover:text-blue-400 transition-colors">Affiliate</Link>
               <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Game Center</Link>
               <Link to="/trade-simulator" className="hover:text-blue-400 transition-colors">Trade Simulator</Link>
+              <Link to="/shop" className="hover:text-blue-400 transition-colors">Shop</Link>
             </nav>
           </div>
           
@@ -531,6 +533,18 @@ function AppContent() {
               {typeof window !== 'undefined' && <AffiliatePage />}
             </Suspense>
           } />
+          <Route path="/shop" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading shop...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <ShopPage />}
+            </Suspense>
+          } />
         </Routes>
       </main>
       
@@ -662,6 +676,11 @@ function Home() {
           description="Practice trading with virtual money in a risk-free environment. Learn to trade various assets using real-time price charts."
           linkTo="/trade-simulator"
         />
+        <FeatureCard 
+          title="Shop"
+          description="Browse and purchase exclusive Trade Hybrid merchandise and items. Visit our official store."
+          linkTo="/shop"
+        />
       </div>
     </PopupContainer>
   );
@@ -686,6 +705,7 @@ function FeatureCard({ title, description, linkTo }: { title: string, descriptio
     '/trade-runner-browser': 'basic_trading',
     '/bulls-vs-bears': 'basic_trading',
     '/trade-simulator': 'basic_trading',
+    '/shop': 'social',
   };
   
   const { isRouteEnabled } = useFeatureDisclosure();

@@ -36,6 +36,37 @@ type BrokerInfo = {
 const BROKERS: Record<BrokerType, BrokerInfo[]> = {
   crypto: [
     {
+      id: 'tradingview',
+      name: 'TradingView',
+      logo: '/logos/tradingview.svg',
+      description: 'Connect your TradingView account to display charts with your trade data.',
+      website: 'https://www.tradingview.com',
+      type: 'crypto',
+      fields: [
+        {
+          name: 'username',
+          label: 'Username',
+          type: 'text',
+          required: true,
+          placeholder: 'Your TradingView username'
+        },
+        {
+          name: 'password',
+          label: 'Password',
+          type: 'password',
+          required: true,
+          placeholder: 'Your TradingView password'
+        },
+        {
+          name: 'apiToken',
+          label: 'API Access Token',
+          type: 'password',
+          required: true,
+          placeholder: 'Your TradingView API token'
+        }
+      ]
+    },
+    {
       id: 'binance',
       name: 'Binance',
       logo: '/logos/binance.svg',
@@ -143,7 +174,39 @@ const BROKERS: Record<BrokerType, BrokerInfo[]> = {
       ]
     }
   ],
-  futures: []
+  futures: [
+    {
+      id: 'ninjatrader',
+      name: 'NinjaTrader',
+      logo: '/logos/ninjatrader.svg',
+      description: 'Award-winning trading software & brokerage for active futures traders.',
+      website: 'https://www.ninjatrader.com',
+      type: 'futures',
+      fields: [
+        {
+          name: 'username',
+          label: 'Username',
+          type: 'text',
+          required: true,
+          placeholder: 'Your NinjaTrader username'
+        },
+        {
+          name: 'password',
+          label: 'Password',
+          type: 'password',
+          required: true,
+          placeholder: 'Your NinjaTrader password'
+        },
+        {
+          name: 'accountId',
+          label: 'Account ID',
+          type: 'text',
+          required: true,
+          placeholder: 'Your NinjaTrader Account ID'
+        }
+      ]
+    }
+  ]
 };
 
 interface ConnectBrokerModalProps {
