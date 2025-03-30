@@ -11,6 +11,55 @@ interface SmartTradePanelProps {
 
 export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol = 'BINANCE:SOLUSDT' }) => {
   const [chartLoaded, setChartLoaded] = useState(false);
+  const [connectedBroker, setConnectedBroker] = useState<string | null>(null);
+  const [orderState, setOrderState] = useState({
+    symbol: defaultSymbol,
+    side: 'buy',
+    quantity: '',
+    price: '',
+    type: 'market'
+  });
+
+  // Connect to broker aggregator service
+  const { activeBrokers, aggregator, isAuthenticated } = useBrokerAggregator();
+
+  useEffect(() => {
+    const initializeBrokerConnection = async () => {
+      if (isAuthenticated && aggregator) {
+        try {
+          const brokerList = await aggregator.getAvailableBrokers();
+          if (brokerList.length > 0) {
+            const primaryBroker = brokerList[0];
+            await aggregator.connectBroker(primaryBroker);
+            setConnectedBroker(primaryBroker);
+          }
+        } catch (error) {
+          console.error('Failed to connect to broker:', error);
+        }
+      }
+    };
+
+    initializeBrokerConnection();
+  }, [isAuthenticated, aggregator]);
+
+  const executeTrade = async () => {
+    if (!connectedBroker || !aggregator) {
+      toast.error('No broker connected');
+      return;
+    }
+
+    try {
+      const order = {
+        ...orderState,
+        broker: connectedBroker
+      };
+      
+      const result = await aggregator.submitOrder(order);
+      toast.success(`Order submitted: ${result.orderId}`);
+    } catch (error) {
+      toast.error('Trade execution failed: ' + error.message);
+    }
+  };
 
   useEffect(() => {
     const loadTradingViewWidget = () => {

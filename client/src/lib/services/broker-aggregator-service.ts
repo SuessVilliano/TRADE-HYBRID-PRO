@@ -1,3 +1,46 @@
+
+import { toast } from 'sonner';
+
+class BrokerAggregatorService {
+  private connectedBrokers: Map<string, any> = new Map();
+  
+  async connectBroker(brokerId: string) {
+    try {
+      // Implementation for broker connection
+      const response = await fetch(`/api/broker/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ brokerId })
+      });
+      
+      if (!response.ok) throw new Error('Failed to connect broker');
+      
+      const connection = await response.json();
+      this.connectedBrokers.set(brokerId, connection);
+      return true;
+    } catch (error) {
+      console.error('Broker connection failed:', error);
+      return false;
+    }
+  }
+
+  async submitOrder(order: any) {
+    const broker = this.connectedBrokers.get(order.broker);
+    if (!broker) throw new Error('Broker not connected');
+
+    const response = await fetch('/api/broker/trade', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order)
+    });
+
+    if (!response.ok) throw new Error('Order submission failed');
+    return await response.json();
+  }
+}
+
+export const brokerAggregator = new BrokerAggregatorService();
+
 import { SUPPORTED_BROKERS as BROKER_CONFIG, TRADING_CONFIG, ABATEV_CONFIG } from '@/lib/constants';
 import { BrokerService } from './broker-service';
 import { createTradeLockerService } from './tradelocker-service';
