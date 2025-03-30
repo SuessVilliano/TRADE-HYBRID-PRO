@@ -1,47 +1,49 @@
 "use client"
 
-import React, { ReactNode, useState } from 'react';
-import { useTheme } from "next-themes"
-import { Toaster as SonnerToaster } from "sonner"
+import React from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-type Toast = {
+interface Toast {
   id: string;
   message: string;
-  type: ToastType;
+  type: 'success' | 'error' | 'warning' | 'info';
   duration?: number;
-};
-
-type ToastType = 'success' | 'error' | 'warning' | 'info';
+}
 
 interface ToastContextType {
-  toasts: Toast[];
   addToast: (toast: Omit<Toast, 'id'>) => void;
   removeToast: (id: string) => void;
 }
 
 const ToastContext = React.createContext<ToastContextType | undefined>(undefined);
 
-export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [toasts, setToasts] = useState<Toast[]>([]);
-
-  const addToast = (toast: Omit<Toast, 'id'>) => {
-    const id = Math.random().toString(36).substring(2, 9);
-    const newToast = { ...toast, id, duration: toast.duration || 5000 };
-    setToasts((prevToasts) => [...prevToasts, newToast]);
-    if (newToast.duration) {
-      setTimeout(() => {
-        removeToast(id);
-      }, newToast.duration);
+export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const addToast = (toastData: Omit<Toast, 'id'>) => {
+    switch (toastData.type) {
+      case 'success':
+        toast.success(toastData.message, { autoClose: toastData.duration || 5000 });
+        break;
+      case 'error':
+        toast.error(toastData.message, { autoClose: toastData.duration || 5000 });
+        break;
+      case 'warning':
+        toast.warning(toastData.message, { autoClose: toastData.duration || 5000 });
+        break;
+      case 'info':
+        toast.info(toastData.message, { autoClose: toastData.duration || 5000 });
+        break;
     }
   };
 
   const removeToast = (id: string) => {
-    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
+    toast.dismiss(id);
   };
 
   return (
-    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
+    <ToastContext.Provider value={{ addToast, removeToast }}>
       {children}
+      <ToastContainer position="top-right" />
     </ToastContext.Provider>
   );
 };
@@ -54,58 +56,4 @@ export const useToast = () => {
   return context;
 };
 
-const Toaster = () => {
-  const { theme = "system" } = useTheme()
-
-  return (
-    <SonnerToaster
-      theme={theme as "light" | "dark" | "system"}
-      className="toaster group"
-      toastOptions={{
-        classNames: {
-          toast: "group toast",
-          title: "group-[.toast]:text-foreground",
-          description: "group-[.toast]:text-muted-foreground",
-          actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
-          error: "group-[.toast]:bg-destructive group-[.toast]:text-destructive-foreground",
-          success: "group-[.toast]:bg-success group-[.toast]:text-success-foreground",
-          warning: "group-[.toast]:bg-warning group-[.toast]:text-warning-foreground",
-          info: "group-[.toast]:bg-info group-[.toast]:text-info-foreground",
-        },
-      }}
-    />
-  )
-}
-
-export { SonnerToaster };
-export default Toaster;
-
-export const Toast: React.FC<{ toast: Toast; onClose: () => void }> = ({ toast, onClose }) => {
-  const getTypeClasses = (type: ToastType) => {
-    switch (type) {
-      case 'success':
-        return 'bg-green-500 text-white';
-      case 'error':
-        return 'bg-red-500 text-white';
-      case 'warning':
-        return 'bg-yellow-500 text-white';
-      case 'info':
-      default:
-        return 'bg-blue-500 text-white';
-    }
-  };
-
-  return (
-    <div
-      className={`flex items-center justify-between p-4 mb-3 rounded-md shadow-md ${getTypeClasses(
-        toast.type
-      )}`}
-    >
-      <p>{toast.message}</p>
-      <button onClick={onClose} className="ml-4 text-white hover:text-gray-200">
-        <span>X</span>
-      </button>
-    </div>
-  );
-};
+export default ToastContainer;
