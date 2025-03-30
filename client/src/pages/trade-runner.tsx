@@ -4,8 +4,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import TradeRunner from '../components/game/TradeRunner';
+import { BullsVsBearsGame } from '../components/game/bulls-vs-bears-game';
 
-export default function TradeRunnerPage() {
+export default function GameCenterPage() {
   return (
     <div className="container mx-auto py-4 px-4 min-h-screen">
       <div className="flex flex-col space-y-6 lg:space-y-0 lg:flex-row lg:space-x-6 w-full">
@@ -13,10 +14,7 @@ export default function TradeRunnerPage() {
           <h3 className="text-lg font-medium mb-4 text-white">Game Center</h3>
           <nav className="space-y-1">
             <Link to="/trade-runner" className="flex items-center px-3 py-2 text-white bg-blue-600 rounded-md">
-              <span className="ml-2">Trade Runner</span>
-            </Link>
-            <Link to="/bulls-vs-bears" className="flex items-center px-3 py-2 text-white hover:bg-slate-700 rounded-md">
-              <span className="ml-2">Bulls vs Bears</span>
+              <span className="ml-2">Trading Games</span>
             </Link>
             <Link to="/trade-simulator" className="flex items-center px-3 py-2 text-white hover:bg-slate-700 rounded-md">
               <span className="ml-2">Trade Simulator</span>
@@ -29,21 +27,32 @@ export default function TradeRunnerPage() {
         
         <div className="flex-1">
           <PopupContainer padding>
-            <Tabs defaultValue="game" className="w-full">
+            <Tabs defaultValue="trade-runner" className="w-full">
               <TabsList className="mb-4">
-                <TabsTrigger value="game">Game</TabsTrigger>
-                <TabsTrigger value="info">About Trade Runner</TabsTrigger>
+                <TabsTrigger value="trade-runner">Trade Runner</TabsTrigger>
+                <TabsTrigger value="bulls-bears">Bulls vs Bears</TabsTrigger>
+                <TabsTrigger value="info">About Game Center</TabsTrigger>
                 <TabsTrigger value="tools">Trading Tools</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="game" className="h-full">
+              <TabsContent value="trade-runner" className="h-full">
                 <TradeRunner />
+              </TabsContent>
+              
+              <TabsContent value="bulls-bears" className="h-full">
+                <BullsVsBearsGame />
               </TabsContent>
               
               <TabsContent value="info">
                 <Card className="p-6">
-                  <h2 className="text-2xl font-bold mb-4">About Trade Runner</h2>
-                  <p className="mb-4">Trade Runner is a gamified trading experience that helps you learn trading concepts while having fun. The app provides a realistic trading simulation with game elements to make learning engaging.</p>
+                  <h2 className="text-2xl font-bold mb-4">About Game Center</h2>
+                  <p className="mb-4">Game Center combines our immersive trading games in one place, helping you learn trading concepts while having fun. These gamified trading experiences provide realistic simulations with game elements to make learning engaging.</p>
+                  
+                  <h3 className="text-xl font-semibold mt-6 mb-3">Available Games</h3>
+                  <ul className="list-disc pl-5 space-y-2">
+                    <li><strong>Trade Runner</strong> - A gamified trading experience with real-time market data visualization and trading challenges</li>
+                    <li><strong>Bulls vs Bears</strong> - An immersive 3D trading game where you join the epic battle between market bulls and bears</li>
+                  </ul>
                   
                   <h3 className="text-xl font-semibold mt-6 mb-3">Key Features</h3>
                   <ul className="list-disc pl-5 space-y-2">
@@ -54,11 +63,8 @@ export default function TradeRunnerPage() {
                     <li>Social features to compete with friends</li>
                   </ul>
                   
-                  <h3 className="text-xl font-semibold mt-6 mb-3">How To Use</h3>
-                  <p className="mb-4">Access Trade Runner directly in the Game tab. The application is optimized for both desktop and mobile use, providing a seamless experience across devices.</p>
-                  
                   <h3 className="text-xl font-semibold mt-6 mb-3">Integration with Trade Hybrid</h3>
-                  <p>Trade Runner is fully integrated with the Trade Hybrid platform. Your progress, achievements, and learning path are synchronized across all platform components, providing a unified trading education experience.</p>
+                  <p>All games in the Game Center are fully integrated with the Trade Hybrid platform. Your progress, achievements, and learning path are synchronized across all platform components, providing a unified trading education experience.</p>
                 </Card>
               </TabsContent>
               

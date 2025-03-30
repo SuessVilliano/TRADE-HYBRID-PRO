@@ -24,7 +24,7 @@ import TestNotificationButton from './components/ui/test-notification-button';
 // Lazy load pages
 const TradeRunner = lazy(() => import('./pages/trade-runner'));
 const TradeRunnerWebBrowserPage = lazy(() => import('./pages/trade-runner-browser'));
-const BullsVsBears = lazy(() => import('./pages/bulls-vs-bears')); // Bulls vs Bears game
+// Bulls vs Bears game integrated into Game Center
 const NewsDashboardSimple = lazy(() => import('./pages/news-dashboard-simple'));
 const TradeJournalSimple = lazy(() => import('./pages/trade-journal-simple'));
 const NFTMarketplaceSimple = lazy(() => import('./pages/nft-marketplace-simple'));
@@ -192,8 +192,7 @@ function AppContent() {
               <Link to="/trading-signals" className="hover:text-blue-400 transition-colors">Signals</Link>
               <Link to="/app" className="hover:text-blue-400 transition-colors">App</Link>
               <Link to="/affiliate" className="hover:text-blue-400 transition-colors">Affiliate</Link>
-              <Link to="/trade-runner-browser" className="hover:text-blue-400 transition-colors">Trade Runner</Link>
-              <Link to="/bulls-vs-bears" className="hover:text-blue-400 transition-colors">Bulls vs Bears</Link>
+              <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Game Center</Link>
               <Link to="/trade-simulator" className="hover:text-blue-400 transition-colors">Trade Simulator</Link>
             </nav>
           </div>
@@ -357,9 +356,18 @@ function AppContent() {
               {typeof window !== 'undefined' && <TradeJournalSimple />}
             </Suspense>
           } />
-          {/* Redirect from /trade-runner to /trade-runner-browser */}
+          {/* Game Center */}
           <Route path="/trade-runner" element={
-            <Navigate to="/trade-runner-browser" replace />
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading Game Center...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <TradeRunner />}
+            </Suspense>
           } />
           <Route path="/trade-runner-browser" element={
             <Suspense fallback={
@@ -373,19 +381,8 @@ function AppContent() {
               {typeof window !== 'undefined' && <TradeRunnerWebBrowserPage />}
             </Suspense>
           } />
-          {/* Bulls vs Bears Game */}
-          <Route path="/bulls-vs-bears" element={
-            <Suspense fallback={
-              <div className="flex items-center justify-center h-screen">
-                <div className="text-center">
-                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <p className="text-slate-300">Loading the Bulls vs Bears game...</p>
-                </div>
-              </div>
-            }>
-              {typeof window !== 'undefined' && <BullsVsBears />}
-            </Suspense>
-          } />
+          {/* Redirect Bulls vs Bears to Game Center */}
+          <Route path="/bulls-vs-bears" element={<Navigate to="/trade-runner" replace />} />
 
           <Route path="/learn" element={
             <Suspense fallback={
@@ -656,14 +653,9 @@ function Home() {
           linkTo="/app"
         />
         <FeatureCard 
-          title="Trade Runner"
-          description="Test your trading skills in our gamified trading simulator. Compete on the leaderboard and earn rewards."
-          linkTo="/trade-runner-browser"
-        />
-        <FeatureCard 
-          title="Bulls vs Bears"
-          description="Join the epic battle between bulls and bears in this immersive 3D trading game. Trade with the trend and win!"
-          linkTo="/bulls-vs-bears"
+          title="Game Center"
+          description="Explore our gaming hub featuring Trade Runner and Bulls vs Bears. Test your trading skills in our gamified trading experiences."
+          linkTo="/trade-runner"
         />
         <FeatureCard 
           title="Trade Simulator"
