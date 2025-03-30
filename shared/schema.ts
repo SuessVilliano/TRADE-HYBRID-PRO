@@ -196,12 +196,26 @@ export const journalEntries = pgTable("journal_entries", {
 export const tradePerformance = pgTable("trade_performance", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  period: text("period").notNull(), // daily, weekly, monthly
+  period: text("period").notNull(),
   hybridScore: real("hybrid_score").notNull(),
   winRate: real("win_rate").notNull(),
   profitFactor: real("profit_factor").notNull(),
   sharpeRatio: real("sharpe_ratio").notNull(),
   totalTrades: integer("total_trades").notNull(),
+  averageWin: real("average_win"),
+  averageLoss: real("average_loss"),
+  largestWin: real("largest_win"),
+  largestLoss: real("largest_loss"),
+  averageHoldingTime: integer("average_holding_time"),
+  bestPerformingSetup: text("best_performing_setup"),
+  worstPerformingSetup: text("worst_performing_setup"),
+  riskRewardRatio: real("risk_reward_ratio"),
+  expectancy: real("expectancy"),
+  drawdown: real("drawdown"),
+  bestTradingDay: timestamp("best_trading_day"),
+  worstTradingDay: timestamp("worst_trading_day"),
+  profitByTimeOfDay: jsonb("profit_by_time_of_day"),
+  profitByDayOfWeek: jsonb("profit_by_day_of_week"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
