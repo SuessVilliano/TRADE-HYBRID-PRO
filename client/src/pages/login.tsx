@@ -3,17 +3,17 @@ import { useEffect } from 'react';
 import { useUserStore } from '@/lib/stores/useUserStore';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useSolanaAuth } from '@/lib/context/SolanaAuthProvider';
-import { useRouter } from 'next/router';
+import { useNavigate } from 'react-router-dom';
 
 export default function LoginPage() {
   const { user, isAuthenticated } = useUserStore();
   const { isWalletAuthenticated } = useSolanaAuth();
-  const router = useRouter();
+  const navigate = useNavigate();
   
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated || isWalletAuthenticated) {
-      router.push('/dashboard');
+      navigate('/dashboard');
     }
   }, [isAuthenticated, isWalletAuthenticated]);
 
