@@ -1,23 +1,20 @@
-import React from 'react';
+"use client"
+
+import React, { ReactNode, useState } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useTheme } from "next-themes"
+import { Toaster as Sonner } from "sonner"
 
-export function Toaster() {
-  return (
-    <ToastContainer
-      position="top-right"
-      autoClose={5000}
-      hideProgressBar={false}
-      newestOnTop={false}
-      closeOnClick
-      rtl={false}
-      pauseOnFocusLoss
-      draggable
-      pauseOnHover
-      theme="dark"
-    />
-  );
-}
+type Toast = {
+  id: string;
+  message: string;
+  type: ToastType;
+  duration?: number;
+};
+
+type ToastType = 'success' | 'error' | 'warning' | 'info';
+
 interface ToastContextType {
   toasts: Toast[];
   addToast: (toast: Omit<Toast, 'id'>) => void;
@@ -33,9 +30,9 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const addToast = (toast: Omit<Toast, 'id'>) => {
     const id = Math.random().toString(36).substring(2, 9);
     const newToast = { ...toast, id, duration: toast.duration || 5000 };
-    
+
     setToasts((prevToasts) => [...prevToasts, newToast]);
-    
+
     // Auto-remove toast after duration
     if (newToast.duration) {
       setTimeout(() => {
@@ -89,14 +86,16 @@ export const Toast: React.FC<{ toast: Toast; onClose: () => void }> = ({ toast, 
     >
       <p>{toast.message}</p>
       <button onClick={onClose} className="ml-4 text-white hover:text-gray-200">
-        <X size={18} />
+        {/* X component would go here */}
+        <span>X</span> {/* Placeholder for X component */}
       </button>
     </div>
   );
 };
 
+
 // Toaster component that renders all toasts
-export const Toaster: React.FC = () => {
+export const ToasterComponent: React.FC = () => {
   const { toasts, removeToast } = useToast();
 
   return (
@@ -108,4 +107,46 @@ export const Toaster: React.FC = () => {
   );
 };
 
-export default Toaster;
+export function Toaster() {
+  return (
+    <ToastContainer
+      position="top-right"
+      autoClose={5000}
+      hideProgressBar={false}
+      newestOnTop={false}
+      closeOnClick
+      rtl={false}
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+      theme="dark"
+    />
+  );
+}
+
+type ToasterProps = React.ComponentProps<typeof Sonner>
+
+const SonnerToaster = ({ ...props }: ToasterProps) => {
+  const { theme = "system" } = useTheme()
+
+  return (
+    <Sonner
+      theme={theme as ToasterProps["theme"]}
+      className="toaster group"
+      toastOptions={{
+        classNames: {
+          toast:
+            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
+          description: "group-[.toast]:text-muted-foreground",
+          actionButton:
+            "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
+          cancelButton:
+            "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+        },
+      }}
+      {...props}
+    />
+  )
+}
+
+export { SonnerToaster, ToasterComponent };
