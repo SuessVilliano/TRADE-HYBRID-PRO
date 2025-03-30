@@ -41,7 +41,7 @@ const DexChart: React.FC<DexChartProps> = ({ symbol, theme = 'dark' }) => {
         hotlist: true,
         calendar: true,
         width: '100%',
-        height: '600',
+        height: '800',
       });
     };
     document.head.appendChild(script);
@@ -52,7 +52,7 @@ const DexChart: React.FC<DexChartProps> = ({ symbol, theme = 'dark' }) => {
   }, [symbol, theme, chartContainerId]);
 
   return (
-    <div className="w-full h-[600px] rounded-lg overflow-hidden border border-slate-700">
+    <div className="w-full h-[800px] rounded-lg overflow-hidden border border-slate-700">
       <div id={chartContainerId} className="w-full h-full" />
     </div>
   );
