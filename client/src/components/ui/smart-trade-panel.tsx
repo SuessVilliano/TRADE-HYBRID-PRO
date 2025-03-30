@@ -1002,3 +1002,59 @@ const SmartTradePanel2: React.FC<SmartTradePanelProps> = ({ defaultSymbol = 'BTC
     </div>
   );
 };
+import { useEffect, useState } from 'react';
+import { Card } from '../ui/card';
+import { getAIMarketAnalysis, getTradingSuggestions } from '@/lib/services/ai-service';
+
+export function SmartTradePanel() {
+  const [analysis, setAnalysis] = useState(null);
+  const [suggestions, setSuggestions] = useState(null);
+  
+  useEffect(() => {
+    const updateAnalysis = async () => {
+      const [marketAnalysis, tradeSuggestions] = await Promise.all([
+        getAIMarketAnalysis(),
+        getTradingSuggestions()
+      ]);
+      
+      setAnalysis(marketAnalysis);
+      setSuggestions(tradeSuggestions);
+    };
+    
+    updateAnalysis();
+    const interval = setInterval(updateAnalysis, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <Card className="p-4 bg-card">
+      <h3 className="text-lg font-semibold mb-4">AI Trade Insights</h3>
+      
+      <div className="space-y-4">
+        <div className="border-l-4 border-primary p-3">
+          <h4 className="font-medium">Market Analysis</h4>
+          <p className="text-sm text-muted-foreground">{analysis?.summary}</p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {suggestions?.map((suggestion) => (
+            <div key={suggestion.id} className="bg-muted p-3 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">{suggestion.symbol}</span>
+                <span className={suggestion.direction === 'buy' ? 'text-green-500' : 'text-red-500'}>
+                  {suggestion.direction.toUpperCase()}
+                </span>
+              </div>
+              <div className="mt-2 text-sm">
+                <p>Entry: {suggestion.entry}</p>
+                <p>Stop: {suggestion.stop}</p>
+                <p>Target: {suggestion.target}</p>
+                <p className="mt-1 text-muted-foreground">{suggestion.reasoning}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Card>
+  );
+}

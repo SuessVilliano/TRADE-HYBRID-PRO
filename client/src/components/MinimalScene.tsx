@@ -443,11 +443,53 @@ function MultiplayerConnection() {
   return null;
 }
 
+// Enhanced voice chat initialization
+const handleVoiceChat = async () => {
+  if (!controlsEnabled) return;
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      }
+    });
+
+    // Initialize spatial audio context
+    const audioContext = new AudioContext();
+    const spatialNode = audioContext.createPanner();
+
+    // Configure spatial audio
+    spatialNode.panningModel = 'HRTF';
+    spatialNode.distanceModel = 'inverse';
+    spatialNode.refDistance = 1;
+    spatialNode.maxDistance = 10000;
+    spatialNode.rolloffFactor = 1;
+    spatialNode.coneInnerAngle = 360;
+    spatialNode.coneOuterAngle = 0;
+    spatialNode.coneOuterGain = 0;
+
+    // Connect audio nodes
+    const source = audioContext.createMediaStreamSource(stream);
+    source.connect(spatialNode);
+    spatialNode.connect(audioContext.destination);
+
+    // Update position based on player movement
+    return { stream, audioContext, spatialNode };
+  } catch (err) {
+    console.error('Failed to initialize voice chat:', err);
+    throw err;
+  }
+};
+
+
 export default function MinimalScene() {
   const [showInstructions, setShowInstructions] = useState(true);
   const [multiplayerEnabled, setMultiplayerEnabled] = useState(true);
   // Add state for voice chat controls
   const [showVoiceControls, setShowVoiceControls] = useState(true);
+  const { controlsEnabled } = useControlsStore.getState(); // Access controlsEnabled from the store
 
   // Define key mappings for controls
   const keyMap = [

@@ -552,3 +552,117 @@ export class NotificationService {
 
 // Export a singleton instance
 export const notificationService = NotificationService.getInstance();
+import { toast } from 'react-toastify';
+import { Sound } from '../utils/sound';
+
+interface SignalNotification {
+  type: 'entry' | 'exit' | 'alert' | 'warning';
+  symbol: string;
+  message: string;
+  sound?: boolean;
+  priority?: 'low' | 'medium' | 'high';
+}
+
+class NotificationService {
+  private static instance: NotificationService;
+  private audioContext: AudioContext;
+  private sounds: Map<string, AudioBuffer>;
+  
+  private constructor() {
+    this.audioContext = new AudioContext();
+    this.sounds = new Map();
+    this.preloadSounds();
+  }
+  
+  public static getInstance(): NotificationService {
+    if (!NotificationService.instance) {
+      NotificationService.instance = new NotificationService();
+    }
+    return NotificationService.instance;
+  }
+  
+  private async preloadSounds() {
+    const soundUrls = {
+      entry: '/sounds/entry.mp3',
+      exit: '/sounds/exit.mp3',
+      alert: '/sounds/alert.mp3',
+      warning: '/sounds/warning.mp3'
+    };
+    
+    for (const [key, url] of Object.entries(soundUrls)) {
+      try {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+        this.sounds.set(key, audioBuffer);
+      } catch (err) {
+        console.error(`Failed to load sound: ${key}`, err);
+      }
+    }
+  }
+  
+  private playSound(type: string) {
+    const buffer = this.sounds.get(type);
+    if (buffer) {
+      const source = this.audioContext.createBufferSource();
+      source.buffer = buffer;
+      source.connect(this.audioContext.destination);
+      source.start(0);
+    }
+  }
+  
+  public notify({
+    type,
+    symbol,
+    message,
+    sound = true,
+    priority = 'medium'
+  }: SignalNotification) {
+    // Visual notification
+    toast(message, {
+      type: type === 'warning' ? 'error' : 'info',
+      position: 'top-right',
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      className: `notification-${priority}`,
+      icon: this.getIcon(type)
+    });
+    
+    // Audio notification
+    if (sound) {
+      this.playSound(type);
+    }
+    
+    // Push notification if supported
+    if (Notification.permission === 'granted') {
+      new Notification(`Trade Signal: ${symbol}`, {
+        body: message,
+        icon: '/icons/trade-signal.png',
+        badge: '/icons/badge.png',
+        tag: symbol,
+        renotify: true
+      });
+    }
+  }
+  
+  private getIcon(type: string) {
+    switch (type) {
+      case 'entry':
+        return '📈';
+      case 'exit':
+        return '📉';
+      case 'alert':
+        return '🔔';
+      case 'warning':
+        return '⚠️';
+      default:
+        return '💡';
+    }
+  }
+}
+
+export const notificationService = NotificationService.getInstance();
