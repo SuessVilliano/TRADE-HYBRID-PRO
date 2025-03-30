@@ -25,7 +25,12 @@ export default defineConfig({
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
     rollupOptions: {
-      external: ['react-toastify']
+      external: [],
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-toastify']
+        }
+      }
     }
   },
   // Add support for large models and audio files
