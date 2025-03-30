@@ -18,7 +18,7 @@ localPort = 5000
 externalPort = 80
 
 [workflows]
-runButton = "Production Build"
+runButton = "Build and Run"
 
 [[workflows.workflow]]
 name = "Project"
@@ -170,6 +170,23 @@ args = "npm run dev"
 
 [[workflows.workflow]]
 name = "Production Build"
+author = 35793521
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm install --legacy-peer-deps"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Build and Run"
 author = 35793521
 mode = "sequential"
 
