@@ -1,4 +1,3 @@
-
 import { Course, Lesson, Quiz } from '../types/learning';
 
 export const courseContent: Course[] = [
@@ -31,20 +30,6 @@ export const courseContent: Course[] = [
             <li>Market Makers - Provide liquidity and match orders</li>
             <li>Brokers - Execute trades on behalf of clients</li>
           </ul>
-
-          <h2>Market Hours and Sessions</h2>
-          <p>Different markets operate at different times:</p>
-          <ul>
-            <li>Stock Market: Usually 9:30 AM - 4:00 PM local time</li>
-            <li>Forex Market: 24 hours, with major sessions:
-              <ul>
-                <li>Asian Session: 23:00-08:00 GMT</li>
-                <li>London Session: 08:00-16:00 GMT</li>
-                <li>New York Session: 13:00-22:00 GMT</li>
-              </ul>
-            </li>
-            <li>Crypto Market: 24/7 trading</li>
-          </ul>
         `,
         videoUrl: 'https://example.com/market-basics',
         duration: 30
@@ -63,7 +48,6 @@ export const courseContent: Course[] = [
             <li>No price guarantee</li>
             <li>Best for highly liquid markets</li>
           </ul>
-
           <h3>Limit Orders</h3>
           <p>A limit order is executed only at your specified price or better:</p>
           <ul>
@@ -71,7 +55,6 @@ export const courseContent: Course[] = [
             <li>No execution guarantee</li>
             <li>Good for getting specific entry points</li>
           </ul>
-
           <h3>Stop Orders</h3>
           <p>Stop orders become market orders when a trigger price is reached:</p>
           <ul>
@@ -79,7 +62,6 @@ export const courseContent: Course[] = [
             <li>Can be used for breakout trades</li>
             <li>No price guarantee after triggering</li>
           </ul>
-
           <h2>Advanced Order Types</h2>
           <ul>
             <li>Stop-Limit Orders</li>
@@ -127,7 +109,7 @@ export const courseContent: Course[] = [
   {
     id: 'technical-analysis',
     title: 'Technical Analysis Mastery',
-    description: 'Learn to analyze price charts and identify trading opportunities',
+    description: 'Learn to analyze price action and chart patterns',
     category: 'analysis',
     level: 'intermediate',
     duration: 180,
@@ -146,14 +128,12 @@ export const courseContent: Course[] = [
             <li>Double Top/Bottom</li>
             <li>Triple Top/Bottom</li>
           </ul>
-
           <h3>Continuation Patterns</h3>
           <ul>
             <li>Flags and Pennants</li>
             <li>Triangles (Ascending, Descending, Symmetric)</li>
             <li>Rectangle Patterns</li>
           </ul>
-
           <h2>Candlestick Patterns</h2>
           <p>Key candlestick formations and their meanings:</p>
           <ul>
@@ -162,7 +142,6 @@ export const courseContent: Course[] = [
             <li>Engulfing Patterns - Strong reversal signal</li>
             <li>Morning/Evening Star - Complex reversal pattern</li>
           </ul>
-
           <h2>Support and Resistance</h2>
           <p>Key concepts in price levels:</p>
           <ul>
@@ -174,6 +153,22 @@ export const courseContent: Course[] = [
         `,
         videoUrl: 'https://example.com/chart-patterns',
         duration: 60
+      },
+      {
+        id: 'candlestick-patterns',
+        title: 'Advanced Candlestick Patterns',
+        content: `
+          <h2>Japanese Candlestick Patterns</h2>
+          <p>Master the art of reading candlestick patterns for market psychology insights:</p>
+          <ul>
+            <li>Doji Formations and Their Meanings</li>
+            <li>Hammer and Shooting Star Patterns</li>
+            <li>Engulfing Patterns - Bullish and Bearish</li>
+            <li>Multiple Candlestick Patterns</li>
+          </ul>
+        `,
+        videoUrl: 'https://example.com/advanced-candlestick-patterns',
+        duration: 75
       }
     ],
     quizzes: [
@@ -199,48 +194,28 @@ export const courseContent: Course[] = [
   },
   {
     id: 'risk-management',
-    title: 'Risk Management Essentials',
-    description: 'Learn to protect your capital and manage trades effectively',
-    category: 'trading',
-    level: 'intermediate',
+    title: 'Professional Risk Management',
+    description: 'Learn institutional-grade risk management techniques',
+    category: 'essential',
+    level: 'all',
     duration: 150,
-    points: 200,
+    points: 175,
     lessons: [
       {
         id: 'position-sizing',
-        title: 'Position Sizing and Risk Control',
+        title: 'Advanced Position Sizing',
         content: `
-          <h2>Position Sizing Fundamentals</h2>
-          <p>Proper position sizing is crucial for long-term survival:</p>
-          
-          <h3>Risk Per Trade</h3>
+          <h2>Position Sizing Strategies</h2>
+          <p>Master position sizing for consistent returns:</p>
           <ul>
-            <li>1-2% risk per trade rule</li>
-            <li>Fixed dollar risk vs. percentage risk</li>
-            <li>Account volatility considerations</li>
-          </ul>
-
-          <h3>Position Size Calculation</h3>
-          <p>Formula: Position Size = (Account * Risk%) / (Entry - Stop)</p>
-          
-          <h2>Risk-Reward Ratio</h2>
-          <p>Understanding trade expectations:</p>
-          <ul>
-            <li>Minimum 1:2 risk-reward ratio</li>
-            <li>Win rate considerations</li>
-            <li>Expectancy calculation</li>
-          </ul>
-
-          <h2>Risk Management Tools</h2>
-          <ul>
-            <li>Stop-loss placement</li>
-            <li>Position scaling</li>
-            <li>Correlation management</li>
-            <li>Portfolio heat</li>
+            <li>Fixed Risk Position Sizing</li>
+            <li>Volatility-Based Position Sizing</li>
+            <li>Portfolio Heat Management</li>
+            <li>Risk:Reward Optimization</li>
           </ul>
         `,
-        videoUrl: 'https://example.com/position-sizing',
-        duration: 45
+        videoUrl: 'https://example.com/advanced-position-sizing',
+        duration: 60
       }
     ],
     quizzes: [
@@ -261,6 +236,114 @@ export const courseContent: Course[] = [
           }
         ],
         passingScore: 85
+      }
+    ]
+  },
+  {
+    id: 'prop-firm-trading',
+    title: 'Prop Firm Success Path',
+    description: 'Complete guide to passing prop firm challenges and trading funded accounts',
+    category: 'advanced',
+    level: 'advanced',
+    duration: 240,
+    points: 200,
+    lessons: [
+      {
+        id: 'challenge-prep',
+        title: 'Prop Firm Challenge Preparation',
+        content: `
+          <h2>Mastering Prop Firm Challenges</h2>
+          <p>Learn proven strategies for passing prop firm evaluations:</p>
+          <ul>
+            <li>Risk Management Rules for Challenges</li>
+            <li>Daily/Overall Drawdown Management</li>
+            <li>Profit Target Strategies</li>
+            <li>Trading Psychology During Evaluation</li>
+          </ul>
+        `,
+        videoUrl: 'https://example.com/prop-firm-prep',
+        duration: 90
+      }
+    ]
+  },
+  {
+    id: 'algorithmic-trading',
+    title: 'Algorithmic Trading Foundation',
+    description: 'Introduction to automated trading strategies',
+    category: 'technology',
+    level: 'advanced',
+    duration: 300,
+    points: 250,
+    lessons: [
+      {
+        id: 'algo-basics',
+        title: 'Algorithmic Trading Fundamentals',
+        content: `
+          <h2>Introduction to Algo Trading</h2>
+          <p>Learn the basics of algorithmic trading:</p>
+          <ul>
+            <li>Strategy Automation Principles</li>
+            <li>Backtesting Fundamentals</li>
+            <li>Risk Management in Algo Trading</li>
+            <li>API Integration Basics</li>
+          </ul>
+        `,
+        videoUrl: 'https://example.com/algo-basics',
+        duration: 120
+      }
+    ]
+  },
+  {
+    id: 'options-trading',
+    title: 'Options Trading Mastery',
+    description: 'Comprehensive guide to options trading strategies',
+    category: 'derivatives',
+    level: 'advanced',
+    duration: 270,
+    points: 225,
+    lessons: [
+      {
+        id: 'options-strategies',
+        title: 'Advanced Options Strategies',
+        content: `
+          <h2>Complex Options Strategies</h2>
+          <p>Master advanced options trading techniques:</p>
+          <ul>
+            <li>Vertical Spreads</li>
+            <li>Iron Condors and Butterflies</li>
+            <li>Calendar Spreads</li>
+            <li>Volatility Trading Strategies</li>
+          </ul>
+        `,
+        videoUrl: 'https://example.com/options-strategies',
+        duration: 100
+      }
+    ]
+  },
+  {
+    id: 'trading-psychology',
+    title: 'Master Trading Psychology',
+    description: 'Develop the mindset of successful traders',
+    category: 'psychology',
+    level: 'all',
+    duration: 160,
+    points: 150,
+    lessons: [
+      {
+        id: 'psychology-basics',
+        title: 'Trading Psychology Fundamentals',
+        content: `
+          <h2>Trading Psychology Principles</h2>
+          <p>Build a resilient trading mindset:</p>
+          <ul>
+            <li>Emotional Control in Trading</li>
+            <li>Handling Losses and Drawdowns</li>
+            <li>Building Trading Confidence</li>
+            <li>Maintaining Trading Discipline</li>
+          </ul>
+        `,
+        videoUrl: 'https://example.com/trading-psychology',
+        duration: 80
       }
     ]
   }
