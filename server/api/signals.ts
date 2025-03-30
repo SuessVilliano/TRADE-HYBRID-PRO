@@ -4,7 +4,7 @@ import { sheetsService, SIGNAL_SOURCES } from './sheets-service';
 import { getAIMarketAnalysis } from './ai-market-analysis';
 import { getCurrentPrice } from './market';
 import { SheetsSignal, ProcessedSignal } from '../../shared/schema'; // Updated import path
-import { brokerAggregator } from '../lib/broker-aggregator';
+import brokerAggregator from '../lib/broker-aggregator';
 
 interface SignalSource {
   id: string;
