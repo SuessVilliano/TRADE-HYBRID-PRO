@@ -302,4 +302,4 @@ export class BadgeService {
 }
 
 // Export a singleton instance
-export const badgeService = BadgeService.getInstance();
+export const badgeService = BadgeService.getInstance();stance();
