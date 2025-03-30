@@ -5,7 +5,7 @@ const REFERRAL_KEY = 'thc_referral_id';
 const REFERRAL_PARAM = 'ref';
 const REFERRAL_EXPIRY_DAYS = 30;
 // Default domain for affiliate links
-const DEFAULT_DOMAIN = 'https://pro.tradehybrid.club';
+const DEFAULT_DOMAIN = 'https://app.tradehybrid.club';
 
 /**
  * Utility for tracking and managing affiliate referrals
@@ -13,13 +13,20 @@ const DEFAULT_DOMAIN = 'https://pro.tradehybrid.club';
 export const AffiliateService = {
   /**
    * Check URL for referral code and store it in localStorage if found
-   * @returns The referral code if found in URL params
+   * @returns The referral code if found in URL path or params
    */
   trackReferralFromUrl: (): string | null => {
     if (typeof window === 'undefined') return null;
     
-    const urlParams = new URLSearchParams(window.location.search);
-    const referralCode = urlParams.get(REFERRAL_PARAM);
+    // First check if referral code is in the URL path format (app.tradehybrid.club/THC29CH8AF)
+    const pathParts = window.location.pathname.split('/');
+    let referralCode = pathParts[1]?.length === 10 ? pathParts[1] : null;
+    
+    // If not found in path, check query parameters as fallback
+    if (!referralCode) {
+      const urlParams = new URLSearchParams(window.location.search);
+      referralCode = urlParams.get(REFERRAL_PARAM);
+    }
     
     if (referralCode) {
       // Store the referral code with an expiration date
@@ -35,9 +42,8 @@ export const AffiliateService = {
       localStorage.setItem(REFERRAL_KEY, JSON.stringify(referralData));
       console.log(`Affiliate referral tracked: ${referralCode}`);
       
-      // Remove the referral parameter from URL for cleaner appearance
-      // but maintain other query parameters
-      if (window.history && window.history.replaceState) {
+      // Clean up URL if it was using the query parameter format
+      if (window.history && window.history.replaceState && window.location.search.includes(REFERRAL_PARAM)) {
         const newUrl = new URL(window.location.href);
         newUrl.searchParams.delete(REFERRAL_PARAM);
         window.history.replaceState({}, document.title, newUrl.toString());
@@ -81,17 +87,12 @@ export const AffiliateService = {
   /**
    * Generate a referral link with the given code
    * @param referralCode The referral code to include in the link
-   * @returns A full referral link
+   * @returns A full referral link using path format (app.tradehybrid.club/THC29CH8AF)
    */
   generateReferralLink: (referralCode: string): string => {
-    if (typeof window === 'undefined') {
-      // Default to our custom domain if not running in browser
-      return `${DEFAULT_DOMAIN}/?${REFERRAL_PARAM}=${encodeURIComponent(referralCode)}`;
-    }
-    
-    // In production always use the custom domain for consistent links
-    // rather than the current origin which might be a development server
-    return `${DEFAULT_DOMAIN}/?${REFERRAL_PARAM}=${encodeURIComponent(referralCode)}`;
+    // Use the path format for referral links as shown in the screenshots
+    // This format is cleaner and more user-friendly
+    return `${DEFAULT_DOMAIN}/${encodeURIComponent(referralCode)}`;
   },
   
   /**

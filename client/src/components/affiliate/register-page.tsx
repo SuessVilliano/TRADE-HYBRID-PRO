@@ -90,8 +90,8 @@ export function RegisterPage() {
         new PublicKey(referrer)
       );
       
-      // If successful, navigate to the matrix dashboard
-      navigate('/affiliate/dashboard');
+      // If successful, navigate to the affiliate dashboard
+      navigate('/affiliate');
     } catch (err) {
       console.error("Registration error:", err);
       setError("Failed to register. Please check your wallet balance and try again.");
@@ -234,7 +234,7 @@ export function RegisterPage() {
           <p className="text-sm text-gray-400 mb-2">Already registered?</p>
           <Button 
             variant="outline" 
-            onClick={() => navigate('/affiliate/dashboard')}
+            onClick={() => navigate('/affiliate')}
           >
             Go to Dashboard
           </Button>
