@@ -16,9 +16,6 @@ export default function GameCenterPage() {
             <Link to="/trade-runner" className="flex items-center px-3 py-2 text-white bg-blue-600 rounded-md">
               <span className="ml-2">Trading Games</span>
             </Link>
-            <Link to="/trade-simulator" className="flex items-center px-3 py-2 text-white hover:bg-slate-700 rounded-md">
-              <span className="ml-2">Trade Simulator</span>
-            </Link>
             <Link to="/educational-games" className="flex items-center px-3 py-2 text-white hover:bg-slate-700 rounded-md">
               <span className="ml-2">Educational Games</span>
             </Link>

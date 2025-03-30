@@ -65,68 +65,82 @@ export function ABATEVTradePanel({ defaultSymbol = 'BTC/USD' }: ABATEVTradePanel
       setActiveBroker(brokers[0].id);
     }
     
+    // Always generate comparison data for demo brokers
+    // This ensures the broker comparison tab always has data to display
+    const demoBrokers = [
+      { id: 'binance', name: 'Binance', type: 'crypto' },
+      { id: 'coinbase', name: 'Coinbase', type: 'crypto' },
+      { id: 'oanda', name: 'Oanda', type: 'forex' },
+      { id: 'alpaca', name: 'Alpaca', type: 'stocks' },
+      { id: 'kraken', name: 'Kraken', type: 'crypto' }
+    ];
+    
     // Generate broker comparison data (real data would come from API)
-    if (brokers.length > 0) {
-      const comparisonData = brokers.map(broker => {
-        let price: number = 0;
-        let speed: number = 0;
-        let reliability: number = 0;
-        
-        // Generate realistic comparison metrics based on broker type
-        switch(broker.id) {
-          case 'binance':
-            price = 49950 + (Math.random() * 20); 
-            speed = 45 + (Math.random() * 10); // ms
-            reliability = 97 + (Math.random() * 2); // percent
-            break;
-          case 'coinbase':
-            price = 50000 + (Math.random() * 25);
-            speed = 65 + (Math.random() * 15); // ms
-            reliability = 98 + (Math.random() * 1); // percent  
-            break;
-          case 'oanda':
-            price = 49990 + (Math.random() * 30);
-            speed = 55 + (Math.random() * 10); // ms
-            reliability = 98.5 + (Math.random() * 1); // percent
-            break;
-          case 'alpaca':
-            price = 49970 + (Math.random() * 35);
-            speed = 60 + (Math.random() * 20); // ms
-            reliability = 96 + (Math.random() * 3); // percent
-            break;
-          default:
-            price = 50000 + (Math.random() * 50 - 25);
-            speed = 75 + (Math.random() * 25); // ms
-            reliability = 95 + (Math.random() * 4); // percent
-        }
-        
-        // Calculate overall score based on slider weights
-        const overallScore = 
-          (price / 50000) * (priceImportance / 100) + 
-          (100 - Math.min(speed, 100)) / 100 * (speedImportance / 100) + 
-          (reliability / 100) * (reliabilityImportance / 100);
-          
-        return {
-          id: broker.id,
-          name: broker.name,
-          price: price.toFixed(2),
-          speed: Math.round(speed), // ms
-          reliability: reliability.toFixed(1), // percent
-          overallScore: (overallScore * 100 / 3).toFixed(1)
-        };
-      });
+    const allBrokers = brokers.length > 0 ? brokers : demoBrokers;
+    const comparisonData = allBrokers.map(broker => {
+      let price: number = 0;
+      let speed: number = 0;
+      let reliability: number = 0;
       
-      // Sort by overall score descending
-      const sortedData = [...comparisonData].sort((a, b) => 
-        parseFloat(b.overallScore) - parseFloat(a.overallScore)
-      );
-      
-      setBrokerComparisonData(sortedData);
-      
-      // Set the best broker as selected
-      if (sortedData.length > 0) {
-        setSelectedBroker(sortedData[0].id);
+      // Generate realistic comparison metrics based on broker type
+      switch(broker.id) {
+        case 'binance':
+          price = 49950 + (Math.random() * 20); 
+          speed = 45 + (Math.random() * 10); // ms
+          reliability = 97 + (Math.random() * 2); // percent
+          break;
+        case 'coinbase':
+          price = 50000 + (Math.random() * 25);
+          speed = 65 + (Math.random() * 15); // ms
+          reliability = 98 + (Math.random() * 1); // percent  
+          break;
+        case 'oanda':
+          price = 49990 + (Math.random() * 30);
+          speed = 55 + (Math.random() * 10); // ms
+          reliability = 98.5 + (Math.random() * 1); // percent
+          break;
+        case 'alpaca':
+          price = 49970 + (Math.random() * 35);
+          speed = 60 + (Math.random() * 20); // ms
+          reliability = 96 + (Math.random() * 3); // percent
+          break;
+        case 'kraken':
+          price = 49980 + (Math.random() * 15);
+          speed = 50 + (Math.random() * 12); // ms
+          reliability = 97.5 + (Math.random() * 1.5); // percent
+          break;
+        default:
+          price = 50000 + (Math.random() * 50 - 25);
+          speed = 75 + (Math.random() * 25); // ms
+          reliability = 95 + (Math.random() * 4); // percent
       }
+      
+      // Calculate overall score based on slider weights
+      const overallScore = 
+        (price / 50000) * (priceImportance / 100) + 
+        (100 - Math.min(speed, 100)) / 100 * (speedImportance / 100) + 
+        (reliability / 100) * (reliabilityImportance / 100);
+        
+      return {
+        id: broker.id,
+        name: broker.name,
+        price: price.toFixed(2),
+        speed: Math.round(speed), // ms
+        reliability: reliability.toFixed(1), // percent
+        overallScore: (overallScore * 100 / 3).toFixed(1)
+      };
+    });
+    
+    // Sort by overall score descending
+    const sortedData = [...comparisonData].sort((a, b) => 
+      parseFloat(b.overallScore) - parseFloat(a.overallScore)
+    );
+    
+    setBrokerComparisonData(sortedData);
+    
+    // Set the best broker as selected
+    if (sortedData.length > 0) {
+      setSelectedBroker(sortedData[0].id);
     }
     
     // Simulate market price updates
@@ -276,7 +290,7 @@ export function ABATEVTradePanel({ defaultSymbol = 'BTC/USD' }: ABATEVTradePanel
             <TabsTrigger value="spot">Spot</TabsTrigger>
             <TabsTrigger value="futures">Futures</TabsTrigger>
             <TabsTrigger value="options">Options</TabsTrigger>
-            <TabsTrigger value="broker-comparison" className="text-xs font-bold bg-blue-100 dark:bg-blue-900/30">Comparison</TabsTrigger>
+            <TabsTrigger value="broker-comparison" className="text-xs font-bold bg-green-100 dark:bg-green-900/30">Comparison</TabsTrigger>
           </TabsList>
           
           <TabsContent value="spot" className="space-y-4">
