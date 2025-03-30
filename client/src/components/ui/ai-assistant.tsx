@@ -154,15 +154,26 @@ export function AIAssistant({ className }: AIAssistantProps) {
       generateGeminiResponse(question);
     } else if (openaiKey) {
       // If OpenAI API is available, use it
-      console.log("Using OpenAI for assistant response");
-      generateOpenAIResponse(question);
+      console.log("Using OpenAI and Gemini for assistant response");
+      // Try OpenAI first for text generation
+      try {
+        await generateOpenAIResponse(question);
+      } catch (error) {
+        console.log("OpenAI failed, falling back to Gemini");
+        try {
+          await generateGeminiResponse(question);
+        } catch (geminiError) {
+          console.log("Both AI services failed, using local response");
+          generateLocalResponse(question);
+          toast.error("AI services encountered an error", { duration: 3000 });
+        }
+      }
     } else {
       // Fallback to simple rule-based responses
       console.log("No API keys found, using local response");
       generateLocalResponse(question);
-      // Show notification to add API key
       toast.info(
-        "For more advanced responses, add your Gemini API key in settings.", 
+        "Add OpenAI or Gemini API key in settings for advanced responses", 
         { duration: 5000 }
       );
     }
