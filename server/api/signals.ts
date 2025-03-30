@@ -1,29 +1,36 @@
 import { Request, Response } from 'express';
 import { randomUUID } from 'crypto';
-import { sheetsService } from './sheets-service';
+import { sheetsService, SIGNAL_SOURCES } from './sheets-service';
 import { getAIMarketAnalysis } from './ai-market-analysis';
 import { getCurrentPrice } from './market';
+import { SheetsSignal, ProcessedSignal } from '../types';
+import { brokerAggregator } from '../lib/broker-aggregator';
 
 interface SignalSource {
   id: string;
   range: string;
+  name: string; // Added 'name' field for source identification
   type: 'crypto' | 'futures' | 'forex';
 }
 
+// Updated SIGNAL_SOURCES to include names
 const SIGNAL_SOURCES: SignalSource[] = [
   {
     id: '1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8',
     range: 'Paradox!A:Z',
+    name: 'Paradox',
     type: 'crypto'
   },
   {
     id: '1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8',
     range: 'Hybrid!A:Z',
+    name: 'Hybrid',
     type: 'futures'
   },
   {
     id: '1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8',
     range: 'Solaris!A:Z',
+    name: 'Solaris',
     type: 'forex'
   }
 ];
@@ -455,7 +462,8 @@ export const receiveWebhook = async (req: Request, res: Response) => {
       message: payload.message || `${action.toUpperCase()} signal on ${symbol}`,
       confidence: payload.confidence,
       timeframe: payload.timeframe || payload.interval || '1d',
-      indicators: payload.indicators || {}
+      indicators: payload.indicators || {},
+      broker: payload.broker // Added broker field
     });
 
     console.log('Processed signal:', processedSignal);
@@ -537,15 +545,84 @@ function calculateConfidence(signal: any, aiAnalysis: any, marketData: any): num
   return Math.min(confidence, 1);
 }
 
-export async function processSignal(signal: any) {
+export async function processSignal(signal: SheetsSignal): Promise<ProcessedSignal> {
+  const confidence = calculateConfidence(signal);
   const analysis = await analyzeSignal(signal);
+
   return {
     ...signal,
+    confidence,
     analysis,
-    takeProfits: signal.takeProfits?.filter(tp => tp !== null) || [signal.takeProfit1],
-    compatibleBrokers: analysis.suggestedBrokers,
-    aiConfidence: analysis.confidence,
-    aiRecommendation: analysis.recommendation
+    compatibleBrokers: [signal.broker],
+    processed: true,
+    timestamp: new Date(),
+  };
+}
+
+export async function getAndProcessSignals(type?: string) {
+  try {
+    const sources = type ?
+      SIGNAL_SOURCES.filter(s => s.name === type) :
+      SIGNAL_SOURCES;
+
+    const allSignals = [];
+    for (const source of sources) {
+      const signals = await sheetsService.getSignals(source);
+      const processed = await Promise.all(signals.map(processSignal));
+      allSignals.push(...processed);
+    }
+
+    return allSignals;
+  } catch (error) {
+    console.error('Error fetching/processing signals:', error);
+    return [];
+  }
+}
+
+export async function autoExecuteSignal(signal: ProcessedSignal, userId: number) {
+  try {
+    if (!signal.processed || !signal.broker) {
+      throw new Error('Signal not properly processed');
+    }
+
+    const brokerConnection = await brokerAggregator.getBrokerConnection(userId, signal.broker);
+    if (!brokerConnection) {
+      throw new Error(`User not connected to broker ${signal.broker}`);
+    }
+
+    const orderParams = {
+      symbol: signal.symbol,
+      side: signal.action,
+      type: 'market',
+      quantity: calculatePositionSize(signal, brokerConnection),
+      stopLoss: signal.stopLoss,
+      takeProfit: signal.takeProfit1
+    };
+
+    const result = await brokerConnection.executeOrder(orderParams);
+    return result;
+  } catch (error) {
+    console.error('Error auto-executing signal:', error);
+    throw error;
+  }
+}
+
+function calculateConfidence(signal: SheetsSignal): number {
+  // Add your confidence calculation logic
+  return signal.confidence || 75;
+}
+
+function calculatePositionSize(signal: ProcessedSignal, brokerConnection: any): number {
+  // Add your position sizing logic based on risk management rules
+  return 1.0; // Default to 1 unit for now
+}
+
+async function analyzeSignal(signal: SheetsSignal) {
+  // Add your signal analysis logic
+  return {
+    recommendation: signal.action,
+    reason: `${signal.source} signal for ${signal.symbol}`,
+    riskLevel: 'medium'
   };
 }
 
