@@ -4,7 +4,7 @@ import React, { ReactNode, useState } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useTheme } from "next-themes"
-import { Toaster as Sonner } from "sonner"
+import { Toaster as SonnerToaster } from "sonner"
 
 type Toast = {
   id: string;
@@ -95,43 +95,13 @@ export const Toast: React.FC<{ toast: Toast; onClose: () => void }> = ({ toast, 
 
 
 // Toaster component that renders all toasts
-export const ToasterComponent: React.FC = () => {
-  const { toasts, removeToast } = useToast();
-
-  return (
-    <div className="fixed top-4 right-4 z-50 w-72">
-      {toasts.map((toast) => (
-        <Toast key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
-      ))}
-    </div>
-  );
-};
+//This component is removed because it is redundant with the new Toaster implementation using Sonner.
 
 export function Toaster() {
-  return (
-    <ToastContainer
-      position="top-right"
-      autoClose={5000}
-      hideProgressBar={false}
-      newestOnTop={false}
-      closeOnClick
-      rtl={false}
-      pauseOnFocusLoss
-      draggable
-      pauseOnHover
-      theme="dark"
-    />
-  );
-}
-
-type ToasterProps = React.ComponentProps<typeof Sonner>
-
-const SonnerToaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme()
 
   return (
-    <Sonner
-      theme={theme as ToasterProps["theme"]}
+    <SonnerToaster
       className="toaster group"
       toastOptions={{
         classNames: {
@@ -144,9 +114,9 @@ const SonnerToaster = ({ ...props }: ToasterProps) => {
             "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
         },
       }}
-      {...props}
+      theme={theme as "light" | "dark" | "system"}
     />
   )
 }
 
-export { SonnerToaster, ToasterComponent };
+export { SonnerToaster };
