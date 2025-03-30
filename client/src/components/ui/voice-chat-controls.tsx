@@ -19,7 +19,7 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
   const audioContext = useRef<AudioContext | null>(null);
   const audioSources = useRef<Record<string, AudioBufferSourceNode>>({});
   const audioProcessor = useRef<ScriptProcessorNode | null>(null);
-  
+
   const {
     voiceChatEnabled,
     toggleVoiceChat,
@@ -27,31 +27,32 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
     activeSpeakers,
     players,
     clientId,
-    isPlayerMuted
+    isPlayerMuted,
+    multiplayer // Added multiplayer reference
   } = useMultiplayer();
-  
+
   // Setup voice chat
   useEffect(() => {
     if (voiceChatEnabled) {
       setupVoiceCapture();
-      
+
       return () => {
         // Cleanup
         if (mediaStream.current) {
           mediaStream.current.getTracks().forEach(track => track.stop());
         }
-        
+
         if (audioProcessor.current && audioContext.current) {
           audioProcessor.current.disconnect();
         }
-        
+
         if (audioContext.current) {
           audioContext.current.close();
         }
       };
     }
   }, [voiceChatEnabled]);
-  
+
   // Initialize audio capture
   const setupVoiceCapture = async () => {
     try {
@@ -64,8 +65,8 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
         toast.error("Could not initialize audio system. Try clicking somewhere on the page first.");
         return;
       }
-      
-      // Request microphone access
+
+      // Request microphone access with specific constraints
       try {
         mediaStream.current = await navigator.mediaDevices.getUserMedia({
           audio: {
@@ -75,23 +76,26 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
           },
           video: false,
         });
+        // Notify multiplayer system - added multiplayer notification
+        if(multiplayer) multiplayer.emit('voice_status', { enabled: true, clientId });
+        toast.success("Microphone enabled");
       } catch (micError) {
         console.error("Microphone access denied:", micError);
         toast.error("Microphone access denied. Voice chat disabled.");
         toggleVoiceChat(false);
         return;
       }
-      
+
       // Create audio processor with safe fallbacks
       try {
         // Create audio processor to capture audio data
         audioProcessor.current = audioContext.current.createScriptProcessor(2048, 1, 1);
-        
+
         // Create source from microphone stream
         const source = audioContext.current.createMediaStreamSource(mediaStream.current);
         source.connect(audioProcessor.current);
         audioProcessor.current.connect(audioContext.current.destination);
-        
+
         // Process audio data
         audioProcessor.current.onaudioprocess = (event) => {
           // Only send when user is pressing the speak button or using push-to-talk
@@ -99,7 +103,7 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
             try {
               const inputBuffer = event.inputBuffer;
               const audioData = inputBuffer.getChannelData(0);
-              
+
               // Check if sound is above threshold (not silent)
               // Calculate RMS (Root Mean Square) to detect if there's actual audio
               let rms = 0;
@@ -107,13 +111,13 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
                 rms += audioData[i] * audioData[i];
               }
               rms = Math.sqrt(rms / audioData.length);
-              
+
               const isSilent = rms < 0.01; // Adjust this threshold as needed
-              
+
               if (!isSilent && audioData && audioData.length > 0) {
                 // Convert to 16-bit PCM for more efficient transmission
                 const pcmData = convertFloatToPCM(audioData);
-                
+
                 // Send chunks to avoid large packets
                 const CHUNK_SIZE = 1024; // Bytes per chunk
                 for (let offset = 0; offset < pcmData.length; offset += CHUNK_SIZE / 2) { // Divide by 2 because each Int16 is 2 bytes
@@ -134,15 +138,13 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
         console.error("Error setting up audio processor:", processorError);
         toast.error("Could not initialize audio processing. Voice chat may not work correctly.");
       }
-      
-      toast.success("Voice chat enabled");
     } catch (error) {
       console.error("Error setting up voice chat:", error);
       toast.error("Failed to access microphone. Voice chat disabled.");
       toggleVoiceChat(false);
     }
   };
-  
+
   // Convert float32 audio data to Int16 PCM format
   const convertFloatToPCM = (float32Array: Float32Array): Int16Array => {
     const int16Array = new Int16Array(float32Array.length);
@@ -152,12 +154,12 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
     }
     return int16Array;
   };
-  
+
   // Handle push-to-talk
   const handlePushToTalk = (isActive: boolean) => {
     setSpeaking(isActive);
   };
-  
+
   // Toggle voice chat on/off
   const handleToggleVoiceChat = () => {
     toggleVoiceChat(!voiceChatEnabled);
@@ -169,7 +171,7 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
       }
     }
   };
-  
+
   // Get active speakers with names
   const activeSpeakersWithNames = activeSpeakers
     .filter(id => !isPlayerMuted(id)) // Filter out muted players
@@ -178,7 +180,7 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
       return player ? { id, username: player.username } : null;
     })
     .filter(Boolean);
-    
+
   return (
     <div 
       className={cn(
@@ -207,7 +209,7 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
             </span>
           )}
         </div>
-        
+
         {!minimized && (
           <div className="flex items-center space-x-1">
             <button 
@@ -235,7 +237,7 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
           </div>
         )}
       </div>
-      
+
       {/* Content - only visible when not minimized */}
       {!minimized && (
         <div className="p-3">
@@ -260,7 +262,7 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
                 )}
               </Button>
             </div>
-            
+
             <div className="flex items-center gap-2">
               {masterVolume === 0 ? (
                 <VolumeX className="h-4 w-4 text-gray-400" />
@@ -278,7 +280,7 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
               />
             </div>
           </div>
-          
+
           {/* Push-to-talk button (only visible when voice chat is enabled) */}
           {voiceChatEnabled && (
             <div className="bg-gray-800/50 rounded-lg p-3 text-center">
@@ -300,14 +302,14 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
               </p>
             </div>
           )}
-          
+
           {/* Active speakers */}
           <div className="mt-4">
             <div className="flex items-center gap-2 mb-2">
               <Users className="h-4 w-4 text-gray-400" />
               <h3 className="text-sm font-medium">Active Speakers</h3>
             </div>
-            
+
             <div className="bg-gray-800/30 rounded-lg p-2">
               {activeSpeakersWithNames.length > 0 ? (
                 <div className="space-y-2">
@@ -342,4 +344,3 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
     </div>
   );
 }
-

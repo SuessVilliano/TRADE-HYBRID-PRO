@@ -7,6 +7,7 @@ import { useMultiplayer } from '../lib/stores/useMultiplayer';
 import OtherPlayers from './game/OtherPlayers';
 import { SocialPanel } from './ui/social-panel';
 import { VoiceChatControls } from './ui/voice-chat-controls';
+import { useControlsStore } from '../lib/stores/useControlsStore'; // Assuming this store exists
 
 // Define controls enum
 enum Controls {
@@ -28,12 +29,12 @@ const TraderCharacter = React.memo(function TraderCharacter(props: any) {
   const [hovered, setHover] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [modelLoaded, setModelLoaded] = useState(false);
-  
+
   // Load the character model
   const { scene: characterModel } = useGLTF('/models/trader_character.glb') as GLTF & {
     scene: THREE.Group
   };
-  
+
   // Track loading state
   useEffect(() => {
     if (characterModel) {
@@ -41,14 +42,14 @@ const TraderCharacter = React.memo(function TraderCharacter(props: any) {
       console.log("Trader character model loaded successfully");
     }
   }, [characterModel]);
-  
+
   useFrame(() => {
     if (modelRef.current) {
       modelRef.current.rotation.y = rotation;
       setRotation(rotation + 0.01);
     }
   });
-  
+
   return (
     <group 
       ref={modelRef}
@@ -86,14 +87,14 @@ const AnimatedBox = React.memo(function AnimatedBox(props: any) {
   const meshRef = useRef<THREE.Mesh>(null!);
   const [hovered, setHover] = useState(false);
   const [rotation, setRotation] = useState(0);
-  
+
   useFrame(() => {
     if (meshRef.current) {
       meshRef.current.rotation.y = rotation;
       setRotation(rotation + 0.01);
     }
   });
-  
+
   return (
     <mesh
       {...props}
@@ -112,14 +113,14 @@ const AnimatedSphere = React.memo(function AnimatedSphere(props: any) {
   const meshRef = useRef<THREE.Mesh>(null!);
   const [hovered, setHover] = useState(false);
   const [position, setPosition] = useState(0);
-  
+
   useFrame(() => {
     if (meshRef.current) {
       setPosition(Math.sin(Date.now() * 0.001) * 0.5);
       meshRef.current.position.y = position + 1;
     }
   });
-  
+
   return (
     <mesh
       {...props}
@@ -149,12 +150,12 @@ const TradeHouseModel = React.memo(function TradeHouseModel(props: any) {
   const modelRef = useRef<THREE.Group>(null!);
   const [hovered, setHover] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
-  
+
   // Load the tradehouse model
   const { scene: houseModel } = useGLTF('/models/tradehouse.glb') as GLTF & {
     scene: THREE.Group
   };
-  
+
   // Track loading state
   useEffect(() => {
     if (houseModel) {
@@ -162,7 +163,7 @@ const TradeHouseModel = React.memo(function TradeHouseModel(props: any) {
       console.log("Trade house model loaded successfully");
     }
   }, [houseModel]);
-  
+
   return (
     <group 
       ref={modelRef}
@@ -200,12 +201,12 @@ const THCCoinModel = React.memo(function THCCoinModel(props: any) {
   const [hovered, setHover] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [modelLoaded, setModelLoaded] = useState(false);
-  
+
   // Load the coin model
   const { scene: coinModel } = useGLTF('/models/thc_coin_premium.glb') as GLTF & {
     scene: THREE.Group
   };
-  
+
   // Track loading state
   useEffect(() => {
     if (coinModel) {
@@ -213,14 +214,14 @@ const THCCoinModel = React.memo(function THCCoinModel(props: any) {
       console.log("THC coin model loaded successfully");
     }
   }, [coinModel]);
-  
+
   useFrame(() => {
     if (modelRef.current) {
       modelRef.current.rotation.y = rotation;
       setRotation(rotation + 0.01);
     }
   });
-  
+
   return (
     <group 
       ref={modelRef}
@@ -295,15 +296,15 @@ function Player() {
 
   // Get the multiplayer service functions
   const { updatePlayerPosition, connected, clientId } = useMultiplayer();
-  
+
   // Get keyboard controls
   const [, getKeys] = useKeyboardControls<Controls>();
-  
+
   // Load the character model
   const { scene: characterModel } = useGLTF('/models/trader_character.glb') as GLTF & {
     scene: THREE.Group
   };
-  
+
   // Track loading state
   useEffect(() => {
     if (characterModel) {
@@ -311,23 +312,23 @@ function Player() {
       console.log("Player character model loaded successfully");
     }
   }, [characterModel]);
-  
+
   // Movement logic in the game loop
   useFrame((_, delta) => {
     if (!modelRef.current) return;
-    
+
     // Get current key states
-    const { forward, back, left, right, jump } = getKeys();
-    
+    const { forward, back, left, right, jump, sprint } = getKeys();
+
     // Movement speed
-    const speed = 5 * delta;
+    const speed = sprint ? 10 * delta : 5 * delta; // Increased speed while sprinting
     let moved = false;
     let newAnimation = 'idle';
-    
+
     // Current position
     const newPosition: [number, number, number] = [...position];
     let newRotation = rotation;
-    
+
     // Handle movement
     if (forward) {
       newPosition[2] -= speed;
@@ -335,52 +336,52 @@ function Player() {
       moved = true;
       newAnimation = 'walking';
     }
-    
+
     if (back) {
       newPosition[2] += speed;
       newRotation = Math.PI;
       moved = true;
       newAnimation = 'walking';
     }
-    
+
     if (left) {
       newPosition[0] -= speed;
       newRotation = Math.PI / 2;
       moved = true;
       newAnimation = 'walking';
     }
-    
+
     if (right) {
       newPosition[0] += speed;
       newRotation = -Math.PI / 2;
       moved = true;
       newAnimation = 'walking';
     }
-    
+
     if (jump) {
       // Simple jump animation
       newAnimation = 'jumping';
     }
-    
+
     // Update position and rotation
     if (moved) {
       setPosition(newPosition);
       setRotation(newRotation);
       modelRef.current.position.set(...newPosition);
       modelRef.current.rotation.y = newRotation;
-      
+
       // Update animation state
       if (animation !== newAnimation) {
         setAnimation(newAnimation);
       }
-      
+
       // Send position update to multiplayer service
       if (connected && clientId) {
         updatePlayerPosition(newPosition, newRotation, newAnimation);
       }
     }
   });
-  
+
   return (
     <group ref={modelRef} position={position} rotation={[0, rotation, 0]}>
       {modelLoaded && characterModel ? (
@@ -412,7 +413,7 @@ function MultiplayerConnection() {
   const [playerName, setPlayerName] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
   const { connect, connected } = useMultiplayer();
-  
+
   // Generate a random name if not set
   useEffect(() => {
     if (!playerName) {
@@ -420,24 +421,24 @@ function MultiplayerConnection() {
       setPlayerName(randomName);
     }
   }, [playerName]);
-  
+
   // Connect to multiplayer on component mount
   useEffect(() => {
     if (!connected && !isConnecting && playerName) {
       console.log("Connecting to multiplayer as:", playerName);
       setIsConnecting(true);
-      
+
       // Connect with basic customization
       connect(playerName, {
         bodyColor: `#${Math.floor(Math.random()*16777215).toString(16)}`, // Random color
         eyeColor: "#ffffff",
         hatColor: `#${Math.floor(Math.random()*16777215).toString(16)}` // Random color
       });
-      
+
       setIsConnecting(false);
     }
   }, [connect, connected, isConnecting, playerName]);
-  
+
   // Render nothing visually
   return null;
 }
@@ -447,53 +448,64 @@ export default function MinimalScene() {
   const [multiplayerEnabled, setMultiplayerEnabled] = useState(true);
   // Add state for voice chat controls
   const [showVoiceControls, setShowVoiceControls] = useState(true);
-  
+
   // Define key mappings for controls
   const keyMap = [
-    { name: Controls.forward, keys: ['ArrowUp', 'KeyW'] },
-    { name: Controls.back, keys: ['ArrowDown', 'KeyS'] },
-    { name: Controls.left, keys: ['ArrowLeft', 'KeyA'] },
-    { name: Controls.right, keys: ['ArrowRight', 'KeyD'] },
-    { name: Controls.jump, keys: ['Space'] },
+    { name: 'forward', keys: ['ArrowUp', 'KeyW'] },
+    { name: 'backward', keys: ['ArrowDown', 'KeyS'] },
+    { name: 'left', keys: ['ArrowLeft', 'KeyA'] },
+    { name: 'right', keys: ['ArrowRight', 'KeyD'] },
+    { name: 'jump', keys: ['Space'] },
+    { name: 'sprint', keys: ['ShiftLeft'] }
   ];
+
+  // Initialize controls state
+  useEffect(() => {
+    const { setControlsEnabled } = useControlsStore.getState();
+    setControlsEnabled(true);
+
+    return () => {
+      setControlsEnabled(false);
+    };
+  }, []);
 
   return (
     <div className="h-full">
       {/* Setup multiplayer connection */}
       {multiplayerEnabled && <MultiplayerConnection />}
-      
+
       <KeyboardControls map={keyMap}>
         <Canvas shadows camera={{ position: [10, 8, 10], fov: 50 }}>
           <color attach="background" args={['#0f172a']} />
           <fog attach="fog" args={['#0f172a', 15, 35]} />
-          
+
           <Lights />
           <Floor />
-          
+
           {/* Trading House elements */}
           <Suspense fallback={null}>
             {/* Controllable Player (only in multiplayer mode) */}
             {multiplayerEnabled ? <Player /> : <TraderCharacter position={[0, 0, 0]} />}
-            
+
             {/* Other players from multiplayer */}
             {multiplayerEnabled && <OtherPlayers />}
-            
+
             {/* Trade house building */}
             <TradeHouseModel position={[8, 0, 0]} />
-            
+
             {/* THC Coins */}
             <THCCoinModel position={[0, 1.5, 3]} />
             <THCCoinModel position={[3, 1.5, 0]} />
             <THCCoinModel position={[-3, 1.5, -3]} />
-            
+
             {/* Decorative elements */}
             <AnimatedBox position={[-5, 0, 5]} />
             <AnimatedSphere position={[5, 0, -5]} />
           </Suspense>
-          
+
           {/* Info panel */}
           <InfoPanel />
-          
+
           <OrbitControls 
             enablePan={true}
             enableZoom={true}
@@ -505,10 +517,10 @@ export default function MinimalScene() {
           <Environment preset="city" />
         </Canvas>
       </KeyboardControls>
-      
+
       {/* Add SocialPanel for voice chat */}
       <SocialPanel />
-      
+
       {/* Add dedicated Voice Chat Controls panel for better visibility */}
       {showVoiceControls && (
         <div className="absolute top-4 right-4 bg-black/70 text-white p-3 rounded-lg text-sm">
@@ -529,7 +541,7 @@ export default function MinimalScene() {
             onToggleMinimize={() => setShowVoiceControls(false)} />
         </div>
       )}
-      
+
       {/* Overlay instructions */}
       {showInstructions && (
         <div className="absolute bottom-4 left-4 bg-black/70 text-white p-3 rounded-lg text-sm max-w-xs">
@@ -547,7 +559,7 @@ export default function MinimalScene() {
             </button>
           </div>
           <p className="text-gray-300 text-xs mb-2">
-            Use the arrow keys or WASD to move your character. Space to jump.
+            Use the arrow keys or WASD to move your character. Space to jump. Shift to sprint.
           </p>
           <ul className="text-xs list-disc pl-4 text-gray-300">
             <li>Other players will appear automatically when they join</li>
@@ -555,7 +567,7 @@ export default function MinimalScene() {
             <li>Hover over other players to see interaction options</li>
             <li>Visit the Trade House to access trading features</li>
           </ul>
-          
+
           {/* Multiplayer toggle for testing */}
           <div className="mt-2 pt-2 border-t border-gray-700">
             <label className="flex items-center gap-2 text-xs">
@@ -570,7 +582,7 @@ export default function MinimalScene() {
           </div>
         </div>
       )}
-      
+
       {/* Show instructions button when minimized */}
       {!showInstructions && (
         <button 
@@ -585,7 +597,7 @@ export default function MinimalScene() {
           Controls
         </button>
       )}
-      
+
       {/* Show voice controls button when minimized */}
       {!showVoiceControls && (
         <button 
