@@ -739,3 +739,20 @@ function normalizeAction(action: string): 'buy' | 'sell' | 'neutral' {
     return 'neutral';
   }
 }
+
+function calculateConfidence(signals: any[]): number {
+  const totalSignals = signals.length;
+  if (totalSignals === 0) return 0;
+
+  const positiveSignals = signals.filter(s => s.direction === 'buy').length;
+  return (positiveSignals / totalSignals) * 100;
+}
+
+async function analyzeSignal(signal: any) {
+  const confidence = calculateConfidence([signal]);
+  return {
+    ...signal,
+    confidence,
+    timestamp: new Date().toISOString()
+  };
+}

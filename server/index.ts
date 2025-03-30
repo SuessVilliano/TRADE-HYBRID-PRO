@@ -44,7 +44,9 @@ app.use((req, res, next) => {
     const message = err.message || "Internal Server Error";
 
     res.status(status).json({ message });
-    throw err;
+    //Throwing the error here might be undesirable in a production environment.  Consider logging instead.
+    //throw err; 
+    console.error("Server Error:", err);
   });
 
   // importantly only setup vite in development and after
@@ -59,11 +61,24 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client
   const port = 5000;
+  process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+    process.exit(1);
+  });
+
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  });
+
+
   server.listen({
     port,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+  }).on('error', (error) => {
+    console.error('Server failed to start:', error);
+    process.exit(1);
   });
 })();
