@@ -3,6 +3,23 @@ import { create } from 'zustand';
 import { brokerAggregatorService, SUPPORTED_BROKERS, BrokerCredentials, 
          BrokerPriceComparison, AccountInfo, Position, OrderRequest, OrderResponse } from '../services/broker-aggregator-service';
 
+// Added: Broker Orchestrator class
+class BrokerOrchestrator {
+  async executeTrade(userId: string, order: OrderRequest, brokerId?: string): Promise<OrderResponse> {
+    // Simulate broker selection logic (replace with actual logic)
+    const broker = brokerId || this.selectBestBroker();
+    console.log(`Executing trade for user ${userId} on broker ${broker} for order:`, order);
+    // Simulate trade execution on chosen broker (replace with actual API call)
+
+    return new Promise(resolve => setTimeout(()=>resolve({orderId: 'simulated-order-id', status: 'filled', message: 'Order filled'}), 1000)) ;
+  }
+
+  selectBestBroker(): string {
+    // Simulate broker selection based on some criteria (replace with your logic)
+    return 'alpaca'; // Replace with dynamic broker selection
+  }
+}
+
 interface BrokerAggregatorState {
   isAuthenticated: boolean;
   demoMode: boolean;
@@ -17,7 +34,9 @@ interface BrokerAggregatorState {
   isConnected: boolean;
   selectedBroker: string;
   useABATEV: boolean;
-  
+  userId: string; // Added: User ID for trade execution
+  hasAlpacaAccess: boolean; // Added: Flag for Alpaca crypto access
+
   // Actions
   authenticateBroker: (credentials: BrokerCredentials) => Promise<boolean>;
   logout: () => void;
@@ -29,7 +48,7 @@ interface BrokerAggregatorState {
   setCurrentSymbol: (symbol: string) => void;
   toggleDemoMode: () => void;
   getSupportedBrokers: () => typeof SUPPORTED_BROKERS;
-  
+
   // Additional actions needed for SignalsList
   initializeAggregator: () => Promise<boolean>;
   executeTrade: (order: OrderRequest) => Promise<any>;
@@ -51,21 +70,25 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
   isConnected: false,
   selectedBroker: 'alpaca',
   useABATEV: true,
-  
+  userId: '', // Initialize userId (needs to be set during authentication)
+  hasAlpacaAccess: false, // Initialize hasAlpacaAccess (needs to be set per user)
+
   authenticateBroker: async (credentials: BrokerCredentials) => {
     set({ isLoading: true, error: null });
     try {
       const success = await brokerAggregatorService.initialize(credentials);
-      
+
       if (success) {
         set({
           isAuthenticated: true,
           demoMode: !!credentials.demoMode,
           currentBroker: credentials.brokerId,
           currentBrokerInfo: brokerAggregatorService.getCurrentBroker(),
-          error: null
+          error: null,
+          userId: credentials.userId || '', // Set userId from credentials
+          hasAlpacaAccess: credentials.hasAlpacaAccess || false // Set Alpaca access from credentials
         });
-        
+
         // Get initial account info and positions
         await get().getAccountInfo();
         await get().getPositions();
@@ -75,7 +98,7 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
           isAuthenticated: false
         });
       }
-      
+
       set({ isLoading: false });
       return success;
     } catch (error) {
@@ -88,7 +111,7 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
       return false;
     }
   },
-  
+
   logout: () => {
     brokerAggregatorService.logout();
     set({
@@ -97,10 +120,12 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
       currentBrokerInfo: null,
       accountInfo: null,
       positions: [],
-      error: null
+      error: null,
+      userId: '', // Reset userId on logout
+      hasAlpacaAccess: false // Reset Alpaca access on logout
     });
   },
-  
+
   compareBrokerPrices: async (symbol: string) => {
     set({ isLoading: true, error: null, currentSymbol: symbol });
     try {
@@ -115,10 +140,10 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
       });
     }
   },
-  
+
   getAccountInfo: async () => {
     if (!get().isAuthenticated) return;
-    
+
     set({ isLoading: true, error: null });
     try {
       const accountInfo = await brokerAggregatorService.getAccountInfo();
@@ -131,10 +156,10 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
       });
     }
   },
-  
+
   getPositions: async () => {
     if (!get().isAuthenticated) return;
-    
+
     set({ isLoading: true, error: null });
     try {
       const positions = await brokerAggregatorService.getPositions();
@@ -148,18 +173,34 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
       });
     }
   },
-  
+
   placeOrder: async (order: OrderRequest) => {
     set({ isLoading: true, error: null });
     try {
-      const result = await brokerAggregatorService.placeOrder(order);
-      
+      const orchestrator = new BrokerOrchestrator();
+
+      // Special handling for Alpaca crypto
+      if (order.asset.type === 'crypto' && get().hasAlpacaAccess) {
+        const result = await orchestrator.executeTrade(get().userId, order, 'alpaca');
+
+        // If order was successful, refresh account info and positions
+        if (result.status === 'filled' || result.status === 'pending') {
+          await get().getAccountInfo();
+          await get().getPositions();
+        }
+        set({ isLoading: false });
+        return result;
+      }
+
+      // Let orchestrator choose best broker
+      const result = await orchestrator.executeTrade(get().userId, order);
+
       // If order was successful, refresh account info and positions
       if (result.status === 'filled' || result.status === 'pending') {
         await get().getAccountInfo();
         await get().getPositions();
       }
-      
+
       set({ isLoading: false });
       return result;
     } catch (error) {
@@ -168,7 +209,7 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
         isLoading: false,
         error: error instanceof Error ? error.message : 'Failed to place order'
       });
-      
+
       return {
         orderId: '',
         status: 'rejected',
@@ -176,18 +217,18 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
       };
     }
   },
-  
+
   closePosition: async (symbol: string) => {
     set({ isLoading: true, error: null });
     try {
       const result = await brokerAggregatorService.closePosition(symbol);
-      
+
       // If position was closed successfully, refresh account info and positions
       if (result.status === 'filled') {
         await get().getAccountInfo();
         await get().getPositions();
       }
-      
+
       set({ isLoading: false });
       return result;
     } catch (error) {
@@ -196,7 +237,7 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
         isLoading: false,
         error: error instanceof Error ? error.message : 'Failed to close position'
       });
-      
+
       return {
         orderId: '',
         status: 'rejected',
@@ -204,13 +245,13 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
       };
     }
   },
-  
+
   setCurrentSymbol: (symbol: string) => {
     set({ currentSymbol: symbol });
     // Also update broker comparisons
     get().compareBrokerPrices(symbol);
   },
-  
+
   toggleDemoMode: () => {
     // Only toggle if not authenticated
     if (!get().isAuthenticated) {
@@ -219,11 +260,11 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
       set({ error: 'Please logout before switching between demo and live modes.' });
     }
   },
-  
+
   getSupportedBrokers: () => {
     return SUPPORTED_BROKERS;
   },
-  
+
   // Additional actions implementation for SignalsList
   initializeAggregator: async () => {
     set({ isLoading: true, error: null });
@@ -242,15 +283,15 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
       return false;
     }
   },
-  
+
   executeTrade: async (order: OrderRequest) => {
     return get().placeOrder(order);
   },
-  
+
   selectBroker: (brokerId: string) => {
     set({ selectedBroker: brokerId });
   },
-  
+
   toggleABATEV: () => {
     set(state => ({ useABATEV: !state.useABATEV }));
   }
