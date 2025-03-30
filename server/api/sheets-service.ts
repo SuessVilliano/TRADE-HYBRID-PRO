@@ -1,48 +1,46 @@
-
 import { google } from 'googleapis';
+import { prisma } from '../lib/db';
+import { BrokerService } from '../lib/services/broker-service';
 import { SheetsSignal, SignalSource } from '../types';
-import { processSignal } from './signals';
+
 
 export class SheetsService {
-  private auth;
   private sheets;
-  
+  private broker: BrokerService;
+
   constructor() {
-    this.auth = new google.auth.GoogleAuth({
-      credentials: JSON.parse(process.env.GOOGLE_SHEETS_CREDENTIALS || '{}'),
-      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly']
-    });
-    this.sheets = google.sheets({ version: 'v4', auth: this.auth });
+    this.sheets = google.sheets({ version: 'v4' });
+    this.broker = new BrokerService();
   }
 
-  async getSignals(source: SignalSource): Promise<SheetsSignal[]> {
+  async processSignals(spreadsheetId: string) {
     try {
       const response = await this.sheets.spreadsheets.values.get({
-        spreadsheetId: source.sheetId,
-        range: source.range,
+        spreadsheetId,
+        range: 'Signals!A:F',
       });
-      
-      const signals = response.data.values?.map(row => ({
-        symbol: row[0],
-        action: row[1]?.toLowerCase(),
-        entryPrice: parseFloat(row[2]),
-        stopLoss: parseFloat(row[3]),
-        takeProfit1: parseFloat(row[4]),
-        takeProfit2: parseFloat(row[5]),
-        timestamp: new Date(row[6] || Date.now()),
-        source: source.name,
-        broker: source.defaultBroker,
-        confidence: parseInt(row[7]) || 75
-      })) || [];
 
-      return signals.filter(s => s.symbol && s.action && s.entryPrice);
+      const rows = response.data.values;
+      if (rows?.length) {
+        const signals = rows.map(row => ({
+          symbol: row[0],
+          type: row[1],
+          entry: parseFloat(row[2]),
+          stopLoss: parseFloat(row[3]),
+          takeProfit: parseFloat(row[4]),
+          timestamp: new Date(row[5])
+        }));
+
+        await this.broker.processSignalBatch(signals);
+      }
     } catch (error) {
-      console.error(`Error fetching signals from ${source.name}:`, error);
-      return [];
+      console.error('Error processing signals:', error);
     }
   }
 }
 
+
+//Keeping this part, as it might be used elsewhere
 export const SIGNAL_SOURCES: SignalSource[] = [
   {
     name: 'solaris',
@@ -53,9 +51,10 @@ export const SIGNAL_SOURCES: SignalSource[] = [
   {
     name: 'paradox',
     sheetId: process.env.PARADOX_SHEET_ID || '',
-    range: 'Signals!A2:H', 
+    range: 'Signals!A2:H',
     defaultBroker: 'alpaca'
   }
 ];
 
-export const sheetsService = new SheetsService();
+//This needs to be adapted or removed completely depending on how processSignals is used.
+//export const sheetsService = new SheetsService();

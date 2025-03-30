@@ -1,60 +1,54 @@
 
-import { db } from '../db';
-import { eq, and } from 'drizzle-orm';
-import { users, trades, copyTradeSettings } from '../../../shared/schema';
-import type { Trade } from '../../../shared/schema';
+import { prisma } from '../db';
+import { BrokerService } from './broker-service';
+import { SignalService } from './signal-service';
 
 export class CopyTradeService {
-  // Add a trader to available copy traders list
-  async addCopyTrader(userId: number, settings: any) {
-    return await db.insert(copyTradeSettings).values({
-      userId,
-      isAvailable: true,
-      maxFollowers: settings.maxFollowers || 100,
-      profitShare: settings.profitShare || 0,
-      riskLevel: settings.riskLevel || 'medium',
-      minCopyAmount: settings.minCopyAmount || 100,
-      description: settings.description || ''
+  constructor(
+    private brokerService: BrokerService,
+    private signalService: SignalService
+  ) {}
+
+  async setupCopyTrading(followerId: string, leaderId: string) {
+    return prisma.copyTrade.create({
+      data: {
+        followerId,
+        leaderId,
+        status: 'active'
+      }
     });
   }
 
-  // Get list of available traders
-  async getAvailableCopyTraders() {
-    return await db
-      .select({
-        id: users.id,
-        username: users.username,
-        avatar: users.avatar,
-        settings: copyTradeSettings
-      })
-      .from(users)
-      .innerJoin(copyTradeSettings, eq(users.id, copyTradeSettings.userId))
-      .where(eq(copyTradeSettings.isAvailable, true));
-  }
+  async processCopyTrade(tradeSignal: any) {
+    const followers = await prisma.copyTrade.findMany({
+      where: {
+        leaderId: tradeSignal.userId,
+        status: 'active'
+      }
+    });
 
-  // Copy a trade for followers
-  async copyTradeForFollowers(trade: Trade) {
-    // Get all followers of the trader
-    const followers = await db
-      .select()
-      .from(copyTradeSettings)
-      .where(eq(copyTradeSettings.followingId, trade.userId));
-
-    // Copy trade for each follower based on their settings
     for (const follower of followers) {
-      const scaledQuantity = trade.quantity * (follower.riskMultiplier || 1);
-      
-      await db.insert(trades).values({
-        userId: follower.userId,
-        symbol: trade.symbol,
-        side: trade.side,
-        quantity: scaledQuantity,
-        entryPrice: trade.entryPrice,
-        leverage: trade.leverage,
-        copiedFromId: trade.id
+      await this.brokerService.executeTrade({
+        userId: follower.followerId,
+        symbol: tradeSignal.symbol,
+        side: tradeSignal.side,
+        quantity: tradeSignal.quantity,
+        type: 'MARKET'
       });
     }
   }
-}
 
-export const copyTradeService = new CopyTradeService();
+  async getLeaderboard() {
+    return prisma.user.findMany({
+      where: { isLeader: true },
+      select: {
+        id: true,
+        name: true,
+        winRate: true,
+        totalPnL: true,
+        followers: true
+      },
+      orderBy: { totalPnL: 'desc' }
+    });
+  }
+}
