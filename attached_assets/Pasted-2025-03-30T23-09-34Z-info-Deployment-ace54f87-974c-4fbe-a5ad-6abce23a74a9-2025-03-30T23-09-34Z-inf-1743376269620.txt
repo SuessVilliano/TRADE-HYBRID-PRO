@@ -1,0 +1,76 @@
+2025-03-30T23:09:34Z info: Deployment: ace54f87-974c-4fbe-a5ad-6abce23a74a9
+2025-03-30T23:09:34Z info: Build: 5ec6cc5b-9fad-4276-9ead-9247dc97e18f
+2025-03-30T23:09:34Z info: Connecting to builder
+2025-03-30T23:09:38Z info: Builder connected
+2025-03-30T23:09:38Z info: Installing packages
+--> npm install
+
+--> npm install
+
+
+up to date, audited 1305 packages in 9s
+
+  run `npm fund` for details
+
+
+24 vulnerabilities (6 low, 8 moderate, 10 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+2025-03-30T23:09:49Z info: Starting Build
+
+up to date, audited 1305 packages in 3s
+
+
+174 packages are looking for funding
+  run `npm fund` for details
+
+
+24 vulnerabilities (6 low, 8 moderate, 10 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+
+vite v5.4.15 building for production...
+
+transforming...
+
+✓ 3930 modules transformed.
+
+error during build:
+client/src/App.tsx (51:9): "default" is not exported by "client/src/components/ui/toaster.tsx", imported by "client/src/App.tsx".
+file: /home/runner/workspace/client/src/App.tsx:51:9
+
+49: import { MicroLearningTipRenderer } from './components/ui/micro-learning-tip-renderer';
+50: import { ToastProvider } from './components/ui/toaster';
+51: import { default as Toaster } from './components/ui/toaster';
+             ^
+52: import { NotificationListener } from './components/ui/notification-listener';
+53: import { FeatureDisclosureProvider, useFeatureDisclosure, UserExperienceLevel } from './lib/context/FeatureDisclosure...
+
+    at getRollupError (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/parseAst.js:397:41)
+    at error (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/parseAst.js:393:42)
+    at Module.error (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:16711:16)
+    at Module.traceVariable (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:17160:29)
+    at ModuleScope.findVariable (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:14816:39)
+    at FunctionScope.findVariable (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:5582:38)
+    at FunctionBodyScope.findVariable (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:5582:38)
+    at Identifier.bind (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:5356:40)
+    at CallExpression.bind (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:2779:28)
+    at CallExpression.bind (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:11928:15)
