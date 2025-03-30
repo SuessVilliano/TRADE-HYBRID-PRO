@@ -8,6 +8,65 @@ interface SmartTradePanelProps {
   defaultSymbol?: string;
 }
 
+interface DexChartProps {
+  symbol: string;
+  theme?: 'light' | 'dark';
+}
+
+const DexChart: React.FC<DexChartProps> = ({ symbol, theme = 'dark' }) => {
+  const chartContainerId = `dex-chart-${Math.random().toString(36).substring(7)}`;
+
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://s3.tradingview.com/tv.js';
+    script.async = true;
+    script.onload = () => {
+      new (window as any).TradingView.widget({
+        container_id: chartContainerId,
+        symbol: symbol,
+        interval: '1D',
+        timezone: 'exchange',
+        theme: theme,
+        style: '1',
+        toolbar_bg: theme === 'dark' ? '#1a1b1e' : '#f8f9fa',
+        enable_publishing: false,
+        allow_symbol_change: true,
+        save_image: true,
+        studies: [
+          "STD;SMA",
+          "STD;RSI",
+          "STD;MACD"
+        ],
+        details: true,
+        hotlist: true,
+        calendar: true,
+        width: '100%',
+        height: '600',
+      });
+    };
+    document.head.appendChild(script);
+    
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, [symbol, theme, chartContainerId]);
+
+  return (
+    <div className="w-full h-[600px] rounded-lg overflow-hidden border border-slate-700">
+      <div id={chartContainerId} className="w-full h-full" />
+    </div>
+  );
+};
+
+const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol = 'BTCUSDT' }) => {
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-bold mb-4">DEX Trading View</h2>
+      <DexChart symbol={defaultSymbol} theme="dark" />
+    </div>
+  );
+};
+
 export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol = 'BTCUSD' }) => {
   const [activeTab, setActiveTab] = useState<'trade' | 'abatev' | 'settings'>('abatev');
   const [symbol, setSymbol] = useState(defaultSymbol);
