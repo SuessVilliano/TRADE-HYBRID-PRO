@@ -16,12 +16,31 @@ interface WhopMembershipStatus {
 class WhopService {
   private apiKey: string;
   private baseUrl: string = 'https://api.whop.com/api/v2';
+  private userCache: Map<string, any> = new Map();
   
   constructor() {
-    // Use the provided API key from environment or a direct value
-    this.apiKey = 'ydROZr0J1kv7LZyMGepujMx7vNrZIC-chXf7lBWIJXE';
+    // Use the provided API key from environment
+    this.apiKey = process.env.WHOP_API_KEY || 'ydROZr0J1kv7LZyMGepujMx7vNrZIC-chXf7lBWIJXE';
     
-    console.log('Whop service initialized with API key');
+    if (!this.apiKey) {
+      console.error('Whop API key not configured properly');
+    }
+    console.log('Whop service initialized');
+  }
+
+  private async validateApiKey(): Promise<boolean> {
+    try {
+      const response = await axios.get(`${this.baseUrl}/me`, {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      return response.status === 200;
+    } catch (error) {
+      console.error('Whop API key validation failed:', error);
+      return false;
+    }
   }
   
   /**
@@ -30,13 +49,25 @@ class WhopService {
    * @returns Promise<WhopMembershipStatus> - Membership status
    */
   async validateMembership(userId: string): Promise<WhopMembershipStatus> {
-    if (!this.apiKey) {
-      console.error('Cannot validate Whop membership: API key not set');
-      return { isActive: false };
+    if (!this.apiKey || !(await this.validateApiKey())) {
+      console.error('Cannot validate Whop membership: Invalid API configuration');
+      return { isActive: false, error: 'Invalid API configuration' };
     }
     
     try {
-      const response = await axios.get(`${this.baseUrl}/memberships`, {
+      // Get detailed user information
+      const userResponse = await axios.get(`${this.baseUrl}/users/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // Cache user info
+      this.userCache.set(userId, userResponse.data);
+
+      // Get membership status
+      const membershipResponse = await axios.get(`${this.baseUrl}/memberships`, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json'
@@ -46,6 +77,25 @@ class WhopService {
           status: 'active'
         }
       });
+      
+      const memberships = membershipResponse.data?.data || [];
+      const userInfo = userResponse.data;
+      
+      if (memberships.length > 0) {
+        const activeMembership = memberships[0];
+        return {
+          isActive: true,
+          planId: activeMembership.plan_id,
+          memberId: activeMembership.id,
+          memberSince: activeMembership.created_at,
+          userDetails: {
+            name: userInfo.username,
+            email: userInfo.email,
+            profileImage: userInfo.profile_pic_url,
+            discord: userInfo.discord_username
+          }
+        };
+      }
       
       // Check if there are any active memberships
       if (response.data && response.data.data && response.data.data.length > 0) {
