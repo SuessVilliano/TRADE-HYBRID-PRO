@@ -1,5 +1,7 @@
 import { MarketData } from "@/lib/types";
+import { MarketData as BrokerMarketData } from "./broker-service";
 import { TradingSignal } from "@/lib/stores/useSignals";
+import { config } from "@/lib/config";
 
 export interface AIMarketAnalysis {
   symbol: string;
@@ -76,7 +78,7 @@ export class AIMarketAnalysisService {
     
     // Try to use OpenAI if available
     try {
-      const openaiKey = process.env.OPENAI_API_KEY;
+      const openaiKey = config.OPENAI_API_KEY;
       if (openaiKey) {
         console.log("Using OpenAI for market analysis");
         // Get the most recent market data points to analyze
@@ -451,10 +453,11 @@ export class AIMarketAnalysisService {
           takeProfit2: latestPrice * (1 + priceMove * 1.5),
           takeProfit3: latestPrice * (1 + priceMove * 2),
           indicators: {
-            "RSI": Math.floor(40 + Math.random() * 30),
+            "RSI": Math.floor(40 + Math.random() * 30).toString(),
             "MACD": pattern.type === 'bullish' ? "Bullish" : "Bearish",
             "Volume": "Above Average"
-          }
+          },
+          read: false
         });
       }
     }

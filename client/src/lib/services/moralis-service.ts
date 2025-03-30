@@ -1,5 +1,6 @@
 import { check_secrets } from '../utils';
 import { apiKeyManager } from './api-key-manager';
+import { config } from '../config';
 
 export interface MoralisTokenData {
   token_address: string;
@@ -88,7 +89,7 @@ export class MoralisService {
           return false;
         } else {
           // Get from environment
-          this.apiKey = process.env.MORALIS_API_KEY || '';
+          this.apiKey = config.MORALIS_API_KEY || '';
         }
         
         // Update the API key manager with this key

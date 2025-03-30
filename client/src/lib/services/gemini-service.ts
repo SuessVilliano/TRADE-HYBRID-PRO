@@ -1,5 +1,6 @@
 import { check_secrets } from '../utils';
 import { apiKeyManager } from './api-key-manager';
+import { config } from '../config';
 
 interface GeminiSentimentResponse {
   sentiment: {
@@ -54,8 +55,8 @@ export class GeminiService {
           return false;
         }
         
-        // Get from environment
-        this.apiKey = process.env.GEMINI_API_KEY || '';
+        // Get from client-side config
+        this.apiKey = config.GEMINI_API_KEY || '';
         
         // Update the API key manager with this key
         await apiKeyManager.setApiKey('gemini', {

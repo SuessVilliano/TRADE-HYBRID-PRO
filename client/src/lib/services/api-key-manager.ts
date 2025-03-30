@@ -1,4 +1,5 @@
 import { check_secrets } from '../utils';
+import { config } from '../config';
 
 export interface ApiKeyConfig {
   key: string;
@@ -145,76 +146,77 @@ class ApiKeyManager {
       
       const hasSecrets = await check_secrets(keyNames);
       
-      if (hasSecrets) {
-        // Set up RapidAPI key if available
-        if (process.env.RAPIDAPI_KEY) {
-          this.apiKeys.set('rapidapi', {
-            key: process.env.RAPIDAPI_KEY,
-            isValid: true,
-            tier: 'basic'
-          });
-        }
-        
-        // Set up Alpaca keys if available
-        if (process.env.ALPACA_API_KEY && process.env.ALPACA_API_SECRET) {
-          this.apiKeys.set('alpaca', {
-            key: process.env.ALPACA_API_KEY,
-            secret: process.env.ALPACA_API_SECRET,
-            isValid: true,
-            tier: 'basic'
-          });
-        }
-        
-        // Set up OANDA key if available
-        if (process.env.OANDA_API_TOKEN) {
-          this.apiKeys.set('oanda', {
-            key: `Bearer ${process.env.OANDA_API_TOKEN}`,
-            isValid: true,
-            tier: 'basic'
-          });
-        }
-        
-        // Set up Binance key if available
-        if (process.env.BINANCE_API_KEY && process.env.BINANCE_API_SECRET) {
-          this.apiKeys.set('binance', {
-            key: process.env.BINANCE_API_KEY,
-            secret: process.env.BINANCE_API_SECRET,
-            isValid: true,
-            tier: 'basic'
-          });
-        }
-        
-        // Set up OpenAI key if available
-        if (process.env.OPENAI_API_KEY) {
-          this.apiKeys.set('openai', {
-            key: `Bearer ${process.env.OPENAI_API_KEY}`,
-            isValid: true,
-            tier: 'basic'
-          });
-        }
-        
-        // Set up Gemini key if available
-        if (process.env.GEMINI_API_KEY) {
-          this.apiKeys.set('gemini', {
-            key: process.env.GEMINI_API_KEY,
-            isValid: true,
-            tier: 'basic'
-          });
-        }
-        
-        // Set up Moralis key if available
-        if (process.env.MORALIS_API_KEY) {
-          this.apiKeys.set('moralis', {
-            key: process.env.MORALIS_API_KEY,
-            isValid: true,
-            tier: 'premium',
-            rateLimits: {
-              requestsPerMinute: 60,
-              requestsPerDay: 100000,
-              requestsRemaining: 100000
-            }
-          });
-        }
+      // Use our client-side config instead of process.env
+      // These will typically be empty in client-side code unless explicitly set
+      
+      // Set up RapidAPI key if available
+      if (config.RAPIDAPI_KEY) {
+        this.apiKeys.set('rapidapi', {
+          key: config.RAPIDAPI_KEY,
+          isValid: true,
+          tier: 'basic'
+        });
+      }
+      
+      // Set up Alpaca keys if available
+      if (config.ALPACA_API_KEY && config.ALPACA_API_SECRET) {
+        this.apiKeys.set('alpaca', {
+          key: config.ALPACA_API_KEY,
+          secret: config.ALPACA_API_SECRET,
+          isValid: true,
+          tier: 'basic'
+        });
+      }
+      
+      // Set up OANDA key if available
+      if (config.OANDA_API_TOKEN) {
+        this.apiKeys.set('oanda', {
+          key: `Bearer ${config.OANDA_API_TOKEN}`,
+          isValid: true,
+          tier: 'basic'
+        });
+      }
+      
+      // Set up Binance key if available
+      if (config.BINANCE_API_KEY && config.BINANCE_API_SECRET) {
+        this.apiKeys.set('binance', {
+          key: config.BINANCE_API_KEY,
+          secret: config.BINANCE_API_SECRET,
+          isValid: true,
+          tier: 'basic'
+        });
+      }
+      
+      // Set up OpenAI key if available
+      if (config.OPENAI_API_KEY) {
+        this.apiKeys.set('openai', {
+          key: `Bearer ${config.OPENAI_API_KEY}`,
+          isValid: true,
+          tier: 'basic'
+        });
+      }
+      
+      // Set up Gemini key if available
+      if (config.GEMINI_API_KEY) {
+        this.apiKeys.set('gemini', {
+          key: config.GEMINI_API_KEY,
+          isValid: true,
+          tier: 'basic'
+        });
+      }
+      
+      // Set up Moralis key if available
+      if (config.MORALIS_API_KEY) {
+        this.apiKeys.set('moralis', {
+          key: config.MORALIS_API_KEY,
+          isValid: true,
+          tier: 'premium',
+          rateLimits: {
+            requestsPerMinute: 60,
+            requestsPerDay: 100000,
+            requestsRemaining: 100000
+          }
+        });
       }
       
       this.initialized = true;
@@ -271,7 +273,7 @@ class ApiKeyManager {
   /**
    * Set an API key for a specific service
    */
-  async setApiKey(service: string, config: Partial<ApiKeyConfig>): Promise<boolean> {
+  async setApiKey(service: string, keyConfig: Partial<ApiKeyConfig>): Promise<boolean> {
     if (!this.initialized) {
       await this.initialize();
     }
@@ -283,22 +285,22 @@ class ApiKeyManager {
       // Update existing config
       this.apiKeys.set(serviceName, {
         ...existingConfig,
-        ...config,
+        ...keyConfig,
         isValid: true // Assume valid until proven otherwise
       });
     } else {
       // Create new config
-      if (!config.key) {
+      if (!keyConfig.key) {
         console.error('API key is required');
         return false;
       }
       
       this.apiKeys.set(serviceName, {
-        key: config.key,
-        secret: config.secret,
+        key: keyConfig.key,
+        secret: keyConfig.secret,
         isValid: true,
-        tier: config.tier || 'free',
-        rateLimits: config.rateLimits
+        tier: keyConfig.tier || 'free',
+        rateLimits: keyConfig.rateLimits
       });
     }
     
@@ -315,19 +317,19 @@ class ApiKeyManager {
     }
     
     const serviceName = service.toLowerCase();
-    const config = this.apiKeys.get(serviceName);
+    const keyConfig = this.apiKeys.get(serviceName);
     
-    if (!config) {
+    if (!keyConfig) {
       return false;
     }
     
     // In a real implementation, we would make a test API call here
     // For now, we'll just check if the key exists
-    const isValid = Boolean(config.key);
+    const isValid = Boolean(keyConfig.key);
     
     // Update the validity status
     this.apiKeys.set(serviceName, {
-      ...config,
+      ...keyConfig,
       isValid
     });
     

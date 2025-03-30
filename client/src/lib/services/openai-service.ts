@@ -1,5 +1,6 @@
 import { check_secrets } from '../utils';
 import { apiKeyManager } from './api-key-manager';
+import { config } from '../config';
 
 interface OpenAISentimentResponse {
   sentiment: {
@@ -37,8 +38,8 @@ export class OpenAIService {
           return false;
         }
         
-        // Get from environment
-        this.apiKey = `Bearer ${process.env.OPENAI_API_KEY || ''}`;
+        // Get from client-side config
+        this.apiKey = `Bearer ${config.OPENAI_API_KEY || ''}`;
         
         // Update the API key manager with this key
         await apiKeyManager.setApiKey('openai', {

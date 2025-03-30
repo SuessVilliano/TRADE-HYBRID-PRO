@@ -1,5 +1,6 @@
 import { BrokerService, MarketData, AccountBalance, BrokerPosition, OrderHistory } from './broker-service';
 import { check_secrets } from '../utils';
+import { config } from '../config';
 
 // Interface for OANDA API responses
 interface OandaAccountResponse {
@@ -86,7 +87,7 @@ export class OandaService implements BrokerService {
         if (!hasToken) {
           throw new Error('OANDA API token not found in environment variables');
         }
-        this.apiToken = process.env.OANDA_API_TOKEN || '';
+        this.apiToken = config.OANDA_API_TOKEN || '';
       } catch (error) {
         console.error('Failed to retrieve OANDA API token:', error);
         throw error;
@@ -107,7 +108,7 @@ export class OandaService implements BrokerService {
             throw new Error('No OANDA account ID found');
           }
         } else {
-          this.accountId = process.env.OANDA_ACCOUNT_ID || '';
+          this.accountId = config.OANDA_ACCOUNT_ID || '';
         }
       } catch (error) {
         console.error('Failed to retrieve OANDA account ID:', error);

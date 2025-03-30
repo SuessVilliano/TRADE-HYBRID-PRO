@@ -1,5 +1,6 @@
 import { BrokerService, MarketData, AccountBalance, BrokerPosition, OrderHistory } from './broker-service';
 import { check_secrets } from '../utils';
+import { config } from '../config';
 
 export class BinanceService implements BrokerService {
   private baseUrl: string;
@@ -31,8 +32,8 @@ export class BinanceService implements BrokerService {
         if (!hasSecrets) {
           throw new Error('Binance API keys not found in environment variables');
         }
-        this.apiKey = process.env.BINANCE_API_KEY || '';
-        this.apiSecret = process.env.BINANCE_API_SECRET || '';
+        this.apiKey = config.BINANCE_API_KEY || '';
+        this.apiSecret = config.BINANCE_API_SECRET || '';
       } catch (error) {
         console.error('Failed to retrieve Binance API keys:', error);
         throw error;

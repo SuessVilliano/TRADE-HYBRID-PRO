@@ -1,5 +1,6 @@
 import { BrokerService, MarketData, AccountBalance, BrokerPosition, OrderHistory } from './broker-service';
 import { check_secrets } from '../utils';
+import { config } from '../config';
 
 // Interface for Kraken API responses
 interface KrakenBalanceResponse {

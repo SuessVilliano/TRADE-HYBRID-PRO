@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { config } from "@/lib/config";
 
 // Using simpler approach for TypeScript compatibility
 // We'll just use 'any' for the speech recognition types to avoid complex type issues
@@ -346,7 +347,7 @@ export function VisionAIScreenShare({ className }: VisionAIScreenShareProps) {
         });
       } else {
         // No screenshot available, use text-only responses
-        if (process.env.NODE_ENV === 'development') {
+        if (config.NODE_ENV === 'development') {
           // In development, fall back to simulated responses
           simulateGeminiResponse(question);
         } else {

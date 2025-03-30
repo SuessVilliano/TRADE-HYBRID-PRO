@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { config } from './config';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -27,17 +28,20 @@ export function truncate(text: string, maxLength: number = 20): string {
 }
 
 // Required by smart-trade-panel.tsx and other components
-export async function check_secrets(secretKeys: string[]): Promise<Record<string, boolean>> {
-  // Mock implementation for now
-  const result: Record<string, boolean> = {};
-  secretKeys.forEach(key => {
-    result[key] = !!localStorage.getItem(key);
-  });
-  return result;
+export async function check_secrets(secretKeys: string[]): Promise<boolean> {
+  // Check if any of the API keys are available in our client config
+  // This function now returns a boolean instead of a record
+  for (const key of secretKeys) {
+    if (config[key as keyof typeof config]) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export async function ask_secrets(secretKeys: string[], message: string): Promise<void> {
-  // Mock implementation for now
+  // This is a client-side function that should show a UI prompt
+  // For now, we just log to console
   console.log(`Please provide the following secrets: ${secretKeys.join(', ')}`);
   console.log(message);
 }

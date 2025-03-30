@@ -1,4 +1,5 @@
 import { check_secrets } from '../utils';
+import { config } from '../config';
 import { apiKeyManager } from './api-key-manager';
 
 export interface RapidAPIConfig {
@@ -86,7 +87,7 @@ export class RapidAPIService {
           this.rapidApiKey = '39b9c246b0msh8981e7993ba7354p1804d6jsn4711338b7ff9'; // Default key from the provided documentation
         } else {
           // Get from environment
-          this.rapidApiKey = process.env.RAPIDAPI_KEY || '';
+          this.rapidApiKey = config.RAPIDAPI_KEY || '';
         }
         
         // Update the API key manager with this key
