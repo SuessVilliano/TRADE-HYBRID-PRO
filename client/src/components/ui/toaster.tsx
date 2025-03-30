@@ -21,17 +21,13 @@ interface ToastContextType {
 
 const ToastContext = React.createContext<ToastContextType | undefined>(undefined);
 
-// Provider component
 export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const addToast = (toast: Omit<Toast, 'id'>) => {
     const id = Math.random().toString(36).substring(2, 9);
     const newToast = { ...toast, id, duration: toast.duration || 5000 };
-
     setToasts((prevToasts) => [...prevToasts, newToast]);
-
-    // Auto-remove toast after duration
     if (newToast.duration) {
       setTimeout(() => {
         removeToast(id);
@@ -50,7 +46,6 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   );
 };
 
-// Hook to use toast
 export const useToast = () => {
   const context = React.useContext(ToastContext);
   if (context === undefined) {
@@ -59,40 +54,7 @@ export const useToast = () => {
   return context;
 };
 
-// Toast component
-export const Toast: React.FC<{ toast: Toast; onClose: () => void }> = ({ toast, onClose }) => {
-  // Get color based on type
-  const getTypeClasses = (type: ToastType) => {
-    switch (type) {
-      case 'success':
-        return 'bg-green-500 text-white';
-      case 'error':
-        return 'bg-red-500 text-white';
-      case 'warning':
-        return 'bg-yellow-500 text-white';
-      case 'info':
-      default:
-        return 'bg-blue-500 text-white';
-    }
-  };
-
-  return (
-    <div
-      className={`flex items-center justify-between p-4 mb-3 rounded-md shadow-md ${getTypeClasses(
-        toast.type
-      )}`}
-    >
-      <p>{toast.message}</p>
-      <button onClick={onClose} className="ml-4 text-white hover:text-gray-200">
-        {/* X component would go here */}
-        <span>X</span> {/* Placeholder for X component */}
-      </button>
-    </div>
-  );
-};
-
-
-export function Toaster() {
+const Toaster = () => {
   const { theme = "system" } = useTheme()
 
   return (
@@ -117,3 +79,33 @@ export function Toaster() {
 }
 
 export { SonnerToaster };
+export default Toaster;
+
+export const Toast: React.FC<{ toast: Toast; onClose: () => void }> = ({ toast, onClose }) => {
+  const getTypeClasses = (type: ToastType) => {
+    switch (type) {
+      case 'success':
+        return 'bg-green-500 text-white';
+      case 'error':
+        return 'bg-red-500 text-white';
+      case 'warning':
+        return 'bg-yellow-500 text-white';
+      case 'info':
+      default:
+        return 'bg-blue-500 text-white';
+    }
+  };
+
+  return (
+    <div
+      className={`flex items-center justify-between p-4 mb-3 rounded-md shadow-md ${getTypeClasses(
+        toast.type
+      )}`}
+    >
+      <p>{toast.message}</p>
+      <button onClick={onClose} className="ml-4 text-white hover:text-gray-200">
+        <span>X</span>
+      </button>
+    </div>
+  );
+};
