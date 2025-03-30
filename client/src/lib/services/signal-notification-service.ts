@@ -1,51 +1,28 @@
 import { toast } from 'sonner';
 import { TradingSignal } from '../stores/useSignals';
+import { useRouter } from 'next/router';
 
-/**
- * Signal Notification Service
- * 
- * This service provides methods to display trading signal notifications
- * using toast notifications with custom styling based on signal type.
- */
 export class SignalNotificationService {
-  /**
-   * Show a toast notification for a new trading signal
-   */
-  static showSignalNotification(signal: TradingSignal): void {
-    // Choose notification sound based on signal type
-    const audioFile = signal.action === 'buy' 
-      ? '/assets/sounds/signal_buy.mp3' 
-      : signal.action === 'sell' 
-        ? '/assets/sounds/signal_sell.mp3'
-        : '/assets/sounds/notification.mp3';
-    
-    // Play notification sound if available
-    const audio = new Audio(audioFile);
-    audio.volume = 0.5;
-    audio.play().catch(err => console.log('Audio play failed:', err));
-    
-    // Format message with key details
-    const message = `${signal.action.toUpperCase()} ${signal.symbol} [${signal.source}]`;
-    
-    // Format description with more details
-    let description = `${signal.strategy}`;
-    if (signal.timeframe) {
-      description += ` • ${signal.timeframe}`;
+  private static audio = typeof window !== 'undefined' ? new Audio('/sounds/signal-alert.mp3') : null;
+
+  static showSignalNotification(signal: TradingSignal) {
+    // Play notification sound
+    if (this.audio) {
+      this.audio.volume = 0.5;
+      this.audio.play().catch(err => console.warn('Audio play failed:', err));
     }
-    if (signal.confidence) {
-      description += ` • ${Math.round(signal.confidence)}% Confidence`;
-    }
-    
-    // Show toast with appropriate styling based on signal action
-    switch (signal.action) {
+
+    const message = `${signal.action.toUpperCase()} Signal: ${signal.symbol}`;
+    const description = `Entry: ${signal.entry} | SL: ${signal.stopLoss} | TP: ${signal.takeProfit}`;
+
+    switch (signal.action.toLowerCase()) {
       case 'buy':
         toast.success(message, {
           description,
           duration: 8000,
-          // Use higher duration to simulate importance for high confidence signals
           ...(signal.confidence > 80 ? { duration: 12000 } : {}),
           action: {
-            label: 'View Details',
+            label: 'View Signal',
             onClick: () => window.location.href = '/trading-signals'
           },
         });
@@ -54,26 +31,30 @@ export class SignalNotificationService {
         toast.error(message, {
           description,
           duration: 8000,
-          // Use higher duration to simulate importance for high confidence signals
           ...(signal.confidence > 80 ? { duration: 12000 } : {}),
           action: {
-            label: 'View Details',
+            label: 'View Signal',
             onClick: () => window.location.href = '/trading-signals'
           },
         });
         break;
-      default:
-        toast.info(message, {
-          description,
-          duration: 6000,
-          action: {
-            label: 'View Details',
-            onClick: () => window.location.href = '/trading-signals'
-          },
-        });
     }
   }
-  
+
+  static showAdminMessage(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') {
+    if (this.audio) {
+      this.audio.play().catch(err => console.warn('Audio play failed:', err));
+    }
+
+    toast[type](message, {
+      duration: 8000,
+      action: {
+        label: 'View All',
+        onClick: () => window.location.href = '/notifications'
+      }
+    });
+  }
+
   /**
    * Show a summary notification for multiple new signals
    */
