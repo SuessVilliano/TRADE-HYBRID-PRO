@@ -36,10 +36,8 @@ class NotificationService {
   }
 
   public notify(message: string, type: 'success' | 'error' | 'info' = 'info') {
-    // Add notification to queue
     this.notificationQueue.push(message);
-
-    // Play different sounds based on notification type
+    
     switch (type) {
       case 'success':
         this.playSound(800, 200);
@@ -52,10 +50,29 @@ class NotificationService {
         break;
     }
 
-    // Process queue if not already processing
     if (!this.isProcessing) {
       this.processQueue();
     }
+  }
+
+  public notifySystem(title: string, message: string, priority: number) {
+    this.notify(`${title}: ${message}`, 'info');
+  }
+
+  public notifyPriceAlert(symbol: string, price: number, condition: string, targetPrice: number, marketType: string, priority: number) {
+    this.notify(`${symbol} ${condition} ${targetPrice} (${price})`, 'info');
+  }
+
+  public notifySignalEntry(symbol: string, direction: string, price: number, stopLoss: number, takeProfit: number, marketType: string, confidence: number, priority: number) {
+    this.notify(`${direction.toUpperCase()} ${symbol} @ ${price}`, 'success');
+  }
+
+  public notifyTakeProfit(symbol: string, price: number, profit: string, marketType: string, priority: number) {
+    this.notify(`TP Hit ${symbol} @ ${price} (${profit})`, 'success');
+  }
+
+  public notifyStopLoss(symbol: string, price: number, loss: string, marketType: string, priority: number) {
+    this.notify(`SL Hit ${symbol} @ ${price} (${loss})`, 'error');
   }
 
   private async processQueue() {
@@ -71,10 +88,10 @@ class NotificationService {
       console.log('Notification:', message);
     }
 
-    // Wait for a short delay before processing next notification
     await new Promise(resolve => setTimeout(resolve, 300));
     this.processQueue();
   }
 }
 
-export default NotificationService;
+// Export the singleton instance
+export const notificationService = NotificationService.getInstance();
