@@ -84,9 +84,56 @@ export class HybridHoldingsService implements BrokerService {
   private baseUrl: string;
   private dataUrl: string;
   private websocketUrl: string;
-  private analytics: any = {};
+  private analytics: {
+    traderAnalytics: Map<string, any>;
+    globalMetrics: any;
+  } = {
+    traderAnalytics: new Map(),
+    globalMetrics: {}
+  };
   private webSocketConnections: Map<string, WebSocket> = new Map();
   private authenticated: boolean = false;
+
+  async getTraderAnalytics(timeframe: string): Promise<any> {
+    // Implement analytics calculation logic here
+    return {
+      totalVolume: 1250000,
+      profitLoss: 12.5,
+      winRate: 68,
+      activeTraders: 42,
+      riskMetrics: {
+        drawdown: -8.5,
+        sharpeRatio: 1.8,
+        volatility: 12.4
+      },
+      performance: {
+        daily: 1.2,
+        weekly: 4.5,
+        monthly: 12.8,
+        yearly: 42.5
+      }
+    };
+  }
+
+  async getPersonalAnalytics(timeframe: string): Promise<any> {
+    // Implement personal analytics calculation logic here
+    return {
+      totalVolume: 50000,
+      profitLoss: 8.2,
+      winRate: 65,
+      riskMetrics: {
+        drawdown: -5.2,
+        sharpeRatio: 1.5,
+        volatility: 9.8
+      },
+      performance: {
+        daily: 0.8,
+        weekly: 3.2,
+        monthly: 8.5,
+        yearly: 28.4
+      }
+    };
+  }
   
   constructor(
     private apiKey: string,
