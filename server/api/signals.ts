@@ -1,5 +1,30 @@
 import { Request, Response } from 'express';
 import { randomUUID } from 'crypto';
+import { sheetsService } from './sheets-service';
+
+interface SignalSource {
+  id: string;
+  range: string;
+  type: 'crypto' | 'futures' | 'forex';
+}
+
+const SIGNAL_SOURCES: SignalSource[] = [
+  {
+    id: '1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8',
+    range: 'Paradox!A:Z',
+    type: 'crypto'
+  },
+  {
+    id: '1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8',
+    range: 'Hybrid!A:Z', 
+    type: 'futures'
+  },
+  {
+    id: '1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8',
+    range: 'Solaris!A:Z',
+    type: 'forex'
+  }
+];
 
 // In-memory store for signals (in production, use a database)
 let signals: any[] = [
@@ -528,8 +553,42 @@ export const receiveWebhook = (req: Request, res: Response) => {
   }
 };
 
+export async function getSignals(type?: 'crypto' | 'futures' | 'forex') {
+  try {
+    const sources = type ? 
+      SIGNAL_SOURCES.filter(s => s.type === type) : 
+      SIGNAL_SOURCES;
+
+    const signals = await Promise.all(
+      sources.map(source => 
+        sheetsService.getSignals(source.id, source.range)
+      )
+    );
+
+    return signals.flat().map(formatSignal);
+  } catch (error) {
+    console.error('Error fetching signals:', error);
+    return [];
+  }
+}
+
+function formatSignal(rawSignal: any[]) {
+  // Format based on your sheet structure
+  return {
+    symbol: rawSignal[0],
+    type: rawSignal[1], 
+    entry: rawSignal[2],
+    stopLoss: rawSignal[3],
+    takeProfit: rawSignal[4],
+    timestamp: rawSignal[5],
+    confidence: rawSignal[6]
+  };
+}
+
 // Endpoint to get all signals
-export async function getSignals(req: Request, res: Response) {
+// This function is now largely replaced by the new getSignals function above.
+//Keeping this for backward compatibility, but it could be removed if no longer needed.
+export async function getSignalsOld(req: Request, res: Response) {
   try {
     const { type = 'all' } = req.query;
     const sheetsConfig = {
