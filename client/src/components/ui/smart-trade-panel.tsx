@@ -4,9 +4,68 @@ import { SMART_TRADE_PANEL_DEFAULT_SETTINGS, SUPPORTED_BROKERS, TRADING_SYMBOLS,
 import { brokerAggregatorService } from '../../lib/services/broker-aggregator-service';
 import { ArrowUpDown, AlertTriangle, Check, ArrowRight, RefreshCw, Wallet, ArrowRightLeft, Shield, Sliders } from 'lucide-react';
 
+
 interface SmartTradePanelProps {
   defaultSymbol?: string;
 }
+
+export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol = 'BINANCE:SOLUSDT' }) => {
+  const [chartLoaded, setChartLoaded] = useState(false);
+
+  useEffect(() => {
+    const loadTradingViewWidget = () => {
+      const script = document.createElement('script');
+      script.src = 'https://s3.tradingview.com/tv.js';
+      script.async = true;
+      script.onload = () => {
+        if (typeof TradingView !== 'undefined') {
+          new TradingView.widget({
+            container_id: 'tradingview_chart',
+            symbol: defaultSymbol,
+            interval: 'D',
+            timezone: 'exchange',
+            theme: 'dark',
+            style: '1',
+            locale: 'en',
+            toolbar_bg: '#f1f3f6',
+            enable_publishing: false,
+            allow_symbol_change: true,
+            save_image: false,
+            width: '100%',
+            height: '800',
+            studies: [
+              "BB@tv-basicstudies",
+              "MASimple@tv-basicstudies",
+              "RSI@tv-basicstudies"
+            ],
+            show_popup_button: true,
+            popup_width: '1000',
+            popup_height: '650',
+          });
+          setChartLoaded(true);
+          console.log('TradingView widget loaded successfully');
+        }
+      };
+      document.head.appendChild(script);
+    };
+
+    loadTradingViewWidget();
+  }, [defaultSymbol]);
+
+  return (
+    <div className="w-full h-full p-4 bg-background">
+      <div className="rounded-lg overflow-hidden border border-border">
+        <div 
+          id="tradingview_chart" 
+          className="w-full"
+          style={{ minHeight: '800px' }}
+        />
+      </div>
+    </div>
+  );
+};
+
+//This is the rest of the original code that is not used anymore
 
 interface DexChartProps {
   symbol: string;
@@ -45,7 +104,6 @@ const DexChart: React.FC<DexChartProps> = ({ symbol, theme = 'dark' }) => {
       });
     };
     document.head.appendChild(script);
-    
     return () => {
       document.head.removeChild(script);
     };
@@ -58,16 +116,7 @@ const DexChart: React.FC<DexChartProps> = ({ symbol, theme = 'dark' }) => {
   );
 };
 
-const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol = 'BTCUSDT' }) => {
-  return (
-    <div className="p-4 space-y-4">
-      <h2 className="text-xl font-bold mb-4">DEX Trading View</h2>
-      <DexChart symbol={defaultSymbol} theme="dark" />
-    </div>
-  );
-};
-
-export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol = 'BTCUSD' }) => {
+const SmartTradePanel2: React.FC<SmartTradePanelProps> = ({ defaultSymbol = 'BTCUSD' }) => {
   const [activeTab, setActiveTab] = useState<'trade' | 'abatev' | 'settings'>('abatev');
   const [symbol, setSymbol] = useState(defaultSymbol);
   const [quantity, setQuantity] = useState('0.01');
@@ -82,20 +131,20 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
   const [bestPrice, setBestPrice] = useState<{brokerId: string, price: number, spread: number} | null>(null);
   const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const [showAdvanced, setShowAdvanced] = useState(false);
-  
+
   // ABATEV metrics
   const [evaluationCriteria, setEvaluationCriteria] = useState({
     pricePriority: 80,
     latencyPriority: 10,
     reliabilityPriority: 10
   });
-  
+
   const allSymbols = Object.values(TRADING_SYMBOLS).flat();
-  
+
   useEffect(() => {
     // Clear error when switching symbols or tabs
     setAbatevError('');
-    
+
     if (activeTab === 'abatev') {
       console.log(`Tab or symbol changed: fetching data for ${symbol}`);
       // Reset the broker comparisons state to prevent stale data display
@@ -104,19 +153,19 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
       const timer = setTimeout(() => {
         fetchBrokerComparisons();
       }, 100);
-      
+
       return () => clearTimeout(timer);
     }
   }, [activeTab, symbol]);
-  
+
   // Set up a periodic refresh for ABATEV data
   useEffect(() => {
     if (activeTab === 'abatev') {
       console.log('Setting up periodic refresh for ABATEV data');
-      
+
       // First refresh on tab selection
       // fetchBrokerComparisons(); // Already done in the first useEffect
-      
+
       // Then set up interval for periodic refresh
       const intervalId = setInterval(() => {
         // Only fetch if there's no loading or error being shown
@@ -125,24 +174,24 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
           fetchBrokerComparisons();
         }
       }, 15000); // Refresh every 15 seconds
-      
+
       return () => {
         console.log('Clearing ABATEV refresh interval');
         clearInterval(intervalId);
       };
     }
   }, [activeTab, symbol, abatevLoading]);
-  
+
   const fetchBrokerComparisons = async () => {
     console.log(`Fetching broker comparisons for ${symbol}`);
     setAbatevLoading(true);
     setAbatevError('');
-    
+
     try {
       // Use the broker aggregator service to get price comparisons
       const comparisons = await brokerAggregatorService.getBrokerPriceComparisons(symbol);
       console.log('Broker comparisons received:', comparisons);
-      
+
       if (comparisons && comparisons.length > 0) {
         // Process the comparisons to include enhanced evaluation metrics
         const processedComparisons = comparisons.map(comparison => {
@@ -150,13 +199,13 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
             console.warn('No prices in comparison data');
             return comparison;
           }
-          
+
           // Sort prices by lowest first for buy orders
           const sortedPrices = [...comparison.prices].sort((a, b) => a.price - b.price);
-          
+
           // Find the best price (lowest) to use as reference
           const bestRawPrice = sortedPrices[0].price;
-          
+
           // Calculate enhanced metrics for each broker
           const processedPrices = sortedPrices.map(price => {
             // Enhanced metrics for transparency
@@ -164,21 +213,21 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
             const reliability = (ABATEV_CONFIG as any).BROKER_RELIABILITY_SCORES?.[price.brokerId.toLowerCase()] || 60;
             const executionSpeed = Math.floor(Math.random() * 150) + 50; // 50-200ms execution speed
             const spread = price.spread || (price.price * 0.0015); // Approximate spread if not provided
-            
+
             // Calculate price advantage - how much better/worse than average
             const priceAdvantage = (1 - (price.price / bestRawPrice)) * 100;
-            
+
             // Calculate broker score based on weighted evaluation criteria
             const priceScore = Math.max((ABATEV_CONFIG as any).MAX_PRICE_SCORE - ((price.price / bestRawPrice) - 1) * 200, 0);
             const latencyScore = Math.max((ABATEV_CONFIG as any).MAX_LATENCY_SCORE - (latency / 10), 0);
             const reliabilityScore = reliability;
-            
+
             const totalScore = (
               (priceScore * evaluationCriteria.pricePriority) +
               (latencyScore * evaluationCriteria.latencyPriority) +
               (reliabilityScore * evaluationCriteria.reliabilityPriority)
             ) / 100;
-            
+
             return {
               ...price,
               latency,
@@ -192,22 +241,22 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
               score: Math.round(totalScore)
             };
           });
-          
+
           if (processedPrices.length > 0) {
             // Find the best broker based on total score
-            const best = processedPrices.reduce((prev, current) => 
+            const best = processedPrices.reduce((prev, current) =>
               current.score > prev.score ? current : prev, processedPrices[0]);
-            
+
             // Calculate price advantage vs. average price
             const avgPrice = processedPrices.reduce((sum, p) => sum + p.price, 0) / processedPrices.length;
             const priceAdvantageVsAvg = ((avgPrice - best.price) / avgPrice) * 100;
-            
+
             setBestPrice({
               brokerId: best.brokerId,
               price: best.price,
               spread: best.spread
             });
-            
+
             return {
               ...comparison,
               prices: processedPrices,
@@ -216,13 +265,13 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
               priceAdvantageVsAvg
             };
           }
-          
+
           return {
             ...comparison,
             prices: processedPrices
           };
         });
-        
+
         setBrokerComparisons(processedComparisons);
         console.log('Enhanced broker comparisons processed successfully');
       } else {
@@ -238,14 +287,14 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
       setLastUpdateTime(Date.now());
     }
   };
-  
+
   const getTimeAgo = (timestamp: number) => {
     const seconds = Math.floor((Date.now() - timestamp) / 1000);
     if (seconds < 60) return `${seconds}s ago`;
     const minutes = Math.floor(seconds / 60);
     return `${minutes}m ago`;
   };
-  
+
   const getBrokerLogo = (brokerId: string) => {
     // This would link to actual broker logos in a real implementation
     // For now, we'll use emoji placeholders
@@ -257,17 +306,17 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
       'kraken': '🐙',
       'coinbase': '🪙'
     };
-    
+
     return brokerIcons[brokerId.toLowerCase()] || '🏢';
   };
-  
+
   const handleRefresh = async () => {
     console.log("Manual refresh triggered");
     // First clear the error state if any
     setAbatevError('');
     await fetchBrokerComparisons();
   };
-  
+
   const renderTradeTab = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
@@ -285,7 +334,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
             ))}
           </select>
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-1">
             Quantity
@@ -299,28 +348,28 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
           />
         </div>
       </div>
-      
+
       <div className="grid grid-cols-3 gap-3">
         <div className="col-span-3">
           <label className="block text-sm font-medium text-slate-300 mb-1">
             Order Type
           </label>
           <div className="grid grid-cols-3 gap-1">
-            <Button 
+            <Button
               variant={orderType === 'market' ? 'default' : 'outline'}
               onClick={() => setOrderType('market')}
               className="text-xs"
             >
               Market
             </Button>
-            <Button 
+            <Button
               variant={orderType === 'limit' ? 'default' : 'outline'}
               onClick={() => setOrderType('limit')}
               className="text-xs"
             >
               Limit
             </Button>
-            <Button 
+            <Button
               variant={orderType === 'stop' ? 'default' : 'outline'}
               onClick={() => setOrderType('stop')}
               className="text-xs"
@@ -330,7 +379,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
           </div>
         </div>
       </div>
-      
+
       {(orderType === 'limit' || orderType === 'stop') && (
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-1">
@@ -345,14 +394,14 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
           />
         </div>
       )}
-      
-      <button 
+
+      <button
         className="w-full text-left flex items-center text-sm text-slate-300 hover:text-white"
         onClick={() => setShowAdvanced(!showAdvanced)}
       >
         {showAdvanced ? '- Hide' : '+ Show'} Advanced Options
       </button>
-      
+
       {showAdvanced && (
         <div className="space-y-3 pt-2">
           <div className="grid grid-cols-2 gap-3">
@@ -368,7 +417,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
                 className="w-full bg-slate-800 border border-slate-700 rounded-md p-2"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">
                 Take Profit
@@ -382,7 +431,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
               />
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">
               Leverage (x)
@@ -403,7 +452,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
           </div>
         </div>
       )}
-      
+
       <div className="grid grid-cols-2 gap-3 mt-6">
         <Button size="lg" className="bg-green-600 hover:bg-green-700">
           Buy / Long
@@ -414,7 +463,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
       </div>
     </div>
   );
-  
+
   const renderAbatevTab = () => (
     <div className="space-y-4 h-full flex flex-col">
       <div className="flex justify-between items-center mb-4">
@@ -429,7 +478,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
           Refresh
         </Button>
       </div>
-      
+
       <div className="flex justify-between items-center">
         <div className="flex items-center">
           <label className="block text-sm font-medium text-slate-300 mr-2">
@@ -454,7 +503,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
           </Button>
         </div>
       </div>
-      
+
       {/* Optimization settings section */}
       <div className="bg-slate-800/50 border border-slate-700 rounded-md p-2.5">
         <div className="flex justify-between items-center mb-2">
@@ -469,13 +518,13 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
               <span>Price</span>
               <span className="text-blue-400">{evaluationCriteria.pricePriority}%</span>
             </label>
-            <input 
-              type="range" 
-              min="0" 
-              max="100" 
+            <input
+              type="range"
+              min="0"
+              max="100"
               value={evaluationCriteria.pricePriority}
               onChange={(e) => setEvaluationCriteria(prev => ({
-                ...prev, 
+                ...prev,
                 pricePriority: parseInt(e.target.value)
               }))}
               className="w-full accent-blue-500 h-1"
@@ -486,13 +535,13 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
               <span>Latency</span>
               <span className="text-blue-400">{evaluationCriteria.latencyPriority}%</span>
             </label>
-            <input 
-              type="range" 
-              min="0" 
-              max="100" 
+            <input
+              type="range"
+              min="0"
+              max="100"
               value={evaluationCriteria.latencyPriority}
               onChange={(e) => setEvaluationCriteria(prev => ({
-                ...prev, 
+                ...prev,
                 latencyPriority: parseInt(e.target.value)
               }))}
               className="w-full accent-blue-500 h-1"
@@ -503,13 +552,13 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
               <span>Reliability</span>
               <span className="text-blue-400">{evaluationCriteria.reliabilityPriority}%</span>
             </label>
-            <input 
-              type="range" 
-              min="0" 
-              max="100" 
+            <input
+              type="range"
+              min="0"
+              max="100"
               value={evaluationCriteria.reliabilityPriority}
               onChange={(e) => setEvaluationCriteria(prev => ({
-                ...prev, 
+                ...prev,
                 reliabilityPriority: parseInt(e.target.value)
               }))}
               className="w-full accent-blue-500 h-1"
@@ -517,7 +566,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
           </div>
         </div>
       </div>
-      
+
       {abatevLoading ? (
         <div className="flex justify-center items-center py-8">
           <div className="text-center">
@@ -560,7 +609,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
               </Button>
             </div>
           )}
-          
+
           {/* Enhanced analytics section */}
           <div className="bg-slate-800/50 border border-slate-700 rounded-md p-3 mb-2">
             <h4 className="text-sm font-medium mb-2">Execution Analytics</h4>
@@ -568,15 +617,15 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
               <div className="bg-slate-800 rounded p-2">
                 <p className="text-xs text-slate-400 mb-1">Price Advantage</p>
                 <p className="text-lg font-bold text-green-400">
-                  {brokerComparisons.length > 0 && bestPrice 
-                    ? `${brokerComparisons[0].priceAdvantageVsAvg?.toFixed(2) || '0.00'}%` 
+                  {brokerComparisons.length > 0 && bestPrice
+                    ? `${brokerComparisons[0].priceAdvantageVsAvg?.toFixed(2) || '0.00'}%`
                     : '—'}
                 </p>
               </div>
               <div className="bg-slate-800 rounded p-2">
                 <p className="text-xs text-slate-400 mb-1">Latency (ms)</p>
                 <p className="text-lg font-bold text-yellow-400">
-                  {brokerComparisons.length > 0 && bestPrice 
+                  {brokerComparisons.length > 0 && bestPrice
                     ? brokerComparisons[0].prices.find(p => p.brokerId === bestPrice.brokerId)?.latency
                     : '—'}
                 </p>
@@ -584,14 +633,14 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
               <div className="bg-slate-800 rounded p-2">
                 <p className="text-xs text-slate-400 mb-1">Reliability</p>
                 <p className="text-lg font-bold text-blue-400">
-                  {brokerComparisons.length > 0 && bestPrice 
+                  {brokerComparisons.length > 0 && bestPrice
                     ? `${brokerComparisons[0].prices.find(p => p.brokerId === bestPrice.brokerId)?.reliability || '0'}%`
                     : '—'}
                 </p>
               </div>
             </div>
           </div>
-          
+
           {/* Enhanced broker comparison table */}
           <div className="bg-slate-800 rounded-md overflow-hidden">
             <div className="px-3 py-2 bg-slate-700 text-xs font-medium grid grid-cols-6">
@@ -601,14 +650,14 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
               <div className="text-right">Latency</div>
               <div className="text-right">Score</div>
             </div>
-            
+
             <div className="divide-y divide-slate-700">
               {brokerComparisons.length > 0 ? (
                 brokerComparisons[0].prices
                   .sort((a: any, b: any) => b.score - a.score)
                   .map((price: any, index: number) => (
-                    <div 
-                      key={price.brokerId} 
+                    <div
+                      key={price.brokerId}
                       className={`px-3 py-2 grid grid-cols-6 items-center text-sm ${
                         index === 0 ? 'bg-blue-900/20' : ''
                       }`}
@@ -631,8 +680,8 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
                       <div className="text-right text-slate-300">{price.latency || 0}ms</div>
                       <div className="text-right">
                         <span className={`font-medium ${
-                          price.score > 80 ? "text-green-400" : 
-                          price.score > 60 ? "text-yellow-400" : "text-red-400"
+                          price.score > 80 ? "text-green-400" :
+                            price.score > 60 ? "text-yellow-400" : "text-red-400"
                         }`}>
                           {price.score}
                         </span>
@@ -646,7 +695,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
               )}
             </div>
           </div>
-          
+
           <div className="bg-slate-800 rounded-md p-3">
             <h4 className="font-medium text-sm mb-2">Evaluation Criteria</h4>
             <div className="space-y-2">
@@ -674,7 +723,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
                   className="w-full accent-blue-500"
                 />
               </div>
-              
+
               <div>
                 <div className="flex justify-between text-xs mb-1">
                   <span>Latency Priority: {evaluationCriteria.latencyPriority}%</span>
@@ -698,7 +747,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
                   className="w-full accent-blue-500"
                 />
               </div>
-              
+
               <div>
                 <div className="flex justify-between text-xs mb-1">
                   <span>Reliability Priority: {evaluationCriteria.reliabilityPriority}%</span>
@@ -728,11 +777,11 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
       )}
     </div>
   );
-  
+
   const renderSettingsTab = () => (
     <div className="space-y-4">
       <h3 className="text-lg font-bold mb-4">Panel Settings</h3>
-      
+
       <div className="bg-slate-800 rounded-md p-3">
         <h4 className="font-medium text-sm mb-2">Connected Brokers</h4>
         <div className="space-y-2">
@@ -754,7 +803,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
           ))}
         </div>
       </div>
-      
+
       <div className="bg-slate-800 rounded-md p-3">
         <h4 className="font-medium text-sm mb-3">Default Trading Settings</h4>
         <div className="space-y-3">
@@ -771,7 +820,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
               <option value="stop">Stop</option>
             </select>
           </div>
-          
+
           <div>
             <label className="block text-sm text-slate-300 mb-1">
               Default Quantity
@@ -782,7 +831,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
               defaultValue="0.01"
             />
           </div>
-          
+
           <div className="flex items-center">
             <input
               type="checkbox"
@@ -798,15 +847,15 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
       </div>
     </div>
   );
-  
+
   return (
     <div className="bg-slate-900 border border-slate-700 rounded-lg overflow-hidden mb-4 h-full flex flex-col">
       {/* Tab Navigation */}
       <div className="flex border-b border-slate-700">
         <button
           className={`flex-1 py-3 px-4 text-center ${
-            activeTab === 'abatev' 
-              ? 'bg-slate-800 text-white font-medium border-b-2 border-blue-500' 
+            activeTab === 'abatev'
+              ? 'bg-slate-800 text-white font-medium border-b-2 border-blue-500'
               : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
           }`}
           onClick={() => setActiveTab('abatev')}
@@ -818,8 +867,8 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
         </button>
         <button
           className={`flex-1 py-3 px-4 text-center ${
-            activeTab === 'trade' 
-              ? 'bg-slate-800 text-white font-medium border-b-2 border-blue-500' 
+            activeTab === 'trade'
+              ? 'bg-slate-800 text-white font-medium border-b-2 border-blue-500'
               : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
           }`}
           onClick={() => setActiveTab('trade')}
@@ -831,8 +880,8 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
         </button>
         <button
           className={`flex-1 py-3 px-4 text-center ${
-            activeTab === 'settings' 
-              ? 'bg-slate-800 text-white font-medium border-b-2 border-blue-500' 
+            activeTab === 'settings'
+              ? 'bg-slate-800 text-white font-medium border-b-2 border-blue-500'
               : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
           }`}
           onClick={() => setActiveTab('settings')}
@@ -843,7 +892,7 @@ export const SmartTradePanel: React.FC<SmartTradePanelProps> = ({ defaultSymbol 
           </div>
         </button>
       </div>
-      
+
       {/* Tab Content */}
       <div className="p-4 h-[calc(100%-48px)] overflow-auto">
         {activeTab === 'trade' && renderTradeTab()}
