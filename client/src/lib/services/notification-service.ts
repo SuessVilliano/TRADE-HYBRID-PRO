@@ -1,4 +1,4 @@
-// Notification service for handling user notifications
+
 class NotificationService {
   private static instance: NotificationService;
   private audioContext: AudioContext;
@@ -68,14 +68,7 @@ class NotificationService {
     const message = this.notificationQueue.shift();
 
     if (message) {
-      toast(message, {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      console.log('Notification:', message);
     }
 
     // Wait for a short delay before processing next notification
@@ -84,7 +77,4 @@ class NotificationService {
   }
 }
 
-// Export a singleton instance
-export const notificationService = NotificationService.getInstance();
-
-import { toast } from 'react-toastify';
+export default NotificationService;
