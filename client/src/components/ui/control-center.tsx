@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { PanelContainer } from './panel-container';
-import { LineChart, BarChart3, Signal, Bot, HelpCircle, BookOpen, Users, Cpu, MessageSquare, Calendar, BarChart, Sparkles, Grid, Activity, Waves, Link2 } from 'lucide-react';
+import { LineChart, BarChart3, Signal, Bot, HelpCircle, BookOpen, Users, Cpu, MessageSquare, Calendar, BarChart, Sparkles, Grid, Activity, Waves, Link2, GripVertical } from 'lucide-react';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
 import { ConnectBrokerModal } from '@/components/broker/connect-broker-modal';
 import { brokerService } from '@/lib/services/broker-service';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 // Lazy load the components
 const TradingViewWidgetLazy = React.lazy(() => import('./TradingViewWidget'));
@@ -385,6 +386,21 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
       }
     }
   };
+  
+  // Handle drag and drop reordering
+  const onDragEnd = (result: any) => {
+    // Dropped outside the list
+    if (!result.destination) {
+      return;
+    }
+
+    // Reorder the panels based on drag and drop
+    const reorderedPanels = Array.from(activePanels);
+    const [removed] = reorderedPanels.splice(result.source.index, 1);
+    reorderedPanels.splice(result.destination.index, 0, removed);
+
+    setActivePanels(reorderedPanels);
+  };
 
   // State for tool carousel scrolling
   const [toolScrollIndex, setToolScrollIndex] = useState(0);
@@ -558,57 +574,100 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
         </div>
       </div>
       
-      {/* Panels Container */}
-      <div 
-        className={cn(
-          "flex-1 p-2 overflow-auto",
-          {
-            "flex flex-col space-y-2": layout === 'vertical',
-            "flex flex-row space-x-2": layout === 'horizontal',
-            "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2": layout === 'grid'
-          }
-        )}
-      >
-        {/* Render active panels */}
-        {activePanels.map(panelId => {
-          const panel = Object.values(allPanels).find(p => p.id === panelId);
-          if (!panel) return null;
-          
-          // Skip rendering minimized panels in the main container
-          if (minimizedPanels.includes(panelId)) return null;
-          
-          return (
+      {/* Panels Container with Drag and Drop */}
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="droppable-panels" 
+          direction={layout === 'horizontal' ? 'horizontal' : 'vertical'}
+          // Need to use a different type when in grid layout to prevent strange behavior
+          type={layout === 'grid' ? 'grid' : 'list'}>
+          {(provided) => (
             <div
-              key={panel.id}
+              ref={provided.innerRef}
+              {...provided.droppableProps}
               className={cn(
-                "transition-all duration-300",
+                "flex-1 p-2 overflow-auto",
                 {
-                  // Full screen if maximized
-                  "fixed inset-0 z-50 p-4 bg-slate-900/95": maximizedPanel === panel.id,
-                  // Responsive column span based on layout
-                  "col-span-1 md:col-span-1": layout === 'grid' && panel.type !== 'chart',
-                  "col-span-1 md:col-span-2": layout === 'grid' && panel.type === 'chart',
+                  "flex flex-col space-y-2": layout === 'vertical',
+                  "flex flex-row space-x-2": layout === 'horizontal',
+                  "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2": layout === 'grid'
                 }
               )}
-              style={{
-                height: maximizedPanel === panel.id ? 'auto' : panel.defaultSize.height
-              }}
             >
-              <PanelContainer
-                title={panel.title}
-                icon={panel.icon}
-                onClose={() => togglePanel(panel.id)}
-                onMinimize={() => toggleMinimize(panel.id)}
-                onMaximize={() => toggleMaximize(panel.id)}
-                isMaximized={maximizedPanel === panel.id}
-                className="h-full"
-              >
-                {panel.component}
-              </PanelContainer>
+              {/* Render active panels */}
+              {activePanels.map((panelId, index) => {
+                const panel = Object.values(allPanels).find(p => p.id === panelId);
+                if (!panel) return null;
+                
+                // Skip rendering minimized panels in the main container
+                if (minimizedPanels.includes(panelId)) return null;
+                
+                // Don't make maximized panels draggable
+                if (maximizedPanel === panel.id) {
+                  return (
+                    <div
+                      key={panel.id}
+                      className="fixed inset-0 z-50 p-4 bg-slate-900/95"
+                      style={{ height: 'auto' }}
+                    >
+                      <PanelContainer
+                        title={panel.title}
+                        icon={panel.icon}
+                        onClose={() => togglePanel(panel.id)}
+                        onMinimize={() => toggleMinimize(panel.id)}
+                        onMaximize={() => toggleMaximize(panel.id)}
+                        isMaximized={true}
+                        className="h-full"
+                      >
+                        {panel.component}
+                      </PanelContainer>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <Draggable key={panel.id} draggableId={panel.id} index={index}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={cn(
+                          "transition-all duration-300",
+                          {
+                            // Responsive column span based on layout
+                            "col-span-1 md:col-span-1": layout === 'grid' && panel.type !== 'chart',
+                            "col-span-1 md:col-span-2": layout === 'grid' && panel.type === 'chart',
+                          },
+                          snapshot.isDragging ? "z-20 opacity-80" : ""
+                        )}
+                        style={{
+                          ...provided.draggableProps.style,
+                          height: panel.defaultSize.height
+                        }}
+                      >
+                        <PanelContainer
+                          title={panel.title}
+                          icon={panel.icon}
+                          onClose={() => togglePanel(panel.id)}
+                          onMinimize={() => toggleMinimize(panel.id)}
+                          onMaximize={() => toggleMaximize(panel.id)}
+                          isMaximized={false}
+                          isDraggable={true}
+                          headerClassName={snapshot.isDragging ? "cursor-grabbing" : "cursor-grab"}
+                          className="h-full"
+                          dragHandleProps={provided.dragHandleProps}
+                        >
+                          {panel.component}
+                        </PanelContainer>
+                      </div>
+                    )}
+                  </Draggable>
+                );
+              })}
+              {provided.placeholder}
             </div>
-          );
-        })}
-      </div>
+          )}
+        </Droppable>
+      </DragDropContext>
       
       {/* Minimized Panels Bar */}
       {minimizedPanels.length > 0 && (

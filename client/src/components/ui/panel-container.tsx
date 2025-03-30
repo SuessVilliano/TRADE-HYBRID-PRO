@@ -18,6 +18,7 @@ export interface PanelContainerProps {
   headerClassName?: string;
   bodyClassName?: string;
   collapsible?: boolean;
+  dragHandleProps?: any; // Props from react-beautiful-dnd
 }
 
 export const PanelContainer: React.FC<PanelContainerProps> = ({
@@ -34,6 +35,7 @@ export const PanelContainer: React.FC<PanelContainerProps> = ({
   headerClassName = '',
   bodyClassName = '',
   collapsible = true,
+  dragHandleProps,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
@@ -47,10 +49,11 @@ export const PanelContainer: React.FC<PanelContainerProps> = ({
     <PopupContainer className={cn("flex flex-col h-full", className)} padding={false}>
       {/* Header */}
       <div 
+        {...(isDraggable && dragHandleProps)}
         className={cn(
           "flex items-center justify-between py-2 px-3 border-b border-slate-700 bg-slate-800/70",
           headerClassName,
-          { "cursor-move": isDraggable }
+          { "cursor-grab": isDraggable }
         )}
       >
         <div className="flex items-center space-x-2 flex-grow">

@@ -271,12 +271,12 @@ export function ABATEVTradePanel({ defaultSymbol = 'BTC/USD' }: ABATEVTradePanel
       </CardHeader>
       
       <CardContent>
-        <Tabs defaultValue="spot">
+        <Tabs defaultValue="broker-comparison">
           <TabsList className="grid grid-cols-4 mb-4">
             <TabsTrigger value="spot">Spot</TabsTrigger>
             <TabsTrigger value="futures">Futures</TabsTrigger>
             <TabsTrigger value="options">Options</TabsTrigger>
-            <TabsTrigger value="broker-comparison" className="text-xs">Comparison</TabsTrigger>
+            <TabsTrigger value="broker-comparison" className="text-xs font-bold bg-blue-100 dark:bg-blue-900/30">Comparison</TabsTrigger>
           </TabsList>
           
           <TabsContent value="spot" className="space-y-4">

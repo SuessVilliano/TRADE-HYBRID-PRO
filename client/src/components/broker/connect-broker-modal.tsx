@@ -216,7 +216,7 @@ export function ConnectBrokerModal({ onConnect }: ConnectBrokerModalProps) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-7 px-2 py-0.5 ml-1">
+        <Button variant="outline" size="sm" className="h-7 px-2 py-0.5 ml-1 bg-black text-white hover:bg-gray-800 border-black hover:border-gray-800">
           <LinkIcon className="mr-1 h-4 w-4" />
           Connect Broker
         </Button>
@@ -322,7 +322,7 @@ export function ConnectBrokerModal({ onConnect }: ConnectBrokerModalProps) {
                       <Button
                         onClick={handleConnect}
                         disabled={!isFormComplete || isConnecting}
-                        className="w-full"
+                        className="w-full bg-black hover:bg-gray-800"
                       >
                         {isConnecting ? (
                           <>Connecting...</>
