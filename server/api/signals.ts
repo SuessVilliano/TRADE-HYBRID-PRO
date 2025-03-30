@@ -82,20 +82,20 @@ let signals: any[] = [
 function processCashCowSignal(payload: any, res: Response) {
   try {
     console.log('Processing Cash Cow style signal:', payload.content);
-    
+
     // Extract the message content
     const content = payload.content.trim();
-    
+
     // Basic validation
     if (!content || content.length < 10) {
       console.error('Invalid Cash Cow signal content (too short):', content);
       return res.status(400).send({ error: 'Invalid signal content' });
     }
-    
+
     // Determine which channel/type the signal is from based on payload metadata or URL
     let source = 'Cash Cow';
     let strategy = 'Premium Signals';
-    
+
     if (payload.channel_name) {
       if (payload.channel_name.toLowerCase().includes('forex')) {
         strategy = 'Forex Signals';
@@ -108,7 +108,7 @@ function processCashCowSignal(payload: any, res: Response) {
         strategy = 'Crypto Signals';
       }
     }
-    
+
     // Extract action (BUY/SELL ALERT)
     let action = 'neutral';
     if (content.toLowerCase().includes('buy alert')) {
@@ -116,50 +116,50 @@ function processCashCowSignal(payload: any, res: Response) {
     } else if (content.toLowerCase().includes('sell alert')) {
       action = 'sell';
     }
-    
+
     // Extract symbol using regex
     let symbol = 'UNKNOWN';
     const symbolMatch = content.match(/Symbol:\s*([A-Z0-9!]+)/i);
     if (symbolMatch && symbolMatch[1]) {
       symbol = symbolMatch[1].trim();
     }
-    
+
     // Extract entry price
     let entryPrice = 0;
     const entryMatch = content.match(/Entry:\s*(\d+\.?\d*)/i);
     if (entryMatch && entryMatch[1]) {
       entryPrice = parseFloat(entryMatch[1]);
     }
-    
+
     // Extract stop loss
     let stopLoss = 0;
     const slMatch = content.match(/Stop Loss:\s*(\d+\.?\d*)/i);
     if (slMatch && slMatch[1]) {
       stopLoss = parseFloat(slMatch[1]);
     }
-    
+
     // Extract take profit(s)
     let takeProfit1 = 0;
     let takeProfit2 = 0;
     let takeProfit3 = 0;
-    
+
     // Check for multiple TPs format (Hybrid AI format)
     const tp1Match = content.match(/TP1:\s*(\d+\.?\d*)/i);
     const tp2Match = content.match(/TP2:\s*(\d+\.?\d*)/i);
     const tp3Match = content.match(/TP3:\s*(\d+\.?\d*)/i);
-    
+
     if (tp1Match && tp1Match[1]) {
       takeProfit1 = parseFloat(tp1Match[1]);
     }
-    
+
     if (tp2Match && tp2Match[1]) {
       takeProfit2 = parseFloat(tp2Match[1]);
     }
-    
+
     if (tp3Match && tp3Match[1]) {
       takeProfit3 = parseFloat(tp3Match[1]);
     }
-    
+
     // Check for single TP format (Forex/Futures format)
     if (!takeProfit1) {
       const tpMatch = content.match(/Take Profit:\s*(\d+\.?\d*)/i);
@@ -167,29 +167,29 @@ function processCashCowSignal(payload: any, res: Response) {
         takeProfit1 = parseFloat(tpMatch[1]);
       }
     }
-    
+
     // Extract risk:reward ratios if available
     const indicators: Record<string, string> = {};
-    
+
     const rr1Match = content.match(/R:R\s*=\s*(\d+)/i);
     const rr2Match = content.match(/R:R\s*=\s*(\d+)/g); 
-    
+
     if (rr1Match && rr1Match[1]) {
       indicators["Risk:Reward"] = rr1Match[1];
     }
-    
+
     // Extract pip information
     const slPipsMatch = content.match(/Stop Loss:.*?(\d+\.?\d*)\s*(?:pips|points)/i);
     const tpPipsMatch = content.match(/Take Profit:.*?(\d+\.?\d*)\s*(?:pips|points)/i);
-    
+
     if (slPipsMatch && slPipsMatch[1]) {
       indicators["SL Pips"] = slPipsMatch[1];
     }
-    
+
     if (tpPipsMatch && tpPipsMatch[1]) {
       indicators["TP Pips"] = tpPipsMatch[1];
     }
-    
+
     // Extract the warning message about risk amount
     if (content.includes("DO NOT RISK MORE THAN")) {
       const riskMatch = content.match(/DO NOT RISK MORE THAN\s*([\d\.\-\%]+)/i);
@@ -199,11 +199,11 @@ function processCashCowSignal(payload: any, res: Response) {
         indicators["Max Risk"] = "0.25-1%";
       }
     }
-    
+
     // Set confidence level based on signal source and quality factors
     // Default base confidence levels per source
     let confidence = 75; // Default baseline
-    
+
     // Adjust base confidence by source
     if (source === 'Hybrid AI') {
       confidence = 85; // Higher confidence for Hybrid AI signals
@@ -212,21 +212,21 @@ function processCashCowSignal(payload: any, res: Response) {
     } else if (source === 'Solaris AI') {
       confidence = 78; // Slightly higher confidence for Solaris AI forex signals
     }
-    
+
     // Adjust confidence based on signal quality factors
-    
+
     // 1. Presence of multiple take profit levels increases confidence
     if (takeProfit1 > 0 && takeProfit2 > 0 && takeProfit3 > 0) {
       confidence += 5; // All three take profits specified
     } else if (takeProfit1 > 0 && takeProfit2 > 0) {
       confidence += 3; // Two take profits specified
     }
-    
+
     // 2. Presence of stop loss increases confidence
     if (stopLoss > 0) {
       confidence += 3;
     }
-    
+
     // 3. Confidence boost for signals with risk-reward ratio data
     if (indicators["Risk:Reward"]) {
       const rr = parseFloat(indicators["Risk:Reward"]);
@@ -238,19 +238,19 @@ function processCashCowSignal(payload: any, res: Response) {
         confidence += 1; // Acceptable R:R ratio
       }
     }
-    
+
     // Cap confidence at 95 (nothing is 100% certain in trading)
     confidence = Math.min(confidence, 95);
-    
+
     // Get timestamp from payload if available, otherwise use current time
     let timestamp = new Date();
     if (payload.timestamp) {
       timestamp = new Date(payload.timestamp);
     }
-    
+
     console.log(`Extracted data - Symbol: ${symbol}, Action: ${action}`);
     console.log(`Prices - Entry: ${entryPrice}, SL: ${stopLoss}, TP1: ${takeProfit1}, TP2: ${takeProfit2}, TP3: ${takeProfit3}`);
-    
+
     // Create a new signal object
     const signal = {
       id: randomUUID(),
@@ -271,17 +271,17 @@ function processCashCowSignal(payload: any, res: Response) {
       indicators: indicators,
       read: false
     };
-    
+
     console.log('Created Cash Cow signal:', signal);
-    
+
     // Add to signals store
     signals.unshift(signal);
-    
+
     // Keep only the last 100 signals
     if (signals.length > 100) {
       signals = signals.slice(0, 100);
     }
-    
+
     return res.status(200).send({ 
       success: true, 
       signalId: signal.id,
@@ -314,7 +314,7 @@ export const receiveWebhook = (req: Request, res: Response) => {
     // Determine the source based on the webhook URL or payload
     let source = 'Trade Hybrid';
     let strategy = payload.strategy || payload.name || 'Trade Hybrid';
-    
+
     // Check the URL path to determine the source 
     const url = req.originalUrl || '';
     console.log('Webhook URL:', url);
@@ -340,7 +340,7 @@ export const receiveWebhook = (req: Request, res: Response) => {
     } else if (url.includes('OXdqSQ0du1D7gFEEDBUsS')) {
       // Solaris AI forex signals can include multiple currency pairs
       source = 'Solaris AI';
-      
+
       // Determine specific forex pair based on symbol in payload
       if (payload.symbol) {
         const symbol = payload.symbol.toUpperCase();
@@ -369,24 +369,24 @@ export const receiveWebhook = (req: Request, res: Response) => {
     if (payload.entryPrice !== undefined) entryPrice = parseFloat(payload.entryPrice);
     else if (payload.entry !== undefined) entryPrice = parseFloat(payload.entry);
     else if (payload.price !== undefined) entryPrice = parseFloat(payload.price);
-    
+
     let stopLoss = 0;
     if (payload.stopLoss !== undefined) stopLoss = parseFloat(payload.stopLoss);
     else if (payload.sl !== undefined) stopLoss = parseFloat(payload.sl);
-    
+
     let takeProfit1 = 0, takeProfit2 = 0, takeProfit3 = 0;
-    
+
     // Parse TP values in different formats
     if (payload.takeProfit1 !== undefined) takeProfit1 = parseFloat(payload.takeProfit1);
     else if (payload.tp1 !== undefined) takeProfit1 = parseFloat(payload.tp1);
     else if (payload.tp !== undefined) takeProfit1 = parseFloat(payload.tp);
-    
+
     if (payload.takeProfit2 !== undefined) takeProfit2 = parseFloat(payload.takeProfit2);
     else if (payload.tp2 !== undefined) takeProfit2 = parseFloat(payload.tp2);
-    
+
     if (payload.takeProfit3 !== undefined) takeProfit3 = parseFloat(payload.takeProfit3);
     else if (payload.tp3 !== undefined) takeProfit3 = parseFloat(payload.tp3);
-    
+
     // Support for arrays of take profits
     if (Array.isArray(payload.takeProfits) && payload.takeProfits.length > 0) {
       if (payload.takeProfits[0] !== undefined) takeProfit1 = parseFloat(payload.takeProfits[0]);
@@ -397,7 +397,7 @@ export const receiveWebhook = (req: Request, res: Response) => {
       if (payload.tps[1] !== undefined) takeProfit2 = parseFloat(payload.tps[1]);
       if (payload.tps[2] !== undefined) takeProfit3 = parseFloat(payload.tps[2]);
     }
-    
+
     console.log(`Entry: ${entryPrice}, SL: ${stopLoss}, TP1: ${takeProfit1}, TP2: ${takeProfit2}, TP3: ${takeProfit3}`);
 
     // Determine action type (buy, sell, etc.)
@@ -414,7 +414,7 @@ export const receiveWebhook = (req: Request, res: Response) => {
     // Calculate confidence score based on signal quality
     // Start with a base confidence level based on the source
     let confidence = 75; // Default baseline
-    
+
     // Adjust base confidence by source
     if (source === 'Hybrid AI') {
       confidence = 85; // Higher confidence for Hybrid AI signals
@@ -423,7 +423,7 @@ export const receiveWebhook = (req: Request, res: Response) => {
     } else if (source === 'Solaris AI') {
       confidence = 78; // Slightly higher confidence for Solaris AI forex signals
     }
-    
+
     // If the payload already has a confidence value, use it as the base instead
     if (payload.confidence !== undefined) {
       const providedConfidence = parseFloat(payload.confidence);
@@ -431,30 +431,30 @@ export const receiveWebhook = (req: Request, res: Response) => {
         confidence = providedConfidence;
       }
     }
-    
+
     // Adjust confidence based on signal quality factors
-    
+
     // 1. Presence of multiple take profit levels increases confidence
     if (takeProfit1 > 0 && takeProfit2 > 0 && takeProfit3 > 0) {
       confidence += 5; // All three take profits specified
     } else if (takeProfit1 > 0 && takeProfit2 > 0) {
       confidence += 3; // Two take profits specified
     }
-    
+
     // 2. Presence of stop loss increases confidence
     if (stopLoss > 0) {
       confidence += 3;
     }
-    
+
     // 3. Calculate risk:reward ratio if both SL and TP1 exist
     if (stopLoss > 0 && takeProfit1 > 0 && entryPrice > 0) {
       const indicators = payload.indicators || {};
-      
+
       // Calculate and add R:R to indicators if not already present
       if (!indicators["Risk:Reward"]) {
         let riskPips = 0;
         let rewardPips = 0;
-        
+
         if (action === 'buy') {
           riskPips = Math.abs(entryPrice - stopLoss);
           rewardPips = Math.abs(takeProfit1 - entryPrice);
@@ -462,11 +462,11 @@ export const receiveWebhook = (req: Request, res: Response) => {
           riskPips = Math.abs(stopLoss - entryPrice);
           rewardPips = Math.abs(entryPrice - takeProfit1);
         }
-        
+
         if (riskPips > 0) {
           const rr = (rewardPips / riskPips).toFixed(2);
           indicators["Risk:Reward"] = rr;
-          
+
           // Adjust confidence based on R:R
           const rrValue = parseFloat(rr);
           if (rrValue >= 3) {
@@ -478,14 +478,14 @@ export const receiveWebhook = (req: Request, res: Response) => {
           }
         }
       }
-      
+
       // Use the indicators object with potentially added R:R
       payload.indicators = indicators;
     }
-    
+
     // Cap confidence at 95 (nothing is 100% certain in trading)
     confidence = Math.min(confidence, 95);
-    
+
     // Create a new signal object with required fields
     const signal = {
       id: randomUUID(),
@@ -511,7 +511,7 @@ export const receiveWebhook = (req: Request, res: Response) => {
 
     // Add to signals store
     signals.unshift(signal);
-    
+
     // Keep only the last 100 signals
     if (signals.length > 100) {
       signals = signals.slice(0, 100);
@@ -529,9 +529,45 @@ export const receiveWebhook = (req: Request, res: Response) => {
 };
 
 // Endpoint to get all signals
-export const getSignals = (_req: Request, res: Response) => {
-  res.status(200).json(signals);
-};
+export async function getSignals(req: Request, res: Response) {
+  try {
+    const { type = 'all' } = req.query;
+    const sheetsConfig = {
+      hybrid: {
+        sheetId: process.env.HYBRID_AI_SHEET_ID,
+        range: 'Signals!A:F'
+      },
+      paradox: {
+        sheetId: process.env.PARADOX_SHEET_ID,
+        range: 'Signals!A:F'
+      },
+      solaris: {
+        sheetId: process.env.SOLARIS_SHEET_ID,
+        range: 'Signals!A:F'
+      }
+    };
+
+    const signals = [];
+
+    if (type === 'all') {
+      for (const config of Object.values(sheetsConfig)) {
+        const data = await sheetsService.getSignals(config.sheetId, config.range);
+        signals.push(...data);
+      }
+    } else {
+      const config = sheetsConfig[type];
+      if (config) {
+        const data = await sheetsService.getSignals(config.sheetId, config.range);
+        signals.push(...data);
+      }
+    }
+
+    res.json({ signals });
+  } catch (error) {
+    console.error('Error fetching signals:', error);
+    res.status(500).json({ error: 'Failed to fetch signals' });
+  }
+}
 
 // Utility function to normalize action values
 function normalizeAction(action: string): 'buy' | 'sell' | 'neutral' {
@@ -539,10 +575,10 @@ function normalizeAction(action: string): 'buy' | 'sell' | 'neutral' {
     console.log('Invalid action value received:', action);
     return 'neutral';
   }
-  
+
   const normalized = action.toLowerCase().trim();
   console.log('Normalizing action value:', normalized);
-  
+
   // Buy signals
   if (['buy', 'long', 'bullish', 'call', 'purchase', 'up', 'enter long', 'open long', 'entry long'].some(term => normalized.includes(term))) {
     return 'buy';
