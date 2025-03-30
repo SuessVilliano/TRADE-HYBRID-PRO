@@ -1,5 +1,15 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { createChart, CrosshairMode, IChartApi, ISeriesApi, LineStyle, CandlestickData, UTCTimestamp, SeriesType } from 'lightweight-charts';
+import { 
+  createChart, 
+  CrosshairMode, 
+  IChartApi, 
+  ISeriesApi, 
+  LineStyle, 
+  CandlestickData, 
+  UTCTimestamp, 
+  SeriesType,
+  ColorType
+} from 'lightweight-charts';
 import { useTradeSimulator } from '../../lib/stores/useTradeSimulator';
 
 interface TradingViewChartProps {

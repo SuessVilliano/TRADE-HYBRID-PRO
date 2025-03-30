@@ -51,6 +51,19 @@ interface TradeSimulatorState {
   // Trading history
   tradingHistory: TradeHistory[];
   
+  // Welcome message
+  showWelcomeMessage: boolean;
+  dismissWelcomeMessage: () => void;
+  startGame: () => void;
+  
+  // Educational tips
+  showEducationalTip: boolean;
+  toggleEducationalTip: () => void;
+  
+  // Chart timeframes
+  selectedTimeframe: string;
+  setTimeframe: (timeframe: string) => void;
+  
   // Reset simulator
   resetSimulator: () => void;
 }
@@ -248,6 +261,25 @@ export const useTradeSimulator = create<TradeSimulatorState>((set, get) => ({
   // Trading history
   tradingHistory: [],
   
+  // Welcome message
+  showWelcomeMessage: true,
+  dismissWelcomeMessage: () => set({ showWelcomeMessage: false }),
+  startGame: () => {
+    set({ 
+      showWelcomeMessage: false,
+      selectedAsset: 'BTC' // Default to Bitcoin as starting asset
+    });
+    get().updatePriceData();
+  },
+  
+  // Educational tips
+  showEducationalTip: false,
+  toggleEducationalTip: () => set(state => ({ showEducationalTip: !state.showEducationalTip })),
+  
+  // Chart timeframes
+  selectedTimeframe: '1D', // Default to 1 day timeframe
+  setTimeframe: (timeframe) => set({ selectedTimeframe: timeframe }),
+  
   // Reset simulator
   resetSimulator: () => {
     set({
@@ -259,7 +291,10 @@ export const useTradeSimulator = create<TradeSimulatorState>((set, get) => ({
       positionSize: 1000,
       positionType: 'buy',
       activePosition: null,
-      tradingHistory: []
+      tradingHistory: [],
+      showWelcomeMessage: true,
+      showEducationalTip: false,
+      selectedTimeframe: '1D'
     });
   }
 }));
