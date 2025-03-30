@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from 'react';
@@ -43,7 +44,18 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <ToastContext.Provider value={{ addToast, removeToast }}>
       {children}
-      <ToastContainer position="top-right" />
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </ToastContext.Provider>
   );
 };
@@ -56,4 +68,4 @@ export const useToast = () => {
   return context;
 };
 
-export default ToastContainer;
+export { ToastContainer };
