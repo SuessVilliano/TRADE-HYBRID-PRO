@@ -143,7 +143,7 @@ export function AIAssistant({ className }: AIAssistantProps) {
     }, 1000);
   };
   
-  const generateResponse = (question: string) => {
+  const generateResponse = async (question: string) => {
     // Check for API keys in localStorage
     const geminiKey = localStorage.getItem('gemini_api_key');
     const openaiKey = localStorage.getItem('openai_api_key');
