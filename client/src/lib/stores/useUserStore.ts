@@ -90,7 +90,7 @@ export interface UserState {
     name: string;
     symbols: string[];
   }[];
-  
+
   // Actions
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
@@ -135,6 +135,13 @@ const initialDemoBalances: AccountBalance[] = [
   { asset: 'THC', free: 5000, locked: 0, total: 5000 }
 ];
 
+// Load initial state from localStorage
+const loadState = () => {
+  if (typeof window === 'undefined') return null;
+  const saved = localStorage.getItem('userAuth');
+  return saved ? JSON.parse(saved) : null;
+};
+
 export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
@@ -153,7 +160,7 @@ export const useUserStore = create<UserState>()(
           symbols: ['BTCUSD', 'ETHUSD', 'AAPLM', 'EURUSD']
         }
       ],
-      
+
       // Authentication actions
       login: async (username: string, password: string): Promise<boolean> => {
         try {
@@ -180,7 +187,7 @@ export const useUserStore = create<UserState>()(
               apiKeys: {},
               isDemoAccount: true
             };
-            
+
             // Set a custom demo balance with higher amounts
             const demoAdminBalances: AccountBalance[] = [
               { asset: 'USD', free: 100000, locked: 0, total: 100000 },
@@ -188,16 +195,16 @@ export const useUserStore = create<UserState>()(
               { asset: 'ETH', free: 50, locked: 0, total: 50 },
               { asset: 'THC', free: 10000, locked: 0, total: 10000 }
             ];
-            
+
             set({
               isAuthenticated: true,
               user: demoAdminUser,
               demoBalances: demoAdminBalances
             });
-            
+
             // Store demo user level as EXPERT to unlock all features
             localStorage.setItem('userExperienceLevel', 'expert');
-            
+
             // Show success notification for demo login
             set({
               notifications: [
@@ -211,10 +218,10 @@ export const useUserStore = create<UserState>()(
                 }
               ]
             });
-            
+
             return true;
           }
-          
+
           // Regular user simulation for demo
           const mockUser = {
             id: '123456789',
@@ -228,7 +235,7 @@ export const useUserStore = create<UserState>()(
             role: 'user' as const,
             apiKeys: {}
           };
-          
+
           set({
             isAuthenticated: true,
             user: mockUser,
@@ -243,7 +250,7 @@ export const useUserStore = create<UserState>()(
               }
             ]
           });
-          
+
           return true;
         } catch (error) {
           set({
@@ -258,15 +265,15 @@ export const useUserStore = create<UserState>()(
               }
             ]
           });
-          
+
           return false;
         }
       },
-      
+
       logout: () => {
         // Reset user experience level to beginner when logging out
         localStorage.setItem('userExperienceLevel', 'beginner');
-        
+
         // Reset to initial demo balances
         set({
           isAuthenticated: false,
@@ -277,14 +284,18 @@ export const useUserStore = create<UserState>()(
           notifications: []
         });
       },
-      
+
       updateUser: (userData) => {
-        set({ user: { ...get().user, ...userData } });
+        set((state) => {
+          const newState = { user: { ...state.user, ...userData } };
+          localStorage.setItem('userAuth', JSON.stringify(newState));
+          return newState;
+        });
       },
-      
+
       updatePreferences: (preferences) => {
         set({ preferences: { ...get().preferences, ...preferences } });
-        
+
         // If theme was updated, apply it to the document
         if (preferences.theme) {
           if (preferences.theme === 'dark') {
@@ -296,7 +307,7 @@ export const useUserStore = create<UserState>()(
           }
         }
       },
-      
+
       // Trade actions
       addTrade: (trade) => {
         const id = Date.now().toString();
@@ -305,13 +316,13 @@ export const useUserStore = create<UserState>()(
           ...trade,
           status: 'open'
         };
-        
+
         set({ tradeHistory: [...get().tradeHistory, newTrade] });
-        
+
         // Update balances
         const balances = trade.brokerId === 'demo' ? [...get().demoBalances] : [...get().liveBalances];
         // In a real app, you would update the balances here
-        
+
         // Add notification
         set({
           notifications: [
@@ -325,49 +336,49 @@ export const useUserStore = create<UserState>()(
             }
           ]
         });
-        
+
         return id;
       },
-      
+
       updateTrade: (id, tradeData) => {
         const trades = get().tradeHistory;
         const tradeIndex = trades.findIndex(t => t.id === id);
-        
+
         if (tradeIndex === -1) return false;
-        
+
         const updatedTrades = [...trades];
         updatedTrades[tradeIndex] = {
           ...updatedTrades[tradeIndex],
           ...tradeData
         };
-        
+
         set({ tradeHistory: updatedTrades });
         return true;
       },
-      
+
       closeTrade: (id, exitPrice, exitDate = new Date().toISOString()) => {
         const trades = get().tradeHistory;
         const tradeIndex = trades.findIndex(t => t.id === id);
-        
+
         if (tradeIndex === -1) return false;
-        
+
         const trade = trades[tradeIndex];
         if (trade.status === 'closed') return false;
-        
+
         // Calculate P&L
         const entryAmount = trade.amount * trade.entryPrice;
         const exitAmount = trade.amount * exitPrice;
         let pnl = 0;
-        
+
         if (trade.type === 'buy') {
           pnl = exitAmount - entryAmount;
         } else if (trade.type === 'sell') {
           pnl = entryAmount - exitAmount;
         }
-        
+
         // Calculate P&L percentage
         const pnlPercentage = (pnl / entryAmount) * 100;
-        
+
         const updatedTrade: Trade = {
           ...trade,
           exitPrice,
@@ -376,12 +387,12 @@ export const useUserStore = create<UserState>()(
           pnl,
           pnlPercentage
         };
-        
+
         const updatedTrades = [...trades];
         updatedTrades[tradeIndex] = updatedTrade;
-        
+
         set({ tradeHistory: updatedTrades });
-        
+
         // Add notification
         set({
           notifications: [
@@ -395,20 +406,20 @@ export const useUserStore = create<UserState>()(
             }
           ]
         });
-        
+
         return true;
       },
-      
+
       deleteTrade: (id) => {
         const trades = get().tradeHistory;
         const updatedTrades = trades.filter(t => t.id !== id);
-        
+
         if (updatedTrades.length === trades.length) return false;
-        
+
         set({ tradeHistory: updatedTrades });
         return true;
       },
-      
+
       // Broker connection actions
       addBrokerConnection: (connection) => {
         const id = Date.now().toString();
@@ -418,9 +429,9 @@ export const useUserStore = create<UserState>()(
           isConnected: true,
           lastConnected: new Date().toISOString()
         };
-        
+
         set({ brokerConnections: [...get().brokerConnections, newConnection] });
-        
+
         // Add notification
         set({
           notifications: [
@@ -434,34 +445,34 @@ export const useUserStore = create<UserState>()(
             }
           ]
         });
-        
+
         return id;
       },
-      
+
       updateBrokerConnection: (id, data) => {
         const connections = get().brokerConnections;
         const connectionIndex = connections.findIndex(c => c.id === id);
-        
+
         if (connectionIndex === -1) return false;
-        
+
         const updatedConnections = [...connections];
         updatedConnections[connectionIndex] = {
           ...updatedConnections[connectionIndex],
           ...data
         };
-        
+
         set({ brokerConnections: updatedConnections });
         return true;
       },
-      
+
       deleteBrokerConnection: (id) => {
         const connections = get().brokerConnections;
         const updatedConnections = connections.filter(c => c.id !== id);
-        
+
         if (updatedConnections.length === connections.length) return false;
-        
+
         set({ brokerConnections: updatedConnections });
-        
+
         // Add notification
         set({
           notifications: [
@@ -475,69 +486,69 @@ export const useUserStore = create<UserState>()(
             }
           ]
         });
-        
+
         return true;
       },
-      
+
       // Notification actions
       markNotificationAsRead: (id) => {
         const notifications = get().notifications;
         const notificationIndex = notifications.findIndex(n => n.id === id);
-        
+
         if (notificationIndex === -1) return;
-        
+
         const updatedNotifications = [...notifications];
         updatedNotifications[notificationIndex] = {
           ...updatedNotifications[notificationIndex],
           read: true
         };
-        
+
         set({ notifications: updatedNotifications });
       },
-      
+
       clearNotifications: () => {
         set({ notifications: [] });
       },
-      
+
       // Watchlist actions
       addToWatchlist: (watchlistId, symbol) => {
         const watchlists = get().watchlists;
         const watchlistIndex = watchlists.findIndex(w => w.id === watchlistId);
-        
+
         if (watchlistIndex === -1) return false;
-        
+
         const watchlist = watchlists[watchlistIndex];
         if (watchlist.symbols.includes(symbol)) return true;
-        
+
         const updatedWatchlists = [...watchlists];
         updatedWatchlists[watchlistIndex] = {
           ...watchlist,
           symbols: [...watchlist.symbols, symbol]
         };
-        
+
         set({ watchlists: updatedWatchlists });
         return true;
       },
-      
+
       removeFromWatchlist: (watchlistId, symbol) => {
         const watchlists = get().watchlists;
         const watchlistIndex = watchlists.findIndex(w => w.id === watchlistId);
-        
+
         if (watchlistIndex === -1) return false;
-        
+
         const watchlist = watchlists[watchlistIndex];
         if (!watchlist.symbols.includes(symbol)) return true;
-        
+
         const updatedWatchlists = [...watchlists];
         updatedWatchlists[watchlistIndex] = {
           ...watchlist,
           symbols: watchlist.symbols.filter(s => s !== symbol)
         };
-        
+
         set({ watchlists: updatedWatchlists });
         return true;
       },
-      
+
       createWatchlist: (name) => {
         const id = Date.now().toString();
         const newWatchlist = {
@@ -545,20 +556,20 @@ export const useUserStore = create<UserState>()(
           name,
           symbols: []
         };
-        
+
         set({ watchlists: [...get().watchlists, newWatchlist] });
         return id;
       },
-      
+
       deleteWatchlist: (id) => {
         // Don't allow deleting the default watchlist
         if (id === 'default') return false;
-        
+
         const watchlists = get().watchlists;
         const updatedWatchlists = watchlists.filter(w => w.id !== id);
-        
+
         if (updatedWatchlists.length === watchlists.length) return false;
-        
+
         set({ watchlists: updatedWatchlists });
         return true;
       }
@@ -603,11 +614,11 @@ export const useUserStore = create<UserState>()(
 export const useTheme = () => {
   const theme = useUserStore(state => state.preferences.theme);
   const updatePreferences = useUserStore(state => state.updatePreferences);
-  
+
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     updatePreferences({ theme: newTheme });
   };
-  
+
   return { theme, toggleTheme };
 };

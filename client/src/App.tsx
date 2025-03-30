@@ -42,6 +42,7 @@ const AffiliatePage = lazy(() => import('./pages/affiliate'));
 const EventsPage = lazy(() => import('./pages/events'));
 const TradeSimulatorPage = lazy(() => import('./pages/trade-simulator'));
 const ShopPage = lazy(() => import('./pages/shop'));
+const LoginPage = lazy(() => import('./pages/login')); // Added import for LoginPage
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -60,7 +61,7 @@ function RedirectComponent({ targetPath }: { targetPath: string }) {
       window.location.href = targetPath;
     }
   }, [targetPath]);
-  
+
   return null;
 }
 
@@ -69,7 +70,7 @@ function RedirectComponent({ targetPath }: { targetPath: string }) {
 // Light wrapper with providers
 function AppWithProviders() {
   const [showComplianceModal, setShowComplianceModal] = useState(false);
-  
+
   // Show compliance modal after a short delay on first visit
   useEffect(() => {
     const hasSeenCompliance = localStorage.getItem('hasSeenCompliance');
@@ -81,7 +82,7 @@ function AppWithProviders() {
       return () => clearTimeout(timer);
     }
   }, []);
-  
+
   return (
     <Router>
       <ToastProvider>
@@ -112,7 +113,7 @@ function AppContent() {
   const { userLevel } = useFeatureDisclosure();
   const [showWhopModal, setShowWhopModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  
+
   // Get user-friendly level name for display
   const getLevelName = () => {
     switch (userLevel) {
@@ -126,7 +127,7 @@ function AppContent() {
         return 'Free';
     }
   };
-  
+
   // Auto-login with Solana when wallet is connected
   useEffect(() => {
     // This will check if a wallet is connected but user is not authenticated
@@ -137,10 +138,10 @@ function AppContent() {
       });
     }
   }, [isAuthenticated, isAuthenticatingWithSolana, solanaAuthError, loginWithSolana]);
-  
+
   // Initialize affiliate tracking
   const { trackReferral, currentReferralCode } = useAffiliateTracking();
-  
+
   // Check for referrals on initial load
   useEffect(() => {
     // Track any referral codes in the URL
@@ -149,25 +150,25 @@ function AppContent() {
       console.log(`Affiliate referral detected: ${detectedReferralCode}`);
     }
   }, [trackReferral]);
-  
+
   // Listen for settings popup events
   useEffect(() => {
     const handleShowSettingsPopup = () => {
       setShowSettingsModal(true);
     };
-    
+
     document.addEventListener('show-settings-popup', handleShowSettingsPopup);
-    
+
     return () => {
       document.removeEventListener('show-settings-popup', handleShowSettingsPopup);
     };
   }, []);
-  
+
   // Handle logout
   const handleLogout = () => {
     logout();
   };
-  
+
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* Header */}
@@ -198,11 +199,11 @@ function AppContent() {
               <Link to="/shop" className="hover:text-blue-400 transition-colors">Shop</Link>
             </nav>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <TradingTipsButton />
             <ThemeToggle className="mr-2" />
-            
+
             {isAuthenticated ? (
               <>
                 <THCBalanceDisplay />
@@ -258,12 +259,12 @@ function AppContent() {
           </div>
         </div>
       </PopupContainer>
-      
+
       {/* Settings Modal */}
       {showSettingsModal && (
         <SettingsPopup onClose={() => setShowSettingsModal(false)} />
       )}
-      
+
       {/* Whop Membership Modal */}
       {showWhopModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
@@ -280,16 +281,17 @@ function AppContent() {
                 </svg>
               </button>
             </div>
-            
+
             <WhopAuth onStatusChange={() => setShowWhopModal(false)} />
           </div>
         </div>
       )}
-      
+
       {/* Main Content */}
       <main className="min-h-[calc(100vh-130px)]">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Suspense fallback={<div>Loading...</div>}><LoginPage /></Suspense>} /> {/* Added login route */}
           <Route path="/marketplace" element={
             <Suspense fallback={
               <div className="flex items-center justify-center h-screen">
@@ -472,7 +474,7 @@ function AppContent() {
               {typeof window !== 'undefined' && <TradingSignalsPage />}
             </Suspense>
           } />
-          
+
           <Route path="/notification-settings" element={
             <Suspense fallback={
               <div className="flex items-center justify-center h-screen">
@@ -547,7 +549,7 @@ function AppContent() {
           } />
         </Routes>
       </main>
-      
+
       {/* Footer with Settings */}
       <footer className="bg-slate-800 border-t border-slate-700 py-3">
         <div className="container mx-auto flex justify-between items-center px-4">
@@ -563,14 +565,14 @@ function AppContent() {
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               </svg>
               Settings
             </Button>
           </div>
         </div>
       </footer>
-      
+
       {/* Footer - non-sticky */}
       <div className="border-t border-slate-700 p-4 text-sm">
         <div className="container mx-auto">
@@ -604,11 +606,11 @@ function Home() {
           The ultimate AI-driven trading metaverse. Experience the future of trading with immersive visualization, real-time data, and social trading in a gamified environment.
         </p>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
         <FeatureCard 
           title="Trade"
-          description="Trade with AI-powered insights, real-time market data, and advanced charting tools."
+          description="Trade with AI-powered insights, real-time market data, andadvanced charting tools."
           linkTo="/trading"
         />
         <FeatureCard 
@@ -707,11 +709,11 @@ function FeatureCard({ title, description, linkTo }: { title: string, descriptio
     '/trade-simulator': 'basic_trading',
     '/shop': 'social',
   };
-  
+
   const { isRouteEnabled } = useFeatureDisclosure();
   const route = routeToFeatureMap[linkTo] ? linkTo : '/';
   const featureEnabled = isRouteEnabled(route);
-  
+
   return (
     <PopupContainer className="h-full flex flex-col p-6 border border-slate-700 rounded-lg relative" padding>
       {!featureEnabled && (
@@ -724,10 +726,10 @@ function FeatureCard({ title, description, linkTo }: { title: string, descriptio
           </div>
         </div>
       )}
-      
+
       <h2 className="text-2xl font-bold mb-4">{title}</h2>
       <p className={`text-slate-300 mb-6 flex-grow ${!featureEnabled ? 'opacity-70' : ''}`}>{description}</p>
-      
+
       {featureEnabled ? (
         <Link to={linkTo}>
           <Button className="w-full">Explore {title}</Button>
@@ -750,7 +752,7 @@ function TradePlaceholder() {
   const TradingPlatformTutorial = React.lazy(() => import('./components/ui/trading-platform-tutorial').then(module => ({ default: module.TradingPlatformTutorial })));
   const [selectedSymbol, setSelectedSymbol] = useState('BINANCE:SOLUSDT');
   const [brokerModalOpen, setBrokerModalOpen] = useState(false);
-  
+
   const tradingSymbols = [
     { value: 'BINANCE:SOLUSDT', label: 'Solana (SOL/USDT)' },
     { value: 'BITSTAMP:BTCUSD', label: 'Bitcoin (BTC/USD)' },
@@ -760,17 +762,17 @@ function TradePlaceholder() {
     { value: 'COMEX:GC1!', label: 'Gold Futures' },
     { value: 'CME:NQ1!', label: 'Nasdaq 100 (Nas100)' }, // Updated for proper CME symbol format
   ];
-  
+
   const handleSymbolChange = (newSymbol: string) => {
     // Properly format CME futures symbols to ensure they load correctly
     let formattedSymbol = newSymbol;
-    
+
     // Log the selected symbol for debugging
     console.log(`Selected symbol: ${newSymbol}`);
-    
+
     setSelectedSymbol(formattedSymbol);
   };
-  
+
   return (
     <div className="min-h-screen bg-slate-900">
       {/* Header with controls and symbol selector - non-sticky on mobile */}
@@ -779,7 +781,7 @@ function TradePlaceholder() {
           <div className="flex items-center mb-2 sm:mb-0">
             <h1 className="text-lg font-bold mr-4">Trade Platform</h1>
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-3">
             <select 
               value={selectedSymbol}
@@ -790,14 +792,14 @@ function TradePlaceholder() {
                 <option key={symbol.value} value={symbol.value}>{symbol.label}</option>
               ))}
             </select>
-            
+
             <Button size="sm" onClick={() => setBrokerModalOpen(true)}>
               Connect Broker
             </Button>
           </div>
         </div>
       </div>
-      
+
       {/* Main Trade Interface with ControlCenter */}
       <div className="container mx-auto h-[calc(100vh-120px)] py-4 px-2 md:px-4">
         <React.Suspense fallback={
@@ -818,12 +820,12 @@ function TradePlaceholder() {
           </div>
         </React.Suspense>
       </div>
-      
+
       {/* Interactive Tutorial */}
       <React.Suspense fallback={null}>
         <TradingPlatformTutorial />
       </React.Suspense>
-      
+
       {/* Broker Connection Modal would go here */}
     </div>
   );
@@ -832,14 +834,14 @@ function TradePlaceholder() {
 function MetaversePlaceholder() {
   const MinimalScene = React.lazy(() => import('./components/MinimalScene'));
   const [minimized, setMinimized] = useState(false);
-  
+
   return (
     <div className="container mx-auto py-12 px-4">
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold mb-4">Metaverse</h1>
         <p className="text-xl text-slate-300">Experience our 3D trading world (Coming Soon)</p>
       </div>
-      
+
       <PopupContainer className={`${minimized ? 'h-14' : 'h-[500px]'} mb-8 transition-all duration-300`} padding>
         <div className="flex justify-between items-center mb-2">
           <h3 className="font-semibold">3D Trade Metaverse</h3>
@@ -852,7 +854,7 @@ function MetaversePlaceholder() {
             {minimized ? '▼' : '▲'}
           </Button>
         </div>
-        
+
         {!minimized && (
           <div className="h-[calc(100%-2rem)]">
             <React.Suspense fallback={
@@ -868,7 +870,7 @@ function MetaversePlaceholder() {
           </div>
         )}
       </PopupContainer>
-      
+
       <div className="max-w-2xl mx-auto">
         <h2 className="text-2xl font-bold mb-4">Metaverse Features</h2>
         <ul className="list-disc pl-6 space-y-2 text-slate-300">
@@ -922,7 +924,7 @@ function LearnPlaceholder() {
       level: "Advanced"
     }
   ];
-  
+
   const tradingTips = [
     "Always use stop losses to protect your capital",
     "Don't risk more than 1-2% of your account on a single trade",
@@ -930,7 +932,7 @@ function LearnPlaceholder() {
     "Keep a trading journal to track and improve your performance",
     "Trade the trend - the trend is your friend"
   ];
-  
+
   return (
     <div className="container mx-auto py-12 px-4">
       <div className="text-center mb-12">
@@ -939,7 +941,7 @@ function LearnPlaceholder() {
           Comprehensive educational materials to help you master trading and financial markets
         </p>
       </div>
-      
+
       {/* Courses Grid */}
       <h2 className="text-2xl font-bold mb-6">Trading Courses</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
@@ -959,7 +961,7 @@ function LearnPlaceholder() {
           </PopupContainer>
         ))}
       </div>
-      
+
       {/* Trading Tips & Daily Insights */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
         <div className="lg:col-span-2">
@@ -978,7 +980,7 @@ function LearnPlaceholder() {
             </Button>
           </PopupContainer>
         </div>
-        
+
         <div>
           <h2 className="text-2xl font-bold mb-6">Daily Trade Insights</h2>
           <PopupContainer padding className="h-full flex flex-col">
@@ -987,20 +989,20 @@ function LearnPlaceholder() {
               <h3 className="font-semibold mb-2">Market volatility expected ahead of economic data releases</h3>
               <p className="text-sm text-slate-300">Key reports could impact major currency pairs and equities...</p>
             </div>
-            
+
             <div className="bg-slate-700/50 rounded-md p-3 mb-4">
               <p className="text-xs text-slate-400 mb-1">TRADING STRATEGY</p>
               <h3 className="font-semibold mb-2">Breakout strategy for cryptocurrency markets</h3>
               <p className="text-sm text-slate-300">Identifying key support and resistance levels for major coins...</p>
             </div>
-            
+
             <Button variant="outline" className="w-full mt-auto">
               Subscribe to Daily Insights
             </Button>
           </PopupContainer>
         </div>
       </div>
-      
+
       {/* Community & Live Sessions */}
       <h2 className="text-2xl font-bold mb-6">Community Learning</h2>
       <PopupContainer padding className="mb-12">
@@ -1012,7 +1014,7 @@ function LearnPlaceholder() {
             </p>
             <Button variant="outline">Join Community</Button>
           </div>
-          
+
           <div>
             <h3 className="text-xl font-bold mb-4">Live Trading Sessions</h3>
             <p className="text-slate-300 mb-4">
@@ -1040,12 +1042,12 @@ const ChatWidgetScript = () => {
       }(document, 'script', 'anw2-sdk-6481mXAtA0-___zvxV91cg'));
     `;
     document.body.appendChild(script);
-    
+
     return () => {
       document.body.removeChild(script);
     };
   }, []);
-  
+
   return null;
 };
 
