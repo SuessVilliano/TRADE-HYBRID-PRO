@@ -10,15 +10,15 @@ REPLIT_KEEP_PACKAGE_DEV_DEPENDENCIES = "1"
 
 [deployment]
 deploymentTarget = "cloudrun"
-run = ["sh", "-c", "npm run start"]
-build = ["sh", "-c", "npm install --legacy-peer-deps && npm run build"]
+run = ["sh", "-c", "node dist/index.js"]
+build = ["sh", "-c", "npm run build"]
 
 [[ports]]
 localPort = 5000
 externalPort = 80
 
 [workflows]
-runButton = "Clean Solana Build"
+runButton = "Production Build"
 
 [[workflows.workflow]]
 name = "Project"
@@ -175,7 +175,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm install --legacy-peer-deps"
+args = "npm install --production=false"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -183,7 +183,7 @@ args = "npm run build"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "npm run start"
 
 [[workflows.workflow]]
 name = "Build and Run"
