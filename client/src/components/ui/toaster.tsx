@@ -5,8 +5,8 @@ import React from 'react';
 
 interface Toast {
   id: string;
-  message: string;
   type: 'success' | 'error' | 'warning' | 'info';
+  message: string;
   duration?: number;
 }
 
@@ -31,10 +31,12 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
 export const useToast = () => {
   const context = React.useContext(ToastContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useToast must be used within a ToastProvider');
   }
   return context;
 };
 
-export { ToastProvider as ToastContainer };
+// Default export for backward compatibility
+const Toaster = ToastProvider;
+export default Toaster;
