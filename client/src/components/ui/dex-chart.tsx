@@ -41,7 +41,7 @@ const TIMEFRAMES = [
 // Chart types
 type ChartType = 'candle' | 'line' | 'area' | 'bar';
 
-export function DexChart({ 
+function DexChart({ 
   symbol = 'BTCUSD', 
   theme = 'dark',
   className,
@@ -297,3 +297,9 @@ export function DexChart({
     </div>
   );
 }
+
+// Export as default
+export default DexChart;
+
+// Also keep named export for backwards compatibility
+export { DexChart };

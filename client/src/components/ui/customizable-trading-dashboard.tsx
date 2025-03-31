@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { Tabs, TabsList, TabsTrigger } from './tabs';
 import { useLocalStorage } from '../../hooks/use-local-storage';
 import { createPortal } from 'react-dom';
-import { DexChart } from './dex-chart';
+import DexChart from './dex-chart';
 import TradingViewWidget from './TradingViewWidget';
 import { TradeSignals } from './trade-signals';
 import { SignalNotifications } from './signal-notifications';
