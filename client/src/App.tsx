@@ -803,8 +803,8 @@ function TradePlaceholder() {
 
   return (
     <div className="min-h-screen bg-slate-900">
-      {/* Header with controls and symbol selector - non-sticky on mobile */}
-      <div className="border-b border-slate-700 bg-slate-800/95 backdrop-blur-sm md:sticky relative top-0 z-10 p-4">
+      {/* Header with controls and symbol selector - non-sticky for all devices */}
+      <div className="border-b border-slate-700 bg-slate-800/95 backdrop-blur-sm relative z-10 p-2 sm:p-3">
         <div className="container mx-auto flex flex-wrap justify-between items-center">
           <div className="flex items-center mb-2 sm:mb-0">
             <h1 className="text-lg font-bold mr-4">Trade Platform</h1>

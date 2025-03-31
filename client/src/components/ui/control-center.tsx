@@ -659,9 +659,11 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
                         className={cn(
                           "transition-all duration-300",
                           {
-                            // Responsive column span based on layout
-                            "col-span-1 md:col-span-1": layout === 'grid' && panel.type !== 'chart',
-                            "col-span-1 md:col-span-2": layout === 'grid' && panel.type === 'chart',
+                            // Responsive column span based on layout and panel type
+                            "col-span-1 md:col-span-1": layout === 'grid' && panel.type !== 'chart' && panel.type !== 'smart-trade',
+                            "col-span-1 md:col-span-2": layout === 'grid' && (panel.type === 'chart' || panel.type === 'smart-trade'),
+                            "order-1 md:order-0": panel.type === 'chart',
+                            "order-2 md:order-0": panel.type === 'smart-trade',
                           },
                           snapshot.isDragging ? "z-20 opacity-80" : ""
                         )}

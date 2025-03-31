@@ -42,6 +42,7 @@ export const PanelContainer: React.FC<PanelContainerProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [initialRect, setInitialRect] = useState<DOMRect | null>(null);
 
   const toggleCollapse = () => {
     if (collapsible) {
@@ -60,9 +61,12 @@ export const PanelContainer: React.FC<PanelContainerProps> = ({
       
       setIsDragging(true);
       
-      // Calculate the offset of the click relative to the panel's position
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (rect) {
+      // Store initial rectangle for ghost display
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setInitialRect(rect);
+        
+        // Calculate the offset of the click relative to the panel's position
         setDragOffset({
           x: e.clientX - rect.left,
           y: e.clientY - rect.top
@@ -78,28 +82,56 @@ export const PanelContainer: React.FC<PanelContainerProps> = ({
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging && containerRef.current) {
+        // Constrain movement to viewport bounds
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const panelWidth = initialRect?.width || containerRef.current.offsetWidth;
+        const panelHeight = initialRect?.height || containerRef.current.offsetHeight;
+        
+        // Calculate new position with boundary constraints
+        const newX = Math.max(0, Math.min(viewportWidth - panelWidth, e.clientX - dragOffset.x));
+        const newY = Math.max(0, Math.min(viewportHeight - 100, e.clientY - dragOffset.y));
+        
         // Update the panel's position based on the mouse position and initial offset
         setPosition({
-          x: e.clientX - dragOffset.x,
-          y: e.clientY - dragOffset.y
+          x: newX,
+          y: newY
         });
+        
+        // Apply a visual transform to the original element to show it's moving
+        containerRef.current.style.transform = `translate3d(0, 0, 0)`;
+        containerRef.current.style.transition = 'box-shadow 0.2s ease, transform 0.1s ease';
+        containerRef.current.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.5)';
       }
     };
     
     const handleMouseUp = () => {
       setIsDragging(false);
+      
+      // Reset styles when done dragging
+      if (containerRef.current) {
+        containerRef.current.style.transform = '';
+        containerRef.current.style.transition = '';
+        containerRef.current.style.boxShadow = '';
+      }
     };
     
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
+      
+      // Add body style to indicate dragging
+      document.body.style.cursor = 'grabbing';
+    } else {
+      document.body.style.cursor = '';
     }
     
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
     };
-  }, [isDragging, dragOffset]);
+  }, [isDragging, dragOffset, initialRect]);
 
   return (
     <PopupContainer 

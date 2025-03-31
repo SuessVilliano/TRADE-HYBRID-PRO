@@ -230,8 +230,23 @@ const TradeActionPanel: React.FC<TradeActionPanelProps> = ({
                 />
               )}
               
+              <div className="grid grid-cols-5 gap-2 mb-2">
+                {[0.5, 1, 2, 5, 10].map((percent) => (
+                  <button
+                    key={percent}
+                    className={`px-2 py-1 text-sm rounded ${
+                      percentOfBalance === percent 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    }`}
+                    onClick={() => setPercentOfBalance(percent)}
+                  >
+                    {percent}%
+                  </button>
+                ))}
+              </div>
               <div className="grid grid-cols-4 gap-2 mb-2">
-                {[10, 25, 50, 75].map((percent) => (
+                {[15, 20, 25, 50].map((percent) => (
                   <button
                     key={percent}
                     className={`px-2 py-1 text-sm rounded ${
@@ -277,9 +292,10 @@ const TradeActionPanel: React.FC<TradeActionPanelProps> = ({
               )}
               
               <div className="bg-slate-800 border border-slate-700 rounded-md p-3 text-sm text-slate-300">
-                <p>• Don't risk more than 1-5% of your account on a single trade</p>
-                <p>• Determine your exit strategy before entering a trade</p>
-                <p>• In real trading, always use stop losses</p>
+                <p>• Professional traders risk 0.5-2% of their account per trade</p>
+                <p>• Always determine your exit strategy before entering a trade</p>
+                <p>• Use proper position sizing to manage risk effectively</p>
+                <p>• In real trading, always set stop losses to protect your capital</p>
               </div>
             </div>
             
