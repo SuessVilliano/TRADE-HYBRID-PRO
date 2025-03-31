@@ -50,6 +50,7 @@ const SignupPage = lazy(() => import('./pages/signup')); // Added import for Sig
 const ForgotPasswordPage = lazy(() => import('./pages/forgot-password')); // Added import for Forgot Password
 const AdvancedTradingDashboard = lazy(() => import('./pages/advanced-trading-dashboard'));
 const MatrixVisualizationDemo = lazy(() => import('./pages/matrix-visualization-demo'));
+const TradingFreedomPodcast = lazy(() => import('./pages/trading-freedom-podcast'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -203,6 +204,7 @@ function AppContent() {
               <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Game Center</Link>
               <Link to="/trade-simulator" className="hover:text-blue-400 transition-colors">Trade Simulator</Link>
               <Link to="/shop" className="hover:text-blue-400 transition-colors">Shop</Link>
+              <Link to="/trading-freedom-podcast" className="hover:text-blue-400 transition-colors">Podcast</Link>
             </nav>
           </div>
 
@@ -595,6 +597,20 @@ function AppContent() {
               {typeof window !== 'undefined' && <MatrixVisualizationDemo />}
             </Suspense>
           } />
+          
+          {/* Trading Freedom Podcast */}
+          <Route path="/trading-freedom-podcast" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading Trading Freedom Podcast...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <TradingFreedomPodcast />}
+            </Suspense>
+          } />
         </Routes>
       </main>
 
@@ -731,6 +747,11 @@ function Home() {
           description="Browse and purchase exclusive Trade Hybrid merchandise and items. Visit our official store."
           linkTo="/shop"
         />
+        <FeatureCard 
+          title="Trading Freedom Podcast"
+          description="Listen to our podcast featuring interviews with successful traders, market insights, and trading strategies."
+          linkTo="/trading-freedom-podcast"
+        />
       </div>
     </PopupContainer>
   );
@@ -756,6 +777,7 @@ function FeatureCard({ title, description, linkTo }: { title: string, descriptio
     '/bulls-vs-bears': 'basic_trading',
     '/trade-simulator': 'basic_trading',
     '/shop': 'social',
+    '/trading-freedom-podcast': 'social',
   };
 
   const { isRouteEnabled } = useFeatureDisclosure();
