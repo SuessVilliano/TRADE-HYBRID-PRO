@@ -1,33 +1,24 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 interface PopupContainerProps {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
-  style?: React.CSSProperties;
   padding?: boolean;
 }
 
-export const PopupContainer: React.FC<PopupContainerProps> = ({
-  children,
-  className = '',
-  style = {},
-  padding = true,
-}) => {
+export function PopupContainer({ 
+  children, 
+  className, 
+  padding = false 
+}: PopupContainerProps) {
   return (
-    <div
-      className={cn(
-        "bg-slate-800/95 backdrop-blur-sm border border-slate-700 rounded-lg",
-        padding ? "p-4" : "",
-        "cyberpunk-glow",
-        className
-      )}
-      style={{
-        ...style,
-        boxShadow: "0 0 20px rgba(var(--primary), 0.1), 0 0 8px rgba(var(--secondary), 0.08)",
-      }}
-    >
+    <div className={cn(
+      "bg-slate-900/95 backdrop-blur-sm",
+      padding && "p-4",
+      className
+    )}>
       {children}
     </div>
   );
-};
+}

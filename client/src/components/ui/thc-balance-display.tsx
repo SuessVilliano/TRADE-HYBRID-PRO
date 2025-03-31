@@ -1,54 +1,59 @@
-import React from 'react';
-import { useUserStore } from '../../lib/stores/useUserStore';
+import React, { useState, useEffect } from 'react';
+import { cn } from '../../lib/utils';
 import { formatCurrency, formatCompactNumber } from '../../lib/utils';
-import { NFT_CONFIG } from '../../lib/constants';
 
 interface THCBalanceDisplayProps {
-  showIcon?: boolean;
-  showLabel?: boolean;
-  compact?: boolean;
   className?: string;
 }
 
-export default function THCBalanceDisplay({
-  showIcon = true,
-  showLabel = true,
-  compact = false,
-  className = '',
-}: THCBalanceDisplayProps) {
-  const { user, demoBalances } = useUserStore();
+export default function THCBalanceDisplay({ className }: THCBalanceDisplayProps) {
+  const [thcBalance, setThcBalance] = useState<number>(1250);
+  const [usdValue, setUsdValue] = useState<number>(125);
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Ensure user exists before rendering
-  if (!user) return null;
+  // Simulate fetching balance (would be connected to blockchain in production)
+  useEffect(() => {
+    const fetchBalance = async () => {
+      setIsLoading(true);
+      try {
+        // This would be a real API call in production
+        // For now, we'll simulate a delay and return mock data
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        setThcBalance(1250 + Math.floor(Math.random() * 100));
+        setUsdValue(125 + Math.floor(Math.random() * 10));
+      } catch (error) {
+        console.error("Error fetching THC balance:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchBalance();
+    // Refresh every 30 seconds
+    const intervalId = setInterval(fetchBalance, 30000);
+    
+    return () => clearInterval(intervalId);
+  }, []);
   
-  // Find THC balance in demo balances array, this replaces the direct user.balance property access
-  const thcAsset = demoBalances.find(asset => asset.asset === 'THC');
-  const thcBalance = thcAsset?.total || 0;
-  
-  // For display purposes, format the balance with the appropriate currency symbol
-  let formattedBalance: string;
-  if (compact) {
+  // Format balance for display
+  let formattedBalance = "0 THC";
+  if (thcBalance > 0) {
     formattedBalance = formatCompactNumber(thcBalance) + ' THC';
-  } else {
-    formattedBalance = formatCurrency(thcBalance, 'THC');
   }
   
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      {showIcon && (
-        <div className="flex-shrink-0 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-sm font-bold text-white">
-          ₮
+    <div className={cn(
+      "flex items-center bg-slate-800 rounded-md px-3 py-1.5 text-sm border border-slate-700",
+      className
+    )}>
+      <div className="flex flex-col">
+        <div className="flex items-center gap-1.5">
+          <span className="font-medium">{formattedBalance}</span>
+          {isLoading && (
+            <span className="inline-block h-3 w-3 rounded-full bg-blue-500/50 animate-pulse"></span>
+          )}
         </div>
-      )}
-      <div>
-        {showLabel && (
-          <div className="text-xs text-slate-400">
-            {NFT_CONFIG.TOKEN_NAME}
-          </div>
-        )}
-        <div className="font-bold">
-          {formattedBalance}
-        </div>
+        <span className="text-xs text-slate-400">≈ {formatCurrency(usdValue)}</span>
       </div>
     </div>
   );

@@ -43,6 +43,7 @@ const EventsPage = lazy(() => import('./pages/events'));
 const TradeSimulatorPage = lazy(() => import('./pages/trade-simulator'));
 const ShopPage = lazy(() => import('./pages/shop'));
 const LoginPage = lazy(() => import('./pages/login')); // Added import for LoginPage
+const AdvancedTradingDashboard = lazy(() => import('./pages/advanced-trading-dashboard'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -196,6 +197,7 @@ function AppContent() {
               <Link to="/affiliate" className="hover:text-blue-400 transition-colors">Affiliate</Link>
               <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Game Center</Link>
               <Link to="/trade-simulator" className="hover:text-blue-400 transition-colors">Trade Simulator</Link>
+              <Link to="/advanced-trading" className="hover:text-blue-400 transition-colors">Advanced Trading</Link>
               <Link to="/shop" className="hover:text-blue-400 transition-colors">Shop</Link>
             </nav>
           </div>
@@ -461,6 +463,18 @@ function AppContent() {
                 {typeof window !== 'undefined' && <AIMarketAnalysisPage />}
               </Suspense>
             </RouteGated>
+          } />
+          <Route path="/advanced-trading" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading Advanced Trading Dashboard...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <AdvancedTradingDashboard />}
+            </Suspense>
           } />
           <Route path="/trading-signals" element={
             <Suspense fallback={
