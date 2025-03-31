@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
 import SpatialMetaverse from './components/spatial/SpatialMetaverse';
 import { PopupContainer } from './components/ui/popup-container';
@@ -859,6 +859,11 @@ function TradePlaceholder() {
   const TradingPlatformTutorial = React.lazy(() => import('./components/ui/trading-platform-tutorial').then(module => ({ default: module.TradingPlatformTutorial })));
   const [selectedSymbol, setSelectedSymbol] = useState('BINANCE:SOLUSDT');
   const [brokerModalOpen, setBrokerModalOpen] = useState(false);
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  
+  // Track touch start position for swipe detection on mobile
+  const touchStartY = useRef(0);
 
   const tradingSymbols = [
     { value: 'BINANCE:SOLUSDT', label: 'Solana (SOL/USDT)' },
@@ -880,10 +885,65 @@ function TradePlaceholder() {
     setSelectedSymbol(formattedSymbol);
   };
 
+  // Function to toggle header visibility manually
+  const toggleHeader = () => {
+    setHeaderVisible(prev => !prev);
+  };
+
+  // Handle scroll events to auto-hide/show header
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Show header when scrolling up, hide when scrolling down
+      if (currentScrollY < lastScrollY || currentScrollY < 10) {
+        setHeaderVisible(true);
+      } else if (currentScrollY > 50 && currentScrollY > lastScrollY) {
+        setHeaderVisible(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
+  // Handle touch events for mobile swipe gestures
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const touchY = e.touches[0].clientY;
+      const diff = touchY - touchStartY.current;
+      
+      // Swipe down shows header, swipe up hides it
+      if (diff > 50 && !headerVisible) {
+        setHeaderVisible(true);
+      } else if (diff < -50 && headerVisible) {
+        setHeaderVisible(false);
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [headerVisible]);
+
   return (
     <div className="min-h-screen bg-slate-900">
-      {/* Header with controls and symbol selector - non-sticky for all devices */}
-      <div className="border-b border-slate-700 bg-slate-800/95 backdrop-blur-sm relative z-10 p-2 sm:p-3">
+      {/* Header with controls and symbol selector */}
+      <div 
+        className={`border-b border-slate-700 bg-slate-800/95 backdrop-blur-sm fixed top-0 left-0 right-0 z-30 transition-transform duration-300 transform ${
+          headerVisible ? 'translate-y-0' : '-translate-y-full'
+        } p-2 sm:p-3`}
+      >
         <div className="container mx-auto flex flex-wrap justify-between items-center">
           <div className="flex items-center mb-2 sm:mb-0">
             <h1 className="text-lg font-bold mr-4">Trade Platform</h1>
@@ -907,8 +967,22 @@ function TradePlaceholder() {
         </div>
       </div>
 
-      {/* Main Trade Interface with ControlCenter */}
-      <div className="container mx-auto h-[calc(100vh-120px)] py-4 px-2 md:px-4">
+      {/* Toggle header button - visible when header is hidden */}
+      <button 
+        onClick={toggleHeader}
+        className={`fixed top-2 right-2 z-40 bg-blue-600 rounded-full p-2 shadow-lg transition-opacity duration-300 ${
+          headerVisible ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
+        }`}
+        aria-label="Toggle Header"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="17 11 12 6 7 11"></polyline>
+          <polyline points="17 18 12 13 7 18"></polyline>
+        </svg>
+      </button>
+
+      {/* Main Trade Interface with ControlCenter - adjusted for fixed header */}
+      <div className="container mx-auto h-[calc(100vh-40px)] pt-14 pb-4 px-2 md:px-4">
         <React.Suspense fallback={
           <div className="h-full w-full flex items-center justify-center">
             <div className="text-center">

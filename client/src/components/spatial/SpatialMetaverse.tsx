@@ -111,14 +111,66 @@ export default function SpatialMetaverse({
     }
   };
 
+  // Track UI visibility for mobile
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const [lastTouchY, setLastTouchY] = useState(0);
+
+  // Handle touch gestures for mobile
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      setLastTouchY(e.touches[0].clientY);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const touchY = e.touches[0].clientY;
+      const diff = touchY - lastTouchY;
+      
+      // Swipe down from top shows controls, swipe up hides them
+      if (diff > 50 && !controlsVisible) {
+        setControlsVisible(true);
+      } else if (diff < -50 && controlsVisible) {
+        setControlsVisible(false);
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [controlsVisible, lastTouchY]);
+
+  // Toggle UI elements visibility
+  const toggleControlsVisibility = () => {
+    setControlsVisible(!controlsVisible);
+  };
+
   return (
     <div className={cn(
       "relative w-full", 
       fullWidth ? "h-[calc(100vh-80px)]" : "h-[600px]",
       isFullscreen ? "fixed inset-0 z-50 bg-background" : ""
     )}>
-      {/* Controls overlay */}
-      <div className="absolute top-0 right-0 z-10 p-2 flex space-x-2">
+      {/* Controls visibility toggle (for mobile) */}
+      <button 
+        onClick={toggleControlsVisibility}
+        className={`absolute top-2 right-2 z-20 bg-blue-600 rounded-full p-2 shadow-lg md:hidden ${
+          controlsVisible ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
+        }`}
+        aria-label="Show Controls"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="17 11 12 6 7 11"></polyline>
+          <polyline points="17 18 12 13 7 18"></polyline>
+        </svg>
+      </button>
+      
+      {/* Controls overlay - conditionally visible on mobile */}
+      <div className={`absolute top-0 right-0 z-10 p-2 flex space-x-2 transition-opacity duration-300 ${
+        controlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none md:opacity-100 md:pointer-events-auto'
+      }`}>
         <Button 
           variant="ghost" 
           size="icon" 
@@ -138,8 +190,10 @@ export default function SpatialMetaverse({
         </Button>
       </div>
       
-      {/* Area navigation controls */}
-      <div className="absolute left-4 top-4 z-10">
+      {/* Area navigation controls - conditionally visible on mobile */}
+      <div className={`absolute left-4 top-4 z-10 transition-opacity duration-300 ${
+        controlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none md:opacity-100 md:pointer-events-auto'
+      }`}>
         <Button
           variant="ghost"
           className="bg-black/40 hover:bg-black/60 text-white mb-2"
@@ -170,9 +224,11 @@ export default function SpatialMetaverse({
         )}
       </div>
       
-      {/* Current area info */}
+      {/* Current area info - conditionally visible on mobile */}
       {currentArea && !isLoading && (
-        <div className="absolute left-4 bottom-4 z-10 p-3 bg-black/60 rounded-md max-w-xs">
+        <div className={`absolute left-4 bottom-4 z-10 p-3 bg-black/60 rounded-md max-w-xs transition-opacity duration-300 ${
+          controlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none md:opacity-100 md:pointer-events-auto'
+        }`}>
           <h3 className="text-white text-sm font-medium">
             {SPATIAL_CONFIG.areas[currentArea as keyof typeof SPATIAL_CONFIG.areas]?.name}
           </h3>
