@@ -27,6 +27,7 @@ const TradeRunnerWebBrowserPage = lazy(() => import('./pages/trade-runner-browse
 // Bulls vs Bears game integrated into Game Center
 const NewsDashboardSimple = lazy(() => import('./pages/news-dashboard-simple'));
 const TradeJournalSimple = lazy(() => import('./pages/trade-journal-simple'));
+const TradeJournalAdvanced = lazy(() => import('./pages/trade-journal-advanced'));
 const NFTMarketplaceSimple = lazy(() => import('./pages/nft-marketplace-simple'));
 const SolanaDexEmbedded = lazy(() => import('./pages/solana-dex-embedded'));
 const LearnEmbedded = lazy(() => import('./pages/learn-embedded'));
@@ -358,7 +359,7 @@ function AppContent() {
                 </div>
               </div>
             }>
-              {typeof window !== 'undefined' && <TradeJournalSimple />}
+              {typeof window !== 'undefined' && <TradeJournalAdvanced />}
             </Suspense>
           } />
           {/* Game Center */}
