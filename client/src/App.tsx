@@ -54,6 +54,7 @@ const AdvancedTradingDashboard = lazy(() => import('./pages/advanced-trading-das
 const MatrixVisualizationDemo = lazy(() => import('./pages/matrix-visualization-demo'));
 const TradingFreedomPodcast = lazy(() => import('./pages/trading-freedom-podcast'));
 const SignalsAnalyzerPage = lazy(() => import('./pages/signals-analyzer'));
+const TradingIndicatorsPage = lazy(() => import('./pages/trading-indicators'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -202,7 +203,24 @@ function AppContent() {
               <Link to="/learn" className="hover:text-blue-400 transition-colors">Learn</Link>
               <Link to="/events" className="hover:text-blue-400 transition-colors">Events</Link>
               <Link to="/ai-market-analysis" className="hover:text-blue-400 transition-colors">AI Agents</Link>
-              <Link to="/trading-signals" className="hover:text-blue-400 transition-colors">Signals</Link>
+              
+              {/* Tools dropdown with Signals and Indicators */}
+              <div className="relative group">
+                <button className="hover:text-blue-400 transition-colors flex items-center gap-1">
+                  Tools
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-0.5">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+                <div className="absolute left-0 mt-1 w-48 rounded-md shadow-lg bg-slate-800 ring-1 ring-black ring-opacity-5 hidden group-hover:block z-50">
+                  <div className="py-1">
+                    <Link to="/trading-signals" className="block px-4 py-2 text-sm text-white hover:bg-slate-700">Signals</Link>
+                    <Link to="/trading-signals/analyzer" className="block px-4 py-2 text-sm text-white hover:bg-slate-700">Signals Analyzer</Link>
+                    <Link to="/trading-indicators" className="block px-4 py-2 text-sm text-white hover:bg-slate-700">Indicators</Link>
+                  </div>
+                </div>
+              </div>
+              
               <Link to="/app" className="hover:text-blue-400 transition-colors">App</Link>
               <Link to="/affiliate" className="hover:text-blue-400 transition-colors">Affiliate</Link>
               {/* Matrix moved inside Affiliate page */}
@@ -608,6 +626,20 @@ function AppContent() {
           {/* Redirect Trading Freedom Podcast to Learning Center */}
           <Route path="/trading-freedom-podcast" element={<Navigate to="/learn" replace />} />
           
+          {/* Trading Indicators route */}
+          <Route path="/trading-indicators" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading Trading Indicators...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <TradingIndicatorsPage />}
+            </Suspense>
+          } />
+          
           {/* Signals Analyzer Route - redirect to trading-signals/analyzer */}
           <Route path="/signals-analyzer" element={<Navigate to="/trading-signals/analyzer" replace />} />
         </Routes>
@@ -756,6 +788,11 @@ function Home() {
           description="Analyze your trading signals against historical data to determine if stop loss or take profit was hit first."
           linkTo="/trading-signals/analyzer"
         />
+        <FeatureCard 
+          title="Trading Indicators"
+          description="Premium TradingView indicators designed to enhance your trading with advanced analysis and clear signals."
+          linkTo="/trading-indicators"
+        />
       </div>
     </PopupContainer>
   );
@@ -783,6 +820,7 @@ function FeatureCard({ title, description, linkTo }: { title: string, descriptio
     '/trade-simulator': 'basic_trading',
     '/shop': 'social',
     '/trading-freedom-podcast': 'social',
+    '/trading-indicators': 'basic_trading',
   };
 
   const { isRouteEnabled } = useFeatureDisclosure();

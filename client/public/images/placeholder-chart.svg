@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
+  <rect width="800" height="450" fill="#1e293b" />
+  <path d="M100,350 L200,300 L300,320 L400,250 L500,180 L600,200 L700,150" stroke="#3b82f6" stroke-width="3" fill="none" />
+  <path d="M100,400 L700,400" stroke="#475569" stroke-width="1" />
+  <path d="M100,50 L100,400" stroke="#475569" stroke-width="1" />
+  
+  <!-- Y-axis labels -->
+  <text x="80" y="50" fill="#94a3b8" font-family="sans-serif" font-size="12" text-anchor="end">100</text>
+  <text x="80" y="150" fill="#94a3b8" font-family="sans-serif" font-size="12" text-anchor="end">75</text>
+  <text x="80" y="250" fill="#94a3b8" font-family="sans-serif" font-size="12" text-anchor="end">50</text>
+  <text x="80" y="350" fill="#94a3b8" font-family="sans-serif" font-size="12" text-anchor="end">25</text>
+  
+  <!-- X-axis labels -->
+  <text x="100" y="420" fill="#94a3b8" font-family="sans-serif" font-size="12" text-anchor="middle">Mon</text>
+  <text x="200" y="420" fill="#94a3b8" font-family="sans-serif" font-size="12" text-anchor="middle">Tue</text>
+  <text x="300" y="420" fill="#94a3b8" font-family="sans-serif" font-size="12" text-anchor="middle">Wed</text>
+  <text x="400" y="420" fill="#94a3b8" font-family="sans-serif" font-size="12" text-anchor="middle">Thu</text>
+  <text x="500" y="420" fill="#94a3b8" font-family="sans-serif" font-size="12" text-anchor="middle">Fri</text>
+  <text x="600" y="420" fill="#94a3b8" font-family="sans-serif" font-size="12" text-anchor="middle">Sat</text>
+  <text x="700" y="420" fill="#94a3b8" font-family="sans-serif" font-size="12" text-anchor="middle">Sun</text>
+  
+  <!-- Grid lines -->
+  <path d="M100,350 L700,350" stroke="#475569" stroke-width="0.5" stroke-dasharray="5,5" />
+  <path d="M100,250 L700,250" stroke="#475569" stroke-width="0.5" stroke-dasharray="5,5" />
+  <path d="M100,150 L700,150" stroke="#475569" stroke-width="0.5" stroke-dasharray="5,5" />
+  <path d="M100,50 L700,50" stroke="#475569" stroke-width="0.5" stroke-dasharray="5,5" />
+  
+  <path d="M200,50 L200,400" stroke="#475569" stroke-width="0.5" stroke-dasharray="5,5" />
+  <path d="M300,50 L300,400" stroke="#475569" stroke-width="0.5" stroke-dasharray="5,5" />
+  <path d="M400,50 L400,400" stroke="#475569" stroke-width="0.5" stroke-dasharray="5,5" />
+  <path d="M500,50 L500,400" stroke="#475569" stroke-width="0.5" stroke-dasharray="5,5" />
+  <path d="M600,50 L600,400" stroke="#475569" stroke-width="0.5" stroke-dasharray="5,5" />
+  <path d="M700,50 L700,400" stroke="#475569" stroke-width="0.5" stroke-dasharray="5,5" />
+  
+  <!-- Candlesticks -->
+  <rect x="120" y="290" width="20" height="30" fill="#16a34a" />
+  <line x1="130" y1="270" x2="130" y2="290" stroke="#16a34a" stroke-width="2" />
+  <line x1="130" y1="320" x2="130" y2="340" stroke="#16a34a" stroke-width="2" />
+  
+  <rect x="220" y="280" width="20" height="40" fill="#16a34a" />
+  <line x1="230" y1="260" x2="230" y2="280" stroke="#16a34a" stroke-width="2" />
+  <line x1="230" y1="320" x2="230" y2="325" stroke="#16a34a" stroke-width="2" />
+  
+  <rect x="320" y="310" width="20" height="20" fill="#ef4444" />
+  <line x1="330" y1="300" x2="330" y2="310" stroke="#ef4444" stroke-width="2" />
+  <line x1="330" y1="330" x2="330" y2="350" stroke="#ef4444" stroke-width="2" />
+  
+  <rect x="420" y="230" width="20" height="40" fill="#16a34a" />
+  <line x1="430" y1="210" x2="430" y2="230" stroke="#16a34a" stroke-width="2" />
+  <line x1="430" y1="270" x2="430" y2="280" stroke="#16a34a" stroke-width="2" />
+  
+  <rect x="520" y="160" width="20" height="30" fill="#16a34a" />
+  <line x1="530" y1="140" x2="530" y2="160" stroke="#16a34a" stroke-width="2" />
+  <line x1="530" y1="190" x2="530" y2="200" stroke="#16a34a" stroke-width="2" />
+  
+  <rect x="620" y="190" width="20" height="30" fill="#ef4444" />
+  <line x1="630" y1="180" x2="630" y2="190" stroke="#ef4444" stroke-width="2" />
+  <line x1="630" y1="220" x2="630" y2="240" stroke="#ef4444" stroke-width="2" />
+  
+  <!-- Trade Hybrid text -->
+  <text x="400" y="220" fill="#cbd5e1" font-family="sans-serif" font-size="18" font-weight="bold" text-anchor="middle">Trading Indicator Preview</text>
+</svg>
