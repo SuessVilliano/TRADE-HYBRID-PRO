@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useGame } from "@/lib/stores/useGame";
 import { useIsMobile } from "@/hooks/use-is-mobile";
+import { useMultiplayer } from "@/lib/stores/useMultiplayer";
+import { toast } from "sonner";
 
 interface TouchPosition {
   startX: number;
@@ -9,13 +11,33 @@ interface TouchPosition {
   currentY: number;
 }
 
-export default function MobileControls() {
+interface MobileControlsProps {
+  onDirectionChange?: (x: number, y: number) => void;
+  onJump?: (jumping: boolean) => void;
+  onSprint?: (sprinting: boolean) => void;
+  onAction?: () => void;
+}
+
+export default function MobileControls({ 
+  onDirectionChange, 
+  onJump, 
+  onSprint,
+  onAction
+}: MobileControlsProps) {
   const [moveTouch, setMoveTouch] = useState<TouchPosition | null>(null);
   const [isSprinting, setIsSprinting] = useState(false);
   const [isJumping, setIsJumping] = useState(false);
   const [isMicOn, setIsMicOn] = useState(false);
   const isMobile = useIsMobile();
   const gamePhase = useGame(state => state.phase);
+  const { voiceChatEnabled, toggleVoiceChat } = useMultiplayer();
+  
+  // Log mobile controls initialization for debugging
+  useEffect(() => {
+    if (isMobile) {
+      console.log("Mobile controls initialized", { gamePhase });
+    }
+  }, [isMobile, gamePhase]);
   
   // Set up events for handling touch controls on mobile
   useEffect(() => {
@@ -58,6 +80,11 @@ export default function MobileControls() {
     const handleTouchEnd = () => {
       // Reset touch position
       setMoveTouch(null);
+      
+      // Call the parent's callback to reset movement
+      if (onDirectionChange) {
+        onDirectionChange(0, 0);
+      }
     };
     
     // Custom event to simulate key events for both mobile and desktop
@@ -69,6 +96,7 @@ export default function MobileControls() {
         cancelable: true,
       });
       document.dispatchEvent(event);
+      console.log(`Mobile simulated keyboard event: ${key} ${type}`);
     };
     
     // Set up interval to check joystick position and simulate key events
@@ -95,7 +123,18 @@ export default function MobileControls() {
       const { startX, startY, currentX, currentY } = moveTouch;
       const diffX = currentX - startX;
       const diffY = currentY - startY;
-      const threshold = 20; // Minimum distance to trigger movement
+      const threshold = 15; // Reduced threshold for more sensitive controls
+      
+      // Calculate normalized direction values for the parent component
+      const maxDistance = 50;
+      const distance = Math.sqrt(diffX * diffX + diffY * diffY);
+      const normalizedX = distance > 0 ? diffX / distance : 0;
+      const normalizedY = distance > 0 ? diffY / distance : 0;
+      
+      // Call the parent's callback with the joystick position
+      if (onDirectionChange) {
+        onDirectionChange(normalizedX, normalizedY);
+      }
       
       // Reset all keys first
       simulateKeyEvent('KeyW', 'keyup');
@@ -115,7 +154,7 @@ export default function MobileControls() {
       } else if (diffX > threshold) {
         simulateKeyEvent('KeyD', 'keydown');
       }
-    }, 50);
+    }, 33); // Increased frequency for smoother controls (approximately 30fps)
     
     // Add listeners
     const joystickElement = document.getElementById('mobile-joystick');
@@ -123,6 +162,8 @@ export default function MobileControls() {
       joystickElement.addEventListener('touchstart', handleTouchStart, { passive: false });
       joystickElement.addEventListener('touchmove', handleTouchMove, { passive: false });
       joystickElement.addEventListener('touchend', handleTouchEnd);
+    } else {
+      console.error("Mobile joystick element not found!");
     }
     
     // Clean up on unmount
@@ -134,11 +175,16 @@ export default function MobileControls() {
         joystickElement.removeEventListener('touchend', handleTouchEnd);
       }
     };
-  }, [isMobile, moveTouch, gamePhase, isSprinting]);
+  }, [isMobile, moveTouch, gamePhase, isSprinting, onDirectionChange]);
   
   // Handle jump button
   useEffect(() => {
     if (!isMobile || gamePhase !== "playing") return;
+    
+    // Call parent's jump callback
+    if (onJump) {
+      onJump(isJumping);
+    }
     
     if (isJumping) {
       const event = new KeyboardEvent('keydown', {
@@ -148,6 +194,7 @@ export default function MobileControls() {
         cancelable: true,
       });
       document.dispatchEvent(event);
+      console.log("Mobile jump triggered");
     } else {
       const event = new KeyboardEvent('keyup', {
         code: 'Space',
@@ -157,22 +204,64 @@ export default function MobileControls() {
       });
       document.dispatchEvent(event);
     }
-  }, [isJumping, isMobile, gamePhase]);
+  }, [isJumping, isMobile, gamePhase, onJump]);
   
-  // Toggle microphone
+  // Handle sprint
   useEffect(() => {
     if (!isMobile || gamePhase !== "playing") return;
     
-    if (isMicOn) {
-      const event = new KeyboardEvent('keydown', {
-        code: 'KeyT',
-        key: 't',
-        bubbles: true,
-        cancelable: true,
-      });
-      document.dispatchEvent(event);
+    // Call parent's sprint callback
+    if (onSprint) {
+      onSprint(isSprinting);
     }
-  }, [isMicOn, isMobile, gamePhase]);
+  }, [isSprinting, isMobile, gamePhase, onSprint]);
+  
+  // Toggle microphone
+  const handleMicToggle = async () => {
+    try {
+      // Ensure audio context is initialized with user interaction
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
+      
+      // Toggle mic state
+      const newMicState = !isMicOn;
+      setIsMicOn(newMicState);
+      
+      // Toggle voice chat in the multiplayer system
+      if (newMicState && !voiceChatEnabled) {
+        // Enable voice chat if turning mic on
+        toggleVoiceChat(true);
+        toast.success("Voice chat enabled");
+      }
+      
+      // Simulate the push-to-talk key if mic is now on
+      if (newMicState) {
+        const event = new KeyboardEvent('keydown', {
+          code: 'KeyT',
+          key: 't',
+          bubbles: true,
+          cancelable: true,
+        });
+        document.dispatchEvent(event);
+        console.log("Voice chat push-to-talk activated");
+      } else {
+        const event = new KeyboardEvent('keyup', {
+          code: 'KeyT',
+          key: 't',
+          bubbles: true,
+          cancelable: true,
+        });
+        document.dispatchEvent(event);
+        console.log("Voice chat push-to-talk deactivated");
+      }
+    } catch (error) {
+      console.error("Error initializing audio:", error);
+      toast.error("Could not initialize audio. Please check microphone permissions.");
+    }
+  };
   
   // Don't render anything if not on mobile
   if (!isMobile) return null;
@@ -258,6 +347,8 @@ export default function MobileControls() {
         <div 
           className="w-24 h-24 rounded-full bg-blue-500 flex items-center justify-center text-white text-lg font-bold shadow-lg"
           onTouchStart={() => {
+            if (onAction) onAction();
+            
             const event = new KeyboardEvent('keydown', {
               code: 'KeyE',
               key: 'e',
@@ -265,6 +356,7 @@ export default function MobileControls() {
               cancelable: true,
             });
             document.dispatchEvent(event);
+            console.log("Mobile action triggered");
           }}
           onTouchEnd={() => {
             const event = new KeyboardEvent('keyup', {
@@ -287,7 +379,7 @@ export default function MobileControls() {
         {/* Microphone button */}
         <div 
           className={`w-24 h-24 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-lg ${isMicOn ? 'bg-red-600' : 'bg-gray-500'}`}
-          onClick={() => setIsMicOn(!isMicOn)}
+          onTouchStart={handleMicToggle}
         >
           <div className="flex flex-col items-center">
             {isMicOn ? (

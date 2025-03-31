@@ -18,6 +18,7 @@ import { useControlsStore } from '@/lib/stores/useControlsStore';
 import { useAudio } from '@/lib/stores/useAudio';
 import THCCoinDisplay from './THCCoinDisplay';
 import BadgeTriggerZone from './BadgeTriggerZone';
+import MobileControls from './MobileControls';
 
 // Define control keys map
 const controlKeys = [
@@ -620,6 +621,8 @@ export default function TradeHouse() {
     // If in metaverse mode, try to play music
     audioStore.playMusic();
     
+    console.log("TradeHouse component mounted, audio initialized");
+    
     // Clean up on unmount
     return () => {
       audioStore.setInMetaverse(false);
@@ -630,7 +633,9 @@ export default function TradeHouse() {
   // Detect mobile device
   useEffect(() => {
     const checkMobile = () => {
-      setMobileControls(window.innerWidth <= 768);
+      const isMobile = window.innerWidth <= 768;
+      setMobileControls(isMobile);
+      console.log("Mobile detection:", { isMobile, width: window.innerWidth });
     };
     
     checkMobile(); // Check on mount
@@ -643,28 +648,27 @@ export default function TradeHouse() {
   
   // Handle mobile joystick movement
   const handleMobileMove = (x: number, y: number) => {
-    setMoveDirection({ x, y });
-  };
-  
-  // Handle stop moving on mobile
-  const handleStopMove = () => {
-    setMoveDirection({ x: 0, y: 0 });
+    console.log("Mobile move:", { x, y });
+    // Invert Y axis for intuitive controls (pushing up should move forward)
+    setMoveDirection({ x, y: -y });
   };
   
   // Handle jump on mobile
-  const handleMobileJump = () => {
-    setIsJumping(true);
-    setTimeout(() => setIsJumping(false), 300); // Reset after 300ms
+  const handleMobileJump = (jumping: boolean) => {
+    console.log("Mobile jump:", jumping);
+    setIsJumping(jumping);
   };
   
   // Handle sprint on mobile
-  const handleMobileSprint = () => {
-    setIsSprinting(true);
+  const handleMobileSprint = (sprinting: boolean) => {
+    console.log("Mobile sprint:", sprinting);
+    setIsSprinting(sprinting);
   };
   
-  // Handle stop sprint on mobile
-  const handleStopSprint = () => {
-    setIsSprinting(false);
+  // Handle action on mobile
+  const handleMobileAction = () => {
+    console.log("Mobile action triggered");
+    // Additional action handling can be added here
   };
   
   return (
@@ -700,53 +704,28 @@ export default function TradeHouse() {
                   </Text>
                 </Billboard>
               )}
+              
+              {/* Show mobile instruction tooltip */}
+              {mobileControls && (
+                <Billboard position={[0, 2, -5]} follow={true}>
+                  <Text fontSize={0.5} color="#ffffff" maxWidth={20} textAlign="center">
+                    Use the joystick on the left to move around
+                  </Text>
+                </Billboard>
+              )}
             </Suspense>
           </Physics>
         </Canvas>
       </KeyboardControls>
       
-      {/* Show mobile controls if needed */}
+      {/* Use the improved MobileControls component */}
       {mobileControls && (
-        <div className="absolute inset-0 pointer-events-none z-10">
-          <div className="pointer-events-auto">
-            <div className="absolute bottom-24 left-10 w-36 h-36 rounded-full bg-black/20 border-2 border-white/30 touch-none"
-                onTouchStart={(e) => {
-                  const touch = e.touches[0];
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const x = (touch.clientX - rect.left) / rect.width * 2 - 1;
-                  const y = (touch.clientY - rect.top) / rect.height * 2 - 1;
-                  handleMobileMove(x, y);
-                }}
-                onTouchMove={(e) => {
-                  const touch = e.touches[0];
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const x = (touch.clientX - rect.left) / rect.width * 2 - 1;
-                  const y = (touch.clientY - rect.top) / rect.height * 2 - 1;
-                  handleMobileMove(x, y);
-                }}
-                onTouchEnd={handleStopMove}
-            >
-              <div className="absolute w-20 h-20 rounded-full bg-white/30 border-2 border-white/50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
-            </div>
-            
-            {/* Jump button */}
-            <button
-              className="absolute right-8 bottom-24 w-16 h-16 rounded-full bg-green-600/80 text-white font-bold text-lg"
-              onTouchStart={handleMobileJump}
-            >
-              JUMP
-            </button>
-            
-            {/* Sprint button */}
-            <button
-              className="absolute right-8 bottom-8 w-16 h-16 rounded-full bg-blue-600/80 text-white font-bold text-lg"
-              onTouchStart={handleMobileSprint}
-              onTouchEnd={handleStopSprint}
-            >
-              RUN
-            </button>
-          </div>
-        </div>
+        <MobileControls 
+          onDirectionChange={handleMobileMove}
+          onJump={handleMobileJump}
+          onSprint={handleMobileSprint}
+          onAction={handleMobileAction}
+        />
       )}
     </>
   );

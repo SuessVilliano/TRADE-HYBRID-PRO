@@ -56,33 +56,84 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
   // Initialize audio capture
   const setupVoiceCapture = async () => {
     try {
+      console.log("Setting up voice capture");
+      
       // First, initialize audio context to prevent browser issues
       // Some browsers need user interaction before creating AudioContext
       try {
         audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        
+        // Resume context if suspended (especially important for iOS/Safari)
+        if (audioContext.current.state === 'suspended') {
+          await audioContext.current.resume();
+          console.log("AudioContext resumed from suspended state");
+        }
       } catch (contextError) {
         console.error("Error creating AudioContext:", contextError);
-        toast.error("Could not initialize audio system. Try clicking somewhere on the page first.");
+        toast.error("Could not initialize audio system. Please tap/click on the screen and try again.");
         return;
       }
 
-      // Request microphone access with specific constraints
+      // Check if getUserMedia is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error("getUserMedia not supported on this browser");
+        toast.error("Voice chat is not supported on this browser.");
+        toggleVoiceChat(false);
+        return;
+      }
+      
+      // Add more detailed error handling for mobile browsers
+      const handleMicrophoneError = (error: any) => {
+        console.error("Microphone access error details:", error);
+        
+        // More descriptive error messages based on error type
+        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+          toast.error("Microphone access denied. Please check your browser permissions.");
+        } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+          toast.error("No microphone found. Please check your device.");
+        } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+          toast.error("Cannot access microphone. It may be in use by another application.");
+        } else if (error.name === 'OverconstrainedError') {
+          toast.error("Microphone constraints not satisfied. Please try a different microphone.");
+        } else if (error.name === 'TypeError') {
+          toast.error("Invalid constraints for microphone. Please restart the application.");
+        } else {
+          toast.error(`Microphone error: ${error.message || 'Unknown error'}`);
+        }
+        
+        toggleVoiceChat(false);
+      };
+
+      // Request microphone access with specific constraints and fallbacks for mobile
       try {
-        mediaStream.current = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-          },
-          video: false,
-        });
+        // Try with ideal constraints first
+        try {
+          mediaStream.current = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+            },
+            video: false,
+          });
+        } catch (idealConstraintError) {
+          console.warn("Failed with ideal constraints, trying simplified constraints:", idealConstraintError);
+          
+          // Fallback to simpler constraints for mobile browsers
+          mediaStream.current = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: false,
+          });
+        }
+        
         // Notify multiplayer system - added multiplayer notification
-        if(multiplayer) multiplayer.emit('voice_status', { enabled: true, clientId });
+        if(multiplayer) {
+          multiplayer.emit('voice_status', { enabled: true, clientId });
+          console.log("Voice status sent to multiplayer");
+        }
         toast.success("Microphone enabled");
       } catch (micError) {
-        console.error("Microphone access denied:", micError);
-        toast.error("Microphone access denied. Voice chat disabled.");
-        toggleVoiceChat(false);
+        handleMicrophoneError(micError);
         return;
       }
 
@@ -155,19 +206,63 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
     return int16Array;
   };
 
-  // Handle push-to-talk
+  // Handle push-to-talk with improved mobile support
   const handlePushToTalk = (isActive: boolean) => {
+    console.log(`Push-to-talk ${isActive ? 'activated' : 'deactivated'}`);
+    
+    // Set the speaking state
     setSpeaking(isActive);
+    
+    // If we're activating the microphone, make sure the audio context is resumed
+    if (isActive && audioContext.current && audioContext.current.state === 'suspended') {
+      audioContext.current.resume()
+        .then(() => console.log("AudioContext resumed for push-to-talk"))
+        .catch(err => console.error("Error resuming AudioContext:", err));
+    }
+    
+    // Send voice status to multiplayer system
+    if (multiplayer && isActive) {
+      multiplayer.emit('voice_status', { 
+        enabled: true, 
+        clientId,
+        speaking: true 
+      });
+    }
   };
 
   // Toggle voice chat on/off
   const handleToggleVoiceChat = () => {
-    toggleVoiceChat(!voiceChatEnabled);
-    if (voiceChatEnabled) {
+    const newState = !voiceChatEnabled;
+    console.log(`Voice chat toggled to: ${newState ? 'enabled' : 'disabled'}`);
+    
+    // Update voice chat state
+    toggleVoiceChat(newState);
+    
+    if (!newState) {
       // Clean up when turning off
       if (mediaStream.current) {
-        mediaStream.current.getTracks().forEach(track => track.stop());
+        console.log("Stopping all audio tracks");
+        mediaStream.current.getTracks().forEach(track => {
+          track.stop();
+          console.log(`Audio track ${track.id} stopped`);
+        });
         mediaStream.current = null;
+      }
+      
+      // Notify multiplayer that voice chat is disabled
+      if (multiplayer) {
+        multiplayer.emit('voice_status', { 
+          enabled: false, 
+          clientId 
+        });
+      }
+    } else {
+      // Display an initial instruction for mobile users
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+        toast.info("Tap and hold the microphone button to speak", {
+          duration: 3000
+        });
       }
     }
   };
@@ -286,16 +381,45 @@ export function VoiceChatControls({ className, minimized = false, onToggleMinimi
             <div className="bg-gray-800/50 rounded-lg p-3 text-center">
               <button
                 className={cn(
-                  "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2 transition-all",
+                  "w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-2 transition-all",
                   speaking ? "bg-green-600 scale-110" : "bg-gray-700 hover:bg-gray-600"
                 )}
                 onMouseDown={(e) => { e.preventDefault(); handlePushToTalk(true); }}
                 onMouseUp={(e) => { e.preventDefault(); handlePushToTalk(false); }}
                 onMouseLeave={(e) => { e.preventDefault(); handlePushToTalk(false); }}
-                onTouchStart={(e) => { e.preventDefault(); handlePushToTalk(true); }}
-                onTouchEnd={(e) => { e.preventDefault(); handlePushToTalk(false); }}
+                onTouchStart={(e) => { 
+                  e.preventDefault();
+                  // Ensure proper handling on mobile by setting focus on the button
+                  (e.target as HTMLElement).focus(); 
+                  handlePushToTalk(true);
+                }}
+                onTouchEnd={(e) => { 
+                  e.preventDefault();
+                  handlePushToTalk(false);
+                }}
+                onTouchCancel={(e) => {
+                  e.preventDefault();
+                  handlePushToTalk(false);
+                }}
+                // Ensure speaking state is reset if the touch moves away from the button
+                onTouchMove={(e) => {
+                  const touch = e.touches[0];
+                  const element = e.target as HTMLElement;
+                  const rect = element.getBoundingClientRect();
+                  
+                  // Check if touch has moved outside the element bounds
+                  if (
+                    touch.clientX < rect.left || 
+                    touch.clientX > rect.right || 
+                    touch.clientY < rect.top || 
+                    touch.clientY > rect.bottom
+                  ) {
+                    handlePushToTalk(false);
+                  }
+                }}
+                aria-label="Push to talk"
               >
-                <Mic className={cn("h-6 w-6", speaking ? "animate-pulse" : "")} />
+                <Mic className={cn("h-8 w-8", speaking ? "animate-pulse" : "")} />
               </button>
               <p className="text-sm text-gray-400">
                 Press and hold to speak
