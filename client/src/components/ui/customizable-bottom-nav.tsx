@@ -107,11 +107,19 @@ export function CustomizableBottomNav({ className = '' }: CustomizableBottomNavP
         {visibleTabs.map((tab) => (
           <Link 
             key={tab.id} 
-            to={`/${tab.id === 'trading' ? 'trading-space' : tab.id}`}
+            to={`/${
+              tab.id === 'trading' ? 'trading-space' : 
+              tab.id === 'journal' ? 'trade-journal' : 
+              tab.id
+            }`}
             className={`flex flex-col items-center justify-center flex-1 p-2 rounded-md transition-colors
-              ${currentPath.includes(tab.id) || (tab.id === 'trading' && currentPath.includes('trading-space')) 
+              ${
+                currentPath.includes(tab.id) || 
+                (tab.id === 'trading' && currentPath.includes('trading-space')) ||
+                (tab.id === 'journal' && currentPath.includes('trade-journal'))
                 ? 'text-primary bg-primary/10' 
-                : 'text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+                : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+              }`}
           >
             {getIcon(tab.icon)}
             <span className="text-xs mt-1">{tab.label}</span>
