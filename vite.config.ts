@@ -28,7 +28,7 @@ export default defineConfig({
       external: [],
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'react-toastify']
+          vendor: ['react', 'react-dom', 'sonner']
         }
       }
     }
