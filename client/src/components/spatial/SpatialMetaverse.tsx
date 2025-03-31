@@ -1,9 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Button } from '../ui/button';
-import { X, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { 
+  X, Maximize2, Minimize2, Volume2, VolumeX, 
+  Building, Users, ChartBar, Store, Radio, School
+} from 'lucide-react';
 import { useAudio } from '../../lib/stores/useAudio';
 import { Card } from '../ui/card';
 import { cn } from '../../lib/utils';
+import { useSpatialSDK } from './sdk/useSpatialSDK';
+import { SPATIAL_CONFIG } from './sdk/config';
+import { TradeHybridMetaverse } from './sdk/MetaverseObjects';
 
 interface SpatialMetaverseProps {
   spatialUrl?: string;
@@ -21,7 +27,18 @@ export default function SpatialMetaverse({
   const [isLoading, setIsLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [showAreaControls, setShowAreaControls] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   
+  // Initialize Spatial SDK
+  const { 
+    initialize, 
+    isInitialized, 
+    currentArea, 
+    teleportToArea,
+    initializeTradingEnvironment
+  } = useSpatialSDK(false); // Don't auto-initialize
+
   // Set that we're in the metaverse environment
   useEffect(() => {
     // Get the audio store state directly
@@ -42,10 +59,22 @@ export default function SpatialMetaverse({
     };
   }, []);
   
-  // Handle loading state
+  // Handle loading state and initialize SDK
   const handleIframeLoad = () => {
     setIsLoading(false);
     console.log("Spatial iframe loaded successfully");
+    
+    // Initialize SDK after iframe is loaded
+    if (iframeRef.current && !isInitialized) {
+      const success = initialize(iframeRef.current);
+      if (success) {
+        console.log("Spatial SDK initialized");
+        // Initialize the trading environment after a delay to ensure everything is loaded
+        setTimeout(() => {
+          initializeTradingEnvironment();
+        }, 5000);
+      }
+    }
   };
   
   // Toggle fullscreen mode
@@ -60,6 +89,26 @@ export default function SpatialMetaverse({
     console.log(`Mute state updated: ${!isMuted}`);
     // Note: This doesn't actually mute Spatial's audio, as that would need
     // to be controlled via Spatial's API if available
+  };
+
+  // Get icon for area
+  const getAreaIcon = (areaKey: string) => {
+    switch (areaKey) {
+      case 'reception':
+        return <Building className="h-4 w-4" />;
+      case 'tradingFloor':
+        return <ChartBar className="h-4 w-4" />;
+      case 'hybridHoldings':
+        return <Users className="h-4 w-4" />;
+      case 'streamingStudio':
+        return <Radio className="h-4 w-4" />;
+      case 'merchStore':
+        return <Store className="h-4 w-4" />;
+      case 'eventSpace':
+        return <School className="h-4 w-4" />;
+      default:
+        return <Building className="h-4 w-4" />;
+    }
   };
 
   return (
@@ -89,6 +138,50 @@ export default function SpatialMetaverse({
         </Button>
       </div>
       
+      {/* Area navigation controls */}
+      <div className="absolute left-4 top-4 z-10">
+        <Button
+          variant="ghost"
+          className="bg-black/40 hover:bg-black/60 text-white mb-2"
+          onClick={() => setShowAreaControls(!showAreaControls)}
+        >
+          {showAreaControls ? "Hide Areas" : "Explore Areas"}
+        </Button>
+        
+        {showAreaControls && (
+          <div className="p-2 bg-black/60 rounded-md space-y-2 w-48">
+            <div className="text-white text-xs font-medium mb-1">Teleport to Area</div>
+            {Object.entries(SPATIAL_CONFIG.areas).map(([key, area]) => (
+              <Button 
+                key={key}
+                variant="ghost" 
+                size="sm"
+                className={cn(
+                  "w-full justify-start text-white",
+                  currentArea === key ? "bg-white/20" : "bg-transparent"
+                )}
+                onClick={() => teleportToArea(key)}
+              >
+                <span className="mr-2">{getAreaIcon(key)}</span>
+                <span className="text-xs">{area.name}</span>
+              </Button>
+            ))}
+          </div>
+        )}
+      </div>
+      
+      {/* Current area info */}
+      {currentArea && !isLoading && (
+        <div className="absolute left-4 bottom-4 z-10 p-3 bg-black/60 rounded-md max-w-xs">
+          <h3 className="text-white text-sm font-medium">
+            {SPATIAL_CONFIG.areas[currentArea as keyof typeof SPATIAL_CONFIG.areas]?.name}
+          </h3>
+          <p className="text-white/70 text-xs mt-1">
+            {SPATIAL_CONFIG.areas[currentArea as keyof typeof SPATIAL_CONFIG.areas]?.description}
+          </p>
+        </div>
+      )}
+      
       {/* Loading indicator */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
@@ -103,6 +196,7 @@ export default function SpatialMetaverse({
       {/* Spatial iframe */}
       <Card className="w-full h-full overflow-hidden border-0">
         <iframe 
+          ref={iframeRef}
           src={`${spatialUrl}${autoEnterVR ? '&vr=true' : ''}`}
           className="w-full h-full border-0"
           onLoad={handleIframeLoad}
@@ -112,6 +206,9 @@ export default function SpatialMetaverse({
           title="Trade Hybrid Metaverse powered by Spatial"
         />
       </Card>
+      
+      {/* Metaverse Objects - These components don't render visually but manage the objects in the metaverse */}
+      {isInitialized && <TradeHybridMetaverse />}
     </div>
   );
 }

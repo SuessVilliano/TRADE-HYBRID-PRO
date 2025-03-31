@@ -728,7 +728,7 @@ function TradingSpaceContent() {
       
       {/* 3D Scene */}
       <div className="absolute inset-0 z-0">
-        <Scene showStats={false} spatialUrl={spatialUrlParam} />
+        <Scene showStats={false} spatialUrl={spatialUrlParam || undefined} />
       </div>
       
       {/* Top Navigation Bar */}
