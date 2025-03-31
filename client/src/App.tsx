@@ -205,7 +205,7 @@ function AppContent() {
               <Link to="/trading-signals" className="hover:text-blue-400 transition-colors">Signals</Link>
               <Link to="/app" className="hover:text-blue-400 transition-colors">App</Link>
               <Link to="/affiliate" className="hover:text-blue-400 transition-colors">Affiliate</Link>
-              <Link to="/matrix-visualization" className="hover:text-blue-400 transition-colors">Matrix</Link>
+              {/* Matrix moved inside Affiliate page */}
               <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Game Center</Link>
               <Link to="/trade-simulator" className="hover:text-blue-400 transition-colors">Trade Simulator</Link>
               <Link to="/shop" className="hover:text-blue-400 transition-colors">Shop</Link>
@@ -601,33 +601,12 @@ function AppContent() {
             </Suspense>
           } />
           
-          {/* Matrix visualization */}
-          <Route path="/matrix-visualization" element={
-            <Suspense fallback={
-              <div className="flex items-center justify-center h-screen">
-                <div className="text-center">
-                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <p className="text-slate-300">Loading Matrix Visualization...</p>
-                </div>
-              </div>
-            }>
-              {typeof window !== 'undefined' && <MatrixVisualizationDemo />}
-            </Suspense>
-          } />
+          {/* Matrix visualization - now part of Affiliate page */}
+          <Route path="/matrix-visualization" element={<Navigate to="/affiliate" replace />} />
           
           {/* Trading Freedom Podcast - redirect to podcast tab in learning center */}
-          <Route path="/trading-freedom-podcast" element={
-            <Suspense fallback={
-              <div className="flex items-center justify-center h-screen">
-                <div className="text-center">
-                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <p className="text-slate-300">Redirecting to podcast...</p>
-                </div>
-              </div>
-            }>
-              <PodcastRedirect />
-            </Suspense>
-          } />
+          {/* Redirect Trading Freedom Podcast to Learning Center */}
+          <Route path="/trading-freedom-podcast" element={<Navigate to="/learn" replace />} />
           
           {/* Signals Analyzer Route - redirect to trading-signals/analyzer */}
           <Route path="/signals-analyzer" element={<Navigate to="/trading-signals/analyzer" replace />} />
@@ -768,9 +747,9 @@ function Home() {
           linkTo="/shop"
         />
         <FeatureCard 
-          title="Trading Freedom Podcast"
-          description="Listen to our podcast featuring interviews with successful traders, market insights, and trading strategies."
-          linkTo="/learn"
+          title="Journal"
+          description="Track your trades, analyze performance, and improve your trading strategy with our advanced journal."
+          linkTo="/trade-journal"
         />
         <FeatureCard 
           title="Signals Analyzer"
