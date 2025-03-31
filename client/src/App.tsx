@@ -45,7 +45,9 @@ const EventsPage = lazy(() => import('./pages/events'));
 const TradeSimulatorPage = lazy(() => import('./pages/trade-simulator'));
 const EducationalGamesPage = lazy(() => import('./pages/educational-games')); // Added import for Educational Games
 const ShopPage = lazy(() => import('./pages/shop'));
-const LoginPage = lazy(() => import('./pages/login')); // Added import for LoginPage
+const LoginPage = lazy(() => import('./pages/login'));
+const SignupPage = lazy(() => import('./pages/signup')); // Added import for Signup
+const ForgotPasswordPage = lazy(() => import('./pages/forgot-password')); // Added import for Forgot Password
 const AdvancedTradingDashboard = lazy(() => import('./pages/advanced-trading-dashboard'));
 
 // Import the MicroLearningProvider and renderer
@@ -293,7 +295,9 @@ function AppContent() {
       <main className="min-h-[calc(100vh-130px)]">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Suspense fallback={<div>Loading...</div>}><LoginPage /></Suspense>} /> {/* Added login route */}
+          <Route path="/login" element={<Suspense fallback={<div>Loading...</div>}><LoginPage /></Suspense>} />
+          <Route path="/signup" element={<Suspense fallback={<div>Loading...</div>}><SignupPage /></Suspense>} />
+          <Route path="/forgot-password" element={<Suspense fallback={<div>Loading...</div>}><ForgotPasswordPage /></Suspense>} />
           <Route path="/marketplace" element={
             <Suspense fallback={
               <div className="flex items-center justify-center h-screen">

@@ -64,7 +64,7 @@ export interface UserState {
     avatar?: string;
     joinDate?: string;
     lastLogin?: string;
-    role?: 'user' | 'premium' | 'admin';
+    role?: 'user' | 'premium' | 'admin' | 'demo';
     apiKeys?: Record<string, string>;
     walletAddress?: string;
     walletSignature?: string;
@@ -72,6 +72,7 @@ export interface UserState {
     whopId?: string;
     whopMemberSince?: string;
     whopPlanId?: string;
+    preferences?: { theme: string };
   };
   demoBalances: AccountBalance[];
   liveBalances: AccountBalance[];
@@ -92,7 +93,8 @@ export interface UserState {
   }[];
 
   // Actions
-  login: (username: string, password: string) => Promise<boolean>;
+  login: ((username: string, password: string) => Promise<boolean>) & 
+         ((user: UserState['user']) => Promise<boolean>);
   logout: () => void;
   updateUser: (userData: Partial<UserState['user']>) => void;
   updatePreferences: (preferences: Partial<UserPreferences>) => void;
@@ -162,8 +164,33 @@ export const useUserStore = create<UserState>()(
       ],
 
       // Authentication actions
-      login: async (username: string, password: string): Promise<boolean> => {
+      login: async (usernameOrUser: string | UserState['user'], password?: string): Promise<boolean> => {
         try {
+          // Handle the case where a user object is passed (for direct login from signup, wallet, etc.)
+          if (typeof usernameOrUser !== 'string') {
+            const user = usernameOrUser;
+            
+            set({
+              isAuthenticated: true,
+              user,
+              notifications: [
+                ...get().notifications,
+                {
+                  id: Date.now().toString(),
+                  type: 'success',
+                  message: 'Successfully logged in. Welcome!',
+                  timestamp: new Date().toISOString(),
+                  read: false
+                }
+              ]
+            });
+            
+            return true;
+          }
+          
+          // Handle the case where username and password are passed
+          const username = usernameOrUser;
+          
           // In production, this would be an actual API call
           // const response = await fetch('/api/auth/login', {
           //   method: 'POST',
