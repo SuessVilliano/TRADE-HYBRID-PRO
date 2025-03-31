@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Button } from './button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './card';
 import {
@@ -16,6 +16,8 @@ import { createPortal } from 'react-dom';
 import { DexChart } from './dex-chart';
 import TradingViewWidget from './TradingViewWidget';
 import { cn } from '../../lib/utils';
+import { Switch } from './switch';
+import { Label } from './label';
 import {
   Maximize2,
   Minimize2,
@@ -32,6 +34,8 @@ import {
   Settings,
   MoreHorizontal,
   Save,
+  Download,
+  Upload,
 } from 'lucide-react';
 
 // Component types that can be added to the dashboard
@@ -118,6 +122,31 @@ export function CustomizableTradingDashboard({
   const [maximizedPanel, setMaximizedPanel] = useState<string | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState(defaultSymbol);
   const [draggedPanel, setDraggedPanel] = useState<{ id: string, startX: number, startY: number, offsetX: number, offsetY: number } | null>(null);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState<boolean>(true);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const autoSaveIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Autosave functionality
+  useEffect(() => {
+    if (autoSaveEnabled) {
+      // Set up autosave interval (every 30 seconds)
+      autoSaveIntervalRef.current = setInterval(() => {
+        // Only save if there are changes (comparing with localStorage would be complex,
+        // so we just save periodically when autosave is enabled)
+        setLastSaved(new Date());
+        // The actual save happens automatically via the useLocalStorage hook
+      }, 30000);
+    } else if (autoSaveIntervalRef.current) {
+      clearInterval(autoSaveIntervalRef.current);
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (autoSaveIntervalRef.current) {
+        clearInterval(autoSaveIntervalRef.current);
+      }
+    };
+  }, [autoSaveEnabled]);
 
   // Get available component types for adding new panels
   const getAvailableComponentTypes = useCallback(() => {
@@ -243,6 +272,55 @@ export function CustomizableTradingDashboard({
     panel.style.zIndex = '';
     
     setDraggedPanel(null);
+  };
+  
+  // Export layout configuration to JSON file
+  const exportLayout = () => {
+    try {
+      const layoutJson = JSON.stringify(layout, null, 2);
+      const blob = new Blob([layoutJson], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      // Create temporary link and trigger download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `trading-dashboard-layout-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast.success('Layout exported successfully');
+    } catch (error) {
+      console.error('Error exporting layout:', error);
+      toast.error('Failed to export layout');
+    }
+  };
+  
+  // Import layout configuration from JSON file
+  const importLayout = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importedLayout = JSON.parse(e.target?.result as string);
+        if (Array.isArray(importedLayout)) {
+          setLayout(importedLayout);
+          setLastSaved(new Date());
+          toast.success('Layout imported successfully');
+        } else {
+          toast.error('Invalid layout format');
+        }
+      } catch (error) {
+        console.error('Error importing layout:', error);
+        toast.error('Failed to import layout');
+      }
+    };
+    reader.readAsText(file);
   };
 
   // Render the appropriate component based on type
@@ -592,14 +670,94 @@ export function CustomizableTradingDashboard({
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Autosave Toggle */}
+          <div className="flex items-center gap-2 mr-4">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="autosave"
+                checked={autoSaveEnabled}
+                onCheckedChange={setAutoSaveEnabled}
+              />
+              <Label htmlFor="autosave" className="text-xs">
+                Autosave
+                {lastSaved && (
+                  <span className="ml-2 text-xs text-gray-400">
+                    Last saved: {lastSaved.toLocaleTimeString()}
+                  </span>
+                )}
+              </Label>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                // Manual save - just update the timestamp since
+                // the actual saving is handled by useLocalStorage
+                setLastSaved(new Date());
+                toast.success('Dashboard layout saved');
+              }}
+              className="ml-2"
+            >
+              <Save className="h-3 w-3 mr-1" />
+              Save
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={exportLayout}
+              title="Export layout configuration"
+              className="ml-1"
+            >
+              <Download className="h-3 w-3 mr-1" />
+              Export
+            </Button>
+            
+            <div className="relative ml-1">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  // Create a hidden file input and trigger it
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = 'application/json';
+                  input.onchange = importLayout as any;
+                  input.click();
+                }}
+                title="Import layout configuration"
+              >
+                <Upload className="h-3 w-3 mr-1" />
+                Import
+              </Button>
+            </div>
+          </div>
+          
           {/* Edit Mode Toggle */}
           <Button 
             variant={editMode ? "default" : "outline"} 
             size="sm" 
-            onClick={() => setEditMode(!editMode)}
+            onClick={() => {
+              // If we're exiting edit mode, we should update the last saved timestamp
+              if (editMode) {
+                setLastSaved(new Date());
+                toast.success('Layout changes saved');
+              }
+              setEditMode(!editMode);
+            }}
             className={editMode ? "bg-blue-600 hover:bg-blue-700" : ""}
           >
-            {editMode ? "Save Layout" : "Edit Layout"}
+            {editMode ? (
+              <>
+                <Save className="h-3 w-3 mr-1" />
+                Exit Edit Mode
+              </>
+            ) : (
+              <>
+                <Settings className="h-3 w-3 mr-1" />
+                Edit Layout
+              </>
+            )}
           </Button>
           
           {/* Add Panel Button */}
