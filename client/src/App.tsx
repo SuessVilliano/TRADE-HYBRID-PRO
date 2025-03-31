@@ -20,6 +20,7 @@ import { WhopAuth } from './components/ui/whop-auth';
 import { THCMembershipDisplay } from './components/ui/thc-membership-display';
 import { WalletStatusIndicator } from './components/ui/wallet-status-indicator';
 import TestNotificationButton from './components/ui/test-notification-button';
+import { HelmetProvider } from 'react-helmet-async';
 
 // Lazy load pages
 const TradeRunner = lazy(() => import('./pages/trade-runner'));
@@ -94,22 +95,24 @@ function AppWithProviders() {
 
   return (
     <Router>
-      <SolanaWalletProvider>
-        <SolanaAuthProvider>
-          <FeatureDisclosureProvider>
-            <PerformanceOptimizationProvider>
-              <MicroLearningProvider>
-                <AppContent />
-                <MicroLearningTipRenderer />
-                <ExperienceLevelSelector />
-                <RegulatoryCompliance isOpen={showComplianceModal} onClose={() => setShowComplianceModal(false)} />
-                <Toaster />
-                <NotificationListener />
-              </MicroLearningProvider>
-            </PerformanceOptimizationProvider>
-          </FeatureDisclosureProvider>
-        </SolanaAuthProvider>
-      </SolanaWalletProvider>
+      <HelmetProvider>
+        <SolanaWalletProvider>
+          <SolanaAuthProvider>
+            <FeatureDisclosureProvider>
+              <PerformanceOptimizationProvider>
+                <MicroLearningProvider>
+                  <AppContent />
+                  <MicroLearningTipRenderer />
+                  <ExperienceLevelSelector />
+                  <RegulatoryCompliance isOpen={showComplianceModal} onClose={() => setShowComplianceModal(false)} />
+                  <Toaster />
+                  <NotificationListener />
+                </MicroLearningProvider>
+              </PerformanceOptimizationProvider>
+            </FeatureDisclosureProvider>
+          </SolanaAuthProvider>
+        </SolanaWalletProvider>
+      </HelmetProvider>
     </Router>
   );
 }
@@ -205,7 +208,6 @@ function AppContent() {
               <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Game Center</Link>
               <Link to="/trade-simulator" className="hover:text-blue-400 transition-colors">Trade Simulator</Link>
               <Link to="/shop" className="hover:text-blue-400 transition-colors">Shop</Link>
-              <Link to="/trading-freedom-podcast" className="hover:text-blue-400 transition-colors">Podcast</Link>
             </nav>
           </div>
 
@@ -413,6 +415,18 @@ function AppContent() {
           } />
           <Route path="/learning-center" element={<Navigate to="/learn" replace />} />
           <Route path="/learning-center/:tab" element={<Navigate to="/learn" replace />} />
+          <Route path="/learn/podcast" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading Trading Freedom Podcast...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <TradingFreedomPodcast />}
+            </Suspense>
+          } />
           <Route path="/learn/journey" element={
             <Suspense fallback={
               <div className="flex items-center justify-center h-screen">
@@ -497,6 +511,18 @@ function AppContent() {
               </div>
             }>
               {typeof window !== 'undefined' && <TradingSignalsPage />}
+            </Suspense>
+          } />
+          <Route path="/trading-signals/analyzer" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading Signals Analyzer...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <SignalsAnalyzerPage />}
             </Suspense>
           } />
 
@@ -599,33 +625,11 @@ function AppContent() {
             </Suspense>
           } />
           
-          {/* Trading Freedom Podcast */}
-          <Route path="/trading-freedom-podcast" element={
-            <Suspense fallback={
-              <div className="flex items-center justify-center h-screen">
-                <div className="text-center">
-                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <p className="text-slate-300">Loading Trading Freedom Podcast...</p>
-                </div>
-              </div>
-            }>
-              {typeof window !== 'undefined' && <TradingFreedomPodcast />}
-            </Suspense>
-          } />
+          {/* Trading Freedom Podcast - redirect to learn/podcast */}
+          <Route path="/trading-freedom-podcast" element={<Navigate to="/learn/podcast" replace />} />
           
-          {/* Signals Analyzer Route */}
-          <Route path="/signals-analyzer" element={
-            <Suspense fallback={
-              <div className="flex items-center justify-center h-screen">
-                <div className="text-center">
-                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <p className="text-slate-300">Loading Signals Analyzer...</p>
-                </div>
-              </div>
-            }>
-              {typeof window !== 'undefined' && <SignalsAnalyzerPage />}
-            </Suspense>
-          } />
+          {/* Signals Analyzer Route - redirect to trading-signals/analyzer */}
+          <Route path="/signals-analyzer" element={<Navigate to="/trading-signals/analyzer" replace />} />
         </Routes>
       </main>
 
@@ -765,12 +769,12 @@ function Home() {
         <FeatureCard 
           title="Trading Freedom Podcast"
           description="Listen to our podcast featuring interviews with successful traders, market insights, and trading strategies."
-          linkTo="/trading-freedom-podcast"
+          linkTo="/learn/podcast"
         />
         <FeatureCard 
           title="Signals Analyzer"
           description="Analyze your trading signals against historical data to determine if stop loss or take profit was hit first."
-          linkTo="/signals-analyzer"
+          linkTo="/trading-signals/analyzer"
         />
       </div>
     </PopupContainer>
