@@ -56,9 +56,6 @@ export default function TradeRunnerWebBrowserPage() {
             <Link to="/trade-runner-browser" className="flex items-center px-3 py-2 text-white bg-blue-600 rounded-md">
               <span className="ml-2">Trade Runner</span>
             </Link>
-            <Link to="/bulls-vs-bears" className="flex items-center px-3 py-2 text-white hover:bg-slate-700 rounded-md">
-              <span className="ml-2">Bulls vs Bears</span>
-            </Link>
             <Link to="/trade-simulator" className="flex items-center px-3 py-2 text-white hover:bg-slate-700 rounded-md">
               <span className="ml-2">Trade Simulator</span>
             </Link>

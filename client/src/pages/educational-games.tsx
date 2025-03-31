@@ -19,9 +19,6 @@ export default function EducationalGamesPage() {
               <Link to="/trade-runner-browser" className="block px-3 py-2 text-white hover:bg-slate-700 rounded-md">
                 Trade Runner
               </Link>
-              <Link to="/bulls-vs-bears" className="block px-3 py-2 text-white hover:bg-slate-700 rounded-md">
-                Bulls vs Bears
-              </Link>
             </div>
             <Link to="/educational-games" className="flex items-center px-3 py-2 text-white bg-blue-600 rounded-md">
               <span className="ml-2">Educational Games</span>

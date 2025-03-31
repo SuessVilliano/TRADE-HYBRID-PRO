@@ -54,9 +54,6 @@ export default function GameCenterPage() {
               <button onClick={openTradeRunnerWindow} className="w-full text-left px-3 py-2 text-white hover:bg-slate-700 rounded-md">
                 Trade Runner
               </button>
-              <Link to="/bulls-vs-bears" className="block px-3 py-2 text-white hover:bg-slate-700 rounded-md">
-                Bulls vs Bears
-              </Link>
             </div>
             <Link to="/educational-games" className="flex items-center px-3 py-2 text-white hover:bg-slate-700 rounded-md">
               <span className="ml-2">Educational Games</span>
@@ -83,7 +80,6 @@ export default function GameCenterPage() {
                   <p>Choose from our selection of trading games and educational tools to enhance your trading skills.</p>
                   <ul>
                     <li>Trade Runner - Practice real-time trading scenarios</li>
-                    <li>Bulls vs Bears - Test your market prediction skills</li>
                     <li>Trade Simulator - Learn trading basics in a risk-free environment</li>
                   </ul>
                   
