@@ -1,0 +1,78 @@
+2025-03-31T01:30:00Z info: Deployment: ace54f87-974c-4fbe-a5ad-6abce23a74a9
+2025-03-31T01:30:00Z info: Build: ba9e3005-88fa-4f9d-bdeb-c75791568428
+2025-03-31T01:30:00Z info: Connecting to builder
+2025-03-31T01:30:04Z info: Builder connected
+2025-03-31T01:30:05Z info: Installing packages
+--> npm install
+
+
+up to date, audited 1305 packages in 11s
+
+174 packages are looking for funding
+  run `npm fund` for details
+
+
+24 vulnerabilities (6 low, 8 moderate, 10 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.2.0
+npm notice To update run: npm install -g npm@11.2.0
+npm notice
+
+2025-03-31T01:30:17Z info: Starting Build
+
+up to date, audited 1305 packages in 3s
+
+  run `npm fund` for details
+
+
+24 vulnerabilities (6 low, 8 moderate, 10 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+
+vite v5.4.15 building for production...
+
+transforming...
+
+node_modules/three-stdlib/libs/lottie.js (13062:32): Use of eval in "node_modules/three-stdlib/libs/lottie.js" is strongly discouraged as it poses security risks and may cause issues with minification.
+
+✓ 3947 modules transformed.
+
+error during build:
+client/src/lib/services/api-key-manager.ts (1:9): "check_secrets" is not exported by "client/src/lib/utils.ts", imported by "client/src/lib/services/api-key-manager.ts".
+file: /home/runner/workspace/client/src/lib/services/api-key-manager.ts:1:9
+
+1: import { check_secrets } from '../utils';
+            ^
+2: import { config } from '../config';
+
+    at getRollupError (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/parseAst.js:397:41)
+    at error (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/parseAst.js:393:42)
+    at Module.error (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:16711:16)
+    at Module.traceVariable (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:17160:29)
+    at ModuleScope.findVariable (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:14816:39)
+    at ChildScope.findVariable (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:5582:38)
+    at ClassBodyScope.findVariable (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:5582:38)
+    at ChildScope.findVariable (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:5582:38)
+    at ChildScope.findVariable (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:5582:38)
+    at FunctionScope.findVariable (file:///home/runner/workspace/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:5582:38)

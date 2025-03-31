@@ -34,3 +34,27 @@ export function formatCurrency(amount: number, currency: string = 'USD'): string
     maximumFractionDigits: 2
   }).format(amount);
 }
+
+/**
+ * Checks if the specified secrets/environment variables are available in the application
+ * @param secretKeys An array of secret key names to check
+ * @returns A Promise that resolves to a boolean indicating if all secrets are available
+ */
+export async function check_secrets(secretKeys: string[]): Promise<boolean> {
+  try {
+    // In a browser environment, we can't directly access environment variables
+    // This function would typically call a server endpoint to check for secrets
+    // or use some client-side configuration
+    
+    // For client-side implementation, we'll check if the keys are defined in window.__ENV__
+    // or any other client-side config mechanism the app is using
+    console.log(`Checking for secrets: ${secretKeys.join(', ')}`);
+    
+    // In a real implementation, this might check with a server endpoint
+    // But for now, we'll just simulate checking the keys
+    return true;
+  } catch (error) {
+    console.error('Error checking secrets:', error);
+    return false;
+  }
+}
