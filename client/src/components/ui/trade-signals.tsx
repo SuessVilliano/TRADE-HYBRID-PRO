@@ -20,10 +20,13 @@ import {
   Clock,
   BarChart4,
   Brain,
-  LineChart
+  LineChart,
+  Sparkles,
+  Zap
 } from 'lucide-react';
 // PDF generation done via simple data URL instead of pdf-lib package due to installation issues
 import { googleSheetsService, TradeSignal } from '../../lib/services/google-sheets-service';
+import { aiTradingAnalysisService } from '../../lib/services/ai-trading-analysis-service';
 
 interface TradeSignalsProps {
   signals?: TradeSignal[];
@@ -39,6 +42,9 @@ export function TradeSignals({ signals = [], onViewSignal }: TradeSignalsProps) 
   const [selectedSignal, setSelectedSignal] = useState<TradeSignal | null>(null);
   const [activeTab, setActiveTab] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [debugResults, setDebugResults] = useState<any>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(new Date());
   
   // Signal statistics
@@ -307,6 +313,156 @@ ${signal.notes ? `Notes: ${signal.notes}\n` : ''}
     }
   };
   
+  // AI Analysis of a signal
+  const analyzeSignalWithAI = async (signal: TradeSignal) => {
+    try {
+      setIsAnalyzing(true);
+      console.log(`Starting AI analysis for signal ${signal.id}...`);
+      
+      // Call the AI service to analyze the signal
+      const result = await aiTradingAnalysisService.analyzeSignal(signal);
+      setAnalysisResult(result);
+      
+      console.log('AI analysis completed:', result);
+      
+      // Update the signal with AI analysis results if not already present
+      if (!signal.aiAnalysis) {
+        const updatedSignals = allSignals.map(s => 
+          s.id === signal.id 
+            ? { 
+                ...s, 
+                aiAnalysis: `${result.marketInsight}\n\n${result.tradingRecommendation}\n\n${result.riskAssessment}` 
+              } 
+            : s
+        );
+        setAllSignals(updatedSignals);
+        
+        // Update appropriate market type signals
+        if (signal.marketType === 'crypto') {
+          setCryptoSignals(updatedSignals.filter(s => s.marketType === 'crypto'));
+        } else if (signal.marketType === 'forex') {
+          setForexSignals(updatedSignals.filter(s => s.marketType === 'forex'));
+        } else if (signal.marketType === 'futures') {
+          setFuturesSignals(updatedSignals.filter(s => s.marketType === 'futures'));
+        }
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error during AI analysis:', error);
+      // Handle error and return a default response
+      return {
+        marketInsight: "Unable to generate market insight due to an error.",
+        tradingRecommendation: "Analysis unavailable. Please try again later.",
+        riskAssessment: "Risk assessment unavailable due to an error.",
+        technicalAnalysis: "Technical analysis unavailable.",
+        fundamentalFactors: "Fundamental factors unavailable.",
+        confidenceScore: 0
+      };
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+  
+  // Debug signals with AI
+  const debugSignalsWithAI = async () => {
+    try {
+      setIsAnalyzing(true);
+      console.log(`Starting AI debugging for ${allSignals.length} signals...`);
+      
+      // Get only active signals for debugging
+      const activeSignals = allSignals.filter(s => s.status === 'active');
+      
+      // Call the AI service to debug signals
+      const result = await aiTradingAnalysisService.debugSignals(activeSignals);
+      setDebugResults(result);
+      
+      console.log('AI debugging completed:', result);
+      return result;
+    } catch (error) {
+      console.error('Error during AI debugging:', error);
+      return {
+        issues: ["Unable to debug signals due to an error."],
+        recommendations: ["Please try again later."],
+        priority: "low" as 'low' | 'medium' | 'high'
+      };
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+  
+  // Generate AI market report
+  const generateAIMarketReport = async () => {
+    try {
+      setIsAnalyzing(true);
+      console.log('Generating AI market report...');
+      
+      // Call the AI service to generate market report
+      const report = await aiTradingAnalysisService.generateMarketReport(allSignals);
+      
+      // Create an HTML report
+      const content = `
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+              h1 { color: #005299; font-size: 24px; }
+              h2 { color: #333; font-size: 18px; margin-top: 30px; }
+              .timestamp { color: #777; font-size: 14px; margin-bottom: 30px; }
+              .report-section { margin: 20px 0; }
+              .separator { border-bottom: 1px solid #ddd; margin: 20px 0; }
+              .disclaimer { margin-top: 40px; color: #777; font-size: 11px; }
+              pre { background-color: #f8f8f8; padding: 15px; border-radius: 5px; white-space: pre-wrap; }
+            </style>
+          </head>
+          <body>
+            <h1>AI-Generated Market Analysis Report</h1>
+            <div class="timestamp">Generated on ${new Date().toLocaleString()}</div>
+            
+            <div class="report-section">
+              ${report.split('\n').map(line => {
+                if (line.trim().endsWith(':')) {
+                  return `<h2>${line}</h2>`;
+                } else {
+                  return `<p>${line}</p>`;
+                }
+              }).join('')}
+            </div>
+            
+            <div class="separator"></div>
+            
+            <div class="disclaimer">
+              This report is generated by AI and does not constitute financial advice. 
+              Market conditions can change rapidly, and all trading decisions should be made after thorough research.
+            </div>
+          </body>
+        </html>
+      `;
+      
+      // Convert HTML to data URL
+      const blob = new Blob([content], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      
+      // Open in new window which can be printed to PDF by the user
+      const printWindow = window.open(url, '_blank');
+      if (printWindow) {
+        printWindow.document.title = `AI Market Analysis - ${new Date().toLocaleDateString()}`;
+        setTimeout(() => {
+          printWindow.print();
+        }, 500);
+      } else {
+        console.error('Unable to open print window. Please check if popup blocker is enabled.');
+      }
+      
+      return report;
+    } catch (error) {
+      console.error('Error generating AI market report:', error);
+      return "Error generating market report. Please try again later.";
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   // Generate signals performance report
   const generatePerformanceReport = async () => {
     // Calculate provider-specific stats
@@ -575,8 +731,30 @@ ${signal.notes ? `Notes: ${signal.notes}\n` : ''}
             onClick={generatePerformanceReport}
             className="gap-2"
           >
-            <Download className="h-4 w-4" />
-            Export Report
+            <LineChart className="h-4 w-4" />
+            Performance Report
+          </Button>
+
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={generateAIMarketReport}
+            disabled={isAnalyzing}
+            className="gap-2"
+          >
+            <Brain className="h-4 w-4" />
+            {isAnalyzing ? 'Analyzing...' : 'AI Market Report'}
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={debugSignalsWithAI}
+            disabled={isAnalyzing}
+            className="gap-2"
+          >
+            <Sparkles className="h-4 w-4" />
+            {isAnalyzing ? 'Debugging...' : 'AI Debug Signals'}
           </Button>
         </div>
       </div>
@@ -730,6 +908,19 @@ ${signal.notes ? `Notes: ${signal.notes}\n` : ''}
                                 title="Copy to clipboard"
                               >
                                 <Copy className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8" 
+                                onClick={async () => {
+                                  setSelectedSignal(signal);
+                                  await analyzeSignalWithAI(signal);
+                                }}
+                                title="AI Analysis"
+                                disabled={isAnalyzing}
+                              >
+                                <Sparkles className={`h-4 w-4 ${isAnalyzing ? 'animate-pulse' : ''}`} />
                               </Button>
                             </div>
                           </TableCell>
