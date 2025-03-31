@@ -46,6 +46,34 @@ export default function LoginPage() {
             >
               Login with Whop
             </button>
+            
+            <div className="relative pt-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-background text-muted-foreground">Or try demo</span>
+              </div>
+            </div>
+            
+            <button 
+              onClick={() => {
+                // Login as demo user
+                useUserStore.getState().login({
+                  id: 'demo-user',
+                  username: 'Demo User',
+                  email: 'demo@tradehybrid.com',
+                  role: 'demo',
+                  walletAddress: null,
+                  apiKeys: {},
+                  preferences: { theme: 'dark' }
+                });
+                navigate('/dashboard');
+              }}
+              className="w-full flex justify-center py-2 px-4 border border-gray-500 rounded-md shadow-sm text-sm font-medium text-white bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            >
+              Enter Demo Mode
+            </button>
           </div>
         </div>
       </div>

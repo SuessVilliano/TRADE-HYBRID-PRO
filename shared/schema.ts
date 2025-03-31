@@ -105,6 +105,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   avatar: text("avatar"),
   balance: real("balance").notNull().default(10000),
+  hasConnectedApis: boolean("has_connected_apis").default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -270,3 +271,17 @@ export type Quiz = typeof quizzes.$inferSelect;
 export type UserProgress = typeof userProgress.$inferSelect;
 export type QuizAttempt = typeof quizAttempts.$inferSelect;
 export type Certificate = typeof certificates.$inferSelect;
+
+// API Keys table for storing user API keys
+export const userApiKeys = pgTable("user_api_keys", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  type: text("type").notNull(), // 'google', 'openai', etc.
+  name: text("name").notNull(), // Display name for the key
+  value: text("value").notNull(), // Encrypted key value
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type UserApiKey = typeof userApiKeys.$inferSelect;

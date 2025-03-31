@@ -15,6 +15,7 @@ import geminiRouter from "./routes/gemini";
 import { MultiplayerServer } from "./multiplayer";
 import journalRoutes from './api/journal'; // Added import for journal routes
 import learningRoutes from './api/learning'; // Added import for learning center routes
+import settingsRoutes from './api/settings'; // Added import for settings routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Market data routes
@@ -121,6 +122,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Learning Center routes
   app.use("/api/learning", learningRoutes);
+  
+  // Settings routes
+  app.use("/api/settings", settingsRoutes);
 
   // News route using default source (bloomberg)
   app.get("/api/rss-feeds/news", (req, res) => {

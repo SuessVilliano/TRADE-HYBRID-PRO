@@ -125,19 +125,94 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
       }
     }
     
-    // Also update any specific content containers that might be hard-coded
-    const bgSlate900Elements = document.querySelectorAll('[class*="bg-slate-900"]');
-    bgSlate900Elements.forEach(element => {
+    // Update all text colors for headers, paragraphs and other text elements
+    const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    headings.forEach(heading => {
       if (theme === 'light') {
-        // Replace dark backgrounds with light ones
-        element.classList.remove('bg-slate-900', 'bg-slate-800', 'bg-slate-700');
-        element.classList.add('bg-white');
+        heading.classList.remove('text-white', 'text-slate-100', 'text-slate-200');
+        heading.classList.add('text-slate-900');
       } else {
-        // Ensure dark theme elements retain dark backgrounds
-        if (!element.classList.contains('bg-slate-900')) {
-          element.classList.add('bg-slate-900');
+        heading.classList.remove('text-slate-900', 'text-slate-800');
+        heading.classList.add('text-white');
+      }
+    });
+    
+    const paragraphs = document.querySelectorAll('p, span, div:not([class*="bg-"])');
+    paragraphs.forEach(p => {
+      // Only update if the element doesn't have specific text color classes
+      if (!p.className.includes('text-') && !p.className.includes('bg-')) {
+        if (theme === 'light') {
+          p.classList.add('text-slate-800');
+        } else {
+          p.classList.add('text-slate-200');
         }
-        element.classList.remove('bg-white');
+      }
+    });
+    
+    // Update all background classes throughout the application
+    // First, handle explicit bg-slate classes
+    const bgSlateElements = document.querySelectorAll('[class*="bg-slate-"]');
+    bgSlateElements.forEach(element => {
+      if (theme === 'light') {
+        // Replace all dark slate backgrounds with light ones
+        element.classList.remove('bg-slate-900', 'bg-slate-800', 'bg-slate-700', 'bg-slate-600');
+        
+        // Look for specific dark classes and replace with appropriate light equivalents
+        if (element.classList.contains('bg-slate-900')) {
+          element.classList.add('bg-white');
+        } else if (element.classList.contains('bg-slate-800')) {
+          element.classList.add('bg-slate-100');
+        } else if (element.classList.contains('bg-slate-700')) {
+          element.classList.add('bg-slate-200');
+        } else if (element.classList.contains('bg-slate-600')) {
+          element.classList.add('bg-slate-300');
+        }
+        
+        // Also set the background color directly to ensure it takes effect
+        (element as HTMLElement).style.backgroundColor = '';
+      } else {
+        // Restore dark theme backgrounds
+        element.classList.remove('bg-white', 'bg-slate-100', 'bg-slate-200', 'bg-slate-300');
+        
+        // Map light classes back to dark equivalents
+        if (element.classList.contains('bg-white')) {
+          element.classList.add('bg-slate-900');
+        } else if (element.classList.contains('bg-slate-100')) {
+          element.classList.add('bg-slate-800');
+        } else if (element.classList.contains('bg-slate-200')) {
+          element.classList.add('bg-slate-700');
+        } else if (element.classList.contains('bg-slate-300')) {
+          element.classList.add('bg-slate-600');
+        }
+        
+        // Also set the background color directly for dark theme
+        (element as HTMLElement).style.backgroundColor = '';
+      }
+    });
+    
+    // Handle other explicit background colors
+    const bgElements = document.querySelectorAll('[class*="bg-"]');
+    bgElements.forEach(element => {
+      // Skip elements we've already processed
+      if (element.classList.contains('bg-slate-900') || element.classList.contains('bg-white')) {
+        return;
+      }
+      
+      // For cards and panels that might have their own backgrounds
+      if (element.classList.contains('card') || 
+          element.classList.contains('panel') || 
+          element.classList.contains('sidebar') ||
+          element.classList.contains('popup') ||
+          element.classList.contains('dialog')) {
+        if (theme === 'light') {
+          element.classList.remove('bg-slate-800', 'bg-slate-900', 'bg-gray-800', 'bg-gray-900');
+          element.classList.add('bg-white');
+          (element as HTMLElement).style.color = '#1e293b'; // Dark text
+        } else {
+          element.classList.remove('bg-white');
+          element.classList.add('bg-slate-800');
+          (element as HTMLElement).style.color = '#f8fafc'; // Light text
+        }
       }
     });
   }, [theme, mounted, updatePreferences]);

@@ -22,7 +22,8 @@ import {
   Brain,
   LineChart,
   Sparkles,
-  Zap
+  Zap,
+  KeyRound
 } from 'lucide-react';
 // PDF generation done via simple data URL instead of pdf-lib package due to installation issues
 import { googleSheetsService, TradeSignal } from '../../lib/services/google-sheets-service';
@@ -46,6 +47,7 @@ export function TradeSignals({ signals = [], onViewSignal }: TradeSignalsProps) 
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [debugResults, setDebugResults] = useState<any>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(new Date());
+  const [apiKeyMissing, setApiKeyMissing] = useState(false);
   
   // Signal statistics
   const [stats, setStats] = useState({
@@ -57,9 +59,16 @@ export function TradeSignals({ signals = [], onViewSignal }: TradeSignalsProps) 
     totalProfit: 0
   });
 
+  // Handle API credentials submission
+  const handleCredentialsSubmit = async (credentials: { googleApiKey: string }) => {
+    console.log('API credentials submitted, refreshing signals...');
+    await fetchSignals();
+  };
+
   // Fetch signals from Google Sheets
   const fetchSignals = async () => {
     setIsLoading(true);
+    setApiKeyMissing(false);
     
     try {
       console.log('Starting to fetch trade signals...');
@@ -86,32 +95,38 @@ export function TradeSignals({ signals = [], onViewSignal }: TradeSignalsProps) 
         // Calculate statistics
         calculateStats(allSignalsFromService);
       }
-      // If no signals, use sample data (as Google Sheets may be restricted)
+      // If no signals, display an error
       else {
-        // Since Google Sheets is restricted in this environment, let's generate some sample signals with REAL timestamp
-        console.log('No signals received from Google Sheets. Generating sample signals for UI testing.');
-        
-        const sampleCrypto = generateSampleSignals('crypto', 'Paradox', 5);
-        const sampleFutures = generateSampleSignals('futures', 'Hybrid', 3);
-        const sampleForex = generateSampleSignals('forex', 'Solaris', 4);
-        
-        const sampleAll = [...sampleCrypto, ...sampleFutures, ...sampleForex];
-        
-        setCryptoSignals(sampleCrypto);
-        setFuturesSignals(sampleFutures);
-        setForexSignals(sampleForex);
-        
-        setAllSignals(sampleAll);
+        console.log('No signals received from Google Sheets API. This may indicate an issue with API access or permissions.');
+        // Update UI to show zero signals and last attempted refresh time
+        setCryptoSignals([]);
+        setFuturesSignals([]);
+        setForexSignals([]);
+        setAllSignals([]);
         setLastUpdated(new Date());
         
-        // Calculate statistics
-        calculateStats(sampleAll);
+        // Reset statistics for empty data
+        setStats({
+          totalSignals: 0,
+          activeSignals: 0,
+          completedSignals: 0,
+          winRate: 0,
+          avgProfitPercentage: 0,
+          totalProfit: 0
+        });
       }
     } catch (error) {
       console.error('Error fetching signals:', error);
       // Provide detailed error info for debugging
       if (error instanceof Error) {
         console.error('Error details:', error.message, error.stack);
+        
+        // Check if the error might be related to API key issues
+        if (error.message.includes('API key') || error.message.includes('permission') || 
+            error.message.includes('auth') || error.message.includes('forbidden') || 
+            error.message.includes('credentials')) {
+          setApiKeyMissing(true);
+        }
       }
     } finally {
       setIsLoading(false);
@@ -703,6 +718,38 @@ ${signal.notes ? `Notes: ${signal.notes}\n` : ''}
     }
   };
   
+  // Show API credentials form if API key is detected as missing
+  if (apiKeyMissing) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">AI Trading Signals</h2>
+          <p className="text-muted-foreground mb-4">
+            Connect your Google API key to enable trading signals data
+          </p>
+        </div>
+        
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-md mb-6">
+          <div className="flex items-start gap-3">
+            <KeyRound className="h-5 w-5 mt-0.5 flex-shrink-0" />
+            <div>
+              <h3 className="font-medium">API Key Required</h3>
+              <p className="text-sm mt-1">
+                To access trading signals data, you need to connect your Google Sheets API key. 
+                This key allows the platform to securely access the real-time trading signals.
+              </p>
+              <p className="text-xs mt-2 text-amber-700">
+                Your API key is stored securely and used only to retrieve trading signals from authorized Google Sheets.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <APICredentialsForm onCredentialsSubmit={handleCredentialsSubmit} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row justify-between items-start gap-4">
@@ -931,23 +978,35 @@ ${signal.notes ? `Notes: ${signal.notes}\n` : ''}
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <TrendingUp className="h-12 w-12 mx-auto text-muted-foreground" />
-                  <h3 className="mt-2 text-lg font-medium">No signals found</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <AlertTriangle className="h-12 w-12 mx-auto text-amber-500" />
+                  <h3 className="mt-2 text-lg font-medium">Signal Data Access Required</h3>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
                     {isLoading 
                       ? 'Loading signals...' 
-                      : 'There are currently no signals available for this category.'}
+                      : 'To display trading signals, you need to connect your Google Sheets API key. Click the button below to set up your API credentials and enable real-time trading signals.'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2 max-w-md mx-auto">
+                    Trading signals require authorized access to the secure Google Sheets data provider. Once connected, you'll receive real-time crypto, forex, and futures signals from our AI systems.
                   </p>
                   {!isLoading && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="mt-4"
-                      onClick={fetchSignals}
-                    >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Refresh Signals
-                    </Button>
+                    <div className="flex gap-2 justify-center mt-4">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setApiKeyMissing(true)}
+                      >
+                        <KeyRound className="h-4 w-4 mr-2" />
+                        Add API Key
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={fetchSignals}
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Try Again
+                      </Button>
+                    </div>
                   )}
                 </div>
               )}

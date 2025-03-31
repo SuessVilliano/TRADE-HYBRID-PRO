@@ -198,7 +198,6 @@ function AppContent() {
               <Link to="/affiliate" className="hover:text-blue-400 transition-colors">Affiliate</Link>
               <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Game Center</Link>
               <Link to="/trade-simulator" className="hover:text-blue-400 transition-colors">Trade Simulator</Link>
-              <Link to="/advanced-trading" className="hover:text-blue-400 transition-colors">Advanced Trading</Link>
               <Link to="/shop" className="hover:text-blue-400 transition-colors">Shop</Link>
             </nav>
           </div>
