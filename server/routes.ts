@@ -16,6 +16,7 @@ import { MultiplayerServer } from "./multiplayer";
 import journalRoutes from './api/journal'; // Added import for journal routes
 import learningRoutes from './api/learning'; // Added import for learning center routes
 import settingsRoutes from './api/settings'; // Added import for settings routes
+import signalsAnalyzerRoutes from './api/signals-analyzer'; // Added import for signals analyzer routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Market data routes
@@ -123,6 +124,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Settings routes
   app.use("/api/settings", settingsRoutes);
+  
+  // Signals Analyzer routes
+  app.use("/api/signals-analyzer", signalsAnalyzerRoutes);
 
   // News route using default source (bloomberg)
   app.get("/api/rss-feeds/news", (req, res) => {

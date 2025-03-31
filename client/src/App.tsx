@@ -51,6 +51,7 @@ const ForgotPasswordPage = lazy(() => import('./pages/forgot-password')); // Add
 const AdvancedTradingDashboard = lazy(() => import('./pages/advanced-trading-dashboard'));
 const MatrixVisualizationDemo = lazy(() => import('./pages/matrix-visualization-demo'));
 const TradingFreedomPodcast = lazy(() => import('./pages/trading-freedom-podcast'));
+const SignalsAnalyzerPage = lazy(() => import('./pages/signals-analyzer'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -611,6 +612,20 @@ function AppContent() {
               {typeof window !== 'undefined' && <TradingFreedomPodcast />}
             </Suspense>
           } />
+          
+          {/* Signals Analyzer Route */}
+          <Route path="/signals-analyzer" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading Signals Analyzer...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <SignalsAnalyzerPage />}
+            </Suspense>
+          } />
         </Routes>
       </main>
 
@@ -752,6 +767,11 @@ function Home() {
           description="Listen to our podcast featuring interviews with successful traders, market insights, and trading strategies."
           linkTo="/trading-freedom-podcast"
         />
+        <FeatureCard 
+          title="Signals Analyzer"
+          description="Analyze your trading signals against historical data to determine if stop loss or take profit was hit first."
+          linkTo="/signals-analyzer"
+        />
       </div>
     </PopupContainer>
   );
@@ -771,6 +791,7 @@ function FeatureCard({ title, description, linkTo }: { title: string, descriptio
     '/live-stream': 'social',
     '/ai-market-analysis': 'ai_features',
     '/trading-signals': 'ai_features',
+    '/signals-analyzer': 'ai_features',
     '/app': 'advanced_trading',
     '/trade-runner': 'basic_trading',
     '/trade-runner-browser': 'basic_trading',
