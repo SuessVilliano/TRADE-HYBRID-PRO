@@ -584,20 +584,18 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
               <span>Trade Now</span>
             </Button>
             
-            {/* Hidden broker modal for advanced users who still need it */}
-            <div className="hidden">
-              <ConnectBrokerModal 
-                onConnect={async (brokerId, credentials) => {
-                  // Connect the broker using broker service
-                  await brokerService.connectBroker(
-                    brokerId,
-                    brokers.find((b: {id: string}) => b.id === brokerId)?.name || "Unknown Broker",
-                    brokers.find((b: {id: string, type: string}) => b.id === brokerId)?.type || "crypto",
+            {/* Broker connection modal */}
+            <ConnectBrokerModal 
+              onConnect={async (brokerId, credentials) => {
+                // Connect the broker using broker service
+                await brokerService.connectBroker(
+                  brokerId,
+                  brokers.find((b: {id: string}) => b.id === brokerId)?.name || "Unknown Broker",
+                  brokers.find((b: {id: string, type: string}) => b.id === brokerId)?.type || "crypto",
                     credentials
                   );
                 }}
               />
-            </div>
           </div>
         </div>
       </div>
