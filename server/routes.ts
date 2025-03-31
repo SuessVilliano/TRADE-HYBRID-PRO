@@ -17,6 +17,7 @@ import journalRoutes from './api/journal'; // Added import for journal routes
 import learningRoutes from './api/learning'; // Added import for learning center routes
 import settingsRoutes from './api/settings'; // Added import for settings routes
 import signalsAnalyzerRoutes from './api/signals-analyzer'; // Added import for signals analyzer routes
+import openAIProxyRoutes from './api/openai-proxy'; // Added import for OpenAI proxy routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Market data routes
@@ -127,6 +128,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Signals Analyzer routes
   app.use("/api/signals-analyzer", signalsAnalyzerRoutes);
+  
+  // OpenAI API proxy routes
+  app.use("/api/openai-proxy", openAIProxyRoutes);
 
   // News route using default source (bloomberg)
   app.get("/api/rss-feeds/news", (req, res) => {

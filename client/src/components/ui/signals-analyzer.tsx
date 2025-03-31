@@ -17,9 +17,11 @@ import {
   AlertCircle, 
   ArrowDown, 
   ArrowUp, 
+  Bot,
   Check, 
   Download, 
   FileSpreadsheet, 
+  FileImage,
   LineChart, 
   UploadCloud, 
   RefreshCw, 
@@ -29,10 +31,14 @@ import {
   X,
   Info,
   Database,
-  FileInput
+  FileInput,
+  Sparkles,
+  Brain,
+  Upload
 } from 'lucide-react';
 import { googleSheetsService, TradeSignal } from '../../lib/services/google-sheets-service';
 import { signalsAnalyzerService, TradeAnalysisResult } from '../../lib/services/signals-analyzer-service';
+import { openAIService } from '../../lib/services/openai-service';
 
 // For date range selection
 const dateFormatter = new Intl.DateTimeFormat('en-US', { 
@@ -62,10 +68,14 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
   const [googleSheetName, setGoogleSheetName] = useState('');
   const [isUpdatingSheet, setIsUpdatingSheet] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<{ success: boolean; message: string } | null>(null);
-  const [selectedTab, setSelectedTab] = useState<'signals' | 'analysis' | 'history'>('signals');
+  const [selectedTab, setSelectedTab] = useState<'signals' | 'analysis' | 'history' | 'ai-analysis'>('signals');
   const [showJsonImport, setShowJsonImport] = useState(false);
   const [jsonImportContent, setJsonImportContent] = useState('');
   const [visibleResultDetails, setVisibleResultDetails] = useState<Record<string, boolean>>({});
+  const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
+  const [aiAnalysisResults, setAiAnalysisResults] = useState<Record<string, string>>({});
+  const [selectedChartImage, setSelectedChartImage] = useState<File | null>(null);
+  const [chartImageUrl, setChartImageUrl] = useState<string>('');
 
   // Toggle result details visibility
   const toggleResultDetails = (resultId: string) => {
@@ -218,6 +228,98 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
     signalsAnalyzerService.downloadCSV(csvContent, `signal_analysis_${new Date().toISOString().split('T')[0]}.csv`);
   };
   
+  // Handle chart image upload
+  const handleChartImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setSelectedChartImage(file);
+    
+    // Create a temporary URL for the image preview
+    const imageUrl = URL.createObjectURL(file);
+    setChartImageUrl(imageUrl);
+  };
+  
+  // AI analysis of signals
+  const analyzeSignalsWithAI = async () => {
+    if (!selectedAsset || signals.length === 0) {
+      setUpdateStatus({
+        success: false,
+        message: 'Please select an asset and load signals first.'
+      });
+      return;
+    }
+    
+    setIsAiAnalyzing(true);
+    try {
+      // Filter signals for the selected asset
+      const filteredSignals = signals.filter(
+        signal => signal.asset.toLowerCase() === selectedAsset.toLowerCase()
+      );
+      
+      if (filteredSignals.length === 0) {
+        setUpdateStatus({
+          success: false,
+          message: `No signals found for asset ${selectedAsset}.`
+        });
+        return;
+      }
+      
+      // Call OpenAI to analyze signals
+      const results = await openAIService.analyzeSignals(filteredSignals);
+      setAiAnalysisResults(results);
+      setSelectedTab('ai-analysis');
+    } catch (error) {
+      console.error('Error analyzing signals with AI:', error);
+      setUpdateStatus({
+        success: false,
+        message: 'Failed to analyze signals with AI. Please try again.'
+      });
+    } finally {
+      setIsAiAnalyzing(false);
+    }
+  };
+  
+  // AI analysis of chart image
+  const analyzeChartImage = async () => {
+    if (!selectedChartImage || !selectedAsset) {
+      setUpdateStatus({
+        success: false,
+        message: 'Please select an asset and upload a chart image.'
+      });
+      return;
+    }
+    
+    setIsAiAnalyzing(true);
+    try {
+      // Convert the image to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(selectedChartImage);
+      
+      reader.onloadend = async () => {
+        const base64Image = reader.result as string;
+        
+        // Call OpenAI to analyze the chart image
+        const timeframe = '1D'; // Default timeframe, could be made dynamic
+        const result = await openAIService.analyzeChart(base64Image, selectedAsset, timeframe);
+        
+        setAiAnalysisResults(prev => ({
+          ...prev,
+          chartAnalysis: result
+        }));
+        
+        setIsAiAnalyzing(false);
+      };
+    } catch (error) {
+      console.error('Error analyzing chart image:', error);
+      setUpdateStatus({
+        success: false,
+        message: 'Failed to analyze chart image. Please try again.'
+      });
+      setIsAiAnalyzing(false);
+    }
+  };
+  
   // Handle JSON import for signals
   const handleJsonImport = () => {
     try {
@@ -278,11 +380,11 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
       case 'SL Hit':
         return <Badge variant="destructive">Stop Loss Hit</Badge>;
       case 'TP1 Hit':
-        return <Badge variant="success" className="bg-green-500 text-white">TP1 Hit</Badge>;
+        return <Badge variant="success">TP1 Hit</Badge>;
       case 'TP2 Hit':
-        return <Badge variant="success" className="bg-green-600 text-white">TP2 Hit</Badge>;
+        return <Badge variant="success">TP2 Hit</Badge>;
       case 'TP3 Hit':
-        return <Badge variant="success" className="bg-green-700 text-white">TP3 Hit</Badge>;
+        return <Badge variant="success">TP3 Hit</Badge>;
       case 'Active':
         return <Badge variant="outline" className="border-blue-500 text-blue-500">Active</Badge>;
       case 'Expired':
@@ -308,7 +410,7 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
       
       <CardContent>
         <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as any)}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="signals">
               <FileSpreadsheet className="mr-2 h-4 w-4" />
               Signals
@@ -316,6 +418,10 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
             <TabsTrigger value="analysis">
               <LineChart className="mr-2 h-4 w-4" />
               Analysis Results
+            </TabsTrigger>
+            <TabsTrigger value="ai-analysis">
+              <Bot className="mr-2 h-4 w-4" />
+              AI Analysis
             </TabsTrigger>
             <TabsTrigger value="history">
               <Database className="mr-2 h-4 w-4" />
@@ -496,6 +602,161 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
                 </TableBody>
               </Table>
             </ScrollArea>
+          </TabsContent>
+
+          {/* AI Analysis Tab */}
+          <TabsContent value="ai-analysis" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium">AI Analysis</h3>
+              <div className="space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={analyzeSignalsWithAI}
+                  disabled={isAiAnalyzing || signals.length === 0 || !selectedAsset}
+                >
+                  <Bot className="mr-2 h-4 w-4" />
+                  Analyze Signals with AI
+                </Button>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="p-4">
+                <h4 className="text-sm font-medium mb-4">Chart Analysis</h4>
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-muted-foreground/20 rounded-md p-4 flex flex-col items-center justify-center">
+                    {chartImageUrl ? (
+                      <div className="relative w-full">
+                        <img 
+                          src={chartImageUrl} 
+                          alt="Chart" 
+                          className="w-full h-auto rounded-md"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="absolute top-2 right-2 bg-background/80"
+                          onClick={() => {
+                            setSelectedChartImage(null);
+                            setChartImageUrl('');
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <FileImage className="h-8 w-8 text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground mb-2">Upload a chart image for AI analysis</p>
+                        <Label 
+                          htmlFor="chart-upload" 
+                          className="cursor-pointer inline-flex items-center px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md text-sm font-medium"
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload Chart
+                        </Label>
+                        <Input
+                          id="chart-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleChartImageUpload}
+                        />
+                      </>
+                    )}
+                  </div>
+                  
+                  {chartImageUrl && (
+                    <Button
+                      onClick={analyzeChartImage}
+                      disabled={isAiAnalyzing || !selectedChartImage}
+                      className="w-full"
+                    >
+                      {isAiAnalyzing ? (
+                        <>
+                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                          Analyzing...
+                        </>
+                      ) : (
+                        <>
+                          <Bot className="mr-2 h-4 w-4" />
+                          Analyze Chart
+                        </>
+                      )}
+                    </Button>
+                  )}
+                  
+                  {aiAnalysisResults.chartAnalysis && (
+                    <div className="mt-4 p-4 border rounded-md bg-muted/20">
+                      <h5 className="text-sm font-medium mb-2">Chart Analysis Results</h5>
+                      <div className="prose prose-sm max-w-none dark:prose-invert">
+                        {aiAnalysisResults.chartAnalysis.split('\n').map((paragraph, i) => (
+                          <p key={i}>{paragraph}</p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Card>
+              
+              <Card className="p-4">
+                <h4 className="text-sm font-medium mb-4">Signal Analysis</h4>
+                {isAiAnalyzing ? (
+                  <div className="flex flex-col items-center justify-center p-8">
+                    <RefreshCw className="h-8 w-8 animate-spin mb-4" />
+                    <p>Analyzing signals with AI...</p>
+                  </div>
+                ) : Object.keys(aiAnalysisResults).length > 0 && !aiAnalysisResults.chartAnalysis ? (
+                  <div className="space-y-4">
+                    <ScrollArea className="h-[400px]">
+                      <div className="space-y-4">
+                        {Object.entries(aiAnalysisResults)
+                          .filter(([key]) => key !== 'chartAnalysis')
+                          .map(([signalId, analysis]) => {
+                            const signal = signals.find(s => s.id === signalId);
+                            return signal ? (
+                              <div key={signalId} className="border rounded-md p-3 bg-muted/10">
+                                <div className="flex justify-between items-center mb-2">
+                                  <div className="flex items-center">
+                                    <span className="font-medium mr-2">{signal.asset}</span>
+                                    {signal.direction === 'long' ? (
+                                      <Badge className="bg-green-500">
+                                        <ArrowUp className="mr-1 h-3 w-3" />
+                                        Long
+                                      </Badge>
+                                    ) : (
+                                      <Badge className="bg-red-500">
+                                        <ArrowDown className="mr-1 h-3 w-3" />
+                                        Short
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <span className="text-xs text-muted-foreground">
+                                    {new Date(signal.timestamp).toLocaleString()}
+                                  </span>
+                                </div>
+                                <div className="prose prose-sm max-w-none dark:prose-invert">
+                                  {analysis.split('\n').map((paragraph, i) => (
+                                    <p key={i}>{paragraph}</p>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : null;
+                          })}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-8 border rounded-md border-dashed border-muted-foreground/20">
+                    <Bot className="h-8 w-8 text-muted-foreground mb-2" />
+                    <p className="text-muted-foreground text-center">
+                      Click the "Analyze Signals with AI" button to get intelligent insights on your trading signals.
+                    </p>
+                  </div>
+                )}
+              </Card>
+            </div>
           </TabsContent>
           
           {/* Analysis Results Tab */}
