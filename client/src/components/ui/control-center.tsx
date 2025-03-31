@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { PanelContainer } from './panel-container';
-import { LineChart, BarChart3, Signal, Bot, HelpCircle, BookOpen, Users, Cpu, MessageSquare, Calendar, BarChart, Sparkles, Grid, Activity, Waves, Link2, GripVertical } from 'lucide-react';
+import { LineChart, BarChart3, Signal, Bot, HelpCircle, BookOpen, Users, Cpu, MessageSquare, Calendar, BarChart, Sparkles, Grid, Activity, Waves, Link2, GripVertical, TrendingUp } from 'lucide-react';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
 import { ConnectBrokerModal } from '@/components/broker/connect-broker-modal';
 import { brokerService } from '@/lib/services/broker-service';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { useDashboardLayout, LayoutItem } from '@/lib/stores/useDashboardLayout';
+import { FloatingTradePanel } from './floating-trade-panel';
 
 // Lazy load the components
 const TradingViewWidgetLazy = React.lazy(() => import('./TradingViewWidget'));
@@ -75,6 +76,9 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
   const [maximizedPanel, setMaximizedPanel] = useState<string | null>(null);
   const [layout, setLayout] = useState<'grid' | 'vertical' | 'horizontal'>('grid');
   const { layouts, updateLayout } = useDashboardLayout();
+  
+  // Trade panel state
+  const [isTradePanelOpen, setIsTradePanelOpen] = useState(false);
 
   // Define all available panels
   const allPanels: Record<PanelType, PanelDefinition> = {
@@ -489,6 +493,14 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
+      {/* Floating Trade Panel */}
+      <FloatingTradePanel 
+        isOpen={isTradePanelOpen}
+        onClose={() => setIsTradePanelOpen(false)}
+        initialPosition={{ x: Math.max(50, window.innerWidth / 2 - 250), y: 100 }}
+        initialSize={{ width: 500, height: 600 }}
+      />
+      
       {/* Toolbar */}
       <div className="flex items-center justify-between bg-slate-800 border-b border-slate-700 px-1.5 py-1">
         <div className="flex space-x-1">
@@ -572,19 +584,32 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
             </Button>
           )}
 
-          {/* Broker Connection Button - placed at the end of the toolbar */}
+          {/* Trade Now Button - placed at the end of the toolbar */}
           <div className="ml-auto flex items-center">
-            <ConnectBrokerModal 
-              onConnect={async (brokerId, credentials) => {
-                // Connect the broker using broker service
-                await brokerService.connectBroker(
-                  brokerId,
-                  brokers.find((b: {id: string}) => b.id === brokerId)?.name || "Unknown Broker",
-                  brokers.find((b: {id: string, type: string}) => b.id === brokerId)?.type || "crypto",
-                  credentials
-                );
-              }}
-            />
+            <Button 
+              variant="default"
+              size="sm"
+              className="flex items-center gap-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
+              onClick={() => setIsTradePanelOpen(true)}
+            >
+              <TrendingUp className="h-4 w-4" />
+              <span>Trade Now</span>
+            </Button>
+            
+            {/* Hidden broker modal for advanced users who still need it */}
+            <div className="hidden">
+              <ConnectBrokerModal 
+                onConnect={async (brokerId, credentials) => {
+                  // Connect the broker using broker service
+                  await brokerService.connectBroker(
+                    brokerId,
+                    brokers.find((b: {id: string}) => b.id === brokerId)?.name || "Unknown Broker",
+                    brokers.find((b: {id: string, type: string}) => b.id === brokerId)?.type || "crypto",
+                    credentials
+                  );
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
