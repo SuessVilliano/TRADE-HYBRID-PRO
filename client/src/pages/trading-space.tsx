@@ -99,6 +99,9 @@ function TradingSpaceContent() {
   const symbolParam = searchParams.get('symbol');
   const actionParam = searchParams.get('action');
   const screenParam = searchParams.get('screen');
+  
+  // Additional URL parameters for metaverse
+  const spatialUrlParam = searchParams.get('spatialUrl'); // For custom Spatial.io spaces
 
   // The additional panels we offer
   const [activePanel, setActivePanel] = useState<string>(
@@ -725,7 +728,7 @@ function TradingSpaceContent() {
       
       {/* 3D Scene */}
       <div className="absolute inset-0 z-0">
-        <Scene showStats={false} />
+        <Scene showStats={false} spatialUrl={spatialUrlParam} />
       </div>
       
       {/* Top Navigation Bar */}
