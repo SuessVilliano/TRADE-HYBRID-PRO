@@ -724,6 +724,82 @@ export function TradeJournal() {
     fetchJournalEntries();
   }, []);
   
+  // Session comparison data
+  const amPmComparisonData = {
+    labels: ['AM Session', 'PM Session'],
+    datasets: [
+      {
+        label: 'Win Rate (%)',
+        data: [76, 62],
+        backgroundColor: 'rgba(75, 192, 92, 0.5)',
+        borderColor: 'rgba(75, 192, 92, 1)',
+        borderWidth: 1,
+        yAxisID: 'y'
+      },
+      {
+        label: 'Avg P&L ($)',
+        data: [245, 180],
+        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1,
+        yAxisID: 'y1'
+      }
+    ]
+  };
+
+  // Day of week analysis data
+  const dayOfWeekData = {
+    labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+    datasets: [
+      {
+        label: 'Win Rate (%)',
+        data: [68, 75, 62, 71, 66],
+        backgroundColor: 'rgba(75, 192, 92, 0.5)',
+        borderColor: 'rgba(75, 192, 92, 1)',
+        borderWidth: 1,
+        yAxisID: 'y'
+      },
+      {
+        label: 'Avg P&L ($)',
+        data: [210, 285, 175, 230, 190],
+        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1,
+        yAxisID: 'y1'
+      },
+      {
+        label: 'Trade Count',
+        data: [12, 15, 18, 14, 20],
+        backgroundColor: 'rgba(153, 102, 255, 0.5)',
+        borderColor: 'rgba(153, 102, 255, 1)',
+        borderWidth: 1,
+        type: 'line',
+        yAxisID: 'y2'
+      }
+    ]
+  };
+
+  // Market conditions performance data
+  const marketConditionsData = {
+    labels: ['Uptrend', 'Downtrend', 'Range-Bound', 'High Volatility', 'Low Volatility'],
+    datasets: [
+      {
+        label: 'Win Rate (%)',
+        data: [74, 67, 63, 59, 72],
+        backgroundColor: 'rgba(75, 192, 92, 0.5)',
+        borderColor: 'rgba(75, 192, 92, 1)',
+        borderWidth: 1
+      },
+      {
+        label: 'Profit Factor',
+        data: [2.8, 2.2, 1.9, 1.7, 2.4],
+        backgroundColor: 'rgba(153, 102, 255, 0.5)',
+        borderColor: 'rgba(153, 102, 255, 1)',
+        borderWidth: 1
+      }
+    ]
+  };
+
   // Prepare chart data
   const moodChartData = {
     labels: moodHistory.map(item => item.date),
@@ -768,6 +844,15 @@ export function TradeJournal() {
         label: 'Win Rate (%)',
         data: tradingSetups.map(setup => setup.winRate * 100),
         backgroundColor: 'rgba(54, 162, 235, 0.5)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1
+      },
+      {
+        label: 'Profit Factor',
+        data: tradingSetups.map(setup => setup.profitFactor || 0),
+        backgroundColor: 'rgba(153, 102, 255, 0.5)',
+        borderColor: 'rgba(153, 102, 255, 1)',
+        borderWidth: 1
       },
       {
         label: 'Avg Profit ($)',
