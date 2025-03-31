@@ -30,8 +30,8 @@ export default function LearnEmbedded() {
         return false;
       }
       
-      // Apply difficulty filter
-      if (difficultyFilter !== 'all' && course.difficulty !== difficultyFilter) {
+      // Apply level filter
+      if (difficultyFilter !== 'all' && course.level !== difficultyFilter) {
         return false;
       }
       
@@ -204,11 +204,11 @@ export default function LearnEmbedded() {
                 </div>
                 
                 <div>
-                  <label htmlFor="difficulty-filter" className="block text-sm font-medium text-slate-400 mb-1">
-                    Difficulty
+                  <label htmlFor="level-filter" className="block text-sm font-medium text-slate-400 mb-1">
+                    Level
                   </label>
                   <select
-                    id="difficulty-filter"
+                    id="level-filter"
                     value={difficultyFilter}
                     onChange={(e) => setDifficultyFilter(e.target.value)}
                     className="bg-slate-800 text-white rounded-md px-3 py-2 w-full"
@@ -422,15 +422,17 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
     }
   };
   
-  // Get difficulty color
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
+  // Get level color
+  const getLevelColor = (level: string) => {
+    switch (level) {
       case 'beginner':
         return 'bg-green-500/80 text-white';
       case 'intermediate':
         return 'bg-yellow-500/80 text-white';
       case 'advanced':
         return 'bg-red-500/80 text-white';
+      case 'all-levels':
+        return 'bg-purple-500/80 text-white';
       default:
         return 'bg-gray-500/80 text-white';
     }
@@ -484,8 +486,8 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
           </span>
         </div>
         <div className="absolute top-2 right-2">
-          <span className={`px-2 py-1 rounded text-xs font-bold ${getDifficultyColor(course.difficulty)}`}>
-            {course.difficulty.charAt(0).toUpperCase() + course.difficulty.slice(1)}
+          <span className={`px-2 py-1 rounded text-xs font-bold ${getLevelColor(course.level)}`}>
+            {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
           </span>
         </div>
       </div>
@@ -496,7 +498,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
         </p>
         <div className="flex justify-between items-center">
           <span className="text-xs text-slate-400">
-            {formatDuration(course.estimated_duration)}
+            {formatDuration(course.duration)}
           </span>
           <a
             href={`/learn/course/${course.id}`}

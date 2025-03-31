@@ -6,7 +6,7 @@ const LearningCenter: React.FC = () => {
   const { courses, fetchCourses, isLoading, error } = useLearningStore();
   const [filter, setFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
+  const [levelFilter, setLevelFilter] = useState<string>('all');
   
   // Fetch courses on component mount
   useEffect(() => {
@@ -21,8 +21,8 @@ const LearningCenter: React.FC = () => {
         return false;
       }
       
-      // Apply difficulty filter
-      if (difficultyFilter !== 'all' && course.difficulty !== difficultyFilter) {
+      // Apply level filter
+      if (levelFilter !== 'all' && course.level !== levelFilter) {
         return false;
       }
       
@@ -66,13 +66,13 @@ const LearningCenter: React.FC = () => {
           </div>
           
           <div>
-            <label htmlFor="difficulty-filter" className="block text-sm font-medium text-slate-400 mb-1">
-              Difficulty
+            <label htmlFor="level-filter" className="block text-sm font-medium text-slate-400 mb-1">
+              Level
             </label>
             <select
-              id="difficulty-filter"
-              value={difficultyFilter}
-              onChange={(e) => setDifficultyFilter(e.target.value)}
+              id="level-filter"
+              value={levelFilter}
+              onChange={(e) => setLevelFilter(e.target.value)}
               className="bg-slate-800 text-white rounded-md px-3 py-2 w-full"
             >
               <option value="all">All Levels</option>
@@ -133,7 +133,7 @@ const LearningCenter: React.FC = () => {
               <button
                 onClick={() => {
                   setFilter('all');
-                  setDifficultyFilter('all');
+                  setLevelFilter('all');
                   setSearchTerm('');
                 }}
                 className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded transition-colors inline-block"
@@ -172,15 +172,17 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
     }
   };
   
-  // Get difficulty color
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
+  // Get level color
+  const getLevelColor = (level: string) => {
+    switch (level) {
       case 'beginner':
         return 'bg-green-500/80 text-white';
       case 'intermediate':
         return 'bg-yellow-500/80 text-white';
       case 'advanced':
         return 'bg-red-500/80 text-white';
+      case 'all-levels':
+        return 'bg-purple-500/80 text-white';
       default:
         return 'bg-gray-500/80 text-white';
     }
@@ -234,8 +236,8 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
           </span>
         </div>
         <div className="absolute top-2 right-2">
-          <span className={`px-2 py-1 rounded text-xs font-bold ${getDifficultyColor(course.difficulty)}`}>
-            {course.difficulty.charAt(0).toUpperCase() + course.difficulty.slice(1)}
+          <span className={`px-2 py-1 rounded text-xs font-bold ${getLevelColor(course.level)}`}>
+            {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
           </span>
         </div>
       </div>
@@ -246,7 +248,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
         </p>
         <div className="flex justify-between items-center">
           <span className="text-xs text-slate-400">
-            {formatDuration(course.estimated_duration)}
+            {formatDuration(course.duration)}
           </span>
           <a
             href={`/learning-center/course/${course.id}`}

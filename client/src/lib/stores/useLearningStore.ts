@@ -7,91 +7,121 @@ export interface Course {
   title: string;
   description: string;
   image_url?: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  category: 'crypto' | 'forex' | 'stocks' | 'futures' | 'general';
-  estimated_duration: number; // in minutes
+  level: string; // 'beginner', 'intermediate', 'advanced', 'all-levels'
+  category: string; // 'crypto', 'forex', 'stocks', 'futures', 'general'
+  duration: number; // in minutes
+  points: number;
+  featured: boolean;
+  prerequisites?: number[]; // array of prerequisite course IDs
+  learning_outcomes?: string[]; // array of learning outcomes
+  certification: boolean;
+  certificate_image_url?: string;
   modules?: Module[];
-  created_at: Date;
-  updated_at: Date;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Module {
   id: number;
   course_id: number;
   title: string;
-  order: number;
+  description: string;
+  order_num: number;
   lessons?: Lesson[];
-  created_at: Date;
-  updated_at: Date;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Lesson {
   id: number;
   module_id: number;
   title: string;
+  description?: string;
   content: string; // HTML content
-  order: number;
+  order_num: number;
   video_url?: string;
-  estimated_duration: number; // in minutes
-  has_quiz: boolean;
-  quiz_questions?: QuizQuestion[];
-  created_at: Date;
-  updated_at: Date;
+  interactive_content?: any;
+  resources?: any[];
+  duration: number; // in minutes
+  quiz?: Quiz;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Quiz {
+  id: number;
+  lesson_id: number;
+  title: string;
+  description?: string;
+  questions: QuizQuestion[];
+  passing_score: number;
+  time_limit?: number; // in minutes
+  created_at: string;
+  updated_at: string;
 }
 
 export interface QuizQuestion {
   id: number;
-  lesson_id: number;
   question: string;
-  options: string[]; // JSON array of options
-  correct_answer: number; // Index of correct option
+  options: string[]; // Array of options
+  correctAnswer: number; // Index of correct option
   explanation: string;
-  created_at: Date;
-  updated_at: Date;
 }
 
 export interface UserCourseProgress {
   id: number;
-  user_id: number;
+  user_id: string;
   course_id: number;
-  completed_lessons: number[];
-  completed_quizzes: number[];
-  completed_at?: Date;
-  certificate_issued: boolean;
-  certificate_id?: number;
-  created_at: Date;
-  updated_at: Date;
+  module_id?: number;
+  lesson_id?: number;
+  completed: boolean;
+  percentage_complete: number;
+  last_accessed_at: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QuizAttempt {
+  id: number;
+  user_id: string;
+  quiz_id: number;
+  score: number;
+  passed: boolean;
+  answers: any; // User's answers
+  time_spent?: number; // in seconds
+  completed_at: string;
+  created_at: string;
 }
 
 export interface Certificate {
   id: number;
-  user_id: number;
+  user_id: string;
   course_id: number;
-  issued_at: Date;
-  certificate_url: string;
-  created_at: Date;
-  updated_at: Date;
+  certificate_id: string;
+  issue_date: string;
+  expiry_date?: string;
+  metadata?: any;
+  created_at: string;
 }
 
 export interface LearningJournalEntry {
   id: number;
   user_id: number;
+  content: string;
   course_id?: number;
   lesson_id?: number;
-  title: string;
-  content: string;
-  tags?: string[]; // JSON array of tags
-  created_at: Date;
-  updated_at: Date;
+  related_to_trade_entry?: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // Journal entry input type
 type JournalEntryInput = {
-  title: string;
   content: string;
   course_id?: number | null;
   lesson_id?: number | null;
-  tags?: string[];
+  related_to_trade_entry?: number | null;
 };
 
 // Define store interface 
@@ -99,17 +129,22 @@ interface LearningStore {
   // Courses
   courses: Course[];
   currentCourse: Course | null;
+  currentModule: Module | null;
   currentLesson: Lesson | null;
   isLoading: boolean;
   error: string | null;
   fetchCourses: () => Promise<void>;
-  fetchCourse: (courseId: number) => Promise<void>;
+  fetchCourse: (courseId: number) => Promise<Course | null>;
+  setCurrentLesson: (lesson: Lesson | null) => void;
+  setCurrentModule: (module: Module | null) => void;
   
   // User Progress
   userProgress: UserCourseProgress[];
+  quizAttempts: QuizAttempt[];
   fetchUserProgress: () => Promise<void>;
+  fetchQuizAttempts: () => Promise<void>;
   markLessonComplete: (lessonId: number, courseId: number) => Promise<void>;
-  submitQuiz: (lessonId: number, answers: Record<number, number>) => Promise<{passed: boolean; score: number}>;
+  submitQuiz: (quizId: number, answers: Record<number, number>) => Promise<{passed: boolean; score: number}>;
   
   // Certificates
   certificates: Certificate[];
@@ -131,12 +166,24 @@ export const useLearningStore = create<LearningStore>((set, get) => ({
   // Initial state
   courses: [],
   currentCourse: null,
+  currentModule: null,
   currentLesson: null,
   userProgress: [],
+  quizAttempts: [],
   certificates: [],
   journalEntries: [],
   isLoading: false,
   error: null,
+
+  // Set current lesson
+  setCurrentLesson: (lesson: Lesson | null) => {
+    set({ currentLesson: lesson });
+  },
+
+  // Set current module
+  setCurrentModule: (module: Module | null) => {
+    set({ currentModule: module });
+  },
 
   // Fetch all courses
   fetchCourses: async () => {
@@ -185,6 +232,21 @@ export const useLearningStore = create<LearningStore>((set, get) => ({
     }
   },
 
+  // Fetch quiz attempts
+  fetchQuizAttempts: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.get(`${API_URL}/quiz-attempts`);
+      set({ quizAttempts: response.data, isLoading: false });
+    } catch (error) {
+      console.error('Error fetching quiz attempts:', error);
+      set({ 
+        error: 'Failed to fetch quiz attempts. Please try again later.', 
+        isLoading: false 
+      });
+    }
+  },
+
   // Mark a lesson as complete
   markLessonComplete: async (lessonId: number, courseId: number) => {
     set({ isLoading: true, error: null });
@@ -207,16 +269,17 @@ export const useLearningStore = create<LearningStore>((set, get) => ({
   },
 
   // Submit quiz answers
-  submitQuiz: async (lessonId: number, answers: Record<number, number>) => {
+  submitQuiz: async (quizId: number, answers: Record<number, number>) => {
     set({ isLoading: true, error: null });
     try {
       const response = await axios.post(`${API_URL}/quiz/submit`, { 
-        lessonId, 
+        quizId, 
         answers 
       });
       
       // Update local state
       await get().fetchUserProgress();
+      await get().fetchQuizAttempts();
       set({ isLoading: false });
       
       return response.data;

@@ -26,7 +26,7 @@ export const modules = pgTable("modules", {
   courseId: integer("course_id").notNull().references(() => courses.id),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  order: integer("order").notNull(),
+  orderNum: integer("order_num").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -40,7 +40,7 @@ export const lessons = pgTable("lessons", {
   videoUrl: text("video_url"),
   interactiveContent: jsonb("interactive_content"), // interactive elements
   resources: jsonb("resources"), // additional learning resources
-  order: integer("order").notNull(),
+  orderNum: integer("order_num").notNull(),
   duration: integer("duration").notNull(), // in minutes
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
