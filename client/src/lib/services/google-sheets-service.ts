@@ -23,9 +23,13 @@ export interface TradeSignal {
 
 // Service class
 export class GoogleSheetsService {
-  private readonly CRYPTO_SIGNALS_URL = 'https://docs.google.com/spreadsheets/d/1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8/gviz/tq?tqx=out:json&gid=0';
-  private readonly FUTURES_SIGNALS_URL = 'https://docs.google.com/spreadsheets/d/1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8/gviz/tq?tqx=out:json&gid=128714687';
-  private readonly FOREX_SIGNALS_URL = 'https://docs.google.com/spreadsheets/d/1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8/gviz/tq?tqx=out:json&gid=1470834705';
+  // The main spreadsheet ID used for signals
+  private readonly SPREADSHEET_ID = '1sPOGJQOQJDuiS5W97tDmYEQotbYL-SYJkjl9YwqJAGg';
+  
+  // URLs for different types of signals
+  private readonly CRYPTO_SIGNALS_URL = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=0`;
+  private readonly FUTURES_SIGNALS_URL = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=1`;
+  private readonly FOREX_SIGNALS_URL = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=2`;
 
   // Fetch crypto signals (Paradox AI)
   async fetchCryptoSignals(): Promise<TradeSignal[]> {
@@ -79,49 +83,170 @@ export class GoogleSheetsService {
     marketType: 'crypto' | 'forex' | 'futures',
     provider: 'Paradox' | 'Hybrid' | 'Solaris'
   ): Promise<TradeSignal[]> {
-    const response = await axios.get(url);
-    
-    // Extract JSON data from Google's JSONP-like response
-    const jsonData = JSON.parse(response.data.substring(47).slice(0, -2));
-    
-    // Extract column headers
-    const headers = jsonData.table.cols.map((col: any) => col.label);
-    
-    // Map rows to signal objects
-    return jsonData.table.rows.map((row: any, index: number) => {
-      const values = row.c.map((cell: any) => cell?.v || null);
+    try {
+      console.log(`Fetching signals from ${url}`);
       
-      // Create an object matching column headers to values
-      const rowData: Record<string, any> = {};
-      headers.forEach((header: string, i: number) => {
-        rowData[header] = values[i];
+      // Add cache-busting parameter to prevent caching issues
+      const urlWithCacheBuster = `${url}&timestamp=${new Date().getTime()}`;
+      
+      const response = await axios.get(urlWithCacheBuster, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }
       });
       
-      // Transform to our TradeSignal interface
-      const signal: TradeSignal = {
-        id: `${provider}-${index}`,
-        timestamp: rowData['Timestamp'] || rowData['Date'] || new Date().toISOString(),
-        asset: rowData['Symbol'] || rowData['Asset'] || rowData['Pair'] || 'Unknown',
-        direction: this.parseDirection(rowData['Direction'] || rowData['Side'] || rowData['Position']),
-        entryPrice: this.parseNumber(rowData['Entry Price'] || rowData['Entry']),
-        stopLoss: this.parseNumber(rowData['Stop Loss'] || rowData['SL']),
-        takeProfit1: this.parseNumber(rowData['Take Profit'] || rowData['TP1'] || rowData['Target 1']),
-        takeProfit2: this.parseNumber(rowData['TP2'] || rowData['Target 2']),
-        takeProfit3: this.parseNumber(rowData['TP3'] || rowData['Target 3']),
-        status: this.parseStatus(rowData['Status'] || rowData['Result']),
-        marketType,
-        provider,
-        pnl: this.parseNumber(rowData['P&L'] || rowData['Profit/Loss']),
-        pnlPercentage: this.parseNumber(rowData['P&L %'] || rowData['ROI']),
-        notes: rowData['Notes'] || rowData['Comments'],
-        accuracy: provider === 'Paradox' ? 0.89 : provider === 'Hybrid' ? 0.92 : 0.85, // Sample accuracy rates
-      };
+      // Check if we got a valid response
+      if (!response || !response.data) {
+        console.error('Empty response from Google Sheets API');
+        return [];
+      }
       
-      // Generate AI analysis based on the signal
-      signal.aiAnalysis = this.generateAIAnalysis(signal);
+      // Log the response for debugging
+      console.log('Google Sheets response received:', 
+                 response.data.length > 100 ? response.data.substring(0, 100) + '...' : response.data);
       
-      return signal;
-    });
+      // Extract JSON data from Google's JSONP-like response
+      // Try different substring approaches to handle Google's response format
+      let jsonData;
+      try {
+        // Standard format (most common)
+        if (response.data.indexOf('/*O_o*/') > -1) {
+          const start = response.data.indexOf('(');
+          const end = response.data.lastIndexOf(')');
+          const jsonpData = response.data.substring(start + 1, end);
+          jsonData = JSON.parse(jsonpData);
+        } else if (response.data.startsWith('google.visualization.Query.setResponse(')) {
+          // Format with google.visualization prefix
+          const jsonpData = response.data.substring(41, response.data.length - 2);
+          jsonData = JSON.parse(jsonpData);
+        } else {
+          // Try the previous approach
+          jsonData = JSON.parse(response.data.substring(47).slice(0, -2));
+        }
+      } catch (e) {
+        console.error('Error parsing JSON from Google Sheets response:', e);
+        console.log('Raw response:', response.data);
+        
+        // Try a more general approach
+        try {
+          const startIdx = response.data.indexOf('{');
+          const endIdx = response.data.lastIndexOf('}') + 1;
+          if (startIdx >= 0 && endIdx > startIdx) {
+            const jsonText = response.data.substring(startIdx, endIdx);
+            jsonData = JSON.parse(jsonText);
+          } else {
+            throw new Error('Could not find valid JSON in response');
+          }
+        } catch (e2) {
+          console.error('Second attempt to parse JSON failed:', e2);
+          return [];
+        }
+      }
+      
+      // Check if we have the expected format
+      if (!jsonData || !jsonData.table || !jsonData.table.cols || !jsonData.table.rows) {
+        console.error('Unexpected response format from Google Sheets', jsonData);
+        return [];
+      }
+      
+      // Extract column headers
+      const headers = jsonData.table.cols.map((col: any) => col.label || col.id || '');
+      console.log('Column headers:', headers);
+      
+      // Iterate through rows to build signals
+      const signals: TradeSignal[] = [];
+      
+      for (let i = 0; i < jsonData.table.rows.length; i++) {
+        const row = jsonData.table.rows[i];
+        if (!row.c) continue; // Skip rows without cells
+        
+        // Create an array of cell values
+        const values = row.c.map((cell: any) => {
+          if (cell === null) return null;
+          return cell.v !== undefined ? cell.v : null;
+        });
+        
+        // Skip empty rows
+        if (values.every(v => v === null)) continue;
+        
+        // Create an object matching column headers to values
+        const rowData: Record<string, any> = {};
+        headers.forEach((header: string, idx: number) => {
+          if (header && idx < values.length) {
+            rowData[header] = values[idx];
+          }
+        });
+        
+        console.log(`Processing row ${i}:`, rowData);
+        
+        // Create a signal with more lenient field matching
+        try {
+          // Match up common field names - search for keys case-insensitively
+          const findField = (possibleNames: string[]): string | null => {
+            for (const name of possibleNames) {
+              // Exact match
+              if (rowData[name] !== undefined) return rowData[name];
+              
+              // Case-insensitive match
+              const key = Object.keys(rowData).find(k => k.toLowerCase() === name.toLowerCase());
+              if (key) return rowData[key];
+            }
+            return null;
+          };
+          
+          const timestamp = findField(['Timestamp', 'Date', 'Time', 'Created']) || new Date().toISOString();
+          const asset = findField(['Symbol', 'Asset', 'Pair', 'Instrument', 'Ticker']) || 'Unknown';
+          const direction = this.parseDirection(findField(['Direction', 'Side', 'Position', 'Type', 'Action']) || '');
+          const entryPrice = this.parseNumber(findField(['Entry Price', 'Entry', 'Open Price', 'Price']));
+          const stopLoss = this.parseNumber(findField(['Stop Loss', 'SL', 'Stop']));
+          const takeProfit1 = this.parseNumber(findField(['Take Profit', 'TP', 'TP1', 'Target', 'Target 1']));
+          const takeProfit2 = this.parseNumber(findField(['TP2', 'Target 2', 'Take Profit 2']));
+          const takeProfit3 = this.parseNumber(findField(['TP3', 'Target 3', 'Take Profit 3']));
+          const status = this.parseStatus(findField(['Status', 'Result', 'State']) || '');
+          const notes = findField(['Notes', 'Comments', 'Description', 'Info']) || '';
+          
+          // Only add valid signals
+          if (asset && asset !== 'Unknown' && entryPrice > 0) {
+            const signal: TradeSignal = {
+              id: `${provider}-${i}-${Date.now()}`,
+              timestamp: typeof timestamp === 'string' ? timestamp : new Date().toISOString(),
+              asset,
+              direction,
+              entryPrice,
+              stopLoss,
+              takeProfit1,
+              takeProfit2,
+              takeProfit3,
+              status,
+              marketType,
+              provider,
+              pnl: this.parseNumber(findField(['P&L', 'Profit/Loss', 'PnL', 'Profit'])),
+              pnlPercentage: this.parseNumber(findField(['P&L %', 'ROI', 'Return', 'PnL %'])),
+              notes,
+              accuracy: provider === 'Paradox' ? 0.89 : provider === 'Hybrid' ? 0.92 : 0.85,
+            };
+            
+            // Generate AI analysis based on the signal
+            signal.aiAnalysis = this.generateAIAnalysis(signal);
+            
+            signals.push(signal);
+          }
+        } catch (e) {
+          console.error(`Error processing row ${i}:`, e);
+          // Continue with next row rather than failing the entire fetch
+        }
+      }
+      
+      console.log(`Successfully processed ${signals.length} signals`);
+      return signals;
+    } catch (error) {
+      console.error('Error in fetchSignalsFromSheet:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', error.message, error.stack);
+      }
+      return [];
+    }
   }
   
   // Parse direction string to standardized format

@@ -28,13 +28,14 @@ import {
 // PDF generation done via simple data URL instead of pdf-lib package due to installation issues
 import { googleSheetsService, TradeSignal } from '../../lib/services/google-sheets-service';
 import { aiTradingAnalysisService } from '../../lib/services/ai-trading-analysis-service';
+import { APICredentialsForm } from './api-credentials-form';
 
 interface TradeSignalsProps {
   signals?: TradeSignal[];
   onViewSignal?: (signalId: string) => void;
 }
 
-export function TradeSignals({ signals = [], onViewSignal }: TradeSignalsProps) {
+export function TradeSignals({ signals = [], onViewSignal }: TradeSignalsProps): JSX.Element {
   // State management
   const [allSignals, setAllSignals] = useState<TradeSignal[]>(signals);
   const [cryptoSignals, setCryptoSignals] = useState<TradeSignal[]>([]);
@@ -684,23 +685,35 @@ ${signal.notes ? `Notes: ${signal.notes}\n` : ''}
   
   // Fetch signals on component mount
   useEffect(() => {
-    if (signals && signals.length > 0) {
-      setAllSignals(signals);
-      setCryptoSignals(signals.filter(s => s.marketType === 'crypto'));
-      setForexSignals(signals.filter(s => s.marketType === 'forex'));
-      setFuturesSignals(signals.filter(s => s.marketType === 'futures'));
-      calculateStats(signals);
-      console.log('Using provided signals:', signals.length);
-    } else {
-      // Fall back to fetching signals if none provided
+    console.log('Trade Signals component mounted, fetching signals...');
+    // Always fetch fresh signals from the service first
+    fetchSignals();
+    
+    // Refresh signals every 3 minutes
+    const interval = setInterval(() => {
+      console.log('Auto-refreshing trading signals...');
       fetchSignals();
-      
-      // Refresh signals every 5 minutes
-      const interval = setInterval(() => {
-        fetchSignals();
-      }, 5 * 60 * 1000);
-      
-      return () => clearInterval(interval);
+    }, 3 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Update state when signals prop changes
+  useEffect(() => {
+    if (signals && signals.length > 0) {
+      console.log('Using provided signals:', signals.length);
+      setAllSignals(prev => {
+        const combined = [...prev, ...signals];
+        // Remove duplicates based on ID
+        const uniqueSignals = Array.from(
+          new Map(combined.map(item => [item.id, item])).values()
+        );
+        return uniqueSignals;
+      });
+      setCryptoSignals(prev => [...prev, ...signals.filter(s => s.marketType === 'crypto')]);
+      setForexSignals(prev => [...prev, ...signals.filter(s => s.marketType === 'forex')]);
+      setFuturesSignals(prev => [...prev, ...signals.filter(s => s.marketType === 'futures')]);
+      calculateStats([...allSignals, ...signals]);
     }
   }, [signals]);
   
