@@ -125,18 +125,22 @@ const TradingFreedomPodcast: React.FC = () => {
                 </div>
               </CardHeader>
               <CardContent className="pt-4">
-                <div className="rounded-md overflow-hidden border bg-card">
-                  <iframe 
-                    src={selectedEpisode.embedUrl}
-                    width="100%" 
-                    height="450" 
-                    scrolling="no"
-                    frameBorder="no" 
-                    allow="autoplay" 
-                    loading="lazy"
-                    title={`Trading for Freedom - Episode ${selectedEpisode.number}`}
-                    className="w-full"
-                  ></iframe>
+                <div className="flex flex-col items-center justify-center p-8 border rounded-md bg-card">
+                  <div className="text-center mb-6">
+                    <Podcast className="h-20 w-20 mx-auto mb-4 text-primary" />
+                    <h3 className="text-xl font-semibold mb-2">Listen on Wattbaa Platform</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Our podcast episodes are now hosted on the Wattbaa platform for an enhanced listening experience.
+                    </p>
+                  </div>
+                  <Button 
+                    size="lg" 
+                    className="gap-2"
+                    onClick={() => window.open('https://wattbaa.profit-vibe.com/album/17695/meta-sv/trading-for-freedom-podcast-series', '_blank')}
+                  >
+                    <PlayCircle className="h-5 w-5" />
+                    Listen on Wattbaa
+                  </Button>
                 </div>
                 
                 <div className="mt-6">

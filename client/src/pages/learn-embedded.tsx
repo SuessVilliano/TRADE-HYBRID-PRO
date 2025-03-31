@@ -22,6 +22,23 @@ export default function LearnEmbedded() {
     fetchCourses();
   }, [fetchCourses]);
   
+  // Listen for custom event to set active tab (used for redirects)
+  useEffect(() => {
+    const handleSetActiveTab = (event: CustomEvent) => {
+      if (event.detail && event.detail.tab) {
+        setActiveTab(event.detail.tab);
+      }
+    };
+    
+    // Add event listener for custom event
+    window.addEventListener('setActiveTab', handleSetActiveTab as EventListener);
+    
+    // Clean up event listener
+    return () => {
+      window.removeEventListener('setActiveTab', handleSetActiveTab as EventListener);
+    };
+  }, []);
+  
   // Apply filters and search to courses
   const filteredCourses = courses
     .filter(course => {
@@ -65,6 +82,7 @@ export default function LearnEmbedded() {
           <TabsTrigger value="certification">Certification Course</TabsTrigger>
           <TabsTrigger value="courses">Course Catalog</TabsTrigger>
           <TabsTrigger value="roadmap">Learning Roadmap</TabsTrigger>
+          <TabsTrigger value="podcast">Podcast</TabsTrigger>
           <TabsTrigger value="resources">Resources</TabsTrigger>
         </TabsList>
         
@@ -331,6 +349,90 @@ export default function LearnEmbedded() {
                     target.parentNode?.appendChild(div);
                   }}
                 />
+              </div>
+            </div>
+          </PopupContainer>
+        </TabsContent>
+        
+        <TabsContent value="podcast">
+          <PopupContainer padding className="bg-gradient-to-r from-blue-900/50 to-indigo-900/50 border border-blue-500/40">
+            <div className="flex flex-col md:flex-row gap-8 items-center">
+              <div className="flex-1">
+                <h2 className="text-3xl font-bold mb-3">Trading Freedom Podcast</h2>
+                <p className="text-slate-300 mb-6">
+                  Join us on the Trading Freedom Podcast, where we dive deep into trading strategies, market analysis,
+                  and interviews with successful traders. Get valuable insights to improve your trading skills and
+                  stay updated with the latest trends in the financial markets.
+                </p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                  <div className="bg-slate-800/60 p-4 rounded-lg border border-blue-500/30">
+                    <h3 className="text-lg font-semibold mb-2">Latest Episodes</h3>
+                    <ul className="space-y-2">
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                        <span>Mastering Crypto Market Cycles</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                        <span>Risk Management Strategies</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                        <span>Trading Psychology Deep Dive</span>
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  <div className="bg-slate-800/60 p-4 rounded-lg border border-blue-500/30">
+                    <h3 className="text-lg font-semibold mb-2">Featured Topics</h3>
+                    <ul className="space-y-2">
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                        <span>Technical Analysis</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                        <span>Crypto Market Insights</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                        <span>Prop Firm Challenges</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <div className="flex justify-center mt-4">
+                  <a 
+                    href="https://wattbaa.co/trading-freedom-podcast" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="inline-block"
+                  >
+                    <Button className="bg-blue-600 hover:bg-blue-700 px-6">
+                      Listen on Wattbaa Platform
+                    </Button>
+                  </a>
+                </div>
+              </div>
+              
+              <div className="flex-shrink-0 relative">
+                <div className="w-56 h-56 rounded-full overflow-hidden bg-blue-900/50 border-2 border-blue-500/50 flex items-center justify-center">
+                  <img 
+                    src="/images/podcast-cover.jpg" 
+                    alt="Trading Freedom Podcast" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const div = document.createElement('div');
+                      div.className = 'w-full h-full flex items-center justify-center text-center p-4';
+                      div.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-9.33-5"></path><path d="M6 15a6 6 0 0 0 11.33 3.4"></path><circle cx="12" cy="12" r="2.5"></circle><path d="M20 12a8 8 0 0 1-8 8"></path><path d="M12 4v4"></path><line x1="8.5" y1="8.5" x2="7" y2="7"></line><path d="M16 12a4 4 0 0 1-4 4"></path></svg><div class="mt-2 text-xl font-bold">Trading Freedom Podcast</div>';
+                      target.parentNode?.appendChild(div);
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </PopupContainer>

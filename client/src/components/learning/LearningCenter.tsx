@@ -41,6 +41,19 @@ const LearningCenter: React.FC = () => {
         <p className="text-slate-300">
           Explore our comprehensive trading courses covering crypto, forex, stocks, futures, and general trading knowledge.
         </p>
+        <div className="mt-4">
+          <a
+            href="https://wattbaa.profit-vibe.com/album/17695/meta-sv/trading-for-freedom-podcast-series"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+            </svg>
+            Listen to Trading Freedom Podcast
+          </a>
+        </div>
       </div>
       
       {/* Filters and Search */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
 import { PopupContainer } from './components/ui/popup-container';
 import NFTMarketplace from './pages/nft-marketplace';
 import { Button } from './components/ui/button';
@@ -415,18 +415,7 @@ function AppContent() {
           } />
           <Route path="/learning-center" element={<Navigate to="/learn" replace />} />
           <Route path="/learning-center/:tab" element={<Navigate to="/learn" replace />} />
-          <Route path="/learn/podcast" element={
-            <Suspense fallback={
-              <div className="flex items-center justify-center h-screen">
-                <div className="text-center">
-                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <p className="text-slate-300">Loading Trading Freedom Podcast...</p>
-                </div>
-              </div>
-            }>
-              {typeof window !== 'undefined' && <TradingFreedomPodcast />}
-            </Suspense>
-          } />
+          {/* Podcast route removed - now accessed through button in Learning Center */}
           <Route path="/learn/journey" element={
             <Suspense fallback={
               <div className="flex items-center justify-center h-screen">
@@ -625,8 +614,19 @@ function AppContent() {
             </Suspense>
           } />
           
-          {/* Trading Freedom Podcast - redirect to learn/podcast */}
-          <Route path="/trading-freedom-podcast" element={<Navigate to="/learn/podcast" replace />} />
+          {/* Trading Freedom Podcast - redirect to podcast tab in learning center */}
+          <Route path="/trading-freedom-podcast" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Redirecting to podcast...</p>
+                </div>
+              </div>
+            }>
+              <PodcastRedirect />
+            </Suspense>
+          } />
           
           {/* Signals Analyzer Route - redirect to trading-signals/analyzer */}
           <Route path="/signals-analyzer" element={<Navigate to="/trading-signals/analyzer" replace />} />
@@ -769,7 +769,7 @@ function Home() {
         <FeatureCard 
           title="Trading Freedom Podcast"
           description="Listen to our podcast featuring interviews with successful traders, market insights, and trading strategies."
-          linkTo="/learn/podcast"
+          linkTo="/learn"
         />
         <FeatureCard 
           title="Signals Analyzer"
@@ -1145,6 +1145,33 @@ const ChatWidgetScript = () => {
 
   return null;
 };
+
+// Redirect component for the podcast page
+function PodcastRedirect() {
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Set the podcast tab as active in the URL and redirect to learn page
+    navigate("/learn", { replace: true });
+    
+    // Use setTimeout to give the learn page time to load before setting the tab
+    setTimeout(() => {
+      const event = new CustomEvent('setActiveTab', { 
+        detail: { tab: 'podcast' } 
+      });
+      window.dispatchEvent(event);
+    }, 500);
+  }, [navigate]);
+  
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <div className="text-center">
+        <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+        <p className="text-slate-300">Redirecting to podcast...</p>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   return (
