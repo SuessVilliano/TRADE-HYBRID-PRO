@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PanelContainer } from './panel-container';
-import { LineChart, BarChart3, Signal, Bot, HelpCircle, BookOpen, Users, Cpu, MessageSquare, Calendar, BarChart, Sparkles, Grid, Activity, Waves, Link2, GripVertical, TrendingUp } from 'lucide-react';
+import { LineChart, BarChart3, Signal, Bot, HelpCircle, BookOpen, Users, Cpu, MessageSquare, Calendar, BarChart, Sparkles, Grid, Activity, Waves, Link2, GripVertical, TrendingUp, FileText } from 'lucide-react';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
 import { ConnectBrokerModal } from '@/components/broker/connect-broker-modal';
@@ -23,6 +23,7 @@ const MarketScannerLazy = React.lazy(() => import('./market-scanner'));
 const StockHeatmapLazy = React.lazy(() => import('./stock-heatmap'));
 const CryptoHeatmapLazy = React.lazy(() => import('./crypto-heatmap'));
 const ZenMeditationModeLazy = React.lazy(() => import('./zen-meditation-mode').then(module => ({ default: module.ZenMeditationMode })));
+const TradeJournalLazy = React.lazy(() => import('./trade-journal').then(module => ({ default: module.TradeJournal })));
 
 // Define the panel types
 export type PanelType = 
@@ -41,6 +42,7 @@ export type PanelType =
   | 'advanced-ai'
   | 'stock-heatmap'
   | 'crypto-heatmap'
+  | 'journal'
   | 'zen';
 
 // Panel definition with its metadata
@@ -281,6 +283,32 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
       defaultSize: { width: '100%', height: '400px' },
       defaultPosition: { x: 0, y: 1530 }
     },
+    'advanced-ai': {
+      id: 'advanced-ai',
+      type: 'advanced-ai',
+      title: 'Advanced AI Analysis',
+      icon: <Sparkles size={16} />,
+      component: (
+        <div className="h-full overflow-y-auto text-sm p-4">
+          <h3 className="text-xl font-bold mb-3">Advanced AI Trading Analysis</h3>
+          <p className="mb-3">
+            The AI-powered trading analysis module helps you identify pattern recognition, sentiment analysis, and predictive modeling.
+          </p>
+          <div className="space-y-3 bg-slate-800 p-4 rounded-md">
+            <h4 className="text-lg font-semibold">Features Coming Soon:</h4>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>Real-time market sentiment analysis</li>
+              <li>Trading pattern recognition</li>
+              <li>Advanced predictive modeling</li>
+              <li>AI-generated trade recommendations</li>
+              <li>Market anomaly detection</li>
+            </ul>
+          </div>
+        </div>
+      ),
+      defaultSize: { width: '100%', height: '400px' },
+      defaultPosition: { x: 0, y: 1830 }
+    },
 
     'stock-heatmap': {
       id: 'stock-heatmap',
@@ -322,6 +350,19 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
         </React.Suspense>
       ),
       defaultSize: { width: '100%', height: '500px' },
+      defaultPosition: { x: 0, y: 2450 }
+    },
+    'journal': {
+      id: 'journal',
+      type: 'journal',
+      title: 'Trade Journal',
+      icon: <FileText size={16} />,
+      component: (
+        <React.Suspense fallback={<div className="h-full flex items-center justify-center">Loading Trade Journal...</div>}>
+          <TradeJournalLazy />
+        </React.Suspense>
+      ),
+      defaultSize: { width: '100%', height: '600px' },
       defaultPosition: { x: 0, y: 2450 }
     },
     'zen': {
