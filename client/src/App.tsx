@@ -1,5 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
+import SpatialMetaverse from './components/spatial/SpatialMetaverse';
 import { PopupContainer } from './components/ui/popup-container';
 import NFTMarketplace from './pages/nft-marketplace';
 import { Button } from './components/ui/button';
@@ -346,7 +347,7 @@ function AppContent() {
           } />
           <Route path="/metaverse" element={
             <RouteGated route="/metaverse">
-              <MetaversePlaceholder />
+              <SpatialMetaverseWrapper />
             </RouteGated>
           } />
           <Route path="/news" element={
@@ -926,6 +927,7 @@ function TradePlaceholder() {
   );
 }
 
+// Legacy placeholder component for backward compatibility
 function MetaversePlaceholder() {
   const MinimalScene = React.lazy(() => import('./components/MinimalScene'));
   const [minimized, setMinimized] = useState(false);
@@ -976,6 +978,118 @@ function MetaversePlaceholder() {
           <li>Daily trading challenges and competitions with rewards</li>
         </ul>
       </div>
+    </div>
+  );
+}
+
+// New Spatial Metaverse wrapper component
+function SpatialMetaverseWrapper() {
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const headerRef = React.useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    // Function to handle scroll events
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Show header when scrolling up or at the top of the page
+      if (currentScrollY <= 10 || currentScrollY < lastScrollY) {
+        setHeaderVisible(true);
+      } 
+      // Hide header when scrolling down
+      else if (currentScrollY > lastScrollY) {
+        setHeaderVisible(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    // Add scroll event listener
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Add touch event listeners for mobile swipe detection
+    let touchStartY = 0;
+    
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+    };
+    
+    const handleTouchMove = (e: TouchEvent) => {
+      const touchY = e.touches[0].clientY;
+      const diff = touchY - touchStartY;
+      
+      // If swiped down from top of screen, show header
+      if (diff > 50 && window.scrollY <= 10) {
+        setHeaderVisible(true);
+      }
+      // If swiped up, hide header
+      else if (diff < -50) {
+        setHeaderVisible(false);
+      }
+    };
+    
+    document.addEventListener('touchstart', handleTouchStart);
+    document.addEventListener('touchmove', handleTouchMove);
+    
+    // Find the header element and update its style
+    const updateHeaderStyle = () => {
+      // Get all elements with the 'sticky top-0' class (header)
+      const headers = document.querySelectorAll('.sticky.top-0');
+      
+      if (headers.length > 0) {
+        headers.forEach(header => {
+          if (headerVisible) {
+            (header as HTMLElement).style.transform = 'translateY(0)';
+            (header as HTMLElement).style.transition = 'transform 0.3s ease-in-out';
+          } else {
+            (header as HTMLElement).style.transform = 'translateY(-100%)';
+            (header as HTMLElement).style.transition = 'transform 0.3s ease-in-out';
+          }
+        });
+      }
+    };
+    
+    // Update header style when visibility changes
+    updateHeaderStyle();
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      
+      // Reset header style when component unmounts
+      const headers = document.querySelectorAll('.sticky.top-0');
+      headers.forEach(header => {
+        (header as HTMLElement).style.transform = '';
+        (header as HTMLElement).style.transition = '';
+      });
+    };
+  }, [headerVisible, lastScrollY]);
+  
+  // Manually toggle header visibility with a button
+  const toggleHeader = () => {
+    setHeaderVisible(!headerVisible);
+  };
+
+  return (
+    <div className="h-[calc(100vh)]">
+      {/* Floating button to manually toggle header - positioned at top to access when header is hidden */}
+      <button 
+        onClick={toggleHeader}
+        className="fixed top-2 right-2 z-50 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full"
+        style={{ opacity: headerVisible ? 0 : 0.7 }}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+      </button>
+      
+      <SpatialMetaverse 
+        spatialUrl="https://www.spatial.io/s/tradehybrids-Hi-Fi-Meetup-67ead44037f57e72f6fcaed5?share=93452074553144377" 
+        fullWidth={true}
+        autoEnterVR={false}
+      />
     </div>
   );
 }
