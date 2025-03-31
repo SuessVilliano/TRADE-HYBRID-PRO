@@ -6,12 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Info } from 'lucide-react';
-import logo from '@/assets/logo.png';
+import logo from '@/assets/logo.svg'; // Updated image import path
 
 export default function SignupPage() {
   const { login } = useUserStore();
   const navigate = useNavigate();
-  
+
   // Local state
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -20,36 +20,36 @@ export default function SignupPage() {
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
+
     // Basic validation
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
       return;
     }
-    
+
     if (password.length < 8) {
       setError('Password must be at least 8 characters long');
       setLoading(false);
       return;
     }
-    
+
     if (!agreeToTerms) {
       setError('You must agree to the terms and conditions');
       setLoading(false);
       return;
     }
-    
+
     try {
       // In a real app, this would call an API to create a user account
       // For demo purposes, we'll just immediately log in the user
-      
+
       // Create and login as a new user
       const mockUser = {
         id: `user-${Date.now()}`,
@@ -64,10 +64,10 @@ export default function SignupPage() {
         joinDate: new Date().toISOString(),
         lastLogin: new Date().toISOString()
       };
-      
+
       // Auto-login after successful registration
       await login(mockUser);
-      
+
       // Redirect to the dashboard
       navigate('/');
     } catch (err) {
@@ -211,7 +211,7 @@ export default function SignupPage() {
             </svg>
             Sign up with Whop
           </Button>
-          
+
           <p className="text-center text-sm text-muted-foreground mt-6">
             Already have an account?{" "}
             <Link to="/login" className="text-primary hover:underline">
