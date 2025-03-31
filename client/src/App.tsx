@@ -32,6 +32,7 @@ const SolanaDexEmbedded = lazy(() => import('./pages/solana-dex-embedded'));
 const LearnEmbedded = lazy(() => import('./pages/learn-embedded'));
 const LearningJourney = lazy(() => import('./pages/learning-journey'));
 const LearningModuleDetail = lazy(() => import('./pages/learning-module-detail'));
+const LearningCenter = lazy(() => import('./pages/learning-center'));
 const StakeAndBake = lazy(() => import('./pages/thc-staking'));
 const LiveStream = lazy(() => import('./pages/live-stream'));
 const AIMarketAnalysisPage = lazy(() => import('./pages/ai-market-analysis-page'));
@@ -191,6 +192,7 @@ function AppContent() {
               <Link to="/trade-journal" className="hover:text-blue-400 transition-colors">Journal</Link>
               <Link to="/marketplace" className="hover:text-blue-400 transition-colors">NFTs</Link>
               <Link to="/learn" className="hover:text-blue-400 transition-colors">Learn</Link>
+              <Link to="/learning-center" className="hover:text-blue-400 transition-colors">Learning Center</Link>
               <Link to="/events" className="hover:text-blue-400 transition-colors">Events</Link>
               <Link to="/ai-market-analysis" className="hover:text-blue-400 transition-colors">AI Agents</Link>
               <Link to="/trading-signals" className="hover:text-blue-400 transition-colors">Signals</Link>
@@ -401,6 +403,30 @@ function AppContent() {
               </div>
             }>
               {typeof window !== 'undefined' && <LearnEmbedded />}
+            </Suspense>
+          } />
+          <Route path="/learning-center" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading learning center...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <LearningCenter />}
+            </Suspense>
+          } />
+          <Route path="/learning-center/:tab" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading learning center...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <LearningCenter />}
             </Suspense>
           } />
           <Route path="/learn/journey" element={

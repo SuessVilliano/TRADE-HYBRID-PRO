@@ -14,6 +14,7 @@ import vapiRouter from "./routes/vapi";
 import geminiRouter from "./routes/gemini";
 import { MultiplayerServer } from "./multiplayer";
 import journalRoutes from './api/journal'; // Added import for journal routes
+import learningRoutes from './api/learning'; // Added import for learning center routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Market data routes
@@ -117,6 +118,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Gemini Vision AI routes
   app.use("/api/gemini", geminiRouter);
+  
+  // Learning Center routes
+  app.use("/api/learning", learningRoutes);
 
   // News route using default source (bloomberg)
   app.get("/api/rss-feeds/news", (req, res) => {

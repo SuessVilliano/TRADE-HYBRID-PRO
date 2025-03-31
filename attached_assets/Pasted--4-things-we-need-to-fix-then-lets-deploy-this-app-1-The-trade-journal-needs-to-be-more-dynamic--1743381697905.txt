@@ -1,0 +1,24 @@
+
+4 things we need to fix then lets deploy this app! 
+
+1. The trade journal needs to be more dynamic and provide more value, look at tradezella.com and all its features and the edge it gives traders and then update our journal so we have better, now Ibelieve the assistant made enhances but Iwant to be sure so check our journal then make all necessary enhancements   
+
+
+
+2 Our signals are coming in from google sheets , I need to ensure the signals are correctly revised to show in the trade signals in a clean way and then we have our ai analysis input on the signals with ability to copy trade. We should see charts and performance reports with the ability to export as pdf so we can share. 
+Paradox Ai - crypto signals - https://docs.google.com/spreadsheets/d/1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8/edit?gid=0#gid=0
+
+
+Hybrid Ai - n’as futures signals - https://docs.google.com/spreadsheets/d/1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8/edit?gid=128714687#gid=128714687
+
+Solaris Ai - forex signals https://docs.google.com/spreadsheets/d/1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8/edit?gid=1470834705#gid=1470834705
+
+They all have columns with timestamps and full trade signals so we not only should be able to push these through to our app trade signals but also be able to update their status automatically if stop loss was hit or take profits. 
+
+These signals should also generate notifications within the trade platform and have the option to pop up and a settings area where users can decide where notifications will pop up . We should have browser notifications and honestly admin should be able to modify notifications and even create our own. 
+
+
+
+3. We need a login page that has the Connect Wallet so users who have our Trade Hybrid Tokens can login or a Login button for whop where users put in their emails or whop ids to get access, and of course for now still have the demo option so we can show the app to investors but eventually we will remove the access via demo button 
+
+4. I love the app and all the colors but i wish the background of the actual app would change with the text when we hit the toggle for theme . Id love to see a complete light theme (white background, dark text, gradient lines etc) and then this version we have now has dark background with white text. 

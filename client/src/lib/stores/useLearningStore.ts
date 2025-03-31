@@ -1,238 +1,319 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { ExperienceLevel, TopicInterest } from '@/components/learning/learning-assessment';
+import axios from 'axios';
 
-export interface LearningModule {
-  id: string;
+// Define interface types
+export interface Course {
+  id: number;
   title: string;
   description: string;
-  topics: TopicInterest[];
-  experienceLevel: ExperienceLevel;
-  completed: boolean;
-  progress: number; // 0-100
-  startedAt?: string;
-  completedAt?: string;
+  image_url?: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  category: 'crypto' | 'forex' | 'stocks' | 'futures' | 'general';
+  estimated_duration: number; // in minutes
+  modules?: Module[];
+  created_at: Date;
+  updated_at: Date;
 }
 
-export interface LearningPath {
-  id: string;
+export interface Module {
+  id: number;
+  course_id: number;
   title: string;
-  description: string;
-  experienceLevel: ExperienceLevel;
-  topics: TopicInterest[];
-  modules: string[]; // Array of module IDs
-  progress: number; // 0-100
+  order: number;
+  lessons?: Lesson[];
+  created_at: Date;
+  updated_at: Date;
 }
 
-interface UserLearningProfile {
-  experienceLevel: ExperienceLevel;
-  topicInterests: TopicInterest[];
-  availableTime: number;
-  completedModules: string[];
-  inProgressModules: string[];
-  bookmarkedModules: string[];
-  assessmentCompleted: boolean;
-  assessmentLastUpdated?: string;
+export interface Lesson {
+  id: number;
+  module_id: number;
+  title: string;
+  content: string; // HTML content
+  order: number;
+  video_url?: string;
+  estimated_duration: number; // in minutes
+  has_quiz: boolean;
+  quiz_questions?: QuizQuestion[];
+  created_at: Date;
+  updated_at: Date;
 }
 
-interface LearningStoreState {
-  modules: LearningModule[];
-  paths: LearningPath[];
-  userProfile: UserLearningProfile;
-  
-  // Learning assessment actions
-  saveAssessmentResults: (experienceLevel: ExperienceLevel, topicInterests: TopicInterest[], availableTime: number) => void;
-  resetAssessment: () => void;
-  
-  // Module actions
-  startModule: (moduleId: string) => void;
-  completeModule: (moduleId: string) => void;
-  updateModuleProgress: (moduleId: string, progress: number) => void;
-  bookmarkModule: (moduleId: string) => void;
-  unbookmarkModule: (moduleId: string) => void;
-  
-  // Path actions
-  getRecommendedPaths: () => LearningPath[];
-  getPathById: (pathId: string) => LearningPath | undefined;
-  getPathsForTopic: (topic: TopicInterest) => LearningPath[];
-  
-  // Module getters
-  getModuleById: (moduleId: string) => LearningModule | undefined;
-  getModulesForPath: (pathId: string) => LearningModule[];
-  getBookmarkedModules: () => LearningModule[];
-  getInProgressModules: () => LearningModule[];
-  getCompletedModules: () => LearningModule[];
+export interface QuizQuestion {
+  id: number;
+  lesson_id: number;
+  question: string;
+  options: string[]; // JSON array of options
+  correct_answer: number; // Index of correct option
+  explanation: string;
+  created_at: Date;
+  updated_at: Date;
 }
 
-export const useLearningStore = create<LearningStoreState>()(
-  persist(
-    (set, get) => ({
-      modules: [],
-      paths: [],
-      userProfile: {
-        experienceLevel: 'beginner',
-        topicInterests: [],
-        availableTime: 5,
-        completedModules: [],
-        inProgressModules: [],
-        bookmarkedModules: [],
-        assessmentCompleted: false,
-      },
-      
-      // Learning assessment actions
-      saveAssessmentResults: (experienceLevel, topicInterests, availableTime) => set(state => ({
-        userProfile: {
-          ...state.userProfile,
-          experienceLevel,
-          topicInterests,
-          availableTime,
-          assessmentCompleted: true,
-          assessmentLastUpdated: new Date().toISOString(),
-        }
-      })),
-      
-      resetAssessment: () => set(state => ({
-        userProfile: {
-          ...state.userProfile,
-          assessmentCompleted: false,
-          experienceLevel: 'beginner',
-          topicInterests: [],
-          availableTime: 5,
-        }
-      })),
-      
-      // Module actions
-      startModule: (moduleId) => set(state => {
-        const module = state.modules.find(m => m.id === moduleId);
-        if (!module) return state;
-        
-        const inProgressModules = [...state.userProfile.inProgressModules];
-        if (!inProgressModules.includes(moduleId)) {
-          inProgressModules.push(moduleId);
-        }
-        
-        return {
-          modules: state.modules.map(m => 
-            m.id === moduleId 
-              ? { ...m, progress: Math.max(m.progress, 1), startedAt: m.startedAt || new Date().toISOString() } 
-              : m
-          ),
-          userProfile: {
-            ...state.userProfile,
-            inProgressModules,
-          }
-        };
-      }),
-      
-      completeModule: (moduleId) => set(state => {
-        const module = state.modules.find(m => m.id === moduleId);
-        if (!module) return state;
-        
-        const inProgressModules = state.userProfile.inProgressModules.filter(id => id !== moduleId);
-        const completedModules = [...state.userProfile.completedModules];
-        if (!completedModules.includes(moduleId)) {
-          completedModules.push(moduleId);
-        }
-        
-        return {
-          modules: state.modules.map(m => 
-            m.id === moduleId 
-              ? { ...m, completed: true, progress: 100, completedAt: new Date().toISOString() } 
-              : m
-          ),
-          userProfile: {
-            ...state.userProfile,
-            completedModules,
-            inProgressModules,
-          }
-        };
-      }),
-      
-      updateModuleProgress: (moduleId, progress) => set(state => ({
-        modules: state.modules.map(m => 
-          m.id === moduleId 
-            ? { ...m, progress: Math.max(m.progress, progress) } 
-            : m
-        )
-      })),
-      
-      bookmarkModule: (moduleId) => set(state => {
-        const bookmarkedModules = [...state.userProfile.bookmarkedModules];
-        if (!bookmarkedModules.includes(moduleId)) {
-          bookmarkedModules.push(moduleId);
-        }
-        
-        return {
-          userProfile: {
-            ...state.userProfile,
-            bookmarkedModules,
-          }
-        };
-      }),
-      
-      unbookmarkModule: (moduleId) => set(state => ({
-        userProfile: {
-          ...state.userProfile,
-          bookmarkedModules: state.userProfile.bookmarkedModules.filter(id => id !== moduleId),
-        }
-      })),
-      
-      // Path actions
-      getRecommendedPaths: () => {
-        const { experienceLevel, topicInterests } = get().userProfile;
-        
-        return get().paths.filter(path => {
-          // Match experience level
-          const matchesExperience = path.experienceLevel === experienceLevel;
-          
-          // Check if any of the path topics match user interests
-          const matchesTopics = path.topics.some(topic => 
-            topicInterests.includes(topic)
-          );
-          
-          return matchesExperience && matchesTopics;
-        });
-      },
-      
-      getPathById: (pathId) => {
-        return get().paths.find(path => path.id === pathId);
-      },
-      
-      getPathsForTopic: (topic) => {
-        return get().paths.filter(path => path.topics.includes(topic));
-      },
-      
-      // Module getters
-      getModuleById: (moduleId) => {
-        return get().modules.find(m => m.id === moduleId);
-      },
-      
-      getModulesForPath: (pathId) => {
-        const path = get().paths.find(p => p.id === pathId);
-        if (!path) return [];
-        
-        return path.modules
-          .map(moduleId => get().modules.find(m => m.id === moduleId))
-          .filter((m): m is LearningModule => m !== undefined);
-      },
-      
-      getBookmarkedModules: () => {
-        const { bookmarkedModules } = get().userProfile;
-        return get().modules.filter(m => bookmarkedModules.includes(m.id));
-      },
-      
-      getInProgressModules: () => {
-        const { inProgressModules } = get().userProfile;
-        return get().modules.filter(m => inProgressModules.includes(m.id));
-      },
-      
-      getCompletedModules: () => {
-        const { completedModules } = get().userProfile;
-        return get().modules.filter(m => completedModules.includes(m.id));
-      },
-    }),
-    {
-      name: 'learning-storage',
+export interface UserCourseProgress {
+  id: number;
+  user_id: number;
+  course_id: number;
+  completed_lessons: number[];
+  completed_quizzes: number[];
+  completed_at?: Date;
+  certificate_issued: boolean;
+  certificate_id?: number;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface Certificate {
+  id: number;
+  user_id: number;
+  course_id: number;
+  issued_at: Date;
+  certificate_url: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface LearningJournalEntry {
+  id: number;
+  user_id: number;
+  course_id?: number;
+  lesson_id?: number;
+  title: string;
+  content: string;
+  tags?: string[]; // JSON array of tags
+  created_at: Date;
+  updated_at: Date;
+}
+
+// Journal entry input type
+type JournalEntryInput = {
+  title: string;
+  content: string;
+  course_id?: number | null;
+  lesson_id?: number | null;
+  tags?: string[];
+};
+
+// Define store interface 
+interface LearningStore {
+  // Courses
+  courses: Course[];
+  currentCourse: Course | null;
+  currentLesson: Lesson | null;
+  isLoading: boolean;
+  error: string | null;
+  fetchCourses: () => Promise<void>;
+  fetchCourse: (courseId: number) => Promise<void>;
+  
+  // User Progress
+  userProgress: UserCourseProgress[];
+  fetchUserProgress: () => Promise<void>;
+  markLessonComplete: (lessonId: number, courseId: number) => Promise<void>;
+  submitQuiz: (lessonId: number, answers: Record<number, number>) => Promise<{passed: boolean; score: number}>;
+  
+  // Certificates
+  certificates: Certificate[];
+  fetchCertificates: () => Promise<void>;
+  
+  // Learning Journal
+  journalEntries: LearningJournalEntry[];
+  fetchJournalEntries: () => Promise<void>;
+  createJournalEntry: (entry: JournalEntryInput) => Promise<void>;
+  updateJournalEntry: (entryId: number, data: Partial<JournalEntryInput>) => Promise<void>;
+  deleteJournalEntry: (entryId: number) => Promise<void>;
+}
+
+// API base URL
+const API_URL = '/api/learning';
+
+// Create and export the store
+export const useLearningStore = create<LearningStore>((set, get) => ({
+  // Initial state
+  courses: [],
+  currentCourse: null,
+  currentLesson: null,
+  userProgress: [],
+  certificates: [],
+  journalEntries: [],
+  isLoading: false,
+  error: null,
+
+  // Fetch all courses
+  fetchCourses: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.get(`${API_URL}/courses`);
+      set({ courses: response.data, isLoading: false });
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+      set({ 
+        error: 'Failed to fetch courses. Please try again later.', 
+        isLoading: false 
+      });
     }
-  )
-);
+  },
+
+  // Fetch a specific course with modules and lessons
+  fetchCourse: async (courseId: number) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.get(`${API_URL}/courses/${courseId}`);
+      set({ currentCourse: response.data, isLoading: false });
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching course ${courseId}:`, error);
+      set({ 
+        error: 'Failed to fetch course details. Please try again later.', 
+        isLoading: false 
+      });
+      return null;
+    }
+  },
+
+  // Fetch user's progress for all courses
+  fetchUserProgress: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.get(`${API_URL}/progress`);
+      set({ userProgress: response.data, isLoading: false });
+    } catch (error) {
+      console.error('Error fetching user progress:', error);
+      set({ 
+        error: 'Failed to fetch learning progress. Please try again later.', 
+        isLoading: false 
+      });
+    }
+  },
+
+  // Mark a lesson as complete
+  markLessonComplete: async (lessonId: number, courseId: number) => {
+    set({ isLoading: true, error: null });
+    try {
+      await axios.post(`${API_URL}/progress/lesson-complete`, { 
+        lessonId, 
+        courseId 
+      });
+      
+      // Update local state
+      await get().fetchUserProgress();
+      set({ isLoading: false });
+    } catch (error) {
+      console.error('Error marking lesson complete:', error);
+      set({ 
+        error: 'Failed to update progress. Please try again later.', 
+        isLoading: false 
+      });
+    }
+  },
+
+  // Submit quiz answers
+  submitQuiz: async (lessonId: number, answers: Record<number, number>) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.post(`${API_URL}/quiz/submit`, { 
+        lessonId, 
+        answers 
+      });
+      
+      // Update local state
+      await get().fetchUserProgress();
+      set({ isLoading: false });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error submitting quiz:', error);
+      set({ 
+        error: 'Failed to submit quiz. Please try again later.', 
+        isLoading: false 
+      });
+      return { passed: false, score: 0 };
+    }
+  },
+
+  // Fetch user certificates
+  fetchCertificates: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.get(`${API_URL}/certificates`);
+      set({ certificates: response.data, isLoading: false });
+    } catch (error) {
+      console.error('Error fetching certificates:', error);
+      set({ 
+        error: 'Failed to fetch certificates. Please try again later.', 
+        isLoading: false 
+      });
+    }
+  },
+
+  // Fetch learning journal entries
+  fetchJournalEntries: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.get(`${API_URL}/journal`);
+      set({ journalEntries: response.data, isLoading: false });
+    } catch (error) {
+      console.error('Error fetching journal entries:', error);
+      set({ 
+        error: 'Failed to fetch journal entries. Please try again later.', 
+        isLoading: false 
+      });
+    }
+  },
+
+  // Create a new journal entry
+  createJournalEntry: async (entry: JournalEntryInput) => {
+    set({ isLoading: true, error: null });
+    try {
+      await axios.post(`${API_URL}/journal`, entry);
+      
+      // Refresh journal entries
+      await get().fetchJournalEntries();
+      set({ isLoading: false });
+    } catch (error) {
+      console.error('Error creating journal entry:', error);
+      set({ 
+        error: 'Failed to create journal entry. Please try again later.', 
+        isLoading: false 
+      });
+    }
+  },
+
+  // Update an existing journal entry
+  updateJournalEntry: async (entryId: number, data: Partial<JournalEntryInput>) => {
+    set({ isLoading: true, error: null });
+    try {
+      await axios.put(`${API_URL}/journal/${entryId}`, data);
+      
+      // Refresh journal entries
+      await get().fetchJournalEntries();
+      set({ isLoading: false });
+    } catch (error) {
+      console.error(`Error updating journal entry ${entryId}:`, error);
+      set({ 
+        error: 'Failed to update journal entry. Please try again later.', 
+        isLoading: false 
+      });
+    }
+  },
+
+  // Delete a journal entry
+  deleteJournalEntry: async (entryId: number) => {
+    set({ isLoading: true, error: null });
+    try {
+      await axios.delete(`${API_URL}/journal/${entryId}`);
+      
+      // Update local state - remove the deleted entry
+      const currentEntries = get().journalEntries;
+      set({ 
+        journalEntries: currentEntries.filter(entry => entry.id !== entryId),
+        isLoading: false 
+      });
+    } catch (error) {
+      console.error(`Error deleting journal entry ${entryId}:`, error);
+      set({ 
+        error: 'Failed to delete journal entry. Please try again later.', 
+        isLoading: false 
+      });
+    }
+  }
+}));

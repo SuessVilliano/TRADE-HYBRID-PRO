@@ -7,68 +7,95 @@ export const courses = pgTable("courses", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  category: text("category").notNull(), // crypto, forex, stocks, etc
+  category: text("category").notNull(), // crypto, forex, stocks, futures
   level: text("level").notNull(), // beginner, intermediate, advanced
   duration: integer("duration").notNull(), // in minutes
   points: integer("points").notNull(),
+  imageUrl: text("image_url"),
+  featured: boolean("featured").default(false),
+  prerequisites: jsonb("prerequisites"), // array of prerequisite course IDs
+  learningOutcomes: jsonb("learning_outcomes"), // array of outcomes
+  certification: boolean("certification").default(false),
+  certificateImageUrl: text("certificate_image_url"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const modules = pgTable("modules", {
+  id: serial("id").primaryKey(),
+  courseId: integer("course_id").notNull().references(() => courses.id),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  order: integer("order").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const lessons = pgTable("lessons", {
   id: serial("id").primaryKey(),
-  courseId: integer("course_id").notNull().references(() => courses.id),
+  moduleId: integer("module_id").notNull().references(() => modules.id),
   title: text("title").notNull(),
+  description: text("description"),
   content: text("content").notNull(),
   videoUrl: text("video_url"),
+  interactiveContent: jsonb("interactive_content"), // interactive elements
+  resources: jsonb("resources"), // additional learning resources
   order: integer("order").notNull(),
-  duration: integer("duration").notNull(),
+  duration: integer("duration").notNull(), // in minutes
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const quizzes = pgTable("quizzes", {
   id: serial("id").primaryKey(),
   lessonId: integer("lesson_id").notNull().references(() => lessons.id),
   title: text("title").notNull(),
+  description: text("description"),
   questions: jsonb("questions").notNull(),
   passingScore: integer("passing_score").notNull(),
+  timeLimit: integer("time_limit"), // in minutes, null for unlimited
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const userProgress = pgTable("user_progress", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: text("user_id").notNull(), // references the user
   courseId: integer("course_id").notNull().references(() => courses.id),
-  lessonId: integer("lesson_id").notNull().references(() => lessons.id),
-  completed: boolean("completed").notNull().default(false),
-  quizScore: integer("quiz_score"),
-  lastAccessed: timestamp("last_accessed").notNull().defaultNow(),
+  moduleId: integer("module_id").references(() => modules.id),
+  lessonId: integer("lesson_id").references(() => lessons.id),
+  completed: boolean("completed").default(false),
+  percentageComplete: real("percentage_complete").default(0),
+  lastAccessedAt: timestamp("last_accessed_at").notNull().defaultNow(),
+  notes: text("notes"), // user's personal notes for this course
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const quizAttempts = pgTable("quiz_attempts", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(), // references the user
+  quizId: integer("quiz_id").notNull().references(() => quizzes.id),
+  score: integer("score").notNull(),
+  passed: boolean("passed").notNull(),
+  answers: jsonb("answers").notNull(), // user's answers
+  timeSpent: integer("time_spent"), // in seconds
+  completedAt: timestamp("completed_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const certificates = pgTable("certificates", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: text("user_id").notNull(), // references the user
   courseId: integer("course_id").notNull().references(() => courses.id),
+  certificateId: text("certificate_id").notNull(), // unique identifier for certificate
   issueDate: timestamp("issue_date").notNull().defaultNow(),
-  grade: text("grade").notNull(),
-  certificateUrl: text("certificate_url").notNull(),
+  expiryDate: timestamp("expiry_date"), // null for non-expiring certificates
+  metadata: jsonb("metadata"), // any additional certificate data
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const badges = pgTable("badges", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  description: text("description").notNull(),
-  category: text("category").notNull(),
-  image: text("image").notNull(),
-  requirements: jsonb("requirements").notNull(),
-});
-
-export const userBadges = pgTable("user_badges", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  badgeId: integer("badge_id").notNull().references(() => badges.id),
-  earnedDate: timestamp("earned_date").notNull().defaultNow(),
-});
+// Will be defined after journalEntries declaration
 
 // Users table
 export const users = pgTable("users", {
@@ -219,6 +246,27 @@ export const tradePerformance = pgTable("trade_performance", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// User learning journal that connects to journal entries
+export const userLearningJournal = pgTable("user_learning_journal", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  courseId: integer("course_id").references(() => courses.id),
+  lessonId: integer("lesson_id").references(() => lessons.id),
+  relatedToTradeEntry: integer("related_to_trade_entry").references(() => journalEntries.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Export types for all tables
 export type LeaderboardEntry = typeof leaderboardEntries.$inferSelect;
 export type JournalEntry = typeof journalEntries.$inferSelect;
 export type TradePerformance = typeof tradePerformance.$inferSelect;
+export type UserLearningJournal = typeof userLearningJournal.$inferSelect;
+export type Course = typeof courses.$inferSelect;
+export type Module = typeof modules.$inferSelect;
+export type Lesson = typeof lessons.$inferSelect;
+export type Quiz = typeof quizzes.$inferSelect;
+export type UserProgress = typeof userProgress.$inferSelect;
+export type QuizAttempt = typeof quizAttempts.$inferSelect;
+export type Certificate = typeof certificates.$inferSelect;
