@@ -5,9 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { CheckCircle, Copy, Users, DollarSign, CreditCard, Award, PieChart, ChevronRight, Link as LinkIcon } from 'lucide-react';
+import { CheckCircle, Copy, Users, DollarSign, CreditCard, Award, PieChart, ChevronRight, Link as LinkIcon, Coins, Wallet } from 'lucide-react';
 import { AffiliateService } from '@/lib/services/affiliate-service';
 import { MatrixVisualization } from './matrix-visualization';
+import { ForsageMatrixVisualization } from './forsage-matrix-visualization';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -237,12 +238,12 @@ export function AffiliateDashboardPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-slate-900 p-4 rounded-lg flex flex-col items-center text-center">
-                <div className="bg-blue-500/20 p-3 rounded-full mb-3">
-                  <DollarSign className="h-6 w-6 text-blue-500" />
+                <div className="bg-yellow-500/20 p-3 rounded-full mb-3">
+                  <Coins className="h-6 w-6 text-yellow-500" />
                 </div>
-                <h3 className="font-bold mb-2">2.5% Commission</h3>
+                <h3 className="font-bold mb-2">100% Commission</h3>
                 <p className="text-sm text-slate-400">
-                  Earn 2.5% on all direct referral trades
+                  Earn 100% of all matrix slot fees directly to your wallet
                 </p>
               </div>
               
@@ -250,19 +251,19 @@ export function AffiliateDashboardPage() {
                 <div className="bg-purple-500/20 p-3 rounded-full mb-3">
                   <Users className="h-6 w-6 text-purple-500" />
                 </div>
-                <h3 className="font-bold mb-2">Spillover Matrix</h3>
+                <h3 className="font-bold mb-2">2×3 Spillover Matrix</h3>
                 <p className="text-sm text-slate-400">
-                  Benefit from automated team spillover
+                  Powerful structure with specific slots passing up to sponsors
                 </p>
               </div>
               
               <div className="bg-slate-900 p-4 rounded-lg flex flex-col items-center text-center">
                 <div className="bg-amber-500/20 p-3 rounded-full mb-3">
-                  <Award className="h-6 w-6 text-amber-500" />
+                  <Wallet className="h-6 w-6 text-amber-500" />
                 </div>
-                <h3 className="font-bold mb-2">Instant Payments</h3>
+                <h3 className="font-bold mb-2">Smart Contract Payments</h3>
                 <p className="text-sm text-slate-400">
-                  Commissions paid directly to your wallet
+                  Commissions paid automatically via blockchain smart contracts
                 </p>
               </div>
             </div>
@@ -279,7 +280,23 @@ export function AffiliateDashboardPage() {
   };
   
   const renderMatrix = () => {
-    return <MatrixVisualization />;
+    // Use our new Forsage-style matrix with direct crypto payments
+    return (
+      <>
+        <div className="mb-6">
+          <Alert className="bg-yellow-900/20 border-yellow-800">
+            <div className="flex items-center">
+              <Wallet className="h-5 w-5 text-yellow-500 mr-2" />
+              <AlertTitle className="text-yellow-400">100% Direct Crypto Payments</AlertTitle>
+            </div>
+            <AlertDescription>
+              All matrix commissions now go directly to your wallet address in real-time via smart contracts
+            </AlertDescription>
+          </Alert>
+        </div>
+        <ForsageMatrixVisualization userWalletAddress={publicKey?.toString()} />
+      </>
+    );
   };
   
   const renderSales = () => {
@@ -305,24 +322,24 @@ export function AffiliateDashboardPage() {
               <div className="bg-blue-500/20 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-3">
                 <PieChart className="h-6 w-6 text-blue-500" />
               </div>
-              <CardTitle>2.5% Commissions</CardTitle>
+              <CardTitle>100% Matrix Commissions</CardTitle>
               <CardDescription>
-                Earn from every trade your referrals make
+                Earn directly from matrix positions filled by your referrals
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2">
                 <li className="flex items-start">
                   <CheckCircle className="text-green-500 mr-2 h-5 w-5 mt-0.5 shrink-0" />
-                  <span>2.5% on all direct referral trades</span>
+                  <span>100% direct crypto payments to your wallet</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="text-green-500 mr-2 h-5 w-5 mt-0.5 shrink-0" />
-                  <span>1.25% on all level 2 referral trades</span>
+                  <span>Smart contract automated payments</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="text-green-500 mr-2 h-5 w-5 mt-0.5 shrink-0" />
-                  <span>Unlimited earning potential</span>
+                  <span>No platform fees, receive full commission</span>
                 </li>
               </ul>
             </CardContent>
@@ -398,23 +415,23 @@ export function AffiliateDashboardPage() {
               <div className="bg-blue-900 text-blue-300 rounded-full w-12 h-12 flex items-center justify-center mb-4 text-xl font-bold">1</div>
               <h3 className="font-bold text-lg mb-2">Connect Your Wallet</h3>
               <p className="text-sm text-slate-400">
-                Connect your Solana wallet to get started with Trade Hybrid
+                Connect your Solana wallet to activate your matrix positions
               </p>
             </div>
             
             <div className="flex flex-col items-center">
               <div className="bg-blue-900 text-blue-300 rounded-full w-12 h-12 flex items-center justify-center mb-4 text-xl font-bold">2</div>
-              <h3 className="font-bold text-lg mb-2">Share Your Link</h3>
+              <h3 className="font-bold text-lg mb-2">Buy Matrix Positions</h3>
               <p className="text-sm text-slate-400">
-                Share your unique affiliate link with potential traders
+                Purchase your X3 and X4 matrix positions starting at just $25
               </p>
             </div>
             
             <div className="flex flex-col items-center">
               <div className="bg-blue-900 text-blue-300 rounded-full w-12 h-12 flex items-center justify-center mb-4 text-xl font-bold">3</div>
-              <h3 className="font-bold text-lg mb-2">Earn Commissions</h3>
+              <h3 className="font-bold text-lg mb-2">Receive Direct Payments</h3>
               <p className="text-sm text-slate-400">
-                Earn from every trade your referrals make and matrix positions
+                Earn 100% commissions sent directly to your wallet via smart contracts
               </p>
             </div>
           </div>
@@ -427,14 +444,14 @@ export function AffiliateDashboardPage() {
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-10"></div>
             <CardContent className="pt-6 pb-8">
               <div className="relative z-10 text-center">
-                <h2 className="text-2xl font-bold mb-4">Ready to Start Earning?</h2>
+                <h2 className="text-2xl font-bold mb-4">Ready to Earn 100% Direct Commissions?</h2>
                 <p className="text-slate-400 max-w-lg mx-auto mb-6">
-                  Join the Trade Hybrid affiliate program today and start earning passive income through trading commissions and our powerful matrix structure.
+                  Join the Trade Hybrid Forsage-style matrix today and start receiving direct crypto payments to your wallet through our smart contract system.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
-                    <LinkIcon className="h-4 w-4 mr-2" />
-                    Get Your Affiliate Link
+                  <Button size="lg" className="bg-yellow-600 hover:bg-yellow-700">
+                    <Wallet className="h-4 w-4 mr-2" />
+                    Buy Your First Matrix Position
                   </Button>
                   <Button size="lg" variant="outline" onClick={() => setActiveTab('matrix')}>
                     <PieChart className="h-4 w-4 mr-2" />
