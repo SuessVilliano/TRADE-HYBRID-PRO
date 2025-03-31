@@ -22,7 +22,7 @@ const MarketOverviewLazy = React.lazy(() => import('./market-overview'));
 const MarketScannerLazy = React.lazy(() => import('./market-scanner'));
 const StockHeatmapLazy = React.lazy(() => import('./stock-heatmap'));
 const CryptoHeatmapLazy = React.lazy(() => import('./crypto-heatmap'));
-const ZenMeditationModeLazy = React.lazy(() => import('./zen-meditation-mode').then(module => ({ default: module.ZenMeditationMode })));
+const ZenMeditationModeLazy = React.lazy(() => import('./zen-meditation-mode'));
 const TradeJournalLazy = React.lazy(() => import('./trade-journal').then(module => ({ default: module.TradeJournal })));
 
 // Define the panel types

@@ -21,7 +21,7 @@ import { ThcTradingPanel } from "@/components/ui/thc-trading-panel";
 import { MicroTradingTipTrigger } from "@/components/ui/micro-trading-tip-trigger";
 import { MobileSidebarToggle } from "@/components/ui/mobile-sidebar-toggle";
 import { AmbientMusicPlayer } from "@/components/ui/ambient-music-player";
-import { ZenMeditationMode } from "@/components/ui/zen-meditation-mode";
+import ZenMeditationMode from "@/components/ui/zen-meditation-mode";
 import { MobileMenu } from "@/components/ui/mobile-menu";
 import { ScreenSharing } from "@/components/ui/screen-sharing";
 import { MusicPlayer } from "@/components/ui/music-player";

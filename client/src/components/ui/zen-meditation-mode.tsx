@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, useTexture, Stars, Cloud, Text } from '@react-three/drei';
 import { useAudio } from '@/lib/stores/useAudio';
@@ -613,3 +613,6 @@ export function ZenMeditationMode({ className }: ZenMeditationModeProps) {
     </div>
   );
 }
+
+// Add default export for the component
+export default ZenMeditationMode;

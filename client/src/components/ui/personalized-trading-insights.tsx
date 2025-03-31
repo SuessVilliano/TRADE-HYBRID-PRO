@@ -1,15 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import { useTrader, TradeStats } from '@/lib/stores/useTrader';
-import { Card, CardContent, CardHeader, CardTitle } from './card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from './card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
-import { LineChart, Brain, TrendingUp, BarChart3, AlertTriangle, Lightbulb, Clock, ChevronRight } from 'lucide-react';
+import { LineChart, Brain, TrendingUp, BarChart3, AlertTriangle, Lightbulb, Clock, ChevronRight, Settings, RefreshCw, Eye, Download, Maximize2, Minimize2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import { Button } from './button';
+import { Switch } from './switch';
+import { Label } from './label';
+import { toast } from 'sonner';
+
+// Define the settings interface for the widget
+export interface PersonalizedInsightsSettings {
+  showPerformanceMetrics: boolean;
+  showRiskInsights: boolean;
+  showPatternAnalysis: boolean;
+  showOpportunities: boolean;
+  autoRefresh: boolean;
+  refreshInterval: number;
+  maxInsights: number;
+  categories: Array<'performance' | 'risk' | 'pattern' | 'opportunity'>;
+}
 
 interface PersonalizedTradingInsightsProps {
   className?: string;
+  compact?: boolean;
+  symbol?: string;
+  refreshInterval?: number;
+  onMaximize?: () => void;
+  onClose?: () => void;
+  onSettingsChange?: (settings: PersonalizedInsightsSettings) => void;
+  isWidget?: boolean;
 }
 
-export function PersonalizedTradingInsights({ className }: PersonalizedTradingInsightsProps) {
+export function PersonalizedTradingInsights({
+  className,
+  compact = false,
+  symbol,
+  refreshInterval = 60000,
+  onMaximize,
+  onClose,
+  onSettingsChange,
+  isWidget = false
+}: PersonalizedTradingInsightsProps) {
   const { 
     positions, 
     trades, 
@@ -24,23 +57,58 @@ export function PersonalizedTradingInsights({ className }: PersonalizedTradingIn
     category: 'performance' | 'risk' | 'pattern' | 'opportunity';
     priority: 'high' | 'medium' | 'low';
   }[]>([]);
+  
+  // Settings for the widget
+  const [settings, setSettings] = useState<PersonalizedInsightsSettings>({
+    showPerformanceMetrics: true,
+    showRiskInsights: true,
+    showPatternAnalysis: true,
+    showOpportunities: true,
+    autoRefresh: true,
+    refreshInterval: refreshInterval,
+    maxInsights: 5,
+    categories: ['performance', 'risk', 'pattern', 'opportunity']
+  });
+  
+  // Apply settings changes
+  const handleSettingsChange = (newSettings: Partial<PersonalizedInsightsSettings>) => {
+    const updatedSettings = { ...settings, ...newSettings };
+    setSettings(updatedSettings);
+    if (onSettingsChange) {
+      onSettingsChange(updatedSettings);
+    }
+  };
 
   // Fetch and analyze data when component mounts
   useEffect(() => {
     generateInsights();
     
-    // Update account info periodically
-    const intervalId = setInterval(() => {
-      updateAccountInfo();
-    }, 30000);
+    // Set up refresh interval based on settings
+    let dataRefreshIntervalId: NodeJS.Timeout | null = null;
+    let insightsRefreshIntervalId: NodeJS.Timeout | null = null;
     
-    return () => clearInterval(intervalId);
-  }, []);
+    if (settings.autoRefresh) {
+      // Update account info periodically
+      dataRefreshIntervalId = setInterval(() => {
+        updateAccountInfo();
+      }, 30000);
+      
+      // Regenerate insights periodically based on configured refresh interval
+      insightsRefreshIntervalId = setInterval(() => {
+        generateInsights();
+      }, settings.refreshInterval);
+    }
+    
+    return () => {
+      if (dataRefreshIntervalId) clearInterval(dataRefreshIntervalId);
+      if (insightsRefreshIntervalId) clearInterval(insightsRefreshIntervalId);
+    };
+  }, [settings.autoRefresh, settings.refreshInterval]);
   
   // Re-generate insights when trade data changes
   useEffect(() => {
     generateInsights();
-  }, [positions, trades, tradeStats]);
+  }, [positions, trades, tradeStats, settings.categories]);
   
   // Generate personalized trading insights based on user's trading data
   const generateInsights = () => {
@@ -50,100 +118,111 @@ export function PersonalizedTradingInsights({ className }: PersonalizedTradingIn
     if (trades.length === 0 && positions.length === 0) {
       newInsights.push({
         text: "Start trading to receive personalized insights based on your trading activity.",
-        category: 'opportunity',
-        priority: 'medium'
+        category: 'opportunity' as const,
+        priority: 'medium' as const
       });
       setInsights(newInsights);
       return;
     }
     
     // Performance insights
-    if (tradeStats.winRate < 50) {
-      newInsights.push({
-        text: `Your win rate is ${tradeStats.winRate}%. Consider reviewing your entry criteria or using smaller position sizes.`,
-        category: 'performance',
-        priority: 'high'
-      });
-    } else if (tradeStats.winRate > 65) {
-      newInsights.push({
-        text: `Strong win rate of ${tradeStats.winRate}%. Consider increasing position size on setups that match your successful patterns.`,
-        category: 'performance',
-        priority: 'medium'
-      });
-    }
-    
-    // Risk management insights
-    if (tradeStats.avgLoss && Math.abs(tradeStats.avgLoss) > Math.abs(tradeStats.avgWin) * 0.8) {
-      newInsights.push({
-        text: `Your average loss (${formatCurrency(tradeStats.avgLoss)}) is too close to your average win (${formatCurrency(tradeStats.avgWin)}). Consider tightening stop losses.`,
-        category: 'risk',
-        priority: 'high'
-      });
-    }
-    
-    // Detect overtrading
-    const recentTrades = trades.filter(t => Date.now() - t.timestamp < 24 * 60 * 60 * 1000);
-    if (recentTrades.length > 5) {
-      newInsights.push({
-        text: `You've made ${recentTrades.length} trades in the last 24 hours. Consider quality over quantity to avoid overtrading.`,
-        category: 'risk',
-        priority: 'medium'
-      });
-    }
-    
-    // Asset diversification check
-    const symbols = [...new Set(positions.map(p => p.symbol))];
-    if (positions.length > 2 && symbols.length === 1) {
-      newInsights.push({
-        text: `All your positions are in ${symbols[0]}. Consider diversifying across different assets to reduce risk.`,
-        category: 'risk',
-        priority: 'medium'
-      });
-    }
-    
-    // Trading pattern insights
-    const profitableTrades = trades.filter(t => t.profit > 0);
-    if (profitableTrades.length >= 3) {
-      // Look for patterns in profitable trades
-      const mostProfitableSymbol = getMostFrequent(profitableTrades.map(t => t.symbol));
-      if (mostProfitableSymbol) {
+    if (settings.showPerformanceMetrics && settings.categories.includes('performance')) {
+      if (tradeStats.winRate < 50) {
         newInsights.push({
-          text: `You're performing particularly well with ${mostProfitableSymbol}. Consider specializing more in this asset.`,
-          category: 'pattern',
-          priority: 'medium'
+          text: `Your win rate is ${tradeStats.winRate}%. Consider reviewing your entry criteria or using smaller position sizes.`,
+          category: 'performance' as const,
+          priority: 'high' as const
+        });
+      } else if (tradeStats.winRate > 65) {
+        newInsights.push({
+          text: `Strong win rate of ${tradeStats.winRate}%. Consider increasing position size on setups that match your successful patterns.`,
+          category: 'performance' as const,
+          priority: 'medium' as const
         });
       }
     }
     
-    // Opportunity insights
-    const activeSymbols = [...new Set([...positions.map(p => p.symbol), ...trades.slice(0, 5).map(t => t.symbol)])];
-    if (activeSymbols.includes('BTCUSD') && !positions.find(p => p.symbol === 'ETHUSD')) {
-      newInsights.push({
-        text: "Based on your BTC trading activity, you might consider adding ETH positions which often shows correlated movements.",
-        category: 'opportunity',
-        priority: 'low'
-      });
+    // Risk management insights
+    if (settings.showRiskInsights && settings.categories.includes('risk')) {
+      if (tradeStats.avgLoss && Math.abs(tradeStats.avgLoss) > Math.abs(tradeStats.avgWin) * 0.8) {
+        newInsights.push({
+          text: `Your average loss (${formatCurrency(tradeStats.avgLoss)}) is too close to your average win (${formatCurrency(tradeStats.avgWin)}). Consider tightening stop losses.`,
+          category: 'risk' as const,
+          priority: 'high' as const
+        });
+      }
+      
+      // Detect overtrading
+      const recentTrades = trades.filter(t => Date.now() - t.timestamp < 24 * 60 * 60 * 1000);
+      if (recentTrades.length > 5) {
+        newInsights.push({
+          text: `You've made ${recentTrades.length} trades in the last 24 hours. Consider quality over quantity to avoid overtrading.`,
+          category: 'risk' as const,
+          priority: 'medium' as const
+        });
+      }
+      
+      // Asset diversification check
+      const symbols = [...new Set(positions.map(p => p.symbol))];
+      if (positions.length > 2 && symbols.length === 1) {
+        newInsights.push({
+          text: `All your positions are in ${symbols[0]}. Consider diversifying across different assets to reduce risk.`,
+          category: 'risk' as const,
+          priority: 'medium' as const
+        });
+      }
+      
+      // Position size consistency
+      const positionSizes = trades.map(t => t.quantity * t.entryPrice);
+      if (positionSizes.length > 0) {
+        const avgPositionSize = positionSizes.reduce((sum, size) => sum + size, 0) / positionSizes.length;
+        const positionSizeVariance = positionSizes.reduce((sum, size) => sum + Math.pow(size - avgPositionSize, 2), 0) / positionSizes.length;
+        const positionSizeStdDev = Math.sqrt(positionSizeVariance);
+        
+        if (positionSizeStdDev > avgPositionSize * 0.5) {
+          newInsights.push({
+            text: "Your position sizes vary significantly. Consider standardizing position sizing for more consistent results.",
+            category: 'risk' as const,
+            priority: 'medium' as const
+          });
+        }
+      }
     }
     
-    // Position size consistency
-    const positionSizes = trades.map(t => t.quantity * t.entryPrice);
-    const avgPositionSize = positionSizes.reduce((sum, size) => sum + size, 0) / positionSizes.length;
-    const positionSizeVariance = positionSizes.reduce((sum, size) => sum + Math.pow(size - avgPositionSize, 2), 0) / positionSizes.length;
-    const positionSizeStdDev = Math.sqrt(positionSizeVariance);
+    // Trading pattern insights
+    if (settings.showPatternAnalysis && settings.categories.includes('pattern')) {
+      const profitableTrades = trades.filter(t => t.profit > 0);
+      if (profitableTrades.length >= 3) {
+        // Look for patterns in profitable trades
+        const mostProfitableSymbol = getMostFrequent(profitableTrades.map(t => t.symbol));
+        if (mostProfitableSymbol) {
+          newInsights.push({
+            text: `You're performing particularly well with ${mostProfitableSymbol}. Consider specializing more in this asset.`,
+            category: 'pattern' as const,
+            priority: 'medium' as const
+          });
+        }
+      }
+    }
     
-    if (positionSizeStdDev > avgPositionSize * 0.5) {
-      newInsights.push({
-        text: "Your position sizes vary significantly. Consider standardizing position sizing for more consistent results.",
-        category: 'risk',
-        priority: 'medium'
-      });
+    // Opportunity insights
+    if (settings.showOpportunities && settings.categories.includes('opportunity')) {
+      const activeSymbols = [...new Set([...positions.map(p => p.symbol), ...trades.slice(0, 5).map(t => t.symbol)])];
+      if (activeSymbols.includes('BTCUSD') && !positions.find(p => p.symbol === 'ETHUSD')) {
+        newInsights.push({
+          text: "Based on your BTC trading activity, you might consider adding ETH positions which often shows correlated movements.",
+          category: 'opportunity' as const,
+          priority: 'low' as const
+        });
+      }
     }
     
     // Sort insights by priority
     const priorityOrder = { high: 0, medium: 1, low: 2 };
     newInsights.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
     
-    setInsights(newInsights.slice(0, 5)); // Limit to top 5 insights
+    // Limit to configured maximum number of insights
+    setInsights(newInsights.slice(0, settings.maxInsights));
   };
   
   // Calculate recent performance
@@ -230,13 +309,232 @@ export function PersonalizedTradingInsights({ className }: PersonalizedTradingIn
     }
   };
   
+  // Manual refresh handler
+  const handleRefresh = () => {
+    updateAccountInfo();
+    generateInsights();
+    toast.success("Insights refreshed");
+  };
+  
+  // Settings popover content
+  const SettingsPanel = (
+    <div className="w-80 space-y-4">
+      <h3 className="text-sm font-medium">Widget Settings</h3>
+      
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="autoRefresh" className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" /> Auto Refresh
+          </Label>
+          <Switch 
+            id="autoRefresh" 
+            checked={settings.autoRefresh}
+            onCheckedChange={(value) => handleSettingsChange({ autoRefresh: value })} 
+          />
+        </div>
+        
+        {settings.autoRefresh && (
+          <div className="space-y-2">
+            <Label className="text-xs">Refresh Interval</Label>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className={cn(settings.refreshInterval === 30000 && "border-primary")}
+                onClick={() => handleSettingsChange({ refreshInterval: 30000 })}
+              >30s</Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className={cn(settings.refreshInterval === 60000 && "border-primary")}
+                onClick={() => handleSettingsChange({ refreshInterval: 60000 })}
+              >1m</Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className={cn(settings.refreshInterval === 300000 && "border-primary")}
+                onClick={() => handleSettingsChange({ refreshInterval: 300000 })}
+              >5m</Button>
+            </div>
+          </div>
+        )}
+        
+        <div className="space-y-2 pt-2 border-t">
+          <Label className="text-xs">Insight Categories</Label>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="showPerformance" 
+                checked={settings.showPerformanceMetrics}
+                onCheckedChange={(value) => {
+                  const newCategories = [...settings.categories];
+                  if (value && !newCategories.includes('performance')) {
+                    newCategories.push('performance');
+                  } else if (!value) {
+                    const index = newCategories.indexOf('performance');
+                    if (index > -1) newCategories.splice(index, 1);
+                  }
+                  
+                  handleSettingsChange({ 
+                    showPerformanceMetrics: value,
+                    categories: newCategories
+                  });
+                }} 
+              />
+              <Label htmlFor="showPerformance" className="text-xs">Performance</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="showRisk" 
+                checked={settings.showRiskInsights}
+                onCheckedChange={(value) => {
+                  const newCategories = [...settings.categories];
+                  if (value && !newCategories.includes('risk')) {
+                    newCategories.push('risk');
+                  } else if (!value) {
+                    const index = newCategories.indexOf('risk');
+                    if (index > -1) newCategories.splice(index, 1);
+                  }
+                  
+                  handleSettingsChange({ 
+                    showRiskInsights: value,
+                    categories: newCategories
+                  });
+                }} 
+              />
+              <Label htmlFor="showRisk" className="text-xs">Risk</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="showPattern" 
+                checked={settings.showPatternAnalysis}
+                onCheckedChange={(value) => {
+                  const newCategories = [...settings.categories];
+                  if (value && !newCategories.includes('pattern')) {
+                    newCategories.push('pattern');
+                  } else if (!value) {
+                    const index = newCategories.indexOf('pattern');
+                    if (index > -1) newCategories.splice(index, 1);
+                  }
+                  
+                  handleSettingsChange({ 
+                    showPatternAnalysis: value,
+                    categories: newCategories
+                  });
+                }} 
+              />
+              <Label htmlFor="showPattern" className="text-xs">Patterns</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="showOpportunities" 
+                checked={settings.showOpportunities}
+                onCheckedChange={(value) => {
+                  const newCategories = [...settings.categories];
+                  if (value && !newCategories.includes('opportunity')) {
+                    newCategories.push('opportunity');
+                  } else if (!value) {
+                    const index = newCategories.indexOf('opportunity');
+                    if (index > -1) newCategories.splice(index, 1);
+                  }
+                  
+                  handleSettingsChange({ 
+                    showOpportunities: value,
+                    categories: newCategories
+                  });
+                }} 
+              />
+              <Label htmlFor="showOpportunities" className="text-xs">Opportunities</Label>
+            </div>
+          </div>
+        </div>
+        
+        <div className="space-y-2 pt-2 border-t">
+          <Label className="text-xs">Max Insights to Show</Label>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              className={cn(settings.maxInsights === 3 && "border-primary")}
+              onClick={() => handleSettingsChange({ maxInsights: 3 })}
+            >3</Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className={cn(settings.maxInsights === 5 && "border-primary")}
+              onClick={() => handleSettingsChange({ maxInsights: 5 })}
+            >5</Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className={cn(settings.maxInsights === 10 && "border-primary")}
+              onClick={() => handleSettingsChange({ maxInsights: 10 })}
+            >10</Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+  
   return (
     <Card className={cn("w-full h-full overflow-hidden", className)}>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between">
         <CardTitle className="text-lg font-semibold flex items-center">
           <Brain className="h-5 w-5 mr-2 text-primary" />
           Personalized Trading Insights
         </CardTitle>
+        
+        <div className="flex items-center gap-1">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={handleRefresh}
+            title="Refresh insights"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                title="Settings"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="p-4 w-80">
+              {SettingsPanel}
+            </PopoverContent>
+          </Popover>
+          
+          {isWidget && (
+            <>
+              {onMaximize && (
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={onMaximize}
+                  title="Maximize"
+                >
+                  <Maximize2 className="h-4 w-4" />
+                </Button>
+              )}
+              
+              {onClose && (
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={onClose}
+                  title="Close"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </>
+          )}
+        </div>
       </CardHeader>
       
       <CardContent className="p-0">
