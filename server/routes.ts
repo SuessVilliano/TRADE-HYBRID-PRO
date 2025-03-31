@@ -110,9 +110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/ai/trading-suggestions", getTradingSuggestions);
 
   // Journal routes
-  app.post("/api/journal/entries", saveJournalEntry);
-  app.get("/api/journal/entries", getJournalEntries);
-  app.use("/api/journal", journalRoutes); //Added journal routes
+  app.use("/api/journal", journalRoutes); // Use the router for all journal routes
 
   // Vapi Voice Assistant routes
   app.use("/api/vapi", vapiRouter);

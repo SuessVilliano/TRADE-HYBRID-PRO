@@ -106,7 +106,7 @@ type Mood = {
 };
 
 // Make sure we're exporting the component correctly for lazy loading
-export function TradeJournal() {
+export const TradeJournal = () => {
   // State management
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [entryContent, setEntryContent] = useState('');

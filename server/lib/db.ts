@@ -20,18 +20,47 @@ try {
   }
 
   // Create drizzle database instance
-  db = drizzle(sql as any);
+  db = drizzle(sql);
 } catch (error) {
   console.error('Failed to initialize database connection:', error);
   // Create dummy instances to prevent app from crashing during build
   sql = {
     query: async () => ({ rows: [] }),
   };
+  
+  // This mock needs to be more complete to handle all common Drizzle operations
   db = {
     query: async () => [],
-    select: () => ({ from: () => ({ where: () => [] }) }),
-    insert: () => ({ values: () => ({ returning: () => [] }) }),
-    // Add other dummy methods as needed
+    select: () => ({ 
+      from: () => ({ 
+        where: () => [], 
+        orderBy: () => [],
+        execute: async () => []
+      }),
+      execute: async () => []
+    }),
+    insert: () => ({ 
+      values: () => ({ 
+        returning: () => [], 
+        execute: async () => []
+      }),
+      execute: async () => []
+    }),
+    delete: () => ({
+      where: () => ({
+        execute: async () => []
+      }),
+      execute: async () => []
+    }),
+    update: () => ({
+      set: () => ({
+        where: () => ({
+          execute: async () => []
+        }),
+        execute: async () => []
+      }),
+      execute: async () => []
+    })
   };
 }
 
