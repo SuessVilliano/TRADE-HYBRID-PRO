@@ -221,20 +221,142 @@ export function ABATEVTradePanel({ defaultSymbol = 'BTC/USD' }: ABATEVTradePanel
     setOrderStatus('pending');
     setIsConfirmModalOpen(false);
     
-    // Simulate order processing
-    setTimeout(() => {
-      setOrderStatus('filled');
-      
-      // Display success notification
-      toast.success(`Order ${tradeType === 'buy' ? 'bought' : 'sold'} ${quantity} ${symbol}`, {
-        description: `Executed at ${entryPrice || marketPrice}`
-      });
-      
-      // Reset form after successful order
+    const orderStartTime = Date.now();
+    
+    // Create trade details object
+    const tradeDetails = {
+      symbol,
+      direction: tradeType,
+      entryPrice: Number(entryPrice) || marketPrice,
+      stopLoss: Number(stopLoss),
+      takeProfit: Number(takeProfit),
+      quantity: Number(quantity),
+      broker: activeBroker || 'unknown',
+      timestamp: Date.now(),
+      orderType: 'market',
+      status: 'pending' as 'pending' | 'filled' | 'rejected' | 'cancelled',
+      id: `order-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+    };
+    
+    // Simulate order processing with some variance to simulate real-world conditions
+    const processingTime = 500 + Math.floor(Math.random() * 1500); // 500-2000ms
+    const successProbability = 0.95; // 95% success rate
+    
+    import('../../../src/lib/services/abatev-trade-analysis-service').then(({ abatevTradeAnalysisService }) => {
       setTimeout(() => {
-        setOrderStatus('idle');
-      }, 3000);
-    }, 2000);
+        const isSuccessful = Math.random() < successProbability;
+        const executionEndTime = Date.now();
+        const actualExecutionTime = executionEndTime - orderStartTime;
+        
+        // Calculate slippage - sometimes positive, sometimes negative
+        const slippagePercent = (Math.random() * 0.4) - 0.2; // -0.2% to +0.2%
+        const actualPrice = (Number(entryPrice) || marketPrice) * (1 + slippagePercent / 100);
+        
+        // Create execution result object
+        const executionResult = {
+          success: isSuccessful,
+          executionTime: actualExecutionTime,
+          slippage: slippagePercent,
+          latency: processingTime,
+          id: tradeDetails.id,
+          actualPrice,
+          timestamp: executionEndTime,
+          error: isSuccessful ? undefined : 'Broker connection timeout'
+        };
+        
+        if (isSuccessful) {
+          setOrderStatus('filled');
+          
+          // Display success notification
+          toast.success(`Order ${tradeType === 'buy' ? 'bought' : 'sold'} ${quantity} ${symbol}`, {
+            description: `Executed at ${actualPrice.toFixed(2)}`
+          });
+          
+          // Analyze the trade execution
+          abatevTradeAnalysisService.analyzeTrade(tradeDetails, executionResult)
+            .then(analysisResult => {
+              console.log('ABATEV Trade Analysis:', analysisResult);
+              
+              // If there are any flagged issues, show a notification
+              if (analysisResult.flaggedIssues.length > 0) {
+                const severityCount = {
+                  low: analysisResult.flaggedIssues.filter(i => i.severity === 'low').length,
+                  medium: analysisResult.flaggedIssues.filter(i => i.severity === 'medium').length, 
+                  high: analysisResult.flaggedIssues.filter(i => i.severity === 'high').length
+                };
+                
+                if (severityCount.high > 0) {
+                  toast.warning('Trade execution issues detected', {
+                    description: `${severityCount.high} high severity issue(s) found with your trade execution.`,
+                  });
+                } else if (severityCount.medium > 0) {
+                  toast.info('Trade execution notice', {
+                    description: `${severityCount.medium} medium severity issue(s) found with your trade execution.`,
+                  });
+                }
+                
+                // Auto-resolve issues if possible
+                abatevTradeAnalysisService.autoResolveIssues(analysisResult, tradeDetails)
+                  .then(resolution => {
+                    if (resolution.resolved) {
+                      toast.success('Issues auto-resolved', {
+                        description: resolution.resolutionSteps[0]
+                      });
+                    }
+                  });
+                
+                // Auto-escalate severe issues
+                abatevTradeAnalysisService.autoEscalateIssues(analysisResult);
+              }
+              
+              // If confidence score is low, show recommendation
+              if (analysisResult.confidenceScore < 70) {
+                toast.info('Execution quality alert', {
+                  description: 'ABATEV recommends reviewing execution settings for optimal performance.',
+                });
+              }
+            })
+            .catch(error => {
+              console.error('Error analyzing trade:', error);
+            });
+        } else {
+          setOrderStatus('rejected');
+          
+          // Display error notification
+          toast.error('Order execution failed', {
+            description: 'The broker reported an error executing your order. Please try again.'
+          });
+          
+          // Auto-escalate the failed trade
+          abatevTradeAnalysisService.analyzeTrade(
+            { ...tradeDetails, status: 'rejected', error: 'Broker connection timeout' },
+            executionResult
+          ).then(analysisResult => {
+            abatevTradeAnalysisService.autoEscalateIssues(analysisResult);
+          });
+        }
+        
+        // Reset order status after a delay
+        setTimeout(() => {
+          setOrderStatus('idle');
+        }, 3000);
+      }, processingTime);
+    }).catch(error => {
+      console.error('Error importing ABATEV trade analysis service:', error);
+      
+      // Fallback execution without analysis
+      setTimeout(() => {
+        setOrderStatus('filled');
+        
+        toast.success(`Order ${tradeType === 'buy' ? 'bought' : 'sold'} ${quantity} ${symbol}`, {
+          description: `Executed at ${entryPrice || marketPrice}`
+        });
+        
+        setTimeout(() => {
+          setOrderStatus('idle');
+        }, 3000);
+      }, 2000);
+    });
   };
   
   // Handle signal coming from the trading signals panel
@@ -286,11 +408,12 @@ export function ABATEVTradePanel({ defaultSymbol = 'BTC/USD' }: ABATEVTradePanel
       
       <CardContent>
         <Tabs defaultValue="broker-comparison">
-          <TabsList className="grid grid-cols-4 mb-4">
+          <TabsList className="grid grid-cols-5 mb-4">
             <TabsTrigger value="spot">Spot</TabsTrigger>
             <TabsTrigger value="futures">Futures</TabsTrigger>
             <TabsTrigger value="options">Options</TabsTrigger>
             <TabsTrigger value="broker-comparison" className="text-xs font-bold bg-green-100 dark:bg-green-900/30">Comparison</TabsTrigger>
+            <TabsTrigger value="ai-analysis" className="text-xs font-bold bg-purple-100 dark:bg-purple-900/30">AI Analysis</TabsTrigger>
           </TabsList>
           
           <TabsContent value="spot" className="space-y-4">
