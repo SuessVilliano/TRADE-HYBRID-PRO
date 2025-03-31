@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useUserStore } from '@/lib/stores/useUserStore';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
@@ -9,20 +8,23 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Info } from 'lucide-react';
-import logo from '@/assets/logo.png';
+
+//This line is changed to use a direct path instead of an import statement
+const logo = '/logo.png';
+
 
 export default function LoginPage() {
   const { user, isAuthenticated, login } = useUserStore();
   const { isWalletAuthenticated, loginWithSolana, isAuthenticatingWithSolana, solanaAuthError } = useSolanaAuth();
   const navigate = useNavigate();
-  
+
   // Local state
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Check for saved credentials
   useEffect(() => {
     const savedUsername = localStorage.getItem('rememberedUsername');
@@ -30,7 +32,7 @@ export default function LoginPage() {
       setUsername(savedUsername);
     }
   }, []);
-  
+
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated || isWalletAuthenticated) {
@@ -43,10 +45,10 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
+
     try {
       const success = await login(username, password);
-      
+
       if (success) {
         // Save username if "remember me" is checked
         if (rememberMe) {
@@ -54,7 +56,7 @@ export default function LoginPage() {
         } else {
           localStorage.removeItem('rememberedUsername');
         }
-        
+
         navigate('/');
       } else {
         setError('Invalid username or password');
@@ -66,7 +68,7 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
-  
+
   // Handle wallet login
   const handleWalletLogin = async () => {
     try {
@@ -232,7 +234,7 @@ export default function LoginPage() {
               )}
             </Button>
           </div>
-          
+
           <Button 
             onClick={() => window.location.href = '/api/whop/login'}
             variant="outline"
@@ -243,7 +245,7 @@ export default function LoginPage() {
             </svg>
             Login with Whop
           </Button>
-          
+
           <div className="relative pt-4">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
@@ -252,7 +254,7 @@ export default function LoginPage() {
               <span className="px-2 bg-background text-muted-foreground">Or try demo</span>
             </div>
           </div>
-          
+
           <Button 
             onClick={handleDemoLogin}
             variant="secondary"
@@ -260,7 +262,7 @@ export default function LoginPage() {
           >
             Enter Demo Mode
           </Button>
-          
+
           <p className="text-center text-sm text-muted-foreground mt-6">
             Don't have an account?{" "}
             <Link to="/signup" className="text-primary hover:underline">
