@@ -49,6 +49,7 @@ const LoginPage = lazy(() => import('./pages/login'));
 const SignupPage = lazy(() => import('./pages/signup')); // Added import for Signup
 const ForgotPasswordPage = lazy(() => import('./pages/forgot-password')); // Added import for Forgot Password
 const AdvancedTradingDashboard = lazy(() => import('./pages/advanced-trading-dashboard'));
+const MatrixVisualizationDemo = lazy(() => import('./pages/matrix-visualization-demo'));
 
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
@@ -198,6 +199,7 @@ function AppContent() {
               <Link to="/trading-signals" className="hover:text-blue-400 transition-colors">Signals</Link>
               <Link to="/app" className="hover:text-blue-400 transition-colors">App</Link>
               <Link to="/affiliate" className="hover:text-blue-400 transition-colors">Affiliate</Link>
+              <Link to="/matrix-visualization" className="hover:text-blue-400 transition-colors">Matrix</Link>
               <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Game Center</Link>
               <Link to="/trade-simulator" className="hover:text-blue-400 transition-colors">Trade Simulator</Link>
               <Link to="/shop" className="hover:text-blue-400 transition-colors">Shop</Link>
@@ -577,6 +579,20 @@ function AppContent() {
               </div>
             }>
               {typeof window !== 'undefined' && <ShopPage />}
+            </Suspense>
+          } />
+          
+          {/* Matrix visualization */}
+          <Route path="/matrix-visualization" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading Matrix Visualization...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <MatrixVisualizationDemo />}
             </Suspense>
           } />
         </Routes>
