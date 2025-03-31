@@ -1,60 +1,55 @@
-import { ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 /**
- * Combines multiple class names and applies Tailwind's merge strategy.
- * @param inputs Any number of class values to be merged
- * @returns A merged and cleaned up class string
+ * Merges class names using clsx and tailwind-merge
  */
-export function cn(...inputs: ClassValue[]) {
+export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 
 /**
- * Formats a number into a compact string representation (eg: 1,200 -> 1.2K)
- * @param num The number to format
- * @returns A compact string representation
+ * Formats a number into a compact representation (e.g., 1.2k, 3.5M)
+ * @param value The number to format
+ * @param maximumFractionDigits Maximum number of decimal places to show
+ * @returns The formatted string
  */
-export function formatCompactNumber(num: number): string {
-  const formatter = Intl.NumberFormat('en', { notation: 'compact' });
-  return formatter.format(num);
+export function formatCompactNumber(value: number, maximumFractionDigits: number = 1): string {
+  if (value === 0) return '0';
+  
+  const formatter = new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    maximumFractionDigits
+  });
+  
+  return formatter.format(value);
 }
 
 /**
- * Formats a number as currency (USD by default)
- * @param amount The amount to format
+ * Formats a number as currency (e.g., $1,234.56)
+ * @param value The number to format
  * @param currency The currency code (default: 'USD')
- * @returns A formatted currency string
+ * @param locale The locale code (default: 'en-US')
+ * @returns The formatted string
  */
-export function formatCurrency(amount: number, currency: string = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
+export function formatCurrency(value: number, currency: string = 'USD', locale: string = 'en-US'): string {
+  if (isNaN(value)) return '$0.00';
+
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
-  }).format(amount);
+  }).format(value);
 }
 
 /**
- * Checks if the specified secrets/environment variables are available in the application
- * @param secretKeys An array of secret key names to check
- * @returns A Promise that resolves to a boolean indicating if all secrets are available
+ * Function to check API secrets 
+ * @param secretKey The name of the secret to check
+ * @returns Boolean indicating whether the secret is available
  */
-export async function check_secrets(secretKeys: string[]): Promise<boolean> {
-  try {
-    // In a browser environment, we can't directly access environment variables
-    // This function would typically call a server endpoint to check for secrets
-    // or use some client-side configuration
-    
-    // For client-side implementation, we'll check if the keys are defined in window.__ENV__
-    // or any other client-side config mechanism the app is using
-    console.log(`Checking for secrets: ${secretKeys.join(', ')}`);
-    
-    // In a real implementation, this might check with a server endpoint
-    // But for now, we'll just simulate checking the keys
-    return true;
-  } catch (error) {
-    console.error('Error checking secrets:', error);
-    return false;
-  }
+export function check_secrets(secretKey: string): boolean {
+  // This is a stub function that always returns true
+  // In production, this would actually check for environment variables
+  return true;
 }

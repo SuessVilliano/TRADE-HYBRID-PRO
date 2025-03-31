@@ -89,7 +89,9 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
   const fetchSignals = async () => {
     setIsLoading(true);
     try {
+      console.log("Fetching signals from Google Sheets...");
       const allSignals = await googleSheetsService.fetchAllSignals();
+      console.log("Signals received:", allSignals.length, "signals");
       setSignals(allSignals);
       
       // Extract unique assets from signals
@@ -99,8 +101,100 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
       if (assets.size > 0 && !selectedAsset) {
         setSelectedAsset(Array.from(assets)[0]);
       }
+      
+      // Show a debug message to the user if no signals were found
+      if (allSignals.length === 0) {
+        setUploadStatus({
+          success: false,
+          message: 'No signals found in Google Sheets. The demo version uses fallback data for testing.'
+        });
+        
+        // Add some demo signals for testing
+        const demoSignals = [
+          {
+            id: "demo-btc-1",
+            timestamp: new Date().toISOString(),
+            asset: "BTCUSDT",
+            direction: "long" as const,
+            entryPrice: 50000,
+            stopLoss: 49000,
+            takeProfit1: 52000,
+            status: "active" as const,
+            marketType: "crypto" as const,
+            provider: "Paradox" as const,
+            accuracy: 0.89
+          },
+          {
+            id: "demo-eth-1",
+            timestamp: new Date().toISOString(),
+            asset: "ETHUSDT",
+            direction: "short" as const,
+            entryPrice: 3000,
+            stopLoss: 3150,
+            takeProfit1: 2800,
+            status: "active" as const,
+            marketType: "crypto" as const,
+            provider: "Hybrid" as const,
+            accuracy: 0.92
+          }
+        ];
+        
+        setSignals(demoSignals);
+        
+        // Extract assets from demo signals
+        const demoAssets = new Set(demoSignals.map(signal => signal.asset));
+        setAvailableAssets(Array.from(demoAssets));
+        
+        if (demoAssets.size > 0 && !selectedAsset) {
+          setSelectedAsset(Array.from(demoAssets)[0]);
+        }
+      }
     } catch (error) {
       console.error('Error fetching signals:', error);
+      setUploadStatus({
+        success: false,
+        message: 'Error fetching signals. Using demo signals for testing.'
+      });
+      
+      // Add demo signals as fallback
+      const demoSignals = [
+        {
+          id: "demo-btc-1",
+          timestamp: new Date().toISOString(),
+          asset: "BTCUSDT",
+          direction: "long" as const,
+          entryPrice: 50000,
+          stopLoss: 49000,
+          takeProfit1: 52000,
+          status: "active" as const,
+          marketType: "crypto" as const,
+          provider: "Paradox" as const,
+          accuracy: 0.89
+        },
+        {
+          id: "demo-eth-1",
+          timestamp: new Date().toISOString(),
+          asset: "ETHUSDT",
+          direction: "short" as const,
+          entryPrice: 3000,
+          stopLoss: 3150,
+          takeProfit1: 2800,
+          status: "active" as const,
+          marketType: "crypto" as const,
+          provider: "Hybrid" as const,
+          accuracy: 0.92
+        }
+      ];
+      
+      setSignals(demoSignals);
+      
+      // Extract assets from demo signals
+      const demoAssets = new Set(demoSignals.map(signal => signal.asset));
+      setAvailableAssets(Array.from(demoAssets));
+      
+      if (demoAssets.size > 0 && !selectedAsset) {
+        setSelectedAsset(Array.from(demoAssets)[0]);
+      }
     } finally {
       setIsLoading(false);
     }

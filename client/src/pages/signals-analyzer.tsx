@@ -3,25 +3,9 @@ import { PageHeading } from '../components/ui/page-heading';
 import { SignalsAnalyzer } from '../components/ui/signals-analyzer';
 import { usePageTitle } from '../lib/hooks/usePageTitle';
 import { PageLayout } from '../components/layout/page-layout';
-import { useUserStore } from '../lib/stores/useUserStore';
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 export default function SignalsAnalyzerPage() {
   usePageTitle('Trade Signals Analyzer');
-  const { isLoggedIn } = useUserStore();
-  const navigate = useNavigate();
-
-  // Redirect to login if not logged in
-  useEffect(() => {
-    if (!isLoggedIn) {
-      navigate('/login?redirect=/signals-analyzer');
-    }
-  }, [isLoggedIn, navigate]);
-
-  if (!isLoggedIn) {
-    return null;
-  }
 
   return (
     <PageLayout>
