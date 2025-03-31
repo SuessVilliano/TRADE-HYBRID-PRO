@@ -303,6 +303,39 @@ export function CustomizableTradingDashboard({
     setDraggedPanel(null);
   };
   
+  // Add event listeners for drag operations
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (draggedPanel && editMode) {
+        e.preventDefault();
+        const panel = document.getElementById(`panel-${draggedPanel.id}`);
+        if (!panel) return;
+        
+        const newX = e.clientX - draggedPanel.offsetX;
+        const newY = e.clientY - draggedPanel.offsetY;
+        
+        panel.style.position = 'absolute';
+        panel.style.left = `${newX}px`;
+        panel.style.top = `${newY}px`;
+        panel.style.zIndex = '50';
+      }
+    };
+    
+    const handleMouseUp = () => {
+      if (draggedPanel && editMode) {
+        handlePanelDragEnd();
+      }
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [draggedPanel, editMode]);
+  
   // Export layout configuration to JSON file
   const exportLayout = () => {
     try {
