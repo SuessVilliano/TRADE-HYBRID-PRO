@@ -15,7 +15,10 @@ import { useLocalStorage } from '../../hooks/use-local-storage';
 import { createPortal } from 'react-dom';
 import { DexChart } from './dex-chart';
 import TradingViewWidget from './TradingViewWidget';
+import { TradeSignals } from './trade-signals';
+import { SignalNotifications } from './signal-notifications';
 import { cn } from '../../lib/utils';
+import { googleSheetsService, TradeSignal } from '../../lib/services/google-sheets-service';
 import { Switch } from './switch';
 import { Label } from './label';
 import {
@@ -124,7 +127,32 @@ export function CustomizableTradingDashboard({
   const [draggedPanel, setDraggedPanel] = useState<{ id: string, startX: number, startY: number, offsetX: number, offsetY: number } | null>(null);
   const [autoSaveEnabled, setAutoSaveEnabled] = useState<boolean>(true);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [signals, setSignals] = useState<TradeSignal[]>([]);
+  const [selectedSignalId, setSelectedSignalId] = useState<string | null>(null);
   const autoSaveIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Fetch signals from Google Sheets
+  const fetchSignals = useCallback(async () => {
+    try {
+      const allSignals = await googleSheetsService.fetchAllSignals();
+      setSignals(allSignals);
+      console.log('Fetched signals:', allSignals.length);
+    } catch (error) {
+      console.error('Error fetching signals:', error);
+    }
+  }, []);
+  
+  // Fetch signals on component mount
+  useEffect(() => {
+    fetchSignals();
+    
+    // Refresh signals every 5 minutes
+    const interval = setInterval(() => {
+      fetchSignals();
+    }, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, [fetchSignals]);
   
   // Autosave functionality
   useEffect(() => {
@@ -426,39 +454,11 @@ export function CustomizableTradingDashboard({
         );
       case 'trading-signals':
         return (
-          <div className="p-4 h-full">
-            <h3 className="text-lg font-medium mb-4">Trading Signals</h3>
-            <div className="space-y-3">
-              <div className="p-2 rounded bg-green-500/10 border border-green-500/20">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">BTC/USD</span>
-                  <span className="text-green-500 font-bold">BUY</span>
-                </div>
-                <div className="text-sm text-muted-foreground mt-1">
-                  Strong bullish momentum detected
-                </div>
-              </div>
-              
-              <div className="p-2 rounded bg-yellow-500/10 border border-yellow-500/20">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">ETH/USD</span>
-                  <span className="text-yellow-500 font-bold">NEUTRAL</span>
-                </div>
-                <div className="text-sm text-muted-foreground mt-1">
-                  Consolidation in progress
-                </div>
-              </div>
-              
-              <div className="p-2 rounded bg-red-500/10 border border-red-500/20">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">SOL/USD</span>
-                  <span className="text-red-500 font-bold">SELL</span>
-                </div>
-                <div className="text-sm text-muted-foreground mt-1">
-                  Bearish divergence on RSI
-                </div>
-              </div>
-            </div>
+          <div className="h-full overflow-auto">
+            <TradeSignals 
+              signals={signals} 
+              onViewSignal={(signalId) => setSelectedSignalId(signalId)}
+            />
           </div>
         );
       case 'order-entry':
@@ -670,6 +670,9 @@ export function CustomizableTradingDashboard({
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Signal Notifications */}
+          <SignalNotifications signals={signals} onShowSignal={setSelectedSignalId} />
+          
           {/* Autosave Toggle */}
           <div className="flex items-center gap-2 mr-4">
             <div className="flex items-center space-x-2">

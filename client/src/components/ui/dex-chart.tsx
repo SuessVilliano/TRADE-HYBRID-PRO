@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 import { Card } from './card';
 import { Button } from './button';
 import { Tabs, TabsList, TabsTrigger } from './tabs';
