@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 export default function TradeRunnerWebBrowserPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [url, setUrl] = useState('https://app.tradehybrid.club/51411/traderunners');
+  const [url, setUrl] = useState('https://pro.tradehybrid.club/51411/traderunners');
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {

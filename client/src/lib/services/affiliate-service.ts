@@ -5,7 +5,7 @@ const REFERRAL_KEY = 'thc_referral_id';
 const REFERRAL_PARAM = 'ref';
 const REFERRAL_EXPIRY_DAYS = 30;
 // Default domain for affiliate links
-const DEFAULT_DOMAIN = 'https://app.tradehybrid.club';
+const DEFAULT_DOMAIN = 'https://pro.tradehybrid.club';
 
 /**
  * Utility for tracking and managing affiliate referrals
@@ -18,7 +18,7 @@ export const AffiliateService = {
   trackReferralFromUrl: (): string | null => {
     if (typeof window === 'undefined') return null;
     
-    // First check if referral code is in the URL path format (app.tradehybrid.club/THC29CH8AF)
+    // First check if referral code is in the URL path format (pro.tradehybrid.club/THC29CH8AF)
     const pathParts = window.location.pathname.split('/');
     let referralCode = pathParts[1]?.length === 10 ? pathParts[1] : null;
     
@@ -87,7 +87,7 @@ export const AffiliateService = {
   /**
    * Generate a referral link with the given code
    * @param referralCode The referral code to include in the link
-   * @returns A full referral link using path format (app.tradehybrid.club/THC29CH8AF)
+   * @returns A full referral link using path format (pro.tradehybrid.club/THC29CH8AF)
    */
   generateReferralLink: (referralCode: string): string => {
     // Use the path format for referral links as shown in the screenshots

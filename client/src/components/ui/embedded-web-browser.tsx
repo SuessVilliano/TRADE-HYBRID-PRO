@@ -14,7 +14,7 @@ interface EmbeddedWebBrowserProps {
 }
 
 export function EmbeddedWebBrowser({
-  initialUrl = "https://app.tradehybrid.club/51411/traderunners/",
+  initialUrl = "https://pro.tradehybrid.club/51411/traderunners/",
   title = "App",
   className = "",
   height = "calc(100vh - 180px)",

@@ -645,13 +645,24 @@ function AppContent() {
         </Routes>
       </main>
 
-      {/* Footer with Settings */}
+      {/* Combined Footer */}
       <footer className="bg-slate-800 border-t border-slate-700 py-3">
-        <div className="container mx-auto flex justify-between items-center px-4">
-          <div className="text-sm text-slate-400">
-            &copy; {new Date().getFullYear()} Trade Hybrid. All rights reserved.
-          </div>
-          <div className="flex items-center gap-4">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            {/* Left section - Logo and copyright */}
+            <div className="flex items-center gap-2">
+              <img src="/images/trade_hybrid_logo.png" alt="Trade Hybrid Logo" className="h-6 w-6" />
+              <p className="text-sm text-slate-400">&copy; {new Date().getFullYear()} Trade Hybrid. All rights reserved.</p>
+            </div>
+            
+            {/* Middle section - Links */}
+            <div className="flex gap-6">
+              <a href="https://www.tradehybrid.club/terms" target="_blank" rel="noopener noreferrer" className="text-sm hover:text-blue-400 transition-colors">Terms</a>
+              <a href="https://www.tradehybrid.club/privacy" target="_blank" rel="noopener noreferrer" className="text-sm hover:text-blue-400 transition-colors">Privacy</a>
+              <a href="https://www.tradehybrid.club/contact" target="_blank" rel="noopener noreferrer" className="text-sm hover:text-blue-400 transition-colors">Contact</a>
+            </div>
+            
+            {/* Right section - Settings button */}
             <Button 
               variant="ghost" 
               size="sm"
@@ -667,23 +678,6 @@ function AppContent() {
           </div>
         </div>
       </footer>
-
-      {/* Footer - non-sticky */}
-      <div className="border-t border-slate-700 p-4 text-sm">
-        <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-4 md:mb-0 flex items-center gap-2">
-              <img src="/images/trade_hybrid_logo.png" alt="Trade Hybrid Logo" className="h-6 w-6" />
-              <p>&copy; {new Date().getFullYear()} Trade Hybrid. All rights reserved.</p>
-            </div>
-            <div className="flex gap-6">
-              <a href="https://www.tradehybrid.club/terms" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">Terms</a>
-              <a href="https://www.tradehybrid.club/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">Privacy</a>
-              <a href="https://www.tradehybrid.club/contact" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">Contact</a>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

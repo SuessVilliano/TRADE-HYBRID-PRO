@@ -30,9 +30,21 @@ export default function GameCenterPage() {
                 <X className="h-5 w-5" />
               </Button>
             </div>
+            {/* URL display bar */}
+            <div className="bg-slate-800 border-b border-slate-700 px-3 py-2 flex items-center">
+              <div className="flex-1 bg-slate-900 rounded-md px-3 py-1.5 text-sm text-slate-300 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-green-500">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M8 12h8" />
+                  <path d="M12 8v8" />
+                </svg>
+                <span className="truncate">https://pro.tradehybrid.club/51411/traderunners</span>
+              </div>
+            </div>
+            
             <div className="flex-1 p-0 overflow-hidden">
               <iframe
-                src="https://app.tradehybrid.club/51411/traderunners"
+                src="https://pro.tradehybrid.club/51411/traderunners"
                 className="w-full h-full border-0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
