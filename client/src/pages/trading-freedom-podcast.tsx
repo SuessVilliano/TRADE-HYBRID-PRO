@@ -18,7 +18,7 @@ const podcastEpisodes = [
     date: 'Mar 28, 2025',
     duration: '52 min',
     image: '/assets/podcast/episode50.jpg',
-    embedUrl: 'https://open.spotify.com/embed/episode/1g4d7vTIxXgNmG5mON6hmS',
+    embedUrl: 'https://wattbaa.profit-vibe.com/album/17695/meta-sv/trading-for-freedom-podcast-series/embed',
     tags: ['risk-management', 'volatility', 'trading-psychology'],
     featured: true
   },
@@ -30,7 +30,7 @@ const podcastEpisodes = [
     date: 'Mar 21, 2025',
     duration: '48 min',
     image: '/assets/podcast/episode49.jpg',
-    embedUrl: 'https://open.spotify.com/embed/episode/5V4XZWkZJbWZLfXhpFM8YP',
+    embedUrl: 'https://wattbaa.profit-vibe.com/album/17695/meta-sv/trading-for-freedom-podcast-series/embed',
     tags: ['solana', 'defi', 'crypto'],
     featured: true
   },
@@ -42,7 +42,7 @@ const podcastEpisodes = [
     date: 'Mar 14, 2025',
     duration: '61 min',
     image: '/assets/podcast/episode48.jpg',
-    embedUrl: 'https://open.spotify.com/embed/episode/3TZhvWrfIcgxboQJCsYlrP',
+    embedUrl: 'https://wattbaa.profit-vibe.com/album/17695/meta-sv/trading-for-freedom-podcast-series/embed',
     tags: ['trading-psychology', 'success-habits', 'professional-trading'],
     featured: false
   },
@@ -54,7 +54,7 @@ const podcastEpisodes = [
     date: 'Mar 7, 2025',
     duration: '55 min',
     image: '/assets/podcast/episode47.jpg',
-    embedUrl: 'https://open.spotify.com/embed/episode/7yJaeSGJB7yeQvmfSZFNnD',
+    embedUrl: 'https://wattbaa.profit-vibe.com/album/17695/meta-sv/trading-for-freedom-podcast-series/embed',
     tags: ['technical-analysis', 'chart-patterns', 'trading-strategy'],
     featured: false
   },
@@ -66,7 +66,7 @@ const podcastEpisodes = [
     date: 'Feb 28, 2025',
     duration: '47 min',
     image: '/assets/podcast/episode46.jpg',
-    embedUrl: 'https://open.spotify.com/embed/episode/4nYCqmFBU0XzJHgSzjyLs5',
+    embedUrl: 'https://wattbaa.profit-vibe.com/album/17695/meta-sv/trading-for-freedom-podcast-series/embed',
     tags: ['prop-trading', 'career-development', 'professional-trading'],
     featured: false
   }
@@ -129,9 +129,10 @@ const TradingFreedomPodcast: React.FC = () => {
                   <iframe 
                     src={selectedEpisode.embedUrl}
                     width="100%" 
-                    height="232" 
-                    frameBorder="0" 
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                    height="450" 
+                    scrolling="no"
+                    frameBorder="no" 
+                    allow="autoplay" 
                     loading="lazy"
                     title={`Trading for Freedom - Episode ${selectedEpisode.number}`}
                     className="w-full"
