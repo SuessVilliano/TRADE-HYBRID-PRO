@@ -41,6 +41,7 @@ const NotificationSettingsPage = lazy(() => import('./pages/notification-setting
 const AffiliatePage = lazy(() => import('./pages/affiliate'));
 const EventsPage = lazy(() => import('./pages/events'));
 const TradeSimulatorPage = lazy(() => import('./pages/trade-simulator'));
+const EducationalGamesPage = lazy(() => import('./pages/educational-games')); // Added import for Educational Games
 const ShopPage = lazy(() => import('./pages/shop'));
 const LoginPage = lazy(() => import('./pages/login')); // Added import for LoginPage
 const AdvancedTradingDashboard = lazy(() => import('./pages/advanced-trading-dashboard'));
@@ -535,6 +536,18 @@ function AppContent() {
               </div>
             }>
               {typeof window !== 'undefined' && <TradeSimulatorPage />}
+            </Suspense>
+          } />
+          <Route path="/educational-games" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading educational games...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <EducationalGamesPage />}
             </Suspense>
           } />
           <Route path="/affiliate/*" element={
