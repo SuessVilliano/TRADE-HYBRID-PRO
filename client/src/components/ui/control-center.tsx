@@ -68,7 +68,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
   selectedSymbol,
   onChangeSymbol,
   className = '',
-  initialPanels = ['chart', 'signals', 'smart-trade', 'scanner', 'advanced-ai', 'economic-calendar', 'market-overview', 'stock-heatmap', 'crypto-heatmap', 'zen'],
+  initialPanels = ['chart', 'signals', 'smart-trade', 'scanner', 'economic-calendar', 'market-overview', 'stock-heatmap', 'crypto-heatmap', 'zen'],
 }) => {
   // State to track active panels and their layout
   const [activePanels, setActivePanels] = useState<string[]>([]);
@@ -281,19 +281,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
       defaultSize: { width: '100%', height: '400px' },
       defaultPosition: { x: 0, y: 1530 }
     },
-    'advanced-ai': {
-      id: 'advanced-ai',
-      type: 'advanced-ai',
-      title: 'AI Trading Assistant',
-      icon: <Sparkles size={16} />,
-      component: (
-        <React.Suspense fallback={<div className="h-full flex items-center justify-center">Loading AI Trading Assistant...</div>}>
-          <AIAssistantLazy selectedSymbol={selectedSymbol} />
-        </React.Suspense>
-      ),
-      defaultSize: { width: '400px', height: '600px' },
-      defaultPosition: { x: 760, y: 510 }
-    },
+
     'stock-heatmap': {
       id: 'stock-heatmap',
       type: 'stock-heatmap',
