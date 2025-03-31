@@ -1,16 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useLearningStore, useCourseProgress, type Module, type Lesson } from '../../lib/stores/useLearningStore';
+import { useLearningStore, type Module, type Lesson, type Course } from '../../lib/stores/useLearningStore';
 
 const CourseDetail: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   
-  const { courses, fetchCourse, isLoading, error, setCurrent } = useLearningStore();
+  const { 
+    courses, 
+    fetchCourse, 
+    isLoading, 
+    error, 
+    fetchUserProgress,
+    userProgress,
+    setCurrentLesson,
+    setCurrentModule
+  } = useLearningStore();
   const [activeModuleIndex, setActiveModuleIndex] = useState<number>(0);
   
   const courseIdNum = parseInt(courseId || '0');
-  const { progress, updateProgress } = useCourseProgress(courseIdNum);
+  // Get progress for this specific course
+  const progress = userProgress.find(p => p.course_id === courseIdNum);
   
   // Find the course in our store
   const course = courses.find(c => c.id === courseIdNum);
@@ -26,27 +36,28 @@ const CourseDetail: React.FC = () => {
       }
       
       // If we have progress data, set the active module based on where the user left off
-      if (progress?.moduleId) {
-        const moduleIndex = course?.modules?.findIndex(m => m.id === progress.moduleId) || 0;
+      if (progress?.module_id) {
+        const moduleIndex = course?.modules?.findIndex(m => m.id === progress.module_id) || 0;
         if (moduleIndex >= 0) {
           setActiveModuleIndex(moduleIndex);
         }
       }
     }
-  }, [courseIdNum, fetchCourse, progress?.moduleId, course]);
+  }, [courseIdNum, fetchCourse, progress?.module_id, course]);
   
   // Handle module selection
   const handleModuleSelect = (index: number) => {
     setActiveModuleIndex(index);
     if (course && course.modules && course.modules[index]) {
-      setCurrent(courseIdNum, course.modules[index].id);
+      setCurrentModule(course.modules[index]);
     }
   };
   
   // Handle lesson selection
   const handleLessonSelect = (lesson: Lesson) => {
     if (course && activeModule) {
-      setCurrent(courseIdNum, activeModule.id, lesson.id);
+      setCurrentModule(activeModule);
+      setCurrentLesson(lesson);
       navigate(`/learning/courses/${courseId}/lessons/${lesson.id}`);
     }
   };
@@ -58,14 +69,14 @@ const CourseDetail: React.FC = () => {
     // If the user has completed the course, all modules are 100%
     if (progress.completed) return 100;
     
-    // If this is a past module (based on order), it's 100%
-    if (module.order < (activeModule?.order || 0)) return 100;
+    // If this is a past module (based on order_num), it's 100%
+    if (module.order_num < (activeModule?.order_num || 0)) return 100;
     
     // If this is a future module, it's 0%
-    if (module.order > (activeModule?.order || 0)) return 0;
+    if (module.order_num > (activeModule?.order_num || 0)) return 0;
     
     // For the current module, return percentage based on lessons
-    return progress.percentageComplete || 0;
+    return progress.percentage_complete || 0;
   };
   
   // Function to render progress bar
@@ -135,9 +146,9 @@ const CourseDetail: React.FC = () => {
       
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="relative">
-          {course.imageUrl ? (
+          {course.image_url ? (
             <img 
-              src={course.imageUrl} 
+              src={course.image_url} 
               alt={course.title} 
               className="w-full h-64 object-cover"
             />
@@ -154,7 +165,7 @@ const CourseDetail: React.FC = () => {
                 {course.level} Level
               </span>
               <span className="bg-black/30 text-white px-3 py-1 rounded-full text-sm">
-                {Math.round(course.durationMinutes / 60)} hrs
+                {Math.round(course.duration_minutes / 60)} hrs
               </span>
             </div>
           </div>
@@ -213,14 +224,14 @@ const CourseDetail: React.FC = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Overall Completion</span>
-                        <span className="font-medium">{progress.percentageComplete}%</span>
+                        <span className="font-medium">{progress.percentage_complete}%</span>
                       </div>
-                      <ProgressBar percentage={progress.percentageComplete} />
+                      <ProgressBar percentage={progress.percentage_complete} />
                       
                       <div className="flex justify-between items-center mt-4">
                         <span className="text-gray-600">Last Accessed</span>
                         <span className="text-sm">
-                          {new Date(progress.lastAccessedAt).toLocaleDateString()}
+                          {new Date(progress.last_accessed_at).toLocaleDateString()}
                         </span>
                       </div>
                       
@@ -255,7 +266,7 @@ const CourseDetail: React.FC = () => {
                           <div className="flex justify-between items-center">
                             <h4 className="font-medium">{lesson.title}</h4>
                             <span className="text-sm text-gray-500">
-                              {lesson.durationMinutes} mins
+                              {lesson.duration_minutes} mins
                             </span>
                           </div>
                           <div className="mt-1 text-gray-500 text-sm line-clamp-2">
@@ -272,7 +283,7 @@ const CourseDetail: React.FC = () => {
                               </span>
                             )}
                             
-                            {lesson.videoUrl && (
+                            {lesson.video_url && (
                               <span className="text-red-600 mr-3 flex items-center">
                                 <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
