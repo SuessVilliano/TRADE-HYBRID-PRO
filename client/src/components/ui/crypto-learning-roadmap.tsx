@@ -22,7 +22,9 @@ export function CryptoLearningRoadmap({ onModuleSelect }: CryptoLearningRoadmapP
   const { 
     getJourneyById, 
     getModuleById,
+    getJourneyForModule,
     startModule,
+    startJourney,
     userProfile,
   } = useLearningJourneyStore();
 
@@ -73,18 +75,53 @@ export function CryptoLearningRoadmap({ onModuleSelect }: CryptoLearningRoadmapP
   const handleModuleClick = (moduleId: string) => {
     const module = getModuleById(moduleId);
     
-    if (!module) return;
+    if (!module) {
+      console.error(`Module with ID ${moduleId} not found`);
+      return;
+    }
     
     if (module.status === 'locked') {
       // Show prerequisites tooltip
       toggleModuleExpanded(moduleId);
     } else {
-      // Navigate to module or start it
-      if (onModuleSelect) {
-        onModuleSelect(moduleId);
-      } else {
-        startModule(moduleId);
-        navigate(`/learn/module/${moduleId}`);
+      try {
+        // Navigate to module or start it
+        if (onModuleSelect) {
+          onModuleSelect(moduleId);
+        } else {
+          console.log(`Handling click for module: ${moduleId}`);
+          
+          // Check if the journey exists and is active
+          if (!cryptoJourney) {
+            console.error('Crypto journey not found');
+            return;
+          }
+          
+          // Start the journey if it's not active yet
+          if (!cryptoJourney.isActive) {
+            console.log('Starting crypto journey:', cryptoJourney.id);
+            startJourney('crypto-journey');
+            
+            // Wait a bit to allow the journey to initialize
+            setTimeout(() => {
+              console.log('Starting module after journey activation');
+              startModule(moduleId);
+              navigate(`/learn/module/${moduleId}`);
+            }, 300);
+            return;
+          }
+          
+          // If the journey is already active, start the module directly
+          console.log('Journey already active, starting module');
+          startModule(moduleId);
+          
+          // Wrap navigation in a try-catch to prevent uncaught errors
+          navigate(`/learn/module/${moduleId}`);
+        }
+      } catch (error) {
+        console.error('Error navigating to module:', error);
+        // Show expanded view instead of crashing
+        toggleModuleExpanded(moduleId);
       }
     }
   };

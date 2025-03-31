@@ -22,6 +22,7 @@ export default function LearningModuleDetail() {
     getModuleById, 
     getJourneyForModule, 
     startModule, 
+    startJourney,
     updateModuleProgress,
     completeModule,
     getJourneyById
@@ -47,11 +48,23 @@ export default function LearningModuleDetail() {
   };
   
   useEffect(() => {
-    // If module exists and is available but not in progress, mark it as in progress
-    if (module && moduleId && module.status === 'available') {
+    // Ensure the journey is active and module is properly initialized
+    if (moduleId && journey && !journey.isActive) {
+      console.log('Starting journey:', journey.id);
+      startJourney(journey.id);
+      
+      // Wait a bit for the journey to initialize
+      setTimeout(() => {
+        if (module && module.status === 'available') {
+          console.log('Starting module after journey activation');
+          startModule(moduleId);
+        }
+      }, 300);
+    } else if (module && moduleId && module.status === 'available') {
+      // If journey is already active but module needs to be started
       startModule(moduleId);
     }
-  }, [module, moduleId, startModule]);
+  }, [module, moduleId, journey, startModule, startJourney]);
   
   // Update progress when changing sections
   useEffect(() => {
