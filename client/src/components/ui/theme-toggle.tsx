@@ -72,6 +72,33 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
       document.documentElement.style.setProperty('--text-color', '#1e293b'); // Dark text
     }
     
+    // Update all container elements with the theme
+    // Find all elements with the class min-h-screen (which are typically main app containers)
+    const containers = document.querySelectorAll('.min-h-screen');
+    containers.forEach(container => {
+      if (theme === 'dark') {
+        // Apply dark theme to each container
+        container.classList.remove('bg-white', 'bg-slate-50', 'bg-slate-100', 'text-slate-900');
+        container.classList.add('bg-slate-900', 'text-white');
+        
+        // Set dark background color directly on the element
+        (container as HTMLElement).style.backgroundColor = '#13111C'; // Dark purple background
+        
+        // Add gradient
+        (container as HTMLElement).style.backgroundImage = 'radial-gradient(circle at top right, rgba(124, 58, 237, 0.1), transparent 65%)';
+      } else {
+        // Apply light theme to each container
+        container.classList.remove('bg-slate-900', 'bg-slate-800', 'text-white');
+        container.classList.add('bg-white', 'text-slate-900');
+        
+        // Set light background color directly on the element
+        (container as HTMLElement).style.backgroundColor = '#F5F3FF'; // Light purple background
+        
+        // Add gradient
+        (container as HTMLElement).style.backgroundImage = 'radial-gradient(circle at top right, rgba(124, 58, 237, 0.1), transparent 65%)';
+      }
+    });
+    
     // Update app container and other key elements with cyberpunk theme
     const appContainer = document.getElementById('root');
     if (appContainer) {
@@ -97,6 +124,22 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
         appContainer.style.backgroundImage = 'radial-gradient(circle at top right, rgba(124, 58, 237, 0.1), transparent 65%)';
       }
     }
+    
+    // Also update any specific content containers that might be hard-coded
+    const bgSlate900Elements = document.querySelectorAll('[class*="bg-slate-900"]');
+    bgSlate900Elements.forEach(element => {
+      if (theme === 'light') {
+        // Replace dark backgrounds with light ones
+        element.classList.remove('bg-slate-900', 'bg-slate-800', 'bg-slate-700');
+        element.classList.add('bg-white');
+      } else {
+        // Ensure dark theme elements retain dark backgrounds
+        if (!element.classList.contains('bg-slate-900')) {
+          element.classList.add('bg-slate-900');
+        }
+        element.classList.remove('bg-white');
+      }
+    });
   }, [theme, mounted, updatePreferences]);
 
   const toggleTheme = () => {
