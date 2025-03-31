@@ -81,6 +81,14 @@ interface TradingSetup {
   winRate: number;
   avgProfit: number;
   count: number;
+  profitFactor?: number;
+  avgWinSize?: number;
+  avgLossSize?: number;
+  expectancy?: number;
+  bestTimeOfDay?: string;
+  bestDayOfWeek?: string;
+  bestMarketCondition?: string;
+  tags?: string[];
 }
 
 // Mood tracking types
@@ -108,10 +116,70 @@ export function TradeJournal() {
   const [lessonLearned, setLessonLearned] = useState<string>('');
   const [moodHistory, setMoodHistory] = useState<Mood[]>([]);
   const [tradingSetups, setTradingSetups] = useState<TradingSetup[]>([
-    { id: '1', name: 'Breakout', description: 'Trading breakouts of key levels', winRate: 0.68, avgProfit: 253, count: 42 },
-    { id: '2', name: 'Pullback', description: 'Buying dips in uptrends', winRate: 0.72, avgProfit: 189, count: 36 },
-    { id: '3', name: 'Range Play', description: 'Trading within established ranges', winRate: 0.65, avgProfit: 124, count: 28 },
-    { id: '4', name: 'Trend Continuation', description: 'Following strong trends', winRate: 0.77, avgProfit: 312, count: 35 },
+    { 
+      id: '1', 
+      name: 'Breakout', 
+      description: 'Trading breakouts of key levels', 
+      winRate: 0.68, 
+      avgProfit: 253, 
+      count: 42,
+      profitFactor: 2.3,
+      avgWinSize: 350,
+      avgLossSize: -190,
+      expectancy: 112,
+      bestTimeOfDay: 'Market Open',
+      bestDayOfWeek: 'Tuesday',
+      bestMarketCondition: 'High Volatility',
+      tags: ['Breakout', 'Momentum', 'Volume Spike']
+    },
+    { 
+      id: '2', 
+      name: 'Pullback', 
+      description: 'Buying dips in uptrends', 
+      winRate: 0.72, 
+      avgProfit: 189, 
+      count: 36,
+      profitFactor: 2.8,
+      avgWinSize: 280,
+      avgLossSize: -130,
+      expectancy: 136,
+      bestTimeOfDay: 'Mid-Day',
+      bestDayOfWeek: 'Wednesday',
+      bestMarketCondition: 'Uptrend',
+      tags: ['Pullback', 'Support', 'Trend Continuation']
+    },
+    { 
+      id: '3', 
+      name: 'Range Play', 
+      description: 'Trading within established ranges', 
+      winRate: 0.65, 
+      avgProfit: 124, 
+      count: 28,
+      profitFactor: 2.1,
+      avgWinSize: 210,
+      avgLossSize: -120,
+      expectancy: 80,
+      bestTimeOfDay: 'Afternoon',
+      bestDayOfWeek: 'Thursday',
+      bestMarketCondition: 'Low Volatility',
+      tags: ['Range Bound', 'Support/Resistance', 'Mean Reversion']
+    },
+    { 
+      id: '4', 
+      name: 'Trend Continuation', 
+      description: 'Following strong trends', 
+      winRate: 0.77, 
+      avgProfit: 312, 
+      count: 35,
+      profitFactor: 3.2,
+      avgWinSize: 420,
+      avgLossSize: -170,
+      expectancy: 240,
+      bestTimeOfDay: 'Mid-Day',
+      bestDayOfWeek: 'Monday',
+      bestMarketCondition: 'Strong Trend',
+      tags: ['Trend Following', 'Momentum', 'Higher Timeframe']
+    },
   ]);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
