@@ -17,6 +17,7 @@ import { DexChart } from './dex-chart';
 import TradingViewWidget from './TradingViewWidget';
 import { TradeSignals } from './trade-signals';
 import { SignalNotifications } from './signal-notifications';
+import { PersonalizedTradingInsights } from './personalized-trading-insights';
 import { cn } from '../../lib/utils';
 import { googleSheetsService, TradeSignal } from '../../lib/services/google-sheets-service';
 import { Switch } from './switch';

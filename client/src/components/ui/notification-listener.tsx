@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useToast } from './toaster';
+import { toast } from 'sonner';
 
 interface NotificationDetail {
   type: string;
@@ -12,15 +12,13 @@ interface NotificationDetail {
 }
 
 /**
- * This component listens for in-app notification events and displays them using the toast system
+ * This component listens for in-app notification events and displays them using the sonner toast system
  * It bridges the notification service with the toast UI
  */
 export const NotificationListener: React.FC = () => {
-  const { addToast } = useToast();
-  
   useEffect(() => {
     // Convert notification priority to toast type
-    const priorityToToastType = (priority: string) => {
+    const priorityToToastType = (priority: string): 'success' | 'info' | 'warning' | 'error' | 'default' => {
       switch (priority) {
         case 'high':
           return 'error';
@@ -34,7 +32,7 @@ export const NotificationListener: React.FC = () => {
     };
     
     // Convert notification type to toast type
-    const notificationTypeToToastType = (type: string) => {
+    const notificationTypeToToastType = (type: string): 'success' | 'info' | 'warning' | 'error' | 'default' => {
       switch (type) {
         case 'price-alert':
         case 'signal-entry':
@@ -58,15 +56,38 @@ export const NotificationListener: React.FC = () => {
       
       console.log('In-app notification received:', detail);
       
-      // Format message to include title and body
-      const message = `${detail.title}: ${detail.body}`;
+      // Show the notification as a toast
+      const toastType = notificationTypeToToastType(detail.type);
+      const duration = detail.priority === 'high' ? 10000 : 5000; // High priority toasts stay longer
       
-      // Add the notification as a toast
-      addToast({
-        type: notificationTypeToToastType(detail.type),
-        message,
-        duration: detail.priority === 'high' ? 10000 : 5000, // High priority toasts stay longer
-      });
+      // Handle different toast types
+      if (toastType === 'success') {
+        toast.success(detail.title, {
+          description: detail.body,
+          duration: duration,
+        });
+      } else if (toastType === 'error') {
+        toast.error(detail.title, {
+          description: detail.body,
+          duration: duration,
+        });
+      } else if (toastType === 'warning') {
+        toast.warning(detail.title, {
+          description: detail.body,
+          duration: duration,
+        });
+      } else if (toastType === 'info') {
+        toast.info(detail.title, {
+          description: detail.body,
+          duration: duration,
+        });
+      } else {
+        // Default case
+        toast(detail.title, {
+          description: detail.body,
+          duration: duration,
+        });
+      }
     };
     
     // Add event listener
@@ -76,7 +97,7 @@ export const NotificationListener: React.FC = () => {
     return () => {
       window.removeEventListener('in-app-notification', handleNotification);
     };
-  }, [addToast]);
+  }, []);
   
   // This component doesn't render anything
   return null;

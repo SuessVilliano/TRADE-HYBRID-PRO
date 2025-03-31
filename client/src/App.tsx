@@ -50,8 +50,8 @@ const AdvancedTradingDashboard = lazy(() => import('./pages/advanced-trading-das
 // Import the MicroLearningProvider and renderer
 import { MicroLearningProvider } from './lib/context/MicroLearningProvider';
 import { MicroLearningTipRenderer } from './components/ui/micro-learning-tip-renderer';
-import { Provider as ToastProvider } from './components/ui/toaster';
-import Toaster from './components/ui/toaster';
+// Using sonner toast instead of custom toaster
+import { Toaster } from './components/ui/sonner';
 import { NotificationListener } from './components/ui/notification-listener';
 import { FeatureDisclosureProvider, useFeatureDisclosure, UserExperienceLevel } from './lib/context/FeatureDisclosureProvider';
 import { ExperienceLevelSelector } from './components/ui/interactive-tutorial';
@@ -88,24 +88,22 @@ function AppWithProviders() {
 
   return (
     <Router>
-      <ToastProvider>
-        <SolanaWalletProvider>
-          <SolanaAuthProvider>
-            <FeatureDisclosureProvider>
-              <PerformanceOptimizationProvider>
-                <MicroLearningProvider>
-                  <AppContent />
-                  <MicroLearningTipRenderer />
-                  <ExperienceLevelSelector />
-                  <RegulatoryCompliance isOpen={showComplianceModal} onClose={() => setShowComplianceModal(false)} />
-                  <Toaster />
-                  <NotificationListener />
-                </MicroLearningProvider>
-              </PerformanceOptimizationProvider>
-            </FeatureDisclosureProvider>
-          </SolanaAuthProvider>
-        </SolanaWalletProvider>
-      </ToastProvider>
+      <SolanaWalletProvider>
+        <SolanaAuthProvider>
+          <FeatureDisclosureProvider>
+            <PerformanceOptimizationProvider>
+              <MicroLearningProvider>
+                <AppContent />
+                <MicroLearningTipRenderer />
+                <ExperienceLevelSelector />
+                <RegulatoryCompliance isOpen={showComplianceModal} onClose={() => setShowComplianceModal(false)} />
+                <Toaster />
+                <NotificationListener />
+              </MicroLearningProvider>
+            </PerformanceOptimizationProvider>
+          </FeatureDisclosureProvider>
+        </SolanaAuthProvider>
+      </SolanaWalletProvider>
     </Router>
   );
 }

@@ -4,7 +4,7 @@ import { PopupContainer } from '../components/ui/popup-container';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Input } from '../components/ui/input';
-import { useToast } from '../components/ui/toaster';
+import { toast } from 'sonner';
 import { Slider } from '../components/ui/slider';
 import { Switch } from '../components/ui/switch';
 import { Label } from '../components/ui/label';
@@ -86,7 +86,7 @@ export default function NFTMarketplaceSimple() {
   const [selectedNFT, setSelectedNFT] = useState<null | number>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
-  const toast = useToast();
+  // Using sonner toast directly
   const auth = useSolanaAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -114,10 +114,8 @@ export default function NFTMarketplaceSimple() {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        toast({
-          title: "File too large",
-          description: "Please select an image under 10MB",
-          variant: "destructive"
+        toast.error("File too large", {
+          description: "Please select an image under 10MB"
         });
         return;
       }
@@ -159,19 +157,15 @@ export default function NFTMarketplaceSimple() {
     // In a production environment, we would check actual auth status
     // For now, we'll assume the user is authenticated if the wallet is connected
     if (!wallet.connected) {
-      toast({
-        title: "Authentication Required",
-        description: "Please connect your wallet to create an NFT",
-        variant: "destructive"
+      toast.error("Authentication Required", {
+        description: "Please connect your wallet to create an NFT"
       });
       return;
     }
     
     if (!nftName || !nftCategory || !nftDescription || !nftPrice || !selectedFile) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill all required fields and upload an image",
-        variant: "destructive"
+      toast.error("Missing Information", {
+        description: "Please fill all required fields and upload an image"
       });
       return;
     }
@@ -209,8 +203,7 @@ export default function NFTMarketplaceSimple() {
       setAttributes([{ name: '', value: '' }]);
       
       // Show success message
-      toast({
-        title: "NFT Created Successfully",
+      toast.success("NFT Created Successfully", {
         description: `${nftName} has been minted with a fee of ${formattedFee} THC`,
       });
       
@@ -218,10 +211,8 @@ export default function NFTMarketplaceSimple() {
       setSelectedTab('explore');
     } catch (error) {
       console.error('Error creating NFT:', error);
-      toast({
-        title: "Creation Failed",
-        description: "There was an error creating your NFT. Please try again.",
-        variant: "destructive"
+      toast.error("Creation Failed", {
+        description: "There was an error creating your NFT. Please try again."
       });
     } finally {
       setIsSubmitting(false);
