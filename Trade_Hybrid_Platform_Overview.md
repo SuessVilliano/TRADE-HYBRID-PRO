@@ -1,83 +1,164 @@
 # Trade Hybrid Platform Overview
 
-Trade Hybrid is an immersive AI-driven trading metaverse that combines cutting-edge technologies to create a revolutionary trading experience. The platform offers a comprehensive suite of tools and features for traders of all levels, integrating social features, educational resources, and advanced trading capabilities in one unified environment.
+## Introduction
 
-## Core Features
+Trade Hybrid is a revolutionary decentralized trading platform that combines traditional trading capabilities with blockchain technology, offering a comprehensive ecosystem for traders, investors, and affiliates. The platform integrates cutting-edge technologies including AI-driven analytics, 3D metaverse environments, and smart contract-based commission systems.
 
-### Trading
+## Core Platform Components
 
-- **Multi-Market Trading**: Access to Cryptocurrency, Futures, Forex, and Stock markets
-- **Real-Time Data**: Live market data and advanced charting tools
-- **AI-Powered Analysis**: Market insights and trading suggestions powered by AI
-- **Smart Trade Interface**: Advanced order types and risk management tools
+### 1. Trading Dashboard
+
+The customizable trading dashboard is the central hub of the Trade Hybrid platform, allowing users to arrange various components according to their preferences. The dashboard features a drag-and-drop interface with multiple layout options:
+
+- **Grid Layout**: Organized tiles of equal size
+- **Horizontal Layout**: Side-by-side panels
+- **Vertical Layout**: Stacked panels
+
+Users can freely move, resize, and customize panels by dragging panel headers, with changes persisting between sessions.
+
+### 2. Trading Tools
+
+The platform offers a comprehensive suite of trading tools:
+
+- **TradingView Charts**: Professional-grade charting with technical indicators
+- **DEX Charts**: Real-time decentralized exchange data visualization
+- **Market Scanner**: Pattern and opportunity detection across multiple assets
+- **Trade Signals**: AI-driven trading signals with Google Sheets integration
+- **ABATEV Smart Trade**: Proprietary methodology for systematic trade analysis
+- **Copy Trading**: Follow successful traders automatically
+- **AI Trading Assistant**: Personalized insights and recommendations
+- **Trading Bots**: Automated strategy execution
+- **Portfolio Tracker**: Real-time portfolio performance monitoring
+- **News Feed**: Curated market news and analysis
+
+### 3. Learning Center
+
+An extensive educational resource featuring:
+
+- **Structured Courses**: Progressive learning paths for all trading levels
+- **Interactive Content**: Quizzes, simulations, and practical exercises
+- **Course Certificates**: Verification of completed learning paths
+- **Learning Journal**: Personal note-taking and reflection system
+- **Progress Tracking**: Comprehensive monitoring of educational advancement
+
+### 4. Matrix Affiliate System
+
+A sophisticated multi-level marketing structure:
+
+- **3x4 Matrix Structure**: Three positions wide, four levels deep
+- **Smart Contract Integration**: Automated commission distribution via Solana blockchain
+- **Real-time Analytics**: Tracking of referrals and earnings
+- **Marketing Materials**: Professional promotional resources
+- **Transparent Commission System**: All transactions recorded on-chain
+
+### 5. 3D Metaverse Trading Environment
+
+An immersive virtual trading space:
+
+- **Interactive 3D World**: Navigate a virtual trading floor
+- **Real-time Communication**: Voice chat with other traders
+- **Live Market Data**: Visualized in an immersive environment
+- **Virtual Offices**: Private spaces for teams and groups
+- **Events and Webinars**: Attend virtual trading seminars
+
+### 6. AI-Powered Features
+
+Advanced artificial intelligence capabilities:
+
+- **Personalized Trading Insights**: Pattern recognition in individual trading behavior
+- **Market Analysis**: AI interpretation of complex market conditions
+- **Performance Optimization**: Suggestions for improving trading strategies
+- **Risk Management**: Automated identification of potential risks
+- **Sentiment Analysis**: Processing of news and social media for market sentiment
+
+### 7. Trade Journal
+
+Comprehensive trade tracking and analysis:
+
+- **Trade Documentation**: Record all aspects of trading activity
+- **Performance Metrics**: In-depth analytics of trading performance
+- **Visual Analysis**: Charts and graphs of trading patterns
+- **Screenshot Integration**: Visual documentation of trades
+- **Export Capabilities**: Data portability in multiple formats
+
+### 8. Broker Integration
+
+Seamless connection to trading platforms:
+
+- **Multiple Broker Support**: Integration with Alpaca, Kraken, and more
+- **API-based Connectivity**: Secure credential management
+- **Real-time Order Execution**: Trade directly from the platform
+- **Position Monitoring**: Track all open positions
+- **Historical Data**: Access to past trading activity
+
+### 9. Blockchain Integration
+
+Web3 functionality throughout the platform:
+
+- **Phantom Wallet Support**: Connect Solana wallets
+- **Smart Contract Execution**: Automated financial transactions
+- **Commission Distribution**: Blockchain-based affiliate payments
+- **Transaction Verification**: On-chain confirmation of all activities
+- **NFT Integration**: Digital asset support
+
+## Technical Architecture
+
+### Frontend
+- **Framework**: React with TypeScript
+- **State Management**: Zustand for global state
+- **UI Components**: Custom components with Tailwind CSS
+- **3D Environment**: Three.js with React Three Fiber
+- **Charts**: TradingView integration and custom chart components
+
+### Backend
+- **Server**: Express.js
+- **Database**: PostgreSQL with Drizzle ORM
+- **Authentication**: JWT with multi-factor options
+- **API Integration**: Broker APIs, Google Sheets
+- **WebSockets**: Real-time data synchronization
 
 ### Blockchain Integration
+- **Network**: Solana
+- **Wallet Support**: Phantom and compatible wallets
+- **Smart Contracts**: Custom commission distribution contracts
+- **Transaction Handling**: Secure signature verification
 
-- **THC Token Utility**: Native token with staking, governance, and fee reduction benefits
-- **Cryptocurrency DEX**: Direct trading on Solana decentralized exchanges
-- **NFT Marketplace**: Trade unique NFTs including trading strategies and virtual properties
-- **Wallet Integration**: Seamless connection with Solana wallets for transactions
+## User Roles and Permissions
 
-### Metaverse Experience
+### Traders
+- Access to all trading tools and features
+- Ability to connect broker accounts
+- Full learning center access
+- Participation in the metaverse environment
 
-- **3D Trading World**: Immersive environment for visualizing market data
-- **Social Interaction**: Connect with other traders in virtual trading floors
-- **Proximity Voice Chat**: Real-time audio communication with nearby traders
-- **Customizable Avatars**: Personalize your presence in the metaverse
+### Affiliates
+- Matrix commission system participation
+- Marketing materials access
+- Referral tracking dashboard
+- Commission withdrawal capabilities
 
-### Trading Education
+### Administrators
+- User management
+- Content management for learning center
+- System configuration
+- Analytics and reporting
 
-- **Personalized Learning Paths**: Customized educational journeys for different trading markets
-- **Interactive Tutorials**: Learn-by-doing approach to trading concepts
-- **Skill Assessment**: Track your progress and identify areas for improvement
-- **Community Learning**: Learn from experienced traders through social features
+## Data Security
 
-### Community Features
+The platform prioritizes security through:
 
-- **Trade Hybrid TV**: Live streaming of market analysis and educational content
-- **Copy Trading**: Follow and automatically copy trades from successful traders
-- **Social Signals**: Community-driven trading signals and ideas
-- **Leaderboards**: Competitive rankings based on trading performance
+- **Encrypted API Keys**: All broker credentials are securely stored
+- **Secure Database**: Industry-standard encryption for user data
+- **Authentication**: Multi-factor authentication options
+- **Session Management**: Automatic timeouts and secure session handling
+- **Audit Logs**: Comprehensive activity tracking
 
-### AI Companions
+## Summary
 
-- **Market Buddy**: Personalized AI assistant for market analysis
-- **Trade Signals**: AI-generated trading opportunities
-- **Risk Assessment**: AI analysis of portfolio risk and opportunity
+Trade Hybrid represents a paradigm shift in trading platform design, merging traditional trading capabilities with cutting-edge technologies like AI, blockchain, and 3D environments. Its modular design allows users to create a personalized trading experience while benefiting from community features and comprehensive educational resources.
 
-### Mobile & Accessibility
+The platform's integration of decentralized financial tools with traditional trading infrastructure bridges the gap between conventional markets and the emerging world of cryptocurrency trading, creating a unified experience for all types of traders.
 
-- **Cross-Platform Access**: Use on desktop, tablet, or mobile devices
-- **Progressive Web App**: Install directly to home screen without app stores
-- **Notification System**: Customizable alerts for market events and trade signals
+---
 
-## Membership Tiers
-
-1. **Free**: Basic access to platform features and educational content
-2. **Paid**: Enhanced access to advanced trading tools and AI features
-3. **PRO**: Full access to all platform features including premium trading tools
-
-## THC Token Economics
-
-- **Trading Fee Reduction**: Hold THC tokens to reduce transaction fees
-- **Staking Rewards**: Earn passive income by staking THC tokens
-- **Membership Benefits**: Token holdings determine membership tier access
-- **Affiliate System**: 2x3 matrix program for commission earnings
-
-## Getting Started
-
-1. Create an account or connect your Solana wallet
-2. Complete your trader profile and set preferences
-3. Take the onboarding tutorial to learn platform navigation
-4. Choose your starting learning path (Crypto, Futures, Forex, or Stocks)
-5. Set up your notification preferences
-6. Start exploring markets and engaging with the community
-
-## Recent Updates
-
-- Enhanced notification system with customizable settings
-- Improved Solana wallet integration with THC token recognition
-- Added personalized learning journeys for different market types
-- Streamlined user interface for better navigation
-- Bulls vs Bears game for hands-on market simulation
-- New market data visualizations and trading tools
+*Last Updated: March 31, 2025*
