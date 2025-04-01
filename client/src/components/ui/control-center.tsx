@@ -8,6 +8,7 @@ import { brokerService } from '@/lib/services/broker-service';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { useDashboardLayout, LayoutItem } from '@/lib/stores/useDashboardLayout';
 import { FloatingTradePanel } from './floating-trade-panel';
+import { SmartTradePanel } from './smart-trade-panel';
 
 // Lazy load the components
 const TradingViewWidgetLazy = React.lazy(() => import('./TradingViewWidget'));
@@ -81,6 +82,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
   
   // Trade panel state
   const [isTradePanelOpen, setIsTradePanelOpen] = useState(false);
+  const [isSmartTradePanelOpen, setIsSmartTradePanelOpen] = useState(false);
 
   // Define all available panels
   const allPanels: Record<PanelType, PanelDefinition> = {
@@ -530,6 +532,14 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
         initialSize={{ width: 500, height: 600 }}
       />
       
+      {/* Smart Trade Panel */}
+      <SmartTradePanel 
+        isOpen={isSmartTradePanelOpen}
+        onClose={() => setIsSmartTradePanelOpen(false)}
+        initialPosition={{ x: Math.max(50, window.innerWidth / 2 - 250), y: 100 }}
+        initialSize={{ width: 500, height: 700 }}
+      />
+      
       {/* Toolbar */}
       <div className="flex items-center justify-between bg-slate-800 border-b border-slate-700 px-1.5 py-1">
         <div className="flex space-x-1">
@@ -613,8 +623,18 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
             </Button>
           )}
 
-          {/* Trade Now Button - placed at the end of the toolbar */}
-          <div className="ml-auto flex items-center">
+          {/* Trade Buttons - placed at the end of the toolbar */}
+          <div className="ml-auto flex items-center space-x-2">
+            <Button 
+              variant="default"
+              size="sm"
+              className="flex items-center gap-1 bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800"
+              onClick={() => setIsSmartTradePanelOpen(true)}
+            >
+              <Cpu className="h-4 w-4" />
+              <span>Smart Trade</span>
+            </Button>
+            
             <Button 
               variant="default"
               size="sm"
