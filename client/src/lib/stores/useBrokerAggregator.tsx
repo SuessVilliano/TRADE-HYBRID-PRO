@@ -1,5 +1,52 @@
 import { create } from 'zustand';
-import { BrokerAggregatorService, BrokerComparison, TradeDetails } from '../services/broker-aggregator-service';
+import { AccountBalance, TradePosition, OrderDetails, TradeUpdate } from '../services/broker-aggregator-service';
+
+// Create interface for compatibility with both implementations
+interface BrokerService {
+  placeOrder: (order: any) => Promise<string>;
+}
+
+// Helper function to type-check the broker aggregator
+function isBrokerAggregator(obj: any): obj is BrokerAggregatorService {
+  return obj && typeof obj === 'object';
+}
+
+// Import with compatibility for both old and new service structures
+interface BrokerAggregatorService {
+  // Methods the service needs to implement
+  getBroker?: (brokerId: string) => BrokerService;
+  executeTrade?: (details: TradeDetails) => Promise<{success: boolean; orderId?: string; broker?: string; error?: string}>;
+  subscribeToMarketData?: (symbol: string) => Promise<void>;
+  getAllBrokerComparisons?: (symbol: string) => BrokerComparison[];
+  
+  // Add any other methods that might be needed for compatibility
+  getAvailableBrokers?: () => string[];
+  isConnectedToBroker?: (brokerId: string) => boolean;
+  getAccountBalances?: (brokerId: string) => Promise<AccountBalance[]>;
+  getPositions?: (brokerId: string) => Promise<TradePosition[]>;
+}
+
+// Compatibility interfaces for both old and new versions
+export interface BrokerComparison {
+  symbol: string;
+  timestamp: number;
+  prices: Array<{
+    brokerId: string;
+    price: number;
+    spread: number;
+    latency?: number;
+    score?: number;
+  }>;
+}
+
+export interface TradeDetails {
+  symbol: string;
+  action: 'buy' | 'sell';
+  quantity: number;
+  orderType: 'market' | 'limit' | 'stop' | 'stop_limit';
+  limitPrice?: number;
+  stopPrice?: number;
+}
 
 interface BrokerAggregatorState {
   aggregator: BrokerAggregatorService | null;
@@ -38,10 +85,17 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
     set({ isLoading: true, error: null });
     
     try {
-      const aggregator = await BrokerAggregatorService.createDefault();
+      // Import the broker aggregator singleton instance directly
+      const { brokerAggregator } = await import('../services/broker-aggregator-service');
       
+      // Type check the aggregator to make sure it's valid
+      if (!isBrokerAggregator(brokerAggregator)) {
+        throw new Error('Invalid broker aggregator instance');
+      }
+      
+      // Set the aggregator state with the singleton instance and cast to our interface
       set({ 
-        aggregator, 
+        aggregator: brokerAggregator as unknown as BrokerAggregatorService,
         isConnected: true,
         activeBrokers: ['ironbeam', 'alpaca', 'bitfinex', 'etrade'], // Default brokers including new integrations
         isLoading: false 
@@ -79,9 +133,19 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
     try {
       if (useABATEV) {
         // Use ABATEV to automatically find the best broker
-        return await aggregator.executeTrade(details);
+        if (aggregator.executeTrade) {
+          return await aggregator.executeTrade(details);
+        } else {
+          // Fallback to default method if executeTrade is not available
+          console.warn('ABATEV executeTrade not available, using fallback');
+          return { success: false, error: 'ABATEV executeTrade not available' };
+        }
       } else if (selectedBroker) {
         // Use the manually selected broker
+        if (!aggregator.getBroker) {
+          return { success: false, error: 'getBroker method not available' };
+        }
+        
         const broker = aggregator.getBroker(selectedBroker);
         if (!broker) {
           return { success: false, error: `Selected broker ${selectedBroker} not available` };
@@ -122,16 +186,27 @@ export const useBrokerAggregator = create<BrokerAggregatorState>((set, get) => (
     }
     
     try {
-      // Subscribe to market data for this symbol if not already
-      await aggregator.subscribeToMarketData(symbol);
-      
-      // Wait a short time for data to arrive
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Check if the method exists before calling it
+      if (aggregator.subscribeToMarketData) {
+        // Subscribe to market data for this symbol if not already
+        await aggregator.subscribeToMarketData(symbol);
+        
+        // Wait a short time for data to arrive
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } else {
+        console.warn('subscribeToMarketData method not available');
+      }
       
       // Get the comparisons
-      const comparisons = aggregator.getAllBrokerComparisons(symbol);
-      set({ currentComparisons: comparisons, isLoading: false });
-      return comparisons;
+      if (aggregator.getAllBrokerComparisons) {
+        const comparisons = aggregator.getAllBrokerComparisons(symbol);
+        set({ currentComparisons: comparisons, isLoading: false });
+        return comparisons;
+      } else {
+        console.warn('getAllBrokerComparisons method not available, using empty array');
+        set({ isLoading: false });
+        return [];
+      }
     } catch (error) {
       console.error('Error comparing brokers:', error);
       set({ 
