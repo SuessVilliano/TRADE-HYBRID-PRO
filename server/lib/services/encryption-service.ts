@@ -1,104 +1,89 @@
-import * as crypto from 'crypto';
-
-// Add type definitions to fix TypeScript errors
-interface CipherGCM extends crypto.Cipher {
-  getAuthTag(): Buffer;
-}
-
-interface DecipherGCM extends crypto.Decipher {
-  setAuthTag(buffer: Buffer): void;
-}
+import crypto from 'crypto';
 
 /**
- * Encryption utility for sensitive data like API keys
- * Uses AES-256-GCM encryption for high security
+ * Service for encrypting and decrypting sensitive data
+ * This is used for storing API keys, secrets, and other credentials securely
  */
-export class EncryptionService {
-  private algorithm = 'aes-256-gcm';
-  private encryptionKey: Buffer;
-  private ivLength = 16; // Initialization vector length
-  private authTagLength = 16; // Authentication tag length
-
-  constructor() {
-    // Use environment variable for encryption key, or use a fallback for development (not secure for production)
-    const key = process.env.ENCRYPTION_KEY || 'trade-hybrid-dev-encryption-key-123456789';
-    if (!process.env.ENCRYPTION_KEY) {
-      console.warn('ENCRYPTION_KEY environment variable not set. Using default key for development only.');
-    }
-    
-    // Derive a 32-byte key using SHA-256 from the provided key
-    this.encryptionKey = crypto.createHash('sha256').update(key).digest();
-  }
-
+class EncryptionService {
+  private algorithm = 'aes-256-cbc';
+  private key: Buffer;
+  private isInitialized = false;
+  
   /**
-   * Encrypts a string using AES-256-GCM
-   * @param plaintext The text to encrypt
-   * @returns The encrypted data with IV and auth tag as a single base64 string
+   * Initialize the encryption service with a secret key
+   * This should be called on server startup
    */
-  encrypt(plaintext: string): string {
+  initialize(): void {
+    // In a production environment, this key should be stored securely
+    // and not hardcoded or committed to version control
+    const secretKey = process.env.ENCRYPTION_KEY || 'default-encryption-key-change-in-production';
+    
+    // Create a fixed-length key using SHA-256
+    this.key = crypto.createHash('sha256').update(secretKey).digest();
+    this.isInitialized = true;
+    
+    console.log('Encryption service initialized');
+  }
+  
+  /**
+   * Encrypt a string
+   * @param text The text to encrypt
+   * @returns The encrypted text as a base64-encoded string
+   */
+  async encrypt(text: string): Promise<string> {
+    this.ensureInitialized();
+    
     // Generate a random initialization vector
-    const iv = crypto.randomBytes(this.ivLength);
+    const iv = crypto.randomBytes(16);
     
-    // Create cipher with key and IV
-    const cipher = crypto.createCipheriv(this.algorithm, this.encryptionKey, iv) as CipherGCM;
+    // Create cipher
+    const cipher = crypto.createCipheriv(this.algorithm, this.key, iv);
     
-    // Encrypt the data
-    let encrypted = cipher.update(plaintext, 'utf8', 'base64');
+    // Encrypt the text
+    let encrypted = cipher.update(text, 'utf8', 'base64');
     encrypted += cipher.final('base64');
     
-    // Get the authentication tag
-    const authTag = cipher.getAuthTag();
+    // Combine IV and encrypted text (IV needs to be stored with the encrypted data for decryption)
+    // Convert the IV to base64 and prepend it to the encrypted text
+    return iv.toString('base64') + ':' + encrypted;
+  }
+  
+  /**
+   * Decrypt a string
+   * @param encryptedText The encrypted text (with IV) to decrypt
+   * @returns The decrypted text
+   */
+  async decrypt(encryptedText: string): Promise<string> {
+    this.ensureInitialized();
     
-    // Combine IV, encrypted data, and auth tag into a single string
-    // Format: base64(iv):base64(encrypted):base64(authTag)
-    return Buffer.concat([
-      iv,
-      Buffer.from(encrypted, 'base64'),
-      authTag
-    ]).toString('base64');
-  }
-
-  /**
-   * Decrypts an encrypted string
-   * @param encryptedData The encrypted data string (from encrypt())
-   * @returns The decrypted plaintext
-   */
-  decrypt(encryptedData: string): string {
-    try {
-      // Convert the combined string back to a buffer
-      const data = Buffer.from(encryptedData, 'base64');
-      
-      // Extract the IV, encrypted data, and auth tag
-      const iv = data.subarray(0, this.ivLength);
-      const encryptedText = data.subarray(this.ivLength, data.length - this.authTagLength);
-      const authTag = data.subarray(data.length - this.authTagLength);
-      
-      // Create decipher
-      const decipher = crypto.createDecipheriv(this.algorithm, this.encryptionKey, iv) as DecipherGCM;
-      decipher.setAuthTag(authTag);
-      
-      // Decrypt the data
-      let decrypted = decipher.update(encryptedText.toString('base64'), 'base64', 'utf8');
-      decrypted += decipher.final('utf8');
-      
-      return decrypted;
-    } catch (error) {
-      console.error('Failed to decrypt data:', error);
-      throw new Error('Failed to decrypt sensitive data. The data may be corrupted or tampered with.');
+    // Split the IV and encrypted text
+    const parts = encryptedText.split(':');
+    if (parts.length !== 2) {
+      throw new Error('Invalid encrypted text format');
     }
+    
+    const iv = Buffer.from(parts[0], 'base64');
+    const encryptedData = parts[1];
+    
+    // Create decipher
+    const decipher = crypto.createDecipheriv(this.algorithm, this.key, iv);
+    
+    // Decrypt the text
+    let decrypted = decipher.update(encryptedData, 'base64', 'utf8');
+    decrypted += decipher.final('utf8');
+    
+    return decrypted;
   }
-
+  
   /**
-   * Generates a secure random token for connection identification
-   * This is used as the connectionToken for broker connections
-   * @param length Length of the token in bytes (default: 32)
-   * @returns A secure random token as a hex string
+   * Ensure the service is initialized before use
    */
-  generateSecureToken(length = 32): string {
-    return crypto.randomBytes(length).toString('hex');
+  private ensureInitialized(): void {
+    if (!this.isInitialized) {
+      this.initialize();
+    }
   }
 }
 
-// Singleton instance for use throughout the application
-const encryptionService = new EncryptionService();
-export default encryptionService;
+// Create and export singleton instance
+export const encryptionService = new EncryptionService();

@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { encryptionService } from "./lib/services/encryption-service";
+import { brokerConnectionService } from "./lib/services/broker-connection-service";
 
 const app = express();
 app.use(express.json());
@@ -37,6 +39,10 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize services
+  encryptionService.initialize();
+  await brokerConnectionService.initialize();
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

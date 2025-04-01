@@ -299,6 +299,7 @@ export const brokerTypes = pgTable("broker_types", {
   requiresUsername: boolean("requires_username").default(false),
   requiresPassword: boolean("requires_password").default(false),
   requiresAccountId: boolean("requires_account_id").default(false),
+  requiresPassphrase: boolean("requires_passphrase").default(false),
   isActive: boolean("is_active").default(true),
   supportsLiveTrading: boolean("supports_live_trading").default(true),
   supportsPaperTrading: boolean("supports_paper_trading").default(true),
@@ -319,6 +320,7 @@ export const brokerConnections = pgTable("broker_connections", {
   encryptedAccessToken: text("encrypted_access_token"),
   encryptedUsername: text("encrypted_username"),
   encryptedPassword: text("encrypted_password"),
+  encryptedPassphrase: text("encrypted_passphrase"),
   accountId: text("account_id"),
   // Connection token is used for copy trading and secure references
   connectionToken: text("connection_token").notNull().unique(),
