@@ -2,6 +2,78 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mobile Trade Panel Optimizations */
+@media (max-width: 767px) {
+  .mobile-trade-panel {
+    padding-bottom: 50px !important; /* Extra space at bottom for Buy/Sell buttons */
+  }
+  
+  .mobile-trade-panel::after {
+    content: '';
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 16px;
+    background: linear-gradient(to bottom, rgba(var(--background), 0) 0%, rgba(var(--background), 0.9) 40%);
+    z-index: 10;
+    pointer-events: none;
+  }
+}
+
+/* Mobile Dashboard Enhancements */
+@media (max-width: 767px) {
+  .mobile-dashboard-container {
+    scroll-snap-type: y mandatory;
+    height: 100vh !important; /* Force full viewport height */
+    max-height: none !important; /* Override any max-height */
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 100px; /* Add extra padding at the bottom */
+  }
+
+  .mobile-dashboard-container > div {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    margin-bottom: 1.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    position: relative;
+  }
+  
+  /* Add subtle visual indicators for snapping */
+  .mobile-dashboard-container > div::after {
+    content: '';
+    position: absolute;
+    bottom: -1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background-color: rgba(var(--primary), 0.5);
+    border-radius: 4px;
+  }
+
+  /* Ensure chart takes up full viewport width and height */
+  .tradingview-widget-container {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-left: -1rem;
+    margin-right: -1rem;
+    min-height: 80vh !important;
+  }
+  
+  /* Make the chart container take up more height */
+  .tradingview-responsive-container {
+    min-height: 80vh !important;
+    height: 80vh !important;
+  }
+}
+
 /* Enhanced Cyberpunk Theme */
 .cyberpunk-glow {
   box-shadow: 0 0 10px rgba(var(--primary), 0.5), 0 0 20px rgba(var(--secondary), 0.3);

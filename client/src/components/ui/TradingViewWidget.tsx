@@ -89,12 +89,24 @@ function TradingViewWidget({
     };
   }, [symbol, theme, interval, allow_symbol_change]); // Rebuild widget when parameters change
 
+  // Use a much larger default height on mobile for better experience
+  const getMobileHeight = () => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      return "80vh"; // Full viewport height on mobile for better UX
+    }
+    return height;
+  };
+
   return (
-    <div className="tradingview-widget-container" style={{ height, width }}>
+    <div className="tradingview-widget-container" style={{ height: getMobileHeight(), width }}>
       <div 
         id={widgetIdRef.current} 
         ref={container} 
-        style={{ height: "100%", width: "100%", minHeight: "300px" }} // Ensure minimum height on mobile
+        style={{ 
+          height: "100%", 
+          width: "100%", 
+          minHeight: typeof window !== 'undefined' && window.innerWidth < 768 ? "70vh" : "300px"
+        }}
         className="tradingview-responsive-container"
       />
     </div>

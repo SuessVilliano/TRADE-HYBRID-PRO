@@ -604,27 +604,38 @@ export function CustomizableTradingDashboard({
         );
       case 'order-entry':
         return (
-          <div className="p-4 h-full overflow-auto">
+          <div className="p-4 h-full overflow-auto mobile-trade-panel">
             <h3 className="text-lg font-medium mb-4 flex items-center">
               <span className="text-primary mr-1">Smart</span> Trade Panel
               <Badge variant="outline" className="ml-2 bg-slate-800 text-xs">Pro</Badge>
             </h3>
             <Tabs defaultValue="market">
-              <TabsList className="w-full mb-4">
-                <TabsTrigger value="market" className="flex-1">Market</TabsTrigger>
-                <TabsTrigger value="limit" className="flex-1">Limit</TabsTrigger>
-                <TabsTrigger value="stop" className="flex-1">Stop</TabsTrigger>
+              <TabsList className="w-full mb-4 grid grid-cols-3 gap-1">
+                <TabsTrigger value="market" className="flex-1 text-sm">Market</TabsTrigger>
+                <TabsTrigger value="limit" className="flex-1 text-sm">Limit</TabsTrigger>
+                <TabsTrigger value="stop" className="flex-1 text-sm">Stop</TabsTrigger>
               </TabsList>
               
               <div className="space-y-5">
+                {/* Chart connection indicator */}
+                <div className="bg-blue-900/10 border border-blue-900/30 rounded-md p-2 mb-2 flex items-center justify-between md:hidden">
+                  <div className="flex items-center">
+                    <LineChart className="h-4 w-4 text-blue-400 mr-2" />
+                    <span className="text-xs text-blue-300">Connected to Chart</span>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] bg-blue-900/30 text-blue-300">
+                    Auto-sync
+                  </Badge>
+                </div>
+
                 {/* Symbol selector - linked to the chart */}
                 <div className="bg-slate-900/50 p-3 rounded-md">
                   <div className="flex items-center justify-between">
                     <label className="block text-xs text-slate-400 mb-1">Symbol</label>
-                    {/* Mobile info badge showing that symbol is linked to chart */}
-                    <Badge variant="outline" className="md:hidden text-[10px] bg-blue-900/30 text-blue-300">
-                      Linked to Chart
-                    </Badge>
+                    <div className="inline-flex items-center text-xs text-green-400">
+                      <div className="h-2 w-2 rounded-full bg-green-500 mr-1 animate-pulse"></div>
+                      Active
+                    </div>
                   </div>
                   <select 
                     className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm"
@@ -641,6 +652,8 @@ export function CustomizableTradingDashboard({
                     <option value="DOTUSD">DOT/USD</option>
                     <option value="AVAXUSD">AVAX/USD</option>
                     <option value="ADAUSD">ADA/USD</option>
+                    <option value="LTCUSD">LTC/USD</option>
+                    <option value="BNBUSD">BNB/USD</option>
                   </select>
                 </div>
                 
@@ -648,11 +661,22 @@ export function CustomizableTradingDashboard({
                 <div className="space-y-3 bg-slate-900/50 p-3 rounded-md">
                   <div>
                     <label className="block text-xs text-slate-400 mb-1">Price (USD)</label>
-                    <input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" placeholder="43,450.00" />
+                    <div className="relative">
+                      <input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm pl-8" placeholder="43,450.00" />
+                      <span className="absolute left-3 top-2 text-slate-500 text-sm">$</span>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs text-slate-400 mb-1">Amount (BTC)</label>
-                    <input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" placeholder="0.25" />
+                    <div className="flex gap-2">
+                      <input type="text" className="flex-1 bg-slate-800 border border-slate-700 rounded p-2 text-sm" placeholder="0.25" />
+                      <div className="grid grid-cols-4 gap-1 w-1/2">
+                        <Button variant="outline" size="sm" className="text-[10px] py-0">25%</Button>
+                        <Button variant="outline" size="sm" className="text-[10px] py-0">50%</Button>
+                        <Button variant="outline" size="sm" className="text-[10px] py-0">75%</Button>
+                        <Button variant="outline" size="sm" className="text-[10px] py-0">100%</Button>
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs text-slate-400 mb-1">Total (USD)</label>
@@ -681,6 +705,21 @@ export function CustomizableTradingDashboard({
                       <input type="text" className="w-32 bg-slate-800 border border-slate-700 rounded p-1 text-xs" placeholder="1:2" />
                     </div>
                   </div>
+                </div>
+                
+                {/* Buy/Sell Buttons - Important for mobile */}
+                <div className="flex gap-2 sticky bottom-0 pt-4 mt-4 pb-2">
+                  <Button 
+                    className="flex-1 py-6 text-lg font-bold bg-green-600 hover:bg-green-700 border-green-500"
+                  >
+                    BUY
+                  </Button>
+                  <Button 
+                    className="flex-1 py-6 text-lg font-bold bg-red-600 hover:bg-red-700 border-red-500"
+                    variant="destructive"
+                  >
+                    SELL
+                  </Button>
                 </div>
               </div>
             </Tabs>
@@ -977,8 +1016,17 @@ export function CustomizableTradingDashboard({
         </div>
       </div>
       
+      {/* Mobile scroll indicator - only visible on small screens */}
+      <div className="md:hidden p-2 bg-slate-800/70 backdrop-blur text-center text-xs text-slate-300 fixed bottom-0 left-0 right-0 z-50">
+        <div className="flex items-center justify-center gap-1">
+          <ArrowDown className="h-3 w-3 animate-bounce" />
+          <span>Swipe to navigate panels</span>
+          <ArrowDown className="h-3 w-3 animate-bounce" />
+        </div>
+      </div>
+      
       {/* Dashboard Content */}
-      <div className="flex-grow p-3 grid grid-cols-12 md:grid-cols-12 gap-3 relative">
+      <div className="flex-grow p-3 flex flex-col md:grid md:grid-cols-12 gap-3 relative mobile-dashboard-container">
         {maximizedPanel ? (
           // Render maximized panel
           layout.map(item => {
@@ -1050,18 +1098,20 @@ export function CustomizableTradingDashboard({
                 return "col-span-" + colSpan;
               };
               
-              // Adjust panel height for mobile
+              // Adjust panel height for mobile with full-size chart
               const getHeightStyle = () => {
                 if (typeof window !== 'undefined' && window.innerWidth < 768) {
                   if (item.componentType === 'tradingview-chart') {
-                    return { height: 350 }; // Fixed chart height on mobile
+                    return { height: 600 }; // Full-size chart height on mobile
                   }
                   if (item.componentType === 'order-entry') {
-                    return { height: 400 }; // Trade panel height on mobile
+                    return { height: 550 }; // Taller trade panel height on mobile
                   }
                   if (item.componentType === 'trading-signals') {
-                    return { height: 300 }; // Signals panel height on mobile
+                    return { height: 400 }; // Taller signals panel height on mobile
                   }
+                  // Other panel types
+                  return { height: 400 }; // Default mobile height
                 }
                 return { height: item.height * 80 }; // Desktop height
               };
