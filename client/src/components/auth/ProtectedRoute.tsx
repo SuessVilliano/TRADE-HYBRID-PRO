@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useSolanaAuth } from '../../lib/context/SolanaAuthProvider';
+import { useAuth } from '../../lib/context/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactElement;
@@ -11,7 +12,10 @@ interface ProtectedRouteProps {
  * Also supports demo mode authentication via localStorage
  */
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, isAuthenticating } = useSolanaAuth();
+  const location = useLocation();
+  const { isAuthenticated: solanaAuthenticated, isAuthenticating } = useSolanaAuth();
+  const { isAuthenticated: contextAuthenticated } = useAuth();
+  
   const [isDemoUser, setIsDemoUser] = useState<boolean>(false);
   const [checkingDemo, setCheckingDemo] = useState<boolean>(true);
   
@@ -29,6 +33,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     setCheckingDemo(false);
   }, []);
   
+  // Log authentication information
+  useEffect(() => {
+    console.log('Protected Route Authentication Status:', {
+      path: location.pathname,
+      solanaAuthenticated,
+      contextAuthenticated,
+      isDemoUser,
+      isChecking: isAuthenticating || checkingDemo
+    });
+  }, [location, solanaAuthenticated, contextAuthenticated, isDemoUser, isAuthenticating, checkingDemo]);
+  
   // Show loading state while checking authentication
   if (isAuthenticating || checkingDemo) {
     return (
@@ -41,15 +56,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
   
-  // Allow access if authenticated via Solana OR demo user
-  const userIsAuthenticated = isAuthenticated || isDemoUser;
+  // Allow access if authenticated via any method
+  const userIsAuthenticated = solanaAuthenticated || contextAuthenticated || isDemoUser;
   
   // Redirect to login if not authenticated
   if (!userIsAuthenticated) {
+    console.log('User not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
   
   // Render the protected content if authenticated
+  console.log('User authenticated, rendering protected content');
   return children;
 };
 

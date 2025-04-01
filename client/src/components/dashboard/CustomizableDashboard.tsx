@@ -72,7 +72,7 @@ interface Props {
 }
 
 const CustomizableDashboard: React.FC<Props> = ({ className = '' }) => {
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const [dashboardOrder, setDashboardOrder] = useState<string[]>([]);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -82,15 +82,15 @@ const CustomizableDashboard: React.FC<Props> = ({ className = '' }) => {
     setDashboardOrder(order);
     
     // If logged in, load settings from server
-    if (user?.id) {
-      settingsService.loadSettingsFromServer(user.id)
+    if (currentUser?.id) {
+      settingsService.loadSettingsFromServer(currentUser.id)
         .then((settings) => {
           if (settings.dashboardOrder) {
             setDashboardOrder(settings.dashboardOrder);
           }
         });
     }
-  }, [user]);
+  }, [currentUser]);
 
   // Handle drag end event
   const handleDragEnd = (result: any) => {
@@ -108,13 +108,13 @@ const CustomizableDashboard: React.FC<Props> = ({ className = '' }) => {
     setDashboardOrder(newOrder);
     
     // Save new order to settings service
-    settingsService.updateDashboardOrder(newOrder, user?.id);
+    settingsService.updateDashboardOrder(newOrder, currentUser?.id);
   };
 
   // Track module usage when clicked
   const handleModuleClick = (moduleId: string) => {
     if (!isEditing) {
-      settingsService.trackModuleUsage(moduleId, user?.id);
+      settingsService.trackModuleUsage(moduleId, currentUser?.id);
     }
   };
 

@@ -33,6 +33,7 @@ const App: React.FC = () => {
               
               {/* Protected routes */}
               <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
               <Route path="/trade" element={<ProtectedRoute><TradeView /></ProtectedRoute>} />
               <Route path="/journal" element={<ProtectedRoute><JournalView /></ProtectedRoute>} />
               <Route path="/metaverse" element={<ProtectedRoute><MetaversePage /></ProtectedRoute>} />

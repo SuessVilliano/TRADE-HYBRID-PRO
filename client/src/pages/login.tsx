@@ -66,15 +66,24 @@ export default function LoginPage() {
       setLoginStatus("Logging in with demo account...");
       
       // Use the AuthContext to perform demo login
-      await auth.loginWithDemo();
+      const userData = await auth.loginWithDemo();
       
-      console.log("Demo login successful");
+      console.log("Demo login successful with user data:", userData);
       
-      // Navigate to dashboard
+      // First navigate to dashboard using simple navigation
       navigate("/dashboard");
       
+      // Additional debugging to help track the redirect
+      setTimeout(() => {
+        console.log("Current location after demo login:", window.location.pathname);
+        if (window.location.pathname === '/login') {
+          console.log("Still on login page, attempting to redirect again...");
+          window.location.href = '/dashboard';
+        }
+      }, 1000);
+      
     } catch (err) {
-      console.error("Demo login failed");
+      console.error("Demo login failed:", err);
       setLoginStatus("Demo login failed. Please try again.");
     }
   };

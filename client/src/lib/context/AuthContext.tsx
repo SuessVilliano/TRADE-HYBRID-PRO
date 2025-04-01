@@ -74,7 +74,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
         username: 'demo_user',
         email: 'demo@tradehybrid.com',
         membership: 'lifetime',
-        isAuthenticated: true
+        isAuthenticated: true,
+        authenticated: true,  // Add this property to match server authentication check
+        features: {           // Add feature access permissions for the demo user
+          trade: true,
+          journal: true,
+          metaverse: true,
+          learn: true,
+          signals: true,
+          leaderboard: true,
+          bots: true,
+          news: true,
+          profile: true,
+          settings: true
+        }
       };
       
       // Store in localStorage
@@ -83,6 +96,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Update state
       setCurrentUser(demoUser);
       setIsAuthenticated(true);
+      
+      console.log('Demo login successful, user data:', demoUser);
       
       return demoUser;
     },
