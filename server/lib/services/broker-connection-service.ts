@@ -1,278 +1,487 @@
-import { eq, and } from 'drizzle-orm';
-import crypto from 'crypto';
 import { db } from '../../db';
-import { brokerTypes, brokerConnections } from '../../../shared/schema';
+import { and, eq } from 'drizzle-orm';
+import { brokerConnections, brokerTypes, users } from '../../../shared/schema';
 import { encryptionService } from './encryption-service';
-import { BrokerAggregator } from '../broker-aggregator';
+import crypto from 'crypto';
+
+// Types for broker credentials
+export interface BrokerCredentials {
+  apiKey?: string;
+  secretKey?: string;
+  accessToken?: string;
+  username?: string;
+  password?: string;
+  passphrase?: string;
+  accountId?: string;
+}
 
 /**
- * Service for managing broker connections
+ * Service for managing broker connections and their secure credentials
  */
-class BrokerConnectionService {
-  private brokerAggregator: BrokerAggregator | null = null;
-  
+export class BrokerConnectionService {
   /**
    * Initialize the broker connection service
    */
   async initialize(): Promise<void> {
-    // Create broker aggregator and initialize it
-    this.brokerAggregator = new BrokerAggregator();
-    await this.brokerAggregator.initialize();
-    
+    // Add any initialization logic here if needed
     console.log('Broker connection service initialized');
+    return Promise.resolve();
   }
-  
   /**
-   * Get broker aggregator instance
+   * Create a new broker connection for a user
    */
-  getBrokerAggregator(): BrokerAggregator {
-    if (!this.brokerAggregator) {
-      throw new Error('Broker aggregator not initialized');
+  async createBrokerConnection(
+    userId: number,
+    brokerTypeId: number,
+    connectionName: string,
+    credentials: BrokerCredentials,
+    options: {
+      isDemo?: boolean;
+    } = {}
+  ) {
+    try {
+      // First, check if broker type exists
+      const brokerType = await db.query.brokerTypes.findFirst({
+        where: eq(brokerTypes.id, brokerTypeId)
+      });
+      
+      if (!brokerType) {
+        throw new Error(`Broker type with ID ${brokerTypeId} not found`);
+      }
+      
+      // Encrypt all sensitive credentials before storing
+      let encryptedKey, encryptedSecret, encryptedPassphrase;
+      
+      if (credentials.apiKey && brokerType.requires_key) {
+        encryptedKey = encryptionService.encrypt(credentials.apiKey);
+      }
+      
+      if (credentials.secretKey && brokerType.requires_secret) {
+        encryptedSecret = encryptionService.encrypt(credentials.secretKey);
+      }
+      
+      if (credentials.passphrase && brokerType.requires_passphrase) {
+        encryptedPassphrase = encryptionService.encrypt(credentials.passphrase);
+      }
+      
+      // Store additional config
+      const additionalConfig: Record<string, any> = {};
+      
+      if (credentials.accessToken) {
+        additionalConfig.accessToken = credentials.accessToken;
+      }
+      
+      if (credentials.username) {
+        additionalConfig.username = credentials.username;
+      }
+      
+      if (credentials.password) {
+        additionalConfig.password = credentials.password;
+      }
+      
+      if (credentials.accountId) {
+        additionalConfig.accountId = credentials.accountId;
+      }
+      
+      // Default options
+      const { isDemo = false } = options;
+      
+      // Create the new connection
+      const connection = await db.insert(brokerConnections).values({
+        userId,
+        brokerTypeId,
+        name: connectionName,
+        encryptedKey,
+        encryptedSecret,
+        encryptedPassphrase,
+        additionalConfig: Object.keys(additionalConfig).length > 0 ? additionalConfig : null,
+        isActive: true,
+        isDemo,
+        lastConnectedAt: new Date(),
+      }).returning();
+      
+      // Update user's has_connected_apis flag
+      await db.update(users)
+        .set({ hasConnectedApis: true })
+        .where(eq(users.id, userId));
+      
+      return connection[0];
+    } catch (error) {
+      console.error('Error creating broker connection:', error);
+      throw error;
     }
-    return this.brokerAggregator;
-  }
-  
-  /**
-   * Get all broker types
-   */
-  async getBrokerTypes() {
-    return await db.select().from(brokerTypes);
-  }
-  
-  /**
-   * Get a specific broker type by ID
-   */
-  async getBrokerType(id: number) {
-    const results = await db.select().from(brokerTypes).where(eq(brokerTypes.id, id));
-    return results[0] || null;
   }
   
   /**
    * Get all broker connections for a user
    */
-  async getUserBrokerConnections(userId: number) {
-    const connections = await db.select({
-      id: brokerConnections.id,
-      userId: brokerConnections.userId,
-      brokerTypeId: brokerConnections.brokerTypeId,
-      name: brokerConnections.connectionName,
-      isLiveTrading: brokerConnections.isLiveTrading,
-      isActive: brokerConnections.isActive,
-      allowCopyTrading: brokerConnections.allowCopyTrading,
-      lastConnectedAt: brokerConnections.lastConnectedAt,
-      createdAt: brokerConnections.createdAt,
-      updatedAt: brokerConnections.updatedAt,
-      // Don't include sensitive fields like API keys
-    }).from(brokerConnections)
-      .where(eq(brokerConnections.userId, userId));
-    
-    // Join with broker types to include broker name and details
-    const brokerTypeIds = connections.map(c => c.brokerTypeId);
-    
-    if (brokerTypeIds.length === 0) {
-      return [];
+  async getBrokerConnections(userId: number) {
+    try {
+      const connections = await db.query.brokerConnections.findMany({
+        where: eq(brokerConnections.userId, userId),
+        with: {
+          broker_type: true,
+        },
+      });
+      
+      // Return without exposing encrypted data
+      return connections.map(conn => {
+        const additionalConfig = conn.additionalConfig as Record<string, any> || {};
+        
+        return {
+          id: conn.id,
+          userId: conn.userId,
+          brokerTypeId: conn.brokerTypeId,
+          brokerType: conn.broker_type,
+          name: conn.name,
+          isActive: conn.isActive,
+          isDemo: conn.isDemo,
+          lastConnectedAt: conn.lastConnectedAt,
+          createdAt: conn.createdAt,
+          updatedAt: conn.updatedAt,
+          // Including boolean flags to indicate which credentials are present
+          hasApiKey: !!conn.encryptedKey,
+          hasSecretKey: !!conn.encryptedSecret,
+          hasPassphrase: !!conn.encryptedPassphrase,
+          // Additional config indicators
+          hasAccessToken: !!additionalConfig.accessToken,
+          hasUsername: !!additionalConfig.username,
+          hasPassword: !!additionalConfig.password,
+          hasAccountId: !!additionalConfig.accountId,
+        };
+      });
+    } catch (error) {
+      console.error('Error getting broker connections:', error);
+      throw error;
     }
-    
-    const types = await db.select().from(brokerTypes);
-    const typesMap = new Map(types.map(t => [t.id, t]));
-    
-    // Add broker details to each connection
-    return connections.map(conn => ({
-      ...conn,
-      broker: typesMap.get(conn.brokerTypeId) || null
-    }));
   }
   
   /**
    * Get a specific broker connection by ID
    */
-  async getBrokerConnection(id: number) {
-    const results = await db.select().from(brokerConnections).where(eq(brokerConnections.id, id));
-    return results[0] || null;
+  async getBrokerConnection(connectionId: number, userId: number) {
+    try {
+      const connection = await db.query.brokerConnections.findFirst({
+        where: and(
+          eq(brokerConnections.id, connectionId),
+          eq(brokerConnections.userId, userId)
+        ),
+        with: {
+          broker_type: true,
+        },
+      });
+      
+      if (!connection) {
+        throw new Error(`Broker connection with ID ${connectionId} not found`);
+      }
+      
+      const additionalConfig = connection.additionalConfig as Record<string, any> || {};
+      
+      return {
+        id: connection.id,
+        userId: connection.userId,
+        brokerTypeId: connection.brokerTypeId,
+        brokerType: connection.broker_type,
+        name: connection.name,
+        isActive: connection.isActive,
+        isDemo: connection.isDemo,
+        lastConnectedAt: connection.lastConnectedAt,
+        createdAt: connection.createdAt,
+        updatedAt: connection.updatedAt,
+        // Including boolean flags to indicate which credentials are present
+        hasApiKey: !!connection.encryptedKey,
+        hasSecretKey: !!connection.encryptedSecret,
+        hasPassphrase: !!connection.encryptedPassphrase,
+        // Additional config indicators
+        hasAccessToken: !!additionalConfig.accessToken,
+        hasUsername: !!additionalConfig.username,
+        hasPassword: !!additionalConfig.password,
+        hasAccountId: !!additionalConfig.accountId,
+      };
+    } catch (error) {
+      console.error('Error getting broker connection:', error);
+      throw error;
+    }
   }
   
   /**
-   * Create a new broker connection
+   * Get full credentials for a broker connection (decrypted for use)
    */
-  async createBrokerConnection(
-    userId: number,
-    brokerTypeId: number,
-    name: string,
-    isDemo: boolean,
-    apiKey: string,
-    apiSecret: string,
-    passphrase: string | null = null,
-    additionalConfig: Record<string, any> = {}
-  ) {
-    // Generate a unique connection token
-    const connectionToken = crypto.randomBytes(16).toString('hex');
-    
-    // Encrypt sensitive data
-    const encryptedApiKey = await encryptionService.encrypt(apiKey);
-    const encryptedSecretKey = await encryptionService.encrypt(apiSecret);
-    const encryptedPassphrase = passphrase ? await encryptionService.encrypt(passphrase) : null;
-    
-    // Create the connection
-    const result = await db.insert(brokerConnections).values({
-      userId: userId,
-      brokerTypeId: brokerTypeId,
-      connectionName: name,
-      encryptedApiKey: encryptedApiKey,
-      encryptedSecretKey: encryptedSecretKey,
-      encryptedPassphrase: encryptedPassphrase,
-      connectionToken: connectionToken,
-      isPrimary: false,
-      isLiveTrading: !isDemo,
-      isActive: true,
-      allowCopyTrading: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }).returning({
-      id: brokerConnections.id,
-      userId: brokerConnections.userId,
-      brokerTypeId: brokerConnections.brokerTypeId,
-      name: brokerConnections.connectionName,
-      isLiveTrading: brokerConnections.isLiveTrading,
-      isActive: brokerConnections.isActive,
-      createdAt: brokerConnections.createdAt,
-      updatedAt: brokerConnections.updatedAt,
-    });
-    
-    return result[0];
+  async getBrokerCredentials(connectionId: number, userId: number): Promise<BrokerCredentials> {
+    try {
+      const connection = await db.query.brokerConnections.findFirst({
+        where: and(
+          eq(brokerConnections.id, connectionId),
+          eq(brokerConnections.userId, userId)
+        )
+      });
+      
+      if (!connection) {
+        throw new Error(`Broker connection with ID ${connectionId} not found`);
+      }
+      
+      const credentials: BrokerCredentials = {};
+      
+      if (connection.encryptedKey) {
+        credentials.apiKey = encryptionService.decrypt(connection.encryptedKey);
+      }
+      
+      if (connection.encryptedSecret) {
+        credentials.secretKey = encryptionService.decrypt(connection.encryptedSecret);
+      }
+      
+      if (connection.encryptedPassphrase) {
+        credentials.passphrase = encryptionService.decrypt(connection.encryptedPassphrase);
+      }
+      
+      // Extract additional fields from additionalConfig if present
+      if (connection.additionalConfig) {
+        const additionalConfig = connection.additionalConfig as Record<string, any>;
+        
+        if (additionalConfig.accessToken) {
+          credentials.accessToken = additionalConfig.accessToken;
+        }
+        
+        if (additionalConfig.username) {
+          credentials.username = additionalConfig.username;
+        }
+        
+        if (additionalConfig.password) {
+          credentials.password = additionalConfig.password;
+        }
+        
+        if (additionalConfig.accountId) {
+          credentials.accountId = additionalConfig.accountId;
+        }
+      }
+      
+      return credentials;
+    } catch (error) {
+      console.error('Error getting broker credentials:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Get credentials by connection token (for copy trading)
+   */
+  async getCredentialsByToken(connectionToken: string): Promise<BrokerCredentials & { brokerId: number }> {
+    try {
+      // TODO: Update this query once copy trading features are fully implemented 
+      // and connection_token field is added to the database
+      const connection = await db.query.brokerConnections.findFirst({
+        where: eq(brokerConnections.isActive, true)
+      });
+      
+      if (!connection) {
+        throw new Error(`Active broker connection not found`);
+      }
+      
+      const credentials: BrokerCredentials & { brokerId: number } = {
+        brokerId: connection.brokerTypeId
+      };
+      
+      if (connection.encryptedKey) {
+        credentials.apiKey = encryptionService.decrypt(connection.encryptedKey);
+      }
+      
+      if (connection.encryptedSecret) {
+        credentials.secretKey = encryptionService.decrypt(connection.encryptedSecret);
+      }
+      
+      if (connection.encryptedPassphrase) {
+        credentials.passphrase = encryptionService.decrypt(connection.encryptedPassphrase);
+      }
+      
+      // Extract additional fields from additionalConfig if present
+      if (connection.additionalConfig) {
+        const additionalConfig = connection.additionalConfig as Record<string, any>;
+        
+        if (additionalConfig.accessToken) {
+          credentials.accessToken = additionalConfig.accessToken;
+        }
+        
+        if (additionalConfig.username) {
+          credentials.username = additionalConfig.username;
+        }
+        
+        if (additionalConfig.password) {
+          credentials.password = additionalConfig.password;
+        }
+        
+        if (additionalConfig.accountId) {
+          credentials.accountId = additionalConfig.accountId;
+        }
+      }
+      
+      return credentials;
+    } catch (error) {
+      console.error('Error getting credentials by token:', error);
+      throw error;
+    }
   }
   
   /**
    * Update a broker connection
    */
   async updateBrokerConnection(
-    id: number,
+    connectionId: number,
     userId: number,
     updates: {
-      name?: string;
-      isLiveTrading?: boolean;
+      connectionName?: string;
+      credentials?: Partial<BrokerCredentials>;
       isActive?: boolean;
-      apiKey?: string;
-      apiSecret?: string;
-      passphrase?: string | null;
-      allowCopyTrading?: boolean;
-      isPrimary?: boolean;
+      isDemo?: boolean;
     }
   ) {
-    // First verify the connection exists and belongs to the user
-    const connection = await this.getBrokerConnection(id);
-    
-    if (!connection || connection.userId !== userId) {
-      return null;
-    }
-    
-    // Prepare updates
-    const updateValues: any = {};
-    
-    if (updates.name !== undefined) {
-      updateValues.connectionName = updates.name;
-    }
-    
-    if (updates.isLiveTrading !== undefined) {
-      updateValues.isLiveTrading = updates.isLiveTrading;
-    }
-    
-    if (updates.isActive !== undefined) {
-      updateValues.isActive = updates.isActive;
-    }
-    
-    if (updates.apiKey !== undefined) {
-      updateValues.encryptedApiKey = await encryptionService.encrypt(updates.apiKey);
-    }
-    
-    if (updates.apiSecret !== undefined) {
-      updateValues.encryptedSecretKey = await encryptionService.encrypt(updates.apiSecret);
-    }
-    
-    if (updates.passphrase !== undefined) {
-      updateValues.encryptedPassphrase = updates.passphrase 
-        ? await encryptionService.encrypt(updates.passphrase) 
-        : null;
-    }
-    
-    if (updates.allowCopyTrading !== undefined) {
-      updateValues.allowCopyTrading = updates.allowCopyTrading;
-    }
-    
-    if (updates.isPrimary !== undefined) {
-      updateValues.isPrimary = updates.isPrimary;
-    }
-    
-    updateValues.updatedAt = new Date();
-    
-    // Perform update
-    const result = await db.update(brokerConnections)
-      .set(updateValues)
-      .where(and(
-        eq(brokerConnections.id, id),
-        eq(brokerConnections.userId, userId)
-      ))
-      .returning({
-        id: brokerConnections.id,
-        userId: brokerConnections.userId,
-        brokerTypeId: brokerConnections.brokerTypeId,
-        name: brokerConnections.connectionName,
-        isLiveTrading: brokerConnections.isLiveTrading,
-        isActive: brokerConnections.isActive,
-        createdAt: brokerConnections.createdAt,
-        updatedAt: brokerConnections.updatedAt,
+    try {
+      // First get the current connection
+      const existingConnection = await db.query.brokerConnections.findFirst({
+        where: and(
+          eq(brokerConnections.id, connectionId),
+          eq(brokerConnections.userId, userId)
+        ),
+        with: {
+          broker_type: true,
+        },
       });
-    
-    return result[0] || null;
+      
+      if (!existingConnection) {
+        throw new Error(`Broker connection with ID ${connectionId} not found`);
+      }
+      
+      // Prepare update data
+      const updateData: Record<string, any> = {};
+      
+      if (updates.connectionName) {
+        updateData.name = updates.connectionName;
+      }
+      
+      if (updates.isActive !== undefined) {
+        updateData.isActive = updates.isActive;
+      }
+      
+      if (updates.isDemo !== undefined) {
+        updateData.isDemo = updates.isDemo;
+      }
+      
+      // Handle credential updates if provided
+      if (updates.credentials) {
+        const { apiKey, secretKey, passphrase, accessToken, username, password, accountId } = updates.credentials;
+        
+        if (apiKey && existingConnection.broker_type.requires_key) {
+          updateData.encryptedKey = encryptionService.encrypt(apiKey);
+        }
+        
+        if (secretKey && existingConnection.broker_type.requires_secret) {
+          updateData.encryptedSecret = encryptionService.encrypt(secretKey);
+        }
+        
+        if (passphrase && existingConnection.broker_type.requires_passphrase) {
+          updateData.encryptedPassphrase = encryptionService.encrypt(passphrase);
+        }
+        
+        // Get existing additional config or create new one
+        let additionalConfig = existingConnection.additionalConfig ? 
+          { ...existingConnection.additionalConfig as Record<string, any> } : {};
+        
+        // Update additional config fields
+        if (accessToken) {
+          additionalConfig.accessToken = accessToken;
+        }
+        
+        if (username) {
+          additionalConfig.username = username;
+        }
+        
+        if (password) {
+          additionalConfig.password = password;
+        }
+        
+        if (accountId) {
+          additionalConfig.accountId = accountId;
+        }
+        
+        if (Object.keys(additionalConfig).length > 0) {
+          updateData.additionalConfig = additionalConfig;
+        }
+      }
+      
+      // Update the timestamp
+      updateData.updatedAt = new Date();
+      
+      // Update the connection
+      const updated = await db.update(brokerConnections)
+        .set(updateData)
+        .where(and(
+          eq(brokerConnections.id, connectionId),
+          eq(brokerConnections.userId, userId)
+        ))
+        .returning();
+      
+      return updated[0];
+    } catch (error) {
+      console.error('Error updating broker connection:', error);
+      throw error;
+    }
   }
   
   /**
    * Delete a broker connection
    */
-  async deleteBrokerConnection(id: number) {
-    await db.delete(brokerConnections).where(eq(brokerConnections.id, id));
-  }
-  
-  /**
-   * Get decrypted credentials for a broker connection
-   */
-  async getDecryptedCredentials(id: number) {
-    const connection = await db.select().from(brokerConnections).where(eq(brokerConnections.id, id));
-    
-    if (!connection || connection.length === 0) {
-      return null;
-    }
-    
-    const conn = connection[0];
-    
-    const apiKey = await encryptionService.decrypt(conn.encryptedApiKey);
-    const apiSecret = await encryptionService.decrypt(conn.encryptedSecretKey);
-    
-    let passphrase = null;
-    if (conn.encryptedPassphrase) {
-      passphrase = await encryptionService.decrypt(conn.encryptedPassphrase);
-    }
-    
-    return {
-      apiKey,
-      apiSecret,
-      passphrase,
-      isDemo: !conn.isLiveTrading
-    };
-  }
-  
-  /**
-   * Validate a broker connection
-   */
-  async validateConnection(connectionId: number): Promise<boolean> {
+  async deleteBrokerConnection(connectionId: number, userId: number) {
     try {
-      const aggregator = this.getBrokerAggregator();
-      return await aggregator.validateConnection(connectionId);
+      const deleted = await db.delete(brokerConnections)
+        .where(and(
+          eq(brokerConnections.id, connectionId),
+          eq(brokerConnections.userId, userId)
+        ))
+        .returning();
+      
+      if (deleted.length === 0) {
+        throw new Error(`Broker connection with ID ${connectionId} not found`);
+      }
+      
+      // Check if user has any connections left
+      const remainingConnections = await db.query.brokerConnections.findMany({
+        where: eq(brokerConnections.userId, userId),
+      });
+      
+      // If no connections left, update user's has_connected_apis flag
+      if (remainingConnections.length === 0) {
+        await db.update(users)
+          .set({ hasConnectedApis: false })
+          .where(eq(users.id, userId));
+      }
+      
+      return deleted[0];
     } catch (error) {
-      console.error('Error validating connection:', error);
-      return false;
+      console.error('Error deleting broker connection:', error);
+      throw error;
     }
+  }
+  
+  /**
+   * Test connection to broker with provided credentials
+   */
+  async testBrokerConnection(brokerTypeId: number, credentials: BrokerCredentials) {
+    try {
+      // Implementation will depend on broker-specific service
+      // This would be implemented in the broker aggregator layer
+      return { success: true, message: 'Connection test not implemented yet' };
+    } catch (error) {
+      console.error('Error testing broker connection:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Generate a unique ID for broker connections
+   */
+  private generateConnectionToken(): string {
+    return crypto.randomBytes(32).toString('hex');
   }
 }
 
-// Create and export singleton instance
+// Create singleton instance
 export const brokerConnectionService = new BrokerConnectionService();

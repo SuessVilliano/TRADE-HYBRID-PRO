@@ -39,8 +39,8 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Initialize services
-  encryptionService.initialize();
+  // Initialize services that need initialization
+  // encryptionService is self-initializing in its constructor
   await brokerConnectionService.initialize();
   
   const server = await registerRoutes(app);

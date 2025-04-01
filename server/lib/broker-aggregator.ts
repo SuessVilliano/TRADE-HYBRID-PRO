@@ -1,165 +1,281 @@
-import { brokerConnectionService } from './services/broker-connection-service';
-import { BrokerService } from './services/broker-service';
+import { brokerConnectionService, BrokerCredentials } from './services/broker-connection-service';
+import { BrokerService, BrokerAccountInfo, BrokerPosition, BrokerOrderRequest, BrokerOrderResponse } from './services/broker-service';
 import { BinanceService } from './services/binance-service';
+import { db } from '../db';
+import { eq } from 'drizzle-orm';
+import { brokerTypes } from '../../shared/schema';
 
 /**
- * BrokerAggregator provides a unified interface for connecting to and trading with
- * multiple brokers. It handles authentication, order execution, and fetching account
- * and position information from various supported brokers.
+ * Broker Aggregator Service
+ * 
+ * Provides a unified interface for interacting with different broker platforms
+ * Manages broker connections and credentials securely
  */
-export class BrokerAggregator {
-  private initialized = false;
-  private brokerServices: Map<number, BrokerService> = new Map();
-
+class BrokerAggregator {
+  // Cache of active broker service instances
+  private brokerServiceCache: Map<number, BrokerService> = new Map();
+  
+  constructor() {}
+  
   /**
-   * Initialize the broker aggregator
-   * This should be called on server startup
+   * Get a broker service instance for a specific connection
    */
-  async initialize(): Promise<void> {
-    // You might want to pre-load active connections here or do any other initialization
-    this.initialized = true;
-    console.log('Broker aggregator initialized');
-  }
-
-  /**
-   * Get broker service instance for a specific connection
-   * This dynamically loads the appropriate broker service and initializes it
-   */
-  private async getBrokerService(connectionId: number): Promise<BrokerService> {
-    // Check if we already have an initialized instance for this connection
-    if (this.brokerServices.has(connectionId)) {
-      return this.brokerServices.get(connectionId)!;
+  async getBrokerService(connectionId: number, userId: number): Promise<BrokerService> {
+    // Check if we already have an instance in the cache
+    if (this.brokerServiceCache.has(connectionId)) {
+      return this.brokerServiceCache.get(connectionId)!;
     }
-
-    // Get connection details and decrypt credentials
-    const credentials = await brokerConnectionService.getDecryptedCredentials(connectionId);
-    if (!credentials) {
-      throw new Error(`No credentials found for connection ID ${connectionId}`);
-    }
-
-    // Get broker type information
-    const connection = await brokerConnectionService.getBrokerConnection(connectionId);
+    
+    // Get the connection details
+    const connection = await brokerConnectionService.getBrokerConnection(connectionId, userId);
+    
     if (!connection) {
-      throw new Error(`Connection not found: ${connectionId}`);
+      throw new Error(`Broker connection with ID ${connectionId} not found`);
     }
-
-    const brokerType = await brokerConnectionService.getBrokerType(connection.brokerTypeId);
+    
+    // Get the broker type
+    const brokerType = await db.query.brokerTypes.findFirst({
+      where: eq(brokerTypes.id, connection.brokerTypeId)
+    });
+    
     if (!brokerType) {
-      throw new Error(`Broker type not found: ${connection.brokerTypeId}`);
+      throw new Error(`Broker type with ID ${connection.brokerTypeId} not found`);
     }
-
-    // Create the appropriate broker service based on broker type
+    
+    // Get the credentials
+    const credentials = await brokerConnectionService.getBrokerCredentials(connectionId, userId);
+    
+    // Create the appropriate broker service based on the broker type
     let brokerService: BrokerService;
-
-    switch (brokerType.name.toLowerCase()) {
+    
+    switch (brokerType.name) {
       case 'binance':
-        brokerService = new BinanceService(
-          credentials.apiKey,
-          credentials.apiSecret,
-          credentials.isDemo,
-          credentials.passphrase || null
-        );
+        brokerService = new BinanceService(credentials, { region: 'global', useTestnet: !connection.isLiveTrading });
         break;
       case 'binance_us':
-        brokerService = new BinanceService(
-          credentials.apiKey,
-          credentials.apiSecret,
-          credentials.isDemo,
-          credentials.passphrase || null,
-          { region: 'us' }
-        );
+        brokerService = new BinanceService(credentials, { region: 'us', useTestnet: !connection.isLiveTrading });
         break;
-      // Add cases for other broker types as they're implemented
-      // case 'alpaca':
-      //   brokerService = new AlpacaService(...);
-      //   break;
-      // case 'kraken':
-      //   brokerService = new KrakenService(...);
-      //   break;
+      // Add more broker types here as they are implemented
+      /*
+      case 'alpaca':
+        brokerService = new AlpacaService(credentials, { isPaper: !connection.isLiveTrading });
+        break;
+      case 'oanda':
+        brokerService = new OandaService(credentials, { isPractice: !connection.isLiveTrading });
+        break;
+      case 'kraken':
+        brokerService = new KrakenService(credentials);
+        break;
+      case 'tradovate':
+        brokerService = new TradovateService(credentials, { isDemoAccount: !connection.isLiveTrading });
+        break;
+      */
       default:
         throw new Error(`Unsupported broker type: ${brokerType.name}`);
     }
-
+    
     // Initialize the broker service
     await brokerService.initialize();
     
-    // Cache the service for future use
-    this.brokerServices.set(connectionId, brokerService);
+    // Cache the broker service
+    this.brokerServiceCache.set(connectionId, brokerService);
     
     return brokerService;
   }
-
+  
   /**
-   * Get account information for a broker connection
+   * Get a broker service by connection token (for copy trading)
    */
-  async getAccountInfo(connectionId: number): Promise<any> {
-    const brokerService = await this.getBrokerService(connectionId);
-    const accountInfo = await brokerService.getAccountInfo();
-    return accountInfo;
-  }
-
-  /**
-   * Get positions for a broker connection
-   */
-  async getPositions(connectionId: number): Promise<any[]> {
-    const brokerService = await this.getBrokerService(connectionId);
-    const positions = await brokerService.getPositions();
-    return positions;
-  }
-
-  /**
-   * Place an order with a broker
-   */
-  async placeOrder(connectionId: number, order: any): Promise<any> {
-    const brokerService = await this.getBrokerService(connectionId);
-    const result = await brokerService.placeOrder(order);
-    return result;
-  }
-
-  /**
-   * Get order history for a broker connection
-   */
-  async getOrderHistory(connectionId: number): Promise<any[]> {
-    const brokerService = await this.getBrokerService(connectionId);
-    const orders = await brokerService.getOrderHistory();
-    return orders;
-  }
-
-  /**
-   * Get current quote for a symbol through a broker connection
-   */
-  async getQuote(connectionId: number, symbol: string): Promise<{ symbol: string; bid: number; ask: number; last?: number; }> {
-    const brokerService = await this.getBrokerService(connectionId);
-    const quote = await brokerService.getQuote(symbol);
-    return quote;
-  }
-
-  /**
-   * Close a position for a broker connection
-   */
-  async closePosition(connectionId: number, symbol: string, quantity?: number): Promise<any> {
-    const brokerService = await this.getBrokerService(connectionId);
-    const result = await brokerService.closePosition(symbol, quantity);
-    return result;
-  }
-
-  /**
-   * Validate a broker connection by testing credentials
-   */
-  async validateConnection(connectionId: number): Promise<boolean> {
+  async getBrokerServiceByToken(connectionToken: string): Promise<BrokerService> {
     try {
-      // This will throw an error if the broker service can't be initialized
-      // or if the credentials are invalid
-      const brokerService = await this.getBrokerService(connectionId);
+      // Get credentials and broker ID from the token
+      const { brokerId, ...credentials } = await brokerConnectionService.getCredentialsByToken(connectionToken);
       
-      // Test the connection explicitly
-      const isValid = await brokerService.validateCredentials();
+      // Get the broker type
+      const brokerType = await db.query.brokerTypes.findFirst({
+        where: eq(brokerTypes.id, brokerId)
+      });
       
-      // If we reached here, the connection is valid
-      return isValid;
+      if (!brokerType) {
+        throw new Error(`Broker type with ID ${brokerId} not found`);
+      }
+      
+      // Create the appropriate broker service based on the broker type
+      let brokerService: BrokerService;
+      
+      switch (brokerType.name) {
+        case 'binance':
+          brokerService = new BinanceService(credentials, { region: 'global' });
+          break;
+        case 'binance_us':
+          brokerService = new BinanceService(credentials, { region: 'us' });
+          break;
+        // Add more broker types here as they are implemented
+        default:
+          throw new Error(`Unsupported broker type: ${brokerType.name}`);
+      }
+      
+      // Initialize the broker service
+      await brokerService.initialize();
+      
+      return brokerService;
     } catch (error) {
-      console.error(`Error validating connection ${connectionId}:`, error);
-      return false;
+      console.error('Error getting broker service by token:', error);
+      throw error;
     }
   }
+  
+  /**
+   * List all supported broker types
+   */
+  async getSupportedBrokerTypes() {
+    return db.query.brokerTypes.findMany({
+      where: eq(brokerTypes.isActive, true),
+    });
+  }
+  
+  /**
+   * Test a connection to a broker
+   */
+  async testConnection(
+    brokerTypeId: number,
+    credentials: BrokerCredentials,
+    isLiveTrading: boolean = false
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      // Get the broker type
+      const brokerType = await db.query.brokerTypes.findFirst({
+        where: eq(brokerTypes.id, brokerTypeId)
+      });
+      
+      if (!brokerType) {
+        throw new Error(`Broker type with ID ${brokerTypeId} not found`);
+      }
+      
+      // Create a temporary broker service
+      let brokerService: BrokerService;
+      
+      switch (brokerType.name) {
+        case 'binance':
+          brokerService = new BinanceService(credentials, { region: 'global', useTestnet: !isLiveTrading });
+          break;
+        case 'binance_us':
+          brokerService = new BinanceService(credentials, { region: 'us', useTestnet: !isLiveTrading });
+          break;
+        // Add more broker types here as needed
+        default:
+          throw new Error(`Unsupported broker type: ${brokerType.name}`);
+      }
+      
+      // Attempt to validate the credentials
+      const isValid = await brokerService.validateCredentials();
+      
+      if (isValid) {
+        return { success: true, message: `Successfully connected to ${brokerType.displayName}` };
+      } else {
+        return { success: false, message: `Failed to validate credentials for ${brokerType.displayName}` };
+      }
+    } catch (error: any) {
+      console.error('Error testing broker connection:', error);
+      return { 
+        success: false, 
+        message: `Connection test failed: ${error.message || 'Unknown error'}` 
+      };
+    }
+  }
+  
+  /**
+   * Get account information for a connection
+   */
+  async getAccountInfo(connectionId: number, userId: number): Promise<BrokerAccountInfo> {
+    const broker = await this.getBrokerService(connectionId, userId);
+    return broker.getAccountInfo();
+  }
+  
+  /**
+   * Get positions for a connection
+   */
+  async getPositions(connectionId: number, userId: number): Promise<BrokerPosition[]> {
+    const broker = await this.getBrokerService(connectionId, userId);
+    return broker.getPositions();
+  }
+  
+  /**
+   * Place an order
+   */
+  async placeOrder(
+    connectionId: number,
+    userId: number,
+    order: BrokerOrderRequest
+  ): Promise<BrokerOrderResponse> {
+    const broker = await this.getBrokerService(connectionId, userId);
+    return broker.placeOrder(order);
+  }
+  
+  /**
+   * Get order history
+   */
+  async getOrderHistory(connectionId: number, userId: number): Promise<any[]> {
+    const broker = await this.getBrokerService(connectionId, userId);
+    return broker.getOrderHistory();
+  }
+  
+  /**
+   * Get a quote for a symbol
+   */
+  async getQuote(
+    connectionId: number,
+    userId: number,
+    symbol: string
+  ): Promise<{ symbol: string; bid: number; ask: number; last?: number }> {
+    const broker = await this.getBrokerService(connectionId, userId);
+    return broker.getQuote(symbol);
+  }
+  
+  /**
+   * Close a position
+   */
+  async closePosition(
+    connectionId: number,
+    userId: number,
+    symbol: string,
+    quantity?: number
+  ): Promise<any> {
+    const broker = await this.getBrokerService(connectionId, userId);
+    return broker.closePosition(symbol, quantity);
+  }
+  
+  /**
+   * Cancel an order
+   */
+  async cancelOrder(
+    connectionId: number,
+    userId: number,
+    orderId: string
+  ): Promise<boolean> {
+    const broker = await this.getBrokerService(connectionId, userId);
+    return broker.cancelOrder(orderId);
+  }
+  
+  /**
+   * Get order status
+   */
+  async getOrderStatus(
+    connectionId: number,
+    userId: number,
+    orderId: string
+  ): Promise<any> {
+    const broker = await this.getBrokerService(connectionId, userId);
+    return broker.getOrderStatus(orderId);
+  }
+  
+  /**
+   * Remove a broker service from the cache
+   */
+  invalidateBrokerService(connectionId: number): void {
+    this.brokerServiceCache.delete(connectionId);
+  }
 }
+
+// Create singleton instance
+export const brokerAggregator = new BrokerAggregator();
