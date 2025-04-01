@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Bot
 } from 'lucide-react';
+import logo from '../../assets/logo.png';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useSolanaAuth, MembershipTier } from '../../lib/context/SolanaAuthProvider';
@@ -158,7 +159,7 @@ export function DesktopHeader({ className }: DesktopHeaderProps) {
         {/* Logo and Main Navigation */}
         <div className="flex items-center space-x-8">
           <Link to="/dashboard" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold text-blue-400">TH</span>
+            <img src={logo} alt="Trade Hybrid Logo" className="h-8 w-auto" />
             <span className="text-lg font-semibold hidden sm:inline">Trade Hybrid</span>
           </Link>
           
