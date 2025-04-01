@@ -116,6 +116,12 @@ export const users = pgTable("users", {
   thcTokenHolder: boolean("thc_token_holder").default(false),
   // User preferences
   dashboardOrder: jsonb("dashboard_order"), // Array of module IDs in preferred order
+  // Membership and permissions
+  membershipLevel: text("membership_level").default('free'), // 'free', 'monthly', 'yearly', 'lifetime'
+  membershipExpirationDate: timestamp("membership_expiration_date"),
+  isAdmin: boolean("is_admin").default(false),
+  isPropTrader: boolean("is_prop_trader").default(false), // For users who have been approved as prop traders
+  customPermissions: jsonb("custom_permissions"), // Custom permissions overrides
   // Timestamps
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -363,7 +369,162 @@ export type BrokerConnection = typeof brokerConnections.$inferSelect;
 export type CopyTradeRelationship = typeof copyTradeRelationships.$inferSelect;
 export type CopyTradeHistory = typeof copyTradeHistory.$inferSelect;
 
+// Prop Firm tables
+export const propFirmChallenges = pgTable("prop_firm_challenges", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  marketType: text("market_type").notNull(), // 'futures', 'crypto', 'forex', 'stocks'
+  brokerModel: text("broker_model").notNull(), // 'apex', 'topstep', 'ftmo', 'the5ers', 'tradehybrid'
+  accountSize: real("account_size").notNull(), // e.g., 10000, 25000, 50000
+  targetProfitPhase1: real("target_profit_phase1").notNull(), // e.g., 8% for Phase 1
+  targetProfitPhase2: real("target_profit_phase2"), // e.g., 5% for Phase 2 (if applicable)
+  maxDailyDrawdown: real("max_daily_drawdown").notNull(), // e.g., 5%
+  maxTotalDrawdown: real("max_total_drawdown").notNull(), // e.g., 10%
+  minTradingDays: integer("min_trading_days"), // Minimum number of trading days required
+  maxTradingDays: integer("max_trading_days"), // Maximum days to complete the challenge
+  durationDays: integer("duration_days").notNull(), // Duration in days for the challenge
+  minTradesRequired: integer("min_trades_required"), // Minimum number of trades required
+  maxDailyLoss: real("max_daily_loss"), // Maximum daily loss allowed in dollars
+  maxPositionSize: real("max_position_size"), // Maximum position size as % of account
+  minHoldingTime: integer("min_holding_time"), // Minimum holding time in minutes
+  maxHoldingTime: integer("max_holding_time"), // Maximum holding time in minutes
+  allowedTradingHours: jsonb("allowed_trading_hours"), // Time windows when trading is allowed
+  restrictedInstruments: jsonb("restricted_instruments"), // Instruments that cannot be traded
+  requiredInstruments: jsonb("required_instruments"), // Instruments that must be traded
+  brokerTypeId: integer("broker_type_id").notNull().references(() => brokerTypes.id),
+  membershipLevelRequired: text("membership_level_required").default('yearly'), // Minimum membership level required
+  price: real("price"), // Price of the challenge (if directly purchased)
+  isCustom: boolean("is_custom").default(false), // If this is a custom challenge for a specific trader
+  customTraderId: integer("custom_trader_id").references(() => users.id), // If this is a custom challenge for a trader
+  customRules: jsonb("custom_rules"), // Any custom rules specific to this challenge
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const propFirmAccounts = pgTable("prop_firm_accounts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  challengeId: integer("challenge_id").references(() => propFirmChallenges.id), // If account started as a challenge
+  accountName: text("account_name").notNull(),
+  accountType: text("account_type").notNull(), // 'challenge_phase1', 'challenge_phase2', 'funded'
+  marketType: text("market_type").notNull(), // 'futures', 'crypto', 'forex', 'stocks'
+  brokerModel: text("broker_model").notNull(), // 'apex', 'topstep', 'ftmo', 'the5ers', 'tradehybrid'
+  accountSize: real("account_size").notNull(),
+  currentBalance: real("current_balance").notNull(),
+  currentEquity: real("current_equity"), // Current balance + unrealized P&L
+  highWatermark: real("high_watermark"), // Highest account balance reached
+  profitTarget: real("profit_target"),
+  maxDailyDrawdown: real("max_daily_drawdown"),
+  maxTotalDrawdown: real("max_total_drawdown"),
+  currentDrawdown: real("current_drawdown"), // Current drawdown amount
+  currentDrawdownPercent: real("current_drawdown_percent"), // Current drawdown percentage
+  maxDailyLoss: real("max_daily_loss"), // Max daily loss in dollars
+  currentDailyLoss: real("current_daily_loss"), // Current day's loss amount
+  startDate: timestamp("start_date").notNull().defaultNow(),
+  endDate: timestamp("end_date"), // When challenge ends or account closed
+  lastTradedDate: timestamp("last_traded_date"), // Last date a trade was made
+  tradingDaysCount: integer("trading_days_count").default(0), // Count of days with trading activity
+  tradesCount: integer("trades_count").default(0), // Total number of trades executed
+  winningTradesCount: integer("winning_trades_count").default(0), // Number of winning trades
+  losingTradesCount: integer("losing_trades_count").default(0), // Number of losing trades
+  status: text("status").notNull(), // 'active', 'completed', 'failed', 'funded'
+  brokerConnectionId: integer("broker_connection_id").references(() => brokerConnections.id), // Company-owned broker connection
+  tradingAllowed: boolean("trading_allowed").default(true),
+  ruleViolations: jsonb("rule_violations"), // Any rule violations by the trader
+  tradingRestrictions: jsonb("trading_restrictions"), // Any restrictions on the trader
+  profitSplit: real("profit_split").default(80), // Percentage of profits trader receives (e.g., 80%)
+  scalingPlan: jsonb("scaling_plan"), // Plan for scaling account size based on performance
+  metrics: jsonb("metrics"), // Store metrics like current drawdown, best day, etc.
+  notifications: jsonb("notifications"), // Account-related notifications
+  tags: jsonb("tags"), // Admin-defined tags for categorizing accounts
+  // API credentials assigned to this trader (managed by the prop firm)
+  assignedApiKey: text("assigned_api_key"),
+  assignedApiSecret: text("assigned_api_secret"),
+  assignedApiPassphrase: text("assigned_api_passphrase"),
+  // Custom account settings
+  customSettings: jsonb("custom_settings"), // Custom settings for this account
+  adminNotes: text("admin_notes"), // Admin notes about this account
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const propFirmTrades = pgTable("prop_firm_trades", {
+  id: serial("id").primaryKey(),
+  propAccountId: integer("prop_account_id").notNull().references(() => propFirmAccounts.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  symbol: text("symbol").notNull(),
+  side: text("side").notNull(), // 'buy' or 'sell'
+  quantity: real("quantity").notNull(),
+  entryPrice: real("entry_price").notNull(),
+  exitPrice: real("exit_price"),
+  profit: real("profit"),
+  profitPercent: real("profit_percent"),
+  leverage: real("leverage").default(1),
+  entryTimestamp: timestamp("entry_timestamp").notNull(),
+  exitTimestamp: timestamp("exit_timestamp"),
+  active: boolean("active").notNull().default(true),
+  brokerOrderId: text("broker_order_id"),
+  traderNotes: text("trader_notes"),
+  adminNotes: text("admin_notes"),
+  tags: jsonb("tags"), // For categorizing trades
+  screenshots: jsonb("screenshots"), // URLs to trade screenshots
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const propFirmPayouts = pgTable("prop_firm_payouts", {
+  id: serial("id").primaryKey(),
+  propAccountId: integer("prop_account_id").notNull().references(() => propFirmAccounts.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  amount: real("amount").notNull(),
+  status: text("status").notNull(), // 'pending', 'processed', 'paid', 'rejected'
+  tradePeriodStart: timestamp("trade_period_start").notNull(),
+  tradePeriodEnd: timestamp("trade_period_end").notNull(),
+  paymentMethod: text("payment_method"), // 'crypto', 'bank', 'paypal', etc.
+  paymentDetails: jsonb("payment_details"), // Wallet address, transaction ID, etc.
+  requestedAt: timestamp("requested_at").notNull().defaultNow(),
+  processedAt: timestamp("processed_at"),
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const propFirmMetrics = pgTable("prop_firm_metrics", {
+  id: serial("id").primaryKey(),
+  propAccountId: integer("prop_account_id").notNull().references(() => propFirmAccounts.id),
+  date: timestamp("date").notNull(),
+  balance: real("balance").notNull(),
+  equity: real("equity").notNull(),
+  dailyPnl: real("daily_pnl"),
+  dailyPnlPercent: real("daily_pnl_percent"),
+  drawdown: real("drawdown"),
+  drawdownPercent: real("drawdown_percent"),
+  totalTrades: integer("total_trades"),
+  winningTrades: integer("winning_trades"),
+  losingTrades: integer("losing_trades"),
+  winRate: real("win_rate"),
+  avgWin: real("avg_win"),
+  avgLoss: real("avg_loss"),
+  largestWin: real("largest_win"),
+  largestLoss: real("largest_loss"),
+  profitFactor: real("profit_factor"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Insert schemas for validation
 export const insertBrokerTypeSchema = createInsertSchema(brokerTypes);
 export const insertBrokerConnectionSchema = createInsertSchema(brokerConnections);
 export const insertCopyTradeRelationshipSchema = createInsertSchema(copyTradeRelationships);
+
+// Export prop firm types
+export type PropFirmChallenge = typeof propFirmChallenges.$inferSelect;
+export type PropFirmAccount = typeof propFirmAccounts.$inferSelect;
+export type PropFirmTrade = typeof propFirmTrades.$inferSelect;
+export type PropFirmPayout = typeof propFirmPayouts.$inferSelect;
+export type PropFirmMetric = typeof propFirmMetrics.$inferSelect;
+
+export const insertPropFirmChallengeSchema = createInsertSchema(propFirmChallenges);
+export const insertPropFirmAccountSchema = createInsertSchema(propFirmAccounts);
+export const insertPropFirmTradeSchema = createInsertSchema(propFirmTrades);

@@ -1,278 +1,324 @@
-import { BrokerService, MarketData, AccountBalance, BrokerPosition, OrderHistory } from './broker-service';
+import { BrokerCredentials } from './broker-connection-service';
+import { BrokerService, BrokerAccountInfo, BrokerPosition, BrokerOrderRequest, BrokerOrderResponse } from './broker-service';
+import axios from 'axios';
+
+interface AlpacaOptions {
+  isPaper: boolean;
+}
 
 /**
- * Implementation of BrokerService for Alpaca
+ * Service for interacting with Alpaca trading API
  */
 export class AlpacaService implements BrokerService {
   private apiKey: string;
   private secretKey: string;
-  private isPaper: boolean;
   private baseUrl: string;
   private dataUrl: string;
-  private authenticated: boolean = false;
-  private accountId: string = '';
-  
-  constructor(apiKey: string = '', secretKey: string = '', isPaper: boolean = true) {
-    this.apiKey = apiKey;
-    this.secretKey = secretKey;
-    this.isPaper = isPaper;
+  private accountId?: string;
+
+  constructor(credentials: BrokerCredentials, options: AlpacaOptions = { isPaper: true }) {
+    if (!credentials.apiKey || !credentials.secretKey) {
+      throw new Error('API key and secret key are required for Alpaca');
+    }
+
+    this.apiKey = credentials.apiKey;
+    this.secretKey = credentials.secretKey;
+    this.accountId = credentials.accountId;
     
-    // Set the appropriate URLs based on paper/live trading
-    if (isPaper) {
-      this.baseUrl = 'https://paper-api.alpaca.markets';
-      this.dataUrl = 'https://data.alpaca.markets';
+    // Set the base URL based on whether paper trading is enabled
+    if (options.isPaper) {
+      this.baseUrl = 'https://paper-api.alpaca.markets/v2';
+      this.dataUrl = 'https://data.alpaca.markets/v2';
     } else {
-      this.baseUrl = 'https://api.alpaca.markets';
-      this.dataUrl = 'https://data.alpaca.markets';
+      this.baseUrl = 'https://api.alpaca.markets/v2';
+      this.dataUrl = 'https://data.alpaca.markets/v2';
     }
   }
-  
-  async connect(): Promise<void> {
-    if (!this.apiKey || !this.secretKey) {
-      throw new Error('Alpaca API key and secret key are required');
-    }
-    
+
+  /**
+   * Initialize the service
+   */
+  async initialize(): Promise<void> {
+    // Verify credentials by making a test API call
     try {
-      // Test the connection by getting account information
-      const response = await fetch(`${this.baseUrl}/v2/account`, {
-        headers: {
-          'APCA-API-KEY-ID': this.apiKey,
-          'APCA-API-SECRET-KEY': this.secretKey
-        }
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Alpaca API error: ${errorData.message || response.statusText}`);
-      }
-      
-      const accountData = await response.json();
-      this.accountId = accountData.id;
-      this.authenticated = true;
-      
-      console.log(`Connected to Alpaca account: ${accountData.id}`);
+      await this.getAccountInfo();
+      console.log('Successfully initialized Alpaca service');
     } catch (error) {
-      console.error('Failed to connect to Alpaca:', error);
-      throw new Error(`Failed to connect to Alpaca: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Failed to initialize Alpaca service:', error);
+      throw new Error('Invalid Alpaca credentials');
     }
   }
-  
-  async getBalance(): Promise<AccountBalance> {
-    if (!this.authenticated) {
-      await this.connect();
-    }
-    
+
+  /**
+   * Validate credentials without full initialization
+   */
+  async validateCredentials(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/v2/account`, {
-        headers: {
-          'APCA-API-KEY-ID': this.apiKey,
-          'APCA-API-SECRET-KEY': this.secretKey
-        }
+      const response = await axios.get(`${this.baseUrl}/account`, {
+        headers: this.getHeaders(),
       });
       
-      if (!response.ok) {
-        throw new Error(`Failed to get account balance: ${response.statusText}`);
-      }
+      return response.status === 200;
+    } catch (error) {
+      console.error('Alpaca credential validation failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get account information
+   */
+  async getAccountInfo(): Promise<BrokerAccountInfo> {
+    try {
+      const response = await axios.get(`${this.baseUrl}/account`, {
+        headers: this.getHeaders(),
+      });
       
-      const accountData = await response.json();
+      const data = response.data;
       
       return {
-        total: parseFloat(accountData.equity),
-        cash: parseFloat(accountData.cash),
-        positions: parseFloat(accountData.long_market_value) - parseFloat(accountData.short_market_value)
+        accountId: data.id,
+        balance: parseFloat(data.cash),
+        equity: parseFloat(data.equity),
+        margin: parseFloat(data.buying_power) - parseFloat(data.cash),
+        unrealizedPnl: parseFloat(data.equity) - parseFloat(data.last_equity),
+        buyingPower: parseFloat(data.buying_power),
+        currency: 'USD',
+        extra: {
+          daytradeCount: data.daytrade_count,
+          daytradeLimit: data.daytrade_count_limit,
+          tradeSuspendedByUser: data.trade_suspended_by_user,
+          tradingBlocked: data.trading_blocked,
+          transfersBlocked: data.transfers_blocked,
+          accountBlocked: data.account_blocked,
+          status: data.status,
+          createdAt: data.created_at,
+        }
       };
     } catch (error) {
-      console.error('Error getting Alpaca account balance:', error);
+      console.error('Error getting Alpaca account info:', error);
       throw error;
     }
   }
-  
+
+  /**
+   * Get positions
+   */
   async getPositions(): Promise<BrokerPosition[]> {
-    if (!this.authenticated) {
-      await this.connect();
-    }
-    
     try {
-      const response = await fetch(`${this.baseUrl}/v2/positions`, {
-        headers: {
-          'APCA-API-KEY-ID': this.apiKey,
-          'APCA-API-SECRET-KEY': this.secretKey
-        }
+      const response = await axios.get(`${this.baseUrl}/positions`, {
+        headers: this.getHeaders(),
       });
       
-      if (!response.ok) {
-        throw new Error(`Failed to get positions: ${response.statusText}`);
-      }
-      
-      const positionsData = await response.json();
-      
-      return positionsData.map((position: any) => ({
+      return response.data.map((position: any) => ({
         symbol: position.symbol,
         quantity: parseFloat(position.qty),
+        side: parseFloat(position.qty) > 0 ? 'buy' : 'sell',
         averagePrice: parseFloat(position.avg_entry_price),
         currentPrice: parseFloat(position.current_price),
-        pnl: parseFloat(position.unrealized_pl)
+        unrealizedPnl: parseFloat(position.unrealized_pl),
+        unrealizedPnlPercent: parseFloat(position.unrealized_plpc) * 100,
+        initialValue: parseFloat(position.cost_basis),
+        currentValue: parseFloat(position.market_value),
+        extra: {
+          exchange: position.exchange,
+          assetClass: position.asset_class,
+          assetId: position.asset_id,
+          changeToday: parseFloat(position.change_today),
+          lastdayPrice: parseFloat(position.lastday_price),
+        }
       }));
     } catch (error) {
       console.error('Error getting Alpaca positions:', error);
       throw error;
     }
   }
-  
-  async placeOrder(order: {
-    symbol: string;
-    side: 'buy' | 'sell';
-    quantity: number;
-    type: 'market' | 'limit';
-    limitPrice?: number;
-  }): Promise<string> {
-    if (!this.authenticated) {
-      await this.connect();
-    }
-    
+
+  /**
+   * Place order
+   */
+  async placeOrder(order: BrokerOrderRequest): Promise<BrokerOrderResponse> {
     try {
-      const orderData: any = {
+      const orderParams: any = {
         symbol: order.symbol,
-        qty: order.quantity.toString(),
+        qty: Math.abs(order.quantity).toString(),
         side: order.side,
-        type: order.type.toUpperCase(),
-        time_in_force: 'day'
+        type: order.orderType || 'market',
+        time_in_force: order.timeInForce || 'day',
       };
-      
-      if (order.type === 'limit' && order.limitPrice) {
-        orderData.limit_price = order.limitPrice.toString();
+
+      // Add limit price if it's a limit order
+      if (order.orderType === 'limit' && order.limitPrice) {
+        orderParams.limit_price = order.limitPrice.toString();
       }
-      
-      const response = await fetch(`${this.baseUrl}/v2/orders`, {
-        method: 'POST',
-        headers: {
-          'APCA-API-KEY-ID': this.apiKey,
-          'APCA-API-SECRET-KEY': this.secretKey,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(orderData)
+
+      // Add stop price if it's a stop order
+      if (order.orderType === 'stop' && order.stopPrice) {
+        orderParams.stop_price = order.stopPrice.toString();
+      }
+
+      // Add client order ID if provided
+      if (order.clientOrderId) {
+        orderParams.client_order_id = order.clientOrderId;
+      }
+
+      const response = await axios.post(`${this.baseUrl}/orders`, orderParams, {
+        headers: this.getHeaders(),
       });
+
+      const data = response.data;
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Failed to place order: ${errorData.message || response.statusText}`);
-      }
-      
-      const responseData = await response.json();
-      return responseData.id;
+      return {
+        orderId: data.id,
+        clientOrderId: data.client_order_id,
+        symbol: data.symbol,
+        side: data.side,
+        quantity: parseFloat(data.qty),
+        filledQuantity: parseFloat(data.filled_qty),
+        orderType: data.type,
+        limitPrice: data.limit_price ? parseFloat(data.limit_price) : undefined,
+        stopPrice: data.stop_price ? parseFloat(data.stop_price) : undefined,
+        status: data.status,
+        createdAt: new Date(data.created_at).toISOString(),
+      };
     } catch (error) {
       console.error('Error placing Alpaca order:', error);
       throw error;
     }
   }
-  
-  async getOrderHistory(): Promise<OrderHistory[]> {
-    if (!this.authenticated) {
-      await this.connect();
-    }
-    
+
+  /**
+   * Get order history
+   */
+  async getOrderHistory(): Promise<any[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/v2/orders?status=all&limit=100`, {
-        headers: {
-          'APCA-API-KEY-ID': this.apiKey,
-          'APCA-API-SECRET-KEY': this.secretKey
-        }
+      const response = await axios.get(`${this.baseUrl}/orders?status=all&limit=100`, {
+        headers: this.getHeaders(),
       });
       
-      if (!response.ok) {
-        throw new Error(`Failed to get order history: ${response.statusText}`);
-      }
-      
-      const ordersData = await response.json();
-      
-      return ordersData.map((order: any) => ({
+      return response.data.map((order: any) => ({
         orderId: order.id,
+        clientOrderId: order.client_order_id,
         symbol: order.symbol,
-        side: order.side as 'buy' | 'sell',
+        side: order.side,
         quantity: parseFloat(order.qty),
-        price: parseFloat(order.filled_avg_price || order.limit_price || '0'),
-        status: this.mapOrderStatus(order.status),
-        timestamp: new Date(order.created_at).getTime(),
-        broker: 'ALPACA'
+        filledQuantity: parseFloat(order.filled_qty),
+        orderType: order.type,
+        limitPrice: order.limit_price ? parseFloat(order.limit_price) : undefined,
+        stopPrice: order.stop_price ? parseFloat(order.stop_price) : undefined,
+        status: order.status,
+        createdAt: order.created_at,
+        updatedAt: order.updated_at,
+        filledAt: order.filled_at,
+        expiredAt: order.expired_at,
+        canceledAt: order.canceled_at,
+        failedAt: order.failed_at,
       }));
     } catch (error) {
       console.error('Error getting Alpaca order history:', error);
       throw error;
     }
   }
-  
-  private mapOrderStatus(alpacaStatus: string): 'filled' | 'pending' | 'cancelled' {
-    switch (alpacaStatus) {
-      case 'filled':
-        return 'filled';
-      case 'canceled':
-      case 'expired':
-      case 'rejected':
-        return 'cancelled';
-      default:
-        return 'pending';
-    }
-  }
-  
-  async getQuote(symbol: string): Promise<{ bid: number; ask: number } | null> {
-    if (!this.authenticated) {
-      await this.connect();
-    }
-    
+
+  /**
+   * Get quote for a symbol
+   */
+  async getQuote(symbol: string): Promise<{ symbol: string; bid: number; ask: number; last?: number }> {
     try {
-      const response = await fetch(`${this.dataUrl}/v2/stocks/${symbol}/quotes/latest`, {
-        headers: {
-          'APCA-API-KEY-ID': this.apiKey,
-          'APCA-API-SECRET-KEY': this.secretKey
-        }
-      });
+      const response = await axios.get(
+        `${this.dataUrl}/stocks/${symbol}/quotes/latest`, 
+        { headers: this.getHeaders() }
+      );
       
-      if (!response.ok) {
-        throw new Error(`Failed to get quote for ${symbol}: ${response.statusText}`);
-      }
-      
-      const quoteData = await response.json();
-      
-      if (!quoteData.quote) {
-        return null;
-      }
+      const quote = response.data.quote;
       
       return {
-        bid: parseFloat(quoteData.quote.bp),
-        ask: parseFloat(quoteData.quote.ap)
+        symbol,
+        bid: parseFloat(quote.bp),
+        ask: parseFloat(quote.ap),
+        last: parseFloat(quote.c || quote.bp),
       };
     } catch (error) {
-      console.error(`Error getting quote for ${symbol}:`, error);
-      return null;
+      console.error(`Error getting Alpaca quote for ${symbol}:`, error);
+      throw error;
     }
   }
-  
-  // WebSocket connection for market data
-  subscribeToMarketData(symbol: string, callback: (data: MarketData) => void): void {
-    // Implementation would use Alpaca's WebSocket API
-    console.log(`Subscribed to market data for ${symbol}`);
-    
-    // Simulate data for now
-    const interval = setInterval(() => {
-      const mockPrice = 100 + Math.random() * 10;
-      callback({
-        symbol,
-        price: mockPrice,
-        timestamp: Date.now(),
-        volume: Math.floor(Math.random() * 1000)
+
+  /**
+   * Close a position
+   */
+  async closePosition(symbol: string, quantity?: number): Promise<any> {
+    try {
+      const url = quantity 
+        ? `${this.baseUrl}/positions/${symbol}?qty=${quantity}`
+        : `${this.baseUrl}/positions/${symbol}`;
+        
+      const response = await axios.delete(url, {
+        headers: this.getHeaders(),
       });
-    }, 5000);
-    
-    // Store the interval for cleanup later
-    (this as any)[`interval_${symbol}`] = interval;
-  }
-  
-  unsubscribeFromMarketData(symbol: string): void {
-    const intervalKey = `interval_${symbol}`;
-    if ((this as any)[intervalKey]) {
-      clearInterval((this as any)[intervalKey]);
-      delete (this as any)[intervalKey];
-      console.log(`Unsubscribed from market data for ${symbol}`);
+      
+      return response.data;
+    } catch (error) {
+      console.error(`Error closing Alpaca position for ${symbol}:`, error);
+      throw error;
     }
+  }
+
+  /**
+   * Cancel an order
+   */
+  async cancelOrder(orderId: string): Promise<boolean> {
+    try {
+      await axios.delete(`${this.baseUrl}/orders/${orderId}`, {
+        headers: this.getHeaders(),
+      });
+      
+      return true;
+    } catch (error) {
+      console.error(`Error canceling Alpaca order ${orderId}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Get order status
+   */
+  async getOrderStatus(orderId: string): Promise<any> {
+    try {
+      const response = await axios.get(`${this.baseUrl}/orders/${orderId}`, {
+        headers: this.getHeaders(),
+      });
+      
+      const order = response.data;
+      
+      return {
+        orderId: order.id,
+        clientOrderId: order.client_order_id,
+        symbol: order.symbol,
+        side: order.side,
+        quantity: parseFloat(order.qty),
+        filledQuantity: parseFloat(order.filled_qty),
+        orderType: order.type,
+        limitPrice: order.limit_price ? parseFloat(order.limit_price) : undefined,
+        stopPrice: order.stop_price ? parseFloat(order.stop_price) : undefined,
+        status: order.status,
+        createdAt: order.created_at,
+        updatedAt: order.updated_at,
+      };
+    } catch (error) {
+      console.error(`Error getting Alpaca order status for ${orderId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get headers for API requests
+   */
+  private getHeaders() {
+    return {
+      'APCA-API-KEY-ID': this.apiKey,
+      'APCA-API-SECRET-KEY': this.secretKey,
+      'Content-Type': 'application/json'
+    };
   }
 }

@@ -1,6 +1,8 @@
 import { brokerConnectionService, BrokerCredentials } from './services/broker-connection-service';
 import { BrokerService, BrokerAccountInfo, BrokerPosition, BrokerOrderRequest, BrokerOrderResponse } from './services/broker-service';
 import { BinanceService } from './services/binance-service';
+import { AlpacaService } from './services/alpaca-service';
+import { TradovateService } from './services/tradovate-service';
 import { db } from '../db';
 import { eq } from 'drizzle-orm';
 import { brokerTypes } from '../../shared/schema';
@@ -55,19 +57,19 @@ class BrokerAggregator {
       case 'binance_us':
         brokerService = new BinanceService(credentials, { region: 'us', useTestnet: !connection.isLiveTrading });
         break;
-      // Add more broker types here as they are implemented
-      /*
       case 'alpaca':
         brokerService = new AlpacaService(credentials, { isPaper: !connection.isLiveTrading });
         break;
+      case 'tradovate':
+        brokerService = new TradovateService(credentials, { isDemoAccount: !connection.isLiveTrading });
+        break;
+      // Add more broker types here as they are implemented
+      /*
       case 'oanda':
         brokerService = new OandaService(credentials, { isPractice: !connection.isLiveTrading });
         break;
       case 'kraken':
         brokerService = new KrakenService(credentials);
-        break;
-      case 'tradovate':
-        brokerService = new TradovateService(credentials, { isDemoAccount: !connection.isLiveTrading });
         break;
       */
       default:
@@ -109,6 +111,12 @@ class BrokerAggregator {
           break;
         case 'binance_us':
           brokerService = new BinanceService(credentials, { region: 'us' });
+          break;
+        case 'alpaca':
+          brokerService = new AlpacaService(credentials, { isPaper: false });
+          break;
+        case 'tradovate':
+          brokerService = new TradovateService(credentials, { isDemoAccount: false });
           break;
         // Add more broker types here as they are implemented
         default:
@@ -161,6 +169,12 @@ class BrokerAggregator {
           break;
         case 'binance_us':
           brokerService = new BinanceService(credentials, { region: 'us', useTestnet: !isLiveTrading });
+          break;
+        case 'alpaca':
+          brokerService = new AlpacaService(credentials, { isPaper: !isLiveTrading });
+          break;
+        case 'tradovate':
+          brokerService = new TradovateService(credentials, { isDemoAccount: !isLiveTrading });
           break;
         // Add more broker types here as needed
         default:
