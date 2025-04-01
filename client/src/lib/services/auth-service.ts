@@ -25,14 +25,35 @@ export const authService = {
 
   async getCurrentUser() {
     try {
-      const response = await fetch('/api/auth/me');
+      const response = await fetch('/api/auth/user');
       if (!response.ok) throw new Error('Failed to get user');
       
       const userData = await response.json();
-      useAuthStore.getState().setUser(userData);
+      if (userData.authenticated) {
+        useAuthStore.getState().setUser(userData);
+      }
       return userData;
     } catch (error) {
       console.error('Get user error:', error);
+      throw error;
+    }
+  },
+  
+  async logout() {
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (!response.ok) throw new Error('Logout failed');
+      
+      useAuthStore.getState().logout();
+      return true;
+    } catch (error) {
+      console.error('Logout error:', error);
       throw error;
     }
   }

@@ -65,20 +65,13 @@ export default function LoginPage() {
     try {
       setLoginStatus("Logging in with demo account...");
       
-      // Set demo user in local storage to bypass database
-      localStorage.setItem('demoUser', JSON.stringify({
-        id: 1,
-        username: 'demo_user',
-        email: 'demo@tradehybrid.com',
-        membership: 'lifetime',
-        isAuthenticated: true
-      }));
+      // Use the AuthContext to perform demo login
+      await auth.loginWithDemo();
       
-      // Small delay to simulate login process
-      setTimeout(() => {
-        console.log("Demo login successful");
-        navigate("/");
-      }, 1000);
+      console.log("Demo login successful");
+      
+      // Navigate to dashboard
+      navigate("/dashboard");
       
     } catch (err) {
       console.error("Demo login failed");
