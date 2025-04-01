@@ -124,6 +124,7 @@ function AppContent() {
   const { isAuthenticated, logout, user } = useUserStore();
   const { loginWithSolana, isWalletAuthenticated, solanaAuthError, isAuthenticatingWithSolana, logoutFromSolana } = useSolanaAuth();
   const { userLevel } = useFeatureDisclosure();
+  const navigate = useNavigate();
   const [showWhopModal, setShowWhopModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
@@ -141,16 +142,7 @@ function AppContent() {
     }
   };
 
-  // Auto-login with Solana when wallet is connected
-  useEffect(() => {
-    // This will check if a wallet is connected but user is not authenticated
-    if (!isAuthenticated && !isAuthenticatingWithSolana && !solanaAuthError) {
-      // Attempt to login with Solana
-      loginWithSolana().catch(error => {
-        console.log("Auto wallet login failed:", error);
-      });
-    }
-  }, [isAuthenticated, isAuthenticatingWithSolana, solanaAuthError, loginWithSolana]);
+  // Removed auto-login effect to require explicit login on the login page
 
   // Initialize affiliate tracking
   const { trackReferral, currentReferralCode } = useAffiliateTracking();
@@ -273,8 +265,6 @@ function AppContent() {
               </>
             ) : (
               <div className="flex flex-wrap items-center gap-3">
-                <WalletStatusIndicator />
-                <div className="border-r border-slate-600 h-8 hidden sm:block" />
                 <Button 
                   variant="outline" 
                   size="sm" 
@@ -284,6 +274,15 @@ function AppContent() {
                   <span className={userLevel === UserExperienceLevel.FREE ? "text-slate-400" : "text-green-400"}>
                     {getLevelName()} Membership
                   </span>
+                </Button>
+                <div className="border-r border-slate-600 h-8 hidden sm:block" />
+                <Button 
+                  variant="primary" 
+                  size="sm" 
+                  onClick={() => navigate('/login')}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Login / Sign Up
                 </Button>
               </div>
             )}

@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Info } from 'lucide-react';
+import '@solana/wallet-adapter-react-ui/styles.css';
+import '@/styles/wallet-adapter.css';
 
 //This line is changed to use a direct path instead of an import statement
 const logo = '/logo.png';
@@ -195,7 +197,13 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-4">
-          <div>
+          <div className="wallet-wrapper w-full flex justify-center">
+            <WalletMultiButton 
+              className="wallet-adapter-button-custom w-full flex justify-center items-center gap-2 text-center bg-transparent hover:bg-gray-700 border border-gray-600 rounded-md px-4 py-2"
+            />
+          </div>
+          
+          <div className="mt-4">
             <Button
               type="button"
               variant="outline"
@@ -206,7 +214,7 @@ export default function LoginPage() {
               {isAuthenticatingWithSolana ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Connecting...
+                  Authenticating with wallet...
                 </>
               ) : (
                 <>
@@ -229,7 +237,7 @@ export default function LoginPage() {
                       </linearGradient>
                     </defs>
                   </svg>
-                  Connect Wallet
+                  Authenticate with Connected Wallet
                 </>
               )}
             </Button>
