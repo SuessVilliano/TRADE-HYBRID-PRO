@@ -51,6 +51,8 @@ import SignalsAnalyzerPage from './pages/signals-analyzer';
 import AiMarketAnalysisPage from './pages/ai-market-analysis-page';
 import VoiceTradeDemoPage from './pages/voice-trade-demo';
 import ApiDemoPage from './pages/api-demo-page';
+import SmartTradeExplainer from './pages/smart-trade-explainer';
+import TradingToolsPage from './pages/trading-tools';
 
 // Prop Firm
 import PropFirmDashboardPage from './pages/PropFirmDashboard';
@@ -123,8 +125,10 @@ const App: React.FC = () => {
               <Route path="/game/trade-runner-browser" element={<ProtectedRoute><TradeRunnerBrowserPage /></ProtectedRoute>} />
               
               {/* Tools & Analysis */}
+              <Route path="/trading-tools" element={<ProtectedRoute><TradingToolsPage /></ProtectedRoute>} />
               <Route path="/ai-market-analysis" element={<ProtectedRoute><AiMarketAnalysisPage /></ProtectedRoute>} />
               <Route path="/voice-trade" element={<ProtectedRoute><VoiceTradeDemoPage /></ProtectedRoute>} />
+              <Route path="/smart-trade-explainer" element={<ProtectedRoute><SmartTradeExplainer /></ProtectedRoute>} />
               <Route path="/api-demo" element={<ProtectedRoute><ApiDemoPage /></ProtectedRoute>} />
               
               {/* Prop Firm */}

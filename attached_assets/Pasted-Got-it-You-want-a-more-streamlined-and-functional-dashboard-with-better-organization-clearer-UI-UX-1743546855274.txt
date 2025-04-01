@@ -1,0 +1,59 @@
+Got it. You want a more streamlined and functional dashboard with better organization, clearer UI/UX, and fully working features. Here’s a breakdown of the key changes and fixes:
+
+Main Menu Adjustments
+	1.	Remove TradingView Chart – It’s already inside the trading dashboard.
+	2.	Clarify Trade Dashboard vs. Trade Platform – Keep the new sleek trade dashboard but integrate smart trade panel features from the trade platform.
+	3.	Smart Trade Panel as an Explainer Page – Instead of a standalone menu item, have a landing page explaining its features with a button linking directly to the trade dashboard.
+	4.	Solana Trading Needs Clarity – If it’s about staking and bridging, integrate it into the Trade Hybrid Coin section.
+	5.	Refine Trading & Markets Section – Keep only:
+	•	Trade Dashboard
+	•	DEX Dashboard
+	•	Move Trading Indicators and Smart Trade Panel under Trading Tools.
+
+⸻
+
+Trading Tools
+	1.	Trading Signals API Fix – Ensure Google Sheet alerts are coming through properly.
+	2.	Merge Trade Journal & Advanced Journal – Keep all important features:
+	•	Trade history
+	•	Add new trade
+	•	Analytics
+	•	Journal entries
+	•	Psychology tracking
+	•	Setup analysis
+	•	Export functionality
+	3.	Trading Bots Page Fix – Should link to a fully functional bot-building page, not the trading simulator.
+	4.	AI Marketplace Fix – Ensure generated analysis works and fix transparent symbol selection UI.
+	5.	Signals Analyzer – Doesn’t pop up; investigate and fix.
+	6.	Voice Trade Assistant Improvements –
+	•	Make panel movable, resizable, and dockable anywhere in the app.
+	•	When activated, it should immediately listen and display transcribed text before executing.
+	•	Ensure voice commands populate the trade panel correctly.
+
+⸻
+
+News & Education
+	1.	Market News Link Fix – Should display RSS feeds and scraped data properly.
+	2.	Rename Economic Calendar to “Events” – Ensure images load correctly.
+	3.	Remove Trading Freedom Podcast – It shouldn’t be in the menu.
+	4.	Merge Learning Center & Learning Journey – The journey is part of the center.
+
+⸻
+
+Immersive Experiences Fixes
+	1.	Trading Metaverse Link Fix – Should open the working dashboard metaverse with Spatial embedded.
+	2.	Trade Runner URL Fix – Replace with the correct game link.
+	3.	Trade Simulator Page Fix – Should load properly inside the Game Center.
+	4.	Bulls vs. Bears Game Improvements:
+	•	Market chart should be clearer.
+	•	Add buy/sell buttons & game instructions.
+	•	Improve movement controls for better playability (joystick, arrows, spacebar).
+
+⸻
+
+Crypto & NFT
+	1.	Fix NFT Wallet Connection – Should connect to Solana wallet for real NFT creation using Moralis.
+
+⸻
+
+Let me know if you want to prioritize any of these fixes first!

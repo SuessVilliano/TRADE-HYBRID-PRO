@@ -19,50 +19,18 @@ const dashboardItems: DashboardItem[] = [
   // Trading & Markets Category
   {
     id: 'trading-dashboard',
-    name: 'Trading Dashboard',
+    name: 'Trade Dashboard',
     icon: <LineChart className="h-5 w-5" />,
     path: '/trading-dashboard',
     description: 'Customizable trading dashboard with widgets',
     category: 'Trading & Markets'
   },
   {
-    id: 'chart',
-    name: 'TradingView Chart',
-    icon: <LineChart className="h-5 w-5" />,
-    path: '/trade',
-    description: 'Professional trading charts with indicators',
-    category: 'Trading & Markets'
-  },
-  {
-    id: 'smart-trade',
-    name: 'Smart Trade Panel',
-    icon: <Cpu className="h-5 w-5" />,
-    path: '/trade',
-    description: 'Advanced trading with AI assistance',
-    category: 'Trading & Markets'
-  },
-  {
-    id: 'solana-trading',
-    name: 'Solana Trading',
-    icon: <Activity className="h-5 w-5" />,
-    path: '/trading/solana',
-    description: 'Trade Solana tokens and manage your portfolio',
-    category: 'Trading & Markets'
-  },
-  {
     id: 'dex',
-    name: 'DEX Trading',
+    name: 'DEX Dashboard',
     icon: <Activity className="h-5 w-5" />,
     path: '/dex',
     description: 'Decentralized exchange for crypto trading',
-    category: 'Trading & Markets'
-  },
-  {
-    id: 'indicators',
-    name: 'Trading Indicators',
-    icon: <BarChart3 className="h-5 w-5" />,
-    path: '/trading/indicators',
-    description: 'Library of technical indicators',
     category: 'Trading & Markets'
   },
   
@@ -76,19 +44,27 @@ const dashboardItems: DashboardItem[] = [
     category: 'Trading Tools'
   },
   {
+    id: 'indicators',
+    name: 'Trading Indicators',
+    icon: <BarChart3 className="h-5 w-5" />,
+    path: '/trading/indicators',
+    description: 'Library of technical indicators',
+    category: 'Trading Tools'
+  },
+  {
+    id: 'smart-trade',
+    name: 'Smart Trade Panel',
+    icon: <Cpu className="h-5 w-5" />,
+    path: '/smart-trade-explainer',
+    description: 'Advanced trading with AI assistance',
+    category: 'Trading Tools'
+  },
+  {
     id: 'journal',
     name: 'Trading Journal',
     icon: <FileText className="h-5 w-5" />,
     path: '/journal',
-    description: 'Record and analyze your trades',
-    category: 'Trading Tools'
-  },
-  {
-    id: 'journal-advanced',
-    name: 'Advanced Journal',
-    icon: <FileText className="h-5 w-5" />,
-    path: '/journal/advanced',
-    description: 'Professional trading journal with analytics',
+    description: 'Complete trading journal with analytics, history, and psychology tracking',
     category: 'Trading Tools'
   },
   {
@@ -135,18 +111,10 @@ const dashboardItems: DashboardItem[] = [
   },
   {
     id: 'economic-calendar',
-    name: 'Economic Calendar',
+    name: 'Events',
     icon: <Calendar className="h-5 w-5" />,
     path: '/events',
     description: 'Important economic events and data releases',
-    category: 'News & Education'
-  },
-  {
-    id: 'podcast',
-    name: 'Trading Freedom Podcast',
-    icon: <Podcast className="h-5 w-5" />,
-    path: '/trading-freedom-podcast',
-    description: 'Learn from professional traders',
     category: 'News & Education'
   },
   {
@@ -154,15 +122,7 @@ const dashboardItems: DashboardItem[] = [
     name: 'Learning Center',
     icon: <BookOpen className="h-5 w-5" />,
     path: '/learn',
-    description: 'Educational resources for traders',
-    category: 'News & Education'
-  },
-  {
-    id: 'learning-journey',
-    name: 'Learning Journey',
-    icon: <BookOpen className="h-5 w-5" />,
-    path: '/learning-journey',
-    description: 'Structured learning paths for traders',
+    description: 'Educational resources and structured learning paths for traders',
     category: 'News & Education'
   },
   

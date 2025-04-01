@@ -17,14 +17,19 @@ const navigationItems = [
     icon: <BarChart3 className="h-5 w-5" />,
   },
   {
-    name: 'Trading',
-    path: '/trade',
+    name: 'Trade Dashboard',
+    path: '/trading-dashboard',
     icon: <LineChart className="h-5 w-5" />,
   },
   {
-    name: 'Signals',
-    path: '/signals',
-    icon: <Signal className="h-5 w-5" />,
+    name: 'DEX Dashboard',
+    path: '/dex',
+    icon: <Activity className="h-5 w-5" />,
+  },
+  {
+    name: 'Trading Tools',
+    path: '/trading-tools',
+    icon: <LineChart className="h-5 w-5" />,
   },
   {
     name: 'Journal',
@@ -32,12 +37,7 @@ const navigationItems = [
     icon: <FileText className="h-5 w-5" />,
   },
   {
-    name: 'Bots',
-    path: '/bots',
-    icon: <Bot className="h-5 w-5" />,
-  },
-  {
-    name: 'Learning',
+    name: 'Learning Center',
     path: '/learn',
     icon: <BookOpen className="h-5 w-5" />,
   },
@@ -47,7 +47,7 @@ const navigationItems = [
     icon: <Activity className="h-5 w-5" />,
   },
   {
-    name: 'News',
+    name: 'News & Events',
     path: '/news',
     icon: <MessageSquare className="h-5 w-5" />,
   },
@@ -57,7 +57,7 @@ const navigationItems = [
     icon: <Users className="h-5 w-5" />,
   },
   {
-    name: 'TokenHub',
+    name: 'THC Tokens',
     path: '/trade?location=thc',
     icon: <Coins className="h-5 w-5" />,
   },
