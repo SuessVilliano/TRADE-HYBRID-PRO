@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import bs58 from 'bs58';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import useLocalStorage from '../hooks/useLocalStorage';
 
 // Define available membership tiers
 export enum MembershipTier {

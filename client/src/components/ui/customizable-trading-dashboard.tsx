@@ -12,7 +12,7 @@ import {
 } from './dropdown-menu';
 import { toast } from 'sonner';
 import { Tabs, TabsList, TabsTrigger } from './tabs';
-import { useLocalStorage } from '../../hooks/use-local-storage';
+import useLocalStorage from '../../lib/hooks/useLocalStorage';
 import { createPortal } from 'react-dom';
 import DexChart from './dex-chart';
 import TradingViewWidget from './TradingViewWidget';

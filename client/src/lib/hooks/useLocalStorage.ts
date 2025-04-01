@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 // Hook for accessing localStorage
-export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
+function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
   // Get from local storage then
   // parse stored json or return initialValue
   const readValue = (): T => {
@@ -49,3 +49,6 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T)
 
   return [storedValue, setValue];
 }
+
+export { useLocalStorage };
+export default useLocalStorage;

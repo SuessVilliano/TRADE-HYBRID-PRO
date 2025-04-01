@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Bell, Lock, Palette, MonitorSmartphone, Volume2, Database, Globe, Cpu } from 'lucide-react';
-import { useLocalStorage } from '@/lib/hooks/useLocalStorage';
+import useLocalStorage from '@/lib/hooks/useLocalStorage';
 import { useTheme } from '@/lib/hooks/useTheme';
 import { useAudio } from '@/lib/stores/useAudio';
 
