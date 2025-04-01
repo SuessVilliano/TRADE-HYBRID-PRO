@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './lib/context/AuthContext';
 import { SolanaAuthProvider } from './lib/context/SolanaAuthProvider';
-import { WalletProvider } from './lib/context/WalletProvider';
+import { SolanaWalletProvider } from './lib/context/SolanaWalletProvider';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Pages
@@ -73,7 +73,7 @@ import NotificationSettingsPage from './pages/notification-settings';
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <WalletProvider>
+      <SolanaWalletProvider>
         <SolanaAuthProvider>
           <Router>
             <Routes>
@@ -149,7 +149,7 @@ const App: React.FC = () => {
             </Routes>
           </Router>
         </SolanaAuthProvider>
-      </WalletProvider>
+      </SolanaWalletProvider>
     </AuthProvider>
   );
 };

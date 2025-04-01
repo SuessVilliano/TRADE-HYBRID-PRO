@@ -1,16 +1,46 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC, ReactNode, useMemo } from 'react';
+import { 
+  ConnectionProvider, 
+  WalletProvider as SolanaWalletProvider 
+} from '@solana/wallet-adapter-react';
+import { 
+  PhantomWalletAdapter 
+} from '@solana/wallet-adapter-phantom';
+import { 
+  WalletModalProvider, 
+} from '@solana/wallet-adapter-react-ui';
+import { Adapter } from '@solana/wallet-adapter-base';
+import { clusterApiUrl } from '@solana/web3.js';
 
-// Simple wallet provider wrapper to fix issues with Solana wallet context
+// Import wallet adapter stylesheet
+import '@solana/wallet-adapter-react-ui/styles.css';
+
 interface WalletProviderProps {
   children: ReactNode;
 }
 
 export const WalletProvider: FC<WalletProviderProps> = ({ children }) => {
-  // For now just pass through children
-  // Later we can implement the full Solana wallet adapter setup
+  // Set up endpoint (devnet)
+  const endpoint = useMemo(() => clusterApiUrl('devnet'), []);
+
+  // Set up wallet adapters
+  const wallets = useMemo<Adapter[]>(
+    () => [
+      new PhantomWalletAdapter() as unknown as Adapter,
+    ],
+    []
+  );
+
   return (
-    <>{children}</>
+    <ConnectionProvider endpoint={endpoint}>
+      <SolanaWalletProvider wallets={wallets as any} autoConnect>
+        <WalletModalProvider>
+          {children}
+        </WalletModalProvider>
+      </SolanaWalletProvider>
+    </ConnectionProvider>
   );
 };
 
+// We don't need this anymore as we are using SolanaWalletProvider
 export default WalletProvider;

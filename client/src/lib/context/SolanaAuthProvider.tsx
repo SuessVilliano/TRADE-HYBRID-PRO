@@ -1,217 +1,251 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import axios from 'axios';
+import bs58 from 'bs58';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 
-// Membership tiers for THC staking
+// Define available membership tiers
 export enum MembershipTier {
-  NONE = 0,
-  BASIC = 1,
-  ADVANCED = 2,
-  PREMIUM = 3,
-  ELITE = 4
+  None = 0,
+  Basic = 1,
+  Advanced = 2,
+  Premium = 3,
+  Elite = 4
 }
 
-// Membership interface
-interface TokenMembership {
+// Define token membership type
+export interface TokenMembership {
   tier: MembershipTier;
   balance: number;
-  expiry: Date | null;
+  expiry: Date | null; // null means lifetime membership
 }
 
-interface SolanaAuthContextType {
-  isAuthenticating: boolean;
-  isAuthenticated: boolean;
+// Define auth context type
+export interface SolanaAuthContextType {
   walletConnected: boolean;
-  userId: number | null;
+  isAuthenticated: boolean;
+  isAuthenticating: boolean;
   username: string | null;
+  tokenMembership: TokenMembership | null;
+  login: () => Promise<boolean>;
+  logout: () => Promise<void>;
   error: string | null;
-  tokenMembership?: TokenMembership; // Add this for membership tier functionality
-  connectAndAuthenticate: () => Promise<boolean | void>; // Allow for both return types
-  logout: () => Promise<boolean>; 
-  linkWalletToUser: (userId: number) => Promise<boolean>;
+  connectAndAuthenticate: () => Promise<boolean>;
   authenticateWithCredentials: (username: string, password: string) => Promise<boolean>;
 }
 
-const SolanaAuthContext = createContext<SolanaAuthContextType | undefined>(undefined);
-
-export function useSolanaAuth() {
-  const context = useContext(SolanaAuthContext);
-  if (!context) {
-    throw new Error('useSolanaAuth must be used within a SolanaAuthProvider');
-  }
-  return context;
-}
+// Create context with default values
+const SolanaAuthContext = createContext<SolanaAuthContextType>({
+  walletConnected: false,
+  isAuthenticated: false,
+  isAuthenticating: false,
+  username: null,
+  tokenMembership: null,
+  login: async () => false,
+  logout: async () => {},
+  error: null,
+  connectAndAuthenticate: async () => false,
+  authenticateWithCredentials: async () => false
+});
 
 interface SolanaAuthProviderProps {
   children: ReactNode;
 }
 
-export function SolanaAuthProvider({ children }: SolanaAuthProviderProps) {
+export const SolanaAuthProvider: React.FC<SolanaAuthProviderProps> = ({ children }) => {
   const wallet = useWallet();
-  
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userId, setUserId] = useState<number | null>(null);
   const [username, setUsername] = useState<string | null>(null);
+  const [tokenMembership, setTokenMembership] = useState<TokenMembership | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  const walletConnected = wallet.connected && !!wallet.publicKey;
+  // Store auth token in local storage
+  const [authToken, setAuthToken] = useLocalStorage<string | null>('solana_auth_token', null);
   
-  // Check if user is already authenticated
+  // Check if wallet is connected
+  const walletConnected = wallet.connected && wallet.publicKey !== null;
+
+  // Reset auth state when wallet disconnects
   useEffect(() => {
-    async function checkAuthentication() {
-      try {
-        const response = await axios.get('/api/auth/user');
-        if (response.data.authenticated) {
-          setIsAuthenticated(true);
-          setUserId(response.data.userId);
-          setUsername(response.data.username);
-        }
-      } catch (error) {
-        console.error('Failed to check authentication status', error);
-      }
+    if (!walletConnected && isAuthenticated) {
+      setIsAuthenticated(false);
+      setUsername(null);
+      setTokenMembership(null);
+      setAuthToken(null);
     }
+  }, [walletConnected, isAuthenticated, setAuthToken]);
+  
+  // Try to restore session from token
+  useEffect(() => {
+    const verifyToken = async () => {
+      if (authToken && walletConnected) {
+        try {
+          // Mock verification for now - in a real app, we'd verify with the server
+          setIsAuthenticated(true);
+          setUsername('TradeHybridUser');
+          
+          // Mock token membership data
+          setTokenMembership({
+            tier: MembershipTier.Premium,
+            balance: 1250,
+            expiry: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 days from now
+          });
+        } catch (err) {
+          console.error('Failed to verify token:', err);
+          setAuthToken(null);
+          setError('Session expired. Please sign in again.');
+        }
+      }
+    };
     
-    checkAuthentication();
-  }, []);
+    verifyToken();
+  }, [authToken, walletConnected, setAuthToken]);
   
-  // Connect wallet and authenticate
-  const connectAndAuthenticate = async () => {
-    if (!wallet.connected) {
-      try {
-        setIsAuthenticating(true);
-        setError(null);
-        
-        // Connect wallet if not connected
-        if (wallet.connect && wallet.publicKey === null) {
-          await wallet.connect();
-        }
-        
-        // Check if wallet is connected after attempt
-        if (!wallet.connected || !wallet.publicKey) {
-          throw new Error('Failed to connect wallet');
-        }
-        
-        // Sign message to authenticate
-        const walletAddress = wallet.publicKey.toString();
-        console.log('Connected wallet address:', walletAddress);
-        
-        // Authenticate with the server
-        const response = await axios.post('/api/auth/wallet-login', {
-          walletAddress,
-        });
-        
-        if (response.data.success) {
-          setIsAuthenticated(true);
-          setUserId(response.data.userId);
-          setUsername(response.data.username);
-        } else {
-          throw new Error(response.data.error || 'Authentication failed');
-        }
-      } catch (err: any) {
-        console.error('Authentication error:', err);
-        setError(err.message || 'Authentication failed');
-        setIsAuthenticated(false);
-      } finally {
-        setIsAuthenticating(false);
-      }
-    }
-  };
-  
-  // Link wallet to existing user account
-  const linkWalletToUser = async (userId: number) => {
-    try {
-      if (!wallet.connected || !wallet.publicKey) {
-        throw new Error('Wallet not connected');
-      }
-      
-      const walletAddress = wallet.publicKey.toString();
-      const response = await axios.post('/api/identity/link-wallet', {
-        userId,
-        walletAddress,
-      });
-      
-      return response.data.success;
-    } catch (err: any) {
-      console.error('Error linking wallet:', err);
-      setError(err.message || 'Failed to link wallet');
+  // Login function - sign a message with wallet to prove ownership
+  const login = async (): Promise<boolean> => {
+    if (!walletConnected) {
+      setError('Please connect your wallet first');
       return false;
     }
-  };
-  
-  // Authenticate with username and password
-  const authenticateWithCredentials = async (username: string, password: string) => {
+    
+    setIsAuthenticating(true);
+    setError(null);
+    
     try {
-      setIsAuthenticating(true);
-      setError(null);
+      // Create the message to sign
+      const message = `Sign this message to authenticate with Trade Hybrid: ${Date.now()}`;
+      const encodedMessage = new TextEncoder().encode(message);
       
-      const response = await axios.post('/api/auth/login', {
-        username,
-        password,
+      // Request signature from wallet
+      const signedMessage = await wallet.signMessage?.(encodedMessage);
+      
+      if (!signedMessage) {
+        throw new Error('Failed to sign message');
+      }
+      
+      // Convert signature to base58 for sending to server
+      const signature = bs58.encode(signedMessage);
+      
+      // Mock authentication response - in a real app, we'd verify with the server
+      // Here we're just setting the auth state based on having a valid signature
+      const mockToken = `mock_token_${Date.now()}`;
+      setAuthToken(mockToken);
+      setIsAuthenticated(true);
+      setUsername('TradeHybridUser');
+      
+      // Set mock membership data
+      setTokenMembership({
+        tier: MembershipTier.Premium, 
+        balance: 1250,
+        expiry: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 days from now
       });
       
-      if (response.data.success) {
-        setIsAuthenticated(true);
-        setUserId(response.data.userId);
-        setUsername(response.data.username);
-        return true;
-      } else {
-        throw new Error(response.data.error || 'Authentication failed');
-      }
-    } catch (err: any) {
+      return true;
+    } catch (err) {
       console.error('Authentication error:', err);
-      setError(err.message || 'Authentication failed');
-      setIsAuthenticated(false);
+      setError(err instanceof Error ? err.message : 'Failed to authenticate');
       return false;
     } finally {
       setIsAuthenticating(false);
     }
   };
   
-  // Logout
-  const logout = async () => {
+  // Logout function
+  const logout = async (): Promise<void> => {
+    setAuthToken(null);
+    setIsAuthenticated(false);
+    setUsername(null);
+    setTokenMembership(null);
+  };
+  
+  // Connect wallet and authenticate
+  const connectAndAuthenticate = async (): Promise<boolean> => {
+    setIsAuthenticating(true);
+    setError(null);
+    
     try {
-      await axios.post('/api/auth/logout');
-      
-      if (wallet.disconnect) {
-        await wallet.disconnect();
+      // First try to connect wallet if not already connected
+      if (!walletConnected) {
+        if (!wallet.wallet) {
+          // Using any to bypass type checking temporarily
+          await wallet.select('phantom' as any);
+        }
+        
+        await wallet.connect();
       }
       
-      setIsAuthenticated(false);
-      setUserId(null);
-      setUsername(null);
-      return true;
-    } catch (err: any) {
-      console.error('Logout error:', err);
-      setError(err.message || 'Logout failed');
+      if (!wallet.connected || !wallet.publicKey) {
+        throw new Error('Failed to connect wallet');
+      }
+      
+      // Now proceed with authentication
+      return await login();
+    } catch (err) {
+      console.error('Connect and authenticate error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to connect wallet and authenticate');
       return false;
+    } finally {
+      setIsAuthenticating(false);
     }
   };
   
-  // Add minimal tokenMembership object for display purposes
-  const mockTokenMembership: TokenMembership = {
-    tier: MembershipTier.BASIC,
-    balance: 500,
-    expiry: null
-  };
-
-  const contextValue: SolanaAuthContextType = {
-    isAuthenticating,
-    isAuthenticated,
-    walletConnected,
-    userId,
-    username,
-    error,
-    tokenMembership: mockTokenMembership, // Add this to fix missing property
-    connectAndAuthenticate,
-    logout,
-    linkWalletToUser,
-    authenticateWithCredentials,
+  // Authenticate with username and password
+  const authenticateWithCredentials = async (username: string, password: string): Promise<boolean> => {
+    setIsAuthenticating(true);
+    setError(null);
+    
+    try {
+      // In a real application, we would make an API call to authenticate
+      // For demo purposes, we'll just simulate a successful auth with mock data
+      if (username === 'demo' && password === 'password') {
+        // Simulate successful authentication
+        const mockToken = `credential_auth_${Date.now()}`;
+        setAuthToken(mockToken);
+        setIsAuthenticated(true);
+        setUsername(username);
+        
+        // Set demo membership data
+        setTokenMembership({
+          tier: MembershipTier.Basic,
+          balance: 250,
+          expiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+        });
+        
+        return true;
+      } else {
+        // Any other credentials will result in an error
+        throw new Error('Invalid username or password');
+      }
+    } catch (err) {
+      console.error('Credential authentication error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to authenticate with credentials');
+      return false;
+    } finally {
+      setIsAuthenticating(false);
+    }
   };
   
   return (
-    <SolanaAuthContext.Provider value={contextValue}>
+    <SolanaAuthContext.Provider
+      value={{
+        walletConnected,
+        isAuthenticated,
+        isAuthenticating,
+        username,
+        tokenMembership,
+        login,
+        logout,
+        error,
+        connectAndAuthenticate,
+        authenticateWithCredentials
+      }}
+    >
       {children}
     </SolanaAuthContext.Provider>
   );
-}
+};
+
+// Hook for accessing the auth context
+export const useSolanaAuth = () => useContext(SolanaAuthContext);
+
+export default SolanaAuthProvider;
