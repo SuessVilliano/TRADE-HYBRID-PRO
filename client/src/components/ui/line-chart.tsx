@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
-// Temporarily commenting out until we can install the package
-// import * as echarts from 'echarts';
+import React from 'react';
+
+// Simple placeholder implementation until we can properly install echarts
 
 interface DataPoint {
   x: string;
@@ -15,7 +15,7 @@ interface DataSeries {
 interface LineChartProps {
   data: DataSeries[];
   categories: string[];
-  colors: string[];
+  colors?: string[];
   height?: number;
   yAxisWidth?: number;
   showLegend?: boolean;
@@ -27,139 +27,69 @@ export const LineChart: React.FC<LineChartProps> = ({
   data, 
   categories, 
   colors = ['#10b981', '#3b82f6', '#ef4444'],
-  height = 300,
-  yAxisWidth = 60,
-  showLegend = true,
-  showGridLines = true,
-  showGradient = false
+  height = 300
 }) => {
-  const chartRef = useRef<HTMLDivElement>(null);
-  const chartInstance = useRef<echarts.ECharts | null>(null);
-  
-  useEffect(() => {
-    if (!chartRef.current) return;
-    
-    if (!chartInstance.current) {
-      chartInstance.current = echarts.init(chartRef.current);
-    }
-    
-    // Handle resize
-    const handleResize = () => {
-      chartInstance.current?.resize();
-    };
-    
-    window.addEventListener('resize', handleResize);
-    
-    // Configure chart options
-    const series = data.map((s, i) => ({
-      name: s.name,
-      type: 'line',
-      data: s.data.map(point => point.y),
-      smooth: true,
-      symbol: 'circle',
-      symbolSize: 6,
-      itemStyle: {
-        color: colors[i % colors.length]
-      },
-      lineStyle: {
-        width: 3,
-        color: colors[i % colors.length]
-      },
-      areaStyle: showGradient ? {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          {
-            offset: 0,
-            color: colors[i % colors.length] + 'CC' // Add transparency
-          },
-          {
-            offset: 1,
-            color: colors[i % colors.length] + '11' // Almost transparent
-          }
-        ])
-      } : undefined
-    }));
-    
-    const options: echarts.EChartsOption = {
-      tooltip: {
-        trigger: 'axis',
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        borderWidth: 0,
-        textStyle: {
-          color: '#fff'
-        },
-        formatter: (params: any) => {
-          const param = Array.isArray(params) ? params[0] : params;
-          const date = categories[param.dataIndex];
-          let tooltip = `<div style="margin-bottom: 4px; font-weight: bold;">${date}</div>`;
-          
-          (Array.isArray(params) ? params : [params]).forEach((p: any) => {
-            tooltip += `<div style="display: flex; justify-content: space-between; align-items: center; margin: 2px 0;">
-              <span style="display: inline-block; margin-right: 5px; width: 10px; height: 10px; background-color: ${p.color};"></span>
-              <span style="margin-right: 15px;">${p.seriesName}:</span>
-              <span style="font-weight: bold;">${p.value}</span>
-            </div>`;
-          });
-          
-          return tooltip;
-        }
-      },
-      legend: {
-        show: showLegend,
-        bottom: 0
-      },
-      grid: {
-        left: yAxisWidth,
-        right: 20,
-        top: 20,
-        bottom: showLegend ? 40 : 20,
-        containLabel: false
-      },
-      xAxis: {
-        type: 'category',
-        data: categories,
-        axisLine: {
-          lineStyle: {
-            color: '#e5e7eb'
-          }
-        },
-        axisLabel: {
-          color: '#6b7280',
-          fontSize: 11
-        },
-        splitLine: {
-          show: false
-        }
-      },
-      yAxis: {
-        type: 'value',
-        axisLine: {
-          show: false
-        },
-        axisLabel: {
-          color: '#6b7280',
-          fontSize: 11
-        },
-        splitLine: {
-          show: showGridLines,
-          lineStyle: {
-            color: '#e5e7eb',
-            type: 'dashed'
-          }
-        }
-      },
-      series
-    };
-    
-    chartInstance.current.setOption(options);
-    
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      chartInstance.current?.dispose();
-      chartInstance.current = null;
-    };
-  }, [data, categories, colors, yAxisWidth, showLegend, showGridLines, showGradient]);
-  
+  // Calculate some basic stats for the placeholder
+  const chartData = data.map(series => ({
+    name: series.name,
+    min: Math.min(...series.data.map(d => d.y)),
+    max: Math.max(...series.data.map(d => d.y)),
+    last: series.data[series.data.length - 1]?.y
+  }));
+
   return (
-    <div ref={chartRef} style={{ width: '100%', height: `${height}px` }} />
+    <div style={{ width: '100%', height: `${height}px`, 
+                 border: '1px solid #e2e8f0', 
+                 borderRadius: '6px', 
+                 padding: '16px',
+                 background: '#f8fafc',
+                 position: 'relative' }}>
+      <div style={{ 
+        position: 'absolute', 
+        top: 0, 
+        left: 0, 
+        width: '100%', 
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '0.875rem',
+        color: '#64748b',
+        padding: '16px',
+        textAlign: 'center'
+      }}>
+        Chart visualization will be available after echarts is installed
+      </div>
+      
+      {/* Show data summary */}
+      <div style={{ 
+        position: 'absolute', 
+        bottom: '16px', 
+        left: '16px', 
+        right: '16px', 
+        zIndex: 10,
+        borderTop: '1px solid #e2e8f0',
+        paddingTop: '12px',
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '8px'
+      }}>
+        {chartData.map((series, i) => (
+          <div key={i} style={{ 
+            background: colors[i % colors.length] + '20', 
+            padding: '4px 8px',
+            borderRadius: '4px',
+            fontSize: '0.75rem'
+          }}>
+            <span style={{ fontWeight: 'bold', marginRight: '4px' }}>{series.name}:</span>
+            <span>Last: {series.last.toFixed(2)}</span>
+            <span style={{ margin: '0 4px' }}>|</span>
+            <span>Min: {series.min.toFixed(2)}</span>
+            <span style={{ margin: '0 4px' }}>|</span>
+            <span>Max: {series.max.toFixed(2)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };

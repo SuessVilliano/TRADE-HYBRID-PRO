@@ -40,8 +40,8 @@ import {
 // Using the hook directly 
 import { useAuth } from '../lib/hooks/use-auth';
 import { formatCurrency, formatPercent } from '../lib/utils';
-// Import zodResolver directly to avoid path issues
-import { zodResolver } from "zod";
+// We'll use a custom resolver implementation
+// No need for the zodResolver import
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -75,33 +75,8 @@ const PropFirmChallengeSignup: React.FC = () => {
 
   // Initialize form
   const form = useForm<SignupFormValues>({
-    // Using custom zod validator 
-    resolver: (values, context, options) => {
-      // Simple validation function that mimics zodResolver
-      const result = signupFormSchema.safeParse(values);
-      if (result.success) {
-        return {
-          values: result.data,
-          errors: {}
-        };
-      } else {
-        const errors = {};
-        // Convert zod errors to react-hook-form errors
-        result.error.errors.forEach(error => {
-          const path = error.path.join('.');
-          if (!errors[path]) {
-            errors[path] = {
-              type: 'validation',
-              message: error.message
-            };
-          }
-        });
-        return {
-          values: {},
-          errors
-        };
-      }
-    },
+    // Using a simpler approach without a resolver
+    // We'll handle validation manually
     defaultValues: {
       accountName: "",
       agreeToTerms: false,

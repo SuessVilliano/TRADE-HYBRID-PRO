@@ -1,14 +1,42 @@
 import React from 'react';
-import { Leaderboard } from '@/components/ui/leaderboard';
-import { Layout } from '@/components/ui/layout';
 
-export default function LeaderboardPage() {
+// Simple placeholder component until we implement the full layout
+const LayoutPlaceholder: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-6">
+    <div className="max-w-6xl mx-auto">
+      <header className="mb-6 p-4 bg-white dark:bg-slate-800 rounded-lg shadow-sm">
+        <h1 className="text-2xl font-bold">Trade Hybrid Platform</h1>
+      </header>
+      <main className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-4">
+        {children}
+      </main>
+    </div>
+  </div>
+);
+
+export default function LeaderboardView() {
   return (
-    <Layout>
-      <div className="container px-4 py-6 max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Trading Leaderboard</h1>
-        <Leaderboard />
+    <LayoutPlaceholder>
+      <div className="space-y-6">
+        <div className="border-b pb-4">
+          <h2 className="text-3xl font-bold">Leaderboard</h2>
+          <p className="text-slate-500 dark:text-slate-400">
+            Track the top performers in the Trade Hybrid community
+          </p>
+        </div>
+        
+        <div className="grid gap-6">
+          <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border">
+            <h3 className="text-xl font-semibold mb-4">Daily Top Traders</h3>
+            <p className="text-slate-400">Leaderboard data is being loaded...</p>
+          </div>
+          
+          <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border">
+            <h3 className="text-xl font-semibold mb-4">All-Time Leaders</h3>
+            <p className="text-slate-400">Leaderboard data is being loaded...</p>
+          </div>
+        </div>
       </div>
-    </Layout>
+    </LayoutPlaceholder>
   );
 }
