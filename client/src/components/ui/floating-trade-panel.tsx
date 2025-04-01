@@ -175,7 +175,7 @@ export function FloatingTradePanel({
   return (
     <div 
       ref={panelRef}
-      className="fixed z-50 shadow-xl rounded-lg overflow-hidden bg-card border"
+      className="fixed z-50 shadow-xl rounded-lg overflow-hidden bg-black border border-gray-700"
       style={{
         top: `${position.y}px`,
         left: `${position.x}px`,
@@ -186,7 +186,7 @@ export function FloatingTradePanel({
     >
       <div 
         ref={headerRef}
-        className="bg-muted px-4 py-2 cursor-move flex items-center justify-between"
+        className="bg-gray-900 px-4 py-2 cursor-move flex items-center justify-between border-b border-gray-700"
         onMouseDown={handleDragStart}
       >
         <div className="flex items-center gap-2">
@@ -209,7 +209,7 @@ export function FloatingTradePanel({
         </div>
       </div>
 
-      <div className="p-4 overflow-auto" style={{ height: 'calc(100% - 40px)' }}>
+      <div className="p-4 overflow-auto bg-black text-white" style={{ height: 'calc(100% - 40px)' }}>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label htmlFor="broker-select">Broker</Label>
@@ -338,8 +338,8 @@ export function FloatingTradePanel({
             </Button>
           </div>
 
-          <div className="border rounded p-3 mt-4">
-            <h4 className="text-xs font-semibold mb-2">Order Summary</h4>
+          <div className="border border-gray-700 rounded p-3 mt-4 bg-gray-900">
+            <h4 className="text-xs font-semibold mb-2 text-white">Order Summary</h4>
             <div className="grid grid-cols-2 gap-y-1 text-xs">
               <span className="text-muted-foreground">Type:</span>
               <span className="capitalize">{orderType}</span>
