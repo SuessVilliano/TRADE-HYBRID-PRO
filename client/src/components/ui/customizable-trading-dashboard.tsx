@@ -68,10 +68,43 @@ interface DashboardItem {
   componentType: PanelComponentType;
   title: string;
   settings?: Record<string, any>;
+  locked?: boolean;
 }
 
 // Dashboard layout templates
 const DASHBOARD_TEMPLATES = {
+  'fixed-chart-right-panel': [
+    // Fixed TradingView chart at the top (locked in place)
+    { 
+      id: 'tradingview-chart-1', 
+      x: 0, 
+      y: 0, 
+      width: 8, 
+      height: 6, 
+      minWidth: 6, 
+      minHeight: 5, 
+      componentType: 'tradingview-chart', 
+      title: 'TradingView Chart',
+      locked: true // This will be used to prevent moving this panel
+    },
+    // Trading panel fixed on the right side
+    { 
+      id: 'order-entry-1', 
+      x: 8, 
+      y: 0, 
+      width: 4, 
+      height: 6, 
+      minWidth: 3, 
+      minHeight: 5, 
+      componentType: 'order-entry', 
+      title: 'Trade Panel',
+      locked: true // This will be used to prevent moving this panel
+    },
+    // AI Tools that can be freely moved around
+    { id: 'trading-signals-1', x: 0, y: 6, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'trading-signals', title: 'Trading Signals' },
+    { id: 'ai-insights-1', x: 4, y: 6, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'ai-insights', title: 'AI Trading Assistant' },
+    { id: 'market-news-1', x: 8, y: 6, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'market-news', title: 'Market News' },
+  ],
   'default': [
     { id: 'tradingview-chart-1', x: 0, y: 0, width: 8, height: 6, minWidth: 4, minHeight: 4, componentType: 'tradingview-chart', title: 'TradingView Chart' },
     { id: 'order-book-1', x: 8, y: 0, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'order-book', title: 'Order Book' },
@@ -119,8 +152,8 @@ export function CustomizableTradingDashboard({
   defaultSymbol = 'BTCUSD',
   className 
 }: CustomizableTradingDashboardProps) {
-  const [selectedTemplate, setSelectedTemplate] = useState<keyof typeof DASHBOARD_TEMPLATES>('default');
-  const [layout, setLayout] = useLocalStorage<DashboardItem[]>('trading-dashboard-layout', DASHBOARD_TEMPLATES.default as DashboardItem[]);
+  const [selectedTemplate, setSelectedTemplate] = useState<keyof typeof DASHBOARD_TEMPLATES>('fixed-chart-right-panel');
+  const [layout, setLayout] = useLocalStorage<DashboardItem[]>('trading-dashboard-layout', DASHBOARD_TEMPLATES['fixed-chart-right-panel'] as DashboardItem[]);
   const [editMode, setEditMode] = useState(false);
   const [isChangingLayout, setIsChangingLayout] = useState(false);
   const [maximizedPanel, setMaximizedPanel] = useState<string | null>(null);
@@ -259,6 +292,15 @@ export function CustomizableTradingDashboard({
   // Handle panel drag start
   const handlePanelDragStart = (e: React.MouseEvent, id: string) => {
     if (!editMode) return;
+    
+    // Check if panel is locked
+    const panelItem = layout.find(item => item.id === id);
+    if (panelItem?.locked) {
+      // Don't allow dragging of locked panels
+      toast.info('This panel is locked in place');
+      return;
+    }
+    
     const panel = document.getElementById(`panel-${id}`);
     if (!panel) return;
     
@@ -497,8 +539,8 @@ export function CustomizableTradingDashboard({
         );
       case 'order-entry':
         return (
-          <div className="p-4 h-full">
-            <h3 className="text-lg font-medium mb-4">Order Entry</h3>
+          <div className="p-4 h-full overflow-auto">
+            <h3 className="text-lg font-medium mb-4">Trade Panel</h3>
             <Tabs defaultValue="limit">
               <TabsList className="w-full mb-4">
                 <TabsTrigger value="limit" className="flex-1">Limit</TabsTrigger>
@@ -506,24 +548,75 @@ export function CustomizableTradingDashboard({
                 <TabsTrigger value="stop" className="flex-1">Stop</TabsTrigger>
               </TabsList>
               
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant="default" className="w-full bg-green-600 hover:bg-green-700">Buy</Button>
-                  <Button variant="default" className="w-full bg-red-600 hover:bg-red-700">Sell</Button>
+              <div className="space-y-5">
+                {/* Symbol selector */}
+                <div className="bg-slate-900/50 p-3 rounded-md">
+                  <label className="block text-xs text-slate-400 mb-1">Symbol</label>
+                  <select 
+                    className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm"
+                    value={selectedSymbol}
+                    onChange={(e) => setSelectedSymbol(e.target.value)}
+                  >
+                    <option value="BTCUSD">BTC/USD</option>
+                    <option value="ETHUSD">ETH/USD</option>
+                    <option value="SOLUSD">SOL/USD</option>
+                    <option value="DOTUSD">DOT/USD</option>
+                  </select>
                 </div>
                 
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Price</span>
-                    <span className="text-sm font-medium">43,450.00 USD</span>
+                {/* Buy/Sell buttons */}
+                <div className="grid grid-cols-2 gap-3">
+                  <Button variant="default" className="w-full bg-green-600 hover:bg-green-700 py-6">
+                    <div>
+                      <div className="text-lg font-medium">BUY</div>
+                      <div className="text-xs opacity-80">$43,450.00</div>
+                    </div>
+                  </Button>
+                  <Button variant="default" className="w-full bg-red-600 hover:bg-red-700 py-6">
+                    <div>
+                      <div className="text-lg font-medium">SELL</div>
+                      <div className="text-xs opacity-80">$43,443.25</div>
+                    </div>
+                  </Button>
+                </div>
+                
+                {/* Trading form */}
+                <div className="space-y-3 bg-slate-900/50 p-3 rounded-md">
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Price (USD)</label>
+                    <input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" placeholder="43,450.00" />
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Amount</span>
-                    <span className="text-sm font-medium">0.25 BTC</span>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Amount (BTC)</label>
+                    <input type="text" className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" placeholder="0.25" />
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Total</span>
-                    <span className="text-sm font-medium">10,862.50 USD</span>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Total (USD)</label>
+                    <input type="text" disabled className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm" placeholder="10,862.50" />
+                  </div>
+                </div>
+                
+                {/* Trade options */}
+                <div className="bg-slate-900/50 p-3 rounded-md">
+                  <h4 className="font-medium text-sm mb-2">Trade Options</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs text-slate-400">Take Profit</label>
+                      <input type="text" className="w-32 bg-slate-800 border border-slate-700 rounded p-1 text-xs" placeholder="44,500.00" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs text-slate-400">Stop Loss</label>
+                      <input type="text" className="w-32 bg-slate-800 border border-slate-700 rounded p-1 text-xs" placeholder="42,800.00" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs text-slate-400">Leverage</label>
+                      <select className="w-32 bg-slate-800 border border-slate-700 rounded p-1 text-xs">
+                        <option>1x</option>
+                        <option>3x</option>
+                        <option>5x</option>
+                        <option>10x</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -694,6 +787,7 @@ export function CustomizableTradingDashboard({
           
           <Tabs value={selectedTemplate} onValueChange={value => applyTemplate(value as keyof typeof DASHBOARD_TEMPLATES)} className="border-0">
             <TabsList>
+              <TabsTrigger value="fixed-chart-right-panel" className="text-xs py-1 px-2 bg-yellow-600/20 hover:bg-yellow-600/30">Trading Station</TabsTrigger>
               <TabsTrigger value="default" className="text-xs py-1 px-2">Default</TabsTrigger>
               <TabsTrigger value="dual-chart" className="text-xs py-1 px-2">Dual Chart</TabsTrigger>
               <TabsTrigger value="trading-focused" className="text-xs py-1 px-2">Trading</TabsTrigger>
@@ -867,7 +961,9 @@ export function CustomizableTradingDashboard({
                 className={cn(
                   "col-span-" + colSpan,
                   "bg-slate-800 border-slate-700 overflow-hidden flex flex-col",
-                  editMode && "cursor-move border-2 border-dashed border-blue-500/50 hover:border-blue-500",
+                  editMode && !item.locked && "cursor-move border-2 border-dashed border-blue-500/50 hover:border-blue-500",
+                  item.locked && "border-2 border-solid border-yellow-500/50",
+                  editMode && item.locked && "border-yellow-500",
                 )}
                 style={{ height: item.height * 80 }}
                 onMouseDown={e => handlePanelDragStart(e, item.id)}
@@ -884,7 +980,8 @@ export function CustomizableTradingDashboard({
                       <Maximize2 className="h-3 w-3" />
                     </Button>
                     
-                    {editMode && (
+                    {/* Only show remove button for non-locked panels in edit mode */}
+                    {editMode && !item.locked && (
                       <Button
                         variant="ghost"
                         size="icon"
