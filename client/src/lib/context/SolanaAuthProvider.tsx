@@ -1,429 +1,192 @@
-import { FC, ReactNode, createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { useUserStore } from '../stores/useUserStore';
-import { PublicKey, Connection } from '@solana/web3.js';
-import nacl from 'tweetnacl';
-import bs58 from 'bs58';
-import { THC_TOKEN } from '../constants';
-import { identityService } from '../services/identity-service';
+import axios from 'axios';
 
-// Define membership tiers based on THC token holdings
-export enum MembershipTier {
-  BASIC = 'basic',
-  ADVANCED = 'advanced',
-  PREMIUM = 'premium',
-  ELITE = 'elite'
+interface SolanaAuthContextType {
+  isAuthenticating: boolean;
+  isAuthenticated: boolean;
+  walletConnected: boolean;
+  userId: number | null;
+  username: string | null;
+  error: string | null;
+  connectAndAuthenticate: () => Promise<void>;
+  logout: () => Promise<void>;
+  linkWalletToUser: (userId: number) => Promise<boolean>;
+  authenticateWithCredentials: (username: string, password: string) => Promise<boolean>;
 }
 
-export interface TokenMembership {
-  tier: MembershipTier;
-  tokenBalance: number;
-  feeDiscount: number;
-}
+const SolanaAuthContext = createContext<SolanaAuthContextType | undefined>(undefined);
 
-interface SolanaAuthContextProps {
-  loginWithSolana: () => Promise<boolean>;
-  logoutFromSolana: () => void;
-  isAuthenticatingWithSolana: boolean;
-  solanaAuthError: string | null;
-  isWalletAuthenticated: boolean;
-  walletAddress?: string;
-  isPhantomAvailable?: boolean;
-  checkTHCTokenMembership: () => Promise<TokenMembership>;
-  tokenMembership?: TokenMembership;
+export function useSolanaAuth() {
+  const context = useContext(SolanaAuthContext);
+  if (!context) {
+    throw new Error('useSolanaAuth must be used within a SolanaAuthProvider');
+  }
+  return context;
 }
-
-const SolanaAuthContext = createContext<SolanaAuthContextProps>({
-  loginWithSolana: async () => false,
-  logoutFromSolana: () => {},
-  isAuthenticatingWithSolana: false,
-  solanaAuthError: null,
-  isWalletAuthenticated: false,
-  walletAddress: undefined,
-  isPhantomAvailable: false,
-  checkTHCTokenMembership: async () => ({
-    tier: MembershipTier.BASIC,
-    tokenBalance: 0,
-    feeDiscount: 0
-  }),
-});
 
 interface SolanaAuthProviderProps {
   children: ReactNode;
 }
 
-export const SolanaAuthProvider: FC<SolanaAuthProviderProps> = ({ children }) => {
-  const { publicKey, connected, disconnect, signMessage } = useWallet();
-  const { isAuthenticated, login, logout, updateUser, user } = useUserStore();
-  const [isAuthenticatingWithSolana, setIsAuthenticatingWithSolana] = useState(false);
-  const [solanaAuthError, setSolanaAuthError] = useState<string | null>(null);
-  const [isWalletAuthenticated, setIsWalletAuthenticated] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string | undefined>(undefined);
-  const [tokenMembership, setTokenMembership] = useState<TokenMembership>({
-    tier: MembershipTier.BASIC,
-    tokenBalance: 0,
-    feeDiscount: 0.05 // 5% discount for basic tier
-  });
-
-  // Check for Phantom Wallet extension
-  const [isPhantomAvailable, setIsPhantomAvailable] = useState<boolean>(false);
+export function SolanaAuthProvider({ children }: SolanaAuthProviderProps) {
+  const wallet = useWallet();
   
-  // Detect Phantom wallet - Check both window.phantom.solana (new method) and window.solana.isPhantom (Chrome extension)
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  
+  const walletConnected = wallet.connected && !!wallet.publicKey;
+  
+  // Check if user is already authenticated
   useEffect(() => {
-    const checkPhantomAvailability = () => {
-      // Check both detection methods for Phantom wallet
-      const phantomNewExists = typeof window !== 'undefined' && 
-        'phantom' in window && 
-        !!(window as any).phantom?.solana;
-        
-      const phantomChromeExists = typeof window !== 'undefined' && 
-        'solana' in window && 
-        !!(window as any).solana?.isPhantom;
-      
-      const phantomExists = phantomNewExists || phantomChromeExists;
-      
-      console.log('Phantom wallet availability check:', { 
-        exists: phantomExists,
-        connectMethod: phantomNewExists 
-          ? typeof (window as any).phantom?.solana?.connect 
-          : (phantomChromeExists ? typeof (window as any).solana?.connect : 'undefined')
-      });
-      
-      setIsPhantomAvailable(phantomExists);
-    };
-    
-    // Check immediately and also set up listener for changes
-    checkPhantomAvailability();
-    
-    // Listen for phantom object appearing (sometimes it loads after page)
-    const phantomCheckInterval = setInterval(checkPhantomAvailability, 1000);
-    
-    return () => {
-      clearInterval(phantomCheckInterval);
-    };
-  }, []);
-
-  // Check if the current user is authenticated with Solana
-  useEffect(() => {
-    console.log('Checking wallet authentication state:', {
-      isAuthenticated,
-      userWalletAddress: user.walletAddress,
-      connected,
-      publicKey: publicKey?.toString(),
-      isPhantomAvailable
-    });
-
-    // Auto-authenticate if conditions are right
-    if (connected && publicKey && !isWalletAuthenticated) {
-      const currentWalletAddress = publicKey.toString();
-      setWalletAddress(currentWalletAddress);
-      
-      if (isAuthenticated && user.walletAddress) {
-        // If user already has a wallet address, check if it matches the connected one
-        if (currentWalletAddress === user.walletAddress) {
-          console.log('Wallet addresses match, setting isWalletAuthenticated to true');
-          setIsWalletAuthenticated(true);
-        } else {
-          console.log('Wallet addresses do not match:', { 
-            currentWalletAddress, 
-            userWalletAddress: user.walletAddress 
-          });
-          // Could prompt user to update their wallet address here
+    async function checkAuthentication() {
+      try {
+        const response = await axios.get('/api/auth/user');
+        if (response.data.authenticated) {
+          setIsAuthenticated(true);
+          setUserId(response.data.userId);
+          setUsername(response.data.username);
         }
-      } else {
-        // User connected wallet but hasn't signed message yet
-        console.log('Wallet connected but not authenticated. Ready for sign & verify.');
+      } catch (error) {
+        console.error('Failed to check authentication status', error);
       }
-    } else if (!connected || !publicKey) {
-      console.log('No wallet connected:', { 
-        connected, 
-        hasPublicKey: !!publicKey
+    }
+    
+    checkAuthentication();
+  }, []);
+  
+  // Connect wallet and authenticate
+  const connectAndAuthenticate = async () => {
+    if (!wallet.connected) {
+      try {
+        setIsAuthenticating(true);
+        setError(null);
+        
+        // Connect wallet if not connected
+        if (wallet.connect && wallet.publicKey === null) {
+          await wallet.connect();
+        }
+        
+        // Check if wallet is connected after attempt
+        if (!wallet.connected || !wallet.publicKey) {
+          throw new Error('Failed to connect wallet');
+        }
+        
+        // Sign message to authenticate
+        const walletAddress = wallet.publicKey.toString();
+        console.log('Connected wallet address:', walletAddress);
+        
+        // Authenticate with the server
+        const response = await axios.post('/api/auth/wallet-login', {
+          walletAddress,
+        });
+        
+        if (response.data.success) {
+          setIsAuthenticated(true);
+          setUserId(response.data.userId);
+          setUsername(response.data.username);
+        } else {
+          throw new Error(response.data.error || 'Authentication failed');
+        }
+      } catch (err: any) {
+        console.error('Authentication error:', err);
+        setError(err.message || 'Authentication failed');
+        setIsAuthenticated(false);
+      } finally {
+        setIsAuthenticating(false);
+      }
+    }
+  };
+  
+  // Link wallet to existing user account
+  const linkWalletToUser = async (userId: number) => {
+    try {
+      if (!wallet.connected || !wallet.publicKey) {
+        throw new Error('Wallet not connected');
+      }
+      
+      const walletAddress = wallet.publicKey.toString();
+      const response = await axios.post('/api/identity/link-wallet', {
+        userId,
+        walletAddress,
       });
-      setIsWalletAuthenticated(false);
-      setWalletAddress(undefined);
-    }
-  }, [isAuthenticated, user.walletAddress, connected, publicKey, isPhantomAvailable]);
-
-  // Verify the signed message
-  const verifySignature = (message: Uint8Array, signature: Uint8Array, publicKey: PublicKey): boolean => {
-    return nacl.sign.detached.verify(
-      message,
-      signature,
-      publicKey.toBytes()
-    );
-  };
-
-  // Try to connect using Phantom directly if wallet-adapter fails
-  // Check both window.phantom.solana (new method) and window.solana (Chrome extension)
-  const tryPhantomDirectConnect = async (): Promise<PublicKey | null> => {
-    // First try the new method (phantom.solana)
-    if (isPhantomAvailable && (window as any).phantom?.solana) {
-      try {
-        console.log('Attempting direct Phantom connection via window.phantom.solana');
-        const response = await (window as any).phantom.solana.connect();
-        const phantomPublicKey = new PublicKey(response.publicKey.toString());
-        console.log('Connected to Phantom directly:', phantomPublicKey.toString());
-        return phantomPublicKey;
-      } catch (error) {
-        console.error('Direct Phantom connection via window.phantom.solana failed:', error);
-        // Fall through to try the Chrome extension method
-      }
-    }
-    
-    // Try Chrome extension method (window.solana)
-    if (isPhantomAvailable && (window as any).solana?.isPhantom) {
-      try {
-        console.log('Attempting direct Phantom connection via window.solana (Chrome extension)');
-        const response = await (window as any).solana.connect();
-        const phantomPublicKey = new PublicKey(response.publicKey.toString());
-        console.log('Connected to Phantom Chrome extension directly:', phantomPublicKey.toString());
-        return phantomPublicKey;
-      } catch (error) {
-        console.error('Direct Phantom connection via Chrome extension failed:', error);
-        return null;
-      }
-    }
-    
-    return null;
-  };
-
-  const loginWithSolana = async (): Promise<boolean> => {
-    console.log('loginWithSolana called with state:', { 
-      connected, 
-      publicKeyExists: !!publicKey, 
-      signMessageExists: !!signMessage,
-      isPhantomAvailable,
-      walletAddress: walletAddress
-    });
-
-    let walletPubKey = publicKey;
-    let needsPhantomSignature = false;
-
-    // If wallet-adapter isn't connected but Phantom is available, try direct connection
-    if ((!connected || !publicKey) && isPhantomAvailable) {
-      const phantomKey = await tryPhantomDirectConnect();
-      if (phantomKey) {
-        walletPubKey = phantomKey;
-        needsPhantomSignature = true;
-        console.log("Using Phantom directly since wallet-adapter isn't connected");
-      }
-    }
-
-    if (!walletPubKey) {
-      console.log('No wallet public key available, cannot proceed');
-      setSolanaAuthError('No wallet connected. Please connect your Solana wallet first.');
+      
+      return response.data.success;
+    } catch (err: any) {
+      console.error('Error linking wallet:', err);
+      setError(err.message || 'Failed to link wallet');
       return false;
     }
-
+  };
+  
+  // Authenticate with username and password
+  const authenticateWithCredentials = async (username: string, password: string) => {
     try {
-      setIsAuthenticatingWithSolana(true);
-      setSolanaAuthError(null);
-
-      // Create a challenge message that includes the wallet address
-      const currentWalletAddress = walletPubKey.toString();
-      setWalletAddress(currentWalletAddress);
-      console.log('Proceeding with wallet address:', currentWalletAddress);
+      setIsAuthenticating(true);
+      setError(null);
       
-      const message = `Sign this message to verify your wallet ownership: ${currentWalletAddress}`;
-      const encodedMessage = new TextEncoder().encode(message);
-
-      console.log('Requesting signature from wallet...');
+      const response = await axios.post('/api/auth/login', {
+        username,
+        password,
+      });
       
-      // Request signature from wallet - either via adapter or directly
-      let signatureBytes: Uint8Array;
-      
-      if (needsPhantomSignature && isPhantomAvailable) {
-        console.log('Using direct Phantom signing');
-        try {
-          // First try the new method (phantom.solana)
-          if ((window as any).phantom?.solana) {
-            console.log('Using phantom.solana.signMessage');
-            const sigData = await (window as any).phantom.solana.signMessage(encodedMessage, 'utf8');
-            signatureBytes = new Uint8Array(sigData.signature);
-          } 
-          // Then try Chrome extension method (window.solana)
-          else if ((window as any).solana?.isPhantom) {
-            console.log('Using solana.signMessage (Chrome extension)');
-            const sigData = await (window as any).solana.signMessage(encodedMessage, 'utf8');
-            signatureBytes = new Uint8Array(sigData.signature);
-          } else {
-            throw new Error('No Phantom signing method available');
-          }
-        } catch (signError) {
-          console.error('Phantom direct sign error:', signError);
-          throw new Error('Failed to sign message with Phantom. Please try again.');
-        }
-      } else if (signMessage) {
-        // Use wallet adapter
-        signatureBytes = await signMessage(encodedMessage);
+      if (response.data.success) {
+        setIsAuthenticated(true);
+        setUserId(response.data.userId);
+        setUsername(response.data.username);
+        return true;
       } else {
-        throw new Error('No signing method available');
+        throw new Error(response.data.error || 'Authentication failed');
       }
-      
-      console.log('Signature received, verifying...');
-      
-      // Verify signature
-      const isValid = verifySignature(encodedMessage, signatureBytes, walletPubKey);
-      console.log('Signature validation result:', isValid);
-
-      if (!isValid) {
-        throw new Error('Invalid signature. Authentication failed.');
-      }
-
-      // In a real application, you would send this signature to your backend to verify
-      // and create a user account or session. Here we're doing it client-side for demo purposes.
-      
-      // Get the signature in base58 format for storage
-      const signatureBase58 = bs58.encode(signatureBytes);
-
-      // Create or update user profile
-      const walletUser = {
-        username: `sol_${currentWalletAddress.substring(0, 6)}`,
-        walletAddress: currentWalletAddress,
-        walletSignature: signatureBase58,
-        // Keep any existing user data if already logged in
-        ...(isAuthenticated ? user : {}),
-      };
-
-      console.log('Created wallet user:', walletUser);
-
-      // Update user store
-      if (isAuthenticated) {
-        console.log('User already authenticated, updating user data');
-        updateUser(walletUser);
-      } else {
-        console.log('Logging in user with wallet auth');
-        // Login with a blank password since we've verified via wallet
-        await login(walletUser.username, 'wallet-auth');
-        updateUser(walletUser);
-      }
-
-      setIsWalletAuthenticated(true);
-      console.log('Wallet authentication successful');
-      
-      return true;
-    } catch (error) {
-      console.error('Solana wallet authentication error:', error);
-      setSolanaAuthError(error instanceof Error ? error.message : 'Failed to authenticate with Solana wallet');
+    } catch (err: any) {
+      console.error('Authentication error:', err);
+      setError(err.message || 'Authentication failed');
+      setIsAuthenticated(false);
       return false;
     } finally {
-      setIsAuthenticatingWithSolana(false);
-    }
-  };
-
-  const logoutFromSolana = () => {
-    if (isWalletAuthenticated) {
-      // Clear wallet-related info from user but keep other data
-      updateUser({
-        walletAddress: undefined,
-        walletSignature: undefined
-      });
-      
-      // If you want to also disconnect the wallet
-      if (disconnect) {
-        disconnect();
-      }
-
-      setIsWalletAuthenticated(false);
-      
-      // Reset token membership to basic tier
-      setTokenMembership({
-        tier: MembershipTier.BASIC,
-        tokenBalance: 0,
-        feeDiscount: 0.05
-      });
+      setIsAuthenticating(false);
     }
   };
   
-  // Check THC token balance and determine membership tier
-  const checkTHCTokenMembership = async (): Promise<TokenMembership> => {
-    if (!connected || !publicKey || !isWalletAuthenticated) {
-      console.log('No authenticated wallet connected for THC token check');
-      return {
-        tier: MembershipTier.BASIC,
-        tokenBalance: 0,
-        feeDiscount: 0.05 // 5% discount for basic tier
-      };
-    }
-    
+  // Logout
+  const logout = async () => {
     try {
-      console.log(`Checking THC token balance for wallet: ${publicKey.toString()}`);
+      await axios.post('/api/auth/logout');
       
-      // Create connection to Solana network
-      const connection = new Connection('https://api.mainnet-beta.solana.com');
-      
-      // THC Token mint address
-      const thcTokenMint = new PublicKey(THC_TOKEN.contractAddress);
-      
-      // In a real implementation, this would query the actual token balance using:
-      // 1. Find the associated token account for this wallet
-      // 2. Query the token balance from that account
-      // For demonstration, we're using a simulated balance based on wallet address
-      
-      // Simulated token balance based on last few chars of wallet address
-      // This is just for demo purposes - real implementation would query blockchain
-      const addressHash = publicKey.toString().slice(-6);
-      const simulatedBalance = parseInt(addressHash, 16) % 100000; // Random value based on address
-      
-      console.log(`Simulated THC token balance: ${simulatedBalance}`);
-      
-      // Determine membership tier based on token balance
-      let tier = MembershipTier.BASIC;
-      let feeDiscount = 0.05; // 5% for basic
-      
-      if (simulatedBalance >= 50000) {
-        tier = MembershipTier.ELITE;
-        feeDiscount = 0.50; // 50% discount
-      } else if (simulatedBalance >= 10000) {
-        tier = MembershipTier.PREMIUM;
-        feeDiscount = 0.35; // 35% discount
-      } else if (simulatedBalance >= 1000) {
-        tier = MembershipTier.ADVANCED;
-        feeDiscount = 0.25; // 25% discount
+      if (wallet.disconnect) {
+        await wallet.disconnect();
       }
       
-      const membership: TokenMembership = {
-        tier,
-        tokenBalance: simulatedBalance,
-        feeDiscount
-      };
-      
-      console.log('Membership tier determined:', membership);
-      
-      // Update state with the membership details
-      setTokenMembership(membership);
-      
-      return membership;
-    } catch (error) {
-      console.error('Error checking THC token balance:', error);
-      return tokenMembership; // Return current state if error
+      setIsAuthenticated(false);
+      setUserId(null);
+      setUsername(null);
+      return true;
+    } catch (err: any) {
+      console.error('Logout error:', err);
+      setError(err.message || 'Logout failed');
+      return false;
     }
   };
   
-  // Check token membership when wallet connects or changes
-  useEffect(() => {
-    if (isWalletAuthenticated && publicKey) {
-      checkTHCTokenMembership();
-    }
-  }, [isWalletAuthenticated, publicKey]);
-
+  const contextValue: SolanaAuthContextType = {
+    isAuthenticating,
+    isAuthenticated,
+    walletConnected,
+    userId,
+    username,
+    error,
+    connectAndAuthenticate,
+    logout,
+    linkWalletToUser,
+    authenticateWithCredentials,
+  };
+  
   return (
-    <SolanaAuthContext.Provider
-      value={{
-        loginWithSolana,
-        logoutFromSolana,
-        isAuthenticatingWithSolana,
-        solanaAuthError,
-        isWalletAuthenticated,
-        walletAddress,
-        isPhantomAvailable,
-        checkTHCTokenMembership,
-        tokenMembership
-      }}
-    >
+    <SolanaAuthContext.Provider value={contextValue}>
       {children}
     </SolanaAuthContext.Provider>
   );
-};
-
-export const useSolanaAuth = () => useContext(SolanaAuthContext);
+}

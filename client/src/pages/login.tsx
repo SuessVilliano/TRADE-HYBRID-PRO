@@ -1,283 +1,251 @@
-import { useEffect, useState } from 'react';
-import { useUserStore } from '@/lib/stores/useUserStore';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { useSolanaAuth } from '@/lib/context/SolanaAuthProvider';
-import { useNavigate, Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Info } from 'lucide-react';
-import '@solana/wallet-adapter-react-ui/styles.css';
-import '@/styles/wallet-adapter.css';
-
-//This line is changed to use a direct path instead of an import statement
-const logo = '/logo.png';
-
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSolanaAuth } from "../lib/context/SolanaAuthProvider";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function LoginPage() {
-  const { user, isAuthenticated, login } = useUserStore();
-  const { isWalletAuthenticated, loginWithSolana, isAuthenticatingWithSolana, solanaAuthError } = useSolanaAuth();
   const navigate = useNavigate();
-
-  // Local state
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Check for saved credentials
-  useEffect(() => {
-    const savedUsername = localStorage.getItem('rememberedUsername');
-    if (savedUsername) {
-      setUsername(savedUsername);
+  const { 
+    isAuthenticating, 
+    isAuthenticated, 
+    error, 
+    connectAndAuthenticate, 
+    authenticateWithCredentials 
+  } = useSolanaAuth();
+  
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showRegister, setShowRegister] = useState(false);
+  const [email, setEmail] = useState("");
+  
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
     }
-  }, []);
-
-  // Redirect if already logged in
-  useEffect(() => {
-    if (isAuthenticated || isWalletAuthenticated) {
-      navigate('/');
-    }
-  }, [isAuthenticated, isWalletAuthenticated, navigate]);
-
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
+  }, [isAuthenticated, navigate]);
+  
+  // Handle form submission for credential login
+  const handleCredentialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-
+    if (!username || !password) {
+      toast.error("Please enter both username and password");
+      return;
+    }
+    
+    const success = await authenticateWithCredentials(username, password);
+    if (success) {
+      toast.success("Login successful");
+      navigate("/dashboard");
+    }
+  };
+  
+  // Handle wallet authentication
+  const handleWalletAuth = async () => {
     try {
-      const success = await login(username, password);
-
-      if (success) {
-        // Save username if "remember me" is checked
-        if (rememberMe) {
-          localStorage.setItem('rememberedUsername', username);
-        } else {
-          localStorage.removeItem('rememberedUsername');
-        }
-
-        navigate('/');
+      await connectAndAuthenticate();
+      if (!error) {
+        toast.success("Wallet authentication successful");
+      }
+    } catch (err) {
+      toast.error("Failed to authenticate with wallet");
+    }
+  };
+  
+  // Handle registration (would connect to register API)
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username || !password || !email) {
+      toast.error("Please fill all fields");
+      return;
+    }
+    
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          password,
+          email,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast.success("Registration successful. Please login.");
+        setShowRegister(false);
       } else {
-        setError('Invalid username or password');
+        toast.error(data.message || "Registration failed");
       }
     } catch (err) {
-      setError('An error occurred during login');
-      console.error(err);
-    } finally {
-      setLoading(false);
+      toast.error("Registration failed");
     }
   };
-
-  // Handle wallet login
-  const handleWalletLogin = async () => {
-    try {
-      const success = await loginWithSolana();
-      if (success) {
-        navigate('/');
-      }
-    } catch (err) {
-      console.error('Wallet login error:', err);
-    }
-  };
-
-  // Handle demo mode login
-  const handleDemoLogin = () => {
-    // Login as demo user
-    useUserStore.getState().login({
-      id: 'demo-user',
-      username: 'Demo User',
-      email: 'demo@tradehybrid.com',
-      role: 'demo' as const, // Use const assertion for correct typing
-      walletAddress: undefined, // Using undefined instead of null for TypeScript compatibility
-      apiKeys: {},
-      preferences: { theme: 'dark' },
-      joinDate: new Date().toISOString(),
-      lastLogin: new Date().toISOString()
-    });
-    navigate('/');
-  };
-
+  
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="max-w-md w-full space-y-8 p-8 bg-card rounded-xl shadow-lg border border-border">
-        <div className="text-center">
-          <div className="flex justify-center">
-            <img src={logo || '/logo.png'} alt="Trade Hybrid Logo" className="h-20 w-auto mb-4" />
-          </div>
-          <h2 className="text-3xl font-bold">Welcome to Trade Hybrid</h2>
-          <p className="mt-2 text-muted-foreground">Sign in to continue to your account</p>
-        </div>
-
+    <div className="flex min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
+      <ToastContainer position="top-right" theme="dark" />
+      
+      <div className="w-full max-w-md m-auto bg-gray-800 rounded-lg border border-gray-700 shadow-lg p-8">
+        <h1 className="text-3xl font-bold text-center mb-6">
+          {showRegister ? "Create Account" : "Trade Hybrid"}
+        </h1>
+        
         {error && (
-          <div className="bg-destructive/10 text-destructive p-3 rounded-md flex items-center gap-2">
-            <Info className="h-4 w-4" />
-            <span>{error}</span>
+          <div className="bg-red-800/50 border border-red-600 text-white p-3 rounded mb-4">
+            {error}
           </div>
         )}
-
-        {solanaAuthError && (
-          <div className="bg-destructive/10 text-destructive p-3 rounded-md flex items-center gap-2">
-            <Info className="h-4 w-4" />
-            <span>{solanaAuthError}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                name="username"
-                type="text"
-                autoComplete="username"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="remember-me"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+        
+        {!showRegister ? (
+          <>
+            {/* Login Form */}
+            <form onSubmit={handleCredentialSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium mb-1">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full p-2.5 bg-gray-700 border border-gray-600 text-white rounded-lg"
+                  required
                 />
-                <Label htmlFor="remember-me" className="cursor-pointer">Remember me</Label>
               </div>
-
-              <div className="text-sm">
-                <Link to="/forgot-password" className="text-primary hover:underline">
-                  Forgot your password?
-                </Link>
+              
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full p-2.5 bg-gray-700 border border-gray-600 text-white rounded-lg"
+                  required
+                />
               </div>
+              
+              <button
+                type="submit"
+                disabled={isAuthenticating}
+                className="w-full bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-800 font-medium rounded-lg px-5 py-2.5 text-white"
+              >
+                {isAuthenticating ? "Logging in..." : "Login"}
+              </button>
+            </form>
+            
+            <div className="mt-4 flex items-center justify-center">
+              <span className="border-b w-1/3 border-gray-600"></span>
+              <span className="px-2 text-gray-400">or</span>
+              <span className="border-b w-1/3 border-gray-600"></span>
             </div>
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
-              ) : 'Sign in'}
-            </Button>
-          </div>
-        </form>
-
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-background text-muted-foreground">Or continue with</span>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div className="wallet-wrapper w-full flex justify-center">
-            <WalletMultiButton 
-              className="wallet-adapter-button-custom w-full flex justify-center items-center gap-2 text-center bg-transparent hover:bg-gray-700 border border-gray-600 rounded-md px-4 py-2"
-            />
-          </div>
-          
-          <div className="mt-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full flex items-center justify-center gap-2"
-              onClick={handleWalletLogin}
-              disabled={isAuthenticatingWithSolana}
-            >
-              {isAuthenticatingWithSolana ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Authenticating with wallet...
-                </>
-              ) : (
-                <>
-                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M17.4384 11.7967C17.3163 11.6281 17.1352 11.5316 16.9399 11.5316H1.84311C1.49963 11.5316 1.2839 11.9018 1.42666 12.1952L6.56173 21.8344C6.684 22.0029 6.86504 22.0994 7.06032 22.0994H22.1571C22.5006 22.0994 22.7163 21.7291 22.5736 21.4358L17.4384 11.7967Z" fill="url(#paint0_linear)" />
-                    <path d="M17.4384 4.66548C17.3197 4.49548 17.1379 4.3982 16.9399 4.3982H1.84311C1.49963 4.3982 1.2839 4.76968 1.42666 5.06428L6.56173 14.7169C6.68399 14.887 6.86504 14.9842 7.06032 14.9842H22.1571C22.5006 14.9842 22.7163 14.6127 22.5736 14.3181L17.4384 4.66548Z" fill="url(#paint1_linear)" />
-                    <path d="M6.56173 7.1676C6.684 6.9976 6.86505 6.90004 7.06033 6.90004H22.1571C22.5006 6.90004 22.7163 7.27152 22.5736 7.56612L17.4385 17.2188C17.3163 17.3874 17.1352 17.4839 16.9399 17.4839H1.84311C1.49963 17.4839 1.2839 17.1136 1.42666 16.8202L6.56173 7.1676Z" fill="url(#paint2_linear)" />
-                    <defs>
-                      <linearGradient id="paint0_linear" x1="17.8487" y1="6.05212" x2="6.93851" y2="27.0892" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#FF9E00" />
-                        <stop offset="1" stopColor="#9E00FF" />
-                      </linearGradient>
-                      <linearGradient id="paint1_linear" x1="14.8701" y1="4.3982" x2="4.13027" y2="21.6992" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#00FFBD" />
-                        <stop offset="1" stopColor="#00FFEA" />
-                      </linearGradient>
-                      <linearGradient id="paint2_linear" x1="21.5716" y1="7.52761" x2="6.32996" y2="17.3926" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#00D1FF" />
-                        <stop offset="1" stopColor="#9000FF" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  Authenticate with Connected Wallet
-                </>
-              )}
-            </Button>
-          </div>
-
-          <Button 
-            onClick={() => window.location.href = '/api/whop/login'}
-            variant="outline"
-            className="w-full"
-          >
-            <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" className="mr-2 h-5 w-5">
-              <path d="M15.3 20L5 30.3V5h20.3L15.3 15.3V20zm4.4 0v-4.7L30 5h5v25.3L19.7 15z" fill="currentColor"/>
-            </svg>
-            Login with Whop
-          </Button>
-
-          <div className="relative pt-4">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+            
+            <div className="mt-4">
+              <button
+                onClick={handleWalletAuth}
+                disabled={isAuthenticating}
+                className="w-full bg-purple-600 hover:bg-purple-700 focus:ring-4 focus:ring-purple-800 font-medium rounded-lg px-5 py-2.5 text-white flex items-center justify-center"
+              >
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 100-12 6 6 0 000 12z"
+                    clipRule="evenodd"
+                  ></path>
+                </svg>
+                Connect Wallet
+              </button>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-background text-muted-foreground">Or try demo</span>
+            
+            <div className="text-sm font-medium text-gray-400 mt-4 text-center">
+              Don't have an account?{" "}
+              <button
+                className="text-blue-500 hover:underline"
+                onClick={() => setShowRegister(true)}
+              >
+                Create one
+              </button>
             </div>
-          </div>
-
-          <Button 
-            onClick={handleDemoLogin}
-            variant="secondary"
-            className="w-full"
-          >
-            Enter Demo Mode
-          </Button>
-
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            Don't have an account?{" "}
-            <Link to="/signup" className="text-primary hover:underline">
-              Sign up
-            </Link>
-          </p>
-        </div>
+          </>
+        ) : (
+          <>
+            {/* Register Form */}
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div>
+                <label htmlFor="register-username" className="block text-sm font-medium mb-1">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  id="register-username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full p-2.5 bg-gray-700 border border-gray-600 text-white rounded-lg"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full p-2.5 bg-gray-700 border border-gray-600 text-white rounded-lg"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="register-password" className="block text-sm font-medium mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  id="register-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full p-2.5 bg-gray-700 border border-gray-600 text-white rounded-lg"
+                  required
+                />
+              </div>
+              
+              <button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-800 font-medium rounded-lg px-5 py-2.5 text-white"
+              >
+                Register
+              </button>
+              
+              <div className="text-sm font-medium text-gray-400 text-center">
+                Already have an account?{" "}
+                <button
+                  className="text-blue-500 hover:underline"
+                  onClick={() => setShowRegister(false)}
+                >
+                  Login
+                </button>
+              </div>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );

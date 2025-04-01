@@ -43,7 +43,7 @@ router.get('/:userId', async (req, res) => {
 router.post('/:userId', async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
-    const { dashboardOrder } = req.body;
+    const { dashboardOrder, theme, notificationsEnabled, soundsEnabled } = req.body;
     
     if (isNaN(userId)) {
       return res.status(400).json({ error: 'Invalid user ID' });

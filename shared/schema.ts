@@ -114,6 +114,8 @@ export const users = pgTable("users", {
   walletAddress: text("wallet_address").unique(),
   walletAuthEnabled: boolean("wallet_auth_enabled").default(false),
   thcTokenHolder: boolean("thc_token_holder").default(false),
+  // User preferences
+  dashboardOrder: jsonb("dashboard_order"), // Array of module IDs in preferred order
   // Timestamps
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
