@@ -1,0 +1,342 @@
+2025-04-01T02:44:55Z info: Deployment: ace54f87-974c-4fbe-a5ad-6abce23a74a9
+2025-04-01T02:44:55Z info: Build: e9c88b2c-5fd2-4440-babb-d1036b40b9ad
+2025-04-01T02:44:55Z info: Connecting to builder
+2025-04-01T02:44:59Z info: Builder connected
+2025-04-01T02:45:00Z info: Installing packages
+--> npm install
+
+--> npm install
+
+
+up to date, audited 1305 packages in 11s
+
+
+up to date, audited 1305 packages in 11s
+
+
+174 packages are looking for funding
+
+
+174 packages are looking for funding
+
+  run `npm fund` for details
+
+  run `npm fund` for details
+
+
+24 vulnerabilities (6 low, 8 moderate, 10 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+
+24 vulnerabilities (6 low, 8 moderate, 10 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.2.0
+npm notice To update run: npm install -g npm@11.2.0
+npm notice
+
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.2.0
+npm notice To update run: npm install -g npm@11.2.0
+npm notice
+
+2025-04-01T02:45:12Z info: Starting Build
+
+up to date, audited 1305 packages in 3s
+
+174 packages are looking for funding
+
+  run `npm fund` for details
+
+
+24 vulnerabilities (6 low, 8 moderate, 10 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+
+vite v5.4.15 building for production...
+
+transforming...
+
+node_modules/three-stdlib/libs/lottie.js (13062:32): Use of eval in "node_modules/three-stdlib/libs/lottie.js" is strongly discouraged as it poses security risks and may cause issues with minification.
+
+✓ 3982 modules transformed.
+
+rendering chunks...
+
+computing gzip size...
+
+../dist/public/index.html                                          1.10 kB │ gzip:   0.58 kB
+
+../dist/public/assets/logo-DkrKHuz4.png                          188.23 kB
+
+../dist/public/assets/index-aQ5JQcTc.css                         185.57 kB │ gzip:  28.03 kB
+
+../dist/public/assets/use-toast-Bswb1C3v.js                        0.23 kB │ gzip:   0.20 kB
+
+../dist/public/assets/arrow-right-D344T5Zl.js                      0.33 kB │ gzip:   0.27 kB
+
+../dist/public/assets/arrow-up-right-BOXaA6qU.js                   0.34 kB │ gzip:   0.27 kB
+
+../dist/public/assets/circle-check-ADUUFU8j.js                     0.35 kB │ gzip:   0.27 kB
+
+../dist/public/assets/message-square-DElxwUm1.js                   0.35 kB │ gzip:   0.27 kB
+
+../dist/public/assets/chart-line-C1Sl6tsf.js                       0.35 kB │ gzip:   0.28 kB
+
+../dist/public/assets/trending-up-DY-_bd-o.js                      0.37 kB │ gzip:   0.29 kB
+
+../dist/public/assets/circle-x-CptRBuOk.js                         0.38 kB │ gzip:   0.28 kB
+
+../dist/public/assets/trending-down-CknJqsFB.js                    0.38 kB │ gzip:   0.28 kB
+
+../dist/public/assets/dollar-sign-Dqp1Q4zd.js                      0.39 kB │ gzip:   0.30 kB
+
+../dist/public/assets/target-Bh4u643H.js                           0.40 kB │ gzip:   0.27 kB
+
+../dist/public/assets/page-layout-CtNx5AhP.js                      0.40 kB │ gzip:   0.29 kB
+
+../dist/public/assets/copy-BQZBH_xg.js                             0.41 kB │ gzip:   0.31 kB
+
+../dist/public/assets/circle-help-DAdgDkZJ.js                      0.41 kB │ gzip:   0.30 kB
+
+../dist/public/assets/database-B-I2uE8z.js                         0.41 kB │ gzip:   0.30 kB
+
+../dist/public/assets/chart-column-Bja67fJl.js                     0.42 kB │ gzip:   0.30 kB
+
+../dist/public/assets/link-C_1skJ9b.js                             0.43 kB │ gzip:   0.30 kB
+../dist/public/assets/calendar-tScW1aVF.js                         0.43 kB │ gzip:   0.30 kB
+
+../dist/public/assets/upload-BE2xtmGP.js                           0.43 kB │ gzip:   0.32 kB
+../dist/public/assets/download-BJqjEn2p.js                         0.43 kB │ gzip:   0.32 kB
+
+../dist/public/assets/triangle-alert-pYwtrzlW.js                   0.43 kB │ gzip:   0.31 kB
+../dist/public/assets/chart-pie-Cf694SL2.js                        0.44 kB │ gzip:   0.32 kB
+
+../dist/public/assets/shield-BTrHV3ya.js                           0.44 kB │ gzip:   0.33 kB
+../dist/public/assets/award-CAQAnAD-.js                            0.44 kB │ gzip:   0.33 kB
+
+../dist/public/assets/wallet-CJgsMAWH.js                           0.46 kB │ gzip:   0.31 kB
+
+../dist/public/assets/send-66Qpoxku.js                             0.46 kB │ gzip:   0.33 kB
+../dist/public/assets/grid-3x3-BIAxot-W.js                         0.46 kB │ gzip:   0.31 kB
+../dist/public/assets/square-pen-DdujlBo0.js                       0.49 kB │ gzip:   0.34 kB
+../dist/public/assets/refresh-ccw-BBm93sxI.js                      0.49 kB │ gzip:   0.33 kB
+../dist/public/assets/bot-DmW4v1YS.js                              0.50 kB │ gzip:   0.33 kB
+../dist/public/assets/graduation-cap-C_9u8Etl.js                   0.50 kB │ gzip:   0.35 kB
+../dist/public/assets/file-text-BUSDwH4a.js                        0.50 kB │ gzip:   0.32 kB
+
+../dist/public/assets/share-2-DbJro8Pw.js                          0.53 kB │ gzip:   0.34 kB
+
+../dist/public/assets/trash-2-DUvYTggT.js                          0.53 kB │ gzip:   0.35 kB
+
+../dist/public/assets/layers-_HTs1q-e.js                           0.53 kB │ gzip:   0.34 kB
+../dist/public/assets/skeleton-0h1iF39r.js                         0.56 kB │ gzip:   0.37 kB
+
+../dist/public/assets/sparkles-CbPpk3Ix.js                         0.68 kB │ gzip:   0.40 kB
+
+../dist/public/assets/avatar-3fTskj30.js                           0.74 kB │ gzip:   0.41 kB
+
+../dist/public/assets/circle-plus--BVxo4ZO.js                      0.76 kB │ gzip:   0.37 kB
+
+../dist/public/assets/minimize-N7FYQC1b.js                         0.88 kB │ gzip:   0.38 kB
+
+../dist/public/assets/brain-fhXS_GG-.js                            0.90 kB │ gzip:   0.47 kB
+
+../dist/public/assets/crypto-heatmap-BjVJEINi.js                   1.05 kB │ gzip:   0.60 kB
+
+../dist/public/assets/stock-heatmap-CnVSaQux.js                    1.07 kB │ gzip:   0.62 kB
+
+../dist/public/assets/market-scanner-Dca5s60k.js                   1.13 kB │ gzip:   0.65 kB
+
+../dist/public/assets/shop-XFTrdcO2.js                             1.31 kB │ gzip:   0.68 kB
+
+../dist/public/assets/solana-dex-embedded-DuW1r3oq.js              1.40 kB │ gzip:   0.72 kB
+
+../dist/public/assets/notification-service-BrQUoVT0.js             1.51 kB │ gzip:   0.63 kB
+
+../dist/public/assets/TradingViewWidget-vZjD-V_h.js                1.67 kB │ gzip:   0.92 kB
+
+../dist/public/assets/brain-circuit-CeQUCSyQ.js                    1.74 kB │ gzip:   0.66 kB
+
+../dist/public/assets/progress-MAT7xTff.js                         1.94 kB │ gzip:   0.96 kB
+
+../dist/public/assets/economic-calendar-CZZcic-g.js                2.01 kB │ gzip:   1.04 kB
+../dist/public/assets/forgot-password-jWbwWvan.js                  2.81 kB │ gzip:   1.18 kB
+../dist/public/assets/market-overview-BsqP4WH3.js                  3.57 kB │ gzip:   1.54 kB
+
+../dist/public/assets/useLearningStore-DzxAq2vZ.js                 3.62 kB │ gzip:   0.83 kB
+
+../dist/public/assets/news-dashboard-simple-B8yFZnUA.js            3.72 kB │ gzip:   1.60 kB
+
+../dist/public/assets/radio-group-D9wrf1W1.js                      3.82 kB │ gzip:   1.75 kB
+
+../dist/public/assets/trade-signal-service-ChTp4gQH.js             3.82 kB │ gzip:   1.55 kB
+
+../dist/public/assets/embedded-app-CMqRF4DR.js                     3.86 kB │ gzip:   1.67 kB
+
+../dist/public/assets/openai-service-CgcI1Za1.js                   3.90 kB │ gzip:   1.69 kB
+
+../dist/public/assets/trade-runner-V4L06ARU.js                     3.98 kB │ gzip:   1.45 kB
+../dist/public/assets/educational-games-D3IwwZ5k.js                4.31 kB │ gzip:   1.24 kB
+
+../dist/public/assets/alert-dialog-J6UcmpAL.js                     4.74 kB │ gzip:   1.75 kB
+
+../dist/public/assets/signup-DUTJKjb9.js                           4.78 kB │ gzip:   1.99 kB
+
+../dist/public/assets/trade-runner-browser-CIA65Q7F.js             4.80 kB │ gzip:   1.70 kB
+
+../dist/public/assets/popover-DalDQ-ge.js                          5.28 kB │ gzip:   1.94 kB
+
+../dist/public/assets/CopyTrading-5goiH_f7.js                      5.34 kB │ gzip:   1.78 kB
+
+../dist/public/assets/trading-platform-tutorial-NjeBw0n7.js        6.53 kB │ gzip:   2.27 kB
+
+../dist/public/assets/login-DhBBP8Q2.js                            6.65 kB │ gzip:   2.37 kB
+
+../dist/public/assets/trade-signals-panel-wJOLVysM.js              7.17 kB │ gzip:   2.46 kB
+../dist/public/assets/live-stream-BwVvqFtf.js                      8.43 kB │ gzip:   2.42 kB
+../dist/public/assets/trading-indicators-DjC47UBs.js               9.22 kB │ gzip:   2.72 kB
+
+../dist/public/assets/google-sheets-service-B2JTNFXp.js            9.32 kB │ gzip:   3.51 kB
+
+../dist/public/assets/abatev-trade-analysis-service-B3D_pTfO.js   10.04 kB │ gzip:   3.81 kB
+../dist/public/assets/trading-companion-chatbot-Dw7oJ82q.js       10.99 kB │ gzip:   4.00 kB
+
+../dist/public/assets/matrix-visualization-demo-B8oPsV-d.js       11.53 kB │ gzip:   3.64 kB
+
+../dist/public/assets/trade-journal-simple-CINAexmo.js            12.06 kB │ gzip:   3.28 kB
+../dist/public/assets/nft-marketplace-simple-CuNd-lcO.js          13.90 kB │ gzip:   3.89 kB
+
+../dist/public/assets/trading-freedom-podcast-CP3hnjsZ.js         14.36 kB │ gzip:   4.57 kB
+
+../dist/public/assets/notification-settings-CdbumTAZ.js           15.16 kB │ gzip:   3.02 kB
+
+../dist/public/assets/voice-trade-demo-B8ldlXc9.js                18.47 kB │ gzip:   6.03 kB
+
+../dist/public/assets/trading-bots-manager-fsidu5DL.js            18.96 kB │ gzip:   5.18 kB
+
+../dist/public/assets/learn-embedded-B9s_EzfF.js                  19.57 kB │ gzip:   5.12 kB
+
+../dist/public/assets/learning-journey-cJUk4Esj.js                20.54 kB │ gzip:   5.59 kB
+
+../dist/public/assets/learning-center-CVEVMR72.js                 23.97 kB │ gzip:   5.68 kB
+
+../dist/public/assets/trade-journal-advanced-DorfM1gg.js          24.96 kB │ gzip:   5.61 kB
+../dist/public/assets/trade-simulator-BX01ZlkN.js                 25.18 kB │ gzip:   6.90 kB
+
+../dist/public/assets/ai-market-analysis-page-BzUzGPko.js         26.72 kB │ gzip:   6.15 kB
+
+../dist/public/assets/abatev-trade-panel-2YRt0i2Y.js              28.28 kB │ gzip:   7.28 kB
+
+../dist/public/assets/learning-module-detail-Y-nltbQu.js          28.41 kB │ gzip:   7.47 kB
+
+../dist/public/assets/smart-trade-panel-CcYATdar.js               29.91 kB │ gzip:   7.41 kB
+
+../dist/public/assets/signals-analyzer-B5NpjOKs.js                33.03 kB │ gzip:   7.89 kB
+../dist/public/assets/thc-staking-BdEQqah7.js                     35.19 kB │ gzip:   8.11 kB
+../dist/public/assets/index-K778FSEH.js                           42.56 kB │ gzip:  10.80 kB
+../dist/public/assets/trading-signals-tKcb_ZFr.js                 50.16 kB │ gzip:  11.48 kB
+../dist/public/assets/trade-journal-DhlTaVpn.js                   51.76 kB │ gzip:  12.74 kB
+../dist/public/assets/ai-trade-assistant-BtojLCOh.js              72.35 kB │ gzip:  20.68 kB
+../dist/public/assets/advanced-trading-dashboard-DS-hmHXA.js      85.13 kB │ gzip:  20.47 kB
+
+../dist/public/assets/events-BwvbnL_q.js                          90.40 kB │ gzip:  25.37 kB
+../dist/public/assets/proxy-Pcb_AaD6.js                          114.41 kB │ gzip:  37.70 kB
+
+../dist/public/assets/control-center-ObATn54F.js                 151.81 kB │ gzip:  44.99 kB
+
+../dist/public/assets/vendor-dqui0UE8.js                         174.97 kB │ gzip:  54.81 kB
+
+../dist/public/assets/index-CAw_FzMG.js                          928.49 kB │ gzip: 286.62 kB
+
+../dist/public/assets/zen-meditation-mode-MfdXAWd0.js            973.76 kB │ gzip: 273.55 kB
+
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+✓ built in 47.27s
+
+
+  dist/index.js  192.9kb
+
+⚡ Done in 206ms
+
+2025-04-01T02:46:12Z info: Pushing pid1 binary layer...
+2025-04-01T02:46:13Z info: Created pid1 binary layer
+2025-04-01T02:46:14Z info: Pushing hosting layer...
+2025-04-01T02:46:14Z info: Pushing Repl layer...
+2025-04-01T02:46:14Z info: Retrieved cached nix layer
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-u0Vnh4S3hmN2" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-aiChEYfJfpHC" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-8MwLK46hN64k" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-OVbLeB57D976" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-wXYmREuNTz6E" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-4xAOctO4HCCu" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-WLANTf2yhv31" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-dySrMDkOfekF" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-hGWjSLMb60m3" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-0AdWkcajKx2u" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-3X6vSvmYFNus" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-VYiG3zJeVbyh" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-8n0qirgu34VM" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-QUXcl1dYEZu9" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-nfecoS3pWXgP" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-QJZxg49pns1A" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-bkkl9qOSQVaD" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-TpCwrWUk4Rxt" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-k0Z9FGKEHBu2" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-dEgOif74LKJg" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-aqjZtJgw4csO" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-O55usmKOp0yU" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-Nw2mv3IFuFsU" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-IZaGSkNHyUgc" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-GLoYgSWAXDGN" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-Aa29P71X4mjw" does not exist.
+2025-04-01T02:46:14Z warning: Detected broken symlink! The path "/tmp/pulse-CXGLVcMMuN4m" does not exist.
+2025-04-01T02:46:14Z info: Created hosting layer
+2025-04-01T02:47:43Z info: Created Repl layer
+2025-04-01T02:47:43Z info: Pushed image manifest
+2025-04-01T02:47:44Z info: Pushed soci index manifest
+2025-04-01T02:47:48Z info: Creating Autoscale service
+Broker connection service initialized
+The `fetchConnectionCache` option is deprecated (now always `true`)
+> NODE_ENV=production node dist/index.js
+> rest-express@1.0.0 start
+2:48:51 AM [ws] Multiplayer WebSocket server initialized
+DATABASE_URL environment variable is not set. Database functionality will be limited until deployment.
+starting up user application
+forwarding local port 5000 to external port 80
+2:48:51 AM [express] serving on port 5000
+2025-04-01T02:48:55Z info: Waiting for service to be ready
+2025-04-01T02:48:57Z info: Deployment successful

@@ -2,10 +2,12 @@ import React from 'react';
 import { AITradingAssistant } from './ai-trading-assistant';
 
 interface AITradeAssistantProps {
+  apiKeyStatus?: boolean;
   selectedSymbol?: string;
 }
 
-const AITradeAssistant: React.FC<AITradeAssistantProps> = ({ 
+export const AiTradeAssistant: React.FC<AITradeAssistantProps> = ({ 
+  apiKeyStatus,
   selectedSymbol = 'BINANCE:SOLUSDT'
 }) => {
   return (
@@ -15,4 +17,5 @@ const AITradeAssistant: React.FC<AITradeAssistantProps> = ({
   );
 };
 
-export default AITradeAssistant;
+// Also export as default for backward compatibility
+export default AiTradeAssistant;

@@ -215,6 +215,14 @@ export const useToast = () => {
 };
 
 // Main component for compatibility with existing code
-const Toaster = () => null;
+export const Toaster = () => {
+  const [toasts, setToasts] = React.useState<Toast[]>([]);
+
+  return (
+    <ToastProvider>
+      <ToastViewport />
+    </ToastProvider>
+  );
+};
 
 export default Toaster;

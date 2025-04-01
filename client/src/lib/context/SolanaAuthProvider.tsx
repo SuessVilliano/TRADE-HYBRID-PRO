@@ -2,6 +2,22 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useWallet } from '@solana/wallet-adapter-react';
 import axios from 'axios';
 
+// Membership tiers for THC staking
+export enum MembershipTier {
+  NONE = 0,
+  BASIC = 1,
+  ADVANCED = 2,
+  PREMIUM = 3,
+  ELITE = 4
+}
+
+// Membership interface
+interface TokenMembership {
+  tier: MembershipTier;
+  balance: number;
+  expiry: Date | null;
+}
+
 interface SolanaAuthContextType {
   isAuthenticating: boolean;
   isAuthenticated: boolean;
@@ -9,8 +25,9 @@ interface SolanaAuthContextType {
   userId: number | null;
   username: string | null;
   error: string | null;
-  connectAndAuthenticate: () => Promise<void>;
-  logout: () => Promise<void>;
+  tokenMembership?: TokenMembership; // Add this for membership tier functionality
+  connectAndAuthenticate: () => Promise<boolean | void>; // Allow for both return types
+  logout: () => Promise<boolean>; 
   linkWalletToUser: (userId: number) => Promise<boolean>;
   authenticateWithCredentials: (username: string, password: string) => Promise<boolean>;
 }
@@ -171,6 +188,13 @@ export function SolanaAuthProvider({ children }: SolanaAuthProviderProps) {
     }
   };
   
+  // Add minimal tokenMembership object for display purposes
+  const mockTokenMembership: TokenMembership = {
+    tier: MembershipTier.BASIC,
+    balance: 500,
+    expiry: null
+  };
+
   const contextValue: SolanaAuthContextType = {
     isAuthenticating,
     isAuthenticated,
@@ -178,6 +202,7 @@ export function SolanaAuthProvider({ children }: SolanaAuthProviderProps) {
     userId,
     username,
     error,
+    tokenMembership: mockTokenMembership, // Add this to fix missing property
     connectAndAuthenticate,
     logout,
     linkWalletToUser,
