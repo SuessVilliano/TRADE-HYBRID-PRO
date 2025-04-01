@@ -285,3 +285,88 @@ export const userApiKeys = pgTable("user_api_keys", {
 });
 
 export type UserApiKey = typeof userApiKeys.$inferSelect;
+
+// Broker types and broker connections for trading platforms
+export const brokerTypes = pgTable("broker_types", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  displayName: text("display_name").notNull(),
+  description: text("description"),
+  logoUrl: text("logo_url"),
+  requiresApiKey: boolean("requires_api_key").default(false),
+  requiresSecretKey: boolean("requires_secret_key").default(false),
+  requiresAccessToken: boolean("requires_access_token").default(false),
+  requiresUsername: boolean("requires_username").default(false),
+  requiresPassword: boolean("requires_password").default(false),
+  requiresAccountId: boolean("requires_account_id").default(false),
+  isActive: boolean("is_active").default(true),
+  supportsLiveTrading: boolean("supports_live_trading").default(true),
+  supportsPaperTrading: boolean("supports_paper_trading").default(true),
+  supportsCopyTrading: boolean("supports_copy_trading").default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// User broker connections table for storing encrypted credentials
+export const brokerConnections = pgTable("broker_connections", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  brokerTypeId: integer("broker_type_id").notNull().references(() => brokerTypes.id),
+  connectionName: text("connection_name").notNull(),
+  // All sensitive data is encrypted before storage
+  encryptedApiKey: text("encrypted_api_key"),
+  encryptedSecretKey: text("encrypted_secret_key"),
+  encryptedAccessToken: text("encrypted_access_token"),
+  encryptedUsername: text("encrypted_username"),
+  encryptedPassword: text("encrypted_password"),
+  accountId: text("account_id"),
+  // Connection token is used for copy trading and secure references
+  connectionToken: text("connection_token").notNull().unique(),
+  isPrimary: boolean("is_primary").default(false),
+  isLiveTrading: boolean("is_live_trading").default(false),
+  isActive: boolean("is_active").default(true),
+  allowCopyTrading: boolean("allow_copy_trading").default(false),
+  lastConnectedAt: timestamp("last_connected_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Copy Trade relationships (for signal providers and followers)
+export const copyTradeRelationships = pgTable("copy_trade_relationships", {
+  id: serial("id").primaryKey(),
+  followerUserId: integer("follower_user_id").notNull().references(() => users.id),
+  providerUserId: integer("provider_user_id").notNull().references(() => users.id),
+  followerBrokerConnectionId: integer("follower_broker_connection_id").notNull().references(() => brokerConnections.id),
+  providerBrokerConnectionId: integer("provider_broker_connection_id").notNull().references(() => brokerConnections.id),
+  isActive: boolean("is_active").default(true),
+  positionSizePercentage: real("position_size_percentage").default(100), // % of provider's position to copy
+  maxRiskPerTrade: real("max_risk_per_trade"), // max risk per trade in %
+  maxDailyLoss: real("max_daily_loss"), // max daily loss in %
+  customSettings: jsonb("custom_settings"), // custom settings for this relationship
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Trade history for copy trades
+export const copyTradeHistory = pgTable("copy_trade_history", {
+  id: serial("id").primaryKey(),
+  relationshipId: integer("relationship_id").notNull().references(() => copyTradeRelationships.id),
+  originalTradeId: integer("original_trade_id").references(() => trades.id),
+  copiedTradeId: integer("copied_trade_id").references(() => trades.id),
+  status: text("status").notNull(), // 'pending', 'executed', 'failed', 'cancelled'
+  statusMessage: text("status_message"),
+  providerDetails: jsonb("provider_details"), // details about the original trade
+  modifiedParameters: jsonb("modified_parameters"), // any modifications made
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  executedAt: timestamp("executed_at"),
+});
+
+export type BrokerType = typeof brokerTypes.$inferSelect;
+export type BrokerConnection = typeof brokerConnections.$inferSelect;
+export type CopyTradeRelationship = typeof copyTradeRelationships.$inferSelect;
+export type CopyTradeHistory = typeof copyTradeHistory.$inferSelect;
+
+// Insert schemas for validation
+export const insertBrokerTypeSchema = createInsertSchema(brokerTypes);
+export const insertBrokerConnectionSchema = createInsertSchema(brokerConnections);
+export const insertCopyTradeRelationshipSchema = createInsertSchema(copyTradeRelationships);
