@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/context/AuthContext';
 import { useSolanaAuth } from '../lib/context/SolanaAuthProvider';
-import CustomizableDashboard from '../components/dashboard/CustomizableDashboard';
+import OriginalDashboard from '../components/dashboard/OriginalDashboard';
 
 const HomePage: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -21,13 +21,7 @@ const HomePage: React.FC = () => {
     return null;
   }
   
-  return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <div className="container mx-auto px-4 py-8">
-        <CustomizableDashboard />
-      </div>
-    </div>
-  );
+  return <OriginalDashboard />;
 };
 
 export default HomePage;
