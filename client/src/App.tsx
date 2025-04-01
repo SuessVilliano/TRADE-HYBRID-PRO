@@ -8,16 +8,16 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import LoginPage from './pages/login';
 import HomePage from './pages/home';
 import SignupPage from './pages/signup';
-import TradeView from './pages/tradeview';
-import JournalView from './pages/journal';
+import TradeView from './pages/trading-space';
+import JournalView from './pages/trade-journal';
 import MetaversePage from './pages/metaverse';
-import LearnView from './pages/learn';
-import SignalsView from './pages/signals';
-import LeaderboardView from './pages/leaderboard';
-import ProfileView from './pages/profile';
-import SettingsView from './pages/settings';
-import BotsView from './pages/bots';
-import NewsView from './pages/news';
+import LearnView from './pages/learning-center';
+import SignalsView from './pages/trading-signals';
+import LeaderboardView from './pages/not-found';
+import ProfileView from './pages/not-found';
+import SettingsView from './pages/not-found';
+import BotsView from './pages/not-found';
+import NewsView from './pages/news-dashboard';
 
 const App: React.FC = () => {
   return (

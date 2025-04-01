@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSolanaAuth } from "../lib/context/SolanaAuthProvider";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -30,13 +28,13 @@ export default function LoginPage() {
   const handleCredentialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !password) {
-      toast.error("Please enter both username and password");
+      console.error("Please enter both username and password");
       return;
     }
     
     const success = await authenticateWithCredentials(username, password);
     if (success) {
-      toast.success("Login successful");
+      console.log("Login successful");
       navigate("/dashboard");
     }
   };
@@ -46,10 +44,10 @@ export default function LoginPage() {
     try {
       await connectAndAuthenticate();
       if (!error) {
-        toast.success("Wallet authentication successful");
+        console.log("Wallet authentication successful");
       }
     } catch (err) {
-      toast.error("Failed to authenticate with wallet");
+      console.error("Failed to authenticate with wallet");
     }
   };
   
@@ -57,7 +55,7 @@ export default function LoginPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !password || !email) {
-      toast.error("Please fill all fields");
+      console.error("Please fill all fields");
       return;
     }
     
@@ -77,20 +75,18 @@ export default function LoginPage() {
       const data = await response.json();
       
       if (data.success) {
-        toast.success("Registration successful. Please login.");
+        console.log("Registration successful. Please login.");
         setShowRegister(false);
       } else {
-        toast.error(data.message || "Registration failed");
+        console.error(data.message || "Registration failed");
       }
     } catch (err) {
-      toast.error("Registration failed");
+      console.error("Registration failed");
     }
   };
   
   return (
     <div className="flex min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      <ToastContainer position="top-right" theme="dark" />
-      
       <div className="w-full max-w-md m-auto bg-gray-800 rounded-lg border border-gray-700 shadow-lg p-8">
         <h1 className="text-3xl font-bold text-center mb-6">
           {showRegister ? "Create Account" : "Trade Hybrid"}

@@ -21,7 +21,8 @@ import openAIProxyRoutes from './api/openai-proxy'; // Added import for OpenAI p
 import brokerRoutes from './routes/broker-routes'; // Added import for broker routes
 import identityRoutes from './routes/identity-routes'; // Added import for user identity routes
 import authRoutes from './routes/auth-routes'; // Added import for authentication routes
-import propFirmRoutes from './routes/prop-firm-routes'; // Added import for prop firm routes
+// import propFirmRoutes from './routes/prop-firm-routes'; // Using mock implementation instead
+import mockPropFirmRoutes from './routes/mock-prop-firm-routes'; // Added import for mock prop firm routes
 import membershipRoutes from './routes/membership-routes'; // Added import for membership routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -146,8 +147,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.use("/api/auth", authRoutes);
   
-  // Prop Firm routes
-  app.use("/api/prop-firm", propFirmRoutes);
+  // Prop Firm routes (using mock implementation)
+  app.use("/api/prop-firm", mockPropFirmRoutes);
   
   // Membership routes
   app.use("/api/membership", membershipRoutes);

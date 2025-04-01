@@ -5,7 +5,8 @@ import { setupVite, serveStatic, log } from "./vite";
 import { encryptionService } from "./lib/services/encryption-service";
 import { brokerConnectionService } from "./lib/services/broker-connection-service";
 import { userIdentityService } from "./lib/services/user-identity-service";
-import { propFirmService } from "./lib/services/prop-firm-service";
+// Using mock prop firm service instead of the actual one for development
+// import { propFirmService } from "./lib/services/prop-firm-service";
 
 const app = express();
 app.use(express.json());
@@ -58,7 +59,8 @@ app.use((req, res, next) => {
   // Initialize services that need initialization
   // encryptionService is self-initializing in its constructor
   await brokerConnectionService.initialize();
-  await propFirmService.initialize();
+  // Skip prop firm service initialization since we're using the mock version
+  // await propFirmService.initialize();
   
   // Log successful initialization
   console.log('Services initialized successfully');
@@ -84,8 +86,8 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Serve on port 8080 to match deployment configuration
-  const port = 8080;
+  // Serve on port 5000 to match workflow configuration
+  const port = 5000;
   process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
     process.exit(1);
