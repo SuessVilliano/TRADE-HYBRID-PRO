@@ -183,6 +183,25 @@ function AppContent() {
             <Link to="/" className="flex items-center">
               <img src="/images/trade_hybrid_logo.png" alt="Trade Hybrid Logo" className="h-10 w-10" />
             </Link>
+            
+            {/* Mobile hamburger menu button */}
+            <button 
+              className="md:hidden p-2 rounded-md hover:bg-slate-800"
+              onClick={() => {
+                const mobileMenu = document.getElementById('mobile-menu');
+                if (mobileMenu) {
+                  mobileMenu.classList.toggle('hidden');
+                }
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+            
+            {/* Desktop navigation */}
             <nav className="hidden md:flex gap-4">
               <Link to="/" className="hover:text-blue-400 transition-colors">Home</Link>
               <Link to="/trading" className="hover:text-blue-400 transition-colors">Trade</Link>
@@ -216,7 +235,6 @@ function AppContent() {
               
               <Link to="/app" className="hover:text-blue-400 transition-colors">App</Link>
               <Link to="/affiliate" className="hover:text-blue-400 transition-colors">Affiliate</Link>
-              {/* Matrix moved inside Affiliate page */}
               <Link to="/trade-runner" className="hover:text-blue-400 transition-colors">Game Center</Link>
               <Link to="/trade-simulator" className="hover:text-blue-400 transition-colors">Trade Simulator</Link>
               <Link to="/shop" className="hover:text-blue-400 transition-colors">Shop</Link>
