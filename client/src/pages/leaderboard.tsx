@@ -1,10 +1,23 @@
 import React from 'react';
-import { Layout } from '../components/ui/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Badge } from '../components/ui/badge';
 import { ArrowUpRight, ArrowDownRight, Trophy, Medal, TrendingUp, Users, Zap } from 'lucide-react';
+
+// Simple placeholder for Layout component
+const Layout = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-6">
+    <div className="max-w-6xl mx-auto">
+      <header className="mb-6 p-4 bg-white dark:bg-slate-800 rounded-lg shadow-sm">
+        <h1 className="text-2xl font-bold">Trade Hybrid Platform</h1>
+      </header>
+      <main className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-4">
+        {children}
+      </main>
+    </div>
+  </div>
+);
 
 export default function Leaderboard() {
   const traderLeaderboard = [
