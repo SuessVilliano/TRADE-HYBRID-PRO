@@ -21,12 +21,13 @@ class WhopService {
   
   constructor() {
     // Use the provided API key from environment
-    this.apiKey = config.WHOP_API_KEY || 'ydROZr0J1kv7LZyMGepujMx7vNrZIC-chXf7lBWIJXE';
+    this.apiKey = config.WHOP_API_KEY || '';
     
     if (!this.apiKey) {
       console.error('Whop API key not configured properly');
+    } else {
+      console.log('Whop service initialized with API key');
     }
-    console.log('Whop service initialized');
   }
 
   private async validateApiKey(): Promise<boolean> {

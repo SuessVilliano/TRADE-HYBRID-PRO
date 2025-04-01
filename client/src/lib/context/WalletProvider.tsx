@@ -24,16 +24,15 @@ export const WalletProvider: FC<WalletProviderProps> = ({ children }) => {
   const endpoint = useMemo(() => clusterApiUrl('devnet'), []);
 
   // Set up wallet adapters
-  const wallets = useMemo<Adapter[]>(
-    () => [
-      new PhantomWalletAdapter() as unknown as Adapter,
-    ],
-    []
-  );
+  const wallets = useMemo(() => {
+    const phantom = new PhantomWalletAdapter();
+    console.log("Initializing wallets, Phantom available:", phantom.ready);
+    return [phantom];
+  }, []);
 
   return (
     <ConnectionProvider endpoint={endpoint}>
-      <SolanaWalletProvider wallets={wallets as any} autoConnect>
+      <SolanaWalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
           {children}
         </WalletModalProvider>

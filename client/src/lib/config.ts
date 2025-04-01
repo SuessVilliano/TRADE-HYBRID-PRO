@@ -14,14 +14,14 @@ export const config = {
   ALPACA_API_SECRET: '',
   OANDA_API_TOKEN: '',
   OANDA_ACCOUNT_ID: '',
-  BINANCE_API_KEY: '',
-  BINANCE_API_SECRET: '',
+  BINANCE_API_KEY: import.meta.env.VITE_BINANCE_US_API_KEY || '',
+  BINANCE_API_SECRET: import.meta.env.VITE_BINANCE_US_SECRET_KEY || '',
   OPENAI_API_KEY: '',
   GEMINI_API_KEY: '',
   MORALIS_API_KEY: '',
   KRAKEN_API_KEY: '',
   KRAKEN_PRIVATE_KEY: '',
-  WHOP_API_KEY: 'ydROZr0J1kv7LZyMGepujMx7vNrZIC-chXf7lBWIJXE',
+  WHOP_API_KEY: import.meta.env.VITE_WHOP_API_KEY || '',
 };
 
 // Add any frontend environment variables from Vite
