@@ -1,10 +1,10 @@
 import express, { Request, Response } from 'express';
 import { z } from 'zod';
-import { db } from '../storage';
+import { db } from '../lib/db';
 import { users } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth-middleware';
-import { requireAdmin } from '../middleware/admin-middleware';
+import { admin as requireAdmin } from '../middleware/admin-middleware';
 
 const router = express.Router();
 
@@ -341,7 +341,11 @@ router.get('/users', requireAuth, requireAdmin, async (req: Request, res: Respon
       .orderBy(users.createdAt);
     
     // Enhanced with membership status
-    const usersWithStatus = result.map(user => {
+    const usersWithStatus = result.map((user: {
+      membershipExpirationDate: string | null;
+      membershipLevel: string | null;
+      [key: string]: any;
+    }) => {
       const isExpired = user.membershipExpirationDate && 
                         new Date(user.membershipExpirationDate) < new Date();
       

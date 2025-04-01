@@ -211,25 +211,16 @@ const ZenVisualization = ({ scene = 'ocean', speed = 1 }) => {
           <Cloud
             opacity={0.5}
             speed={0.4}
-            width={20}
-            depth={1.5}
-            segments={20}
             position={[0, 2, 0]}
           />
           <Cloud
             opacity={0.25}
             speed={0.3}
-            width={10}
-            depth={1}
-            segments={15}
             position={[-4, 0, 2]}
           />
           <Cloud
             opacity={0.7}
             speed={0.2}
-            width={15}
-            depth={2}
-            segments={20}
             position={[4, -2, -2]}
           />
           <Text
@@ -614,5 +605,5 @@ export function ZenMeditationMode({ className }: ZenMeditationModeProps) {
   );
 }
 
-// Add default export for the component
+// Make sure we export the component properly
 export default ZenMeditationMode;

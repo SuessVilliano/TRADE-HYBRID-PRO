@@ -12,7 +12,7 @@ interface EconomicCalendarProps {
 
 export function EconomicCalendar({
   width = '100%',
-  height = '800px', // Further increased height to show more content and prevent black space
+  height = '600px', // Adjusted height for better display
   colorTheme = 'dark',
   isTransparent = true, // Make transparent to allow custom styling
   locale = 'en',
@@ -28,7 +28,7 @@ export function EconomicCalendar({
     script.async = true;
     script.type = 'text/javascript';
     
-    // Configure the widget options
+    // Configure the widget options with improved settings to fix black space
     const widgetOptions = {
       width,
       height,
@@ -39,6 +39,12 @@ export function EconomicCalendar({
       currencyFilter: "USD,EUR,JPY,GBP,AUD,CAD,CHF,CNY", // Add common currencies
       fontSize: "12", // Slightly larger font for better readability
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, // Use user's timezone
+      firstDayOfWeek: 0, // Start with Sunday
+      showSeconds: false, // Less cluttered times
+      hideDateSeparators: false, // Keep date separators for better readability
+      autosize: true, // Allow widget to resize properly
+      eventFilter: "economic", // Focus on economic events only
+      dailyTableStyle: "compact", // Use compact style to show more content
     };
     
     script.innerHTML = JSON.stringify(widgetOptions);
@@ -65,16 +71,27 @@ export function EconomicCalendar({
     };
   }, [width, height, colorTheme, isTransparent, locale, importanceFilter]);
 
+  // Added CSS styles to better position the content and fix the black space issue
   return (
     <div 
       className={`tradingview-widget-container rounded-md shadow-lg overflow-hidden border border-primary/30 shadow-[0_0_10px_rgba(var(--primary),0.15)] ${className}`}
       ref={containerRef}
       style={{
         background: 'linear-gradient(to bottom, rgba(20, 20, 30, 0.95), rgba(15, 15, 20, 0.97))',
-        minHeight: '760px', // Ensure minimum height for content, matching main height minus footer
+        height: height, // Use specified height
+        position: 'relative', // For better positioning
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
-      <div className="tradingview-widget-container__widget" style={{ minHeight: '460px' }}></div>
+      <div className="tradingview-widget-container__widget" style={{ 
+        flex: 1, 
+        overflow: 'auto',
+        minHeight: '400px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-start', // Start from the top
+      }}></div>
       <div className="tradingview-widget-script-container"></div>
       <div 
         className="tradingview-widget-copyright" 

@@ -4,7 +4,7 @@
  * Uses OpenAI to validate authenticity of login attempts
  */
 
-import { db } from '../storage';
+import { db } from './db';
 import { users } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 import { validateLoginAttempt, crossReferenceUserData } from './openai-validator';

@@ -17,7 +17,6 @@ const TradingSignalsLazy = React.lazy(() => import('@/components/trade/trade-sig
 const CopyTradingLazy = React.lazy(() => import('./CopyTrading'));
 const SmartTradePanelLazy = React.lazy(() => import('@/components/trade/abatev-trade-panel'));
 const TradingBotsManagerLazy = React.lazy(() => import('./trading-bots-manager').then(module => ({ default: module.TradingBotsManager })));
-const TradingCompanionChatbotLazy = React.lazy(() => import('./trading-companion-chatbot'));
 const EconomicCalendarLazy = React.lazy(() => import('./economic-calendar'));
 const MarketOverviewLazy = React.lazy(() => import('./market-overview'));
 const MarketScannerLazy = React.lazy(() => import('./market-scanner'));
@@ -37,10 +36,8 @@ export type PanelType =
   | 'bots' 
   | 'news' 
   | 'education'
-  | 'companion'
   | 'economic-calendar'
   | 'market-overview'
-  | 'advanced-ai'
   | 'stock-heatmap'
   | 'crypto-heatmap'
   | 'journal'
@@ -71,7 +68,7 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
   selectedSymbol,
   onChangeSymbol,
   className = '',
-  initialPanels = ['chart', 'signals', 'smart-trade', 'scanner', 'journal', 'economic-calendar', 'market-overview', 'stock-heatmap', 'crypto-heatmap', 'zen'],
+  initialPanels = ['chart', 'signals', 'smart-trade', 'scanner', 'journal', 'economic-calendar', 'market-overview', 'stock-heatmap', 'crypto-heatmap'],
 }) => {
   // State to track active panels and their layout
   const [activePanels, setActivePanels] = useState<string[]>([]);
@@ -236,19 +233,6 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
       defaultSize: { width: '320px', height: '300px' },
       defaultPosition: { x: 760, y: 1230 }
     },
-    'companion': {
-      id: 'companion',
-      type: 'companion',
-      title: 'Trading Companion',
-      icon: <MessageSquare size={16} />,
-      component: (
-        <React.Suspense fallback={<div className="h-full flex items-center justify-center">Loading Trading Companion...</div>}>
-          <TradingCompanionChatbotLazy selectedSymbol={selectedSymbol} />
-        </React.Suspense>
-      ),
-      defaultSize: { width: '320px', height: '500px' },
-      defaultPosition: { x: 760, y: 920 }
-    },
     'economic-calendar': {
       id: 'economic-calendar',
       type: 'economic-calendar',
@@ -285,33 +269,6 @@ export const ControlCenter: React.FC<ControlCenterProps> = ({
       defaultSize: { width: '100%', height: '400px' },
       defaultPosition: { x: 0, y: 1530 }
     },
-    'advanced-ai': {
-      id: 'advanced-ai',
-      type: 'advanced-ai',
-      title: 'Advanced AI Analysis',
-      icon: <Sparkles size={16} />,
-      component: (
-        <div className="h-full overflow-y-auto text-sm p-4">
-          <h3 className="text-xl font-bold mb-3">Advanced AI Trading Analysis</h3>
-          <p className="mb-3">
-            The AI-powered trading analysis module helps you identify pattern recognition, sentiment analysis, and predictive modeling.
-          </p>
-          <div className="space-y-3 bg-slate-800 p-4 rounded-md">
-            <h4 className="text-lg font-semibold">Features Coming Soon:</h4>
-            <ul className="list-disc pl-5 space-y-2">
-              <li>Real-time market sentiment analysis</li>
-              <li>Trading pattern recognition</li>
-              <li>Advanced predictive modeling</li>
-              <li>AI-generated trade recommendations</li>
-              <li>Market anomaly detection</li>
-            </ul>
-          </div>
-        </div>
-      ),
-      defaultSize: { width: '100%', height: '400px' },
-      defaultPosition: { x: 0, y: 1830 }
-    },
-
     'stock-heatmap': {
       id: 'stock-heatmap',
       type: 'stock-heatmap',

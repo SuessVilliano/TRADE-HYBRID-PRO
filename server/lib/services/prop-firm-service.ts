@@ -1,10 +1,11 @@
-import { db } from '../../storage';
+import { db } from '../../db';
 import { 
-  challenges, 
-  accounts,
-  trades,
-  metrics,
-  payouts
+  propFirmChallenges as challenges, 
+  propFirmAccounts as accounts,
+  propFirmTrades as trades,
+  propFirmMetrics as metrics,
+  propFirmPayouts as payouts,
+  users
 } from '../../../shared/schema';
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
 
@@ -19,7 +20,7 @@ export class PropFirmService {
     return db
       .select()
       .from(challenges)
-      .where(eq(challenges.isActive, true))
+      .where(eq(challenges.active, true))
       .orderBy(challenges.accountSize);
   }
 
@@ -53,7 +54,7 @@ export class PropFirmService {
         durationDays: data.durationDays,
         minTradingDays: data.minTradingDays,
         brokerTypeId: data.brokerTypeId,
-        isActive: data.isActive ?? true,
+        active: data.active ?? true,
         createdAt: new Date()
       })
       .returning();
@@ -78,7 +79,7 @@ export class PropFirmService {
         durationDays: data.durationDays,
         minTradingDays: data.minTradingDays,
         brokerTypeId: data.brokerTypeId,
-        isActive: data.isActive,
+        active: data.active,
         updatedAt: new Date()
       })
       .where(eq(challenges.id, id))
@@ -260,7 +261,7 @@ export class PropFirmService {
     return db
       .select()
       .from(trades)
-      .where(eq(trades.accountId, accountId))
+      .where(eq(trades.propAccountId, accountId))
       .orderBy(desc(trades.entryTimestamp));
   }
 
@@ -292,9 +293,10 @@ export class PropFirmService {
     const result = await db
       .insert(trades)
       .values({
-        accountId,
+        propAccountId: accountId,
+        userId: data.userId,
         symbol: data.symbol,
-        direction: data.direction,
+        side: data.direction || data.side,
         entryPrice: data.entryPrice,
         exitPrice: data.exitPrice,
         quantity: data.quantity,
@@ -330,7 +332,7 @@ export class PropFirmService {
     }
     
     // Get the account
-    const account = await this.getAccountById(originalTrade.accountId);
+    const account = await this.getAccountById(originalTrade.propAccountId);
     
     if (!account) {
       throw new Error('Account not found');
@@ -351,7 +353,7 @@ export class PropFirmService {
     // If the trade status changed from active to closed, update account balance
     if (originalTrade.active && !updatedTrade.active && 
         updatedTrade.profit !== null && updatedTrade.profit !== undefined) {
-      await this.updateAccount(updatedTrade.accountId, {
+      await this.updateAccount(updatedTrade.propAccountId, {
         currentBalance: account.currentBalance + updatedTrade.profit
       });
     }
@@ -362,7 +364,7 @@ export class PropFirmService {
         updatedTrade.profit !== null && updatedTrade.profit !== undefined && 
         originalTrade.profit !== null && originalTrade.profit !== undefined) {
       const profitDifference = updatedTrade.profit - originalTrade.profit;
-      await this.updateAccount(updatedTrade.accountId, {
+      await this.updateAccount(updatedTrade.propAccountId, {
         currentBalance: account.currentBalance + profitDifference
       });
     }
@@ -377,7 +379,7 @@ export class PropFirmService {
     let query = db
       .select()
       .from(metrics)
-      .where(eq(metrics.accountId, accountId));
+      .where(eq(metrics.propAccountId, accountId));
     
     if (startDate && endDate) {
       query = query.where(
@@ -401,7 +403,7 @@ export class PropFirmService {
       .from(metrics)
       .where(
         and(
-          eq(metrics.accountId, accountId),
+          eq(metrics.propAccountId, accountId),
           eq(metrics.date, new Date(data.date))
         )
       );
@@ -416,7 +418,7 @@ export class PropFirmService {
         })
         .where(
           and(
-            eq(metrics.accountId, accountId),
+            eq(metrics.propAccountId, accountId),
             eq(metrics.date, new Date(data.date))
           )
         )

@@ -1,7 +1,8 @@
-import { Router } from 'express';
-import { db } from '../storage';
+import { Router, Request, Response } from 'express';
+import { db } from '../lib/db';
 import { users } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
+import { requireAuth } from '../middleware/auth-middleware';
 
 // Create express router
 const router = Router();
@@ -9,7 +10,7 @@ const router = Router();
 /**
  * Get user settings
  */
-router.get('/:userId', async (req, res) => {
+router.get('/:userId', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = parseInt(req.params.userId);
     
@@ -40,7 +41,7 @@ router.get('/:userId', async (req, res) => {
 /**
  * Update user settings
  */
-router.post('/:userId', async (req, res) => {
+router.post('/:userId', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = parseInt(req.params.userId);
     const { dashboardOrder, theme, notificationsEnabled, soundsEnabled } = req.body;
@@ -67,7 +68,7 @@ router.post('/:userId', async (req, res) => {
 /**
  * Update dashboard order
  */
-router.post('/:userId/dashboard-order', async (req, res) => {
+router.post('/:userId/dashboard-order', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = parseInt(req.params.userId);
     const { dashboardOrder } = req.body;
@@ -98,7 +99,7 @@ router.post('/:userId/dashboard-order', async (req, res) => {
 /**
  * Reset user settings to defaults
  */
-router.post('/:userId/reset', async (req, res) => {
+router.post('/:userId/reset', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = parseInt(req.params.userId);
     
