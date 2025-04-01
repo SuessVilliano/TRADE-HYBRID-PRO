@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import * as echarts from 'echarts';
+// Temporarily commenting out until we can install the package
+// import * as echarts from 'echarts';
 
 interface DataPoint {
   x: string;

@@ -6,22 +6,69 @@ import { WalletProvider } from './lib/context/WalletProvider';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Pages
+// Core Platform Pages
 import LoginPage from './pages/login';
 import HomePage from './pages/home';
 import SignupPage from './pages/signup';
 import TradeView from './pages/trading-space';
 import JournalView from './pages/trade-journal';
+import AdvancedJournalView from './pages/trade-journal-advanced';
 import MetaversePage from './pages/metaverse';
 import LearnView from './pages/learning-center';
 import SignalsView from './pages/trading-signals';
-import LeaderboardView from './pages/not-found';
-import ProfileView from './pages/not-found';
-import SettingsView from './pages/not-found';
-import BotsView from './pages/not-found';
+import LeaderboardView from './pages/leaderboard';
+import ProfileView from './pages/profile';
+import SettingsView from './pages/settings';
+import BotsView from './pages/trade-simulator';
 import NewsView from './pages/news-dashboard';
+import NewsSimpleView from './pages/news-dashboard-simple';
 import LandingPage from './pages/landing';
+import EventsPage from './pages/events';
+import NotFoundPage from './pages/not-found';
+
+// Trading & Markets
+import AdvancedTradingDashboard from './pages/advanced-trading-dashboard';
+import TradingIndicatorsPage from './pages/trading-indicators';
+import SolanaTradingPage from './pages/solana-trading';
+import SolanaDexEmbedded from './pages/solana-dex-embedded';
+
+// Learning & Education
+import LearningJourneyPage from './pages/learning-journey';
+import LearningModuleDetailPage from './pages/learning-module-detail';
+import LearnEmbeddedPage from './pages/learn-embedded';
+import EducationalGamesPage from './pages/educational-games';
 import TradingFreedomPodcast from './pages/trading-freedom-podcast';
+
+// Game Center
+import GamePage from './pages/game';
+import BullsVsBearsPage from './pages/bulls-vs-bears';
+import BullsVsBearsNewPage from './pages/bulls-vs-bears-new';
+import TradeRunnerPage from './pages/trade-runner';
+import TradeRunnerBrowserPage from './pages/trade-runner-browser';
+
+// Tools & Analysis
 import SignalsAnalyzerPage from './pages/signals-analyzer';
+import AiMarketAnalysisPage from './pages/ai-market-analysis-page';
+import VoiceTradeDemoPage from './pages/voice-trade-demo';
+import ApiDemoPage from './pages/api-demo-page';
+
+// Prop Firm
+import PropFirmDashboardPage from './pages/PropFirmDashboard';
+import PropFirmAdminDashboardPage from './pages/PropFirmAdminDashboard';
+import PropFirmChallengeSignupPage from './pages/PropFirmChallengeSignup';
+import PropFirmAccountDetailsPage from './pages/PropFirmAccountDetails';
+
+// NFT & Crypto
+import NftMarketplacePage from './pages/nft-marketplace';
+import NftMarketplaceSimplePage from './pages/nft-marketplace-simple';
+import ThcStakingPage from './pages/thc-staking';
+import MatrixVisualizationPage from './pages/matrix-visualization-demo';
+
+// Other Pages
+import AffiliatePage from './pages/affiliate';
+import ShopPage from './pages/shop';
+import LiveStreamPage from './pages/live-stream';
+import NotificationSettingsPage from './pages/notification-settings';
 
 const App: React.FC = () => {
   return (
@@ -39,21 +86,66 @@ const App: React.FC = () => {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               
-              {/* Protected routes */}
+              {/* Core Platform Routes */}
               <Route path="/dashboard" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
               <Route path="/trade" element={<ProtectedRoute><TradeView /></ProtectedRoute>} />
               <Route path="/journal" element={<ProtectedRoute><JournalView /></ProtectedRoute>} />
+              <Route path="/journal/advanced" element={<ProtectedRoute><AdvancedJournalView /></ProtectedRoute>} />
               <Route path="/metaverse" element={<ProtectedRoute><MetaversePage /></ProtectedRoute>} />
               <Route path="/learn" element={<ProtectedRoute><LearnView /></ProtectedRoute>} />
               <Route path="/signals" element={<ProtectedRoute><SignalsView /></ProtectedRoute>} />
               <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardView /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><SettingsView /></ProtectedRoute>} />
+              <Route path="/notification-settings" element={<ProtectedRoute><NotificationSettingsPage /></ProtectedRoute>} />
               <Route path="/bots" element={<ProtectedRoute><BotsView /></ProtectedRoute>} />
               <Route path="/news" element={<ProtectedRoute><NewsView /></ProtectedRoute>} />
+              <Route path="/news/simple" element={<ProtectedRoute><NewsSimpleView /></ProtectedRoute>} />
+              <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
+              
+              {/* Trading & Markets */}
+              <Route path="/trading-dashboard" element={<ProtectedRoute><AdvancedTradingDashboard /></ProtectedRoute>} />
+              <Route path="/trading/indicators" element={<ProtectedRoute><TradingIndicatorsPage /></ProtectedRoute>} />
+              <Route path="/trading/solana" element={<ProtectedRoute><SolanaTradingPage /></ProtectedRoute>} />
+              <Route path="/dex" element={<ProtectedRoute><SolanaDexEmbedded /></ProtectedRoute>} />
+
+              {/* Learning & Education */}
+              <Route path="/learning-journey" element={<ProtectedRoute><LearningJourneyPage /></ProtectedRoute>} />
+              <Route path="/learn/:moduleId" element={<ProtectedRoute><LearningModuleDetailPage /></ProtectedRoute>} />
+              <Route path="/learn-embed" element={<ProtectedRoute><LearnEmbeddedPage /></ProtectedRoute>} />
+              <Route path="/educational-games" element={<ProtectedRoute><EducationalGamesPage /></ProtectedRoute>} />
+              
+              {/* Game Center */}
+              <Route path="/game" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
+              <Route path="/game/bulls-vs-bears" element={<ProtectedRoute><BullsVsBearsPage /></ProtectedRoute>} />
+              <Route path="/game/bulls-vs-bears-new" element={<ProtectedRoute><BullsVsBearsNewPage /></ProtectedRoute>} />
+              <Route path="/game/trade-runner" element={<ProtectedRoute><TradeRunnerPage /></ProtectedRoute>} />
+              <Route path="/game/trade-runner-browser" element={<ProtectedRoute><TradeRunnerBrowserPage /></ProtectedRoute>} />
+              
+              {/* Tools & Analysis */}
+              <Route path="/ai-market-analysis" element={<ProtectedRoute><AiMarketAnalysisPage /></ProtectedRoute>} />
+              <Route path="/voice-trade" element={<ProtectedRoute><VoiceTradeDemoPage /></ProtectedRoute>} />
+              <Route path="/api-demo" element={<ProtectedRoute><ApiDemoPage /></ProtectedRoute>} />
+              
+              {/* Prop Firm */}
+              <Route path="/prop-firm" element={<ProtectedRoute><PropFirmDashboardPage /></ProtectedRoute>} />
+              <Route path="/prop-firm/admin" element={<ProtectedRoute><PropFirmAdminDashboardPage /></ProtectedRoute>} />
+              <Route path="/prop-firm/challenge" element={<ProtectedRoute><PropFirmChallengeSignupPage /></ProtectedRoute>} />
+              <Route path="/prop-firm/account/:accountId" element={<ProtectedRoute><PropFirmAccountDetailsPage /></ProtectedRoute>} />
+              
+              {/* NFT & Crypto */}
+              <Route path="/nft-marketplace" element={<ProtectedRoute><NftMarketplacePage /></ProtectedRoute>} />
+              <Route path="/nft-marketplace/simple" element={<ProtectedRoute><NftMarketplaceSimplePage /></ProtectedRoute>} />
+              <Route path="/thc-staking" element={<ProtectedRoute><ThcStakingPage /></ProtectedRoute>} />
+              <Route path="/matrix" element={<ProtectedRoute><MatrixVisualizationPage /></ProtectedRoute>} />
+              
+              {/* Other Pages */}
+              <Route path="/affiliate/*" element={<ProtectedRoute><AffiliatePage /></ProtectedRoute>} />
+              <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
+              <Route path="/live-stream" element={<ProtectedRoute><LiveStreamPage /></ProtectedRoute>} />
               
               {/* Fallback route */}
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Router>
         </SolanaAuthProvider>

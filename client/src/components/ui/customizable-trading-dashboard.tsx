@@ -104,58 +104,54 @@ const DASHBOARD_TEMPLATES = {
       locked: true, // This will be used to prevent moving this panel
       priority: 2 // Second highest priority to load
     },
-    // Economic Calendar positioned below (loads third)
+    // Trading Signals 
     { 
-      id: 'market-news-1', 
+      id: 'trading-signals-1', 
       x: 0, 
       y: 6, 
       width: 12, 
       height: 3, 
-      minWidth: 6, 
+      minWidth: 2, 
       minHeight: 2, 
-      componentType: 'market-news', 
-      title: 'Economic Calendar',
+      componentType: 'trading-signals', 
+      title: 'Trading Signals',
       priority: 3 // Third highest priority to load
     },
-    // Trading Signals 
-    { id: 'trading-signals-1', x: 0, y: 9, width: 6, height: 3, minWidth: 2, minHeight: 2, componentType: 'trading-signals', title: 'Trading Signals' },
-    // Remove the Trading Companion as it is non-functional (but keep this line commented for reference)
-    // { id: 'ai-insights-1', x: 6, y: 9, width: 6, height: 3, minWidth: 2, minHeight: 2, componentType: 'ai-insights', title: 'AI Trading Assistant' },
   ],
   'default': [
-    { id: 'tradingview-chart-1', x: 0, y: 0, width: 8, height: 6, minWidth: 4, minHeight: 4, componentType: 'tradingview-chart', title: 'TradingView Chart' },
+    { id: 'tradingview-chart-1', x: 0, y: 0, width: 8, height: 6, minWidth: 4, minHeight: 4, componentType: 'tradingview-chart', title: 'TradingView Chart', priority: 1 },
+    { id: 'order-entry-1', x: 0, y: 6, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'order-entry', title: 'Order Entry', priority: 2 },
     { id: 'order-book-1', x: 8, y: 0, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'order-book', title: 'Order Book' },
     { id: 'market-depth-1', x: 8, y: 3, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'market-depth', title: 'Market Depth' },
-    { id: 'order-entry-1', x: 0, y: 6, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'order-entry', title: 'Order Entry' },
     { id: 'position-manager-1', x: 4, y: 6, width: 8, height: 3, minWidth: 2, minHeight: 2, componentType: 'position-manager', title: 'Positions' },
   ],
   'dual-chart': [
-    { id: 'tradingview-chart-1', x: 0, y: 0, width: 6, height: 6, minWidth: 4, minHeight: 4, componentType: 'tradingview-chart', title: 'TradingView Chart' },
-    { id: 'dex-chart-1', x: 6, y: 0, width: 6, height: 6, minWidth: 4, minHeight: 4, componentType: 'dex-chart', title: 'DEX Chart' },
+    { id: 'tradingview-chart-1', x: 0, y: 0, width: 6, height: 6, minWidth: 4, minHeight: 4, componentType: 'tradingview-chart', title: 'TradingView Chart', priority: 1 },
+    { id: 'dex-chart-1', x: 6, y: 0, width: 6, height: 6, minWidth: 4, minHeight: 4, componentType: 'dex-chart', title: 'DEX Chart', priority: 2 },
+    { id: 'order-entry-1', x: 3, y: 6, width: 3, height: 3, minWidth: 2, minHeight: 2, componentType: 'order-entry', title: 'Order Entry', priority: 3 },
     { id: 'order-book-1', x: 0, y: 6, width: 3, height: 3, minWidth: 2, minHeight: 2, componentType: 'order-book', title: 'Order Book' },
-    { id: 'order-entry-1', x: 3, y: 6, width: 3, height: 3, minWidth: 2, minHeight: 2, componentType: 'order-entry', title: 'Order Entry' },
     { id: 'position-manager-1', x: 6, y: 6, width: 6, height: 3, minWidth: 2, minHeight: 2, componentType: 'position-manager', title: 'Positions' },
   ],
   'trading-focused': [
-    { id: 'tradingview-chart-1', x: 0, y: 0, width: 7, height: 6, minWidth: 4, minHeight: 4, componentType: 'tradingview-chart', title: 'TradingView Chart' },
+    { id: 'tradingview-chart-1', x: 0, y: 0, width: 7, height: 6, minWidth: 4, minHeight: 4, componentType: 'tradingview-chart', title: 'TradingView Chart', priority: 1 },
+    { id: 'order-entry-1', x: 0, y: 6, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'order-entry', title: 'Order Entry', priority: 2 },
+    { id: 'trading-signals-1', x: 4, y: 6, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'trading-signals', title: 'Signals', priority: 3 },
     { id: 'dex-chart-1', x: 7, y: 0, width: 5, height: 3, minWidth: 3, minHeight: 3, componentType: 'dex-chart', title: 'DEX Chart' },
     { id: 'order-book-1', x: 7, y: 3, width: 5, height: 3, minWidth: 2, minHeight: 2, componentType: 'order-book', title: 'Order Book' },
-    { id: 'order-entry-1', x: 0, y: 6, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'order-entry', title: 'Order Entry' },
-    { id: 'trading-signals-1', x: 4, y: 6, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'trading-signals', title: 'Signals' },
     { id: 'position-manager-1', x: 8, y: 6, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'position-manager', title: 'Positions' },
   ],
   'analysis-focused': [
-    { id: 'tradingview-chart-1', x: 0, y: 0, width: 8, height: 6, minWidth: 4, minHeight: 4, componentType: 'tradingview-chart', title: 'TradingView Chart' },
+    { id: 'tradingview-chart-1', x: 0, y: 0, width: 8, height: 6, minWidth: 4, minHeight: 4, componentType: 'tradingview-chart', title: 'TradingView Chart', priority: 1 },
+    { id: 'ai-insights-1', x: 8, y: 3, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'ai-insights', title: 'AI Insights', priority: 2 },
+    { id: 'market-news-1', x: 0, y: 6, width: 6, height: 3, minWidth: 2, minHeight: 2, componentType: 'market-news', title: 'Market News', priority: 3 },
     { id: 'market-depth-1', x: 8, y: 0, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'market-depth', title: 'Market Depth' },
-    { id: 'ai-insights-1', x: 8, y: 3, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'ai-insights', title: 'AI Insights' },
-    { id: 'market-news-1', x: 0, y: 6, width: 6, height: 3, minWidth: 2, minHeight: 2, componentType: 'market-news', title: 'Market News' },
     { id: 'performance-metrics-1', x: 6, y: 6, width: 6, height: 3, minWidth: 2, minHeight: 2, componentType: 'performance-metrics', title: 'Performance' },
   ],
   'dex-focused': [
-    { id: 'dex-chart-1', x: 0, y: 0, width: 8, height: 6, minWidth: 4, minHeight: 4, componentType: 'dex-chart', title: 'DEX Chart' },
-    { id: 'tradingview-chart-1', x: 8, y: 0, width: 4, height: 6, minWidth: 3, minHeight: 3, componentType: 'tradingview-chart', title: 'TradingView Chart' },
+    { id: 'dex-chart-1', x: 0, y: 0, width: 8, height: 6, minWidth: 4, minHeight: 4, componentType: 'dex-chart', title: 'DEX Chart', priority: 1 },
+    { id: 'tradingview-chart-1', x: 8, y: 0, width: 4, height: 6, minWidth: 3, minHeight: 3, componentType: 'tradingview-chart', title: 'TradingView Chart', priority: 2 },
+    { id: 'order-entry-1', x: 4, y: 6, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'order-entry', title: 'Order Entry', priority: 3 },
     { id: 'order-book-1', x: 0, y: 6, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'order-book', title: 'Order Book' },
-    { id: 'order-entry-1', x: 4, y: 6, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'order-entry', title: 'Order Entry' },
     { id: 'position-manager-1', x: 8, y: 6, width: 4, height: 3, minWidth: 2, minHeight: 2, componentType: 'position-manager', title: 'Positions' },
   ],
 };
@@ -1000,13 +996,13 @@ export function CustomizableTradingDashboard({
         ) : (
           // Render normal layout with priority sorting to ensure correct loading order
           [...layout]
-            // Sort by priority (if present) to ensure widgets load in the desired order
+            // Sort by priority (if present) to ensure widgets load in the desired order - Chart, Smart Trade, Economic Calendar
             .sort((a, b) => {
               // If both have priority, sort by it (lower number = higher priority)
-              if (a.priority && b.priority) return a.priority - b.priority;
+              if (a.priority !== undefined && b.priority !== undefined) return a.priority - b.priority;
               // Items with priority come first
-              if (a.priority) return -1;
-              if (b.priority) return 1;
+              if (a.priority !== undefined) return -1;
+              if (b.priority !== undefined) return 1;
               // Otherwise, maintain original order
               return 0;
             })

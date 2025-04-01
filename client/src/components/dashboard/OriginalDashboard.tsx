@@ -4,91 +4,262 @@ import { LineChart, BarChart3, Signal, Bot, BookOpen, Users, FileText,
   Settings, Cpu, Calendar, MessageSquare, Podcast, Zap, Activity, BrainCircuit } from 'lucide-react';
 import { Button } from '../ui/button';
 
+// Define dashboard item type
+interface DashboardItem {
+  id: string;
+  name: string;
+  icon: React.ReactNode;
+  path: string;
+  description: string;
+  category: string;
+}
+
 // Define the panel types for our original dashboard
-const dashboardItems = [
+const dashboardItems: DashboardItem[] = [
+  // Trading & Markets Category
+  {
+    id: 'trading-dashboard',
+    name: 'Trading Dashboard',
+    icon: <LineChart className="h-5 w-5" />,
+    path: '/trading-dashboard',
+    description: 'Customizable trading dashboard with widgets',
+    category: 'Trading & Markets'
+  },
   {
     id: 'chart',
     name: 'TradingView Chart',
     icon: <LineChart className="h-5 w-5" />,
     path: '/trade',
-    description: 'Professional trading charts with indicators'
+    description: 'Professional trading charts with indicators',
+    category: 'Trading & Markets'
   },
   {
     id: 'smart-trade',
     name: 'Smart Trade Panel',
     icon: <Cpu className="h-5 w-5" />,
     path: '/trade',
-    description: 'Advanced trading with AI assistance'
+    description: 'Advanced trading with AI assistance',
+    category: 'Trading & Markets'
   },
+  {
+    id: 'solana-trading',
+    name: 'Solana Trading',
+    icon: <Activity className="h-5 w-5" />,
+    path: '/trading/solana',
+    description: 'Trade Solana tokens and manage your portfolio',
+    category: 'Trading & Markets'
+  },
+  {
+    id: 'dex',
+    name: 'DEX Trading',
+    icon: <Activity className="h-5 w-5" />,
+    path: '/dex',
+    description: 'Decentralized exchange for crypto trading',
+    category: 'Trading & Markets'
+  },
+  {
+    id: 'indicators',
+    name: 'Trading Indicators',
+    icon: <BarChart3 className="h-5 w-5" />,
+    path: '/trading/indicators',
+    description: 'Library of technical indicators',
+    category: 'Trading & Markets'
+  },
+  
+  // Trading Tools Category
   {
     id: 'signals',
     name: 'Trading Signals',
     icon: <Signal className="h-5 w-5" />,
-    path: '/signals-analyzer',
-    description: 'Real-time market signals and alerts'
+    path: '/signals',
+    description: 'Real-time market signals and alerts',
+    category: 'Trading Tools'
   },
   {
     id: 'journal',
     name: 'Trading Journal',
     icon: <FileText className="h-5 w-5" />,
     path: '/journal',
-    description: 'Record and analyze your trades'
+    description: 'Record and analyze your trades',
+    category: 'Trading Tools'
+  },
+  {
+    id: 'journal-advanced',
+    name: 'Advanced Journal',
+    icon: <FileText className="h-5 w-5" />,
+    path: '/journal/advanced',
+    description: 'Professional trading journal with analytics',
+    category: 'Trading Tools'
   },
   {
     id: 'bots',
     name: 'Trading Bots',
     icon: <Bot className="h-5 w-5" />,
     path: '/bots',
-    description: 'Automated trading strategies'
+    description: 'Automated trading strategies',
+    category: 'Trading Tools'
   },
+  {
+    id: 'ai-insights',
+    name: 'AI Market Analysis',
+    icon: <BrainCircuit className="h-5 w-5" />,
+    path: '/ai-market-analysis',
+    description: 'AI-powered market insights',
+    category: 'Trading Tools'
+  },
+  {
+    id: 'signals-analyzer',
+    name: 'Signals Analyzer',
+    icon: <Signal className="h-5 w-5" />,
+    path: '/signals-analyzer',
+    description: 'Analyze and backtest trading signals',
+    category: 'Trading Tools'
+  },
+  {
+    id: 'voice-trade',
+    name: 'Voice Trade Assistant',
+    icon: <MessageSquare className="h-5 w-5" />,
+    path: '/voice-trade',
+    description: 'Trade using voice commands',
+    category: 'Trading Tools'
+  },
+  
+  // News & Education
   {
     id: 'news',
     name: 'Market News',
     icon: <BookOpen className="h-5 w-5" />,
     path: '/news',
-    description: 'Latest market news and analysis'
+    description: 'Latest market news and analysis',
+    category: 'News & Education'
+  },
+  {
+    id: 'economic-calendar',
+    name: 'Economic Calendar',
+    icon: <Calendar className="h-5 w-5" />,
+    path: '/events',
+    description: 'Important economic events and data releases',
+    category: 'News & Education'
   },
   {
     id: 'podcast',
     name: 'Trading Freedom Podcast',
     icon: <Podcast className="h-5 w-5" />,
     path: '/trading-freedom-podcast',
-    description: 'Learn from professional traders'
+    description: 'Learn from professional traders',
+    category: 'News & Education'
   },
   {
-    id: 'economic-calendar',
-    name: 'Economic Calendar',
-    icon: <Calendar className="h-5 w-5" />,
-    path: '/news',
-    description: 'Important economic events and data releases'
+    id: 'learn',
+    name: 'Learning Center',
+    icon: <BookOpen className="h-5 w-5" />,
+    path: '/learn',
+    description: 'Educational resources for traders',
+    category: 'News & Education'
   },
+  {
+    id: 'learning-journey',
+    name: 'Learning Journey',
+    icon: <BookOpen className="h-5 w-5" />,
+    path: '/learning-journey',
+    description: 'Structured learning paths for traders',
+    category: 'News & Education'
+  },
+  
+  // Immersive Experiences
   {
     id: 'metaverse',
     name: 'Trading Metaverse',
     icon: <Activity className="h-5 w-5" />,
     path: '/metaverse',
-    description: 'Enter the immersive trading experience'
+    description: 'Enter the immersive trading experience',
+    category: 'Immersive Experiences'
   },
   {
-    id: 'copy-trading',
-    name: 'Copy Trading',
+    id: 'trade-runner',
+    name: 'Trade Runner Game',
+    icon: <Zap className="h-5 w-5" />,
+    path: '/game/trade-runner',
+    description: 'Fast-paced trading game',
+    category: 'Immersive Experiences'
+  },
+  {
+    id: 'bulls-vs-bears',
+    name: 'Bulls vs Bears Game',
+    icon: <Zap className="h-5 w-5" />,
+    path: '/game/bulls-vs-bears',
+    description: 'Multiplayer trading competition',
+    category: 'Immersive Experiences'
+  },
+  {
+    id: 'educational-games',
+    name: 'Educational Games',
+    icon: <Zap className="h-5 w-5" />,
+    path: '/educational-games',
+    description: 'Learn trading through games',
+    category: 'Immersive Experiences'
+  },
+  
+  // Crypto & NFTs
+  {
+    id: 'nft-marketplace',
+    name: 'NFT Marketplace',
+    icon: <Activity className="h-5 w-5" />,
+    path: '/nft-marketplace',
+    description: 'Trade unique digital collectibles',
+    category: 'Crypto & NFTs'
+  },
+  {
+    id: 'thc-staking',
+    name: 'THC Staking',
+    icon: <Activity className="h-5 w-5" />,
+    path: '/thc-staking',
+    description: 'Stake your THC tokens for rewards',
+    category: 'Crypto & NFTs'
+  },
+  
+  // Services
+  {
+    id: 'prop-firm',
+    name: 'Prop Firm Dashboard',
     icon: <Users className="h-5 w-5" />,
-    path: '/copy-trading',
-    description: 'Copy successful traders automatically'
+    path: '/prop-firm',
+    description: 'Funded trading account management',
+    category: 'Services'
   },
   {
-    id: 'ai-insights',
-    name: 'AI Market Analysis',
-    icon: <BrainCircuit className="h-5 w-5" />,
-    path: '/ai-insights',
-    description: 'AI-powered market insights'
+    id: 'prop-firm-challenge',
+    name: 'Prop Firm Challenge',
+    icon: <Users className="h-5 w-5" />,
+    path: '/prop-firm/challenge',
+    description: 'Apply for funded trading accounts',
+    category: 'Services'
+  },
+  {
+    id: 'affiliate',
+    name: 'Affiliate Program',
+    icon: <Users className="h-5 w-5" />,
+    path: '/affiliate',
+    description: 'Partner with us and earn commissions',
+    category: 'Services'
+  },
+  
+  // User & Settings
+  {
+    id: 'profile',
+    name: 'Profile',
+    icon: <Users className="h-5 w-5" />,
+    path: '/profile',
+    description: 'View and edit your profile',
+    category: 'User & Settings'
   },
   {
     id: 'settings',
     name: 'Settings',
     icon: <Settings className="h-5 w-5" />,
     path: '/settings',
-    description: 'Configure your trading environment'
+    description: 'Configure your trading environment',
+    category: 'User & Settings'
   }
 ];
 
@@ -105,10 +276,13 @@ const OriginalDashboard: React.FC<OriginalDashboardProps> = ({ className = '' })
     item.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
+  // Get unique categories from dashboard items
+  const categories = Array.from(new Set(dashboardItems.map(item => item.category || 'Uncategorized')));
+  
   return (
     <div className={`min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white ${className}`}>
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col space-y-6">
+        <div className="flex flex-col space-y-8">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-bold">TradeHybrid Dashboard</h1>
             <div className="flex space-x-2">
@@ -122,21 +296,54 @@ const OriginalDashboard: React.FC<OriginalDashboardProps> = ({ className = '' })
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredItems.map((item) => (
-              <Link to={item.path} key={item.id} className="block">
-                <div className="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg p-4 transition-all duration-200 h-full">
-                  <div className="flex items-center mb-2">
-                    <div className="mr-3 p-2 bg-blue-600 rounded-md">
-                      {item.icon}
+          {searchTerm ? (
+            // Show flat list when searching
+            <div>
+              <h2 className="text-xl font-bold mb-4">Search Results</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filteredItems.map((item) => (
+                  <Link to={item.path} key={item.id} className="block">
+                    <div className="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg p-4 transition-all duration-200 h-full">
+                      <div className="flex items-center mb-2">
+                        <div className="mr-3 p-2 bg-blue-600 rounded-md">
+                          {item.icon}
+                        </div>
+                        <h3 className="text-lg font-semibold">{item.name}</h3>
+                      </div>
+                      <p className="text-gray-400 text-sm">{item.description}</p>
                     </div>
-                    <h3 className="text-lg font-semibold">{item.name}</h3>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : (
+            // Show categorized layout when not searching
+            <div className="space-y-8">
+              {categories.map(category => {
+                const categoryItems = dashboardItems.filter(item => (item.category || 'Uncategorized') === category);
+                return (
+                  <div key={category}>
+                    <h2 className="text-xl font-bold mb-4 border-b border-gray-700 pb-2">{category}</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {categoryItems.map((item) => (
+                        <Link to={item.path} key={item.id} className="block">
+                          <div className="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg p-4 transition-all duration-200 h-full">
+                            <div className="flex items-center mb-2">
+                              <div className="mr-3 p-2 bg-blue-600 rounded-md">
+                                {item.icon}
+                              </div>
+                              <h3 className="text-lg font-semibold">{item.name}</h3>
+                            </div>
+                            <p className="text-gray-400 text-sm">{item.description}</p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                  <p className="text-gray-400 text-sm">{item.description}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          )}
           
           <div className="mt-8 bg-gray-800 border border-gray-700 rounded-lg p-4">
             <h2 className="text-xl font-bold mb-2">Quick Actions</h2>
