@@ -155,6 +155,37 @@ function AppContent() {
       console.log(`Affiliate referral detected: ${detectedReferralCode}`);
     }
   }, [trackReferral]);
+  
+  // Close mobile menu when clicking on links
+  useEffect(() => {
+    const closeMobileMenu = () => {
+      const mobileMenu = document.getElementById('mobile-menu');
+      const menuIcon = document.getElementById('menu-icon');
+      const closeIcon = document.getElementById('close-icon');
+      
+      if (mobileMenu && menuIcon && closeIcon) {
+        if (!mobileMenu.classList.contains('hidden')) {
+          mobileMenu.classList.add('hidden');
+          menuIcon.classList.remove('hidden');
+          closeIcon.classList.add('hidden');
+        }
+      }
+    };
+    
+    // Add event listener to navigation links
+    const navLinks = document.querySelectorAll('#mobile-menu a');
+    navLinks.forEach(link => {
+      link.addEventListener('click', closeMobileMenu);
+    });
+    
+    // Clean up event listeners
+    return () => {
+      const navLinks = document.querySelectorAll('#mobile-menu a');
+      navLinks.forEach(link => {
+        link.removeEventListener('click', closeMobileMenu);
+      });
+    };
+  }, []);
 
   // Listen for settings popup events
   useEffect(() => {
@@ -189,15 +220,24 @@ function AppContent() {
               className="md:hidden p-2 rounded-md hover:bg-slate-800"
               onClick={() => {
                 const mobileMenu = document.getElementById('mobile-menu');
-                if (mobileMenu) {
+                const menuIcon = document.getElementById('menu-icon');
+                const closeIcon = document.getElementById('close-icon');
+                
+                if (mobileMenu && menuIcon && closeIcon) {
                   mobileMenu.classList.toggle('hidden');
+                  menuIcon.classList.toggle('hidden');
+                  closeIcon.classList.toggle('hidden');
                 }
               }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg id="menu-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="3" y1="12" x2="21" y2="12"></line>
                 <line x1="3" y1="6" x2="21" y2="6"></line>
                 <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+              <svg id="close-icon" className="hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
             
@@ -284,17 +324,6 @@ function AppContent() {
             ) : (
               <div className="flex flex-wrap items-center gap-3">
                 <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setShowWhopModal(true)}
-                  className="flex items-center gap-1"
-                >
-                  <span className={userLevel === UserExperienceLevel.FREE ? "text-slate-400" : "text-green-400"}>
-                    {getLevelName()} Membership
-                  </span>
-                </Button>
-                <div className="border-r border-slate-600 h-8 hidden sm:block" />
-                <Button 
                   variant="primary" 
                   size="sm" 
                   onClick={() => navigate('/login')}
@@ -307,6 +336,55 @@ function AppContent() {
           </div>
         </div>
       </PopupContainer>
+
+      {/* Mobile Menu Dropdown */}
+      <div id="mobile-menu" className="md:hidden hidden bg-slate-800 border-b border-slate-700 z-50">
+        <div className="container mx-auto py-4 px-6">
+          <nav className="flex flex-col gap-4">
+            <Link to="/" className="py-2 hover:text-blue-400 transition-colors">Home</Link>
+            <Link to="/trading" className="py-2 hover:text-blue-400 transition-colors">Trade</Link>
+            <Link to="/solana-trading" className="py-2 hover:text-blue-400 transition-colors">DEX</Link>
+            <Link to="/thc-staking" className="py-2 hover:text-blue-400 transition-colors">THC</Link>
+            <Link to="/metaverse" className="py-2 hover:text-blue-400 transition-colors">Metaverse</Link>
+            <Link to="/news" className="py-2 hover:text-blue-400 transition-colors">News</Link>
+            <Link to="/live-stream" className="py-2 hover:text-blue-400 transition-colors">TH TV</Link>
+            <Link to="/trade-journal" className="py-2 hover:text-blue-400 transition-colors">Journal</Link>
+            <Link to="/marketplace" className="py-2 hover:text-blue-400 transition-colors">NFTs</Link>
+            <Link to="/learn" className="py-2 hover:text-blue-400 transition-colors">Learn</Link>
+            <Link to="/events" className="py-2 hover:text-blue-400 transition-colors">Events</Link>
+            <Link to="/ai-market-analysis" className="py-2 hover:text-blue-400 transition-colors">AI Agents</Link>
+            
+            {/* Tools expandable section */}
+            <div className="py-2">
+              <button 
+                className="flex items-center justify-between w-full hover:text-blue-400 transition-colors"
+                onClick={() => {
+                  const toolsMenu = document.getElementById('mobile-tools-menu');
+                  if (toolsMenu) {
+                    toolsMenu.classList.toggle('hidden');
+                  }
+                }}
+              >
+                <span>Tools</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <div id="mobile-tools-menu" className="hidden mt-2 pl-4 border-l border-slate-700">
+                <Link to="/trading-signals" className="block py-2 hover:text-blue-400 transition-colors">Signals</Link>
+                <Link to="/trading-signals/analyzer" className="block py-2 hover:text-blue-400 transition-colors">Signals Analyzer</Link>
+                <Link to="/trading-indicators" className="block py-2 hover:text-blue-400 transition-colors">Indicators</Link>
+              </div>
+            </div>
+            
+            <Link to="/app" className="py-2 hover:text-blue-400 transition-colors">App</Link>
+            <Link to="/affiliate" className="py-2 hover:text-blue-400 transition-colors">Affiliate</Link>
+            <Link to="/trade-runner" className="py-2 hover:text-blue-400 transition-colors">Game Center</Link>
+            <Link to="/trade-simulator" className="py-2 hover:text-blue-400 transition-colors">Trade Simulator</Link>
+            <Link to="/shop" className="py-2 hover:text-blue-400 transition-colors">Shop</Link>
+          </nav>
+        </div>
+      </div>
 
       {/* Settings Modal */}
       {showSettingsModal && (

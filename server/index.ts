@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { encryptionService } from "./lib/services/encryption-service";
 import { brokerConnectionService } from "./lib/services/broker-connection-service";
+import { userIdentityService } from "./lib/services/user-identity-service";
 
 const app = express();
 app.use(express.json());
@@ -42,6 +43,9 @@ app.use((req, res, next) => {
   // Initialize services that need initialization
   // encryptionService is self-initializing in its constructor
   await brokerConnectionService.initialize();
+  
+  // Log successful initialization
+  console.log('User identity service initialized');
   
   const server = await registerRoutes(app);
 

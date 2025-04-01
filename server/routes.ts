@@ -19,6 +19,7 @@ import settingsRoutes from './api/settings'; // Added import for settings routes
 import signalsAnalyzerRoutes from './api/signals-analyzer'; // Added import for signals analyzer routes
 import openAIProxyRoutes from './api/openai-proxy'; // Added import for OpenAI proxy routes
 import brokerRoutes from './routes/broker-routes'; // Added import for broker routes
+import identityRoutes from './routes/identity-routes'; // Added import for user identity routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Market data routes
@@ -135,6 +136,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Broker routes
   app.use("/api/brokers", brokerRoutes);
+  
+  // User identity routes
+  app.use("/api/identity", identityRoutes);
 
   // News route using default source (bloomberg)
   app.get("/api/rss-feeds/news", (req, res) => {

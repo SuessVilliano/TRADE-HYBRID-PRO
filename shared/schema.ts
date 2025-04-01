@@ -106,6 +106,15 @@ export const users = pgTable("users", {
   avatar: text("avatar"),
   balance: real("balance").notNull().default(10000),
   hasConnectedApis: boolean("has_connected_apis").default(false),
+  // Whop membership fields
+  whopId: text("whop_id").unique(),
+  whopPlanId: text("whop_plan_id"),
+  whopMemberSince: text("whop_member_since"),
+  // Wallet integration fields
+  walletAddress: text("wallet_address").unique(),
+  walletAuthEnabled: boolean("wallet_auth_enabled").default(false),
+  thcTokenHolder: boolean("thc_token_holder").default(false),
+  // Timestamps
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

@@ -5,6 +5,7 @@ import { PublicKey, Connection } from '@solana/web3.js';
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';
 import { THC_TOKEN } from '../constants';
+import { identityService } from '../services/identity-service';
 
 // Define membership tiers based on THC token holdings
 export enum MembershipTier {
