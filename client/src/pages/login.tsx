@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSolanaAuth } from "../lib/context/SolanaAuthProvider";
+import { useAuth } from "../lib/context/AuthContext";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -12,10 +13,13 @@ export default function LoginPage() {
     authenticateWithCredentials 
   } = useSolanaAuth();
   
+  const auth = useAuth();
+  
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showRegister, setShowRegister] = useState(false);
   const [email, setEmail] = useState("");
+  const [loginStatus, setLoginStatus] = useState<string | null>(null);
   
   // Redirect if already authenticated
   React.useEffect(() => {
@@ -48,6 +52,37 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error("Failed to authenticate with wallet");
+    }
+  };
+  
+  // Handle Whop authentication
+  const handleWhopAuth = () => {
+    window.location.href = '/api/whop/login';
+  };
+  
+  // Handle demo login
+  const handleDemoLogin = async () => {
+    try {
+      setLoginStatus("Logging in with demo account...");
+      
+      // Set demo user in local storage to bypass database
+      localStorage.setItem('demoUser', JSON.stringify({
+        id: 1,
+        username: 'demo_user',
+        email: 'demo@tradehybrid.com',
+        membership: 'lifetime',
+        isAuthenticated: true
+      }));
+      
+      // Small delay to simulate login process
+      setTimeout(() => {
+        console.log("Demo login successful");
+        navigate("/");
+      }, 1000);
+      
+    } catch (err) {
+      console.error("Demo login failed");
+      setLoginStatus("Demo login failed. Please try again.");
     }
   };
   
@@ -145,7 +180,18 @@ export default function LoginPage() {
               <span className="border-b w-1/3 border-gray-600"></span>
             </div>
             
-            <div className="mt-4">
+            <div className="space-y-3 mt-4">
+              <button
+                onClick={handleWhopAuth}
+                disabled={isAuthenticating}
+                className="w-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-800 font-medium rounded-lg px-5 py-2.5 text-white flex items-center justify-center"
+              >
+                <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 mr-2">
+                  <path d="M15.3 20L5 30.3V5h20.3L15.3 15.3V20zm4.4 0v-4.7L30 5h5v25.3L19.7 15z" fill="currentColor"/>
+                </svg>
+                Login with Whop
+              </button>
+
               <button
                 onClick={handleWalletAuth}
                 disabled={isAuthenticating}
@@ -165,6 +211,35 @@ export default function LoginPage() {
                 </svg>
                 Connect Wallet
               </button>
+              
+              <button
+                onClick={handleDemoLogin}
+                disabled={isAuthenticating}
+                className="w-full bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-800 font-medium rounded-lg px-5 py-2.5 text-white flex items-center justify-center"
+              >
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M10 12a2 2 0 100-4 2 2 0 000 4z"
+                  ></path>
+                  <path
+                    fillRule="evenodd"
+                    d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                    clipRule="evenodd"
+                  ></path>
+                </svg>
+                Demo Login
+              </button>
+              
+              {loginStatus && (
+                <div className="bg-blue-800/50 border border-blue-600 text-white p-3 rounded mt-2">
+                  {loginStatus}
+                </div>
+              )}
             </div>
             
             <div className="text-sm font-medium text-gray-400 mt-4 text-center">

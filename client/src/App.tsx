@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './lib/context/AuthContext';
 import { SolanaAuthProvider } from './lib/context/SolanaAuthProvider';
+import { WalletProvider } from './lib/context/WalletProvider';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Pages
@@ -22,31 +23,33 @@ import NewsView from './pages/news-dashboard';
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <SolanaAuthProvider>
-        <Router>
-          <Routes>
-            {/* Auth routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            
-            {/* Protected routes */}
-            <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-            <Route path="/trade" element={<ProtectedRoute><TradeView /></ProtectedRoute>} />
-            <Route path="/journal" element={<ProtectedRoute><JournalView /></ProtectedRoute>} />
-            <Route path="/metaverse" element={<ProtectedRoute><MetaversePage /></ProtectedRoute>} />
-            <Route path="/learn" element={<ProtectedRoute><LearnView /></ProtectedRoute>} />
-            <Route path="/signals" element={<ProtectedRoute><SignalsView /></ProtectedRoute>} />
-            <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardView /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><SettingsView /></ProtectedRoute>} />
-            <Route path="/bots" element={<ProtectedRoute><BotsView /></ProtectedRoute>} />
-            <Route path="/news" element={<ProtectedRoute><NewsView /></ProtectedRoute>} />
-            
-            {/* Fallback route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Router>
-      </SolanaAuthProvider>
+      <WalletProvider>
+        <SolanaAuthProvider>
+          <Router>
+            <Routes>
+              {/* Auth routes */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              
+              {/* Protected routes */}
+              <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+              <Route path="/trade" element={<ProtectedRoute><TradeView /></ProtectedRoute>} />
+              <Route path="/journal" element={<ProtectedRoute><JournalView /></ProtectedRoute>} />
+              <Route path="/metaverse" element={<ProtectedRoute><MetaversePage /></ProtectedRoute>} />
+              <Route path="/learn" element={<ProtectedRoute><LearnView /></ProtectedRoute>} />
+              <Route path="/signals" element={<ProtectedRoute><SignalsView /></ProtectedRoute>} />
+              <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardView /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><SettingsView /></ProtectedRoute>} />
+              <Route path="/bots" element={<ProtectedRoute><BotsView /></ProtectedRoute>} />
+              <Route path="/news" element={<ProtectedRoute><NewsView /></ProtectedRoute>} />
+              
+              {/* Fallback route */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Router>
+        </SolanaAuthProvider>
+      </WalletProvider>
     </AuthProvider>
   );
 };

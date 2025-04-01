@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSolanaAuth } from '../../lib/context/SolanaAuthProvider';
 
@@ -8,12 +8,29 @@ interface ProtectedRouteProps {
 
 /**
  * A protected route component that redirects unauthenticated users to the login page
+ * Also supports demo mode authentication via localStorage
  */
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated, isAuthenticating } = useSolanaAuth();
+  const [isDemoUser, setIsDemoUser] = useState<boolean>(false);
+  const [checkingDemo, setCheckingDemo] = useState<boolean>(true);
+  
+  // Check for demo user in localStorage
+  useEffect(() => {
+    const demoUser = localStorage.getItem('demoUser');
+    if (demoUser) {
+      try {
+        const user = JSON.parse(demoUser);
+        setIsDemoUser(user.isAuthenticated === true);
+      } catch (error) {
+        console.error('Error parsing demo user:', error);
+      }
+    }
+    setCheckingDemo(false);
+  }, []);
   
   // Show loading state while checking authentication
-  if (isAuthenticating) {
+  if (isAuthenticating || checkingDemo) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900">
         <div className="text-center">
@@ -24,8 +41,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
   
+  // Allow access if authenticated via Solana OR demo user
+  const userIsAuthenticated = isAuthenticated || isDemoUser;
+  
   // Redirect to login if not authenticated
-  if (!isAuthenticated) {
+  if (!userIsAuthenticated) {
     return <Navigate to="/login" replace />;
   }
   
