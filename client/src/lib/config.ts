@@ -10,8 +10,9 @@ export const config = {
   // API Keys - IMPORTANT: In a production environment, these should be empty
   // and all API calls should go through your backend server for security
   RAPIDAPI_KEY: '',
-  ALPACA_API_KEY: '',
-  ALPACA_API_SECRET: '',
+  ALPACA_API_KEY: 'CKNOL84VJ0N28QW3LZAX',
+  ALPACA_API_SECRET: 'dp1bnTfVQZ9iwbrOW4wZnSw77ic3cbEOdZYDYzvY',
+  ALPACA_API_URL: 'https://broker-api.sandbox.alpaca.markets',
   OANDA_API_TOKEN: '',
   OANDA_ACCOUNT_ID: '',
   BINANCE_API_KEY: import.meta.env.VITE_BINANCE_US_API_KEY || '',

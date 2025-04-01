@@ -25,14 +25,15 @@ export class AlpacaService implements BrokerService {
     this.secretKey = credentials.secretKey;
     this.accountId = credentials.accountId;
     
-    // Set the base URL based on whether paper trading is enabled
+    // Use trading API instead of broker API
     if (options.isPaper) {
       this.baseUrl = 'https://paper-api.alpaca.markets/v2';
-      this.dataUrl = 'https://data.alpaca.markets/v2';
     } else {
       this.baseUrl = 'https://api.alpaca.markets/v2';
-      this.dataUrl = 'https://data.alpaca.markets/v2';
     }
+    
+    // Data API URL for market data
+    this.dataUrl = 'https://data-api.alpaca.markets/v2';
   }
 
   /**

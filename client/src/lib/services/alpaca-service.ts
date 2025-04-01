@@ -137,17 +137,18 @@ export class HybridHoldingsService implements BrokerService {
   }
   
   constructor(
-    private apiKey: string,
-    private apiSecret: string,
+    private apiKey: string = '',
+    private apiSecret: string = '', 
     private isDemo: boolean = true
   ) {
-    if (isDemo) {
-      this.baseUrl = 'https://paper-api.alpaca.markets';
-      this.dataUrl = 'https://data.alpaca.markets';
-    } else {
-      this.baseUrl = 'https://api.alpaca.markets';
-      this.dataUrl = 'https://data.alpaca.markets';
-    }
+    // Use the broker API URL if provided in config, fallback to paper trading URL
+    this.baseUrl = config.ALPACA_API_URL || 'https://paper-api.alpaca.markets';
+    this.dataUrl = 'https://data.alpaca.markets';
+    
+    // If API keys are provided, use them, otherwise use from config
+    this.apiKey = apiKey || config.ALPACA_API_KEY || '';
+    this.apiSecret = apiSecret || config.ALPACA_API_SECRET || '';
+    
     this.websocketUrl = 'wss://stream.data.alpaca.markets/v2';
   }
 
