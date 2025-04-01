@@ -18,11 +18,15 @@ import { Progress } from './progress';
 import { Separator } from './separator';
 import { toast } from '../../lib/toastify-bridge';
 
+// Import TradeCommand type from voice-trade-assistant
+import { TradeCommand } from './voice-trade-assistant';
+
 interface SmartTradePanelProps {
   isOpen: boolean;
   onClose: () => void;
   initialPosition?: { x: number; y: number };
   initialSize?: { width: number; height: number };
+  receivedCommand?: TradeCommand;
 }
 
 // Market data mock - to be replaced with real data
@@ -41,6 +45,7 @@ export function SmartTradePanel({
   onClose,
   initialPosition = { x: 100, y: 100 },
   initialSize = { width: 500, height: 700 },
+  receivedCommand
 }: SmartTradePanelProps) {
   // Panel state
   const [position, setPosition] = useState(initialPosition);
@@ -488,6 +493,90 @@ export function SmartTradePanel({
     }
   }, [price, stopPrice, riskPercentage, tradeDirection, riskRewardRatio]);
   
+  // Process received trade commands
+  useEffect(() => {
+    if (receivedCommand) {
+      console.log('Received trade command:', receivedCommand);
+      
+      // Set trade direction
+      if (receivedCommand.action) {
+        setTradeDirection(receivedCommand.action);
+      }
+      
+      // Set symbol
+      if (receivedCommand.symbol) {
+        setSelectedSymbol(receivedCommand.symbol);
+      }
+      
+      // Set quantity
+      if (receivedCommand.quantity) {
+        setQuantity(receivedCommand.quantity);
+      }
+      
+      // Set order type
+      if (receivedCommand.orderType) {
+        setOrderType(receivedCommand.orderType);
+      }
+      
+      // Set price for limit/stop orders
+      if (receivedCommand.price) {
+        setPrice(receivedCommand.price);
+      } else if (receivedCommand.orderType === 'market') {
+        // For market orders, use current market price
+        setPrice(marketPrice.toFixed(2));
+      }
+      
+      // Set stop loss
+      if (receivedCommand.stopLoss) {
+        setStopPrice(receivedCommand.stopLoss);
+        setAutoCalculateStopLoss(false);
+      }
+      
+      // Set take profit
+      if (receivedCommand.takeProfit) {
+        setTakeProfitPrice(receivedCommand.takeProfit);
+        setAutoCalculateTakeProfit(false);
+      }
+      
+      // Set risk percentage
+      if (receivedCommand.riskPercentage) {
+        setRiskPercentage(receivedCommand.riskPercentage);
+      }
+      
+      // Set leverage
+      if (receivedCommand.leverage) {
+        setLeverage(receivedCommand.leverage);
+      }
+      
+      // If order is market and we have risk percentage but no quantity
+      if (receivedCommand.orderType === 'market' && receivedCommand.riskPercentage && !receivedCommand.quantity) {
+        // Auto calculate position size if stop loss is provided or can be calculated
+        if (!receivedCommand.stopLoss && autoCalculateStopLoss) {
+          // Set a default stop loss at 2% away from entry
+          const stopDistance = parseFloat(price) * 0.02;
+          const newStopPrice = tradeDirection === 'buy'
+            ? parseFloat(price) - stopDistance
+            : parseFloat(price) + stopDistance;
+          setStopPrice(newStopPrice.toFixed(2));
+        }
+      }
+      
+      // Set broker if provided
+      if (receivedCommand.broker) {
+        const broker = availableBrokers.find(b => 
+          b.id.toLowerCase() === receivedCommand.broker?.toLowerCase() ||
+          b.name.toLowerCase() === receivedCommand.broker?.toLowerCase()
+        );
+        if (broker) {
+          setSelectedBroker(broker.id);
+        }
+      }
+      
+      // Display toast notification
+      toast.success(`Trade panel populated: ${receivedCommand.action.toUpperCase()} ${receivedCommand.symbol}`);
+    }
+  }, [receivedCommand]);
+
   // Update market price periodically (simulate real-time data)
   useEffect(() => {
     const interval = setInterval(() => {

@@ -30,6 +30,7 @@ const TradeRunnerWebBrowserPage = lazy(() => import('./pages/trade-runner-browse
 const NewsDashboardSimple = lazy(() => import('./pages/news-dashboard-simple'));
 const TradeJournalSimple = lazy(() => import('./pages/trade-journal-simple'));
 const TradeJournalAdvanced = lazy(() => import('./pages/trade-journal-advanced'));
+const VoiceTradeDemo = lazy(() => import('./pages/voice-trade-demo'));
 const NFTMarketplaceSimple = lazy(() => import('./pages/nft-marketplace-simple'));
 const SolanaDexEmbedded = lazy(() => import('./pages/solana-dex-embedded'));
 const LearnEmbedded = lazy(() => import('./pages/learn-embedded'));
@@ -582,6 +583,19 @@ function AppContent() {
               {typeof window !== 'undefined' && <TradeSimulatorPage />}
             </Suspense>
           } />
+          
+          <Route path="/voice-trade-demo" element={
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p className="text-slate-300">Loading voice trade demo...</p>
+                </div>
+              </div>
+            }>
+              {typeof window !== 'undefined' && <VoiceTradeDemo />}
+            </Suspense>
+          } />
           <Route path="/educational-games" element={
             <Suspense fallback={
               <div className="flex items-center justify-center h-screen">
@@ -787,6 +801,11 @@ function Home() {
           description="Premium TradingView indicators designed to enhance your trading with advanced analysis and clear signals."
           linkTo="/trading-indicators"
         />
+        <FeatureCard 
+          title="Voice Trading"
+          description="Experience AI-powered voice-activated trading with natural language commands and automated trade execution."
+          linkTo="/voice-trade-demo"
+        />
       </div>
     </PopupContainer>
   );
@@ -815,6 +834,7 @@ function FeatureCard({ title, description, linkTo }: { title: string, descriptio
     '/shop': 'social',
     '/trading-freedom-podcast': 'social',
     '/trading-indicators': 'basic_trading',
+    '/voice-trade-demo': 'advanced_trading',
   };
 
   const { isRouteEnabled } = useFeatureDisclosure();
