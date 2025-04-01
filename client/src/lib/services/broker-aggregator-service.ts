@@ -9,6 +9,9 @@ import { createTastyworksService } from './tastyworks-service';
 import { createTradeStationService } from './tradestation-service';
 import { KrakenService } from './kraken-service';
 
+// Re-export the SUPPORTED_BROKERS constant for use by other modules
+export const SUPPORTED_BROKERS = BROKER_CONFIG;
+
 // Storage key for API credentials
 const API_KEYS_STORAGE_KEY = 'trade-hybrid-api-keys';
 
