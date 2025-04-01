@@ -19,6 +19,9 @@ import ProfileView from './pages/not-found';
 import SettingsView from './pages/not-found';
 import BotsView from './pages/not-found';
 import NewsView from './pages/news-dashboard';
+import LandingPage from './pages/landing';
+import TradingFreedomPodcast from './pages/trading-freedom-podcast';
+import SignalsAnalyzerPage from './pages/signals-analyzer';
 
 const App: React.FC = () => {
   return (
@@ -27,12 +30,16 @@ const App: React.FC = () => {
         <SolanaAuthProvider>
           <Router>
             <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/trading-freedom-podcast" element={<TradingFreedomPodcast />} />
+              <Route path="/signals-analyzer" element={<SignalsAnalyzerPage />} />
+              
               {/* Auth routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               
               {/* Protected routes */}
-              <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
               <Route path="/trade" element={<ProtectedRoute><TradeView /></ProtectedRoute>} />
               <Route path="/journal" element={<ProtectedRoute><JournalView /></ProtectedRoute>} />
