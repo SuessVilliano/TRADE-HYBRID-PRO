@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Coins, LineChart, BarChart3, Signal, Bot, BookOpen, Users, FileText, 
-  Settings, Activity, MessageSquare, Podcast } from 'lucide-react';
+  Settings, Activity, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../lib/context/AuthContext';
 import DesktopHeader from './desktop-header';
 
