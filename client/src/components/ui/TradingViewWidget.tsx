@@ -1,14 +1,5 @@
 import React, { useEffect, useRef, memo } from 'react';
 
-// Define the TradingView window interface
-declare global {
-  interface Window {
-    TradingView: {
-      widget: new (config: any) => any;
-    };
-  }
-}
-
 interface TradingViewWidgetProps {
   symbol?: string;
   theme?: 'light' | 'dark';
@@ -50,10 +41,12 @@ function TradingViewWidget({
     script.src = "https://s3.tradingview.com/tv.js";
     script.async = true;
     script.onload = () => {
-      if (window.TradingView && container.current) {
+      // Use type assertion to access TradingView
+      const win = window as any;
+      if (win.TradingView && container.current) {
         try {
           // Create new widget instance
-          new window.TradingView.widget({
+          new win.TradingView.widget({
             autosize: true,
             symbol: formattedSymbol,
             interval: interval,
@@ -101,7 +94,8 @@ function TradingViewWidget({
       <div 
         id={widgetIdRef.current} 
         ref={container} 
-        style={{ height: "100%", width: "100%" }}
+        style={{ height: "100%", width: "100%", minHeight: "300px" }} // Ensure minimum height on mobile
+        className="tradingview-responsive-container"
       />
     </div>
   );

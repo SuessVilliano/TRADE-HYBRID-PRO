@@ -71,6 +71,8 @@ interface DashboardItem {
   settings?: Record<string, any>;
   locked?: boolean;
   priority?: number; // Lower numbers = higher priority for loading order
+  mobileFullWidth?: boolean; // Whether this panel should take up the full width on mobile
+  mobilePosition?: 'below-chart' | 'above-chart' | 'default'; // Special positioning for mobile
 }
 
 // Dashboard layout templates
@@ -88,7 +90,8 @@ const DASHBOARD_TEMPLATES = {
       componentType: 'tradingview-chart', 
       title: 'TradingView Chart',
       locked: true, // This will be used to prevent moving this panel
-      priority: 1 // Highest priority to load first
+      priority: 1, // Highest priority to load first
+      mobileFullWidth: true // Will span full width on mobile
     },
     // Smart Trade Panel fixed on the right side (loads second)
     { 
@@ -102,7 +105,8 @@ const DASHBOARD_TEMPLATES = {
       componentType: 'order-entry', 
       title: 'Smart Trade Panel',
       locked: true, // This will be used to prevent moving this panel
-      priority: 2 // Second highest priority to load
+      priority: 2, // Second highest priority to load
+      mobilePosition: 'below-chart' // On mobile, this will be positioned directly below the chart
     },
     // Trading Signals 
     { 
@@ -115,7 +119,8 @@ const DASHBOARD_TEMPLATES = {
       minHeight: 2, 
       componentType: 'trading-signals', 
       title: 'Trading Signals',
-      priority: 3 // Third highest priority to load
+      priority: 3, // Third highest priority to load
+      mobileFullWidth: true // Will span full width on mobile
     },
   ],
   'default': [
@@ -612,22 +617,34 @@ export function CustomizableTradingDashboard({
               </TabsList>
               
               <div className="space-y-5">
-                {/* Symbol selector */}
+                {/* Symbol selector - linked to the chart */}
                 <div className="bg-slate-900/50 p-3 rounded-md">
-                  <label className="block text-xs text-slate-400 mb-1">Symbol</label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs text-slate-400 mb-1">Symbol</label>
+                    {/* Mobile info badge showing that symbol is linked to chart */}
+                    <Badge variant="outline" className="md:hidden text-[10px] bg-blue-900/30 text-blue-300">
+                      Linked to Chart
+                    </Badge>
+                  </div>
                   <select 
                     className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm"
                     value={selectedSymbol}
-                    onChange={(e) => setSelectedSymbol(e.target.value)}
+                    onChange={(e) => {
+                      // When changing symbol in trade panel, update the chart
+                      setSelectedSymbol(e.target.value);
+                      console.log(`Trade panel symbol changed to: ${e.target.value}`);
+                    }}
                   >
                     <option value="BTCUSD">BTC/USD</option>
                     <option value="ETHUSD">ETH/USD</option>
                     <option value="SOLUSD">SOL/USD</option>
                     <option value="DOTUSD">DOT/USD</option>
+                    <option value="AVAXUSD">AVAX/USD</option>
+                    <option value="ADAUSD">ADA/USD</option>
                   </select>
                 </div>
                 
-                {/* Trading form */}
+                {/* Trading form with mobile optimizations */}
                 <div className="space-y-3 bg-slate-900/50 p-3 rounded-md">
                   <div>
                     <label className="block text-xs text-slate-400 mb-1">Price (USD)</label>
@@ -961,7 +978,7 @@ export function CustomizableTradingDashboard({
       </div>
       
       {/* Dashboard Content */}
-      <div className="flex-grow p-3 grid grid-cols-12 gap-3 relative">
+      <div className="flex-grow p-3 grid grid-cols-12 md:grid-cols-12 gap-3 relative">
         {maximizedPanel ? (
           // Render maximized panel
           layout.map(item => {
@@ -1011,18 +1028,56 @@ export function CustomizableTradingDashboard({
               const colSpan = Math.min(item.width, 12);
               const heightClass = `h-[${item.height * 80}px]`;
               
+              // Handle mobile layout special positioning
+              const getMobileClassName = () => {
+                // On small screens, adjust layout based on mobile properties
+                if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                  if (item.mobileFullWidth) {
+                    return "col-span-12"; // Full width on mobile
+                  }
+                  
+                  if (item.mobilePosition === 'below-chart') {
+                    // Find the chart panel
+                    const chartPanel = layout.find(p => p.componentType === 'tradingview-chart');
+                    if (chartPanel) {
+                      // Position this panel to appear right below the chart
+                      return "col-span-12 order-2";
+                    }
+                  }
+                }
+                
+                // Default desktop behavior
+                return "col-span-" + colSpan;
+              };
+              
+              // Adjust panel height for mobile
+              const getHeightStyle = () => {
+                if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                  if (item.componentType === 'tradingview-chart') {
+                    return { height: 350 }; // Fixed chart height on mobile
+                  }
+                  if (item.componentType === 'order-entry') {
+                    return { height: 400 }; // Trade panel height on mobile
+                  }
+                  if (item.componentType === 'trading-signals') {
+                    return { height: 300 }; // Signals panel height on mobile
+                  }
+                }
+                return { height: item.height * 80 }; // Desktop height
+              };
+              
               return (
                 <Card
                   key={item.id}
                   id={`panel-${item.id}`}
                   className={cn(
-                    "col-span-" + colSpan,
+                    getMobileClassName(),
                     "bg-slate-800 border-slate-700 overflow-hidden flex flex-col",
                     editMode && !item.locked && "cursor-move border-2 border-dashed border-blue-500/50 hover:border-blue-500",
                     item.locked && "border-2 border-solid border-yellow-500/50",
                     editMode && item.locked && "border-yellow-500",
                   )}
-                  style={{ height: item.height * 80 }}
+                  style={getHeightStyle()}
                   onMouseDown={e => handlePanelDragStart(e, item.id)}
               >
                 <CardHeader className="py-2 px-3 flex flex-row items-center justify-between bg-slate-800/90">
