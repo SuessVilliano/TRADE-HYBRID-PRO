@@ -123,6 +123,7 @@ export function NotificationSettingsDialog() {
   const [activeSound, setActiveSound] = useState<string | null>(null);
 
   const handleToggle = (key: keyof NotificationSettings, value?: boolean) => {
+    console.log(`Toggle ${key}: current=${settings[key]}, new=${value}`);
     setSettings({
       ...settings,
       [key]: value !== undefined ? value : !settings[key as keyof NotificationSettings],
