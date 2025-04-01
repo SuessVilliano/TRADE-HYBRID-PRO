@@ -86,6 +86,7 @@ export default function TradeJournalSimple() {
   // UI states
   const [tradeToView, setTradeToView] = useState<null | number>(null);
   const [filter, setFilter] = useState('all');
+  const [editingTradeId, setEditingTradeId] = useState<number | null>(null);
 
   const filteredTrades = trades.filter(trade => {
     if (filter === 'all') return true;
@@ -112,23 +113,47 @@ export default function TradeJournalSimple() {
       return;
     }
     
-    const newTrade = {
-      id: trades.length + 1,
-      symbol: newEntry.symbol,
-      type: newEntry.type,
-      entryPrice: parseFloat(newEntry.entryPrice),
-      exitPrice: null,
-      quantity: parseFloat(newEntry.quantity),
-      pnl: null,
-      pnlPercent: null,
-      date: new Date().toISOString().split('T')[0],
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      status: 'Open',
-      notes: newEntry.notes,
-      tags: newEntry.tags.split(',').map(tag => tag.trim()),
-    };
+    if (editingTradeId !== null) {
+      // We're editing an existing trade
+      const updatedTrades = trades.map(trade => {
+        if (trade.id === editingTradeId) {
+          return {
+            ...trade,
+            symbol: newEntry.symbol,
+            type: newEntry.type,
+            entryPrice: parseFloat(newEntry.entryPrice),
+            quantity: parseFloat(newEntry.quantity),
+            notes: newEntry.notes,
+            tags: newEntry.tags.split(',').map(tag => tag.trim()),
+          };
+        }
+        return trade;
+      });
+      
+      setTrades(updatedTrades);
+      setEditingTradeId(null);
+    } else {
+      // We're adding a new trade
+      const newTrade = {
+        id: trades.length + 1,
+        symbol: newEntry.symbol,
+        type: newEntry.type,
+        entryPrice: parseFloat(newEntry.entryPrice),
+        exitPrice: null,
+        quantity: parseFloat(newEntry.quantity),
+        pnl: null,
+        pnlPercent: null,
+        date: new Date().toISOString().split('T')[0],
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        status: 'Open',
+        notes: newEntry.notes,
+        tags: newEntry.tags.split(',').map(tag => tag.trim()),
+      };
+      
+      setTrades([newTrade, ...trades]);
+    }
     
-    setTrades([newTrade, ...trades]);
+    // Reset form and return to trades view
     setNewEntry({
       symbol: '',
       type: 'Long',
@@ -355,8 +380,71 @@ export default function TradeJournalSimple() {
                   
                   {trade.status === 'Open' && (
                     <div className="mt-6 flex gap-3">
-                      <Button>Close Position</Button>
-                      <Button variant="outline">Edit Trade</Button>
+                      <Button onClick={() => {
+                        // Create a dialog to close the trade
+                        const exitPrice = window.prompt("Enter the exit price:");
+                        if (exitPrice && !isNaN(parseFloat(exitPrice))) {
+                          // Calculate P&L
+                          const entryPrice = trade.entryPrice;
+                          const quantity = trade.quantity;
+                          const exitPriceNumber = parseFloat(exitPrice);
+                          let pnl;
+                          
+                          if (trade.type === 'Long') {
+                            pnl = (exitPriceNumber - entryPrice) * quantity;
+                          } else {
+                            pnl = (entryPrice - exitPriceNumber) * quantity;
+                          }
+                          
+                          const pnlPercent = (pnl / (entryPrice * quantity)) * 100;
+                          
+                          // Update the trade
+                          const updatedTrades = trades.map(t => {
+                            if (t.id === trade.id) {
+                              return {
+                                ...t,
+                                exitPrice: exitPriceNumber,
+                                pnl: pnl,
+                                pnlPercent: parseFloat(pnlPercent.toFixed(2)),
+                                status: 'Closed',
+                              };
+                            }
+                            return t;
+                          });
+                          
+                          setTrades(updatedTrades);
+                          // Go back to the trades list
+                          setTradeToView(null);
+                        }
+                      }}>
+                        Close Position
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={() => {
+                          // Find the trade
+                          const currentTrade = trades.find(t => t.id === trade.id);
+                          if (currentTrade) {
+                            // Prep the form for editing
+                            setNewEntry({
+                              symbol: currentTrade.symbol,
+                              type: currentTrade.type,
+                              entryPrice: currentTrade.entryPrice.toString(),
+                              quantity: currentTrade.quantity.toString(),
+                              notes: currentTrade.notes,
+                              tags: currentTrade.tags.join(', '),
+                            });
+                            
+                            // Set the tab to edit mode
+                            setSelectedTab('add-trade');
+                            
+                            // Set the ID of the trade we're editing
+                            setEditingTradeId(trade.id);
+                          }
+                        }}
+                      >
+                        Edit Trade
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -367,7 +455,9 @@ export default function TradeJournalSimple() {
 
         <TabsContent value="add-trade" className="mt-4">
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-6">Record New Trade</h2>
+            <h2 className="text-xl font-semibold mb-6">
+              {editingTradeId ? 'Edit Trade' : 'Record New Trade'}
+            </h2>
             
             <form onSubmit={handleAddTrade} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -448,7 +538,19 @@ export default function TradeJournalSimple() {
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={() => setSelectedTab('all-trades')}
+                  onClick={() => {
+                    setSelectedTab('all-trades');
+                    setEditingTradeId(null);
+                    // Reset the form
+                    setNewEntry({
+                      symbol: '',
+                      type: 'Long',
+                      entryPrice: '',
+                      quantity: '',
+                      notes: '',
+                      tags: '',
+                    });
+                  }}
                 >
                   Cancel
                 </Button>
