@@ -70,12 +70,13 @@ interface DashboardItem {
   title: string;
   settings?: Record<string, any>;
   locked?: boolean;
+  priority?: number; // Lower numbers = higher priority for loading order
 }
 
 // Dashboard layout templates
 const DASHBOARD_TEMPLATES = {
   'fixed-chart-right-panel': [
-    // Fixed TradingView chart as the primary panel (locked in place)
+    // Fixed TradingView chart as the primary panel (locked in place and loads first)
     { 
       id: 'tradingview-chart-1', 
       x: 0, 
@@ -86,9 +87,10 @@ const DASHBOARD_TEMPLATES = {
       minHeight: 5, 
       componentType: 'tradingview-chart', 
       title: 'TradingView Chart',
-      locked: true // This will be used to prevent moving this panel
+      locked: true, // This will be used to prevent moving this panel
+      priority: 1 // Highest priority to load first
     },
-    // Smart Trade Panel fixed on the right side
+    // Smart Trade Panel fixed on the right side (loads second)
     { 
       id: 'order-entry-1', 
       x: 8, 
@@ -99,13 +101,26 @@ const DASHBOARD_TEMPLATES = {
       minHeight: 5, 
       componentType: 'order-entry', 
       title: 'Smart Trade Panel',
-      locked: true // This will be used to prevent moving this panel
+      locked: true, // This will be used to prevent moving this panel
+      priority: 2 // Second highest priority to load
     },
-    // Economic Calendar positioned below (immediate content visible)
-    { id: 'market-news-1', x: 0, y: 6, width: 12, height: 3, minWidth: 6, minHeight: 2, componentType: 'market-news', title: 'Economic Calendar' },
-    // Other panels below
+    // Economic Calendar positioned below (loads third)
+    { 
+      id: 'market-news-1', 
+      x: 0, 
+      y: 6, 
+      width: 12, 
+      height: 3, 
+      minWidth: 6, 
+      minHeight: 2, 
+      componentType: 'market-news', 
+      title: 'Economic Calendar',
+      priority: 3 // Third highest priority to load
+    },
+    // Trading Signals 
     { id: 'trading-signals-1', x: 0, y: 9, width: 6, height: 3, minWidth: 2, minHeight: 2, componentType: 'trading-signals', title: 'Trading Signals' },
-    { id: 'ai-insights-1', x: 6, y: 9, width: 6, height: 3, minWidth: 2, minHeight: 2, componentType: 'ai-insights', title: 'AI Trading Assistant' },
+    // Remove the Trading Companion as it is non-functional (but keep this line commented for reference)
+    // { id: 'ai-insights-1', x: 6, y: 9, width: 6, height: 3, minWidth: 2, minHeight: 2, componentType: 'ai-insights', title: 'AI Trading Assistant' },
   ],
   'default': [
     { id: 'tradingview-chart-1', x: 0, y: 0, width: 8, height: 6, minWidth: 4, minHeight: 4, componentType: 'tradingview-chart', title: 'TradingView Chart' },
@@ -323,12 +338,15 @@ export function CustomizableTradingDashboard({
     const panel = document.getElementById(`panel-${draggedPanel.id}`);
     if (!panel) return;
     
+    // For horizontal-only movement, we only update the X position
     const newX = e.clientX - draggedPanel.offsetX;
-    const newY = e.clientY - draggedPanel.offsetY;
+    
+    // Get initial Y position
+    const initialY = draggedPanel.startY - draggedPanel.offsetY;
     
     panel.style.position = 'absolute';
     panel.style.left = `${newX}px`;
-    panel.style.top = `${newY}px`;
+    panel.style.top = `${initialY}px`; // Keep vertical position fixed
     panel.style.zIndex = '50';
   };
 
@@ -339,6 +357,47 @@ export function CustomizableTradingDashboard({
     const panel = document.getElementById(`panel-${draggedPanel.id}`);
     if (!panel) return;
     
+    // Get the final position
+    const rect = panel.getBoundingClientRect();
+    const containerRect = panel.parentElement?.getBoundingClientRect();
+    
+    if (!containerRect) {
+      // Reset styles and exit if container not found
+      panel.style.position = '';
+      panel.style.left = '';
+      panel.style.top = '';
+      panel.style.zIndex = '';
+      setDraggedPanel(null);
+      return;
+    }
+    
+    // Determine drop position - this is the key change
+    // We'll update the layout array horizontally instead of vertically
+    const updatedLayout = [...layout];
+    const draggedItemIndex = updatedLayout.findIndex(item => item.id === draggedPanel.id);
+    
+    if (draggedItemIndex !== -1) {
+      // Only update X position to ensure horizontal movement only
+      const newX = Math.max(0, Math.min(Math.round((rect.left - containerRect.left) / 100), 12 - updatedLayout[draggedItemIndex].width));
+      updatedLayout[draggedItemIndex] = {
+        ...updatedLayout[draggedItemIndex],
+        x: newX,
+        // Keep y position the same
+      };
+      
+      // Sort items so they don't overlap
+      updatedLayout.sort((a, b) => {
+        // First by row (y position)
+        if (a.y !== b.y) return a.y - b.y;
+        // Then by column (x position) for items in the same row
+        return a.x - b.x;
+      });
+      
+      setLayout(updatedLayout);
+      setLastSaved(new Date());
+    }
+    
+    // Reset styles
     panel.style.position = '';
     panel.style.left = '';
     panel.style.top = '';
@@ -355,12 +414,15 @@ export function CustomizableTradingDashboard({
         const panel = document.getElementById(`panel-${draggedPanel.id}`);
         if (!panel) return;
         
+        // For horizontal-only movement, we only update the X position
         const newX = e.clientX - draggedPanel.offsetX;
-        const newY = e.clientY - draggedPanel.offsetY;
+        
+        // Get initial Y position
+        const initialY = draggedPanel.startY - draggedPanel.offsetY;
         
         panel.style.position = 'absolute';
         panel.style.left = `${newX}px`;
-        panel.style.top = `${newY}px`;
+        panel.style.top = `${initialY}px`; // Keep vertical position fixed
         panel.style.zIndex = '50';
       }
     };
@@ -936,25 +998,36 @@ export function CustomizableTradingDashboard({
             return null;
           })
         ) : (
-          // Render normal layout
-          layout.map(item => {
-            // Calculate column and row span based on width and height
-            const colSpan = Math.min(item.width, 12);
-            const heightClass = `h-[${item.height * 80}px]`;
-            
-            return (
-              <Card
-                key={item.id}
-                id={`panel-${item.id}`}
-                className={cn(
-                  "col-span-" + colSpan,
-                  "bg-slate-800 border-slate-700 overflow-hidden flex flex-col",
-                  editMode && !item.locked && "cursor-move border-2 border-dashed border-blue-500/50 hover:border-blue-500",
-                  item.locked && "border-2 border-solid border-yellow-500/50",
-                  editMode && item.locked && "border-yellow-500",
-                )}
-                style={{ height: item.height * 80 }}
-                onMouseDown={e => handlePanelDragStart(e, item.id)}
+          // Render normal layout with priority sorting to ensure correct loading order
+          [...layout]
+            // Sort by priority (if present) to ensure widgets load in the desired order
+            .sort((a, b) => {
+              // If both have priority, sort by it (lower number = higher priority)
+              if (a.priority && b.priority) return a.priority - b.priority;
+              // Items with priority come first
+              if (a.priority) return -1;
+              if (b.priority) return 1;
+              // Otherwise, maintain original order
+              return 0;
+            })
+            .map(item => {
+              // Calculate column and row span based on width and height
+              const colSpan = Math.min(item.width, 12);
+              const heightClass = `h-[${item.height * 80}px]`;
+              
+              return (
+                <Card
+                  key={item.id}
+                  id={`panel-${item.id}`}
+                  className={cn(
+                    "col-span-" + colSpan,
+                    "bg-slate-800 border-slate-700 overflow-hidden flex flex-col",
+                    editMode && !item.locked && "cursor-move border-2 border-dashed border-blue-500/50 hover:border-blue-500",
+                    item.locked && "border-2 border-solid border-yellow-500/50",
+                    editMode && item.locked && "border-yellow-500",
+                  )}
+                  style={{ height: item.height * 80 }}
+                  onMouseDown={e => handlePanelDragStart(e, item.id)}
               >
                 <CardHeader className="py-2 px-3 flex flex-row items-center justify-between bg-slate-800/90">
                   <CardTitle className="text-sm font-medium">{item.title}</CardTitle>

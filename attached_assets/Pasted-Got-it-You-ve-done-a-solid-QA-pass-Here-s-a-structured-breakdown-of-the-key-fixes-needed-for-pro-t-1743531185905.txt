@@ -1,0 +1,87 @@
+Got it! You’ve done a solid QA pass. Here’s a structured breakdown of the key fixes needed for pro.tradehybrid.com:
+
+⸻
+
+🔧 Trading Panel (Main Dashboard) Issues & Fixes
+	1.	Widget Rearrangement Issue
+	•	Widgets should be draggable left/right instead of moving downward incorrectly.
+	•	Custom widget arrangement should save when refreshed.
+	2.	Chart Priority & Smart Trade Integration
+	•	The chart should be the first thing that loads.
+	•	Smart Trade should be embedded as a panel next to the chart, allowing it to be hidden/shown dynamically.
+	3.	Default Load Order Fix
+	•	Right now, it loads in this order:
+	1.	Trading Signals
+	2.	Trading Companion (to be removed)
+	3.	Economic Calendar
+	•	Instead, it should load as:
+	1.	Chart
+	2.	Smart Trade Terminal
+	3.	Economic Calendar (with no black dead space)
+	4.	Trading Companion Removal
+	•	This tool is non-functional, but keep it for now.
+	5.	Economic Calendar UI Fix
+	•	Remove large black empty space.
+
+⸻
+
+🤖 AI Tools Menu Fixes
+	1.	Too Many Icons & Arrows
+	•	Remove unnecessary arrows—all tools should fit on one screen.
+	2.	Duplicate Icons & Tools
+	•	Remove Market News (duplicate).
+	•	Ensure Trading Education links to the Learning Center, not an external URL.
+	3.	Broken Tools to Remove
+	•	Advanced AI Analysis (remove it, says “Coming Soon”).
+	•	Zen Mode crashes → Investigate why it doesn’t load.
+	4.	Smart Trade Button Placement
+	•	Move Smart Trade as a tab inside AI Tools for easier access.
+
+⸻
+
+📈 Trading Panel (Right Side) Fixes
+	1.	Buttons Cleanup
+	•	Remove “Trade Now” button (not needed).
+	•	Move “Smart Trade” button up to the AI tools tab.
+	•	Replace the broken “Connect Broker” button at the top with the working one from the right panel.
+	•	Ensure “Connect Broker” actually opens and connects brokers.
+
+⸻
+
+🎓 Learning & Education Issues
+	1.	Course Catalog Bug
+	•	Courses fail to fetch → They should load properly & be accessible.
+	2.	Learning Roadmap Fix
+	•	This should be a full interactive course with a quiz and results tracking.
+
+⸻
+
+🎙️ Podcast & Resource Issues
+	1.	Podcast URL Typo
+	•	Current: W.A.T.T.B.A.C.O
+	•	Fix to: W.A.T.T.B.A.A.COM
+	2.	Resource Section
+	•	Should contain real, useful resources (not empty placeholders).
+
+⸻
+
+📅 Event & Scheduling Issues
+	1.	Event Persistence Issue
+	•	Events should stay in real-time, list based on date, and actually display.
+
+⸻
+
+🎮 Game Center Fixes
+	1.	Trade Runner Game Issue
+	•	Currently opens with: pro.tradehybrid.club/51411/trade-runner
+	•	Game does not load—fix so it runs properly within the browser.
+
+⸻
+
+✅ Next Steps
+	1.	Document these fixes & assign priorities.
+	2.	Fix the core functionality (drag/drop widgets, saving, broker connection, game loading).
+	3.	QA again to verify fixes work.
+	4.	Deploy & test in real-time.
+
+This is a great breakdown! Let me know if you need a more detailed task list for developers or a testing checklist for post-fix validation.
