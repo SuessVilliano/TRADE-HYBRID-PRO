@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { Helmet } from 'react-helmet-async';
+import React from 'react';
 import SpatialMetaverse from '../components/spatial/SpatialMetaverse';
 
 /**
@@ -14,10 +13,6 @@ const MetaversePage: React.FC = () => {
   
   return (
     <div className="metaverse-page w-full h-screen">
-      <Helmet>
-        <title>Trade Hybrid - Metaverse Trading Environment</title>
-      </Helmet>
-      
       <div className="w-full h-full">
         <SpatialMetaverse 
           spatialUrl={SPATIAL_URL}

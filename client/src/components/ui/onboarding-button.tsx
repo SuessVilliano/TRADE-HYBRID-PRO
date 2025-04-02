@@ -87,10 +87,10 @@ export function OnboardingButton({ className }: OnboardingButtonProps) {
         <Button 
           variant="outline" 
           size="icon" 
-          className={`fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-xl z-40 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg border-2 border-blue-400 dark:border-blue-800 ${className}`}
+          className={`fixed bottom-6 right-6 h-10 w-10 rounded-full shadow-xl z-40 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg border-2 border-blue-400 dark:border-blue-800 ${className}`}
           title="Help & Tours"
         >
-          <HelpCircle className="h-7 w-7" />
+          <HelpCircle className="h-5 w-5" />
         </Button>
       </PopoverTrigger>
       <PopoverContent 
