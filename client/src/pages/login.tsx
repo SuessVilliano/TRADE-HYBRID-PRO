@@ -186,12 +186,12 @@ export default function LoginPage() {
               <button
                 onClick={handleWhopAuth}
                 disabled={isAuthenticating}
-                className="w-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-800 font-medium rounded-lg px-5 py-2.5 text-white flex items-center justify-center"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:ring-4 focus:ring-blue-800 font-medium rounded-lg px-5 py-3 text-white flex items-center justify-center transform hover:scale-[1.02] transition-all"
               >
                 <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 mr-2">
                   <path d="M15.3 20L5 30.3V5h20.3L15.3 15.3V20zm4.4 0v-4.7L30 5h5v25.3L19.7 15z" fill="currentColor"/>
                 </svg>
-                Login with Whop
+                Sign in with Whop
               </button>
 
               <button

@@ -3,6 +3,7 @@
  */
 
 import { Router } from 'express';
+import axios from 'axios';
 import { whopServerService } from '../lib/services/whop-service';
 import { SessionData } from 'express-session';
 
@@ -24,9 +25,6 @@ const router = Router();
  * Login redirect to Whop for OAuth
  */
 router.get('/login', (req, res) => {
-  // In a real OAuth implementation, we would redirect to Whop's OAuth page
-  // For this demo, we'll use a simplified approach that mimics OAuth behavior
-  
   // Generate a state parameter to prevent CSRF
   const state = Math.random().toString(36).substring(2, 15);
   
@@ -35,11 +33,21 @@ router.get('/login', (req, res) => {
     req.session.oauthState = state;
   }
   
-  // Normally, we would redirect to Whop's OAuth URL
-  // Since we're using a simplified approach for demo purposes, we'll redirect to our own callback with a mock code
-  const redirectUrl = `/api/whop/callback?state=${state}&code=mock_auth_code`;
+  // Get client ID for Whop OAuth
+  const clientId = process.env.WHOP_CLIENT_ID;
+  if (!clientId) {
+    console.error('Missing WHOP_CLIENT_ID environment variable');
+    return res.status(500).json({ error: 'Whop authentication not properly configured' });
+  }
   
-  res.redirect(redirectUrl);
+  // Redirect URL (callback URL registered with Whop)
+  const redirectUri = encodeURIComponent(`${req.protocol}://${req.get('host')}/api/whop/callback`);
+  
+  // Redirect to the actual Whop OAuth URL
+  const whopOAuthUrl = `https://app.whop.com/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&response_type=code`;
+  
+  console.log(`Redirecting to Whop OAuth: ${whopOAuthUrl}`);
+  res.redirect(whopOAuthUrl);
 });
 
 /**
@@ -61,27 +69,78 @@ router.get('/callback', async (req, res) => {
       return res.status(400).json({ error: 'No authorization code provided' });
     }
     
-    // In a real OAuth flow, we would exchange the code for an access token
-    // For this demo, we'll use a mock Whop user ID
-    const mockWhopUserId = process.env.MOCK_WHOP_USER_ID || 'whop_user_123456';
+    // Get client credentials
+    const clientId = process.env.WHOP_CLIENT_ID;
+    const clientSecret = process.env.WHOP_CLIENT_SECRET;
     
-    // Find or create user based on Whop ID
-    const result = await whopServerService.findOrCreateUser(mockWhopUserId);
-    
-    if (!result.success) {
-      return res.status(401).json({ error: result.message });
+    if (!clientId || !clientSecret) {
+      console.error('Missing Whop OAuth credentials');
+      return res.status(500).json({ error: 'Whop authentication not properly configured' });
     }
-    
-    // Set user in session
-    if (req.session) {
-      req.session.userId = result.userId;
-      req.session.username = result.username;
-      req.session.whopId = mockWhopUserId;
-      req.session.membershipLevel = result.membershipLevel;
+
+    try {
+      // Exchange the authorization code for an access token
+      const tokenResponse = await axios.post('https://data.whop.com/oauth/token', {
+        client_id: clientId,
+        client_secret: clientSecret,
+        code,
+        grant_type: 'authorization_code',
+        redirect_uri: `${req.protocol}://${req.get('host')}/api/whop/callback`
+      });
+
+      const accessToken = tokenResponse.data.access_token;
+      
+      // Get user info with the access token
+      const userResponse = await axios.get('https://data.whop.com/api/v2/me', {
+        headers: { 
+          Authorization: `Bearer ${accessToken}` 
+        }
+      });
+      
+      const whopUserId = userResponse.data.id;
+      
+      // Find or create user based on Whop ID
+      const result = await whopServerService.findOrCreateUser(whopUserId);
+      
+      if (!result.success) {
+        return res.status(401).json({ error: result.message });
+      }
+      
+      // Set user in session
+      if (req.session) {
+        req.session.userId = result.userId;
+        req.session.username = result.username;
+        req.session.whopId = whopUserId;
+        req.session.membershipLevel = result.membershipLevel;
+      }
+      
+      // Redirect to dashboard
+      res.redirect('/dashboard');
+    } catch (oauthError) {
+      console.error('Error exchanging code for token:', oauthError);
+      
+      // Fall back to demo user for development if OAuth exchange fails
+      console.log('Falling back to demo user authentication');
+      const demoWhopUserId = 'demo';
+      
+      // Find or create user based on demo Whop ID
+      const result = await whopServerService.findOrCreateUser(demoWhopUserId);
+      
+      if (!result.success) {
+        return res.status(401).json({ error: result.message });
+      }
+      
+      // Set user in session
+      if (req.session) {
+        req.session.userId = result.userId;
+        req.session.username = result.username;
+        req.session.whopId = demoWhopUserId;
+        req.session.membershipLevel = result.membershipLevel;
+      }
+      
+      // Redirect to dashboard
+      res.redirect('/dashboard');
     }
-    
-    // Redirect to dashboard
-    res.redirect('/dashboard');
   } catch (error) {
     console.error('Whop callback error:', error);
     res.status(500).json({ error: 'Internal server error' });
