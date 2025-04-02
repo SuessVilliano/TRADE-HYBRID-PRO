@@ -14,7 +14,7 @@ const getSignals = (req: any, res: any) => {
 // Import at the top to avoid circular dependency
 import { processWebhookSignal } from './api/signals';
 import { processUserWebhook, getUserWebhookByToken } from './api/user-webhooks';
-import { processTradingViewAlert } from './api/tradingview-webhooks';
+import { processTradingViewWebhook } from './api/tradingview-webhooks';
 
 const receiveWebhook = (req: any, res: any) => {
   try {
@@ -123,7 +123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/webhooks/user/:token", receiveUserWebhook); // Custom user webhooks
   
   // TradingView webhook route
-  app.post("/api/webhooks/tradingview/:token", processTradingViewAlert); // TradingView alerts integration
+  app.post("/api/webhooks/tradingview/:token", processTradingViewWebhook); // TradingView alerts integration
 
   // Test webhooks for Cash Cow formats
   app.post("/api/test/webhook/cashcow", (req, res) => {

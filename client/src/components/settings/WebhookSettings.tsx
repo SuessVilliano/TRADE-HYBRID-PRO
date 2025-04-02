@@ -220,17 +220,23 @@ export function WebhookSettings() {
 
   // TradingView integration example
   const tradingViewBasicFormat = `{
-  "token": "your-webhook-token-here",
-  "exchange": "{{exchange}}",
-  "ticker": "{{ticker}}",
-  "close": {{close}},
-  "message": "{{strategy.order.action}} Alert: {{ticker}} at {{close}}"
+  "symbol": "{{ticker}}",
+  "side": "{{strategy.order.action}}",
+  "entryPrice": {{close}},
+  "stopLoss": {{strategy.position.size > 0 ? strategy.position.stoploss : plot("Stop Loss")}},
+  "takeProfit": {{strategy.position.size > 0 ? strategy.position.takeprofit : plot("Take Profit")}},
+  "timeframe": "{{interval}}",
+  "description": "{{strategy.order.comment}}"
 }`;
 
   const tradingViewAdvancedFormat = `{
-  "token": "your-webhook-token-here",
-  "exchange": "{{exchange}}",
-  "ticker": "{{ticker}}",
+  "symbol": "{{ticker}}",
+  "side": "{{strategy.order.action}}",
+  "entryPrice": {{close}},
+  "stopLoss": {{strategy.position.size > 0 ? strategy.position.stoploss : plot("Stop Loss")}},
+  "takeProfit": {{strategy.position.size > 0 ? strategy.position.takeprofit : plot("Take Profit")}},
+  "timeframe": "{{interval}}",
+  "description": "Signal from {{strategy.order.alert_message}}",
   "bar": {
     "time": "{{time}}",
     "open": {{open}},
@@ -239,13 +245,16 @@ export function WebhookSettings() {
     "close": {{close}},
     "volume": {{volume}}
   },
-  "strategy": {
-    "position_size": {{strategy.position_size}},
-    "order_action": "{{strategy.order.action}}",
-    "order_price": {{strategy.order.price}},
-    "market_position": "{{strategy.market_position}}"
-  },
-  "message": "{{strategy.order.action}} Alert: {{ticker}} at {{close}}, SL: {{plot_0}}, TP: {{plot_1}}"
+  "sl": {{plot("Stop Loss")}},
+  "tp": {{plot("Take Profit")}},
+  "tp1": {{plot("TP1")}},
+  "tp2": {{plot("TP2")}},
+  "tp3": {{plot("TP3")}},
+  "timeframe": "{{interval}}",
+  "provider": "TradingView Strategy",
+  "notes": "{{strategy.order.comment}}",
+  "strategy_position": "{{strategy.market_position}}",
+  "strategy_position_size": {{strategy.position_size}}
 }`;
   
   return (
@@ -424,6 +433,29 @@ export function WebhookSettings() {
                 </div>
                 
                 <div className="mt-4">
+                  <Label className="text-xs font-medium">TradingView Webhook URL</Label>
+                  <div className="mt-1 flex items-center gap-2">
+                    <Input
+                      value={`${window.location.origin}/api/webhooks/tradingview/${webhook.token}`}
+                      readOnly
+                      className="font-mono text-xs"
+                    />
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="shrink-0"
+                      onClick={() => copyToClipboard(`${window.location.origin}/api/webhooks/tradingview/${webhook.token}`, 'tv-url-' + webhook.id)}
+                    >
+                      {isCopied['tv-url-' + webhook.id] ? 'Copied!' : 'Copy URL'}
+                      <Copy className="ml-2 h-3 w-3" />
+                    </Button>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Use this URL when setting up alerts in TradingView
+                  </p>
+                </div>
+                
+                <div className="mt-4">
                   <Label className="text-xs font-medium">
                     Example Payload Format
                   </Label>
@@ -510,11 +542,19 @@ export function WebhookSettings() {
               <li>Create a webhook in Trade Hybrid and copy its token</li>
               <li>In TradingView, go to Alerts or Strategy Tester</li>
               <li>Create a new alert or enable alerts in your strategy</li>
-              <li>Set webhook URL to: <span className="font-mono">{window.location.origin}/api/webhooks/tradingview/your-token</span></li>
-              <li>Copy the template format above and paste it in TradingView's "Message" field</li>
-              <li>Replace "your-webhook-token-here" with your actual webhook token</li>
-              <li>Save the alert - your signals will appear in your trading dashboard</li>
+              <li>Set webhook URL to: <span className="font-mono">{window.location.origin}/api/webhooks/tradingview/<strong>{webhooks[0]?.token || 'your-token'}</strong></span></li>
+              <li>Copy the template format above and paste it in TradingView's "Message" field (use Webhook URL format)</li>
+              <li>For best results, name your plots in TradingView for stop loss and take profits (e.g., "Stop Loss", "Take Profit")</li>
+              <li>Test your alert - signals will appear instantly in your trading dashboard and signals panel</li>
             </ol>
+            <div className="bg-yellow-100 text-yellow-800 p-2 mt-2 rounded-md border border-yellow-200">
+              <p className="font-medium">Pro Tip:</p>
+              <p>In TradingView, you can create plots for your stop loss and take profit levels, then reference them in the webhook:</p>
+              <div className="mt-1 ml-2 font-mono bg-white/50 p-1 rounded">
+                plot(strategy.position_size {'>'} 0 ? low - atr : na, "Stop Loss", color.red)<br/>
+                plot(strategy.position_size {'>'} 0 ? high + atr*2 : na, "Take Profit", color.green)
+              </div>
+            </div>
           </div>
         </div>
       </CardFooter>

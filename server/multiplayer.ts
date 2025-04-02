@@ -22,17 +22,26 @@ interface ChatMessage {
 }
 
 interface WSMessage {
-  type: 'player_update' | 'chat_message' | 'join' | 'leave' | 'trade_offer' | 'friend_request' | 'friend_response' | 'voice_status' | 'voice_data' | 'ping' | 'user_status' | 'social_activity';
+  type: 'player_update' | 'chat_message' | 'join' | 'leave' | 'trade_offer' | 'friend_request' | 'friend_response' | 'voice_status' | 'voice_data' | 'ping' | 'user_status' | 'social_activity' | 'trading_signal';
   data: any;
 }
 
 export class MultiplayerServer {
+  // Static instance for global access
+  static instance: MultiplayerServer;
+  
   private wss: WebSocketServer;
   private clients: Map<string, WebSocket> = new Map();
   private playerStates: Map<string, PlayerState> = new Map();
   private chatMessages: ChatMessage[] = [];
   
+  // User ID to client ID mapping for sending messages to specific users
+  private userIdToClientId: Map<string, string> = new Map();
+  
   constructor(server: Server) {
+    // Set the static instance for global access
+    MultiplayerServer.instance = this;
+    
     this.wss = new WebSocketServer({ 
       server,
       path: '/ws'  // Updated path for our WebSocket server
@@ -47,6 +56,30 @@ export class MultiplayerServer {
     }, 60000); // Check every minute
     
     log('Multiplayer WebSocket server initialized', 'ws');
+  }
+  
+  // Register a user ID with a client ID for direct messaging
+  public registerUser(userId: string, clientId: string) {
+    this.userIdToClientId.set(userId, clientId);
+    log(`Registered user ${userId} with client ${clientId}`, 'ws');
+  }
+  
+  // Remove a user mapping when they disconnect
+  public unregisterUser(userId: string) {
+    this.userIdToClientId.delete(userId);
+  }
+  
+  // Send a message to a specific user by their user ID
+  public sendToUser(userId: string, message: any) {
+    const clientId = this.userIdToClientId.get(userId);
+    if (clientId) {
+      this.sendToClient(clientId, message);
+    } else {
+      // Broadcast to all clients - this is a fallback for now
+      // In the future, we could store the message for delivery when the user connects
+      this.broadcast(message);
+      log(`User ${userId} not found for direct message, broadcasting instead`, 'ws');
+    }
   }
   
   private initialize() {

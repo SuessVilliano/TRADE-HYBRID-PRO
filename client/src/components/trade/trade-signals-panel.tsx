@@ -49,6 +49,66 @@ export function TradeSignalsPanel() {
       });
     };
     
+    // Listen for WebSocket trading signals
+    const handleWebSocketSignal = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        // Check if this is a trading signal message
+        if (data.type === 'trading_signal' && data.data) {
+          const { signal, provider } = data.data;
+          
+          if (!signal || !signal.symbol) return;
+          
+          // Convert to our TradeSignal format
+          const newSignal: TradeSignal = {
+            id: `ws-${Date.now()}`,
+            symbol: signal.symbol,
+            type: signal.side === 'buy' ? 'buy' : 'sell',
+            entry: signal.entryPrice || 0,
+            stopLoss: signal.stopLoss || 0,
+            takeProfit: signal.takeProfit || 0,
+            timestamp: new Date(),
+            source: provider || 'WebSocket',
+            risk: 1,
+            notes: signal.description || ''
+          };
+          
+          // Add to signals list
+          handleNewSignal(newSignal);
+          
+          // Add to trading service
+          tradeSignalService.addSignal(newSignal);
+        }
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error);
+      }
+    };
+    
+    // Connect to WebSocket
+    if (typeof window !== 'undefined') {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      
+      const ws = new WebSocket(wsUrl);
+      
+      ws.addEventListener('message', handleWebSocketSignal);
+      
+      // Handle connection events
+      ws.addEventListener('open', () => {
+        console.log('WebSocket connected for trading signals');
+      });
+      
+      ws.addEventListener('error', (error) => {
+        console.error('WebSocket error:', error);
+      });
+      
+      return () => {
+        ws.removeEventListener('message', handleWebSocketSignal);
+        ws.close();
+      };
+    }
+    
     tradeSignalService.subscribe('signal_added', handleNewSignal);
     
     // Clean up subscription

@@ -1,223 +1,169 @@
 import { Request, Response } from 'express';
-import { storage } from '../storage';
-import { sql } from 'drizzle-orm';
-import { userWebhooks } from '../../shared/schema';
-import { eq } from 'drizzle-orm';
+import crypto from 'crypto';
+import { processWebhookSignal } from './signals';
+import { MultiplayerServer } from '../multiplayer';
 
-// Define types
-interface TradingViewAlert {
-  token: string;
-  exchange?: string;
-  ticker?: string;
-  bar?: {
-    time: string;
-    open: number;
-    high: number;
-    low: number;
-    close: number;
-    volume: number;
-  };
-  strategy?: {
-    position_size?: number;
-    order_price?: number;
-    order_action?: string;
-    order_contracts?: number;
-    order_id?: string;
-    market_position?: string;
-    market_position_size?: number;
-    prev_market_position?: string;
-    prev_market_position_size?: number;
-  };
-  close?: number;
-  time?: string;
-  message?: string;
-  // Allow dynamic properties from TradingView
-  [key: string]: any;
-}
+// Simple logging function
+const log = (message: string, category: string = 'general') => {
+  console.log(`[${category}] ${message}`);
+};
+
+// Regular Expression to extract placeholders in the format: {{variable}}
+const PLACEHOLDER_REGEX = /\{\{([^}]+)\}\}/g;
 
 /**
- * Process incoming TradingView webhook alerts
+ * Parse TradingView alert data
+ * 
+ * TradingView alerts can be customized with templates like:
+ * {
+ *   "symbol": "{{ticker}}",
+ *   "side": "{{strategy.order.action}}",
+ *   "price": {{close}},
+ *   "tp": {{plot("Take Profit")}}
+ * }
+ * 
+ * @param payload The raw webhook payload
+ * @returns Parsed trading signal in platform format
  */
-export const processTradingViewAlert = async (req: Request, res: Response) => {
+export const parseTradingViewAlert = (payload: any) => {
   try {
-    const token = req.params.token;
-    if (!token) {
-      return res.status(400).json({ error: 'Missing token parameter' });
-    }
-
-    // Validate the webhook token
-    const webhook = await storage.query.userWebhooks.findFirst({
-      where: eq(storage.schema.userWebhooks.token, token)
-    });
-
-    if (!webhook) {
-      return res.status(404).json({ error: 'Invalid webhook token' });
-    }
-
-    const payload: TradingViewAlert = req.body;
-
-    // Ensure the payload has the minimum required fields
-    if (!payload) {
-      return res.status(400).json({ error: 'Invalid or empty payload' });
-    }
-
-    // Standardize the alert format for internal use
-    const signalContent = formatTradingViewAlert(payload);
-
-    // Update webhook statistics
-    await storage.update(storage.schema.userWebhooks)
-      .set({
-        signalCount: webhook.signalCount + 1,
-        lastUsedAt: new Date().toISOString()
-      })
-      .where(eq(storage.schema.userWebhooks.id, webhook.id));
-
-    // Process the signal using the existing signals processor
-    const { processWebhookSignal } = await import('./signals');
+    // If payload is a string (common with TradingView), try to parse it
+    const data = typeof payload === 'string' ? JSON.parse(payload) : payload;
     
-    // Format the payload to match expected format
-    const formattedPayload = {
-      content: `TradingView Alert: ${signalContent.action} ${signalContent.symbol} at ${signalContent.price}`,
-      channel_name: 'tradingview-signals',
-      market_type: signalContent.exchange === 'CRYPTO' ? 'crypto' : 
-                   signalContent.exchange === 'FOREX' ? 'forex' : 'stocks',
-      metadata: signalContent
+    // Extract required fields from the TradingView format
+    const symbol = data.symbol || data.ticker || '';
+    const direction = (data.side || data.action || '').toLowerCase();
+    const entryPrice = parseFloat(data.price || data.close || 0);
+    
+    // Normalize direction to our platform format
+    let normalizedDirection = 'buy';
+    if (direction.includes('sell') || direction.includes('short')) {
+      normalizedDirection = 'sell';
+    }
+    
+    // Map to our standardized format
+    const signal = {
+      id: crypto.randomUUID(),
+      Symbol: symbol,
+      Asset: determineAssetType(symbol),
+      Direction: normalizedDirection,
+      'Entry Price': entryPrice,
+      'Stop Loss': parseFloat(data.sl || data.stop_loss || 0) || null,
+      'Take Profit': parseFloat(data.tp || data.take_profit || 0) || null,
+      TP1: parseFloat(data.tp1 || data.tp || 0) || null,
+      TP2: parseFloat(data.tp2 || 0) || null,
+      TP3: parseFloat(data.tp3 || 0) || null,
+      Status: 'active',
+      Date: new Date().toISOString().split('T')[0],
+      Time: new Date().toISOString().split('T')[1].slice(0, 8),
+      Provider: data.provider || 'TradingView',
+      Notes: data.notes || data.message || `TradingView Alert for ${symbol}`
     };
     
-    // Process the signal for broadcasting
-    await processWebhookSignal(formattedPayload, webhook.userId);
-
-    return res.status(200).json({
-      success: true,
-      message: 'TradingView alert processed successfully'
-    });
+    log(`Parsed TradingView signal: ${JSON.stringify(signal)}`, 'webhook');
+    return signal;
   } catch (error) {
-    console.error('Error processing TradingView alert:', error);
-    return res.status(500).json({ error: 'Failed to process TradingView alert' });
+    log(`Error parsing TradingView alert: ${error}`, 'webhook');
+    throw new Error(`Failed to parse TradingView alert: ${error}`);
   }
 };
 
 /**
- * Format TradingView alert data into a standardized signal format
+ * Attempt to determine the asset type based on the symbol
  */
-function formatTradingViewAlert(payload: TradingViewAlert): any {
-  // Default values
-  let signalType = 'ALERT';
-  let action = 'NOTIFICATION';
-  let symbol = payload.ticker || '';
-  let exchange = payload.exchange || '';
-  let message = payload.message || '';
-  let price = payload.close || (payload.bar?.close || 0);
-  let entryPrice = 0;
-  let stopLoss = 0;
-  let takeProfit = 0;
+const determineAssetType = (symbol: string): string => {
+  symbol = symbol.toUpperCase();
   
-  // Try to extract information from message if it exists
-  if (message) {
-    // Check for common strategy patterns
-    if (message.includes('BUY') || message.includes('LONG')) {
-      signalType = 'ENTRY';
-      action = 'BUY';
-    } else if (message.includes('SELL') || message.includes('SHORT')) {
-      signalType = 'ENTRY';
-      action = 'SELL';
-    } else if (message.includes('EXIT') || message.includes('CLOSE')) {
-      signalType = 'EXIT';
-      action = 'CLOSE';
-    }
-    
-    // Try to extract symbol if not provided
-    if (!symbol) {
-      const symbolMatch = message.match(/\b[A-Z]+\/[A-Z]+\b|\b[A-Z]+[A-Z0-9]*\b/);
-      if (symbolMatch) {
-        symbol = symbolMatch[0];
-      }
-    }
-    
-    // Try to extract price levels
-    const priceMatch = message.match(/price[:\s]+(\d+\.?\d*)/i);
-    if (priceMatch) {
-      entryPrice = parseFloat(priceMatch[1]);
-    }
-    
-    const slMatch = message.match(/stop[:\s]+(\d+\.?\d*)|SL[:\s]+(\d+\.?\d*)/i);
-    if (slMatch) {
-      stopLoss = parseFloat(slMatch[1] || slMatch[2]);
-    }
-    
-    const tpMatch = message.match(/target[:\s]+(\d+\.?\d*)|TP[:\s]+(\d+\.?\d*)/i);
-    if (tpMatch) {
-      takeProfit = parseFloat(tpMatch[1] || tpMatch[2]);
-    }
+  // Check for common forex pairs
+  if (/^(EUR|USD|GBP|JPY|AUD|NZD|CAD|CHF)[A-Z]{3}$/.test(symbol)) {
+    return 'forex';
   }
   
-  // If strategy data is available, use it
-  if (payload.strategy) {
-    if (payload.strategy.order_action === 'buy') {
-      signalType = 'ENTRY';
-      action = 'BUY';
-    } else if (payload.strategy.order_action === 'sell') {
-      signalType = 'ENTRY';
-      action = 'SELL';
-    }
-    
-    if (payload.strategy.order_price) {
-      entryPrice = payload.strategy.order_price;
-    }
+  // Check for common crypto tickers
+  if (symbol.includes('BTC') || symbol.includes('ETH') || 
+      symbol.includes('USDT') || symbol.includes('BNB') ||
+      symbol.endsWith('PERP')) {
+    return 'crypto';
   }
   
-  // Return standardized format
-  return {
-    signalType,
-    action,
-    symbol,
-    exchange,
-    message,
-    price,
-    levels: {
-      entry: entryPrice || price,
-      stopLoss: stopLoss,
-      takeProfit: takeProfit
-    },
-    metadata: {
-      source: 'tradingview',
-      originalPayload: payload
-    },
-    timestamp: new Date().toISOString()
-  };
-}
+  // Check for futures symbols
+  if (symbol.includes('F') || symbol.endsWith('F') || 
+      symbol.includes('_F') || /\d{4}/.test(symbol)) {
+    return 'futures';
+  }
+  
+  // Default to stocks
+  return 'stocks';
+};
 
 /**
- * Generate a sample TradingView alert payload for users
+ * Process TradingView webhook and send signal to the correct user
  */
-export const getTradingViewAlertTemplate = () => {
-  return {
-    basicTemplate: `{
-  "token": "{{token}}",
-  "exchange": "{{exchange}}",
-  "ticker": "{{ticker}}",
-  "close": {{close}},
-  "message": "{{strategy.order.action}} Alert: {{ticker}} at {{close}}"
-}`,
-    advancedTemplate: `{
-  "token": "{{token}}",
-  "exchange": "{{exchange}}",
-  "ticker": "{{ticker}}",
-  "bar": {
-    "time": "{{time}}",
-    "open": {{open}},
-    "high": {{high}},
-    "low": {{low}},
-    "close": {{close}},
-    "volume": {{volume}}
-  },
-  "strategy": {
-    "position_size": {{strategy.position_size}},
-    "order_action": "{{strategy.order.action}}",
-    "order_price": {{strategy.order.price}},
-    "market_position": "{{strategy.market_position}}"
-  },
-  "message": "{{strategy.order.action}} Alert: {{ticker}} at {{close}}, SL: {{plot_0}}, TP: {{plot_1}}"
-}`
-  };
+export const processTradingViewWebhook = async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const payload = req.body;
+    
+    if (!token) {
+      log('TradingView webhook missing token', 'webhook');
+      return res.status(400).json({ error: 'Missing token parameter' });
+    }
+    
+    log(`Received TradingView webhook with token: ${token}`, 'webhook');
+    
+    // Get userId from token (via user-webhooks module)
+    try {
+      // Directly import to avoid circular dependencies
+      const { getUserWebhookByToken, processUserWebhook } = require('./user-webhooks');
+      
+      const webhook = await getUserWebhookByToken(token);
+      if (!webhook) {
+        log(`Invalid webhook token: ${token}`, 'webhook');
+        return res.status(404).json({ error: 'Webhook not found' });
+      }
+      
+      // Parse the TradingView alert format
+      const parsedSignal = parseTradingViewAlert(payload);
+      
+      // Process the signal through the regular webhook system
+      const success = await processUserWebhook(token, parsedSignal);
+      
+      if (success) {
+        // If we have a multiplayer server instance, send directly to the user
+        if (MultiplayerServer.instance && webhook.userId) {
+          // Convert the server-side signal format to client-side format
+          const clientSignal = {
+            symbol: parsedSignal.Symbol,
+            side: parsedSignal.Direction.toLowerCase() as 'buy' | 'sell',
+            entryPrice: parsedSignal['Entry Price'],
+            takeProfit: parsedSignal['Take Profit'],
+            stopLoss: parsedSignal['Stop Loss'],
+            timeframe: payload.timeframe || 'Unknown',
+            description: parsedSignal.Notes
+          };
+          
+          // Send the signal to the specific user
+          MultiplayerServer.instance.sendToUser(webhook.userId, {
+            type: 'trading_signal',
+            data: {
+              signal: clientSignal,
+              provider: parsedSignal.Provider
+            }
+          });
+          
+          log(`Sent trading signal to user ${webhook.userId}`, 'webhook');
+        }
+        
+        return res.status(200).json({ success: true, message: 'Webhook processed successfully' });
+      } else {
+        return res.status(500).json({ error: 'Failed to process webhook' });
+      }
+    } catch (error) {
+      log(`Error processing TradingView webhook: ${error}`, 'webhook');
+      return res.status(500).json({ error: `Error processing webhook: ${error}` });
+    }
+  } catch (error) {
+    log(`TradingView webhook error: ${error}`, 'webhook');
+    return res.status(500).json({ error: `Server error: ${error}` });
+  }
 };

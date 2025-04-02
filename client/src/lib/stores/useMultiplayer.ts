@@ -46,6 +46,7 @@ interface MultiplayerState {
   currentRoomId: string | null;
   isConnected: boolean;
   friendList: string[]; // Array of user IDs who are friends
+  lastSignals: Record<string, TradeSignal>; // Last trading signals by category
   setCurrentUser: (user: Player) => void;
   sendChatMessage: (
     message: string, 
@@ -53,6 +54,7 @@ interface MultiplayerState {
     target?: string,
     tradeSignal?: TradeSignal
   ) => void;
+  receiveTradeSignal: (signal: TradeSignal, provider: string) => void;
   deleteChatMessage: (messageId: string) => void;
   joinRoom: (roomId: string) => void;
   leaveRoom: () => void;
@@ -141,6 +143,7 @@ export const useMultiplayer = create<MultiplayerState>((set, get) => ({
   currentRoomId: null,
   isConnected: true,
   friendList: ["1"], // Initialize with one mock friend (TradeExpert)
+  lastSignals: {},  // Initialize empty object for last signals by category
   
   setCurrentUser: (user) => set({ currentUser: user }),
   
@@ -225,5 +228,36 @@ export const useMultiplayer = create<MultiplayerState>((set, get) => ({
     
     // In a real implementation, this would send the friend request to the server
     console.log("Friend request sent to:", userId);
+  },
+  
+  // Receive a trading signal from the server
+  receiveTradeSignal: (signal, provider) => {
+    const { chatMessages, lastSignals } = get();
+    
+    // Create a system message for the signal
+    const signalMessage = `New trading signal from ${provider}: ${signal.symbol} ${signal.side.toUpperCase()} at ${signal.entryPrice || 'market price'}`;
+    
+    // Create a new chat message to display the signal
+    const newMessage: ChatMessage = {
+      id: uuidv4(),
+      sender: 'System',
+      senderId: 'system',
+      message: signalMessage,
+      timestamp: Date.now(),
+      type: 'trading',
+      tradeSignal: signal
+    };
+    
+    // Update the chat messages and last signals
+    set({ 
+      chatMessages: [...chatMessages, newMessage],
+      lastSignals: { 
+        ...lastSignals, 
+        [provider]: signal 
+      }
+    });
+    
+    // Show a notification or alert (this would be implemented in UI)
+    console.log("Received trading signal:", signal, "from", provider);
   }
 }));
