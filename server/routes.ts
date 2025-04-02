@@ -5,7 +5,16 @@ import { getMarketData, getCurrentPrice, getSymbols } from "./api/market";
 import { getNews, getTopicNews } from "./api/news";
 import { getLeaderboard, getTrader } from "./api/leaderboard";
 import { getBots, getBot, createBot, updateBot, deleteBot, runBot, stopBot } from "./api/bots";
-import { getSignals, receiveWebhook } from "./api/signals";
+
+// We'll create separate functions since we have a new signals implementation
+const getSignals = (req: any, res: any) => {
+  // This is just a wrapper to redirect to the new endpoint
+  res.redirect(307, `/api/sheets/trading-signals?marketType=crypto`);
+};
+const receiveWebhook = (req: any, res: any) => {
+  // For now just return a success message
+  return res.json({success: true, message: 'Webhook received'});
+};
 import { getGameLeaderboard, getGamePlayer, submitGameScore } from "./api/game-leaderboard";
 import { getRssFeed, getAvailableSources, getEconomicCalendar } from "./api/rss-feeds";
 import { getAIMarketAnalysis, getTradingSuggestions } from "./api/ai-market-analysis";
@@ -17,6 +26,7 @@ import journalRoutes from './api/journal'; // Added import for journal routes
 import learningRoutes from './api/learning'; // Added import for learning center routes
 import settingsRoutes from './api/settings'; // Added import for settings routes
 import signalsAnalyzerRoutes from './api/signals-analyzer'; // Added import for signals analyzer routes
+import googleSheetsSignalsRoutes from './api/signals'; // Added import for Google Sheets signals routes
 import openAIProxyRoutes from './api/openai-proxy'; // Added import for OpenAI proxy routes
 import brokerRoutes from './routes/broker-routes'; // Added import for broker routes
 import identityRoutes from './routes/identity-routes'; // Added import for user identity routes
@@ -135,6 +145,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Signals Analyzer routes
   app.use("/api/signals-analyzer", signalsAnalyzerRoutes);
+  
+  // Google Sheets Signals routes
+  app.use("/api/sheets", googleSheetsSignalsRoutes);
   
   // OpenAI API proxy routes
   app.use("/api/openai-proxy", openAIProxyRoutes);

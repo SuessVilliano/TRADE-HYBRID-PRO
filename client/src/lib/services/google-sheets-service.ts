@@ -34,6 +34,30 @@ export class GoogleSheetsService {
   // Fetch crypto signals (Paradox AI)
   async fetchCryptoSignals(): Promise<TradeSignal[]> {
     try {
+      // First try to fetch signals from our backend API
+      try {
+        const response = await axios.get('/api/sheets/trading-signals', {
+          params: {
+            marketType: 'crypto',
+            gid: 0
+          }
+        });
+        
+        console.log('Server response for crypto signals:', 
+                   response.data ? 'Data received' : 'Empty response');
+        
+        if (response.data && response.data.signals && response.data.signals.length > 0) {
+          // Transform the signals to our format
+          return this.transformSignalsToTradeSignals(response.data.signals, 'crypto', 'Paradox');
+        }
+        
+        // If no signals from API, fallback to direct fetch
+        console.log('No crypto signals from API, falling back to direct fetch');
+      } catch (apiError) {
+        console.error('API fetch error for crypto signals, falling back to direct fetch:', apiError);
+      }
+      
+      // Fallback to direct fetch
       return await this.fetchSignalsFromSheet(this.CRYPTO_SIGNALS_URL, 'crypto', 'Paradox');
     } catch (error) {
       console.error('Error fetching crypto signals:', error);
@@ -44,6 +68,30 @@ export class GoogleSheetsService {
   // Fetch futures signals (Hybrid AI)
   async fetchFuturesSignals(): Promise<TradeSignal[]> {
     try {
+      // First try to fetch signals from our backend API
+      try {
+        const response = await axios.get('/api/sheets/trading-signals', {
+          params: {
+            marketType: 'futures',
+            gid: 1
+          }
+        });
+        
+        console.log('Server response for futures signals:', 
+                   response.data ? 'Data received' : 'Empty response');
+        
+        if (response.data && response.data.signals && response.data.signals.length > 0) {
+          // Transform the signals to our format
+          return this.transformSignalsToTradeSignals(response.data.signals, 'futures', 'Hybrid');
+        }
+        
+        // If no signals from API, fallback to direct fetch
+        console.log('No futures signals from API, falling back to direct fetch');
+      } catch (apiError) {
+        console.error('API fetch error for futures signals, falling back to direct fetch:', apiError);
+      }
+      
+      // Fallback to direct fetch
       return await this.fetchSignalsFromSheet(this.FUTURES_SIGNALS_URL, 'futures', 'Hybrid');
     } catch (error) {
       console.error('Error fetching futures signals:', error);
@@ -54,11 +102,99 @@ export class GoogleSheetsService {
   // Fetch forex signals (Solaris AI)
   async fetchForexSignals(): Promise<TradeSignal[]> {
     try {
+      // First try to fetch signals from our backend API
+      try {
+        const response = await axios.get('/api/sheets/trading-signals', {
+          params: {
+            marketType: 'forex',
+            gid: 2
+          }
+        });
+        
+        console.log('Server response for forex signals:', 
+                   response.data ? 'Data received' : 'Empty response');
+        
+        if (response.data && response.data.signals && response.data.signals.length > 0) {
+          // Transform the signals to our format
+          return this.transformSignalsToTradeSignals(response.data.signals, 'forex', 'Solaris');
+        }
+        
+        // If no signals from API, fallback to direct fetch
+        console.log('No forex signals from API, falling back to direct fetch');
+      } catch (apiError) {
+        console.error('API fetch error for forex signals, falling back to direct fetch:', apiError);
+      }
+      
+      // Fallback to direct fetch
       return await this.fetchSignalsFromSheet(this.FOREX_SIGNALS_URL, 'forex', 'Solaris');
     } catch (error) {
       console.error('Error fetching forex signals:', error);
       return [];
     }
+  }
+  
+  // Transform signals from API to TradeSignal format
+  private transformSignalsToTradeSignals(
+    signals: Record<string, any>[], 
+    marketType: 'crypto' | 'forex' | 'futures',
+    provider: 'Paradox' | 'Hybrid' | 'Solaris'
+  ): TradeSignal[] {
+    return signals.map((signal, index) => {
+      try {
+        // Attempt to extract important fields
+        const asset = signal.Symbol || signal.Asset || signal.Pair || 'Unknown';
+        
+        // Parse direction
+        const directionStr = signal.Direction || signal.Side || signal.Type || '';
+        const direction = this.parseDirection(directionStr);
+        
+        // Parse prices
+        const entryPrice = this.parseNumber(signal['Entry Price'] || signal.Entry || signal.Price || 0);
+        const stopLoss = this.parseNumber(signal['Stop Loss'] || signal.SL || signal.Stop || 0);
+        const takeProfit1 = this.parseNumber(signal['Take Profit'] || signal.TP || signal.TP1 || signal.Target || 0);
+        const takeProfit2 = this.parseNumber(signal.TP2 || signal['Take Profit 2'] || signal['Target 2'] || 0);
+        const takeProfit3 = this.parseNumber(signal.TP3 || signal['Take Profit 3'] || signal['Target 3'] || 0);
+        
+        // Parse status
+        const statusStr = signal.Status || signal.Result || '';
+        const status = this.parseStatus(statusStr);
+        
+        // Parse timestamps
+        const timestamp = signal.Timestamp || signal.Date || signal.Time || new Date().toISOString();
+        
+        // Only include valid signals
+        if (asset !== 'Unknown' && entryPrice > 0) {
+          const tradeSignal: TradeSignal = {
+            id: `${provider}-${index}-${Date.now()}`,
+            timestamp: typeof timestamp === 'string' ? timestamp : new Date().toISOString(),
+            asset,
+            direction,
+            entryPrice,
+            stopLoss,
+            takeProfit1,
+            takeProfit2,
+            takeProfit3,
+            status,
+            marketType,
+            provider,
+            pnl: this.parseNumber(signal['P&L'] || signal.PnL || signal.Profit || 0),
+            pnlPercentage: this.parseNumber(signal['P&L %'] || signal.ROI || signal.Return || 0),
+            notes: signal.Notes || signal.Comments || '',
+            accuracy: provider === 'Paradox' ? 0.89 : provider === 'Hybrid' ? 0.92 : 0.85,
+          };
+          
+          // Generate AI analysis
+          tradeSignal.aiAnalysis = this.generateAIAnalysis(tradeSignal);
+          
+          return tradeSignal;
+        }
+      } catch (error) {
+        console.error(`Error transforming signal at index ${index}:`, error);
+      }
+      
+      // Return a null value for invalid signals to be filtered out
+      return null as unknown as TradeSignal;
+    }).filter(signal => signal !== null); // Filter out null signals
   }
 
   // Fetch all signals from all providers
@@ -168,7 +304,7 @@ export class GoogleSheetsService {
         });
         
         // Skip empty rows
-        if (values.every(v => v === null)) continue;
+        if (values.every((v: any) => v === null)) continue;
         
         // Create an object matching column headers to values
         const rowData: Record<string, any> = {};

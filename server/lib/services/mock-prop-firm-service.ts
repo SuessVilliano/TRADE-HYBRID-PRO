@@ -43,8 +43,8 @@ export class MockPropFirmService {
       // Make a real API call to test connection
       try {
         console.log('Testing Alpaca API connection with credentials:', { 
-          apiKey: credentials.apiKey.substring(0, 4) + '...',
-          secretKeyLength: credentials.secretKey.length
+          apiKey: credentials.apiKey ? credentials.apiKey.substring(0, 4) + '...' : 'undefined',
+          secretKeyLength: credentials.secretKey ? credentials.secretKey.length : 0
         });
         
         // Use the AlpacaService to validate credentials
