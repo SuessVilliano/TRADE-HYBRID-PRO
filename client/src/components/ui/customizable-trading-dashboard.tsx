@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Button } from './button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './card';
 import { Badge } from './badge';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -197,6 +198,72 @@ interface CustomizableTradingDashboardProps {
   defaultSymbol?: string;
   className?: string;
 }
+
+// Animation variants for dashboard components
+const panelVariants: Variants = {
+  hidden: { 
+    opacity: 0,
+    y: 20,
+    scale: 0.95
+  },
+  visible: (i: number) => ({ 
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { 
+      type: 'spring',
+      stiffness: 350,
+      damping: 25,
+      mass: 0.5,
+      delay: i * 0.05 // Staggered delay based on priority
+    }
+  }),
+  hover: {
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+    scale: 1.005,
+    transition: {
+      duration: 0.2
+    }
+  },
+  tap: {
+    scale: 0.98,
+    transition: {
+      duration: 0.1
+    }
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.9,
+    transition: {
+      duration: 0.2
+    }
+  }
+};
+
+const buttonVariants: Variants = {
+  initial: { scale: 1 },
+  hover: { 
+    scale: 1.05,
+    transition: { duration: 0.2 }
+  },
+  tap: { 
+    scale: 0.95,
+    transition: { duration: 0.1 }
+  }
+};
+
+const contentVariants: Variants = {
+  hidden: { 
+    opacity: 0 
+  },
+  visible: { 
+    opacity: 1,
+    transition: { 
+      delay: 0.1,
+      duration: 0.3
+    }
+  }
+};
 
 export function CustomizableTradingDashboard({ 
   defaultSymbol, 
@@ -666,14 +733,27 @@ export function CustomizableTradingDashboard({
         const mainPanelEffectiveWidth = colSpan - rightPanelWidth;
                 
         return (
-          <div 
+          <motion.div 
             key={`docked-group-${item.id}`}
             className={`col-span-${colSpan} relative h-full flex flex-col`}
             style={{ height: item.height * 80 }}
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: { 
+                opacity: 1,
+                transition: { 
+                  staggerChildren: 0.05,
+                  delay: 0.1,
+                  duration: 0.4
+                }
+              }
+            }}
           >
             <div className="flex flex-row h-full relative">
               {/* Main panel (chart) */}
-              <div 
+              <motion.div 
                 id={`panel-${item.id}`}
                 className={cn(
                   "flex-grow flex-shrink h-full relative",
@@ -683,110 +763,150 @@ export function CustomizableTradingDashboard({
                 )}
                 style={{ minWidth: '70%' }}
                 onMouseDown={e => handlePanelDragStart(e, item.id)}
+                variants={panelVariants}
+                custom={item.priority || 1}
+                whileHover={!editMode ? "hover" : undefined}
+                whileTap={!editMode ? "tap" : undefined}
+                exit="exit"
+                layout
               >
                 <div className="absolute top-0 left-0 right-0 z-10 bg-slate-800/90 flex items-center justify-between px-3 py-2 border-b border-slate-700">
                   <div className="font-medium">{item.title}</div>
                   <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
+                    <motion.button
+                      variants={buttonVariants}
+                      initial="initial"
+                      whileHover="hover"
+                      whileTap="tap"
                       onClick={() => toggleMaximizePanel(item.id)}
+                      className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
                     >
                       <Maximize2 className="h-3 w-3" />
-                    </Button>
+                    </motion.button>
                   </div>
                 </div>
-                <div className="pt-10 h-full w-full">
+                <motion.div 
+                  className="pt-10 h-full w-full"
+                  variants={contentVariants}
+                >
                   {renderPanelContent(item)}
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
                       
               {/* Right-docked panel (trade panel) */}
               {rightDockedPanel && (
-                <div 
+                <motion.div 
                   id={`panel-${rightDockedPanel.id}`}
                   className={cn(
                     "h-full max-h-full border-t border-r border-b border-slate-700 bg-slate-800 rounded-r-lg overflow-hidden",
-                    "transition-all duration-200 ease-in-out flex flex-col",
+                    "flex flex-col",
                     rightDockedPanel.locked && "border-r-2 border-t-2 border-b-2 border-solid border-yellow-500/50"
                   )}
                   style={{ 
-                    width: `${(rightDockedPanel.width / colSpan) * 100}%`, 
+                    width: `${(rightDockedPanel.width / colSpan) * 100}%`,
                     minWidth: `${rightDockedPanel.minWidth ? rightDockedPanel.minWidth * 50 : 200}px`,
                     maxWidth: rightDockedPanel.maxWidth ? `${rightDockedPanel.maxWidth * 80}px` : undefined
                   }}
+                  variants={panelVariants}
+                  custom={rightDockedPanel.priority || 5}
+                  whileHover={!editMode ? "hover" : undefined}
+                  whileTap={!editMode ? "tap" : undefined}
                   onMouseDown={e => handlePanelDragStart(e, rightDockedPanel.id)}
                 >
                   <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700 bg-slate-800">
                     <div className="font-medium text-sm">{rightDockedPanel.title}</div>
                     <div className="flex items-center">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
+                      <motion.button
+                        variants={buttonVariants}
+                        initial="initial"
+                        whileHover="hover"
+                        whileTap="tap"
                         onClick={() => toggleMaximizePanel(rightDockedPanel.id)}
+                        className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
                       >
                         <Maximize2 className="h-3 w-3" />
-                      </Button>
+                      </motion.button>
                     </div>
                   </div>
-                  <div className="flex-grow overflow-auto">
+                  <motion.div 
+                    className="flex-grow overflow-auto"
+                    variants={contentVariants}
+                  >
                     {renderPanelContent(rightDockedPanel)}
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
               )}
             </div>
-          </div>
+          </motion.div>
         );
       }
               
       // Regular standalone panel rendering
       const itemColSpan = Math.min(item.width, 12);
+      
+      // Calculate animation custom variant props
+      const customProps = item.priority || 10;  // Default to 10 if no priority set
               
       return (
-        <Card
+        <motion.div
           key={item.id}
           id={`panel-${item.id}`}
           className={cn(
             `col-span-${itemColSpan}`,
-            "bg-slate-800 border-slate-700 overflow-hidden flex flex-col",
+            "bg-slate-800 border-slate-700 rounded-lg overflow-hidden flex flex-col",
             editMode && !item.locked && "cursor-move border-2 border-dashed border-blue-500/50 hover:border-blue-500",
             item.locked && "border-2 border-solid border-yellow-500/50",
             editMode && item.locked && "border-yellow-500",
           )}
           style={getHeightStyle()}
           onMouseDown={e => handlePanelDragStart(e, item.id)}
+          variants={panelVariants}
+          initial="hidden"
+          animate="visible"
+          whileHover={!editMode ? "hover" : undefined}
+          whileTap={!editMode ? "tap" : undefined}
+          exit="exit"
+          custom={customProps}
+          layout
         >
-          <CardHeader className="py-2 px-3 flex flex-row items-center justify-between bg-slate-800/90">
-            <CardTitle className="text-sm font-medium">{item.title}</CardTitle>
+          <div className="py-2 px-3 flex flex-row items-center justify-between bg-slate-800/90 border-b border-slate-700">
+            <h3 className="text-sm font-medium">{item.title}</h3>
             <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
+              <motion.button
+                variants={buttonVariants}
+                initial="initial"
+                whileHover="hover"
+                whileTap="tap"
                 onClick={() => toggleMaximizePanel(item.id)}
+                className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
               >
                 <Maximize2 className="h-3 w-3" />
-              </Button>
+              </motion.button>
                     
               {/* Only show remove button for non-locked panels in edit mode */}
               {editMode && !item.locked && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-red-400 hover:text-red-500 hover:bg-red-500/10"
+                <motion.button
+                  variants={buttonVariants}
+                  initial="initial"
+                  whileHover="hover"
+                  whileTap="tap"
                   onClick={() => removePanel(item.id)}
+                  className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-red-500/20 text-red-400 hover:text-red-500 transition-colors"
                 >
                   <X className="h-3 w-3" />
-                </Button>
+                </motion.button>
               )}
             </div>
-          </CardHeader>
-          <CardContent className="p-0 flex-grow overflow-auto">
+          </div>
+          <motion.div 
+            className="p-0 flex-grow overflow-auto"
+            variants={contentVariants}
+            initial="hidden"
+            animate="visible"
+          >
             {renderPanelContent(item)}
-          </CardContent>
-        </Card>
+          </motion.div>
+        </motion.div>
       );
     });
   }
@@ -878,35 +998,58 @@ export function CustomizableTradingDashboard({
       )}>
         {maximizedPanel ? (
           // Show only the maximized panel
-          layout.map(item => {
-            if (item.id === maximizedPanel) {
-              return (
-                <div 
-                  key={item.id}
-                  className="col-span-12 bg-slate-800 rounded-lg border border-slate-700 overflow-hidden flex flex-col"
-                  style={{ height: 'calc(100vh - 250px)' }}
-                >
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700 bg-slate-800">
-                    <div className="font-medium">{item.title}</div>
-                    <div className="flex items-center">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => toggleMaximizePanel(item.id)}
-                      >
-                        <Minimize2 className="h-4 w-4" />
-                      </Button>
+          <AnimatePresence>
+            {layout.map(item => {
+              if (item.id === maximizedPanel) {
+                return (
+                  <motion.div 
+                    key={item.id}
+                    className="col-span-12 bg-slate-800 rounded-lg border border-slate-700 overflow-hidden flex flex-col"
+                    style={{ height: 'calc(100vh - 250px)' }}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ 
+                      opacity: 1, 
+                      scale: 1,
+                      transition: {
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 25
+                      }
+                    }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    layoutId={`panel-${item.id}`}
+                  >
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700 bg-slate-800">
+                      <div className="font-medium">{item.title}</div>
+                      <div className="flex items-center">
+                        <motion.button
+                          variants={buttonVariants}
+                          initial="initial"
+                          whileHover="hover"
+                          whileTap="tap"
+                          onClick={() => toggleMaximizePanel(item.id)}
+                          className="h-7 w-7 flex items-center justify-center rounded-full hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                        >
+                          <Minimize2 className="h-4 w-4" />
+                        </motion.button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex-grow overflow-auto">
-                    {renderPanelContent(item)}
-                  </div>
-                </div>
-              );
-            }
-            return null;
-          })
+                    <motion.div 
+                      className="flex-grow overflow-auto"
+                      initial={{ opacity: 0 }}
+                      animate={{ 
+                        opacity: 1,
+                        transition: { delay: 0.1, duration: 0.3 }
+                      }}
+                    >
+                      {renderPanelContent(item)}
+                    </motion.div>
+                  </motion.div>
+                );
+              }
+              return null;
+            })}
+          </AnimatePresence>
         ) : (
           // Group panels by docking relationships
           sortedLayout()
