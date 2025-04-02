@@ -61,6 +61,7 @@ class ServerWhopService extends WhopServiceBase {
       if (whopId === 'demo') {
         const [newUser] = await db.insert(users).values({
           username: 'Demo User',
+          password: 'demo123', // Using a simple password for demo users
           email: 'demo@example.com',
           whopId: whopId,
           createdAt: new Date(),
@@ -83,7 +84,8 @@ class ServerWhopService extends WhopServiceBase {
         // Still create the user but mark them as free tier
         const [newUser] = await db.insert(users).values({
           username: membershipStatus.userDetails?.name || 'New User',
-          email: membershipStatus.userDetails?.email || '',
+          password: 'temppassword', // Temporary password, will need reset
+          email: membershipStatus.userDetails?.email || 'user@example.com',
           whopId: whopId,
           createdAt: new Date(),
           updatedAt: new Date()
@@ -100,7 +102,8 @@ class ServerWhopService extends WhopServiceBase {
       // Create user with active membership
       const [newUser] = await db.insert(users).values({
         username: membershipStatus.userDetails?.name || 'New User',
-        email: membershipStatus.userDetails?.email || '',
+        password: 'temppassword', // Temporary password, will need reset
+        email: membershipStatus.userDetails?.email || 'user@example.com',
         whopId: whopId,
         whopPlanId: membershipStatus.planId,
         createdAt: new Date(),
