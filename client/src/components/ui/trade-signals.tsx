@@ -33,9 +33,10 @@ import { APICredentialsForm } from './api-credentials-form';
 interface TradeSignalsProps {
   signals?: TradeSignal[];
   onViewSignal?: (signalId: string) => void;
+  asCard?: boolean; // Whether to render as a card with a header
 }
 
-export function TradeSignals({ signals = [], onViewSignal }: TradeSignalsProps): JSX.Element {
+export function TradeSignals({ signals = [], onViewSignal, asCard = true }: TradeSignalsProps): JSX.Element {
   // State management
   const [allSignals, setAllSignals] = useState<TradeSignal[]>(signals);
   const [cryptoSignals, setCryptoSignals] = useState<TradeSignal[]>([]);
@@ -763,14 +764,21 @@ ${signal.notes ? `Notes: ${signal.notes}\n` : ''}
     );
   }
 
-  return (
+  // Render the component content based on props
+  const content = (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row justify-between items-start gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">AI Trading Signals</h2>
-          <p className="text-muted-foreground">
-            Trading signals from Paradox, Hybrid, and Solaris AI systems
-          </p>
+          {asCard ? (
+            <>
+              <h2 className="text-2xl font-bold tracking-tight">AI Trading Signals</h2>
+              <p className="text-muted-foreground">
+                Trading signals from Paradox, Hybrid, and Solaris AI systems
+              </p>
+            </>
+          ) : (
+            <h3 className="font-medium text-lg mb-2">Trading Signals</h3>
+          )}
         </div>
         
         <div className="flex items-center space-x-2">
@@ -1185,4 +1193,16 @@ ${signal.notes ? `Notes: ${signal.notes}\n` : ''}
       </Dialog>
     </div>
   );
+  
+  if (asCard) {
+    return (
+      <Card className="overflow-hidden">
+        <CardContent className="p-0">
+          {content}
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  return content;
 }

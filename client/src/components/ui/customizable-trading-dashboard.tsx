@@ -80,34 +80,45 @@ interface DashboardItem {
 const DASHBOARD_TEMPLATES = {
   'fixed-chart-right-panel': [
     // Fixed TradingView chart as the primary panel (locked in place and loads first)
+    // Now full-width with Smart Trade Panel docked as an overlay
     { 
       id: 'tradingview-chart-1', 
       x: 0, 
       y: 0, 
-      width: 8, 
+      width: 12, 
       height: 6, 
-      minWidth: 6, 
+      minWidth: 8, 
       minHeight: 5, 
       componentType: 'tradingview-chart', 
       title: 'TradingView Chart',
       locked: true, // This will be used to prevent moving this panel
       priority: 1, // Highest priority to load first
-      mobileFullWidth: true // Will span full width on mobile
+      mobileFullWidth: true, // Will span full width on mobile
+      settings: {
+        isDocked: true, // Indicates that other panels can dock to this one
+        allowOverlay: true // Allows other panels to overlay on top of this one
+      }
     },
-    // Smart Trade Panel fixed on the right side (loads second)
+    // Smart Trade Panel docked with chart (loads second)
     { 
       id: 'order-entry-1', 
-      x: 8, 
+      x: 9, 
       y: 0, 
-      width: 4, 
+      width: 3, 
       height: 6, 
-      minWidth: 3, 
-      minHeight: 5, 
+      minWidth: 2, 
+      minHeight: 4, 
+      maxWidth: 4, 
       componentType: 'order-entry', 
       title: 'Smart Trade Panel',
       locked: true, // This will be used to prevent moving this panel
       priority: 2, // Second highest priority to load
-      mobilePosition: 'below-chart' // On mobile, this will be positioned directly below the chart
+      mobilePosition: 'below-chart', // On mobile, this will be positioned directly below the chart
+      settings: {
+        isDockedTo: 'tradingview-chart-1', // Indicates which panel this is docked to
+        resizable: true, // Allows the panel to be resized
+        dockedPosition: 'right' // Position relative to the panel it's docked to
+      }
     },
     // Trading Signals 
     { 
@@ -121,7 +132,11 @@ const DASHBOARD_TEMPLATES = {
       componentType: 'trading-signals', 
       title: 'Trading Signals',
       priority: 3, // Third highest priority to load
-      mobileFullWidth: true // Will span full width on mobile
+      mobileFullWidth: true, // Will span full width on mobile
+      settings: {
+        draggable: true, // Can be moved around
+        resizable: true // Can be resized
+      }
     },
   ],
   'default': [
@@ -1060,43 +1075,68 @@ export function CustomizableTradingDashboard({
             return null;
           })
         ) : (
-          // Render normal layout with priority sorting to ensure correct loading order
-          [...layout]
-            // Sort by priority (if present) to ensure widgets load in the desired order - Chart, Smart Trade, Economic Calendar
-            .sort((a, b) => {
-              // If both have priority, sort by it (lower number = higher priority)
-              if (a.priority !== undefined && b.priority !== undefined) return a.priority - b.priority;
-              // Items with priority come first
-              if (a.priority !== undefined) return -1;
-              if (b.priority !== undefined) return 1;
-              // Otherwise, maintain original order
-              return 0;
-            })
-            .map(item => {
-              // Calculate column and row span based on width and height
-              const colSpan = Math.min(item.width, 12);
-              const heightClass = `h-[${item.height * 80}px]`;
-              
-              // Handle mobile layout special positioning
-              const getMobileClassName = () => {
-                // On small screens, adjust layout based on mobile properties
-                if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                  if (item.mobileFullWidth) {
-                    return "col-span-12"; // Full width on mobile
-                  }
-                  
-                  if (item.mobilePosition === 'below-chart') {
-                    // Find the chart panel
-                    const chartPanel = layout.find(p => p.componentType === 'tradingview-chart');
-                    if (chartPanel) {
-                      // Position this panel to appear right below the chart
-                      return "col-span-12 order-2";
-                    }
-                  }
-                }
-                
-                // Default desktop behavior
-                return "col-span-" + colSpan;
+          // Group panels by docking relationships
+          sortedLayout()
+        )}
+      </div>
+    </div>
+  );
+  
+  // Helper function to generate the sorted and docked layout
+  function sortedLayout() {
+    // Sort by priority to ensure correct loading order
+    const sortedItems = [...layout].sort((a, b) => {
+      // If both have priority, sort by it (lower number = higher priority)
+      if (a.priority !== undefined && b.priority !== undefined) return a.priority - b.priority;
+      // Items with priority come first
+      if (a.priority !== undefined) return -1;
+      if (b.priority !== undefined) return 1;
+      // Otherwise, maintain original order
+      return 0;
+    });
+    
+    // Track which panels have been rendered
+    const renderedPanels = new Set<string>();
+    
+    return sortedItems.map(item => {
+      // Skip if this panel has already been rendered as part of a docked group
+      if (renderedPanels.has(item.id)) return null;
+      
+      // Check if this is a dockable panel
+      const isDockablePanel = item.settings?.isDocked === true;
+      
+      // Find any panels that are docked to this one
+      const dockedPanels = isDockablePanel 
+        ? sortedItems.filter(p => p.settings?.isDockedTo === item.id)
+        : [];
+      
+      // Mark all panels in this group as rendered
+      renderedPanels.add(item.id);
+      dockedPanels.forEach(p => renderedPanels.add(p.id));
+      
+      // Calculate column span based on width
+      const colSpan = Math.min(item.width, 12);
+      
+      // Handle mobile layout special positioning
+      const getMobileClassName = (panel: DashboardItem) => {
+        // On small screens, adjust layout based on mobile properties
+        if (typeof window !== 'undefined' && window.innerWidth < 768) {
+          if (panel.mobileFullWidth) {
+            return "col-span-12"; // Full width on mobile
+          }
+          
+          if (panel.mobilePosition === 'below-chart') {
+            // Find the chart panel
+            const chartPanel = layout.find(p => p.componentType === 'tradingview-chart');
+            if (chartPanel) {
+              // Position this panel to appear right below the chart
+              return "col-span-12 order-2";
+            }
+          }
+        }
+        
+        // Default desktop behavior
+        return `col-span-${Math.min(panel.width, 12)}`;
               };
               
               // Adjust panel height for mobile with full-size chart
@@ -1117,12 +1157,104 @@ export function CustomizableTradingDashboard({
                 return { height: item.height * 80 }; // Desktop height
               };
               
+              // Check if this is a panel with docked panels
+              if (isDockablePanel && dockedPanels.length > 0) {
+                // Calculate column and row span based on width and height
+                const colSpan = Math.min(item.width, 12);
+                
+                // Process dockedPanels to find right-docked panel for primary configuration
+                const rightDockedPanel = dockedPanels.find(p => p.settings?.dockedPosition === 'right');
+                
+                // Get the width of the right-docked panel if any
+                const rightPanelWidth = rightDockedPanel ? rightDockedPanel.width : 0;
+                
+                // Adjust the main panel's effective width
+                const mainPanelEffectiveWidth = colSpan - rightPanelWidth;
+                
+                // Create the combined panel layout with docking
+                return (
+                  <div 
+                    key={`docked-group-${item.id}`}
+                    className={`col-span-${colSpan} relative h-full flex flex-col`}
+                    style={getHeightStyle()}
+                  >
+                    {/* Main panel with docked subpanels */}
+                    <div className="flex flex-row h-full relative">
+                      {/* Main panel (usually the chart) */}
+                      <div 
+                        className={cn(
+                          "flex-grow flex-shrink h-full relative",
+                          "bg-slate-800 border border-slate-700 rounded-l-lg overflow-hidden",
+                          item.locked && "border-l-2 border-t-2 border-b-2 border-solid border-yellow-500/50",
+                        )}
+                        style={{ minWidth: '70%' }}
+                      >
+                        <div className="absolute top-0 left-0 right-0 z-10 bg-slate-800/90 flex items-center justify-between px-3 py-2 border-b border-slate-700">
+                          <div className="font-medium text-sm">{item.title}</div>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => toggleMaximizePanel(item.id)}
+                            >
+                              <Maximize2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="pt-10 h-full w-full">
+                          {renderPanelContent(item)}
+                        </div>
+                      </div>
+                      
+                      {/* Render right-docked panel if present */}
+                      {rightDockedPanel && (
+                        <div 
+                          id={`panel-${rightDockedPanel.id}`}
+                          className={cn(
+                            "h-full max-h-full border-t border-r border-b border-slate-700 bg-slate-800 rounded-r-lg overflow-hidden",
+                            "transition-all duration-200 ease-in-out flex flex-col",
+                            rightDockedPanel.locked && "border-r-2 border-t-2 border-b-2 border-solid border-yellow-500/50",
+                          )}
+                          style={{ 
+                            width: `${(rightDockedPanel.width / colSpan) * 100}%`, 
+                            minWidth: `${rightDockedPanel.minWidth ? rightDockedPanel.minWidth * 50 : 200}px`,
+                            maxWidth: `${rightDockedPanel.maxWidth ? rightDockedPanel.maxWidth * 80 : 400}px`
+                          }}
+                        >
+                          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700 bg-slate-800/90">
+                            <div className="font-medium text-sm">{rightDockedPanel.title}</div>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => toggleMaximizePanel(rightDockedPanel.id)}
+                              >
+                                <Maximize2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="p-0 flex-grow overflow-auto">
+                            {renderPanelContent(rightDockedPanel)}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+              
+              // For regular, non-docked panels, render as before
+              const itemColSpan = Math.min(item.width, 12);
+              
               return (
                 <Card
                   key={item.id}
                   id={`panel-${item.id}`}
                   className={cn(
-                    getMobileClassName(),
+                    `col-span-${itemColSpan}`,
                     "bg-slate-800 border-slate-700 overflow-hidden flex flex-col",
                     editMode && !item.locked && "cursor-move border-2 border-dashed border-blue-500/50 hover:border-blue-500",
                     item.locked && "border-2 border-solid border-yellow-500/50",
