@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../lib/context/AuthContext';
 import { useSolanaAuth } from '../lib/context/SolanaAuthProvider';
-import { Podcast, Zap, BookOpen, BarChart4, Briefcase, Shield, Award, PenTool } from 'lucide-react';
+import { Podcast, Zap, BookOpen, BarChart4, Briefcase, Shield, Award, PenTool, CheckCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 
 const LandingPage: React.FC = () => {
@@ -22,7 +22,7 @@ const LandingPage: React.FC = () => {
           <div className="hidden md:flex space-x-4">
             <NavLink href="#features">Features</NavLink>
             <NavLink href="#metaverse">Metaverse</NavLink>
-            <NavLink href="#signals">Signals</NavLink>
+            <NavLink href="#trade">Trade</NavLink>
             <NavLink href="#education">Education</NavLink>
             <NavLink href="#membership">Membership</NavLink>
           </div>
@@ -178,29 +178,148 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
       
-      {/* Signals Analyzer Section */}
-      <section id="signals" className="py-16 bg-gray-900/50">
+      {/* Trade Section */}
+      <section id="trade" className="py-16 bg-gray-900/50">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row-reverse gap-8 items-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center">Advanced Trading Tools</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            <TradeFeatureCard 
+              title="Smart Trade Panel"
+              description="Execute trades with precision using our intuitive and customizable trade panel that integrates seamlessly with your charts."
+              icon={<PenTool className="h-8 w-8" />}
+              linkUrl="/trading-dashboard"
+              linkText="Open Trade Panel"
+            />
+            <TradeFeatureCard 
+              title="Signal Analyzer"
+              description="Backtest trading signals against historical data to determine effectiveness and optimize your trading strategies."
+              icon={<Zap className="h-8 w-8" />}
+              linkUrl="/signals-analyzer"
+              linkText="Try Signal Analyzer"
+            />
+            <TradeFeatureCard 
+              title="Custom Indicators"
+              description="Access to premium technical indicators and create your own custom indicators to spot unique trading opportunities."
+              icon={<BarChart4 className="h-8 w-8" />}
+              linkUrl="/trading/indicators"
+              linkText="View Indicators"
+            />
+          </div>
+          
+          <div className="flex flex-col lg:flex-row gap-12 items-center bg-gray-800 p-8 rounded-xl border border-gray-700">
             <div className="lg:w-1/2">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">Signals Analyzer</h2>
-              <p className="text-gray-300 mb-8">
-                Our proprietary Signals Analyzer helps you backtest trading signals against historical data.
-                Determine if your stop loss or take profit would have been hit first, and optimize your trading strategies
-                with powerful analytics and visual insights.
+              <h3 className="text-2xl font-bold mb-4">Real-Time Multi-Broker Trading</h3>
+              <p className="text-gray-300 mb-6">
+                Trade directly through your favorite brokers with our integrated trading dashboard. 
+                Execute orders, manage positions, and track performance all from one unified interface 
+                with institutional-grade tools previously only available to professionals.
               </p>
-              <Link to="/signals-analyzer">
-                <Button className="bg-yellow-600 hover:bg-yellow-700">
-                  Try Signals Analyzer
+              <div className="flex flex-wrap gap-3">
+                <Link to="/trading-dashboard">
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    Open Trading Dashboard
+                  </Button>
+                </Link>
+                <Link to="/trading-tools">
+                  <Button variant="outline" className="border-gray-600">
+                    Explore All Tools
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            <div className="lg:w-1/2">
+              <img 
+                src="/assets/charts-dashboard.png" 
+                alt="Trading Dashboard" 
+                className="rounded-lg shadow-xl border border-gray-700 w-full"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "https://placehold.co/600x400/2d3748/e2e8f0?text=Trading+Dashboard";
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Education Section */}
+      <section id="education" className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col lg:flex-row gap-8 items-center">
+            <div className="lg:w-1/2">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">Learning Center</h2>
+              <p className="text-gray-300 mb-8">
+                Accelerate your trading journey with our comprehensive Learning Center. Whether you're a beginner 
+                looking to understand market basics or an experienced trader refining advanced strategies, our 
+                structured learning paths provide the knowledge you need to succeed in today's markets.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <EducationFeature 
+                  title="Structured Learning Paths" 
+                  description="Follow step-by-step courses designed for your experience level"
+                />
+                <EducationFeature 
+                  title="Video Tutorials" 
+                  description="Visual explanations of complex trading concepts"
+                />
+                <EducationFeature 
+                  title="Interactive Quizzes" 
+                  description="Test your knowledge and reinforce your learning"
+                />
+                <EducationFeature 
+                  title="Trading Simulations" 
+                  description="Practice in risk-free environments before trading real capital"
+                />
+              </div>
+              <Link to="/learn">
+                <Button className="bg-green-600 hover:bg-green-700">
+                  Explore Learning Center
                 </Button>
               </Link>
             </div>
             <div className="lg:w-1/2">
-              <img 
-                src="/assets/signals-analyzer-preview.png" 
-                alt="Signals Analyzer" 
-                className="rounded-lg shadow-xl border border-gray-700"
-              />
+              <div className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
+                <div className="p-1 bg-gray-900">
+                  <div className="flex space-x-1.5 px-2 py-1">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold mb-4 flex items-center">
+                    <BookOpen className="h-5 w-5 mr-2 text-green-500" />
+                    Popular Learning Modules
+                  </h3>
+                  <div className="space-y-3">
+                    <LearningModule 
+                      title="Technical Analysis Fundamentals" 
+                      level="Beginner"
+                      lessons={12}
+                      progress={100}
+                    />
+                    <LearningModule 
+                      title="Advanced Chart Patterns" 
+                      level="Intermediate"
+                      lessons={8}
+                      progress={65}
+                    />
+                    <LearningModule 
+                      title="Risk Management Strategies" 
+                      level="All Levels"
+                      lessons={6}
+                      progress={30}
+                    />
+                    <LearningModule 
+                      title="Algorithmic Trading Basics" 
+                      level="Advanced"
+                      lessons={10}
+                      progress={10}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -349,6 +468,49 @@ const FeatureCard: React.FC<{
   </div>
 );
 
+const EducationFeature: React.FC<{
+  title: string;
+  description: string;
+}> = ({ title, description }) => (
+  <div className="p-4 border border-gray-700 rounded-lg bg-gray-800/50">
+    <h4 className="font-semibold mb-1 flex items-center">
+      <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+      {title}
+    </h4>
+    <p className="text-sm text-gray-400">{description}</p>
+  </div>
+);
+
+const LearningModule: React.FC<{
+  title: string;
+  level: string;
+  lessons: number;
+  progress: number;
+}> = ({ title, level, lessons, progress }) => (
+  <div className="p-3 rounded-md border border-gray-700 bg-gray-800/50">
+    <div className="flex justify-between items-start mb-2">
+      <h5 className="font-medium text-sm">{title}</h5>
+      <span className="text-xs px-2 py-0.5 bg-green-500/10 text-green-400 rounded-full">{level}</span>
+    </div>
+    <div className="flex items-center text-xs text-gray-400 mb-2">
+      <BookOpen className="h-3.5 w-3.5 mr-1" />
+      <span>{lessons} lessons</span>
+    </div>
+    <div className="w-full bg-gray-700 rounded-full h-1.5 mb-1">
+      <div 
+        className="bg-green-500 h-1.5 rounded-full" 
+        style={{ width: `${progress}%` }}
+      ></div>
+    </div>
+    <div className="flex justify-between text-xs">
+      <span className="text-gray-500">{progress}% complete</span>
+      <Link to="/learn" className="text-green-400 hover:text-green-300">
+        {progress === 100 ? 'Completed' : 'Continue'}
+      </Link>
+    </div>
+  </div>
+);
+
 const MetaverseFeature: React.FC<{
   title: string;
   description: string;
@@ -362,6 +524,25 @@ const MetaverseFeature: React.FC<{
       <h4 className="font-medium text-sm truncate">{title}</h4>
       <p className="text-xs text-gray-400 mt-1">{description}</p>
     </div>
+  </div>
+);
+
+const TradeFeatureCard: React.FC<{
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  linkUrl: string;
+  linkText: string;
+}> = ({ title, description, icon, linkUrl, linkText }) => (
+  <div className="bg-gray-800 p-6 rounded-lg border border-gray-700 hover:border-blue-500 transition-colors h-full flex flex-col">
+    <div className="mb-3 text-blue-500">{icon}</div>
+    <h3 className="text-lg font-bold mb-2">{title}</h3>
+    <p className="text-gray-400 mb-4 flex-grow">{description}</p>
+    <Link to={linkUrl} className="inline-block">
+      <Button variant="outline" size="sm" className="mt-2 border-blue-500 text-blue-400 hover:bg-blue-900/20">
+        {linkText}
+      </Button>
+    </Link>
   </div>
 );
 
