@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
@@ -7,10 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Bell, Lock, Palette, MonitorSmartphone, Volume2, Database, Globe, Cpu } from 'lucide-react';
+import { Bell, Lock, Palette, MonitorSmartphone, Volume2, Database, Globe, Cpu, Settings } from 'lucide-react';
 import useLocalStorage from '@/lib/hooks/useLocalStorage';
 import { useTheme } from '@/lib/hooks/useTheme';
 import { useAudio } from '@/lib/stores/useAudio';
+import { BottomNavCustomizer } from './bottom-nav-customizer';
+import { useUserPreferences } from '@/lib/stores/useUserPreferences';
 
 export const SettingsPanel = () => {
   const [theme, setTheme] = useTheme();
@@ -65,7 +67,7 @@ export const SettingsPanel = () => {
   return (
     <div className="w-full max-w-5xl mx-auto">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-6 mb-6">
+        <TabsList className="grid grid-cols-7 mb-6">
           <TabsTrigger value="account" className="flex items-center gap-1.5">
             <Lock className="h-4 w-4" />
             Account
@@ -73,6 +75,10 @@ export const SettingsPanel = () => {
           <TabsTrigger value="interface" className="flex items-center gap-1.5">
             <Palette className="h-4 w-4" />
             Interface
+          </TabsTrigger>
+          <TabsTrigger value="navigation" className="flex items-center gap-1.5">
+            <MonitorSmartphone className="h-4 w-4" />
+            Navigation
           </TabsTrigger>
           <TabsTrigger value="notifications" className="flex items-center gap-1.5">
             <Bell className="h-4 w-4" />
@@ -205,6 +211,57 @@ export const SettingsPanel = () => {
               <div className="flex items-center justify-between">
                 <Label htmlFor="showTooltips">Show Tooltips</Label>
                 <Switch id="showTooltips" defaultChecked />
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button onClick={saveSettings}>Save Changes</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="navigation">
+          <Card>
+            <CardHeader>
+              <CardTitle>Navigation Settings</CardTitle>
+              <CardDescription>
+                Customize your bottom navigation bar and menu preferences
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 p-3 rounded-md text-sm">
+                Configure which buttons appear in the bottom navigation bar.
+                You can select up to 4 tabs to show in the bottom navigation.
+              </div>
+              
+              {/* Add BottomNavCustomizer component here */}
+              <div className="flex justify-center pt-2 pb-4">
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  className="w-full max-w-md flex items-center justify-center gap-2 py-6"
+                  id="bottom-nav-customizer-trigger"
+                >
+                  <Settings className="h-5 w-5" />
+                  <span>Customize Bottom Navigation Bar</span>
+                </Button>
+              </div>
+              
+              <Separator className="my-2" />
+              
+              <div className="space-y-2">
+                <h3 className="text-md font-medium">Additional Options</h3>
+                <div className="flex items-center justify-between mt-4">
+                  <Label htmlFor="sidebarCollapsed">Collapsed Sidebar by Default</Label>
+                  <Switch id="sidebarCollapsed" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="rememberLastPage">Remember Last Visited Page</Label>
+                  <Switch id="rememberLastPage" defaultChecked />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="showPanelLabels">Show Panel Labels</Label>
+                  <Switch id="showPanelLabels" defaultChecked />
+                </div>
               </div>
             </CardContent>
             <CardFooter>
