@@ -2,14 +2,20 @@ import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { DraggableTradingDashboard } from '../components/ui/draggable-trading-dashboard';
+import { SmartTradeLayout } from '../components/ui/smart-trade-layout';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
-import { Share2, Star, Bookmark, FileQuestion, ArrowUpRightFromCircle } from 'lucide-react';
+import { Share2, Star, Bookmark, FileQuestion, ArrowUpRightFromCircle, LayoutGrid, MonitorPlay } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { PopupContainer } from '../components/ui/popup-container';
+import { useMediaQuery } from '../lib/hooks/useMediaQuery';
 
 export default function TradingDashboard() {
   const [selectedTab, setSelectedTab] = useState('trading');
+  const [selectedLayout, setSelectedLayout] = useState<'classic' | 'smart'>('smart');
+  
+  // Check if mobile
+  const isMobile = useMediaQuery('(max-width: 768px)');
   
   const handleShareClick = () => {
     // Copy the current URL to clipboard
@@ -28,6 +34,11 @@ export default function TradingDashboard() {
   
   const handleSaveAsDefault = () => {
     toast.success('Dashboard saved as your default layout');
+  };
+  
+  const toggleLayout = () => {
+    setSelectedLayout(selectedLayout === 'classic' ? 'smart' : 'classic');
+    toast.success(`Switched to ${selectedLayout === 'classic' ? 'Smart' : 'Classic'} trading layout`);
   };
   
   return (
@@ -65,22 +76,53 @@ export default function TradingDashboard() {
           </div>
         </div>
         
-        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mb-6">
-          <TabsList className="bg-slate-800 border border-slate-700">
-            <TabsTrigger value="trading" className="data-[state=active]:bg-blue-600">
-              Trading Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="journal" className="data-[state=active]:bg-blue-600">
-              Trade Journal
-            </TabsTrigger>
-            <TabsTrigger value="analysis" className="data-[state=active]:bg-blue-600">
-              Market Analysis
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+          <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+            <TabsList className="bg-slate-800 border border-slate-700">
+              <TabsTrigger value="trading" className="data-[state=active]:bg-blue-600">
+                Trading Dashboard
+              </TabsTrigger>
+              <TabsTrigger value="journal" className="data-[state=active]:bg-blue-600">
+                Trade Journal
+              </TabsTrigger>
+              <TabsTrigger value="analysis" className="data-[state=active]:bg-blue-600">
+                Market Analysis
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          
+          {selectedTab === 'trading' && (
+            <div className="flex items-center gap-2 ml-auto">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className={`h-9 gap-1.5 ${selectedLayout === 'classic' ? 'bg-slate-800 text-white' : 'bg-transparent text-slate-300'}`}
+                onClick={toggleLayout}
+              >
+                <LayoutGrid className="h-4 w-4" />
+                Classic
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className={`h-9 gap-1.5 ${selectedLayout === 'smart' ? 'bg-slate-800 text-white' : 'bg-transparent text-slate-300'}`}
+                onClick={toggleLayout}
+              >
+                <MonitorPlay className="h-4 w-4" />
+                Smart
+              </Button>
+            </div>
+          )}
+        </div>
         
         {selectedTab === 'trading' && (
-          <DraggableTradingDashboard defaultSymbol="BTCUSDT" />
+          selectedLayout === 'classic' ? (
+            <DraggableTradingDashboard defaultSymbol="BTCUSDT" />
+          ) : (
+            <div className="h-[calc(100vh-230px)] md:h-[calc(100vh-260px)] w-full rounded-lg overflow-hidden border border-slate-700">
+              <SmartTradeLayout defaultSymbol="BTCUSDT" />
+            </div>
+          )
         )}
         
         {selectedTab === 'journal' && (
