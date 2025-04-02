@@ -155,14 +155,31 @@ export function WhopAuth({ onStatusChange }: WhopAuthProps) {
             </div>
           </div>
           
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={enableDemoAccess}
-          >
-            Enable Demo Access
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full bg-[#FF640A] hover:bg-[#FF640A]/90 text-white"
+              onClick={() => window.location.href = '/api/whop/login'}
+            >
+              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 24C18.6274 24 24 18.6274 24 12C24 5.37258 18.6274 0 12 0C5.37258 0 0 5.37258 0 12C0 18.6274 5.37258 24 12 24Z" fill="white"/>
+                <path d="M18.8486 12.104C18.8486 9.31191 16.5895 7.05273 13.7974 7.05273H7.05273V17.155H13.7974C16.5895 17.155 18.8486 14.8958 18.8486 12.104Z" fill="#FF640A"/>
+                <path d="M13.7974 8.45264C15.8189 8.45264 17.4487 10.0825 17.4487 12.104C17.4487 14.1255 15.8189 15.7553 13.7974 15.7553H8.45264V8.45264H13.7974Z" fill="white"/>
+                <path d="M13.7973 9.85254C15.0444 9.85254 16.0488 10.8569 16.0488 12.104C16.0488 13.3511 15.0444 14.3555 13.7973 14.3555H9.85254V9.85254H13.7973Z" fill="#FF640A"/>
+              </svg>
+              Connect with Whop
+            </Button>
+            
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={enableDemoAccess}
+            >
+              Enable Demo Access
+            </Button>
+          </div>
           
           <Alert className="bg-blue-900/20 border-blue-800">
             <Info className="h-4 w-4 text-blue-500" />

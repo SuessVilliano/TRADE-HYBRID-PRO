@@ -3,6 +3,19 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import bs58 from 'bs58';
 import useLocalStorage from '../hooks/useLocalStorage';
 
+// Add interface to detect Solana in window
+declare global {
+  interface Window {
+    solana?: {
+      isPhantom?: boolean;
+      connect: () => Promise<{ publicKey: string }>;
+      disconnect: () => Promise<void>;
+      signMessage?: (message: Uint8Array) => Promise<{ signature: Uint8Array }>;
+      signTransaction?: (transaction: any) => Promise<any>;
+    };
+  }
+}
+
 // Define available membership tiers
 export enum MembershipTier {
   None = 0,
@@ -164,19 +177,65 @@ export const SolanaAuthProvider: React.FC<SolanaAuthProviderProps> = ({ children
     setError(null);
     
     try {
+      // First check if wallet adapter is available
+      if (typeof window !== 'undefined' && !window.solana) {
+        setError('Phantom wallet extension not detected. Please install the Phantom wallet browser extension and reload the page.');
+        console.error('Phantom wallet extension not detected');
+        return false;
+      }
+      
       // First try to connect wallet if not already connected
       if (!walletConnected) {
+        console.log('Wallet not connected, attempting to connect...');
+        
+        // Check if wallet is available
         if (!wallet.wallet) {
-          // Using any to bypass type checking temporarily
-          await wallet.select('phantom' as any);
+          console.log('Wallet not selected, attempting to select Phantom...');
+          try {
+            // Try multiple wallet selection approaches to increase compatibility
+            if (wallet.wallets && wallet.wallets.length > 0) {
+              // Find Phantom wallet in the list if available
+              const phantomWallet = wallet.wallets.find(w => 
+                w.adapter.name.toLowerCase().includes('phantom')
+              );
+              
+              if (phantomWallet) {
+                console.log('Found Phantom wallet in wallet list, selecting...');
+                await wallet.select(phantomWallet.adapter.name);
+              } else {
+                console.log('Phantom wallet not found in list, trying default method...');
+                // Try generic method if we can't find Phantom specifically
+                await wallet.select('phantom' as any);
+              }
+            } else {
+              // Fallback to direct method
+              console.log('No wallet list available, using direct select method...');
+              await wallet.select('phantom' as any);
+            }
+          } catch (selectErr) {
+            console.error('Error selecting wallet:', selectErr);
+            setError('Unable to select wallet. Please make sure Phantom is installed and try again.');
+            return false;
+          }
         }
         
-        await wallet.connect();
+        try {
+          console.log('Attempting to connect to selected wallet...');
+          await wallet.connect();
+        } catch (connectErr) {
+          console.error('Error connecting to wallet:', connectErr);
+          setError('Unable to connect to wallet. Please make sure Phantom is unlocked and try again.');
+          return false;
+        }
       }
       
       if (!wallet.connected || !wallet.publicKey) {
-        throw new Error('Failed to connect wallet');
+        console.error('Wallet seems connected but no public key is available');
+        setError('Failed to establish a proper connection with your wallet. Please try refreshing the page.');
+        return false;
       }
+      
+      console.log('Wallet connected successfully with public key:', wallet.publicKey.toString());
       
       // Now proceed with authentication
       return await login();
