@@ -133,8 +133,8 @@ export function OnboardingTooltip({ className }: OnboardingTooltipProps) {
       style={{ top: `${position.top}px`, left: `${position.left}px` }}
       ref={tooltipRef}
     >
-      <Card className="w-[350px] shadow-lg border-2 border-primary/20">
-        <CardHeader className="pb-2">
+      <Card className="w-[350px] shadow-lg border-2 border-primary/20 bg-background/95 backdrop-blur-sm">
+        <CardHeader className="pb-2 bg-background">
           <div className="flex justify-between items-center">
             <CardTitle className="text-lg flex items-center">
               <HelpCircle className="h-5 w-5 mr-2 text-blue-500" />

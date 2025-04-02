@@ -67,29 +67,49 @@ export function TradeSignals({ signals = [], onViewSignal, asCard = true }: Trad
     await fetchSignals();
   };
 
-  // Fetch signals from Google Sheets
+  // Fetch signals from API
   const fetchSignals = async () => {
     setIsLoading(true);
     setApiKeyMissing(false);
     
     try {
-      console.log('Starting to fetch trade signals...');
+      console.log('Starting to fetch trade signals from API...');
       
-      // Direct approach to fetch all signals
-      const allSignalsFromService = await googleSheetsService.fetchAllSignals();
-      console.log(`Received ${allSignalsFromService.length} total signals from service`);
+      // Fetch crypto signals
+      const cryptoResponse = await fetch('/api/sheets/trading-signals?marketType=crypto');
+      const cryptoData = await cryptoResponse.json();
+      
+      // Fetch futures signals
+      const futuresResponse = await fetch('/api/sheets/trading-signals?marketType=futures');
+      const futuresData = await futuresResponse.json();
+      
+      // Fetch forex signals
+      const forexResponse = await fetch('/api/sheets/trading-signals?marketType=forex');
+      const forexData = await forexResponse.json();
+      
+      // Process and convert signals to match our TradeSignal format
+      const cryptoSignalsConverted = convertApiSignalsToTradeSignals(cryptoData.signals || [], 'crypto', 'Paradox');
+      const futuresSignalsConverted = convertApiSignalsToTradeSignals(futuresData.signals || [], 'futures', 'Hybrid');
+      const forexSignalsConverted = convertApiSignalsToTradeSignals(forexData.signals || [], 'forex', 'Solaris');
+      
+      console.log(`Received signals from API: 
+        Crypto: ${cryptoSignalsConverted.length} signals
+        Futures: ${futuresSignalsConverted.length} signals
+        Forex: ${forexSignalsConverted.length} signals
+      `);
+      
+      // Combine all signals
+      const allSignalsFromService = [
+        ...cryptoSignalsConverted,
+        ...futuresSignalsConverted,
+        ...forexSignalsConverted
+      ];
       
       // If we have signals, proceed with normal flow
       if (allSignalsFromService.length > 0) {
-        const crypto = allSignalsFromService.filter(s => s.marketType === 'crypto');
-        const futures = allSignalsFromService.filter(s => s.marketType === 'futures');
-        const forex = allSignalsFromService.filter(s => s.marketType === 'forex');
-        
-        console.log(`Filtered signals by market type: ${crypto.length} crypto, ${futures.length} futures, ${forex.length} forex`);
-        
-        setCryptoSignals(crypto);
-        setFuturesSignals(futures);
-        setForexSignals(forex);
+        setCryptoSignals(cryptoSignalsConverted);
+        setFuturesSignals(futuresSignalsConverted);
+        setForexSignals(forexSignalsConverted);
         
         setAllSignals(allSignalsFromService);
         setLastUpdated(new Date());
@@ -99,7 +119,7 @@ export function TradeSignals({ signals = [], onViewSignal, asCard = true }: Trad
       }
       // If no signals, display an error
       else {
-        console.log('No signals received from Google Sheets API. This may indicate an issue with API access or permissions.');
+        console.log('No signals received from API. This may indicate an issue with API access or permissions.');
         // Update UI to show zero signals and last attempted refresh time
         setCryptoSignals([]);
         setFuturesSignals([]);
@@ -135,6 +155,40 @@ export function TradeSignals({ signals = [], onViewSignal, asCard = true }: Trad
     }
   };
   
+  // Convert API signals to our TradeSignal format
+  const convertApiSignalsToTradeSignals = (
+    apiSignals: any[],
+    marketType: 'crypto' | 'forex' | 'futures',
+    provider: 'Paradox' | 'Hybrid' | 'Solaris'
+  ): TradeSignal[] => {
+    return apiSignals.map(signal => {
+      const direction = signal.Direction.toLowerCase() === 'buy' ? 'long' : 'short';
+      
+      // Base properties for all signals
+      const tradeSignal: TradeSignal = {
+        id: signal.id || `${provider}-${Date.now()}`,
+        timestamp: signal.Date || new Date().toISOString(),
+        asset: signal.Symbol,
+        direction,
+        entryPrice: signal['Entry Price'],
+        stopLoss: signal['Stop Loss'],
+        takeProfit1: signal['Take Profit'] || signal.TP1,
+        status: (signal.Status || 'active').toLowerCase() as 'active' | 'completed' | 'stopped',
+        marketType,
+        provider,
+        notes: signal.Notes || '',
+      };
+      
+      // Add TP2 and TP3 for futures signals if they exist
+      if (marketType === 'futures') {
+        if (signal.TP2) tradeSignal.takeProfit2 = signal.TP2;
+        if (signal.TP3) tradeSignal.takeProfit3 = signal.TP3;
+      }
+      
+      return tradeSignal;
+    });
+  };
+
   // Generate sample signals for UI display
   const generateSampleSignals = (
     marketType: 'crypto' | 'forex' | 'futures', 
