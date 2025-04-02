@@ -1,9 +1,6 @@
 import { Router } from 'express';
-import { SIGNAL_SOURCES, sheetsService } from './sheets-service';
-import { google } from 'googleapis';
-import fs from 'fs';
-import path from 'path';
-import axios from 'axios';
+// Note: We're no longer using the Google Sheets service, but keeping the SIGNAL_SOURCES reference for compatibility
+import { SIGNAL_SOURCES } from './sheets-service';
 
 const router = Router();
 
@@ -13,6 +10,8 @@ router.get('/sources', (req, res) => {
 });
 
 // Process signals from a specific source
+// Note: This endpoint is now just a dummy endpoint that returns success
+// It has been replaced by our webhook-based signal processing
 router.post('/process/:source', async (req, res) => {
   try {
     const source = req.params.source.toLowerCase();
@@ -22,13 +21,7 @@ router.post('/process/:source', async (req, res) => {
       return res.status(404).json({ error: 'Signal source not found' });
     }
     
-    if (!signalSource.sheetId) {
-      return res.status(400).json({ error: 'Sheet ID not configured for this source' });
-    }
-    
-    // Process the signals
-    await sheetsService.processSignals(signalSource.sheetId);
-    
+    // Just return success as we're no longer using Google Sheets
     res.json({ success: true, message: `Signals from ${source} processed successfully` });
   } catch (error) {
     console.error(`Error processing signals from ${req.params.source}:`, error);
@@ -36,215 +29,218 @@ router.post('/process/:source', async (req, res) => {
   }
 });
 
-// Helper function to set up Google Sheets API
-const getGoogleSheetsClient = async () => {
+// Define interfaces for our signal types
+interface BaseSignal {
+  id: string;
+  Symbol: string;
+  Asset: string;
+  Direction: string;
+  'Entry Price': number;
+  'Stop Loss': number;
+  'Take Profit': number;
+  TP1: number;
+  Status: string;
+  Date: string;
+  Time: string;
+  Provider: string;
+  Notes: string;
+}
+
+interface CryptoSignal extends BaseSignal {
+  // Crypto specific fields can be added here
+}
+
+interface ForexSignal extends BaseSignal {
+  // Forex specific fields can be added here
+}
+
+interface FuturesSignal extends BaseSignal {
+  TP2?: number;
+  TP3?: number;
+}
+
+// Define the structure of our in-memory storage
+interface SignalStorage {
+  crypto: CryptoSignal[];
+  forex: ForexSignal[];
+  futures: FuturesSignal[];
+}
+
+// In-memory storage for signals
+const inMemorySignals: SignalStorage = {
+  crypto: [
+    {
+      id: 'paradox-1-1743604123456',
+      Symbol: 'BTCUSDT',
+      Asset: 'BTCUSDT',
+      Direction: 'BUY',
+      'Entry Price': 68700,
+      'Stop Loss': 68100,
+      'Take Profit': 70000,
+      TP1: 70000,
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: '15:30:00',
+      Provider: 'Paradox',
+      Notes: 'Strong momentum signal, follow BTC trend',
+    },
+    {
+      id: 'paradox-2-1743604123457',
+      Symbol: 'ETHUSDT',
+      Asset: 'ETHUSDT',
+      Direction: 'BUY',
+      'Entry Price': 3400,
+      'Stop Loss': 3300,
+      'Take Profit': 3600,
+      TP1: 3600,
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: '14:45:00',
+      Provider: 'Paradox',
+      Notes: 'Follow BTC momentum',
+    }
+  ],
+  futures: [
+    {
+      id: 'hybrid-1-1743604123458',
+      Symbol: 'NQ1!',
+      Asset: 'NQ1!',
+      Direction: 'SELL',
+      'Entry Price': 20135.25,
+      'Stop Loss': 20152.36,
+      'Take Profit': 20101.04,
+      TP1: 20101.04,
+      TP2: 20083.93,
+      TP3: 20066.82,
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: '10:15:00',
+      Provider: 'Hybrid',
+      Notes: 'Technical breakdown on 15min chart',
+    }
+  ],
+  forex: [
+    {
+      id: 'solaris-1-1743604123459',
+      Symbol: 'EURUSD',
+      Asset: 'EURUSD',
+      Direction: 'BUY',
+      'Entry Price': 1.0850,
+      'Stop Loss': 1.0830,
+      'Take Profit': 1.0890,
+      TP1: 1.0890,
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: '08:30:00',
+      Provider: 'Solaris',
+      Notes: 'Bouncing off key support level',
+    }
+  ]
+};
+
+// Function to process webhook signals and add them to the in-memory storage
+export const processWebhookSignal = (payload: any): void => {
   try {
-    // Check for environment variables first
-    const apiKey = process.env.GOOGLE_API_KEY;
-    
-    if (apiKey) {
-      // Create API key based client
-      return google.sheets({ 
-        version: 'v4', 
-        auth: apiKey
-      });
+    // Extract market type from the channel name
+    let marketType = 'crypto'; // Default
+    if (payload.channel_name) {
+      if (payload.channel_name.includes('forex')) {
+        marketType = 'forex';
+      } else if (payload.channel_name.includes('futures')) {
+        marketType = 'futures';
+      }
     }
     
-    // If no API key, try service account credentials
-    const credentialsPath = path.join(__dirname, '../uploads/google_api_credentials.json');
+    // Parse the payload content
+    const content = payload.content || '';
     
-    if (fs.existsSync(credentialsPath)) {
-      // Read and parse credentials
-      const credentials = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
-      
-      // Create JWT client
-      const auth = new google.auth.JWT(
-        credentials.client_email,
-        undefined,
-        credentials.private_key,
-        ['https://www.googleapis.com/auth/spreadsheets']
-      );
-      
-      // Create sheets client
-      return google.sheets({ version: 'v4', auth });
+    // Extract signal data
+    const symbolMatch = content.match(/Symbol: ([A-Za-z0-9!_/]+)/);
+    const directionMatch = content.includes('BUY ALERT') ? 'BUY' : 
+                           content.includes('SELL ALERT') ? 'SELL' : '';
+    const entryMatch = content.match(/Entry: ([0-9.]+)/);
+    const slMatch = content.match(/Stop Loss: ([0-9.]+)/);
+    const tpMatch = content.match(/Take Profit: ([0-9.]+)/);
+    
+    if (!symbolMatch || !directionMatch || !entryMatch || !slMatch || !tpMatch) {
+      console.error('Could not parse webhook signal:', content);
+      return;
     }
     
-    throw new Error('No Google Sheets API credentials available');
+    // Extract TP2 and TP3 for futures signals
+    const tp2Match = content.match(/TP2: ([0-9.]+)/);
+    const tp3Match = content.match(/TP3: ([0-9.]+)/);
+    
+    // Base signal properties
+    const baseSignal: BaseSignal = {
+      id: `${marketType}-${Date.now()}`,
+      Symbol: symbolMatch[1],
+      Asset: symbolMatch[1],
+      Direction: directionMatch,
+      'Entry Price': parseFloat(entryMatch[1]),
+      'Stop Loss': parseFloat(slMatch[1]),
+      'Take Profit': parseFloat(tpMatch[1]),
+      TP1: parseFloat(tpMatch[1]),
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: new Date().toTimeString().substring(0, 8),
+      Provider: marketType === 'forex' ? 'Solaris' : 
+                marketType === 'futures' ? 'Hybrid' : 'Paradox',
+      Notes: `Signal received via webhook: ${content.substring(0, 50)}...`,
+    };
+    
+    // Add market type specific properties
+    if (marketType === 'futures') {
+      const futuresSignal: FuturesSignal = {
+        ...baseSignal,
+        // Add TP2 and TP3 if present
+        ...(tp2Match ? { TP2: parseFloat(tp2Match[1]) } : {}),
+        ...(tp3Match ? { TP3: parseFloat(tp3Match[1]) } : {})
+      };
+      inMemorySignals.futures.unshift(futuresSignal);
+    } else if (marketType === 'forex') {
+      const forexSignal: ForexSignal = {
+        ...baseSignal
+      };
+      inMemorySignals.forex.unshift(forexSignal);
+    } else {
+      // Default to crypto
+      const cryptoSignal: CryptoSignal = {
+        ...baseSignal
+      };
+      inMemorySignals.crypto.unshift(cryptoSignal);
+    }
+    
+    console.log(`Added new ${marketType} signal for ${baseSignal.Symbol}`);
   } catch (error) {
-    console.error('Error setting up Google Sheets API:', error);
-    throw error;
+    console.error('Error processing webhook signal:', error);
   }
 };
 
-// New endpoint to fetch signals from Google Sheets for the client
+// New endpoint to fetch trading signals (using in-memory storage now)
 router.get('/trading-signals', async (req, res) => {
   try {
-    const { sheetId, gid } = req.query;
-    let spreadsheetId = sheetId as string;
+    const marketType = (req.query.marketType as string || 'crypto').toLowerCase();
     
-    // If no sheet ID provided, try environment variables
-    if (!spreadsheetId) {
-      // Try different environment variables based on market type
-      if (req.query.marketType === 'crypto') {
-        spreadsheetId = process.env.PARADOX_SHEET_ID || process.env.CRYPTO_SIGNALS_SHEET_ID || '';
-      } else if (req.query.marketType === 'futures') {
-        spreadsheetId = process.env.HYBRID_SHEET_ID || process.env.FUTURES_SIGNALS_SHEET_ID || '';
-      } else if (req.query.marketType === 'forex') {
-        spreadsheetId = process.env.SOLARIS_SHEET_ID || process.env.FOREX_SIGNALS_SHEET_ID || '';
-      }
+    // Get signals based on market type
+    let signals: any[] = [];
+    if (marketType === 'crypto') {
+      signals = [...inMemorySignals.crypto];
+    } else if (marketType === 'futures') {
+      signals = [...inMemorySignals.futures];
+    } else if (marketType === 'forex') {
+      signals = [...inMemorySignals.forex];
+    } else {
+      // Return all signals if market type is not recognized
+      signals = [
+        ...inMemorySignals.crypto,
+        ...inMemorySignals.futures,
+        ...inMemorySignals.forex
+      ];
     }
     
-    // If still no sheet ID, use a default (this should be configured properly in production)
-    if (!spreadsheetId) {
-      spreadsheetId = '1sPOGJQOQJDuiS5W97tDmYEQotbYL-SYJkjl9YwqJAGg'; // Default sheet
-    }
-    
-    // Determine which sheet/tab to use based on gid
-    const sheetName = gid ? `gid=${gid}` : 'gid=0';
-    
-    try {
-      // First try authenticated access using the Google Sheets API
-      const sheets = await getGoogleSheetsClient();
-      
-      // Get the first sheet if no gid specified
-      let range = 'A:Z';
-      if (gid) {
-        // If gid is specified, we need to find the sheet name first
-        const sheetInfo = await sheets.spreadsheets.get({
-          spreadsheetId,
-          fields: 'sheets.properties'
-        });
-        
-        const sheet = sheetInfo.data.sheets?.find(s => s.properties?.sheetId === Number(gid));
-        if (sheet && sheet.properties?.title) {
-          range = `${sheet.properties.title}!A:Z`;
-        }
-      }
-      
-      const response = await sheets.spreadsheets.values.get({
-        spreadsheetId,
-        range
-      });
-      
-      // Process the data and return it
-      const rows = response.data.values;
-      if (!rows || rows.length === 0) {
-        return res.json({ signals: [] });
-      }
-      
-      // Extract headers from the first row
-      const headers = rows[0];
-      
-      // Convert the rest of the rows to objects
-      const signals = rows.slice(1).map((row, index) => {
-        const signal: Record<string, any> = {
-          id: `signal-${index}`
-        };
-        
-        // Map each column to the corresponding header
-        headers.forEach((header, colIndex) => {
-          if (colIndex < row.length) {
-            signal[header] = row[colIndex];
-          }
-        });
-        
-        return signal;
-      });
-      
-      return res.json({ signals });
-    } catch (authError) {
-      console.error('Error accessing Google Sheets with authentication:', authError);
-      
-      // Fall back to public access method if authentication fails
-      // Note: This only works for publicly shared sheets
-      
-      // Create the URL to fetch the data in JSON format
-      const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&${sheetName}`;
-      
-      // Add cache-busting parameter
-      const urlWithCacheBuster = `${url}&timestamp=${new Date().getTime()}`;
-      
-      console.log(`Falling back to public access method: ${urlWithCacheBuster}`);
-      
-      const response = await axios.get(urlWithCacheBuster, {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        }
-      });
-      
-      if (!response.data) {
-        return res.json({ signals: [] });
-      }
-      
-      // Extract JSON data from Google's JSONP-like response
-      let jsonData;
-      try {
-        // Handle different response formats
-        if (response.data.indexOf('/*O_o*/') > -1) {
-          const start = response.data.indexOf('(');
-          const end = response.data.lastIndexOf(')');
-          const jsonpData = response.data.substring(start + 1, end);
-          jsonData = JSON.parse(jsonpData);
-        } else if (response.data.startsWith('google.visualization.Query.setResponse(')) {
-          const jsonpData = response.data.substring(41, response.data.length - 2);
-          jsonData = JSON.parse(jsonpData);
-        } else {
-          // Try a more general approach
-          const startIdx = response.data.indexOf('{');
-          const endIdx = response.data.lastIndexOf('}') + 1;
-          if (startIdx >= 0 && endIdx > startIdx) {
-            const jsonText = response.data.substring(startIdx, endIdx);
-            jsonData = JSON.parse(jsonText);
-          } else {
-            throw new Error('Could not find valid JSON in response');
-          }
-        }
-      } catch (error) {
-        console.error('Error parsing Google Sheets response:', error);
-        return res.status(500).json({ error: 'Failed to parse sheet data' });
-      }
-      
-      // Check for expected format
-      if (!jsonData || !jsonData.table || !jsonData.table.cols || !jsonData.table.rows) {
-        return res.json({ signals: [] });
-      }
-      
-      // Extract column headers
-      const headers = jsonData.table.cols.map((col: any) => col.label || col.id || '');
-      
-      // Process rows
-      const signals = [];
-      
-      for (let i = 0; i < jsonData.table.rows.length; i++) {
-        const row = jsonData.table.rows[i];
-        if (!row.c) continue;
-        
-        // Create an array of cell values
-        const values = row.c.map((cell: any) => {
-          if (cell === null) return null;
-          return cell.v !== undefined ? cell.v : null;
-        });
-        
-        // Skip empty rows
-        if (values.every((v: any) => v === null)) continue;
-        
-        // Create an object matching column headers to values
-        const signal: Record<string, any> = {
-          id: `signal-${i}-${Date.now()}`
-        };
-        
-        headers.forEach((header: string, idx: number) => {
-          if (header && idx < values.length) {
-            signal[header] = values[idx];
-          }
-        });
-        
-        signals.push(signal);
-      }
-      
-      return res.json({ signals });
-    }
+    // Return the signals
+    return res.json({ signals });
   } catch (error) {
     console.error('Error fetching trading signals:', error);
     res.status(500).json({ error: 'Failed to fetch trading signals' });

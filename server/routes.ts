@@ -11,8 +11,25 @@ const getSignals = (req: any, res: any) => {
   // This is just a wrapper to redirect to the new endpoint
   res.redirect(307, `/api/sheets/trading-signals?marketType=crypto`);
 };
+// Import at the top to avoid circular dependency
+import { processWebhookSignal } from './api/signals';
+
 const receiveWebhook = (req: any, res: any) => {
-  // For now just return a success message
+  try {
+    // Check if there's a payload and forward it to the signal processor
+    if (req.body && (req.body.content || req.body.data)) {
+      const payload = req.body;
+      
+      // Process the webhook signal
+      processWebhookSignal(payload);
+      
+      console.log('Received and processed webhook signal');
+    }
+  } catch (error) {
+    console.error('Error processing webhook:', error);
+  }
+  
+  // Always return success to prevent the webhook sender from retrying
   return res.json({success: true, message: 'Webhook received'});
 };
 import { getGameLeaderboard, getGamePlayer, submitGameScore } from "./api/game-leaderboard";
