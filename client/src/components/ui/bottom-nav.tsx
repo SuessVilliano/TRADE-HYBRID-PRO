@@ -82,7 +82,8 @@ export function BottomNav({ className = '' }: BottomNavProps) {
           <Link 
             key={tab.id} 
             to={`/${
-              tab.id === 'trading' ? 'trading-space' : 
+              tab.id === 'home' ? 'dashboard' :
+              tab.id === 'trading' ? 'trading-dashboard' : 
               tab.id === 'journal' ? 'trade-journal' : 
               tab.id === 'connect-broker' ? 'broker-connections' :
               tab.id === 'smart-trade' ? 'trading-ai' :
@@ -92,7 +93,8 @@ export function BottomNav({ className = '' }: BottomNavProps) {
             className={`flex flex-col items-center justify-center flex-1 p-2 rounded-md transition-colors
               ${
                 currentPath.includes(tab.id) || 
-                (tab.id === 'trading' && currentPath.includes('trading-space')) ||
+                (tab.id === 'home' && currentPath.includes('dashboard')) ||
+                (tab.id === 'trading' && (currentPath.includes('trading-dashboard') || currentPath.includes('trading-space'))) ||
                 (tab.id === 'journal' && currentPath.includes('trade-journal')) ||
                 (tab.id === 'connect-broker' && currentPath.includes('broker-connections')) ||
                 (tab.id === 'smart-trade' && currentPath.includes('trading-ai')) ||

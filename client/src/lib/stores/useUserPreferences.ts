@@ -74,7 +74,7 @@ const defaultBottomNavTabs: TabConfig[] = [
   },
   {
     id: 'trading',
-    label: 'Trading',
+    label: 'Trade',
     icon: 'BarChart',
     active: true, // Active - 2 of 4
     order: 1

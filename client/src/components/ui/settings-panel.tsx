@@ -34,8 +34,8 @@ export const SettingsPanel = () => {
   
   // Audio settings
   const audioStore = useAudio();
-  const [musicVolume, setMusicVolume] = useState(audioStore.musicVolume || 50);
-  const [soundEffectsVolume, setSoundEffectsVolume] = useState(audioStore.sfxVolume || 50);
+  const [musicVolume, setMusicVolume] = useState(Math.round(audioStore.musicVolume * 100) || 50);
+  const [soundEffectsVolume, setSoundEffectsVolume] = useState(Math.round(audioStore.effectsVolume * 100) || 50);
   const [tradingSounds, setTradingSounds] = useState(true);
   
   // Performance settings
@@ -46,16 +46,12 @@ export const SettingsPanel = () => {
   // Handle audio volume changes
   const handleMusicVolumeChange = (value: number) => {
     setMusicVolume(value);
-    if (audioStore.setMusicVolume) {
-      audioStore.setMusicVolume(value / 100);
-    }
+    audioStore.setMusicVolume(value / 100);
   };
   
   const handleSfxVolumeChange = (value: number) => {
     setSoundEffectsVolume(value);
-    if (audioStore.setSfxVolume) {
-      audioStore.setSfxVolume(value / 100);
-    }
+    audioStore.setEffectsVolume(value / 100);
   };
   
   // Save settings
@@ -234,16 +230,19 @@ export const SettingsPanel = () => {
               </div>
               
               {/* Add BottomNavCustomizer component here */}
-              <div className="flex justify-center pt-2 pb-4">
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  className="w-full max-w-md flex items-center justify-center gap-2 py-6"
-                  id="bottom-nav-customizer-trigger"
-                >
-                  <Settings className="h-5 w-5" />
-                  <span>Customize Bottom Navigation Bar</span>
-                </Button>
+              <div className="mt-4 mb-6">
+                <BottomNavCustomizer 
+                  trigger={
+                    <Button 
+                      variant="outline" 
+                      size="lg"
+                      className="w-full max-w-md flex items-center justify-center gap-2 py-6"
+                    >
+                      <Settings className="h-5 w-5" />
+                      <span>Customize Bottom Navigation Bar</span>
+                    </Button>
+                  } 
+                />
               </div>
               
               <Separator className="my-2" />
@@ -347,11 +346,9 @@ export const SettingsPanel = () => {
                   <Label htmlFor="enableMusic">Enable Background Music</Label>
                   <Switch 
                     id="enableMusic" 
-                    checked={audioStore.musicEnabled} 
+                    checked={!audioStore.musicMuted} 
                     onCheckedChange={(checked) => {
-                      if (audioStore.setMusicEnabled) {
-                        audioStore.setMusicEnabled(checked);
-                      }
+                      audioStore.toggleMusicMuted();
                     }} 
                   />
                 </div>
@@ -375,11 +372,9 @@ export const SettingsPanel = () => {
                   <Label htmlFor="enableSoundEffects">Enable Sound Effects</Label>
                   <Switch 
                     id="enableSoundEffects" 
-                    checked={audioStore.sfxEnabled} 
+                    checked={!audioStore.isMuted} 
                     onCheckedChange={(checked) => {
-                      if (audioStore.setSfxEnabled) {
-                        audioStore.setSfxEnabled(checked);
-                      }
+                      audioStore.toggleMute();
                     }} 
                   />
                 </div>
