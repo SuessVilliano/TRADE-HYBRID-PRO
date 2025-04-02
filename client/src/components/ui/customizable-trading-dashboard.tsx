@@ -42,8 +42,17 @@ import {
   Save,
   ArrowRight,
   LineChartIcon,
+  Activity,
+  Calendar,
+  Globe,
+  FileText,
 } from 'lucide-react';
 import { SmartTradePanel } from './smart-trade-panel';
+import { CryptoHeatmap } from './crypto-heatmap';
+import { StockHeatmap } from './stock-heatmap';
+import { EconomicCalendar } from './economic-calendar';
+import { MarketOverview } from './market-overview';
+import { TradeJournal } from './trade-journal';
 
 import {
   Select,
@@ -63,7 +72,12 @@ export type PanelComponentType =
   | 'position-manager'
   | 'market-news'
   | 'performance-metrics'
-  | 'ai-insights';
+  | 'ai-insights'
+  | 'crypto-heatmap'
+  | 'stock-heatmap'
+  | 'economic-calendar'
+  | 'market-overview'
+  | 'trade-journal';
 
 // Defined templates for the dashboard
 const DASHBOARD_TEMPLATES = {
@@ -150,6 +164,15 @@ const DASHBOARD_TEMPLATES = {
     { id: 'trading-signals-1', x: 0, y: 6, width: 4, height: 4, componentType: 'trading-signals', title: 'Trading Signals' },
     { id: 'order-entry-1', x: 4, y: 6, width: 4, height: 4, componentType: 'order-entry', title: 'Smart Trade Panel' },
     { id: 'market-news-1', x: 8, y: 6, width: 4, height: 4, componentType: 'market-news', title: 'Market News' },
+  ],
+  'market-analysis-layout': [
+    { id: 'tradingview-chart-1', x: 0, y: 0, width: 8, height: 5, componentType: 'tradingview-chart', title: 'TradingView Chart' },
+    { id: 'order-entry-1', x: 8, y: 0, width: 4, height: 5, componentType: 'order-entry', title: 'Smart Trade Panel' },
+    { id: 'market-overview-1', x: 0, y: 5, width: 6, height: 4, componentType: 'market-overview', title: 'Market Overview' },
+    { id: 'economic-calendar-1', x: 6, y: 5, width: 6, height: 4, componentType: 'economic-calendar', title: 'Economic Calendar' },
+    { id: 'crypto-heatmap-1', x: 0, y: 9, width: 6, height: 4, componentType: 'crypto-heatmap', title: 'Crypto Heatmap' },
+    { id: 'stock-heatmap-1', x: 6, y: 9, width: 6, height: 4, componentType: 'stock-heatmap', title: 'Stock Heatmap' },
+    { id: 'trade-journal-1', x: 0, y: 13, width: 12, height: 6, componentType: 'trade-journal', title: 'Trade Journal' },
   ],
 };
 
@@ -388,7 +411,12 @@ export function CustomizableTradingDashboard({
       'position-manager',
       'market-news',
       'performance-metrics',
-      'ai-insights'
+      'ai-insights',
+      'crypto-heatmap',
+      'stock-heatmap',
+      'economic-calendar',
+      'market-overview',
+      'trade-journal'
     ];
     
     // Return all types that aren't already in the active panels, or allow duplicates for some panel types
@@ -542,6 +570,16 @@ export function CustomizableTradingDashboard({
         return <BarChart3 className="h-4 w-4 mr-2" />;
       case 'ai-insights':
         return <BrainCircuit className="h-4 w-4 mr-2" />;
+      case 'crypto-heatmap':
+        return <Activity className="h-4 w-4 mr-2" />;
+      case 'stock-heatmap':
+        return <Activity className="h-4 w-4 mr-2" />;
+      case 'economic-calendar':
+        return <Calendar className="h-4 w-4 mr-2" />;
+      case 'market-overview':
+        return <Globe className="h-4 w-4 mr-2" />;
+      case 'trade-journal':
+        return <FileText className="h-4 w-4 mr-2" />;
       default:
         return <PanelLeft className="h-4 w-4 mr-2" />;
     }
@@ -612,6 +650,21 @@ export function CustomizableTradingDashboard({
         
       case 'ai-insights':
         return <PersonalizedTradingInsights />;
+      
+      case 'crypto-heatmap':
+        return <CryptoHeatmap dataSource="Crypto" colorTheme="dark" height="100%" width="100%" />;
+        
+      case 'stock-heatmap':
+        return <StockHeatmap dataSource="SPX500" colorTheme="dark" height="100%" width="100%" />;
+        
+      case 'economic-calendar':
+        return <EconomicCalendar colorTheme="dark" height="100%" width="100%" />;
+        
+      case 'market-overview':
+        return <MarketOverview height="100%" width="100%" colorTheme="dark" />;
+        
+      case 'trade-journal':
+        return <TradeJournal />;
         
       default:
         return <div>Unknown component type</div>;
