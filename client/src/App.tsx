@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './lib/context/AuthContext';
 import { SolanaAuthProvider } from './lib/context/SolanaAuthProvider';
@@ -22,7 +22,7 @@ import SignalsView from './pages/trading-signals';
 import Leaderboard from './pages/leaderboard';
 import ProfileView from './pages/profile';
 import SettingsView from './pages/settings';
-import BotsView from './pages/trade-simulator';
+import BotsView from './pages/trading-bots';
 import NewsView from './pages/news-dashboard';
 import NewsSimpleView from './pages/news-dashboard-simple';
 import LandingPage from './pages/landing';
@@ -91,7 +91,6 @@ const App: React.FC = () => {
                 {/* Public routes */}
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/trading-freedom-podcast" element={<TradingFreedomPodcast />} />
-                <Route path="/signals-analyzer" element={<SignalsAnalyzerPage />} />
                 
                 {/* Auth routes */}
                 <Route path="/login" element={<LoginPage />} />
@@ -136,6 +135,7 @@ const App: React.FC = () => {
                 {/* Tools & Analysis */}
                 <Route path="/trading-tools" element={<ProtectedRoute><TradingToolsPage /></ProtectedRoute>} />
                 <Route path="/ai-market-analysis" element={<ProtectedRoute><AiMarketAnalysisPage /></ProtectedRoute>} />
+                <Route path="/signals-analyzer" element={<ProtectedRoute><SignalsAnalyzerPage /></ProtectedRoute>} />
                 <Route path="/voice-trade" element={<ProtectedRoute><VoiceTradeDemoPage /></ProtectedRoute>} />
                 <Route path="/smart-trade-explainer" element={<ProtectedRoute><SmartTradeExplainer /></ProtectedRoute>} />
                 <Route path="/api-demo" element={<ProtectedRoute><ApiDemoPage /></ProtectedRoute>} />
