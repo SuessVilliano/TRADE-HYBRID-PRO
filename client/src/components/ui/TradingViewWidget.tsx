@@ -1,4 +1,6 @@
-import React, { useEffect, useRef, memo } from 'react';
+import React, { useEffect, useRef, memo, useState } from 'react';
+import { Maximize2, Minimize2 } from 'lucide-react';
+import { Button } from './button';
 
 interface TradingViewWidgetProps {
   symbol?: string;
@@ -8,6 +10,8 @@ interface TradingViewWidgetProps {
   interval?: string;
   allow_symbol_change?: boolean;
   container_id?: string;
+  allowFullscreen?: boolean;
+  onFullscreenChange?: (isFullscreen: boolean) => void;
 }
 
 function TradingViewWidget({ 
@@ -16,10 +20,30 @@ function TradingViewWidget({
   width = '100%', 
   height = '500px', 
   interval = "D",
-  allow_symbol_change = true 
+  allow_symbol_change = true,
+  allowFullscreen = true,
+  onFullscreenChange
 }: TradingViewWidgetProps) {
   const container = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string>(`tradingview_widget_${Math.floor(Math.random() * 1000000)}`);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // Add keyboard handler for ESC key to exit fullscreen mode
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+        if (onFullscreenChange) {
+          onFullscreenChange(false);
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isFullscreen, onFullscreenChange]);
 
   useEffect(() => {
     if (!container.current) return;
@@ -87,7 +111,7 @@ function TradingViewWidget({
         container.current.innerHTML = '';
       }
     };
-  }, [symbol, theme, interval, allow_symbol_change]); // Rebuild widget when parameters change
+  }, [symbol, theme, interval, allow_symbol_change, isFullscreen]); // Rebuild widget when parameters change or fullscreen state changes
 
   // Use a much larger default height on mobile for better experience
   const getMobileHeight = () => {
@@ -97,15 +121,46 @@ function TradingViewWidget({
     return height;
   };
 
+  // Toggle fullscreen state
+  const toggleFullscreen = () => {
+    const newState = !isFullscreen;
+    setIsFullscreen(newState);
+    
+    // Call the callback if provided
+    if (onFullscreenChange) {
+      onFullscreenChange(newState);
+    }
+  };
+
   return (
-    <div className="tradingview-widget-container" style={{ height: getMobileHeight(), width }}>
+    <div 
+      className={`tradingview-widget-container relative ${isFullscreen ? 'fixed inset-0 z-50 bg-slate-900 p-4' : ''}`} 
+      style={{ 
+        height: isFullscreen ? '100vh' : getMobileHeight(), 
+        width: isFullscreen ? '100vw' : width 
+      }}
+    >
+      {allowFullscreen && (
+        <div className="absolute top-3 right-3 z-10">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 rounded-full bg-slate-800/70 hover:bg-slate-700"
+            onClick={toggleFullscreen}
+          >
+            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </Button>
+        </div>
+      )}
       <div 
         id={widgetIdRef.current} 
         ref={container} 
         style={{ 
           height: "100%", 
           width: "100%", 
-          minHeight: typeof window !== 'undefined' && window.innerWidth < 768 ? "70vh" : "300px"
+          minHeight: isFullscreen 
+            ? "calc(100vh - 32px)" 
+            : (typeof window !== 'undefined' && window.innerWidth < 768 ? "70vh" : "300px")
         }}
         className="tradingview-responsive-container"
       />
