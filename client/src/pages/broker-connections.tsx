@@ -269,6 +269,35 @@ const BrokerConnectionsView: React.FC = () => {
     // Mark Alpaca as active by default for the demo
     setActiveBrokers(['alpaca']);
   }, []);
+  
+  // Render broker logo with fallback to Globe icon
+  const renderBrokerLogo = (broker: Broker, size: 'sm' | 'md' = 'sm') => {
+    const sizeClasses = size === 'sm' 
+      ? { container: 'w-8 h-8', image: 'w-6 h-6', icon: 'h-5 w-5' }
+      : { container: 'w-10 h-10', image: 'w-8 h-8', icon: 'h-6 w-6' };
+    
+    return (
+      <div className={`${sizeClasses.container} flex items-center justify-center rounded-full bg-primary/10 overflow-hidden`}>
+        {broker.logo ? (
+          <img 
+            src={broker.logo} 
+            alt={`${broker.name} logo`} 
+            className={`${sizeClasses.image} object-contain`}
+            onError={(e) => {
+              // If image fails to load, show fallback icon
+              const target = e.currentTarget;
+              const sibling = target.nextElementSibling;
+              if (sibling && sibling instanceof HTMLElement) {
+                target.style.display = 'none';
+                sibling.style.display = 'block';
+              }
+            }} 
+          />
+        ) : null}
+        <Globe className={`${sizeClasses.icon} text-primary`} style={{display: broker.logo ? 'none' : 'block'}} />
+      </div>
+    );
+  };
 
   return (
     <Container className="py-6">
@@ -298,10 +327,7 @@ const BrokerConnectionsView: React.FC = () => {
                     <CardHeader className="pb-2">
                       <div className="flex justify-between items-start">
                         <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 flex items-center justify-center rounded-full bg-primary/10">
-                            {/* Logo would go here in a real app */}
-                            <Globe className="h-6 w-6 text-primary" />
-                          </div>
+                          {renderBrokerLogo(broker, 'md')}
                           <div>
                             <CardTitle>{broker.name}</CardTitle>
                             <CardDescription className="flex items-center mt-1">
@@ -408,10 +434,7 @@ const BrokerConnectionsView: React.FC = () => {
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 flex items-center justify-center rounded-full bg-primary/10">
-                        {/* Logo would go here in a real app */}
-                        <Globe className="h-5 w-5 text-primary" />
-                      </div>
+                      {renderBrokerLogo(broker)}
                       <CardTitle className="text-lg">{broker.name}</CardTitle>
                     </div>
                     <Badge variant={
@@ -497,10 +520,7 @@ const BrokerConnectionsView: React.FC = () => {
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 flex items-center justify-center rounded-full bg-primary/10">
-                        {/* Logo would go here in a real app */}
-                        <Globe className="h-5 w-5 text-primary" />
-                      </div>
+                      {renderBrokerLogo(broker)}
                       <CardTitle className="text-lg">{broker.name}</CardTitle>
                     </div>
                     <Badge variant={
@@ -574,10 +594,7 @@ const BrokerConnectionsView: React.FC = () => {
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 flex items-center justify-center rounded-full bg-primary/10">
-                        {/* Logo would go here in a real app */}
-                        <Globe className="h-5 w-5 text-primary" />
-                      </div>
+                      {renderBrokerLogo(broker)}
                       <CardTitle className="text-lg">{broker.name}</CardTitle>
                     </div>
                     <Badge variant={
@@ -638,129 +655,72 @@ const BrokerConnectionsView: React.FC = () => {
             ))}
           </div>
         </TabsContent>
-      </Tabs>
-      
-      {/* Educational Section */}
-      <div className="mt-12">
-        <h2 className="text-2xl font-bold mb-4">Connect with Trade Hybrid</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Shield className="h-5 w-5 mr-2 text-primary" />
-                Secure Broker Connections
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                We use read-only API keys when possible, and never store your broker passwords. 
-                Your trading credentials are encrypted and securely stored with industry-standard 
-                practices.
-              </p>
-              
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="item-1">
-                  <AccordionTrigger>How to create API keys?</AccordionTrigger>
-                  <AccordionContent>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Most brokers provide API keys in their account settings or developer section.
-                      Follow these general steps:
-                    </p>
-                    <ol className="text-sm text-muted-foreground space-y-2 list-decimal pl-4">
-                      <li>Log into your broker account</li>
-                      <li>Navigate to API settings or Developer section</li>
-                      <li>Create a new API key (often requires 2FA verification)</li>
-                      <li>Set appropriate permissions (read-only when possible)</li>
-                      <li>Copy the API key and secret to connect to Trade Hybrid</li>
-                    </ol>
-                  </AccordionContent>
-                </AccordionItem>
+        {/* API Key Connection Modal */}
+        {selectedBroker && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+            <Card className="w-full max-w-md mx-auto">
+              <CardHeader>
+                <div className="flex items-center space-x-3">
+                  {renderBrokerLogo(brokers.find(b => b.id === selectedBroker) as Broker, 'md')}
+                  <div>
+                    <CardTitle>Connect to {brokers.find(b => b.id === selectedBroker)?.name}</CardTitle>
+                    <CardDescription>
+                      Enter your API credentials to connect
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-1">
+                  <label htmlFor="apiKey" className="text-sm font-medium">
+                    API Key
+                  </label>
+                  <input
+                    type="text"
+                    id="apiKey"
+                    className="w-full p-2 rounded-md border border-input bg-background"
+                    placeholder="Enter your API key"
+                  />
+                </div>
                 
-                <AccordionItem value="item-2">
-                  <AccordionTrigger>Can I use multiple brokers at once?</AccordionTrigger>
-                  <AccordionContent>
-                    <p className="text-sm text-muted-foreground">
-                      Yes, Trade Hybrid is designed to connect with multiple brokers simultaneously.
-                      This allows you to execute trades across different markets and asset classes
-                      from a single unified interface.
-                    </p>
-                  </AccordionContent>
-                </AccordionItem>
+                <div className="space-y-1">
+                  <label htmlFor="apiSecret" className="text-sm font-medium">
+                    API Secret
+                  </label>
+                  <input
+                    type="password"
+                    id="apiSecret"
+                    className="w-full p-2 rounded-md border border-input bg-background"
+                    placeholder="Enter your API secret"
+                  />
+                </div>
                 
-                <AccordionItem value="item-3">
-                  <AccordionTrigger>What if my broker isn't listed?</AccordionTrigger>
-                  <AccordionContent>
-                    <p className="text-sm text-muted-foreground">
-                      We're constantly expanding our broker integrations. If your preferred broker
-                      isn't available yet, please let us know through the support section and
-                      we'll prioritize adding it to our platform.
-                    </p>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Settings className="h-5 w-5 mr-2 text-primary" />
-                Broker Integration Features
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-start space-x-3">
-                <div className="mt-0.5">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
+                <div className="space-y-1">
+                  <label className="text-sm font-medium flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      className="rounded border-input"
+                    />
+                    <span>Enable Demo/Paper Trading</span>
+                  </label>
                 </div>
-                <div>
-                  <h4 className="font-medium">Real-Time Market Data</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Access live prices, order book depth, and market movements directly from your broker.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-3">
-                <div className="mt-0.5">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                </div>
-                <div>
-                  <h4 className="font-medium">Automated Trade Execution</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Execute trades programmatically using our platform's strategies or AI recommendations.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-3">
-                <div className="mt-0.5">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                </div>
-                <div>
-                  <h4 className="font-medium">Portfolio Monitoring</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Track your positions, open orders, and account balances across all connected brokers.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-3">
-                <div className="mt-0.5">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                </div>
-                <div>
-                  <h4 className="font-medium">Multi-Market Trading</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Seamlessly trade across stocks, crypto, forex, and futures from a single interface.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+              </CardContent>
+              <CardFooter className="flex justify-between">
+                <Button variant="outline" onClick={() => setSelectedBroker(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => connectToBroker(selectedBroker, {
+                  apiKey: 'demo-key',
+                  apiSecret: 'demo-secret'
+                })}>
+                  Connect
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+        )}
+      </Tabs>
     </Container>
   );
 };

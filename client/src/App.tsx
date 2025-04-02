@@ -126,6 +126,7 @@ const App: React.FC = () => {
                 <Route path="/trading/indicators" element={<ProtectedRoute><TradingIndicatorsPage /></ProtectedRoute>} />
                 <Route path="/trading/solana" element={<ProtectedRoute><SolanaTradingPage /></ProtectedRoute>} />
                 <Route path="/dex" element={<ProtectedRoute><SolanaDexEmbedded /></ProtectedRoute>} />
+                <Route path="/broker-connections" element={<ProtectedRoute><BrokerConnectionsView /></ProtectedRoute>} />
 
                 {/* Learning & Education */}
                 <Route path="/learning-journey" element={<ProtectedRoute><LearningJourneyPage /></ProtectedRoute>} />

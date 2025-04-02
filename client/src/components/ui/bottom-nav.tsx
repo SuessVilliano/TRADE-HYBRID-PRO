@@ -60,6 +60,7 @@ const getIcon = (iconName: string) => {
 export function BottomNav({ className = '' }: BottomNavProps) {
   const location = useLocation();
   const currentPath = location.pathname;
+  const [isVisible, setIsVisible] = React.useState(false);
 
   // Get tabs from user preferences
   const { bottomNavTabs, toggleBottomNavTab, reorderBottomNavTabs, resetPreferences } = useUserPreferences();
@@ -72,10 +73,28 @@ export function BottomNav({ className = '' }: BottomNavProps) {
       .slice(0, 4); // Limit to exactly 4 buttons
   }, [bottomNavTabs]);
   
-  // No edit-related state or handlers needed here anymore as they're moved to bottom-nav-customizer.tsx
+  // Add scroll event listener to show/hide bottom nav
+  React.useEffect(() => {
+    const handleScroll = () => {
+      // Show navbar when scrolled down at least 200px
+      const scrollPosition = window.scrollY;
+      setIsVisible(scrollPosition > 200);
+    };
+    
+    // Initial check
+    handleScroll();
+    
+    // Add event listener
+    window.addEventListener('scroll', handleScroll);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
   
   return (
-    <div className={`fixed bottom-0 left-[120px] right-[120px] z-50 bg-background border-t rounded-t-2xl shadow-lg ${className}`}>
+    <div className={`fixed bottom-0 left-[120px] right-[120px] z-50 bg-background border-t rounded-t-2xl shadow-lg transition-all duration-300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'} ${className}`}>
       <div className="flex items-center justify-around px-2 py-2">
         {/* Visible tabs */}
         {visibleTabs.map((tab) => (

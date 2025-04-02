@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="96px" height="96px">
+  <linearGradient id="VoTgMl1Uyt~UiQ2QWsifma" x1="24" x2="24" y1="6" y2="42" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#33bef0"/>
+    <stop offset="1" stop-color="#22a5e2"/>
+  </linearGradient>
+  <circle cx="24" cy="24" r="18" fill="url(#VoTgMl1Uyt~UiQ2QWsifma)"/>
+  <path fill="#fff" d="M29,17l-4,8l-4-8h-5l6,12v6h6v-6l6-12H29z"/>
+</svg>
