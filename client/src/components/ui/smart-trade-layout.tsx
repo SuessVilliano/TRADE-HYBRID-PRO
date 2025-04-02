@@ -20,6 +20,7 @@ import {
   MoveLeft
 } from 'lucide-react';
 import TradingViewWidget from './TradingViewWidget';
+import DexChart from './dex-chart';
 import { SmartTradePanel } from './smart-trade-panel';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
@@ -448,14 +449,13 @@ export function SmartTradeLayout({
           </div>
         )}
         
-        {/* Chart */}
+        {/* DEX Chart */}
         <div className="h-full relative overflow-hidden">
-          <TradingViewWidget
+          <DexChart
             symbol={symbol}
-            height="100%"
-            width="100%"
+            height={'100%'}
             theme="dark"
-            allow_symbol_change={true}
+            showControls={true}
           />
         </div>
         
