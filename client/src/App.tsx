@@ -6,6 +6,7 @@ import { SolanaWalletProvider } from './lib/context/SolanaWalletProvider';
 import OnboardingProvider from './lib/context/OnboardingProvider';
 import { OnboardingTooltip } from './components/ui/onboarding-tooltip';
 import { OnboardingButton } from './components/ui/onboarding-button';
+import { BottomNav } from './components/ui/bottom-nav';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Pages
@@ -31,6 +32,7 @@ import NotFoundPage from './pages/not-found';
 
 // Trading & Markets
 import AdvancedTradingDashboard from './pages/advanced-trading-dashboard';
+import TradingDashboard from './pages/trading-dashboard';
 import TradingIndicatorsPage from './pages/trading-indicators';
 import SolanaTradingPage from './pages/solana-trading';
 import SolanaDexEmbedded from './pages/solana-dex-embedded';
@@ -86,6 +88,8 @@ const App: React.FC = () => {
               {/* Onboarding Components */}
               <OnboardingTooltip />
               <OnboardingButton />
+              {/* Use the fixed version of the customizable bottom nav */}
+              <BottomNav />
               
               <Routes>
                 {/* Public routes */}
@@ -117,6 +121,7 @@ const App: React.FC = () => {
                 
                 {/* Trading & Markets */}
                 <Route path="/trading-dashboard" element={<ProtectedRoute><AdvancedTradingDashboard /></ProtectedRoute>} />
+                <Route path="/trading-dashboard/custom" element={<ProtectedRoute><TradingDashboard /></ProtectedRoute>} />
                 <Route path="/trading/indicators" element={<ProtectedRoute><TradingIndicatorsPage /></ProtectedRoute>} />
                 <Route path="/trading/solana" element={<ProtectedRoute><SolanaTradingPage /></ProtectedRoute>} />
                 <Route path="/dex" element={<ProtectedRoute><SolanaDexEmbedded /></ProtectedRoute>} />

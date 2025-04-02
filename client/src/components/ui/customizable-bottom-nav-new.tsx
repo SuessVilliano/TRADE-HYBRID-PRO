@@ -1,39 +1,46 @@
-import React, { useState } from 'react';
-import { useUserPreferences, TabConfig } from '@/lib/stores/useUserPreferences';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import * as React from 'react';
+import { useState } from 'react';
+import { useUserPreferences, TabConfig } from '../../lib/stores/useUserPreferences';
+import { Button } from './button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
+import { Label } from './label';
+import { Switch } from './switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { GripVertical, X, Plus, Settings, Check } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import * as Icons from 'lucide-react';
-
-// Map specific icons to component functions
-const iconMap: Record<string, React.ComponentType<any>> = {
-  'Home': Icons.Home,
-  'LineChart': Icons.LineChart,
-  'FileText': Icons.FileText,
-  'BookOpen': Icons.BookOpen,
-  'Wallet': Icons.Wallet,
-  'Brain': Icons.Brain,
-  'Settings': Icons.Settings,
-  'User': Icons.User,
-  'Users': Icons.Users,
-  'Dices': Icons.Dices,
-  'Bell': Icons.Bell,
-  'Activity': Icons.Activity,
-  'BarChart3': Icons.BarChart3,
-  'MessageSquare': Icons.MessageSquare,
-  'Coins': Icons.Coins,
-  'ShoppingCart': Icons.ShoppingCart,
-  'Circle': Icons.Circle,
-};
+import * as LucideIcons from 'lucide-react';
 
 interface CustomizableBottomNavProps {
   className?: string;
 }
+
+// Map of icons we use frequently
+const iconComponentMap: Record<string, JSX.Element> = {
+  'Home': <LucideIcons.Home className="h-5 w-5" />,
+  'LineChart': <LucideIcons.LineChart className="h-5 w-5" />,
+  'FileText': <LucideIcons.FileText className="h-5 w-5" />,
+  'BookOpen': <LucideIcons.BookOpen className="h-5 w-5" />,
+  'BarChart': <LucideIcons.BarChart className="h-5 w-5" />,
+  'Brain': <LucideIcons.Brain className="h-5 w-5" />,
+  'Settings': <LucideIcons.Settings className="h-5 w-5" />,
+  'User': <LucideIcons.User className="h-5 w-5" />,
+  'Users': <LucideIcons.Users className="h-5 w-5" />,
+  'Sparkles': <LucideIcons.Sparkles className="h-5 w-5" />,
+  'Link': <LucideIcons.Link className="h-5 w-5" />,
+  'Dices': <LucideIcons.Dices className="h-5 w-5" />,
+  'Bell': <LucideIcons.Bell className="h-5 w-5" />,
+  'Activity': <LucideIcons.Activity className="h-5 w-5" />,
+  'BarChart3': <LucideIcons.BarChart3 className="h-5 w-5" />,
+  'Gamepad2': <LucideIcons.Gamepad2 className="h-5 w-5" />,
+  'Store': <LucideIcons.Store className="h-5 w-5" />,
+  'Share2': <LucideIcons.Share2 className="h-5 w-5" />,
+  'Circle': <LucideIcons.Circle className="h-5 w-5" />,
+};
+
+const IconComponent = ({ name }: { name: string }) => {
+  // Return the icon from our map or fallback to Circle
+  return iconComponentMap[name] || iconComponentMap['Circle'];
+};
 
 export function CustomizableBottomNav({ className = '' }: CustomizableBottomNavProps) {
   const location = useLocation();
@@ -43,9 +50,11 @@ export function CustomizableBottomNav({ className = '' }: CustomizableBottomNavP
   const { bottomNavTabs, toggleBottomNavTab, reorderBottomNavTabs, resetPreferences } = useUserPreferences();
   
   // Filter tabs to only show active ones and sort by order
-  const visibleTabs = bottomNavTabs
-    .filter(t => t.active)
-    .sort((a, b) => a.order - b.order);
+  const visibleTabs = React.useMemo(() => {
+    return bottomNavTabs
+      .filter(t => t.active)
+      .sort((a, b) => a.order - b.order);
+  }, [bottomNavTabs]);
   
   // State for edit dialog
   const [isEditing, setIsEditing] = useState(false);
@@ -108,13 +117,6 @@ export function CustomizableBottomNav({ className = '' }: CustomizableBottomNavP
     setIsEditing(false);
   };
   
-  // Get icon component and render it with proper props
-  const getIcon = (iconName: string) => {
-    // Fallback to 'Circle' if icon not found
-    const IconComponent = iconMap[iconName] || iconMap['Circle'];
-    return <IconComponent className="h-5 w-5" />;
-  };
-  
   return (
     <div className={`fixed bottom-0 left-0 right-0 z-50 bg-background border-t shadow-lg ${className}`}>
       <div className="flex items-center justify-around px-2 py-2">
@@ -148,7 +150,7 @@ export function CustomizableBottomNav({ className = '' }: CustomizableBottomNavP
               }, 150);
             }}
           >
-            {getIcon(tab.icon)}
+            <IconComponent name={tab.icon} />
             <span className="text-xs mt-1">{tab.label}</span>
           </Link>
         ))}
@@ -170,7 +172,7 @@ export function CustomizableBottomNav({ className = '' }: CustomizableBottomNavP
                 }, 150);
               }}
             >
-              <Settings className="h-5 w-5" />
+              <LucideIcons.Settings className="h-5 w-5" />
               <span className="text-xs mt-1">Customize</span>
             </Button>
           </DialogTrigger>
@@ -193,7 +195,7 @@ export function CustomizableBottomNav({ className = '' }: CustomizableBottomNavP
                     {editableTabs.map((tab) => (
                       <div key={tab.id} className="flex items-center justify-between p-2 border rounded-md">
                         <div className="flex items-center gap-2">
-                          {getIcon(tab.icon)}
+                          <IconComponent name={tab.icon} />
                           <span>{tab.label}</span>
                         </div>
                         <Switch 
@@ -231,9 +233,9 @@ export function CustomizableBottomNav({ className = '' }: CustomizableBottomNavP
                                 >
                                   <div className="flex items-center gap-2">
                                     <div {...provided.dragHandleProps}>
-                                      <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                      <LucideIcons.GripVertical className="h-5 w-5 text-muted-foreground" />
                                     </div>
-                                    {getIcon(tab.icon)}
+                                    <IconComponent name={tab.icon} />
                                     <span>{tab.label}</span>
                                   </div>
                                   <div className="flex items-center space-x-2">
@@ -263,14 +265,14 @@ export function CustomizableBottomNav({ className = '' }: CustomizableBottomNavP
                 onClick={handleResetToDefaults}
                 className="flex items-center gap-2"
               >
-                <X className="h-4 w-4" />
+                <LucideIcons.X className="h-4 w-4" />
                 Reset to Defaults
               </Button>
               <Button 
                 onClick={handleSaveChanges}
                 className="flex items-center gap-2"
               >
-                <Check className="h-4 w-4" />
+                <LucideIcons.Check className="h-4 w-4" />
                 Save Changes
               </Button>
             </DialogFooter>

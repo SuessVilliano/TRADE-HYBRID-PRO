@@ -1,27 +1,26 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
+import React from "react";
+import { cn } from "../../lib/utils";
 
-interface ContainerProps {
-  children: React.ReactNode;
+interface ContainerProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
+  children: React.ReactNode;
 }
 
 /**
- * Container component that provides consistent padding and max-width constraints
+ * Container component that centers content and provides consistent padding
  */
-export const Container: React.FC<ContainerProps> = ({ 
-  children,
-  className,
-  ...props
-}) => {
+export function Container({ className, children, ...props }: ContainerProps) {
   return (
     <div 
-      className={cn("container mx-auto px-4 md:px-6", className)}
+      className={cn(
+        "w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8", 
+        className
+      )} 
       {...props}
     >
       {children}
     </div>
   );
-};
+}
 
 export default Container;

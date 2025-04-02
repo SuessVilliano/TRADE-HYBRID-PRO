@@ -124,6 +124,15 @@ export default function AdvancedTradingDashboard({}: AdvancedTradingDashboardPro
                         <Save className="h-4 w-4" />
                         Save Layout
                       </Button>
+                      <Button 
+                        variant="default" 
+                        size="sm" 
+                        className="gap-2 bg-purple-600 hover:bg-purple-700"
+                        onClick={() => window.location.href = '/trading-dashboard/custom'}
+                      >
+                        <LayoutDashboard className="h-4 w-4" />
+                        Customizable Dashboard
+                      </Button>
                     </div>
                   </div>
                 </CardContent>

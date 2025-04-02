@@ -17,7 +17,8 @@ import {
   Bot,
   Moon,
   Sun,
-  ArrowLeft
+  ArrowLeft,
+  LayoutGrid
 } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
 // Using direct URL for logo
@@ -51,6 +52,11 @@ const navigationItems = [
     name: 'Trade Dashboard',
     path: '/trading-dashboard',
     icon: <LineChart className="h-4 w-4" />,
+  },
+  {
+    name: 'Customizable Dashboard',
+    path: '/trading-dashboard/custom',
+    icon: <LayoutGrid className="h-4 w-4" />,
   },
   {
     name: 'DEX Dashboard',

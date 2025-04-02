@@ -1,41 +1,70 @@
-import React, { useState } from 'react';
-import { useUserPreferences, TabConfig } from '@/lib/stores/useUserPreferences';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import * as React from 'react';
+import { useState } from 'react';
+import { useUserPreferences, TabConfig } from '../../lib/stores/useUserPreferences';
+import { Button } from './button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
+import { Label } from './label';
+import { Switch } from './switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { GripVertical, X, Plus, Settings, Check } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import * as Icons from 'lucide-react';
 
-// Map specific icons to component functions
-const iconMap: Record<string, React.ComponentType<any>> = {
-  'Home': Icons.Home,
-  'LineChart': Icons.LineChart,
-  'FileText': Icons.FileText,
-  'BookOpen': Icons.BookOpen,
-  'Wallet': Icons.Wallet,
-  'Brain': Icons.Brain,
-  'Settings': Icons.Settings,
-  'User': Icons.User,
-  'Users': Icons.Users,
-  'Dices': Icons.Dices,
-  'Bell': Icons.Bell,
-  'Activity': Icons.Activity,
-  'BarChart3': Icons.BarChart3,
-  'MessageSquare': Icons.MessageSquare,
-  'Coins': Icons.Coins,
-  'ShoppingCart': Icons.ShoppingCart,
-  'Circle': Icons.Circle,
-};
+// Import only the icons we need directly
+import {
+  Home,
+  LineChart,
+  FileText,
+  BookOpen,
+  BarChart,
+  Brain,
+  Settings,
+  User,
+  Users,
+  Sparkles,
+  Link2,
+  Dices,
+  Bell,
+  Activity,
+  BarChart3,
+  Gamepad2,
+  Store,
+  Share2,
+  Circle,
+  GripVertical,
+  X,
+  Check,
+} from 'lucide-react';
 
-interface CustomizableBottomNavProps {
+interface BottomNavProps {
   className?: string;
 }
 
-export function CustomizableBottomNav({ className = '' }: CustomizableBottomNavProps) {
+// Create a simple mapping of icon names to components
+const getIcon = (iconName: string) => {
+  switch (iconName) {
+    case 'Home': return <Home className="h-5 w-5" />;
+    case 'LineChart': return <LineChart className="h-5 w-5" />;
+    case 'FileText': return <FileText className="h-5 w-5" />;
+    case 'BookOpen': return <BookOpen className="h-5 w-5" />;
+    case 'BarChart': return <BarChart className="h-5 w-5" />;
+    case 'Brain': return <Brain className="h-5 w-5" />;
+    case 'Settings': return <Settings className="h-5 w-5" />;
+    case 'User': return <User className="h-5 w-5" />;
+    case 'Users': return <Users className="h-5 w-5" />;
+    case 'Sparkles': return <Sparkles className="h-5 w-5" />;
+    case 'Link': return <Link2 className="h-5 w-5" />;
+    case 'Dices': return <Dices className="h-5 w-5" />;
+    case 'Bell': return <Bell className="h-5 w-5" />;
+    case 'Activity': return <Activity className="h-5 w-5" />;
+    case 'BarChart3': return <BarChart3 className="h-5 w-5" />;
+    case 'Gamepad2': return <Gamepad2 className="h-5 w-5" />;
+    case 'Store': return <Store className="h-5 w-5" />;
+    case 'Share2': return <Share2 className="h-5 w-5" />;
+    default: return <Circle className="h-5 w-5" />;
+  }
+};
+
+export function BottomNav({ className = '' }: BottomNavProps) {
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -43,9 +72,11 @@ export function CustomizableBottomNav({ className = '' }: CustomizableBottomNavP
   const { bottomNavTabs, toggleBottomNavTab, reorderBottomNavTabs, resetPreferences } = useUserPreferences();
   
   // Filter tabs to only show active ones and sort by order
-  const visibleTabs = bottomNavTabs
-    .filter(t => t.active)
-    .sort((a, b) => a.order - b.order);
+  const visibleTabs = React.useMemo(() => {
+    return bottomNavTabs
+      .filter(t => t.active)
+      .sort((a, b) => a.order - b.order);
+  }, [bottomNavTabs]);
   
   // State for edit dialog
   const [isEditing, setIsEditing] = useState(false);
@@ -106,13 +137,6 @@ export function CustomizableBottomNav({ className = '' }: CustomizableBottomNavP
   const handleResetToDefaults = () => {
     resetPreferences();
     setIsEditing(false);
-  };
-  
-  // Get icon component and render it with proper props
-  const getIcon = (iconName: string) => {
-    // Fallback to 'Circle' if icon not found
-    const IconComponent = iconMap[iconName] || iconMap['Circle'];
-    return <IconComponent className="h-5 w-5" />;
   };
   
   return (
