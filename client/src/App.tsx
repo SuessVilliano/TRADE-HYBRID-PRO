@@ -37,6 +37,7 @@ import TradingDashboard from './pages/trading-dashboard';
 import TradingIndicatorsPage from './pages/trading-indicators';
 import SolanaTradingPage from './pages/solana-trading';
 import SolanaDexEmbedded from './pages/solana-dex-embedded';
+import BrokerConnectionsView from './pages/broker-connections';
 
 // Learning & Education
 import LearningJourneyPage from './pages/learning-journey';

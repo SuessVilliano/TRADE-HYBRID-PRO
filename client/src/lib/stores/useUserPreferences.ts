@@ -219,6 +219,23 @@ export const useUserPreferences = create<UserPreferencesState>()(
       // Bottom nav actions
       setBottomNavTabs: (tabs) => set({ bottomNavTabs: tabs }),
       toggleBottomNavTab: (tabId) => set((state) => {
+        // First, check if there are any duplicate tabs with the same ID
+        // This fixes the issue where multiple copies of the same tab appear
+        const dedupedTabs: TabConfig[] = [];
+        const idMap = new Map<string, boolean>();
+        
+        for (const tab of state.bottomNavTabs) {
+          if (!idMap.has(tab.id)) {
+            idMap.set(tab.id, true);
+            dedupedTabs.push(tab);
+          }
+        }
+        
+        // If we removed any duplicates, update the state first
+        if (dedupedTabs.length < state.bottomNavTabs.length) {
+          return { bottomNavTabs: dedupedTabs };
+        }
+        
         const activeTabsCount = state.bottomNavTabs.filter(t => t.active).length;
         const currentTab = state.bottomNavTabs.find(t => t.id === tabId);
         
@@ -229,35 +246,6 @@ export const useUserPreferences = create<UserPreferencesState>()(
         
         // Don't activate if we already have 4 active tabs
         if (!currentTab?.active && activeTabsCount >= 4) {
-          // Check for duplicates - if there are duplicate entries (e.g., multiple "home" buttons),
-          // deactivate one of them first to make room for the new tab
-          const activeTabs = state.bottomNavTabs.filter(t => t.active);
-          const tabIds = activeTabs.map(tab => tab.id);
-          const hasDuplicates = tabIds.some((id, index) => tabIds.indexOf(id) !== index);
-          
-          if (hasDuplicates) {
-            // Find duplicates and deactivate the higher-ordered one
-            const duplicateGroups = activeTabs.reduce((groups, tab) => {
-              groups[tab.id] = groups[tab.id] || [];
-              groups[tab.id].push(tab);
-              return groups;
-            }, {} as Record<string, TabConfig[]>);
-            
-            const duplicatesToDeactivate = Object.values(duplicateGroups)
-              .filter(group => group.length > 1)
-              .map(group => group.sort((a, b) => b.order - a.order)[0]); // Take the one with highest order
-              
-            if (duplicatesToDeactivate.length > 0) {
-              return {
-                bottomNavTabs: state.bottomNavTabs.map(tab => 
-                  duplicatesToDeactivate.some(d => d.id === tab.id && d.order === tab.order) 
-                    ? { ...tab, active: false }
-                    : tab.id === tabId ? { ...tab, active: true } : tab
-                )
-              };
-            }
-          }
-          
           return state;
         }
         

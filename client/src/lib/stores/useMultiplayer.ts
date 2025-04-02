@@ -45,6 +45,7 @@ interface MultiplayerState {
   }[];
   currentRoomId: string | null;
   isConnected: boolean;
+  friendList: string[]; // Array of user IDs who are friends
   setCurrentUser: (user: Player) => void;
   sendChatMessage: (
     message: string, 
@@ -57,6 +58,8 @@ interface MultiplayerState {
   leaveRoom: () => void;
   markUserOnline: (userId: string) => void;
   markUserOffline: (userId: string) => void;
+  sendFriendRequest: (userId: string) => void;
+  isPlayerFriend: (userId: string) => boolean;
 }
 
 // Mock data for development
@@ -137,6 +140,7 @@ export const useMultiplayer = create<MultiplayerState>((set, get) => ({
   tradingRooms: mockTradingRooms,
   currentRoomId: null,
   isConnected: true,
+  friendList: ["1"], // Initialize with one mock friend (TradeExpert)
   
   setCurrentUser: (user) => set({ currentUser: user }),
   
@@ -202,5 +206,24 @@ export const useMultiplayer = create<MultiplayerState>((set, get) => ({
         player.id === userId ? { ...player, isOnline: false, lastSeen: new Date() } : player
       )
     });
+  },
+  
+  // Check if a player is in the friend list
+  isPlayerFriend: (userId) => {
+    return get().friendList.includes(userId);
+  },
+  
+  // Send a friend request (in mock implementation, automatically adds to friend list)
+  sendFriendRequest: (userId) => {
+    const { friendList } = get();
+    
+    // Skip if already a friend
+    if (friendList.includes(userId)) return;
+    
+    // Add to friend list (in a real implementation, this would send a request first)
+    set({ friendList: [...friendList, userId] });
+    
+    // In a real implementation, this would send the friend request to the server
+    console.log("Friend request sent to:", userId);
   }
 }));

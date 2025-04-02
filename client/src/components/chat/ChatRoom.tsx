@@ -113,7 +113,7 @@ export default function ChatRoom({
     <div 
       className={cn(
         "bg-gray-900 text-white rounded-lg overflow-hidden transition-all duration-300 border border-gray-700 shadow-xl",
-        minimized ? "w-60 h-10" : "w-full h-[calc(100vh-200px)] max-w-4xl",
+        minimized ? "w-60 h-10" : "w-full h-[calc(100vh-140px)] max-w-4xl",
         className
       )}
     >
@@ -164,7 +164,7 @@ export default function ChatRoom({
           {/* Messages container */}
           <div 
             ref={chatMessagesRef}
-            className={`${attachingTradeSignal ? 'h-[calc(100%-350px)]' : 'h-[calc(100%-132px)]'} px-4 py-3 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent space-y-4`}
+            className={`${attachingTradeSignal ? 'h-[calc(100%-380px)]' : 'h-[calc(100%-132px)]'} px-4 py-3 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent space-y-4`}
           >
             {filteredMessages.length > 0 ? (
               filteredMessages.map((msg) => (
