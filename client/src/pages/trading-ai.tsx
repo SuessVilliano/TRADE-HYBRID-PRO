@@ -1,560 +1,400 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Container } from '@/components/ui/container';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { SmartTradePanel } from '@/components/ui/smart-trade-panel';
 import { 
-  Cpu, 
-  Sparkles, 
-  MessageSquare, 
-  ArrowRight, 
-  TrendingUp, 
-  BarChart3,
   Mic, 
-  Play, 
-  Square, 
-  Loader2,
-  CheckCircle,
-  BrainCircuit,
-  LineChart,
-  HelpCircle,
-  ArrowUpRight,
-  ArrowDownRight,
-  CheckCircle2
+  MicOff, 
+  SendHorizonal, 
+  BarChart4, 
+  BookOpen, 
+  Brain, 
+  ChevronRight,
+  Lightbulb,
+  AlertCircle,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useBrokerAggregator } from '@/lib/stores/useBrokerAggregator';
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
-const TradingAIPage: React.FC = () => {
-  // Recording and transcription state
-  const [isRecording, setIsRecording] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
+interface Message {
+  id: string;
+  type: 'user' | 'ai';
+  content: string;
+  timestamp: Date;
+  isTradeCommand?: boolean;
+}
+
+const TradingAIView: React.FC = () => {
+  const { toast } = useToast();
+  const [listening, setListening] = useState(false);
   const [transcription, setTranscription] = useState('');
-  const [aiResponse, setAiResponse] = useState<string | null>(null);
-  const [tradeIntent, setTradeIntent] = useState<any | null>(null);
-  const [selectedTab, setSelectedTab] = useState('voice');
-  const [microphoneAccess, setMicrophoneAccess] = useState<boolean | null>(null);
-  const [chatHistory, setChatHistory] = useState<{role: 'user' | 'assistant', content: string, timestamp: number}[]>([
+  const [messages, setMessages] = useState<Message[]>([
     {
-      role: 'assistant',
-      content: 'Hello! I can help you analyze markets and execute trades using natural language. Try asking me to analyze a stock or place a trade.',
-      timestamp: Date.now()
-    }
+      id: '1',
+      type: 'ai',
+      content: 'Hello, I\'m your AI Trading Assistant. How can I help you today?',
+      timestamp: new Date(),
+    },
   ]);
-  const [userMessage, setUserMessage] = useState('');
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const [inputMessage, setInputMessage] = useState('');
+  const [muted, setMuted] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // Mock recent AI signals
-  const aiSignals = [
-    { symbol: 'AAPL', direction: 'buy', confidence: 87, timeframe: '4H', price: 185.42, timestamp: Date.now() - 1000 * 60 * 30 },
-    { symbol: 'BTC/USD', direction: 'sell', confidence: 92, timeframe: '1D', price: 51750.25, timestamp: Date.now() - 1000 * 60 * 120 },
-    { symbol: 'EUR/USD', direction: 'buy', confidence: 76, timeframe: '1H', price: 1.0834, timestamp: Date.now() - 1000 * 60 * 240 },
-    { symbol: 'SPY', direction: 'buy', confidence: 81, timeframe: '1D', price: 478.84, timestamp: Date.now() - 1000 * 60 * 360 },
+  // Example AI responses for demo purposes
+  const aiResponses = [
+    "I've analyzed the market conditions and detected a potential buying opportunity for AAPL. The stock has shown strong support at current levels with increasing volume.",
+    "Based on technical indicators, TSLA is approaching a resistance level. Consider setting a stop loss if you're currently in a long position.",
+    "I'm seeing unusual options activity for NVDA today. This could indicate institutional interest and potential price movement.",
+    "The fear and greed index is showing extreme fear in the market today. Historically, this has been a contrarian buying opportunity for quality stocks.",
+    "I've analyzed your trade history and noticed your win rate is higher on momentum trades compared to reversal trades. Would you like me to focus more on momentum setups?",
   ];
-
-  // Check for microphone access
+  
+  // Example trade commands for demo purposes
+  const tradeCommands = [
+    "Buy 10 shares of AAPL at market",
+    "Sell 5 shares of TSLA at limit $250.50",
+    "Set stop loss for AMZN at $140.25",
+    "Close half position in MSFT",
+    "Create alert when SPY breaks below $450",
+  ];
+  
+  // Scroll to bottom of messages
   useEffect(() => {
-    const checkMicrophoneAccess = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach(track => track.stop());
-        setMicrophoneAccess(true);
-      } catch (err) {
-        console.error("Microphone access error:", err);
-        setMicrophoneAccess(false);
-      }
-    };
-    
-    checkMicrophoneAccess();
-  }, []);
-
-  // Scroll to bottom of chat
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatHistory]);
-
-  // Simulate starting/stopping voice recording
-  const toggleRecording = () => {
-    if (isRecording) {
-      setIsRecording(false);
-      setIsProcessing(true);
-      
-      // Simulate processing delay
-      setTimeout(() => {
-        // Example transcription based on common trading phrases
-        const exampleTranscriptions = [
-          "Buy 100 shares of Apple stock at market price",
-          "Analyze Tesla stock and give me a short term outlook",
-          "What's the current price of Bitcoin?",
-          "Sell my entire position in Amazon",
-          "Set a stop loss for my Microsoft position at 340 dollars"
-        ];
-        const randomTranscription = exampleTranscriptions[Math.floor(Math.random() * exampleTranscriptions.length)];
-        setTranscription(randomTranscription);
-        setIsProcessing(false);
-        
-        // Add to chat history
-        setChatHistory(prev => [...prev, {
-          role: 'user',
-          content: randomTranscription,
-          timestamp: Date.now()
-        }]);
-        
-        // Process AI response after a short delay
-        processAIResponse(randomTranscription);
-      }, 1500);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+  
+  // Simulated voice recognition functionality
+  const toggleListening = () => {
+    if (listening) {
+      setListening(false);
+      // In a real app, we would stop the actual speech recognition here
+      toast({
+        title: "Voice recognition stopped",
+        description: "Voice-to-text conversion paused.",
+      });
     } else {
-      setIsRecording(true);
-      setTranscription('');
-      setAiResponse(null);
-      setTradeIntent(null);
+      setListening(true);
+      // In a real app, we would start the actual speech recognition here
+      toast({
+        title: "Listening...",
+        description: "Speak now. Your voice will be converted to text.",
+      });
+      
+      // Simulate speech recognition with random example
+      const timeout = Math.floor(Math.random() * 3000) + 1000; // 1-4 seconds
+      setTimeout(() => {
+        // Pick a random example
+        const examples = [...tradeCommands, "How is the market doing today?", "What's your analysis on tech stocks?"];
+        const randomExample = examples[Math.floor(Math.random() * examples.length)];
+        setTranscription(randomExample);
+        setListening(false);
+      }, timeout);
     }
   };
-
-  // Process message from text input
+  
+  // Handle sending a message (either typed or transcribed)
   const handleSendMessage = () => {
-    if (userMessage.trim() === '') return;
+    const messageText = transcription || inputMessage;
+    if (!messageText.trim()) return;
     
-    // Add user message to chat
-    setChatHistory(prev => [...prev, {
-      role: 'user',
-      content: userMessage,
-      timestamp: Date.now()
-    }]);
+    // Determine if the message is a trade command
+    const isTrade = isTradeCommand(messageText);
     
-    // Process the message
-    processAIResponse(userMessage);
+    // Add user message
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      type: 'user',
+      content: messageText,
+      timestamp: new Date(),
+      isTradeCommand: isTrade,
+    };
+    setMessages(prev => [...prev, userMessage]);
     
     // Clear input
-    setUserMessage('');
-  };
-
-  // Simulate AI processing and response
-  const processAIResponse = (message: string) => {
-    setIsProcessing(true);
+    setInputMessage('');
+    setTranscription('');
     
-    // Simulate AI thinking time
+    // Simulate AI response
     setTimeout(() => {
-      // Simple logic to create different responses based on message content
-      let response = '';
-      let intent = null;
+      let response: string;
       
-      const lowercaseMessage = message.toLowerCase();
-      
-      // Check for buy intent
-      if (lowercaseMessage.includes('buy')) {
-        const stockMatch = message.match(/buy.+?(?:of\s+)?([A-Za-z]+)/) || [];
-        const quantityMatch = message.match(/buy\s+(\d+)/) || [];
-        const stock = stockMatch[1] || 'AAPL';
-        const quantity = parseInt(quantityMatch[1]) || 100;
-        
-        response = `I'll help you buy ${quantity} shares of ${stock.toUpperCase()}. The current market price is $${(Math.random() * 200 + 50).toFixed(2)}. Would you like to proceed with this order?`;
-        
-        intent = {
-          action: 'BUY',
-          symbol: stock.toUpperCase(),
-          quantity: quantity,
-          price: 'MARKET',
-          estimatedCost: (Math.random() * 200 + 50) * quantity
-        };
-      } 
-      // Check for sell intent
-      else if (lowercaseMessage.includes('sell')) {
-        const stockMatch = message.match(/sell.+?(?:of\s+)?([A-Za-z]+)/) || [];
-        const stock = stockMatch[1] || 'position';
-        
-        response = `I can help you sell your ${stock.toUpperCase()} position. Based on your current holdings, you have approximately ${Math.floor(Math.random() * 100) + 1} shares. Would you like to proceed?`;
-        
-        intent = {
-          action: 'SELL',
-          symbol: stock.toUpperCase(),
-          quantity: 'ALL',
-          price: 'MARKET'
-        };
-      } 
-      // Check for analysis intent
-      else if (lowercaseMessage.includes('analyze') || lowercaseMessage.includes('outlook') || lowercaseMessage.includes('what')) {
-        const stockMatch = message.match(/(?:analyze|outlook|price of)\s+([A-Za-z]+)/) || [];
-        const stock = stockMatch[1] || 'the market';
-        
-        const sentimentOptions = ['BULLISH', 'BEARISH', 'NEUTRAL'];
-        const sentiment = sentimentOptions[Math.floor(Math.random() * sentimentOptions.length)];
-        const direction = sentiment === 'BULLISH' ? 'upward' : sentiment === 'BEARISH' ? 'downward' : 'sideways';
-        
-        response = `Based on my analysis of ${stock.toUpperCase()}, the short-term outlook appears ${sentiment.toLowerCase()}. Key technical indicators suggest a ${direction} trend over the next few sessions. The RSI is ${Math.floor(Math.random() * 100)}, which indicates ${sentiment === 'BULLISH' ? 'potential buying pressure' : sentiment === 'BEARISH' ? 'potential selling pressure' : 'balanced supply and demand'}. Would you like me to prepare a trade based on this analysis?`;
-      }
-      // Default response
-      else {
-        response = `I've analyzed your request: "${message}". Would you like me to help with market analysis, placing a trade, or managing your portfolio?`;
+      if (isTrade) {
+        // If it's a trade command, respond accordingly
+        response = `I've processed your trade command: "${messageText}". ${Math.random() > 0.5 ? 'Order executed successfully.' : 'Order queued and awaiting market open.'}`;
+      } else {
+        // Otherwise, use a general AI response
+        response = aiResponses[Math.floor(Math.random() * aiResponses.length)];
       }
       
-      // Add AI response to chat
-      setChatHistory(prev => [...prev, {
-        role: 'assistant',
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai',
         content: response,
-        timestamp: Date.now()
-      }]);
+        timestamp: new Date(),
+      };
       
-      setAiResponse(response);
-      setTradeIntent(intent);
-      setIsProcessing(false);
-    }, 2000);
+      setMessages(prev => [...prev, aiMessage]);
+      
+      // Speak the response if not muted
+      if (!muted) {
+        speakResponse(response);
+      }
+    }, 1000);
   };
-
-  // Format relative time for messages
-  const formatRelativeTime = (timestamp: number) => {
-    const seconds = Math.floor((Date.now() - timestamp) / 1000);
-    
-    if (seconds < 60) return 'just now';
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return new Date(timestamp).toLocaleDateString();
+  
+  // Check if a message is a trade command
+  const isTradeCommand = (text: string): boolean => {
+    const lowerText = text.toLowerCase();
+    return (
+      lowerText.includes('buy') || 
+      lowerText.includes('sell') || 
+      lowerText.includes('trade') ||
+      lowerText.includes('limit') ||
+      lowerText.includes('stop loss') ||
+      lowerText.includes('position') ||
+      lowerText.includes('order') ||
+      lowerText.includes('shares')
+    );
   };
-
-  // Format confidence as color
-  const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 85) return 'text-green-500';
-    if (confidence >= 70) return 'text-yellow-500';
-    return 'text-orange-500';
+  
+  // Simulate text-to-speech
+  const speakResponse = (text: string) => {
+    // In a real app, we would use the actual Web Speech API here
+    toast({
+      title: "Speaking response",
+      description: "AI response is being spoken (simulated).",
+    });
   };
-
+  
+  // Handle pressing Enter to send
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSendMessage();
+    }
+  };
+  
   return (
-    <Container className="py-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Sparkles className="h-8 w-8 text-primary" /> 
-            Smart Trading AI
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Use natural language to analyze markets and execute trades
-          </p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="overflow-hidden">
-            <CardHeader className="pb-0">
-              <Tabs defaultValue="voice" value={selectedTab} onValueChange={setSelectedTab}>
-                <TabsList className="grid grid-cols-2 mb-4">
-                  <TabsTrigger value="voice" className="flex items-center gap-1" onClick={() => setSelectedTab('voice')}>
-                    <Mic className="h-4 w-4" /> Voice Commands
-                  </TabsTrigger>
-                  <TabsTrigger value="chat" className="flex items-center gap-1" onClick={() => setSelectedTab('chat')}>
-                    <MessageSquare className="h-4 w-4" /> Chat Interface
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </CardHeader>
+    <Container className="py-6">
+      <Card className="border-0 shadow-none bg-background">
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-2xl flex items-center">
+                <Brain className="h-6 w-6 mr-2 text-primary" />
+                AI Trading Assistant
+              </CardTitle>
+              <CardDescription>
+                Voice-enabled AI that can analyze markets and execute trades
+              </CardDescription>
+            </div>
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => setMuted(!muted)}
+              title={muted ? "Unmute AI responses" : "Mute AI responses"}
+            >
+              {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            </Button>
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          <Tabs defaultValue="chat" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="chat">Chat</TabsTrigger>
+              <TabsTrigger value="analysis">Analysis</TabsTrigger>
+              <TabsTrigger value="help">Help</TabsTrigger>
+            </TabsList>
             
-            <CardContent className="p-4">
-              <TabsContent value="voice" className="mt-0 space-y-4">
-                <div className="flex flex-col items-center justify-center p-6 text-center">
-                  {microphoneAccess === false ? (
-                    <div className="space-y-2">
-                      <HelpCircle className="h-16 w-16 text-orange-500 mx-auto" />
-                      <h3 className="text-xl font-semibold">Microphone Access Required</h3>
-                      <p className="text-muted-foreground max-w-md mx-auto">
-                        Please enable microphone access in your browser settings to use voice commands.
-                      </p>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setMicrophoneAccess(null)}
-                        className="mt-4"
+            <TabsContent value="chat" className="space-y-4">
+              <div className="border rounded-md h-[400px] flex flex-col">
+                <ScrollArea className="flex-grow p-4">
+                  {messages.map((message) => (
+                    <div 
+                      key={message.id} 
+                      className={`mb-4 ${message.type === 'user' ? 'flex justify-end' : 'flex justify-start'}`}
+                    >
+                      <div 
+                        className={`max-w-[80%] p-3 rounded-lg ${
+                          message.type === 'user' 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'bg-muted'
+                        } ${message.isTradeCommand ? 'border-2 border-yellow-500' : ''}`}
                       >
-                        Check Again
-                      </Button>
+                        {message.isTradeCommand && (
+                          <Badge variant="outline" className="mb-2 bg-yellow-500/10">
+                            Trade Command
+                          </Badge>
+                        )}
+                        <p>{message.content}</p>
+                        <div className={`text-xs mt-1 ${message.type === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                          {message.timestamp.toLocaleTimeString()}
+                        </div>
+                      </div>
                     </div>
-                  ) : (
-                    <>
-                      <div 
-                        className={cn(
-                          "w-32 h-32 rounded-full flex items-center justify-center mb-6 transition-all duration-300",
-                          isRecording 
-                            ? "bg-red-500/20 border-4 border-red-500 scale-110" 
-                            : isProcessing 
-                              ? "bg-yellow-500/20 border-4 border-yellow-500"
-                              : "bg-primary/20 border-4 border-primary hover:bg-primary/30"
-                        )}
-                        onClick={toggleRecording}
-                      >
-                        {isProcessing ? (
-                          <Loader2 className="h-12 w-12 text-yellow-500 animate-spin" />
-                        ) : isRecording ? (
-                          <Square className="h-12 w-12 text-red-500" />
-                        ) : (
-                          <Mic className="h-12 w-12 text-primary" />
-                        )}
-                      </div>
-                      
-                      <h3 className="text-lg font-medium mb-2">
-                        {isRecording 
-                          ? "Listening..." 
-                          : isProcessing 
-                            ? "Processing your request..." 
-                            : transcription 
-                              ? "Command Received" 
-                              : "Tap to Speak"}
-                      </h3>
-                      
-                      {transcription && !isRecording && !isProcessing && (
-                        <div className="bg-muted rounded-lg p-4 max-w-md mb-6">
-                          <p className="text-foreground">{transcription}</p>
-                        </div>
-                      )}
-                      
-                      {aiResponse && !isRecording && !isProcessing && (
-                        <div className="space-y-4 max-w-md">
-                          <Card className="border-primary/20 bg-primary/5">
-                            <CardHeader className="pb-2">
-                              <div className="flex items-center gap-2">
-                                <Sparkles className="h-5 w-5 text-primary" />
-                                <CardTitle className="text-lg">AI Response</CardTitle>
-                              </div>
-                            </CardHeader>
-                            <CardContent>
-                              <p className="text-foreground">{aiResponse}</p>
-                            </CardContent>
-                          </Card>
-                          
-                          {tradeIntent && (
-                            <Card className="border-green-500/20 bg-green-500/5">
-                              <CardHeader className="pb-2">
-                                <div className="flex items-center gap-2">
-                                  <BrainCircuit className="h-5 w-5 text-green-500" />
-                                  <CardTitle className="text-lg">Trade Intent Detected</CardTitle>
-                                </div>
-                              </CardHeader>
-                              <CardContent className="space-y-2">
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Action:</span>
-                                  <span className={`font-medium ${tradeIntent.action === 'BUY' ? 'text-green-500' : 'text-red-500'}`}>
-                                    {tradeIntent.action}
-                                  </span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Symbol:</span>
-                                  <span className="font-medium">{tradeIntent.symbol}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Quantity:</span>
-                                  <span className="font-medium">{tradeIntent.quantity}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Price:</span>
-                                  <span className="font-medium">{tradeIntent.price}</span>
-                                </div>
-                                {tradeIntent.estimatedCost && (
-                                  <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Est. Cost:</span>
-                                    <span className="font-medium">${tradeIntent.estimatedCost.toFixed(2)}</span>
-                                  </div>
-                                )}
-                              </CardContent>
-                              <CardFooter>
-                                <div className="flex gap-2 w-full">
-                                  <Button variant="outline" className="flex-1">
-                                    Edit Order
-                                  </Button>
-                                  <Button className="flex-1 bg-green-600 hover:bg-green-700">
-                                    <CheckCircle className="h-4 w-4 mr-2" />
-                                    Execute Trade
-                                  </Button>
-                                </div>
-                              </CardFooter>
-                            </Card>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="chat" className="mt-0 space-y-4 h-[600px] flex flex-col">
-                <ScrollArea className="pr-4 flex-grow">
-                  <div className="space-y-4">
-                    {chatHistory.map((message, i) => (
-                      <div 
-                        key={i} 
-                        className={cn(
-                          "flex",
-                          message.role === 'user' ? "justify-end" : "justify-start"
-                        )}
-                      >
-                        <div 
-                          className={cn(
-                            "max-w-[80%] rounded-lg p-4",
-                            message.role === 'user' 
-                              ? "bg-primary text-primary-foreground" 
-                              : "bg-muted"
-                          )}
-                        >
-                          <p className="text-sm">{message.content}</p>
-                          <p className="text-xs opacity-70 mt-1 text-right">{formatRelativeTime(message.timestamp)}</p>
-                        </div>
-                      </div>
-                    ))}
-                    <div ref={chatEndRef} />
-                  </div>
+                  ))}
+                  <div ref={messagesEndRef} />
                 </ScrollArea>
                 
-                <div className="flex items-center gap-2 pt-2">
-                  <Input 
-                    placeholder="Ask about markets or enter a trade command..." 
-                    value={userMessage}
-                    onChange={(e) => setUserMessage(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') handleSendMessage();
-                    }}
-                    disabled={isProcessing}
-                    className="flex-grow"
-                  />
-                  <Button 
-                    onClick={handleSendMessage}
-                    disabled={isProcessing || userMessage.trim() === ''}
-                  >
-                    {isProcessing ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                <div className="p-4 border-t">
+                  <div className="flex items-center space-x-2">
+                    {transcription ? (
+                      <div className="flex-grow rounded-md border bg-background px-3 py-2">
+                        {transcription}
+                      </div>
                     ) : (
-                      <ArrowRight className="h-4 w-4" />
+                      <Input
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        onKeyDown={handleKeyPress}
+                        placeholder="Type your message or press the mic to speak..."
+                        className="flex-grow"
+                      />
                     )}
-                  </Button>
-                </div>
-              </TabsContent>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Smart Trade Panel</CardTitle>
-              <CardDescription>Execute trades with AI assistance</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SmartTradePanel />
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <LineChart className="h-5 w-5 text-primary" />
-                AI Trading Signals
-              </CardTitle>
-              <CardDescription>Latest market insights from our AI</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {aiSignals.map((signal, index) => (
-                  <div key={index} className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center">
-                        <span className="font-semibold mr-2">{signal.symbol}</span>
-                        <Badge variant={signal.direction === 'buy' ? "default" : "destructive"} className="capitalize">
-                          {signal.direction}
-                        </Badge>
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        {formatRelativeTime(signal.timestamp)}
-                      </span>
-                    </div>
                     
-                    <div className="grid grid-cols-2 gap-2 text-sm mb-2">
-                      <div>
-                        <span className="text-muted-foreground">Price: </span>
-                        <span className="font-medium">${signal.price}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Timeframe: </span>
-                        <span className="font-medium">{signal.timeframe}</span>
-                      </div>
-                    </div>
+                    <Button 
+                      variant={listening ? "destructive" : "outline"}
+                      size="icon"
+                      onClick={toggleListening}
+                      className={listening ? "animate-pulse" : ""}
+                    >
+                      {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                    </Button>
                     
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-muted-foreground text-xs">Confidence: </span>
-                        <span className={`font-medium ${getConfidenceColor(signal.confidence)}`}>
-                          {signal.confidence}%
-                        </span>
-                      </div>
-                      <Button variant="outline" size="sm" className="h-7 text-xs">Place Trade</Button>
-                    </div>
+                    <Button onClick={handleSendMessage}>
+                      <SendHorizonal className="h-4 w-4" />
+                    </Button>
                   </div>
-                ))}
+                </div>
               </div>
               
-              <Button variant="outline" className="w-full mt-4">
-                View All Signals
-              </Button>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Voice Command Examples</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="p-2 bg-muted rounded-md text-sm">
-                "Buy 100 shares of Apple stock at market price"
+              <div className="bg-muted/50 p-4 rounded-md">
+                <h3 className="text-sm font-medium mb-2 flex items-center">
+                  <Lightbulb className="h-4 w-4 mr-2 text-yellow-500" />
+                  Voice Command Examples
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {tradeCommands.slice(0, 4).map((command, index) => (
+                    <div key={index} className="text-sm flex items-center">
+                      <ChevronRight className="h-3 w-3 mr-1 text-muted-foreground" />
+                      <span>{command}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="p-2 bg-muted rounded-md text-sm">
-                "What's your analysis on Tesla for the next week?"
+            </TabsContent>
+            
+            <TabsContent value="analysis">
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center">
+                      <BarChart4 className="h-5 w-5 mr-2 text-primary" />
+                      Market Overview
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      This is a placeholder for the AI market analysis dashboard. In the full implementation, 
+                      this section would display real-time market data, sentiment analysis, and AI-generated insights
+                      based on current market conditions and your portfolio.
+                    </p>
+                    <div className="mt-4">
+                      <Button variant="outline">
+                        Request Detailed Analysis
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center">
+                      <AlertCircle className="h-5 w-5 mr-2 text-primary" />
+                      Risk Assessment
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      This section would provide AI-driven risk assessment for your current positions
+                      and potential trades, including volatility analysis, correlation metrics, and portfolio
+                      diversification recommendations.
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
-              <div className="p-2 bg-muted rounded-md text-sm">
-                "Sell half of my Bitcoin position"
-              </div>
-              <div className="p-2 bg-muted rounded-md text-sm">
-                "Set a stop loss for AMD at 115 dollars"
-              </div>
-              <div className="p-2 bg-muted rounded-md text-sm">
-                "Show me bullish stocks in the tech sector"
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-primary/5 border-primary/10">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                AI Trading Benefits
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                  <span>Natural language trade execution saves time</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                  <span>AI analyzes 100+ technical indicators instantly</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                  <span>Sentiment analysis across news and social feeds</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                  <span>Trade execution confirmation reduces errors</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </TabsContent>
+            
+            <TabsContent value="help">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center">
+                    <BookOpen className="h-5 w-5 mr-2 text-primary" />
+                    Using the AI Trading Assistant
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h4 className="font-medium mb-1">Voice Commands</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Click the microphone icon to start voice recognition. Speak clearly and use natural language
+                      to ask questions or issue trade commands. Click again to stop recording.
+                    </p>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div>
+                    <h4 className="font-medium mb-1">Trade Commands</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      The AI can understand and execute various trade commands. Here are some examples:
+                    </p>
+                    <ul className="space-y-2">
+                      {tradeCommands.map((command, index) => (
+                        <li key={index} className="text-sm bg-muted p-2 rounded-md">
+                          "{command}"
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div>
+                    <h4 className="font-medium mb-1">Market Analysis</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Ask the AI about market conditions, specific stocks, or technical analysis. 
+                      For example: "What's your analysis on AAPL?" or "How are tech stocks performing today?"
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+        
+        <CardFooter className="flex justify-between">
+          <p className="text-xs text-muted-foreground">
+            Note: This is a simulation of AI trading functionality. In the full implementation, 
+            this would connect to real trading APIs and market data sources.
+          </p>
+        </CardFooter>
+      </Card>
     </Container>
   );
 };
 
-export default TradingAIPage;
+export default TradingAIView;
