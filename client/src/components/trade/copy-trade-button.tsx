@@ -5,7 +5,7 @@ import { CopyIcon, CheckIcon, SendIcon } from 'lucide-react';
 import { useTradeSignalStore } from '@/lib/stores/useTradeSignalStore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { Switch } from '../ui/switch';
-import { TradeSignal } from '@/lib/types';
+import { TradeSignal } from '@/lib/services/trade-signal-service';
 
 interface CopyTradeButtonProps {
   signal: TradeSignal;
@@ -60,24 +60,24 @@ export function CopyTradeButton({ signal }: CopyTradeButtonProps) {
                 </div>
                 <div className="flex justify-between mb-2">
                   <span className="font-medium">Side:</span>
-                  <span className={signal.side === 'buy' ? 'text-green-500' : 'text-red-500'}>
-                    {signal.side.toUpperCase()}
+                  <span className={signal.type === 'buy' ? 'text-green-500' : 'text-red-500'}>
+                    {signal.type.toUpperCase()}
                   </span>
                 </div>
                 <div className="flex justify-between mb-2">
                   <span className="font-medium">Entry Price:</span>
-                  <span>{signal.entryPrice?.toLocaleString()}</span>
+                  <span>{signal.entry.toLocaleString()}</span>
                 </div>
                 {signal.stopLoss && (
                   <div className="flex justify-between mb-2">
                     <span className="font-medium">Stop Loss:</span>
-                    <span>{signal.stopLoss?.toLocaleString()}</span>
+                    <span>{signal.stopLoss.toLocaleString()}</span>
                   </div>
                 )}
                 {signal.takeProfit && (
                   <div className="flex justify-between mb-2">
                     <span className="font-medium">Take Profit:</span>
-                    <span>{signal.takeProfit?.toLocaleString()}</span>
+                    <span>{signal.takeProfit.toLocaleString()}</span>
                   </div>
                 )}
               </div>

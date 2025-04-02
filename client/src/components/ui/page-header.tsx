@@ -1,41 +1,61 @@
-import React, { ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
+import React from "react";
 
 interface PageHeaderProps {
   title: string;
   description?: string;
-  icon?: ReactNode;
-  actions?: ReactNode;
-  className?: string;
+  actions?: React.ReactNode;
 }
 
-export function PageHeader({ 
-  title, 
-  description, 
-  icon, 
-  actions,
-  className 
-}: PageHeaderProps) {
+export function PageHeader({ title, description, actions }: PageHeaderProps) {
   return (
-    <div className={cn("flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4", className)}>
-      <div className="flex items-start">
-        {icon && (
-          <div className="mr-3 mt-1 flex-shrink-0 h-8 w-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
-            {icon}
-          </div>
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+        {description && (
+          <p className="text-muted-foreground">{description}</p>
         )}
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-          {description && (
-            <p className="text-sm text-muted-foreground mt-1">{description}</p>
-          )}
-        </div>
       </div>
-      {actions && (
-        <div className="flex-shrink-0 flex space-x-2 mt-2 sm:mt-0">
-          {actions}
-        </div>
-      )}
+      {actions && <div className="flex items-center gap-2">{actions}</div>}
+    </div>
+  );
+}
+
+interface PageHeaderTitleProps {
+  className?: string;
+  children: React.ReactNode;
+}
+
+export function PageHeaderTitle({ className, children }: PageHeaderTitleProps) {
+  return (
+    <h1 className={cn("text-2xl font-bold tracking-tight", className)}>
+      {children}
+    </h1>
+  );
+}
+
+interface PageHeaderDescriptionProps {
+  className?: string;
+  children: React.ReactNode;
+}
+
+export function PageHeaderDescription({ className, children }: PageHeaderDescriptionProps) {
+  return (
+    <p className={cn("text-muted-foreground", className)}>
+      {children}
+    </p>
+  );
+}
+
+interface PageHeaderActionsProps {
+  className?: string;
+  children: React.ReactNode;
+}
+
+export function PageHeaderActions({ className, children }: PageHeaderActionsProps) {
+  return (
+    <div className={cn("flex items-center gap-2 mt-2 sm:mt-0", className)}>
+      {children}
     </div>
   );
 }

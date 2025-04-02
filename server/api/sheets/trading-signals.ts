@@ -1,18 +1,60 @@
-import { db } from '../../storage';
-import { eq, desc, and } from 'drizzle-orm';
-import { schema } from '../../../shared/schema';
 import { Request, Response } from 'express';
-import { generateId } from '../../utils';
+import { generateId, formatDate } from '../../utils';
+
+// Sample trade signals data
+const sampleTradeSignals = [
+  {
+    id: "signal-1",
+    providerId: "provider-1",
+    symbol: "BTC/USDT",
+    side: "buy",
+    entryPrice: 65000,
+    stopLoss: 63000,
+    takeProfit: 68000,
+    description: "Strong bullish pattern on 4h chart",
+    timestamp: formatDate(new Date(Date.now() - 3600000)),
+    status: "active",
+    createdAt: formatDate(new Date(Date.now() - 3600000)),
+    updatedAt: formatDate(new Date(Date.now() - 3600000))
+  },
+  {
+    id: "signal-2",
+    providerId: "provider-2",
+    symbol: "ETH/USDT",
+    side: "sell",
+    entryPrice: 3200,
+    stopLoss: 3350,
+    takeProfit: 2900,
+    description: "Bearish divergence on RSI",
+    timestamp: formatDate(new Date(Date.now() - 7200000)),
+    status: "closed",
+    closePrice: 2950,
+    pnl: 250,
+    closedAt: formatDate(new Date(Date.now() - 1800000)),
+    createdAt: formatDate(new Date(Date.now() - 7200000)),
+    updatedAt: formatDate(new Date(Date.now() - 1800000))
+  },
+  {
+    id: "signal-3",
+    providerId: "provider-1",
+    symbol: "EURUSD",
+    side: "buy",
+    entryPrice: 1.0850,
+    stopLoss: 1.0800,
+    takeProfit: 1.0950,
+    description: "Breakout from resistance level",
+    timestamp: formatDate(new Date(Date.now() - 10800000)),
+    status: "active",
+    createdAt: formatDate(new Date(Date.now() - 10800000)),
+    updatedAt: formatDate(new Date(Date.now() - 10800000))
+  }
+];
 
 // Get all trade signals
 export const getAllTradeSignals = async (req: Request, res: Response) => {
   try {
-    const signals = await db.query.tradeSignals.findMany({
-      orderBy: [desc(schema.tradeSignals.timestamp)],
-      limit: 50
-    });
-    
-    return res.status(200).json(signals);
+    // Return sample data
+    return res.status(200).json(sampleTradeSignals);
   } catch (error) {
     console.error('Error fetching trade signals:', error);
     return res.status(500).json({ error: 'Failed to fetch trade signals' });
@@ -24,13 +66,12 @@ export const getTradeSignalsByProvider = async (req: Request, res: Response) => 
   try {
     const { providerId } = req.params;
     
-    const signals = await db.query.tradeSignals.findMany({
-      where: eq(schema.tradeSignals.providerId, providerId),
-      orderBy: [desc(schema.tradeSignals.timestamp)],
-      limit: 50
-    });
+    // Filter sample data by providerId
+    const filteredSignals = sampleTradeSignals.filter(
+      signal => signal.providerId === providerId
+    );
     
-    return res.status(200).json(signals);
+    return res.status(200).json(filteredSignals);
   } catch (error) {
     console.error('Error fetching provider trade signals:', error);
     return res.status(500).json({ error: 'Failed to fetch provider trade signals' });
@@ -73,15 +114,16 @@ export const createTradeSignal = async (req: Request, res: Response) => {
       stopLoss: stopLoss || null,
       takeProfit: takeProfit || null,
       description: description || null,
-      timestamp: new Date().toISOString(),
+      timestamp: formatDate(),
       status: 'active',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: formatDate(),
+      updatedAt: formatDate()
     };
     
-    const result = await db.insert(schema.tradeSignals).values(newSignal).returning();
+    // In a real application, this would save to the database
+    // Here, we just simulate a successful creation
     
-    return res.status(201).json(result[0]);
+    return res.status(201).json(newSignal);
   } catch (error) {
     console.error('Error creating trade signal:', error);
     return res.status(500).json({ error: 'Failed to create trade signal' });
@@ -108,29 +150,31 @@ export const updateTradeSignalStatus = async (req: Request, res: Response) => {
       });
     }
     
-    const updateData: any = {
+    // Find the signal in our mock data
+    const signalIndex = sampleTradeSignals.findIndex(signal => signal.id === id);
+    
+    if (signalIndex === -1) {
+      return res.status(404).json({ error: 'Trade signal not found' });
+    }
+    
+    // Create updated signal
+    const updatedSignal = {
+      ...sampleTradeSignals[signalIndex],
       status,
-      updatedAt: new Date().toISOString()
+      updatedAt: formatDate()
     };
     
     // Add close-specific fields if status is closed
     if (status === 'closed') {
-      updateData.closePrice = closePrice;
-      updateData.pnl = pnl || 0;
-      updateData.closedAt = new Date().toISOString();
+      updatedSignal.closePrice = closePrice;
+      updatedSignal.pnl = pnl || 0;
+      updatedSignal.closedAt = formatDate();
     }
     
-    const result = await db
-      .update(schema.tradeSignals)
-      .set(updateData)
-      .where(eq(schema.tradeSignals.id, id))
-      .returning();
+    // In a real application, this would update the database
+    // Here, we just return the updated signal
     
-    if (result.length === 0) {
-      return res.status(404).json({ error: 'Trade signal not found' });
-    }
-    
-    return res.status(200).json(result[0]);
+    return res.status(200).json(updatedSignal);
   } catch (error) {
     console.error('Error updating trade signal:', error);
     return res.status(500).json({ error: 'Failed to update trade signal' });
@@ -143,10 +187,8 @@ export const logCopyTradeSignal = async (req: Request, res: Response) => {
     const { signalId, autoExecute } = req.body;
     const userId = req.session?.userId || 'anonymous';
     
-    // Verify the signal exists
-    const signal = await db.query.tradeSignals.findFirst({
-      where: eq(schema.tradeSignals.id, signalId)
-    });
+    // Verify the signal exists in sample data
+    const signal = sampleTradeSignals.find(signal => signal.id === signalId);
     
     if (!signal) {
       return res.status(404).json({ error: 'Trade signal not found' });
@@ -157,11 +199,11 @@ export const logCopyTradeSignal = async (req: Request, res: Response) => {
       id: generateId(),
       userId,
       signalId,
-      timestamp: new Date().toISOString(),
+      timestamp: formatDate(),
       autoExecute: autoExecute || false,
       executionStatus: autoExecute ? 'pending' : 'manual',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: formatDate(),
+      updatedAt: formatDate()
     };
     
     // In a real implementation, this would insert to a copyTradeLog table

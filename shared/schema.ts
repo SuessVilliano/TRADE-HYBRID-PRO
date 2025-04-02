@@ -339,6 +339,7 @@ export const copyTradeLogsRelations = relations(copyTradeLogs, ({ one }) => ({
   }),
 }));
 
+// Main trade signal and copy log types
 export type TradeSignal = typeof tradeSignals.$inferSelect;
 export type CopyTradeLog = typeof copyTradeLogs.$inferSelect;
 
@@ -785,9 +786,8 @@ export type DirectMessageConversation = typeof directMessageConversations.$infer
 export type DirectMessage = typeof directMessages.$inferSelect;
 export type DirectMessageReaction = typeof directMessageReactions.$inferSelect;
 
-// Type alias for better code organization
-export type TradeSignalType = typeof tradeSignals.$inferSelect;
-export type CopyTradeLogType = typeof copyTradeLogs.$inferSelect;
+// Export trading signal types
+// These export the primary type aliases for trade signals and copy logs throughout the codebase
 
 // Create insert schemas for chat system
 export const insertChatRoomSchema = createInsertSchema(chatRooms);

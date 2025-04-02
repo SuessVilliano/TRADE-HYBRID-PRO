@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { TradeSignal } from '../types';
+import { TradeSignal } from '../services/trade-signal-service';
 import axios from 'axios';
 
 interface TradeSignalStore {
@@ -41,8 +41,8 @@ export const useTradeSignalStore = create<TradeSignalStore>((set, get) => ({
         await axios.post('/api/broker/execute-trade', { 
           signalId,
           symbol: signal.symbol,
-          side: signal.side,
-          price: signal.entryPrice,
+          side: signal.type,
+          price: signal.entry,
           stopLoss: signal.stopLoss,
           takeProfit: signal.takeProfit,
         });

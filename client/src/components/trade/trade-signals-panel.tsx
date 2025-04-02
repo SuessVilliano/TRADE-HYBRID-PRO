@@ -139,24 +139,7 @@ export function TradeSignalsPanel() {
   // Get unique sources for filtering
   const signalSources = Array.from(new Set(signals.map(signal => signal.source)));
   
-  // Handle copying a signal to the ABATEV panel
-  const handleCopySignal = (signal: TradeSignal, autoExecute: boolean) => {
-    if (autoExecute) {
-      // Execute the signal directly
-      if (tradeSignalService.executeSignalViaABATEV(signal.id)) {
-        toast.success(`Auto-executing ${signal.symbol} ${signal.type.toUpperCase()} signal`, {
-          description: `Signal has been sent for auto-execution.`
-        });
-      }
-    } else {
-      // Just copy the signal data to the ABATEV panel
-      if (tradeSignalService.copySignalToABATEV(signal.id)) {
-        toast.success(`Copied ${signal.symbol} ${signal.type.toUpperCase()} signal`, {
-          description: `Signal has been copied to the trading panel.`
-        });
-      }
-    }
-  };
+  // Note: Signal copying is now handled directly within the CopyTradeButton component
   
   // Reset all filters
   const resetFilters = () => {
@@ -336,8 +319,7 @@ export function TradeSignalsPanel() {
                         
                         <div className="flex gap-1 mt-1">
                           <CopyTradeButton 
-                            signalId={signal.id}
-                            onCopy={(autoExecute: boolean) => handleCopySignal(signal, autoExecute)}
+                            signal={signal}
                           />
                           
                           <Button 

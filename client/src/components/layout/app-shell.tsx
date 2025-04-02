@@ -1,15 +1,54 @@
-import React, { ReactNode } from 'react';
-import { BottomNav } from '../ui/bottom-nav';
+import React from 'react';
+import { cn } from '@/lib/utils';
 
 interface AppShellProps {
-  children: ReactNode;
+  className?: string;
+  children: React.ReactNode;
 }
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ className, children }: AppShellProps) {
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <main className="flex-1 pt-16">{children}</main>
-      <BottomNav />
+    <div className={cn("min-h-screen flex flex-col", className)}>
+      {children}
     </div>
+  );
+}
+
+interface AppShellHeaderProps {
+  className?: string;
+  children: React.ReactNode;
+}
+
+export function AppShellHeader({ className, children }: AppShellHeaderProps) {
+  return (
+    <header className={cn("bg-background border-b sticky top-0 z-10", className)}>
+      {children}
+    </header>
+  );
+}
+
+interface AppShellMainProps {
+  className?: string;
+  children: React.ReactNode;
+}
+
+export function AppShellMain({ className, children }: AppShellMainProps) {
+  return (
+    <main className={cn("flex-grow p-4", className)}>
+      {children}
+    </main>
+  );
+}
+
+interface AppShellFooterProps {
+  className?: string;
+  children: React.ReactNode;
+}
+
+export function AppShellFooter({ className, children }: AppShellFooterProps) {
+  return (
+    <footer className={cn("bg-background border-t", className)}>
+      {children}
+    </footer>
   );
 }
