@@ -19,12 +19,27 @@ import {
   ExternalLink,
   MoveLeft
 } from 'lucide-react';
-import TradingViewWidget from './TradingViewWidget';
 import DexChart from './dex-chart';
 import { SmartTradePanel } from './smart-trade-panel';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
-import { useMediaQuery } from '../../lib/hooks/useMediaQuery';
+// Define useMediaQuery hook directly here to avoid import issues
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(false);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const media = window.matchMedia(query);
+      setMatches(media.matches);
+      const listener = () => setMatches(media.matches);
+      media.addEventListener('change', listener);
+      return () => media.removeEventListener('change', listener);
+    }
+    return undefined;
+  }, [query]);
+  
+  return matches;
+}
 
 // Panel positions
 type PanelPosition = 'left' | 'right' | 'top' | 'bottom' | 'hidden';
@@ -453,7 +468,7 @@ export function SmartTradeLayout({
         <div className="h-full relative overflow-hidden">
           <DexChart
             symbol={symbol}
-            height={'100%'}
+            height={600}
             theme="dark"
             showControls={true}
           />

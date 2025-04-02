@@ -76,7 +76,7 @@ function DexChart({
       script.src = 'https://s3.tradingview.com/tv.js';
       script.async = true;
       script.onload = () => {
-        if (typeof TradingView !== 'undefined') {
+        if (typeof (window as any).TradingView !== 'undefined') {
           const widget = new (window as any).TradingView.widget({
             container_id: chartId.current,
             symbol: `BINANCE:${selectedToken}USDT`,
@@ -118,7 +118,7 @@ function DexChart({
         document.head.appendChild(script);
       } else {
         // If script already exists, manually trigger the load event
-        if (typeof TradingView !== 'undefined') {
+        if (typeof (window as any).TradingView !== 'undefined') {
           script.onload && script.onload({} as any);
         }
       }
@@ -227,8 +227,9 @@ function DexChart({
       <div 
         className={cn(
           "relative w-full rounded-lg border border-border overflow-hidden",
-          isFullscreen ? "flex-grow" : `h-[${height}px]`
+          isFullscreen ? "flex-grow" : ""
         )}
+        style={{ height: isFullscreen ? '100%' : `${height}px` }}
       >
         <div ref={chartContainerRef} className="w-full h-full" />
         
