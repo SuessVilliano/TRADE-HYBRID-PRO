@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { Tabs, TabsList, TabsTrigger } from './tabs';
 import useLocalStorage from '../../lib/hooks/useLocalStorage';
 import { createPortal } from 'react-dom';
-import DexChart from './dex-chart';
+import { DexChart } from './dex-chart';
 import TradingViewWidget from './TradingViewWidget';
 import { TradeSignals } from './trade-signals';
 import { SignalNotifications } from './signal-notifications';
@@ -199,11 +199,16 @@ export function DockableTradingDashboard({
     if (DASHBOARD_TEMPLATES[templateName as keyof typeof DASHBOARD_TEMPLATES]) {
       // Cast the template to ensure it's properly typed as DashboardItem[]
       const template = DASHBOARD_TEMPLATES[templateName as keyof typeof DASHBOARD_TEMPLATES];
-      const typedTemplate: DashboardItem[] = template.map(item => ({
-        ...item,
-        componentType: item.componentType as PanelComponentType,
-        mobilePosition: item.mobilePosition as 'below-chart' | 'above-chart' | 'default' | undefined
-      }));
+      const typedTemplate: DashboardItem[] = template.map(item => {
+        // Create a properly typed object with all the required properties
+        const typedItem: DashboardItem = {
+          ...item,
+          componentType: item.componentType as PanelComponentType,
+          // Ensure mobilePosition is properly typed
+          mobilePosition: (item.mobilePosition as 'below-chart' | 'above-chart' | 'default' | undefined)
+        };
+        return typedItem;
+      });
       setLayout(typedTemplate);
     } else {
       toast.error('Template not found');
