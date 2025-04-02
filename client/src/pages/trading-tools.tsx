@@ -38,7 +38,7 @@ const TradingToolsPage: React.FC = () => {
     {
       name: 'Trading Bots',
       description: 'Build and run automated trading strategies with our no-code bot builder',
-      path: '/bots',
+      path: '/trading-bots',
       icon: <Bot className="h-8 w-8" />,
     },
     {

@@ -71,7 +71,7 @@ const dashboardItems: DashboardItem[] = [
     id: 'bots',
     name: 'Trading Bots',
     icon: <Bot className="h-5 w-5" />,
-    path: '/bots',
+    path: '/trading-bots',
     description: 'Automated trading strategies',
     category: 'Trading Tools'
   },

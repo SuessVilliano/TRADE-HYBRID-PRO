@@ -108,7 +108,9 @@ const App: React.FC = () => {
                 <Route path="/profile" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
                 <Route path="/settings" element={<ProtectedRoute><SettingsView /></ProtectedRoute>} />
                 <Route path="/notification-settings" element={<ProtectedRoute><NotificationSettingsPage /></ProtectedRoute>} />
-                <Route path="/bots" element={<ProtectedRoute><BotsView /></ProtectedRoute>} />
+                <Route path="/trading-bots" element={<ProtectedRoute><BotsView /></ProtectedRoute>} />
+                {/* Redirect for backward compatibility */}
+                <Route path="/bots" element={<Navigate to="/trading-bots" replace />} />
                 <Route path="/news" element={<ProtectedRoute><NewsView /></ProtectedRoute>} />
                 <Route path="/news/simple" element={<ProtectedRoute><NewsSimpleView /></ProtectedRoute>} />
                 <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />

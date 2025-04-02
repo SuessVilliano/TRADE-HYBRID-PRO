@@ -56,6 +56,11 @@ const navigationItems = [
     icon: <LineChart className="h-4 w-4" />,
   },
   {
+    name: 'Trading Bots',
+    path: '/trading-bots',
+    icon: <Bot className="h-4 w-4" />,
+  },
+  {
     name: 'Journal',
     path: '/journal',
     icon: <FileText className="h-4 w-4" />,
