@@ -1,6 +1,7 @@
-import { pgTable, text, serial, integer, boolean, timestamp, real, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, real, jsonb, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 // Learning Center Tables
 export const courses = pgTable("courses", {
@@ -530,3 +531,201 @@ export type PropFirmMetric = typeof propFirmMetrics.$inferSelect;
 export const insertPropFirmChallengeSchema = createInsertSchema(propFirmChallenges);
 export const insertPropFirmAccountSchema = createInsertSchema(propFirmAccounts);
 export const insertPropFirmTradeSchema = createInsertSchema(propFirmTrades);
+
+// Chat system - Social networking features
+// Chat room types enum
+export const chatRoomTypeEnum = pgEnum('chat_room_type', ['public', 'private', 'group', 'trading']);
+
+// Chat rooms table
+export const chatRooms = pgTable('chat_rooms', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  type: chatRoomTypeEnum('type').notNull().default('public'),
+  createdById: integer('created_by_id').references(() => users.id),
+  icon: text('icon'),
+  isActive: boolean('is_active').default(true).notNull(),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Chat room relations
+export const chatRoomsRelations = relations(chatRooms, ({ one, many }) => ({
+  createdBy: one(users, {
+    fields: [chatRooms.createdById],
+    references: [users.id],
+  }),
+  messages: many(chatMessages),
+  members: many(chatRoomMembers)
+}));
+
+// Chat messages table
+export const chatMessages = pgTable('chat_messages', {
+  id: serial('id').primaryKey(),
+  roomId: integer('room_id').notNull().references(() => chatRooms.id),
+  senderId: integer('sender_id').notNull().references(() => users.id),
+  content: text('content').notNull(),
+  attachments: jsonb('attachments'),
+  tradeSignal: jsonb('trade_signal'),
+  reactionCount: jsonb('reaction_count'),
+  replyToId: integer('reply_to_id').references(() => chatMessages.id),
+  isDeleted: boolean('is_deleted').default(false).notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Chat message relations
+export const chatMessagesRelations = relations(chatMessages, ({ one, many }) => ({
+  room: one(chatRooms, {
+    fields: [chatMessages.roomId],
+    references: [chatRooms.id],
+  }),
+  sender: one(users, {
+    fields: [chatMessages.senderId],
+    references: [users.id],
+  }),
+  replyTo: one(chatMessages, {
+    fields: [chatMessages.replyToId],
+    references: [chatMessages.id],
+  }),
+  reactions: many(messageReactions)
+}));
+
+// Message reactions table
+export const messageReactions = pgTable('message_reactions', {
+  id: serial('id').primaryKey(),
+  messageId: integer('message_id').notNull().references(() => chatMessages.id),
+  userId: integer('user_id').notNull().references(() => users.id),
+  reaction: text('reaction').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// Message reactions relations
+export const messageReactionsRelations = relations(messageReactions, ({ one }) => ({
+  message: one(chatMessages, {
+    fields: [messageReactions.messageId],
+    references: [chatMessages.id],
+  }),
+  user: one(users, {
+    fields: [messageReactions.userId],
+    references: [users.id],
+  }),
+}));
+
+// Chat room members table
+export const chatRoomMembers = pgTable('chat_room_members', {
+  id: serial('id').primaryKey(),
+  roomId: integer('room_id').notNull().references(() => chatRooms.id),
+  userId: integer('user_id').notNull().references(() => users.id),
+  isAdmin: boolean('is_admin').default(false).notNull(),
+  isMuted: boolean('is_muted').default(false).notNull(),
+  lastReadMessageId: integer('last_read_message_id').references(() => chatMessages.id),
+  joinedAt: timestamp('joined_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Chat room members relations
+export const chatRoomMembersRelations = relations(chatRoomMembers, ({ one }) => ({
+  room: one(chatRooms, {
+    fields: [chatRoomMembers.roomId],
+    references: [chatRooms.id],
+  }),
+  user: one(users, {
+    fields: [chatRoomMembers.userId],
+    references: [users.id],
+  }),
+  lastReadMessage: one(chatMessages, {
+    fields: [chatRoomMembers.lastReadMessageId],
+    references: [chatMessages.id],
+  }),
+}));
+
+// Direct messages conversations (for private chats)
+export const directMessageConversations = pgTable('direct_message_conversations', {
+  id: serial('id').primaryKey(),
+  user1Id: integer('user1_id').notNull().references(() => users.id),
+  user2Id: integer('user2_id').notNull().references(() => users.id),
+  lastMessageAt: timestamp('last_message_at').notNull().defaultNow(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// Direct message conversations relations
+export const directMessageConversationsRelations = relations(directMessageConversations, ({ one, many }) => ({
+  user1: one(users, {
+    fields: [directMessageConversations.user1Id],
+    references: [users.id],
+  }),
+  user2: one(users, {
+    fields: [directMessageConversations.user2Id],
+    references: [users.id],
+  }),
+  messages: many(directMessages)
+}));
+
+// Direct messages table
+export const directMessages = pgTable('direct_messages', {
+  id: serial('id').primaryKey(),
+  conversationId: integer('conversation_id').notNull().references(() => directMessageConversations.id),
+  senderId: integer('sender_id').notNull().references(() => users.id),
+  content: text('content').notNull(),
+  attachments: jsonb('attachments'),
+  tradeSignal: jsonb('trade_signal'),
+  reactionCount: jsonb('reaction_count'),
+  isRead: boolean('is_read').default(false).notNull(),
+  isDeleted: boolean('is_deleted').default(false).notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Direct messages relations
+export const directMessagesRelations = relations(directMessages, ({ one, many }) => ({
+  conversation: one(directMessageConversations, {
+    fields: [directMessages.conversationId],
+    references: [directMessageConversations.id],
+  }),
+  sender: one(users, {
+    fields: [directMessages.senderId],
+    references: [users.id],
+  }),
+  reactions: many(directMessageReactions)
+}));
+
+// Direct message reactions table
+export const directMessageReactions = pgTable('direct_message_reactions', {
+  id: serial('id').primaryKey(),
+  messageId: integer('message_id').notNull().references(() => directMessages.id),
+  userId: integer('user_id').notNull().references(() => users.id),
+  reaction: text('reaction').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// Direct message reactions relations
+export const directMessageReactionsRelations = relations(directMessageReactions, ({ one }) => ({
+  message: one(directMessages, {
+    fields: [directMessageReactions.messageId],
+    references: [directMessages.id],
+  }),
+  user: one(users, {
+    fields: [directMessageReactions.userId],
+    references: [users.id],
+  }),
+}));
+
+// Export chat system types
+export type ChatRoom = typeof chatRooms.$inferSelect;
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type MessageReaction = typeof messageReactions.$inferSelect;
+export type ChatRoomMember = typeof chatRoomMembers.$inferSelect;
+export type DirectMessageConversation = typeof directMessageConversations.$inferSelect;
+export type DirectMessage = typeof directMessages.$inferSelect;
+export type DirectMessageReaction = typeof directMessageReactions.$inferSelect;
+
+// Create insert schemas for chat system
+export const insertChatRoomSchema = createInsertSchema(chatRooms);
+export const insertChatMessageSchema = createInsertSchema(chatMessages);
+export const insertMessageReactionSchema = createInsertSchema(messageReactions);
+export const insertChatRoomMemberSchema = createInsertSchema(chatRoomMembers);
+export const insertDirectMessageConversationSchema = createInsertSchema(directMessageConversations);
+export const insertDirectMessageSchema = createInsertSchema(directMessages);
+export const insertDirectMessageReactionSchema = createInsertSchema(directMessageReactions);

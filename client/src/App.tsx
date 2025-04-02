@@ -29,6 +29,7 @@ import NewsSimpleView from './pages/news-dashboard-simple';
 import LandingPage from './pages/landing';
 import EventsPage from './pages/events';
 import NotFoundPage from './pages/not-found';
+import SocialNetworkPage from './pages/social-network';
 
 // Trading & Markets
 import AdvancedTradingDashboard from './pages/advanced-trading-dashboard';
@@ -163,6 +164,7 @@ const App: React.FC = () => {
                 <Route path="/affiliate/*" element={<ProtectedRoute><AffiliatePage /></ProtectedRoute>} />
                 <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
                 <Route path="/live-stream" element={<ProtectedRoute><LiveStreamPage /></ProtectedRoute>} />
+                <Route path="/social-network" element={<ProtectedRoute><SocialNetworkPage /></ProtectedRoute>} />
                 
                 {/* Fallback route */}
                 <Route path="*" element={<NotFoundPage />} />
