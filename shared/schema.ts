@@ -292,6 +292,56 @@ export type UserProgress = typeof userProgress.$inferSelect;
 export type QuizAttempt = typeof quizAttempts.$inferSelect;
 export type Certificate = typeof certificates.$inferSelect;
 
+// Trade Signals table for storing trading signals
+// Trading Signals system
+// Trade signals status enum
+export const tradeSignalStatusEnum = pgEnum('trade_signal_status', ['active', 'closed', 'cancelled']);
+export const tradeSignalSideEnum = pgEnum('trade_signal_side', ['buy', 'sell']);
+
+// Trade signals table
+export const tradeSignals = pgTable("trade_signals", {
+  id: text('id').primaryKey(),
+  providerId: text("provider_id").notNull(), // Signal provider ID or source
+  symbol: text("symbol").notNull(),
+  side: tradeSignalSideEnum("side").notNull(), // 'buy' or 'sell'
+  entryPrice: real("entry_price"),
+  stopLoss: real("stop_loss"),
+  takeProfit: real("take_profit"),
+  description: text("description"),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  status: tradeSignalStatusEnum("status").notNull().default('active'), // 'active', 'closed', 'cancelled'
+  closePrice: real("close_price"),
+  pnl: real("pnl"),
+  closedAt: timestamp("closed_at"),
+  metadata: jsonb("metadata"), // Additional signal data
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Copy trade logs table
+export const copyTradeLogs = pgTable('copy_trade_logs', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  signalId: text('signal_id').notNull().references(() => tradeSignals.id),
+  timestamp: timestamp('timestamp').notNull().defaultNow(),
+  autoExecute: boolean('auto_execute').default(false),
+  executionStatus: text('execution_status').notNull(), // 'pending', 'executed', 'failed', 'manual'
+  brokerResponse: jsonb('broker_response'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Relations for copy trade logs
+export const copyTradeLogsRelations = relations(copyTradeLogs, ({ one }) => ({
+  signal: one(tradeSignals, {
+    fields: [copyTradeLogs.signalId],
+    references: [tradeSignals.id],
+  }),
+}));
+
+export type TradeSignal = typeof tradeSignals.$inferSelect;
+export type CopyTradeLog = typeof copyTradeLogs.$inferSelect;
+
 // API Keys table for storing user API keys
 export const userApiKeys = pgTable("user_api_keys", {
   id: serial("id").primaryKey(),
@@ -735,6 +785,10 @@ export type DirectMessageConversation = typeof directMessageConversations.$infer
 export type DirectMessage = typeof directMessages.$inferSelect;
 export type DirectMessageReaction = typeof directMessageReactions.$inferSelect;
 
+// Type alias for better code organization
+export type TradeSignalType = typeof tradeSignals.$inferSelect;
+export type CopyTradeLogType = typeof copyTradeLogs.$inferSelect;
+
 // Create insert schemas for chat system
 export const insertChatRoomSchema = createInsertSchema(chatRooms);
 export const insertChatMessageSchema = createInsertSchema(chatMessages);
@@ -743,3 +797,7 @@ export const insertChatRoomMemberSchema = createInsertSchema(chatRoomMembers);
 export const insertDirectMessageConversationSchema = createInsertSchema(directMessageConversations);
 export const insertDirectMessageSchema = createInsertSchema(directMessages);
 export const insertDirectMessageReactionSchema = createInsertSchema(directMessageReactions);
+
+// Create insert schemas for trading signals
+export const insertTradeSignalSchema = createInsertSchema(tradeSignals);
+export const insertCopyTradeLogSchema = createInsertSchema(copyTradeLogs);

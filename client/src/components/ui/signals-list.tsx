@@ -1,576 +1,165 @@
-import { useState, useEffect } from "react";
-import { useSignals, TradingSignal } from "../../lib/stores/useSignals";
-import { useBrokerAggregator } from "../../lib/stores/useBrokerAggregator";
-import { ContextualTooltip } from "./contextual-tooltip";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "./card";
-import { Badge } from "./badge";
-import { Button } from "./button";
-import { Bell, BellOff, RefreshCw, ChevronDown, ChevronUp, ExternalLink, CheckCircle2, BarChart2, X as XCircle } from "lucide-react";
-import { formatDate, formatTime, truncate, cn } from "../../lib/utils";
-import { toast } from "sonner";
+import React from 'react';
+import { Card, CardContent } from './card';
+import { Badge } from './badge';
+import { useTradeSignalStore } from '@/lib/stores/useTradeSignalStore';
+import { EmptyPlaceholder } from './empty-placeholder';
+import { Skeleton } from './skeleton';
+import { ArrowUpIcon, ArrowDownIcon, ExternalLinkIcon } from 'lucide-react';
+import { CopyTradeButton } from '../trade/copy-trade-button';
 
-interface SignalsListProps {
-  className?: string;
-  maxSignals?: number;
-}
+export function SignalsList() {
+  const { signals, isLoading } = useTradeSignalStore();
 
-export function SignalsList({ className, maxSignals = 10 }: SignalsListProps) {
-  const { signals, loading, fetchSignals } = useSignals();
-  const { 
-    initializeAggregator, 
-    executeTrade, 
-    selectBroker, 
-    toggleABATEV, 
-    useABATEV, 
-    selectedBroker,
-    isLoading: isAggregatorLoading,
-    isConnected
-  } = useBrokerAggregator();
-  
-  const [expanded, setExpanded] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [selectedSignal, setSelectedSignal] = useState<TradingSignal | null>(null);
-  const [showingBrokerComparison, setShowingBrokerComparison] = useState(false);
-  const [filterProvider, setFilterProvider] = useState<string | null>(null);
-  
-  useEffect(() => {
-    // Initial fetch for signals
-    fetchSignals();
-    
-    // Initialize the broker aggregator
-    initializeAggregator().catch((error: Error) => {
-      console.error('Failed to initialize broker aggregator:', error);
-      toast.error('Failed to connect to brokers');
-    });
-    
-    // Poll for new signals every 30 seconds
-    const interval = setInterval(() => {
-      fetchSignals();
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, [fetchSignals, initializeAggregator]);
-  
-  // Apply filters if needed
-  const filteredSignals = filterProvider 
-    ? signals.filter(signal => signal.source === filterProvider)
-    : signals;
-  
-  // Display a limited number of signals unless expanded
-  const displayedSignals = expanded ? filteredSignals : filteredSignals.slice(0, maxSignals);
-  
+  if (isLoading) {
+    return <SignalsListSkeleton />;
+  }
+
+  if (!signals || signals.length === 0) {
+    return (
+      <EmptyPlaceholder
+        title="No trading signals"
+        description="There are no trading signals available at the moment."
+        icon="signal"
+      />
+    );
+  }
+
   return (
-    <div className={cn("w-full", className)}>
-      <Card className="bg-background/90 backdrop-blur-sm">
-        <CardHeader className="py-3 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm flex items-center">
-            <ContextualTooltip
-              id="trading-signals-intro"
-              title="Trading Signals"
-              content={
-                <>
-                  <p>These are real-time trading signals from various sources including TradingView, AI algorithms, and professional traders.</p>
-                  <p className="mt-2">Click on any signal to see complete details and execute trades through the best available broker.</p>
-                </>
-              }
-              delay={1500}
-              position="bottom"
-            >
-              <span className="flex items-center">
-                <span className="relative mr-2">
-                  <Bell size={16} />
-                  {signals.length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
-                  )}
-                </span>
-                Trading Signals
-              </span>
-            </ContextualTooltip>
-            
-            <Badge variant="outline" className="ml-2 text-xs">
-              {filteredSignals.length} / {signals.length} available
-            </Badge>
-          </CardTitle>
-          
-          <div className="flex gap-1">
-            {filterProvider && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 text-xs gap-1"
-                onClick={() => setFilterProvider(null)}
-                title="Clear filter"
-              >
-                <XCircle size={12} />
-                <span>Clear Filter</span>
-              </Button>
-            )}
-            
-            <ContextualTooltip
-              id="signal-notifications"
-              title="Signal Notifications"
-              content={
-                <p>Enable notifications to receive alerts when new trading signals arrive. You'll never miss an opportunity!</p>
-              }
-              position="left"
-              delay={3000}
-            >
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-6 w-6"
-                onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-                title={notificationsEnabled ? "Disable notifications" : "Enable notifications"}
-              >
-                {notificationsEnabled ? <Bell size={14} /> : <BellOff size={14} />}
-              </Button>
-            </ContextualTooltip>
-            
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-6 w-6"
-              onClick={fetchSignals}
-              disabled={loading}
-              title="Refresh signals"
-            >
-              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            </Button>
-            
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-6 w-6"
-              onClick={() => setExpanded(!expanded)}
-              title={expanded ? "Show less" : "Show more"}
-            >
-              {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </Button>
-          </div>
-        </CardHeader>
-        
-        <CardContent className="px-3 pb-3">
-          {loading && signals.length === 0 ? (
-            <div className="flex justify-center py-8">
-              <RefreshCw size={24} className="animate-spin text-muted-foreground" />
-            </div>
-          ) : signals.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <p>No trading signals available</p>
-              <p className="text-xs mt-1">Signals from TradingView will appear here</p>
-            </div>
-          ) : displayedSignals.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <p>No signals match your current filter</p>
-              <p className="text-xs mt-1">Click on a provider name to clear the filter</p>
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-              {displayedSignals.map((signal) => (
-                <SignalCard 
-                  key={signal.id} 
-                  signal={signal} 
-                  isSelected={selectedSignal?.id === signal.id}
-                  onClick={() => setSelectedSignal(signal.id === selectedSignal?.id ? null : signal)}
-                />
-              ))}
-            </div>
-          )}
-        </CardContent>
-        
-        {/* Signal Providers footer */}
-        <CardFooter className="px-3 py-2 border-t text-xs text-muted-foreground">
-          <div className="flex flex-col w-full gap-1">
-            <div className="flex justify-between w-full items-center">
-              <span>Signal Providers:</span>
-              <Button 
-                variant="link" 
-                size="sm" 
-                className="h-6 text-xs p-0 ml-1"
-                asChild
-              >
-                <a 
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setFilterProvider(filterProvider === 'Trade Hybrid' ? null : 'Trade Hybrid');
-                  }}
-                  className="flex items-center"
-                >
-                  <span className={cn(
-                    "truncate max-w-32",
-                    filterProvider === 'Trade Hybrid' ? "font-bold text-primary" : ""
-                  )}>
-                    Trade Hybrid
-                    {filterProvider === 'Trade Hybrid' ? ' (filtered)' : ''}
-                  </span>
-                  <ExternalLink size={10} className="ml-1" />
-                </a>
-              </Button>
-            </div>
-            <div className="flex justify-between w-full items-center">
-              <span>Crypto Signals:</span>
-              <Button 
-                variant="link" 
-                size="sm" 
-                className="h-6 text-xs p-0 ml-1"
-                asChild
-              >
-                <a 
-                  href="#" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setFilterProvider(filterProvider === 'Paradox AI' ? null : 'Paradox AI');
-                  }}
-                  className="flex items-center"
-                >
-                  <span className={cn(
-                    "truncate max-w-32",
-                    filterProvider === 'Paradox AI' ? "font-bold text-primary" : ""
-                  )}>
-                    Paradox AI
-                    {filterProvider === 'Paradox AI' ? ' (filtered)' : ''}
-                  </span>
-                </a>
-              </Button>
-            </div>
-          </div>
-        </CardFooter>
-      </Card>
-      
-      {/* Signal detail view */}
-      {selectedSignal && (
-        <Card className="mt-4 bg-background/90 backdrop-blur-sm">
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm flex items-center justify-between">
-              <span>Signal Details</span>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-6 w-6"
-                onClick={() => setSelectedSignal(null)}
-              >
-                <ChevronUp size={14} />
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          
-          <CardContent className="px-3 pb-3">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Symbol</span>
-                <span className="text-sm">{selectedSignal.symbol}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Action</span>
-                <Badge 
-                  variant={selectedSignal.action === 'buy' ? 'default' : 
-                          selectedSignal.action === 'sell' ? 'destructive' : 'outline'}
-                  className={selectedSignal.action === 'buy' ? 'bg-green-500 hover:bg-green-600' : ''}
-                >
-                  {selectedSignal.action.toUpperCase()}
+    <div className="space-y-4">
+      {signals.map((signal) => (
+        <Card key={signal.id} className="overflow-hidden transition-all hover:shadow-md">
+          <CardContent className="p-0">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center">
+                  <Badge 
+                    variant={signal.side === 'buy' ? 'success' : 'destructive'}
+                    className="mr-2"
+                  >
+                    {signal.side.toUpperCase()}
+                  </Badge>
+                  <h3 className="text-lg font-semibold">{signal.symbol}</h3>
+                </div>
+                <Badge variant="outline" className="font-mono">
+                  {signal.providerId}
                 </Badge>
               </div>
               
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Entry Price</span>
-                <span className="text-sm">${selectedSignal.entryPrice?.toLocaleString() || selectedSignal.price.toLocaleString()}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Stop Loss</span>
-                <span className="text-sm text-red-500">${selectedSignal.stopLoss?.toLocaleString() || 'Not Set'}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Take Profit 1</span>
-                <span className="text-sm text-green-500">${selectedSignal.takeProfit1?.toLocaleString() || 'Not Set'}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Take Profit 2</span>
-                <span className="text-sm text-green-500">${selectedSignal.takeProfit2?.toLocaleString() || 'Not Set'}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Take Profit 3</span>
-                <span className="text-sm text-green-500">${selectedSignal.takeProfit3?.toLocaleString() || 'Not Set'}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Time</span>
-                <span className="text-sm">{formatTime(selectedSignal.timestamp.getTime())}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Date</span>
-                <span className="text-sm">{formatDate(selectedSignal.timestamp.getTime())}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Source</span>
-                <span className="text-sm">{selectedSignal.source}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Strategy</span>
-                <span className="text-sm">{selectedSignal.strategy}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Confidence</span>
-                <div className="flex items-center">
-                  <div className="h-2 w-24 bg-muted rounded-full mr-2 overflow-hidden">
-                    <div 
-                      className={cn(
-                        "h-full rounded-full",
-                        selectedSignal.confidence > 70 ? "bg-green-500" :
-                        selectedSignal.confidence > 40 ? "bg-yellow-500" : 
-                        "bg-red-500"
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Entry Price</p>
+                  <p className="text-xl font-bold">{signal.entryPrice?.toLocaleString()}</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Stop Loss</span>
+                    <span className={`text-sm font-medium ${signal.side === 'buy' ? 'text-red-500' : 'text-green-500'}`}>
+                      {signal.stopLoss?.toLocaleString()}
+                      {signal.stopLoss && signal.entryPrice && (
+                        <span className="ml-1 text-xs opacity-70">
+                          ({signal.side === 'buy' 
+                            ? <ArrowDownIcon className="inline h-3 w-3" /> 
+                            : <ArrowUpIcon className="inline h-3 w-3" />}
+                          {Math.abs(((signal.stopLoss - signal.entryPrice) / signal.entryPrice) * 100).toFixed(2)}%)
+                        </span>
                       )}
-                      style={{ width: `${selectedSignal.confidence}%` }}
-                    />
+                    </span>
                   </div>
-                  <span className="text-sm">{selectedSignal.confidence}%</span>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Take Profit</span>
+                    <span className={`text-sm font-medium ${signal.side === 'buy' ? 'text-green-500' : 'text-red-500'}`}>
+                      {signal.takeProfit?.toLocaleString()}
+                      {signal.takeProfit && signal.entryPrice && (
+                        <span className="ml-1 text-xs opacity-70">
+                          ({signal.side === 'buy' 
+                            ? <ArrowUpIcon className="inline h-3 w-3" /> 
+                            : <ArrowDownIcon className="inline h-3 w-3" />}
+                          {Math.abs(((signal.takeProfit - signal.entryPrice) / signal.entryPrice) * 100).toFixed(2)}%)
+                        </span>
+                      )}
+                    </span>
+                  </div>
                 </div>
               </div>
               
-              <div className="pt-2">
-                <span className="text-sm font-medium">Message</span>
-                <p className="text-sm mt-1 p-2 bg-muted/50 rounded border">
-                  {selectedSignal.message}
-                </p>
-              </div>
-              
-              {/* Indicators if available */}
-              {selectedSignal.indicators && Object.keys(selectedSignal.indicators).length > 0 && (
-                <div className="pt-2">
-                  <span className="text-sm font-medium">Indicators</span>
-                  <div className="grid grid-cols-2 gap-2 mt-1">
-                    {Object.entries(selectedSignal.indicators).map(([key, value]) => (
-                      <div key={key} className="flex justify-between p-1 bg-muted/30 rounded">
-                        <span className="text-xs">{key}</span>
-                        <span className="text-xs font-mono">{value}</span>
-                      </div>
-                    ))}
-                  </div>
+              {signal.description && (
+                <div className="mb-3">
+                  <p className="text-sm text-muted-foreground">{signal.description}</p>
                 </div>
               )}
-            </div>
-          </CardContent>
-          
-          <CardFooter className="px-3 py-2 border-t space-y-2">
-            <div className="flex justify-between items-center w-full">
-              <div className="flex items-center gap-1">
-                <ContextualTooltip
-                  id="abatev-intro"
-                  title="ABATEV System"
-                  content={
-                    <>
-                      <p>ABATEV (AI-driven Broker Aggregator and Trade Execution Validator) automatically selects the optimal broker for each trade based on:</p>
-                      <ul className="list-disc pl-4 mt-1 space-y-1">
-                        <li>Price execution</li>
-                        <li>Spread costs</li>
-                        <li>Latency (speed)</li>
-                        <li>Available liquidity</li>
-                      </ul>
-                      <p className="mt-2">This ensures you always get the best possible trade execution.</p>
-                    </>
-                  }
-                  position="bottom"
-                  delay={2000}
-                >
-                  <Button 
-                    variant={useABATEV ? "default" : "outline"}
-                    size="sm"
-                    className="text-xs h-7 px-2"
-                    onClick={toggleABATEV}
-                    title="Toggle ABATEV (AI-driven Broker Aggregator and Trade Execution Validator)"
-                  >
-                    <CheckCircle2 
-                      size={14} 
-                      className={cn("mr-1", useABATEV ? "opacity-100" : "opacity-50")} 
-                    />
-                    ABATEV
-                  </Button>
-                </ContextualTooltip>
-                
-                <ContextualTooltip
-                  id="broker-comparison"
-                  title="Broker Comparison"
-                  content={
-                    <p>View real-time comparison of prices, spreads, and latency across different brokers to understand why ABATEV selected a particular broker for your trade.</p>
-                  }
-                  position="bottom"
-                  delay={4000}
-                >
-                  <Button 
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0"
-                    onClick={() => setShowingBrokerComparison(!showingBrokerComparison)}
-                  >
-                    <BarChart2 size={14} />
-                  </Button>
-                </ContextualTooltip>
-              </div>
               
-              <ContextualTooltip
-                id="execute-trade"
-                title="Execute Trade"
-                content={
-                  <>
-                    <p>Click this button to execute the trade with the parameters shown.</p>
-                    <p className="mt-2">With ABATEV enabled, the system will automatically select the best broker for execution.</p>
-                    <p className="mt-2">Your trade will include the specified stop loss and take profit levels for risk management.</p>
-                  </>
-                }
-                position="top"
-                delay={6000}
-                highlight={true}
-              >
-                <Button 
-                  className="flex-1 max-w-[120px]" 
-                  size="sm"
-                  variant="default"
-                  onClick={() => {
-                  if (!isConnected) {
-                    toast.error("Not connected to brokers");
-                    return;
-                  }
-                  
-                  // Create a trade from the signal
-                  const tradeDetails = {
-                    symbol: selectedSignal.symbol,
-                    quantity: 1, // Default quantity
-                    side: selectedSignal.action === 'neutral' ? 'buy' : selectedSignal.action,
-                    type: 'market' as 'market', // Type assertion to fix type error
-                    stopLossPrice: selectedSignal.stopLoss,
-                    takeProfitPrice: selectedSignal.takeProfit1
-                  };
-                  
-                  toast.promise(executeTrade(tradeDetails), {
-                    loading: 'Executing trade...',
-                    success: (result: any) => {
-                      if (result.status === 'filled' || result.status === 'pending') {
-                        return `Trade executed with order ID: ${result.orderId}`;
-                      }
-                      throw new Error(result.message || 'Trade execution failed');
-                    },
-                    error: 'Failed to execute trade'
-                  });
-                }}
-                disabled={isAggregatorLoading || !isConnected}
-              >
-                {selectedSignal.action === 'buy' ? 'Buy Now' : 
-                 selectedSignal.action === 'sell' ? 'Sell Now' : 
-                 'Execute'}
-              </Button>
-              </ContextualTooltip>
-            </div>
-            
-            {!useABATEV && (
-              <div className="flex flex-wrap gap-2 w-full">
-                {['ironbeam', 'alpaca', 'oanda', 'bitfinex', 'etrade'].map(broker => (
-                  <Button 
-                    key={broker}
-                    className="flex-1" 
-                    size="sm" 
-                    variant={selectedBroker === broker ? "default" : "outline"}
-                    onClick={() => selectBroker(broker)}
+              <div className="flex items-center justify-between text-sm">
+                <div className="text-muted-foreground">
+                  {new Date(signal.timestamp).toLocaleString()}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Badge 
+                    variant={signal.status === 'active' ? 'outline' : 
+                            signal.status === 'closed' && signal.pnl && signal.pnl > 0 ? 'success' : 
+                            signal.status === 'closed' ? 'destructive' : 'secondary'}
                   >
-                    {broker.charAt(0).toUpperCase() + broker.slice(1)}
-                  </Button>
-                ))}
-              </div>
-            )}
-            
-            {showingBrokerComparison && (
-              <div className="w-full mt-2 pt-2 border-t">
-                <div className="text-xs font-medium mb-1">ABATEV Broker Comparison</div>
-                <div className="space-y-1 text-xs">
-                  <div className="flex items-center justify-between text-muted-foreground bg-muted/30 px-2 py-1 rounded">
-                    <div className="w-1/4">Broker</div>
-                    <div className="w-1/4 text-right">Price</div>
-                    <div className="w-1/4 text-right">Spread</div>
-                    <div className="w-1/4 text-right">Latency</div>
-                  </div>
+                    {signal.status.toUpperCase()}
+                    {signal.status === 'closed' && signal.pnl && (
+                      <span className="ml-1">
+                        {signal.pnl > 0 ? '+' : ''}{signal.pnl.toLocaleString()}
+                      </span>
+                    )}
+                  </Badge>
                   
-                  {['ironbeam', 'alpaca', 'oanda', 'bitfinex', 'etrade'].map((broker, index) => (
-                    <div 
-                      key={broker}
-                      className={cn(
-                        "flex items-center justify-between px-2 py-1 rounded", 
-                        index === 0 ? "bg-green-500/10 border border-green-500/30" : ""
-                      )}
-                    >
-                      <div className="w-1/4 font-medium">{broker.charAt(0).toUpperCase() + broker.slice(1)}</div>
-                      <div className="w-1/4 text-right">${(Math.random() * 1000 + 30000).toFixed(2)}</div>
-                      <div className="w-1/4 text-right">{(Math.random() * 0.5).toFixed(2)}%</div>
-                      <div className="w-1/4 text-right">{Math.floor(Math.random() * 100)}ms</div>
-                    </div>
-                  ))}
+                  <CopyTradeButton signal={signal} />
                 </div>
               </div>
-            )}
-          </CardFooter>
+            </div>
+          </CardContent>
         </Card>
-      )}
+      ))}
     </div>
   );
 }
 
-// Individual signal card component
-function SignalCard({ 
-  signal, 
-  isSelected, 
-  onClick 
-}: { 
-  signal: TradingSignal; 
-  isSelected: boolean;
-  onClick: () => void;
-}) {
+function SignalsListSkeleton() {
   return (
-    <div 
-      className={cn(
-        "p-2 border rounded-md cursor-pointer transition-all",
-        isSelected ? "border-primary bg-muted/50" : "hover:bg-muted/30"
-      )}
-      onClick={onClick}
-    >
-      <div className="flex justify-between items-start mb-1">
-        <div className="flex items-center">
-          <Badge 
-            variant={signal.action === 'buy' ? 'default' : 
-                    signal.action === 'sell' ? 'destructive' : 'outline'}
-            className={cn("mr-2 uppercase text-xs", 
-              signal.action === 'buy' ? 'bg-green-500 hover:bg-green-600' : '')}
-          >
-            {signal.action}
-          </Badge>
-          <span className="font-medium">{signal.symbol}</span>
-        </div>
-        <span className="text-xs text-muted-foreground">{formatTime(signal.timestamp.getTime())}</span>
-      </div>
-      
-      <p className="text-xs text-muted-foreground mb-1">
-        {truncate(signal.message, 100)}
-      </p>
-      
-      <div className="flex justify-between items-center text-xs">
-        <span className="text-muted-foreground">{signal.strategy}</span>
-        <span 
-          className={cn(
-            "font-medium",
-            signal.confidence > 70 ? "text-green-500" :
-            signal.confidence > 40 ? "text-yellow-500" : 
-            "text-red-500"
-          )}
-        >
-          {signal.confidence}% confidence
-        </span>
-      </div>
+    <div className="space-y-4">
+      {[1, 2, 3].map((i) => (
+        <Card key={i} className="overflow-hidden">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <Skeleton className="h-6 w-16 mr-2" />
+                <Skeleton className="h-6 w-24" />
+              </div>
+              <Skeleton className="h-6 w-24" />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <Skeleton className="h-4 w-20 mb-2" />
+                <Skeleton className="h-8 w-28" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              </div>
+            </div>
+            
+            <Skeleton className="h-4 w-full mb-4" />
+            
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-4 w-32" />
+              <div className="flex items-center space-x-2">
+                <Skeleton className="h-6 w-16" />
+                <Skeleton className="h-8 w-8" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }

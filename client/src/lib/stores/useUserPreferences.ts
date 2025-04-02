@@ -108,53 +108,60 @@ const defaultBottomNavTabs: TabConfig[] = [
     order: 5
   },
   {
+    id: 'copy-trading',
+    label: 'Copy Trade',
+    icon: 'Share2',
+    active: false,
+    order: 6
+  },
+  {
     id: 'journal',
     label: 'Journal',
     icon: 'FileText',
     active: false,
-    order: 6
+    order: 7
   },
   {
     id: 'learn',
     label: 'Learn',
     icon: 'BookOpen',
     active: false,
-    order: 7
+    order: 8
   },
   {
     id: 'portfolio',
     label: 'Portfolio',
     icon: 'BarChart3',
     active: false,
-    order: 8
+    order: 9
   },
   {
     id: 'social',
     label: 'Social',
     icon: 'Users',
     active: true, // Active - 4 of 4
-    order: 9
+    order: 10
   },
   {
     id: 'marketplace',
     label: 'NFT Market',
     icon: 'Store',
     active: false,
-    order: 10
+    order: 11
   },
   {
     id: 'affiliate',
     label: 'Affiliate',
-    icon: 'Share2',
+    icon: 'Link2',
     active: false,
-    order: 11
+    order: 12
   },
   {
     id: 'settings',
     label: 'Settings',
     icon: 'Settings',
     active: false,
-    order: 12
+    order: 13
   }
 ];
 

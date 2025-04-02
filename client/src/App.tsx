@@ -30,6 +30,7 @@ import LandingPage from './pages/landing';
 import EventsPage from './pages/events';
 import NotFoundPage from './pages/not-found';
 import SocialNetworkPage from './pages/social-network';
+import CopyTradingPage from './pages/copy-trading';
 
 // Trading & Markets
 import AdvancedTradingDashboard from './pages/advanced-trading-dashboard';
@@ -110,6 +111,7 @@ const App: React.FC = () => {
                 <Route path="/metaverse" element={<ProtectedRoute><MetaversePage /></ProtectedRoute>} />
                 <Route path="/learn" element={<ProtectedRoute><LearnView /></ProtectedRoute>} />
                 <Route path="/signals" element={<ProtectedRoute><SignalsView /></ProtectedRoute>} />
+                <Route path="/copy-trading" element={<ProtectedRoute><CopyTradingPage /></ProtectedRoute>} />
                 <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
                 <Route path="/settings" element={<ProtectedRoute><SettingsView /></ProtectedRoute>} />
