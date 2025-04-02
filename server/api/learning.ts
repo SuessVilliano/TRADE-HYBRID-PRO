@@ -1,5 +1,5 @@
 import express from 'express';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql, isNull, isNotNull } from 'drizzle-orm';
 import { db } from '../db';
 import {
   courses,
@@ -8,7 +8,8 @@ import {
   quizzes,
   userProgress,
   certificates,
-  userLearningJournal
+  userLearningJournal,
+  quizAttempts
 } from '../../shared/schema';
 
 const router = express.Router();
@@ -41,7 +42,7 @@ router.get('/courses/:id', async (req, res) => {
       .select()
       .from(modules)
       .where(eq(modules.courseId, courseId))
-      .orderBy(modules.order);
+      .orderBy(modules.orderNum);
     
     // For each module, get the lessons
     const result = { ...course[0], modules: [] };
@@ -51,8 +52,9 @@ router.get('/courses/:id', async (req, res) => {
         .select()
         .from(lessons)
         .where(eq(lessons.moduleId, module.id))
-        .orderBy(lessons.order);
+        .orderBy(lessons.orderNum);
       
+      // @ts-ignore - TypeScript doesn't understand we're creating a new object shape
       result.modules.push({ ...module, lessons: moduleLessons });
     }
     
@@ -72,7 +74,7 @@ router.get('/modules/:id/lessons', async (req, res) => {
       .select()
       .from(lessons)
       .where(eq(lessons.moduleId, moduleId))
-      .orderBy(lessons.order);
+      .orderBy(lessons.orderNum);
     
     res.json(lessonList);
   } catch (error) {
@@ -129,7 +131,7 @@ router.get('/progress', async (req, res) => {
   
   try {
     // Mock user ID for development
-    const userId = 1;
+    const userId = "1"; // Using string as per schema definition
     
     const progress = await db
       .select()
@@ -157,8 +159,8 @@ router.post('/progress/lesson-complete', async (req, res) => {
   }
   
   try {
-    // Mock user ID for development
-    const userId = 1;
+    // Mock user ID for development - using string as per schema
+    const userId = "1";
     
     // Check if progress record exists for this course
     let progress = await db
@@ -268,7 +270,7 @@ router.post('/quiz/submit', async (req, res) => {
   
   try {
     // Mock user ID for development
-    const userId = 1;
+    const userId = "1";
     
     // Get the quiz
     const quiz = await db
@@ -332,7 +334,7 @@ router.post('/quiz/submit', async (req, res) => {
       
       try {
         // Record the quiz attempt if quizAttempts table exists
-        await db.insert(quizAttempts).values({
+        const result = await db.insert(quizAttempts).values({
           userId,
           quizId,
           score,
@@ -406,16 +408,19 @@ router.post('/quiz/submit', async (req, res) => {
 
 // Get user's certificates
 router.get('/certificates', async (req, res) => {
-  if (!req.user) {
+  if (!req.user || !req.user.id) {
     return res.status(401).json({ error: 'Authentication required' });
   }
   
   try {
+    // Use req.user.id as a string
+    const userId = String(req.user.id);
+    
     const userCertificates = await db
       .select()
       .from(certificates)
-      .where(eq(certificates.user_id, req.user.id))
-      .orderBy(desc(certificates.issued_at));
+      .where(eq(certificates.userId, userId))
+      .orderBy(desc(certificates.issueDate));
     
     res.json(userCertificates);
   } catch (error) {
@@ -426,7 +431,7 @@ router.get('/certificates', async (req, res) => {
 
 // Get user's learning journal entries
 router.get('/journal', async (req, res) => {
-  if (!req.user) {
+  if (!req.user || !req.user.id) {
     return res.status(401).json({ error: 'Authentication required' });
   }
   
@@ -434,8 +439,8 @@ router.get('/journal', async (req, res) => {
     const entries = await db
       .select()
       .from(userLearningJournal)
-      .where(eq(userLearningJournal.user_id, req.user.id))
-      .orderBy(desc(userLearningJournal.created_at));
+      .where(eq(userLearningJournal.userId, req.user.id))
+      .orderBy(desc(userLearningJournal.createdAt));
     
     res.json(entries);
   } catch (error) {
@@ -446,7 +451,7 @@ router.get('/journal', async (req, res) => {
 
 // Create a new journal entry
 router.post('/journal', async (req, res) => {
-  if (!req.user) {
+  if (!req.user || !req.user.id) {
     return res.status(401).json({ error: 'Authentication required' });
   }
   
@@ -458,17 +463,19 @@ router.post('/journal', async (req, res) => {
   
   try {
     const result = await db.insert(userLearningJournal).values({
-      user_id: req.user.id,
-      title,
-      content,
-      course_id: course_id || null,
-      lesson_id: lesson_id || null,
+      userId: req.user.id,
+      title: title,
+      content: content,
+      courseId: course_id || null,
+      lessonId: lesson_id || null,
       tags: tags || null,
-      created_at: new Date(),
-      updated_at: new Date()
+      createdAt: new Date(),
+      updatedAt: new Date()
     });
     
-    res.status(201).json({ id: result.insertId, success: true });
+    // Return the ID from the result or fallback
+    const id = result.insertId ?? -1;
+    res.status(201).json({ id, success: true });
   } catch (error) {
     console.error('Error creating journal entry:', error);
     res.status(500).json({ error: 'Failed to create journal entry' });
@@ -477,7 +484,7 @@ router.post('/journal', async (req, res) => {
 
 // Update a journal entry
 router.put('/journal/:id', async (req, res) => {
-  if (!req.user) {
+  if (!req.user || !req.user.id) {
     return res.status(401).json({ error: 'Authentication required' });
   }
   
@@ -492,7 +499,7 @@ router.put('/journal/:id', async (req, res) => {
       .where(
         and(
           eq(userLearningJournal.id, entryId),
-          eq(userLearningJournal.user_id, req.user.id)
+          eq(userLearningJournal.userId, req.user.id)
         )
       )
       .limit(1);
@@ -501,13 +508,14 @@ router.put('/journal/:id', async (req, res) => {
       return res.status(404).json({ error: 'Journal entry not found or unauthorized' });
     }
     
+    // Update using a properly typed object
     await db
       .update(userLearningJournal)
       .set({
         title: title || entry[0].title,
         content: content || entry[0].content,
         tags: tags || entry[0].tags,
-        updated_at: new Date()
+        updatedAt: new Date()
       })
       .where(eq(userLearningJournal.id, entryId));
     
@@ -520,7 +528,7 @@ router.put('/journal/:id', async (req, res) => {
 
 // Delete a journal entry
 router.delete('/journal/:id', async (req, res) => {
-  if (!req.user) {
+  if (!req.user || !req.user.id) {
     return res.status(401).json({ error: 'Authentication required' });
   }
   
@@ -534,7 +542,7 @@ router.delete('/journal/:id', async (req, res) => {
       .where(
         and(
           eq(userLearningJournal.id, entryId),
-          eq(userLearningJournal.user_id, req.user.id)
+          eq(userLearningJournal.userId, req.user.id)
         )
       )
       .limit(1);

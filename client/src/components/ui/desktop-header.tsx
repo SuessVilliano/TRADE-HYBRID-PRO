@@ -17,6 +17,8 @@ import {
   Bot
 } from 'lucide-react';
 import logo from '../../assets/logo.svg';
+import logoFull from '../../assets/images/logo-full.jpeg';
+import logoStacked from '../../assets/images/logo-stacked.png';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useSolanaAuth, MembershipTier } from '../../lib/context/SolanaAuthProvider';
@@ -164,8 +166,18 @@ export function DesktopHeader({ className }: DesktopHeaderProps) {
         {/* Logo and Main Navigation */}
         <div className="flex items-center space-x-8">
           <Link to="/dashboard" className="flex items-center space-x-2">
-            <img src={logo} alt="Trade Hybrid Logo" className="h-8 w-auto" />
-            <span className="text-lg font-semibold hidden sm:inline">Trade Hybrid</span>
+            {/* For larger screens, use the full logo */}
+            <img 
+              src={logoFull} 
+              alt="Trade Hybrid Logo" 
+              className="hidden md:block h-8 w-auto object-contain"
+            />
+            {/* For smaller screens, use the compact version */}
+            <img 
+              src={logo} 
+              alt="Trade Hybrid Logo" 
+              className="block md:hidden h-8 w-auto" 
+            />
           </Link>
           
           {/* Navigation Tabs */}

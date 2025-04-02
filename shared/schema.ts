@@ -268,9 +268,11 @@ export const tradePerformance = pgTable("trade_performance", {
 export const userLearningJournal = pgTable("user_learning_journal", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
   content: text("content").notNull(),
   courseId: integer("course_id").references(() => courses.id),
   lessonId: integer("lesson_id").references(() => lessons.id),
+  tags: jsonb("tags"),
   relatedToTradeEntry: integer("related_to_trade_entry").references(() => journalEntries.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
