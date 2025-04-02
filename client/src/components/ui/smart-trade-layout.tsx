@@ -223,31 +223,51 @@ export function SmartTradeLayout({
     if (!isMobile) return null;
     
     return (
-      <div className="absolute top-3 left-0 right-0 px-3 z-30 flex items-center justify-between">
-        <div className="flex items-center">
-          <div className="text-white text-sm font-medium">{symbol}</div>
-          <div className="ml-2 text-green-400 text-sm">19,627.25 <span className="text-green-400">+37.00 (+0.19%)</span></div>
+      <div className="absolute top-1 left-0 right-0 px-2 z-30">
+        <div className="flex items-center justify-between bg-slate-900/80 backdrop-blur-sm py-1.5 px-2 mb-1 rounded">
+          <div className="flex items-center">
+            <div className="text-white text-sm font-medium">{symbol}</div>
+            <div className="ml-2 text-green-400 text-xs">
+              19,627.25 <span className="text-green-400">+37.00 (+0.19%)</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center">
+            <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
+              USD
+            </Button>
+          </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between">
           <Button 
             size="sm" 
             variant="destructive" 
-            className="h-8 min-w-[80px]"
+            className="h-8 w-[120px] font-bold"
           >
+            <span className="mr-2">19,630.00</span>
             SELL
           </Button>
+          
+          <div className="flex items-center justify-center text-xs text-white/60">
+            9.00
+          </div>
+          
           <Button 
             size="sm" 
             variant="default"
-            className="h-8 min-w-[80px] bg-blue-600 hover:bg-blue-700"
+            className="h-8 w-[120px] font-bold bg-blue-600 hover:bg-blue-700"
           >
+            <span className="mr-2">19,639.00</span>
             BUY
           </Button>
+        </div>
+        
+        <div className="absolute right-2 -top-1">
           <Button
             size="icon"
             variant="ghost"
-            className="h-8 w-8 bg-slate-800/80 rounded-full"
+            className="h-7 w-7 bg-slate-800/80 rounded-full"
             onClick={() => changePanelPosition(panelPosition === 'bottom' ? 'hidden' : 'bottom')}
           >
             {panelPosition === 'bottom' ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
@@ -474,39 +494,6 @@ export function SmartTradeLayout({
         >
           {renderPanelContent(true)}
         </motion.div>
-      )}
-      
-      {/* Mobile Bottom Tab Bar (in mobile layout) */}
-      {isMobile && (
-        <div className="fixed bottom-0 left-0 right-0 h-12 bg-slate-900 border-t border-slate-800 flex items-center justify-around z-50">
-          <Button variant="ghost" className="h-10 flex flex-col items-center justify-center text-[10px] text-slate-400">
-            <Layers className="h-4 w-4 mb-1" />
-            Watchlist
-          </Button>
-          <Button variant="ghost" className="h-10 flex flex-col items-center justify-center text-[10px] text-blue-400">
-            <BarChart className="h-4 w-4 mb-1" />
-            Chart
-          </Button>
-          <Button variant="ghost" className="h-10 flex flex-col items-center justify-center text-[10px] text-slate-400">
-            <SlidersHorizontal className="h-4 w-4 mb-1" />
-            Explore
-          </Button>
-          <Button variant="ghost" className="h-10 flex flex-col items-center justify-center text-[10px] text-slate-400">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 mb-1">
-              <path d="M10 7.5a2.5 2.5 0 1 0 5 0 2.5 2.5 0 1 0-5 0" />
-              <path d="M9 21V9.6a6 6 0 0 1 12 0V21" />
-            </svg>
-            Ideas
-          </Button>
-          <Button variant="ghost" className="h-10 flex flex-col items-center justify-center text-[10px] text-slate-400">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 mb-1">
-              <line x1="4" x2="20" y1="12" y2="12" />
-              <line x1="4" x2="20" y1="6" y2="6" />
-              <line x1="4" x2="20" y1="18" y2="18" />
-            </svg>
-            Menu
-          </Button>
-        </div>
       )}
     </div>
   );

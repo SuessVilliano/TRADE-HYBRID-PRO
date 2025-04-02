@@ -91,9 +91,15 @@ function TradingViewWidget({
             disabled_features: ["header_compare"],
             enabled_features: ["use_localstorage_for_settings"],
             overrides: {
-              "paneProperties.background": theme === "dark" ? "#0f172a" : "#ffffff",
-              "paneProperties.vertGridProperties.color": theme === "dark" ? "#334155" : "#e6e9ec",
-              "paneProperties.horzGridProperties.color": theme === "dark" ? "#334155" : "#e6e9ec",
+              "paneProperties.background": theme === "dark" ? "#171b26" : "#ffffff",
+              "paneProperties.vertGridProperties.color": theme === "dark" ? "#2a2e39" : "#e6e9ec",
+              "paneProperties.horzGridProperties.color": theme === "dark" ? "#2a2e39" : "#e6e9ec",
+              "mainSeriesProperties.candleStyle.upColor": "#26a69a",
+              "mainSeriesProperties.candleStyle.downColor": "#ef5350",
+              "mainSeriesProperties.candleStyle.borderUpColor": "#26a69a",
+              "mainSeriesProperties.candleStyle.borderDownColor": "#ef5350",
+              "mainSeriesProperties.candleStyle.wickUpColor": "#26a69a",
+              "mainSeriesProperties.candleStyle.wickDownColor": "#ef5350",
             }
           });
           console.log("TradingView widget loaded successfully");
