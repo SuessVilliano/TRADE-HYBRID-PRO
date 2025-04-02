@@ -76,7 +76,7 @@ export function BottomNav({ className = '' }: BottomNavProps) {
     return bottomNavTabs
       .filter(t => t.active)
       .sort((a, b) => a.order - b.order)
-      .slice(0, 6); // Limit to maximum 6 buttons to leave space for widgets (reduced from 8)
+      .slice(0, 4); // Limit to exactly 4 buttons
   }, [bottomNavTabs]);
   
   // State for edit dialog
@@ -91,9 +91,19 @@ export function BottomNav({ className = '' }: BottomNavProps) {
   
   // Toggle tab visibility
   const handleToggleTab = (tabId: string) => {
-    setEditableTabs(tabs => 
-      tabs.map(tab => tab.id === tabId ? { ...tab, active: !tab.active } : tab)
-    );
+    setEditableTabs(tabs => {
+      // Count currently active tabs
+      const activeTabCount = tabs.filter(t => t.active).length;
+      const tab = tabs.find(t => t.id === tabId);
+      
+      // If trying to activate a tab but we already have 4 active ones, don't allow it
+      if (!tab?.active && activeTabCount >= 4) {
+        // We could show a toast or alert here about the 4 tab limit
+        return tabs;
+      }
+      
+      return tabs.map(tab => tab.id === tabId ? { ...tab, active: !tab.active } : tab);
+    });
   };
   
   // Reorder tabs with drag and drop
@@ -141,7 +151,7 @@ export function BottomNav({ className = '' }: BottomNavProps) {
   };
   
   return (
-    <div className={`fixed bottom-0 left-16 right-16 z-50 bg-background border-t rounded-t-2xl shadow-lg ${className}`}>
+    <div className={`fixed bottom-0 left-[120px] right-[120px] z-50 bg-background border-t rounded-t-2xl shadow-lg ${className}`}>
       <div className="flex items-center justify-around px-2 py-2">
         {/* Visible tabs */}
         {visibleTabs.map((tab) => (
@@ -216,6 +226,9 @@ export function BottomNav({ className = '' }: BottomNavProps) {
                 
                 {/* Tab visibility settings */}
                 <TabsContent value="tabs" className="space-y-4">
+                  <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 p-3 rounded-md text-sm mb-2">
+                    You can enable up to 4 tabs to appear in the bottom navigation.
+                  </div>
                   <div className="grid grid-cols-1 gap-2">
                     {editableTabs.map((tab) => (
                       <div key={tab.id} className="flex items-center justify-between p-2 border rounded-md">
@@ -234,6 +247,9 @@ export function BottomNav({ className = '' }: BottomNavProps) {
                 
                 {/* Tab ordering */}
                 <TabsContent value="order" className="space-y-4">
+                  <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 p-3 rounded-md text-sm mb-2">
+                    Only the first 4 active tabs will appear in the bottom navigation.
+                  </div>
                   <DragDropContext onDragEnd={handleDragEnd}>
                     <Droppable droppableId="tabs">
                       {(provided) => (
@@ -254,7 +270,7 @@ export function BottomNav({ className = '' }: BottomNavProps) {
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   className={`flex items-center justify-between p-2 border rounded-md 
-                                    ${tab.active ? 'bg-background' : 'bg-muted/40 text-muted-foreground'}`}
+                                    ${tab.active ? (index < 4 ? 'bg-background border-blue-300' : 'bg-background') : 'bg-muted/40 text-muted-foreground'}`}
                                 >
                                   <div className="flex items-center gap-2">
                                     <div {...provided.dragHandleProps}>
@@ -262,10 +278,11 @@ export function BottomNav({ className = '' }: BottomNavProps) {
                                     </div>
                                     {getIcon(tab.icon)}
                                     <span>{tab.label}</span>
+                                    {tab.active && index < 4 && <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 rounded ml-2">Visible</span>}
                                   </div>
                                   <div className="flex items-center space-x-2">
                                     <Label className={`text-xs ${tab.active ? '' : 'text-muted-foreground'}`}>
-                                      {tab.active ? 'Visible' : 'Hidden'}
+                                      {tab.active ? (index < 4 ? 'Showing' : 'Hidden (>4)') : 'Hidden'}
                                     </Label>
                                   </div>
                                 </div>
@@ -278,7 +295,7 @@ export function BottomNav({ className = '' }: BottomNavProps) {
                     </Droppable>
                   </DragDropContext>
                   <p className="text-xs text-muted-foreground">
-                    Drag and drop to reorder visible tabs. Hidden tabs won't appear in the navigation bar.
+                    Drag and drop to reorder tabs. Only the first 4 active tabs will appear in the navigation bar.
                   </p>
                 </TabsContent>
               </Tabs>

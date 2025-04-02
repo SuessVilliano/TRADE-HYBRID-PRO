@@ -69,56 +69,56 @@ const defaultBottomNavTabs: TabConfig[] = [
     id: 'home',
     label: 'Home',
     icon: 'Home',
-    active: true,
+    active: true, // Active - 1 of 4
     order: 0
   },
   {
     id: 'trading',
     label: 'Trading',
     icon: 'BarChart',
-    active: true,
+    active: true, // Active - 2 of 4
     order: 1
   },
   {
     id: 'connect-broker',
     label: 'Connect Broker',
     icon: 'Link',
-    active: true,
+    active: false,
     order: 2
   },
   {
     id: 'smart-trade',
     label: 'Smart Trade',
     icon: 'Sparkles',
-    active: true,
+    active: false,
     order: 3
   },
   {
     id: 'game',
     label: 'Game',
     icon: 'Gamepad2',
-    active: true,
+    active: false,
     order: 4
   },
   {
     id: 'signals',
     label: 'Signals',
     icon: 'LineChart',
-    active: false, // Changed to inactive
+    active: true, // Active - 3 of 4
     order: 5
   },
   {
     id: 'journal',
     label: 'Journal',
     icon: 'FileText',
-    active: false, // Changed to inactive
+    active: false,
     order: 6
   },
   {
     id: 'learn',
     label: 'Learn',
     icon: 'BookOpen',
-    active: false, // Changed to inactive
+    active: false,
     order: 7
   },
   {
@@ -132,7 +132,7 @@ const defaultBottomNavTabs: TabConfig[] = [
     id: 'social',
     label: 'Social',
     icon: 'Users',
-    active: true, // Activated Social tab
+    active: true, // Active - 4 of 4
     order: 9
   },
   {
@@ -146,7 +146,7 @@ const defaultBottomNavTabs: TabConfig[] = [
     id: 'affiliate',
     label: 'Affiliate',
     icon: 'Share2',
-    active: false, // Changed to inactive
+    active: false,
     order: 11
   },
   {
@@ -218,11 +218,26 @@ export const useUserPreferences = create<UserPreferencesState>()(
       
       // Bottom nav actions
       setBottomNavTabs: (tabs) => set({ bottomNavTabs: tabs }),
-      toggleBottomNavTab: (tabId) => set((state) => ({
-        bottomNavTabs: state.bottomNavTabs.map(tab => 
-          tab.id === tabId ? { ...tab, active: !tab.active } : tab
-        )
-      })),
+      toggleBottomNavTab: (tabId) => set((state) => {
+        const activeTabsCount = state.bottomNavTabs.filter(t => t.active).length;
+        const currentTab = state.bottomNavTabs.find(t => t.id === tabId);
+        
+        // Don't deactivate if it's the only active tab
+        if (currentTab?.active && activeTabsCount <= 1) {
+          return state;
+        }
+        
+        // Don't activate if we already have 4 active tabs
+        if (!currentTab?.active && activeTabsCount >= 4) {
+          return state;
+        }
+        
+        return {
+          bottomNavTabs: state.bottomNavTabs.map(tab => 
+            tab.id === tabId ? { ...tab, active: !tab.active } : tab
+          )
+        };
+      }),
       reorderBottomNavTabs: (tabId, newOrder) => set((state) => {
         // First, get the tab to be moved
         const tabToMove = state.bottomNavTabs.find(tab => tab.id === tabId);
