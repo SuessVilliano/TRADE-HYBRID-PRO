@@ -21,7 +21,7 @@ const LandingPage: React.FC = () => {
           
           <div className="hidden md:flex space-x-4">
             <NavLink href="#features">Features</NavLink>
-            <NavLink href="#podcast">Podcast</NavLink>
+            <NavLink href="#metaverse">Metaverse</NavLink>
             <NavLink href="#signals">Signals</NavLink>
             <NavLink href="#education">Education</NavLink>
             <NavLink href="#membership">Membership</NavLink>
@@ -137,40 +137,40 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
       
-      {/* Podcast Section */}
-      <section id="podcast" className="py-16">
+      {/* Metaverse Section */}
+      <section id="metaverse" className="py-16">
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row gap-8 items-center">
             <div className="lg:w-1/2">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">Trading Freedom Podcast</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">Trading Metaverse</h2>
               <p className="text-gray-300 mb-8">
-                Join us on the Trading Freedom Podcast, where we dive deep into trading strategies, market analysis,
-                and interviews with successful traders. Get valuable insights to improve your trading skills and
-                stay updated with the latest trends in the financial markets.
+                Experience trading in a whole new dimension with our immersive Trading Metaverse environment. 
+                Interact with other traders, participate in virtual trading floors, attend live market analysis events, 
+                and learn from experts in a 3D virtual world designed to revolutionize how you engage with markets.
               </p>
-              <Link to="/trading-freedom-podcast">
+              <Link to="/metaverse">
                 <Button className="bg-purple-600 hover:bg-purple-700">
-                  Explore All Episodes
+                  Enter Metaverse
                 </Button>
               </Link>
             </div>
             <div className="lg:w-1/2 bg-gray-800 rounded-lg p-6 border border-gray-700">
-              <h3 className="text-xl font-semibold mb-4">Latest Episodes</h3>
+              <h3 className="text-xl font-semibold mb-4">Metaverse Features</h3>
               <div className="space-y-4">
-                <PodcastEpisode 
-                  title="Technical Analysis Masterclass: Advanced Patterns"
-                  date="Apr 1, 2025"
-                  duration="55 min"
+                <MetaverseFeature 
+                  title="3D Interactive Trading Floors"
+                  description="Experience real-time market data visualization in 3D"
+                  icon="💹"
                 />
-                <PodcastEpisode 
-                  title="From Retail to Prop: The Journey to Professional Trading"
-                  date="Mar 28, 2025"
-                  duration="47 min"
+                <MetaverseFeature 
+                  title="Virtual Trading Competitions"
+                  description="Compete with traders worldwide in risk-free environments"
+                  icon="🏆"
                 />
-                <PodcastEpisode 
-                  title="Trading Psychology: Mental Habits of Successful Traders"
-                  date="Mar 21, 2025"
-                  duration="63 min"
+                <MetaverseFeature 
+                  title="Live Expert Sessions"
+                  description="Join virtual seminars and Q&A with professional traders"
+                  icon="👨‍🏫"
                 />
               </div>
             </div>
@@ -346,6 +346,22 @@ const FeatureCard: React.FC<{
     <div className="mb-4">{icon}</div>
     <h3 className="text-lg font-bold mb-2">{title}</h3>
     <p className="text-gray-400">{description}</p>
+  </div>
+);
+
+const MetaverseFeature: React.FC<{
+  title: string;
+  description: string;
+  icon: string;
+}> = ({ title, description, icon }) => (
+  <div className="flex items-center space-x-3 p-3 rounded-md bg-gray-700/50 hover:bg-gray-700 transition-colors">
+    <div className="h-10 w-10 flex items-center justify-center bg-purple-500/20 rounded-md text-xl">
+      {icon}
+    </div>
+    <div className="flex-1 min-w-0">
+      <h4 className="font-medium text-sm truncate">{title}</h4>
+      <p className="text-xs text-gray-400 mt-1">{description}</p>
+    </div>
   </div>
 );
 
