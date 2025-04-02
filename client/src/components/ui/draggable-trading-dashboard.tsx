@@ -12,7 +12,9 @@ import {
   Plus, 
   Settings, 
   Layers, 
-  LayoutGrid 
+  LayoutGrid,
+  ExternalLink,
+  MoveLeft
 } from 'lucide-react';
 import { toast } from 'sonner';
 import TradingViewWidget from './TradingViewWidget';
@@ -140,6 +142,9 @@ export function DraggableTradingDashboard({
   // Maximized widget
   const [maximizedWidget, setMaximizedWidget] = useState<string | null>(null);
   
+  // Undocked widgets
+  const [undockedWidgets, setUndockedWidgets] = useState<string[]>([]);
+  
   // Add widget dialog
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   
@@ -193,6 +198,20 @@ export function DraggableTradingDashboard({
       setMaximizedWidget(id);
     }
   };
+
+  // Toggle widget undocked state
+  const toggleUndock = (id: string) => {
+    if (undockedWidgets.includes(id)) {
+      setUndockedWidgets(undockedWidgets.filter(widgetId => widgetId !== id));
+      toast.success('Widget docked back to dashboard');
+    } else {
+      setUndockedWidgets([...undockedWidgets, id]);
+      toast.success('Widget undocked from dashboard');
+    }
+  };
+
+  // Check if widget is undocked
+  const isWidgetUndocked = (id: string) => undockedWidgets.includes(id);
 
   // Change widget size
   const changeWidgetSize = (id: string, size: 'small' | 'medium' | 'large') => {
@@ -391,6 +410,61 @@ export function DraggableTradingDashboard({
         </div>
       )}
       
+      {/* Undocked Widgets */}
+      {undockedWidgets.length > 0 && undockedWidgets.map(widgetId => {
+        const widget = widgets.find(w => w.id === widgetId);
+        if (!widget) return null;
+        
+        return (
+          <div 
+            key={`undocked-${widgetId}`} 
+            className="fixed z-40 shadow-2xl"
+            style={{
+              width: widget.size === 'small' ? '320px' : widget.size === 'medium' ? '500px' : '750px',
+              height: widget.size === 'small' ? '300px' : widget.size === 'medium' ? '400px' : '500px',
+              top: `${50 + (undockedWidgets.indexOf(widgetId) * 30)}px`,
+              right: `${50 + (undockedWidgets.indexOf(widgetId) * 20)}px`,
+            }}
+          >
+            <Card className="h-full bg-slate-800 border-slate-700 overflow-hidden shadow-md">
+              <CardHeader className="p-3 bg-slate-800 flex-row justify-between items-center cursor-move">
+                <CardTitle className="text-sm font-medium truncate">
+                  {widget.title}
+                </CardTitle>
+                
+                <div className="flex items-center gap-1">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7"
+                    onClick={() => toggleUndock(widgetId)}
+                    title="Dock widget"
+                  >
+                    <MoveLeft className="h-4 w-4 text-blue-400" />
+                  </Button>
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7"
+                    onClick={() => toggleMaximize(widgetId)}
+                    title="Maximize widget"
+                  >
+                    <Maximize2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              
+              <CardContent className="p-0 h-[calc(100%-3rem)]">
+                <div className="h-full overflow-hidden">
+                  {renderWidgetContent(widget)}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      })}
+      
       {/* Dashboard Grid */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="dashboard" direction="vertical" isDropDisabled={!editMode}>
@@ -456,7 +530,21 @@ export function DraggableTradingDashboard({
                               variant="ghost" 
                               size="icon" 
                               className="h-7 w-7"
+                              onClick={() => toggleUndock(widget.id)}
+                              title={isWidgetUndocked(widget.id) ? "Dock widget" : "Undock widget"}
+                            >
+                              {isWidgetUndocked(widget.id) ? 
+                                <MoveLeft className="h-4 w-4 text-blue-400" /> : 
+                                <ExternalLink className="h-4 w-4" />
+                              }
+                            </Button>
+                            
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-7 w-7"
                               onClick={() => toggleMaximize(widget.id)}
+                              title="Maximize widget"
                             >
                               <Maximize2 className="h-4 w-4" />
                             </Button>
@@ -467,6 +555,7 @@ export function DraggableTradingDashboard({
                                 size="icon" 
                                 className="h-7 w-7 text-red-400 hover:text-red-300 hover:bg-red-900/20"
                                 onClick={() => removeWidget(widget.id)}
+                                title="Remove widget"
                               >
                                 <X className="h-4 w-4" />
                               </Button>
