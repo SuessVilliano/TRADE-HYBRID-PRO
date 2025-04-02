@@ -6,7 +6,7 @@
 import { db } from '../../db';
 import { users, brokerConnections } from '../../../shared/schema';
 import { eq, and } from 'drizzle-orm';
-import { whopService } from '../../../client/src/lib/services/whop-service';
+import { whopService } from './whop-service';
 
 /**
  * User identity information linking different authentication methods

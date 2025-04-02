@@ -4,7 +4,7 @@
 
 import { Router } from 'express';
 import axios from 'axios';
-import { whopServerService } from '../lib/services/whop-service';
+import { whopService } from '../lib/services/whop-service';
 import { SessionData } from 'express-session';
 
 // Extend session data type with our custom fields
@@ -100,7 +100,7 @@ router.get('/callback', async (req, res) => {
       const whopUserId = userResponse.data.id;
       
       // Find or create user based on Whop ID
-      const result = await whopServerService.findOrCreateUser(whopUserId);
+      const result = await whopService.findOrCreateUser(whopUserId);
       
       if (!result.success) {
         return res.status(401).json({ error: result.message });
@@ -124,7 +124,7 @@ router.get('/callback', async (req, res) => {
       const demoWhopUserId = 'demo';
       
       // Find or create user based on demo Whop ID
-      const result = await whopServerService.findOrCreateUser(demoWhopUserId);
+      const result = await whopService.findOrCreateUser(demoWhopUserId);
       
       if (!result.success) {
         return res.status(401).json({ error: result.message });
@@ -156,7 +156,7 @@ router.get('/verify', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated with Whop' });
     }
     
-    const membershipStatus = await whopServerService.validateMembership(req.session.whopId);
+    const membershipStatus = await whopService.validateMembership(req.session.whopId);
     
     res.json({
       isActive: membershipStatus.isActive,
