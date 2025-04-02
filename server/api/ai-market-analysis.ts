@@ -110,25 +110,11 @@ export const getAIMarketAnalysis = async (req: Request, res: Response) => {
     // Generate market data for the given symbol and timeframe
     const marketData = generateMarketData(symbol as string, timeframe as string, 60);
 
-    // Check if OpenAI API key is valid
-    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.startsWith('sk-') === false) {
-      console.warn('OpenAI API key is missing or invalid, using fallback data');
-      
-      // Create fallback demo analysis
-      const demoAnalysis = createDemoAnalysis(symbol as string, timeframe as string);
-      
-      // Calculate the Hybrid Score with fallback data
-      const hybridScore = calculateHybridScore(symbol as string, marketData, demoAnalysis);
-      
-      const response: MarketAnalysisResponse = {
-        symbol: symbol as string,
-        timeframe: timeframe as string,
-        timestamp: Date.now(),
-        hybridScore,
-        analysis: demoAnalysis,
-      };
-      
-      return res.json(response);
+    // Verify OpenAI API key is present - we already have the key in environment variables
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({ 
+        error: 'OpenAI API key not configured. Please set the OPENAI_API_KEY environment variable.'
+      });
     }
 
     try {
@@ -203,23 +189,11 @@ export const getTradingSuggestions = async (req: Request, res: Response) => {
       weekly: generateMarketData(symbol as string, '1w', 12),
     };
 
-    // Check if we have AI API access
-    const hasOpenAI = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.startsWith('sk-');
-    const hasGemini = !!process.env.GEMINI_API_KEY;
-    
-    if (!hasOpenAI && !hasGemini) {
-      console.warn('No AI API keys available, using demo suggestions');
-      
-      // Create demo suggestions
-      const demoSuggestions = createDemoTradingSuggestions(symbol as string, (riskProfile as string) || 'medium');
-      
-      const response: TradingSuggestionsResponse = {
-        symbol: symbol as string,
-        timestamp: Date.now(),
-        suggestions: demoSuggestions,
-      };
-      
-      return res.json(response);
+    // Verify OpenAI API key is present
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({ 
+        error: 'OpenAI API key not configured. Please set the OPENAI_API_KEY environment variable.'
+      });
     }
 
     try {
