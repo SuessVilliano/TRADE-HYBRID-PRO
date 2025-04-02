@@ -37,6 +37,12 @@ export type WebhookConfig = z.infer<typeof webhookConfigSchema>;
 
 // Define webhook payload schemas for different brokers
 export const alpacaWebhookSchema = z.object({
+  // Support for token in the payload
+  token: z.string().optional(),
+  api_key: z.string().optional(),
+  apiKey: z.string().optional(),
+  webhook_token: z.string().optional(),
+  
   action: z.enum(['buy', 'sell']),
   symbol: z.string(),
   qty: z.number().optional(),
@@ -56,6 +62,12 @@ export const alpacaWebhookSchema = z.object({
 export type AlpacaWebhookPayload = z.infer<typeof alpacaWebhookSchema>;
 
 export const oandaWebhookSchema = z.object({
+  // Support for token in the payload
+  token: z.string().optional(),
+  api_key: z.string().optional(),
+  apiKey: z.string().optional(),
+  webhook_token: z.string().optional(),
+  
   instrument: z.string(),
   units: z.number().or(z.string()),
   side: z.enum(['buy', 'sell']).optional(),
@@ -85,6 +97,12 @@ export const oandaWebhookSchema = z.object({
 export type OandaWebhookPayload = z.infer<typeof oandaWebhookSchema>;
 
 export const ninjaTraderWebhookSchema = z.object({
+  // Support for token in the payload
+  token: z.string().optional(),
+  api_key: z.string().optional(),
+  apiKey: z.string().optional(),
+  webhook_token: z.string().optional(),
+  
   action: z.enum(['BUY', 'SELL', 'FLATTEN']),
   symbol: z.string(),
   quantity: z.number().or(z.string()),
@@ -104,6 +122,12 @@ export type NinjaTraderWebhookPayload = z.infer<typeof ninjaTraderWebhookSchema>
 
 // Generic webhook payload that we'll parse based on broker type
 export const genericWebhookSchema = z.object({
+  // Support for token in the payload
+  token: z.string().optional(),
+  api_key: z.string().optional(),
+  apiKey: z.string().optional(),
+  webhook_token: z.string().optional(),
+  
   broker: z.enum([
     BrokerType.ALPACA, 
     BrokerType.OANDA, 
@@ -123,6 +147,12 @@ export type GenericWebhookPayload = z.infer<typeof genericWebhookSchema>;
 
 // TradingView alert format
 export const tradingViewAlertSchema = z.object({
+  // Support for token in the payload
+  token: z.string().optional(),
+  api_key: z.string().optional(),
+  apiKey: z.string().optional(),
+  webhook_token: z.string().optional(),
+  
   strategy: z.object({
     position_size: z.number().optional(),
     order_action: z.enum(['buy', 'sell']).optional(),

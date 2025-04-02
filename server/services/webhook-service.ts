@@ -95,11 +95,18 @@ export const deleteWebhookConfig = async (id: string): Promise<boolean> => {
 };
 
 /**
- * Generate a random token for the webhook
+ * Generate a random token for the webhook that is shorter and more user-friendly
+ * Similar to how CrossTrade and PickMyTrade create compact token URLs
  */
 const generateWebhookToken = (): string => {
-  return Math.random().toString(36).substring(2, 15) +
-         Math.random().toString(36).substring(2, 15);
+  // Create a shorter, more user-friendly token (8 chars)
+  // This format makes it easier to share and use in documentation
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let token = '';
+  for (let i = 0; i < 8; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
 };
 
 /**
@@ -112,6 +119,19 @@ export const processWebhook = async (
   try {
     const { broker } = webhookConfig;
     let validatedPayload;
+    
+    // Extract the token if it exists in the payload
+    const payloadToken = req.body.token || req.body.api_key || req.body.apiKey || req.body.webhook_token;
+    
+    // Add token to request metadata for logging/debugging
+    const requestMetadata = {
+      token: webhookConfig.token,
+      payloadToken: payloadToken || 'none',
+      broker,
+      userId: webhookConfig.userId
+    };
+    
+    console.log('Processing webhook with metadata:', requestMetadata);
     
     // Parse and validate the payload based on broker type
     switch (broker) {

@@ -22,9 +22,16 @@ import {
   Alert,
   AlertDescription,
   AlertTitle,
-  Separator
+  Separator,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from "@/components/ui";
-import { Copy, ChevronsUpDown, AlertCircle, Check, Cog, Lock, RefreshCw, Clipboard } from 'lucide-react';
+import { Copy, ChevronsUpDown, AlertCircle, Check, Cog, Lock, RefreshCw, Clipboard, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 // The available broker types
@@ -122,14 +129,14 @@ const WebhookForm: React.FC<WebhookFormProps> = ({ onSave, onCancel, initialWebh
     }
   );
   
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: unknown) => {
     setWebhook(prev => ({
       ...prev,
       [field]: value
     }));
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onSave(webhook);
   };
@@ -141,7 +148,7 @@ const WebhookForm: React.FC<WebhookFormProps> = ({ onSave, onCancel, initialWebh
         <Input 
           id="name" 
           value={webhook.name || ''} 
-          onChange={e => handleChange('name', e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('name', e.target.value)}
           placeholder="My Trading Webhook"
           required
         />
@@ -151,7 +158,7 @@ const WebhookForm: React.FC<WebhookFormProps> = ({ onSave, onCancel, initialWebh
         <Label htmlFor="broker">Broker</Label>
         <Select 
           value={webhook.broker} 
-          onValueChange={value => handleChange('broker', value)}
+          onValueChange={(value: string) => handleChange('broker', value)}
         >
           <SelectTrigger id="broker">
             <SelectValue placeholder="Select broker" />
@@ -170,7 +177,7 @@ const WebhookForm: React.FC<WebhookFormProps> = ({ onSave, onCancel, initialWebh
         <Switch 
           id="isActive" 
           checked={webhook.isActive} 
-          onCheckedChange={value => handleChange('isActive', value)}
+          onCheckedChange={(value: boolean) => handleChange('isActive', value)}
         />
         <Label htmlFor="isActive">Active</Label>
       </div>
@@ -180,7 +187,7 @@ const WebhookForm: React.FC<WebhookFormProps> = ({ onSave, onCancel, initialWebh
           <Label htmlFor="targetBroker">Target Broker</Label>
           <Select 
             value={webhook.settings?.targetBroker || 'alpaca'} 
-            onValueChange={value => handleChange('settings', { ...webhook.settings, targetBroker: value })}
+            onValueChange={(value: string) => handleChange('settings', { ...webhook.settings, targetBroker: value })}
           >
             <SelectTrigger id="targetBroker">
               <SelectValue placeholder="Select target broker" />
@@ -219,13 +226,22 @@ const WebhookListItem: React.FC<WebhookListItemProps> = ({
   onToggleActive
 }) => {
   const [copied, setCopied] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<any>(null);
+  const [showTestResult, setShowTestResult] = useState(false);
   
-  const webhookUrl = `${window.location.origin}/api/webhooks/receive/${webhook.token}`;
+  // Create shorter, cleaner URLs based on CrossTrade's approach
+  const baseUrl = window.location.origin;
+  const shortUrl = `${baseUrl}/api/w/${webhook.token}`;
+  const tvUrl = `${baseUrl}/api/w/tv/${webhook.token}`;
   
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(webhookUrl);
+  // Legacy URL for backward compatibility
+  const legacyUrl = `${baseUrl}/api/webhooks/receive/${webhook.token}`;
+  
+  const copyToClipboard = (url: string, message = 'Webhook URL copied to clipboard') => {
+    navigator.clipboard.writeText(url);
     setCopied(true);
-    toast.success('Webhook URL copied to clipboard');
+    toast.success(message);
     
     setTimeout(() => setCopied(false), 2000);
   };
@@ -235,12 +251,122 @@ const WebhookListItem: React.FC<WebhookListItemProps> = ({
     return broker ? broker.name : brokerId;
   };
   
+  // Function to test the webhook with sample data
+  const testWebhook = async () => {
+    setIsTesting(true);
+    setTestResult(null);
+    setShowTestResult(true);
+    
+    try {
+      // Prepare a sample payload based on broker type
+      let testPayload = {};
+      
+      switch(webhook.broker) {
+        case 'alpaca':
+          testPayload = {
+            action: "buy",
+            symbol: "AAPL",
+            qty: 1,
+            type: "market",
+            time_in_force: "day"
+          };
+          break;
+        case 'oanda':
+          testPayload = {
+            instrument: "EUR_USD",
+            units: 1000,
+            type: "MARKET"
+          };
+          break;
+        case 'ninjatrader':
+          testPayload = {
+            action: "BUY",
+            symbol: "ES 09-23",
+            quantity: 1,
+            orderType: "MARKET"
+          };
+          break;
+        case 'tradingview':
+          testPayload = {
+            strategy: {
+              order_action: "buy",
+              order_contracts: 1,
+              order_price: 150.00,
+              market_position: "long",
+              position_size: 1
+            },
+            ticker: "AAPL",
+            time: new Date().toISOString(),
+            price: 150.00,
+            comment: "Test webhook"
+          };
+          break;
+        default:
+          testPayload = {
+            action: "TEST",
+            message: "Testing webhook connectivity"
+          };
+      }
+      
+      // Send test request to the webhook
+      const response = await fetch(shortUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(testPayload),
+      });
+      
+      const data = await response.json();
+      setTestResult({
+        status: response.ok ? 'success' : 'error',
+        statusCode: response.status,
+        data
+      });
+      
+      // Show toast notification
+      if (response.ok) {
+        toast.success('Webhook test successful!', {
+          description: 'Your webhook endpoint is working properly'
+        });
+      } else {
+        toast.error('Webhook test failed', {
+          description: `Error: ${data.message || 'Unknown error'}`
+        });
+      }
+    } catch (error: any) {
+      console.error('Error testing webhook:', error);
+      setTestResult({
+        status: 'error',
+        error: error.message || 'Failed to test webhook'
+      });
+      
+      toast.error('Webhook test failed', {
+        description: error.message || 'Connection error'
+      });
+    } finally {
+      setIsTesting(false);
+    }
+  };
+  
   return (
     <Card className={webhook.isActive ? '' : 'opacity-60'}>
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg">{webhook.name}</CardTitle>
           <div className="flex space-x-1">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => testWebhook()}
+              disabled={!webhook.isActive || isTesting}
+              title="Test webhook"
+            >
+              {isTesting ? 
+                <Loader2 className="h-4 w-4 animate-spin" /> : 
+                <RefreshCw className="h-4 w-4" />
+              }
+            </Button>
             <Button 
               variant="ghost" 
               size="icon" 
@@ -272,7 +398,7 @@ const WebhookListItem: React.FC<WebhookListItemProps> = ({
             <Switch 
               id={`active-${webhook.id}`}
               checked={webhook.isActive}
-              onCheckedChange={checked => onToggleActive(webhook.id, checked)}
+              onCheckedChange={(checked: boolean) => onToggleActive(webhook.id, checked)}
             />
             <Label htmlFor={`active-${webhook.id}`} className="cursor-pointer">
               {webhook.isActive ? 'Active' : 'Inactive'}
@@ -280,32 +406,302 @@ const WebhookListItem: React.FC<WebhookListItemProps> = ({
           </div>
         </div>
         
-        <div className="mt-4 flex items-center space-x-2">
-          <div className="relative flex-1">
-            <div className="flex items-center border rounded-md px-3 py-2 bg-muted">
-              <Lock className="h-4 w-4 mr-2 text-muted-foreground" />
-              <input 
-                type="text" 
-                value={webhookUrl}
-                readOnly
-                className="w-full bg-transparent border-none focus:outline-none text-xs"
-              />
+        {/* Short URL (Main) */}
+        <div className="mt-4">
+          <div className="text-xs text-muted-foreground mb-1">Webhook URL</div>
+          <div className="flex items-center space-x-2">
+            <div className="relative flex-1">
+              <div className="flex items-center border rounded-md px-3 py-2 bg-muted">
+                <Lock className="h-4 w-4 mr-2 text-muted-foreground" />
+                <input 
+                  type="text" 
+                  value={shortUrl}
+                  readOnly
+                  className="w-full bg-transparent border-none focus:outline-none text-xs"
+                />
+              </div>
+            </div>
+            
+            <Button
+              size="sm"
+              onClick={() => copyToClipboard(shortUrl)}
+              variant="outline"
+              className="flex items-center"
+            >
+              {copied ? <Check className="h-4 w-4 mr-1" /> : <Clipboard className="h-4 w-4 mr-1" />}
+              {copied ? 'Copied' : 'Copy'}
+            </Button>
+          </div>
+        </div>
+        
+        {/* TradingView specific URL */}
+        {webhook.broker === 'tradingview' && (
+          <div className="mt-3">
+            <div className="text-xs text-muted-foreground mb-1">TradingView URL</div>
+            <div className="flex items-center space-x-2">
+              <div className="relative flex-1">
+                <div className="flex items-center border rounded-md px-3 py-2 bg-muted">
+                  <Lock className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <input 
+                    type="text" 
+                    value={tvUrl}
+                    readOnly
+                    className="w-full bg-transparent border-none focus:outline-none text-xs"
+                  />
+                </div>
+              </div>
+              
+              <Button
+                size="sm"
+                onClick={() => copyToClipboard(tvUrl, 'TradingView URL copied')}
+                variant="outline"
+                className="flex items-center"
+              >
+                <Clipboard className="h-4 w-4 mr-1" />
+                Copy
+              </Button>
             </div>
           </div>
+        )}
+        
+        {/* JSON Payload Direct Endpoint */}
+        <div className="mt-3">
+          <div className="text-xs text-muted-foreground mb-1">JSON Payload Endpoint</div>
+          <div className="flex items-center space-x-2">
+            <div className="relative flex-1">
+              <div className="flex items-center border rounded-md px-3 py-2 bg-muted">
+                <Lock className="h-4 w-4 mr-2 text-muted-foreground" />
+                <input 
+                  type="text" 
+                  value={`${baseUrl}/api/webhooks/execute`}
+                  readOnly
+                  className="w-full bg-transparent border-none focus:outline-none text-xs"
+                />
+              </div>
+            </div>
+            
+            <Button
+              size="sm"
+              onClick={() => copyToClipboard(`${baseUrl}/api/webhooks/execute`, 'JSON Payload URL copied')}
+              variant="outline"
+              className="flex items-center"
+            >
+              <Clipboard className="h-4 w-4 mr-1" />
+              Copy
+            </Button>
+          </div>
           
-          <Button
-            size="sm"
-            onClick={copyToClipboard}
-            variant="outline"
-            className="flex items-center"
-          >
-            {copied ? <Check className="h-4 w-4 mr-1" /> : <Clipboard className="h-4 w-4 mr-1" />}
-            {copied ? 'Copied' : 'Copy'}
-          </Button>
+          <div className="mt-2 text-xs text-muted-foreground">
+            <p className="mb-1">Include your token in the JSON payload:</p>
+            <div className="bg-muted p-2 rounded-md font-mono text-xs overflow-auto">
+{`{
+  "token": "${webhook.token}", 
+  "action": "buy",
+  "symbol": "AAPL",
+  ...
+}`}
+            </div>
+          </div>
         </div>
+        
+        {/* Test result display */}
+        {showTestResult && testResult && (
+          <div className={`mt-3 p-3 text-xs rounded-md ${
+            testResult.status === 'success' 
+              ? 'bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800/30' 
+              : 'bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-800/30'
+          }`}>
+            <div className="flex justify-between items-center mb-1">
+              <div className={`font-medium ${
+                testResult.status === 'success' 
+                  ? 'text-green-700 dark:text-green-400' 
+                  : 'text-red-700 dark:text-red-400'
+              }`}>
+                {testResult.status === 'success' ? 'Test successful' : 'Test failed'}
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-5 w-5 p-0" 
+                onClick={() => setShowTestResult(false)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+            <div className="max-h-24 overflow-auto bg-background/80 p-2 rounded border text-[10px] font-mono">
+              {JSON.stringify(testResult.data || testResult.error, null, 2)}
+            </div>
+          </div>
+        )}
+        
+        {/* TradingView Setup Guide (shown when clicked) */}
+        {webhook.broker === 'tradingview' && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button 
+                variant="link" 
+                size="sm" 
+                className="mt-3 p-0 h-auto text-xs"
+              >
+                How to set up in TradingView →
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg max-h-[80vh] overflow-auto">
+              <DialogHeader>
+                <DialogTitle>TradingView Webhook Setup Guide</DialogTitle>
+                <DialogDescription>
+                  Follow these steps to connect your TradingView alerts to your webhook
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 text-sm">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 p-3 rounded-md">
+                  <h4 className="font-medium text-blue-700 dark:text-blue-400 mb-1">How to set up in TradingView:</h4>
+                  <ol className="list-decimal pl-5 space-y-1">
+                    <li>Create a webhook in Trade Hybrid (you've already done this)</li>
+                    <li>In TradingView, go to Alerts or Strategy Tester</li>
+                    <li>Create a new alert or enable alerts in your strategy</li>
+                    <li>Set webhook URL to: <code className="bg-background/80 px-1 py-0.5 rounded">{tvUrl}</code></li>
+                    <li>Copy the template format below and paste it in TradingView's "Message" field</li>
+                    <li>For best results, name your plots in TradingView for stop loss and take profits (e.g., "Stop Loss", "Take Profit")</li>
+                    <li>Test your alert - signals will appear instantly in your trading dashboard and signals panel</li>
+                  </ol>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium mb-1">Message Template:</h4>
+                  <div className="bg-muted p-3 rounded-md">
+                    <pre className="text-xs overflow-auto whitespace-pre-wrap">
+{`{
+  "strategy": {
+    "order_action": "{{strategy.order.action}}",
+    "order_contracts": {{strategy.order.contracts}},
+    "order_price": {{strategy.order.price}},
+    "market_position": "{{strategy.market_position}}",
+    "position_size": {{strategy.position_size}}
+  },
+  "ticker": "{{ticker}}",
+  "time": "{{time}}",
+  "price": {{close}},
+  "comment": "{{strategy.order.comment}}"
+}`}
+                    </pre>
+                    <div className="mt-2 flex justify-end">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="text-xs"
+                        onClick={() => {
+                          const template = `{
+  "strategy": {
+    "order_action": "{{strategy.order.action}}",
+    "order_contracts": {{strategy.order.contracts}},
+    "order_price": {{strategy.order.price}},
+    "market_position": "{{strategy.market_position}}",
+    "position_size": {{strategy.position_size}}
+  },
+  "ticker": "{{ticker}}",
+  "time": "{{time}}",
+  "price": {{close}},
+  "comment": "{{strategy.order.comment}}"
+}`;
+                          copyToClipboard(template, "Template copied to clipboard");
+                        }}
+                      >
+                        <Clipboard className="h-3 w-3 mr-1" />
+                        Copy Template
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium mb-1">Alternative Setup with Token in JSON:</h4>
+                  <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 rounded-md text-xs">
+                    <p className="mb-2">If TradingView doesn't allow you to use a custom URL, you can use our JSON token method:</p>
+                    <ol className="list-decimal pl-5 space-y-1">
+                      <li>Use <code className="bg-background/80 px-1 py-0.5 rounded">{baseUrl}/api/webhooks/execute</code> as webhook URL</li>
+                      <li>Include your token in the message body:</li>
+                    </ol>
+                    <div className="mt-2 bg-background/80 p-2 rounded font-mono text-[10px]">
+{`{
+  "token": "${webhook.token}",
+  "strategy": {
+    "order_action": "{{strategy.order.action}}",
+    "order_contracts": {{strategy.order.contracts}},
+    "order_price": {{strategy.order.price}},
+    "market_position": "{{strategy.market_position}}",
+    "position_size": {{strategy.position_size}}
+  },
+  "ticker": "{{ticker}}",
+  "time": "{{time}}",
+  "price": {{close}}
+}`}
+                    </div>
+                    <div className="mt-2 flex justify-end">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="text-xs"
+                        onClick={() => {
+                          const tokenTemplate = `{
+  "token": "${webhook.token}",
+  "strategy": {
+    "order_action": "{{strategy.order.action}}",
+    "order_contracts": {{strategy.order.contracts}},
+    "order_price": {{strategy.order.price}},
+    "market_position": "{{strategy.market_position}}",
+    "position_size": {{strategy.position_size}}
+  },
+  "ticker": "{{ticker}}",
+  "time": "{{time}}",
+  "price": {{close}}
+}`;
+                          copyToClipboard(tokenTemplate, "Token template copied to clipboard");
+                        }}
+                      >
+                        <Clipboard className="h-3 w-3 mr-1" />
+                        Copy Token Template
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium mb-1">Pro Tip:</h4>
+                  <div className="bg-muted p-3 rounded-md">
+                    <p className="mb-2 text-xs">In TradingView, you can create plots for your stop loss and take profit levels, then reference them in the webhook:</p>
+                    <pre className="text-xs overflow-auto">
+{`plot(strategy.position_size > 0 ? low - atr : na, "Stop Loss", color.red)
+plot(strategy.position_size > 0 ? high + atr*2 : na, "Take Profit", color.green)`}
+                    </pre>
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </CardContent>
       <CardFooter className="text-xs text-muted-foreground">
-        Created: {new Date(webhook.createdAt || Date.now()).toLocaleDateString()}
+        <div className="flex justify-between w-full">
+          <span>Created: {new Date(webhook.createdAt || Date.now()).toLocaleDateString()}</span>
+          
+          {/* TradingView setup instructions */}
+          {webhook.broker === 'tradingview' && (
+            <Button 
+              variant="link" 
+              size="sm" 
+              className="p-0 h-auto text-xs"
+              onClick={() => {
+                toast.success('How to set up in TradingView', {
+                  description: 'See the webhook setup instructions in the docs panel'
+                });
+              }}
+            >
+              View TradingView setup
+            </Button>
+          )}
+        </div>
       </CardFooter>
     </Card>
   );
@@ -352,9 +748,13 @@ export const WebhookManager: React.FC = () => {
     }
   };
   
-  const handleUpdateWebhook = async (webhook: WebhookConfig) => {
+  const handleUpdateWebhook = async (webhook: Partial<WebhookConfig>) => {
     try {
       setIsLoading(true);
+      // Make sure webhook.id is available
+      if (!webhook.id) {
+        throw new Error('Webhook ID is required for update');
+      }
       const updated = await webhookApi.updateWebhook(webhook.id, webhook);
       setWebhooks(prev => prev.map(w => w.id === updated.id ? updated : w));
       setEditingWebhook(null);
@@ -492,20 +892,42 @@ export const WebhookManager: React.FC = () => {
           <h3 className="text-lg font-medium mb-2">How to Use Webhooks</h3>
           <div className="space-y-2 text-sm text-muted-foreground">
             <p>
-              Use your webhook URL to receive trade signals from external platforms:
+              Use your webhook URL to receive trade signals from external platforms. We provide two methods:
             </p>
-            <ol className="list-decimal pl-5 space-y-1">
-              <li>Copy the webhook URL for the broker you want to use</li>
-              <li>Configure your external platform to send signals to this URL</li>
-              <li>Ensure your payload matches the expected format for the broker</li>
-              <li>Trades will execute automatically when signals are received</li>
-            </ol>
+            
+            <div className="mt-4 border rounded-md p-4 bg-slate-50/50 dark:bg-slate-900/50">
+              <h4 className="font-medium mb-2">Method 1: Direct URL (Simple)</h4>
+              <ol className="list-decimal pl-5 space-y-1">
+                <li>Copy the webhook URL from your webhook card</li>
+                <li>Configure your external platform to send signals to this URL</li>
+                <li>Ensure your payload matches the expected format for the broker</li>
+                <li>Trades will execute automatically when signals are received</li>
+              </ol>
+            </div>
+            
+            <div className="mt-4 border rounded-md p-4 bg-slate-50/50 dark:bg-slate-900/50">
+              <h4 className="font-medium mb-2">Method 2: JSON Token (Advanced Security)</h4>
+              <ol className="list-decimal pl-5 space-y-1">
+                <li>Use the JSON Payload Endpoint: <code className="bg-muted px-1 py-0.5 rounded">/api/webhooks/execute</code></li>
+                <li>Include your webhook token in the JSON payload:</li>
+                <div className="bg-muted p-2 mt-1 rounded-md font-mono text-xs overflow-auto">
+{`{
+  "token": "your-webhook-token",
+  "action": "buy",
+  "symbol": "AAPL",
+  ...other fields
+}`}
+                </div>
+                <li>This method allows you to include your token directly in the payload instead of the URL</li>
+                <li>Useful for platforms that don't allow custom webhook URLs but do accept JSON payloads</li>
+              </ol>
+            </div>
             
             <Alert className="mt-4">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Security Note</AlertTitle>
               <AlertDescription>
-                Keep your webhook URLs private. Anyone with access to your webhook URL can execute trades on your behalf.
+                Keep your webhook URLs and tokens private. Anyone with access to your webhook token can execute trades on your behalf.
               </AlertDescription>
             </Alert>
             

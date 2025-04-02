@@ -36,11 +36,15 @@ export interface TokenMembership {
 export interface SolanaAuthContextType {
   walletConnected: boolean;
   isAuthenticated: boolean;
+  isWalletAuthenticated: boolean; // Added for backward compatibility
   isAuthenticating: boolean;
   username: string | null;
+  walletAddress: string | null; // Added for NFT marketplace
   tokenMembership: TokenMembership | null;
   login: () => Promise<boolean>;
   logout: () => Promise<void>;
+  logoutFromSolana: () => Promise<void>; // Added for NFT marketplace
+  loginWithSolana: () => Promise<boolean>; // Added for NFT marketplace
   error: string | null;
   connectAndAuthenticate: () => Promise<boolean>;
   authenticateWithCredentials: (username: string, password: string) => Promise<boolean>;
@@ -50,11 +54,15 @@ export interface SolanaAuthContextType {
 const SolanaAuthContext = createContext<SolanaAuthContextType>({
   walletConnected: false,
   isAuthenticated: false,
+  isWalletAuthenticated: false,
   isAuthenticating: false,
   username: null,
+  walletAddress: null,
   tokenMembership: null,
   login: async () => false,
   logout: async () => {},
+  logoutFromSolana: async () => {},
+  loginWithSolana: async () => false,
   error: null,
   connectAndAuthenticate: async () => false,
   authenticateWithCredentials: async () => false
@@ -77,6 +85,8 @@ export const SolanaAuthProvider: React.FC<SolanaAuthProviderProps> = ({ children
   
   // Check if wallet is connected
   const walletConnected = wallet.connected && wallet.publicKey !== null;
+  // Set wallet address from the connected wallet
+  const walletAddress = wallet.publicKey?.toString() || null;
 
   // Reset auth state when wallet disconnects
   useEffect(() => {
@@ -169,6 +179,43 @@ export const SolanaAuthProvider: React.FC<SolanaAuthProviderProps> = ({ children
     setIsAuthenticated(false);
     setUsername(null);
     setTokenMembership(null);
+  };
+  
+  // Logout from Solana wallet
+  const logoutFromSolana = async (): Promise<void> => {
+    try {
+      // Disconnect the wallet
+      if (wallet.wallet && wallet.connected) {
+        await wallet.disconnect();
+      }
+      
+      // Clear authentication state
+      setAuthToken(null);
+      setIsAuthenticated(false);
+      setUsername(null);
+      setTokenMembership(null);
+    } catch (err) {
+      console.error('Error disconnecting wallet:', err);
+      setError('Failed to disconnect wallet. Please try again.');
+    }
+  };
+  
+  // Login specifically with Solana wallet
+  const loginWithSolana = async (): Promise<boolean> => {
+    try {
+      if (!walletConnected) {
+        // First connect the wallet
+        const connected = await connectAndAuthenticate();
+        return connected;
+      } else {
+        // If already connected, just authenticate
+        return await login();
+      }
+    } catch (err) {
+      console.error('Error logging in with Solana:', err);
+      setError(err instanceof Error ? err.message : 'Failed to login with Solana wallet');
+      return false;
+    }
   };
   
   // Connect wallet and authenticate
@@ -314,16 +361,23 @@ export const SolanaAuthProvider: React.FC<SolanaAuthProviderProps> = ({ children
     }
   };
   
+  // For backward compatibility
+  const isWalletAuthenticated = isAuthenticated && walletConnected;
+  
   return (
     <SolanaAuthContext.Provider
       value={{
         walletConnected,
         isAuthenticated,
+        isWalletAuthenticated,
         isAuthenticating,
         username,
+        walletAddress,
         tokenMembership,
         login,
         logout,
+        logoutFromSolana,
+        loginWithSolana,
         error,
         connectAndAuthenticate,
         authenticateWithCredentials

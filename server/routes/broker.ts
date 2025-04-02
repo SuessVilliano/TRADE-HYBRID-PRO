@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { authenticateUser } from '../middleware/auth';
+import authMiddleware from '../middleware/auth';
 
 // Import broker services
 import * as alpacaService from '../services/alpaca-service';
@@ -11,7 +11,7 @@ const router = Router();
 // ------------- Alpaca Routes -------------
 
 // Test Alpaca connection
-router.post('/alpaca/test', authenticateUser, async (req: Request, res: Response) => {
+router.post('/alpaca/test', authMiddleware, async (req: Request, res: Response) => {
   try {
     const { apiKey, apiSecret } = req.body;
     
@@ -29,7 +29,7 @@ router.post('/alpaca/test', authenticateUser, async (req: Request, res: Response
 });
 
 // Save Alpaca credentials
-router.post('/alpaca/credentials', authenticateUser, async (req: Request, res: Response) => {
+router.post('/alpaca/credentials', authMiddleware, async (req: Request, res: Response) => {
   try {
     const { apiKey, apiSecret, label, isDefault } = req.body;
     const userId = req.session.userId;
@@ -72,7 +72,7 @@ router.post('/alpaca/credentials', authenticateUser, async (req: Request, res: R
 });
 
 // Get Alpaca account info
-router.get('/alpaca/account', authenticateUser, async (req: Request, res: Response) => {
+router.get('/alpaca/account', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.session.userId;
     
@@ -90,7 +90,7 @@ router.get('/alpaca/account', authenticateUser, async (req: Request, res: Respon
 });
 
 // Get Alpaca positions
-router.get('/alpaca/positions', authenticateUser, async (req: Request, res: Response) => {
+router.get('/alpaca/positions', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.session.userId;
     
@@ -108,7 +108,7 @@ router.get('/alpaca/positions', authenticateUser, async (req: Request, res: Resp
 });
 
 // Execute Alpaca trade
-router.post('/alpaca/trade', authenticateUser, async (req: Request, res: Response) => {
+router.post('/alpaca/trade', authMiddleware, async (req: Request, res: Response) => {
   try {
     const {
       symbol,
@@ -159,7 +159,7 @@ router.post('/alpaca/trade', authenticateUser, async (req: Request, res: Respons
 // ------------- Oanda Routes -------------
 
 // Test Oanda connection
-router.post('/oanda/test', authenticateUser, async (req: Request, res: Response) => {
+router.post('/oanda/test', authMiddleware, async (req: Request, res: Response) => {
   try {
     const { apiToken, accountId, isPractice } = req.body;
     
@@ -181,7 +181,7 @@ router.post('/oanda/test', authenticateUser, async (req: Request, res: Response)
 });
 
 // Save Oanda credentials
-router.post('/oanda/credentials', authenticateUser, async (req: Request, res: Response) => {
+router.post('/oanda/credentials', authMiddleware, async (req: Request, res: Response) => {
   try {
     const { apiToken, accountId, isPractice, label, isDefault } = req.body;
     const userId = req.session.userId;
@@ -230,7 +230,7 @@ router.post('/oanda/credentials', authenticateUser, async (req: Request, res: Re
 });
 
 // Get Oanda account info
-router.get('/oanda/account', authenticateUser, async (req: Request, res: Response) => {
+router.get('/oanda/account', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.session.userId;
     
@@ -248,7 +248,7 @@ router.get('/oanda/account', authenticateUser, async (req: Request, res: Respons
 });
 
 // Get Oanda positions
-router.get('/oanda/positions', authenticateUser, async (req: Request, res: Response) => {
+router.get('/oanda/positions', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.session.userId;
     
@@ -266,7 +266,7 @@ router.get('/oanda/positions', authenticateUser, async (req: Request, res: Respo
 });
 
 // Execute Oanda trade
-router.post('/oanda/trade', authenticateUser, async (req: Request, res: Response) => {
+router.post('/oanda/trade', authMiddleware, async (req: Request, res: Response) => {
   try {
     const {
       instrument,
@@ -313,7 +313,7 @@ router.post('/oanda/trade', authenticateUser, async (req: Request, res: Response
 // ------------- NinjaTrader Routes -------------
 
 // Test NinjaTrader connection
-router.post('/ninjatrader/test', authenticateUser, async (req: Request, res: Response) => {
+router.post('/ninjatrader/test', authMiddleware, async (req: Request, res: Response) => {
   try {
     const { endpoint, apiKey } = req.body;
     
@@ -331,7 +331,7 @@ router.post('/ninjatrader/test', authenticateUser, async (req: Request, res: Res
 });
 
 // Save NinjaTrader configuration
-router.post('/ninjatrader/config', authenticateUser, async (req: Request, res: Response) => {
+router.post('/ninjatrader/config', authMiddleware, async (req: Request, res: Response) => {
   try {
     const { endpoint, apiKey, account, label, isDefault } = req.body;
     const userId = req.session.userId;
@@ -375,7 +375,7 @@ router.post('/ninjatrader/config', authenticateUser, async (req: Request, res: R
 });
 
 // Execute NinjaTrader command
-router.post('/ninjatrader/command', authenticateUser, async (req: Request, res: Response) => {
+router.post('/ninjatrader/command', authMiddleware, async (req: Request, res: Response) => {
   try {
     const {
       action,

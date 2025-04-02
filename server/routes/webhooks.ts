@@ -8,12 +8,12 @@ import {
   logWebhookExecution
 } from '../services/webhook-service';
 import { WebhookConfig } from '../../shared/models/webhook';
-import { authenticateUser } from '../middleware/auth';
+import authMiddleware from '../middleware/auth';
 
 const router = Router();
 
 // Create a new webhook configuration
-router.post('/', authenticateUser, async (req: Request, res: Response) => {
+router.post('/', authMiddleware, async (req: Request, res: Response) => {
   try {
     const { name, broker, settings } = req.body;
     const userId = req.session.userId;
@@ -39,7 +39,7 @@ router.post('/', authenticateUser, async (req: Request, res: Response) => {
 });
 
 // Get all webhook configurations for the authenticated user
-router.get('/', authenticateUser, async (req: Request, res: Response) => {
+router.get('/', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.session.userId;
     
@@ -59,7 +59,7 @@ router.get('/', authenticateUser, async (req: Request, res: Response) => {
 });
 
 // Update a webhook configuration
-router.put('/:id', authenticateUser, async (req: Request, res: Response) => {
+router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, broker, isActive, settings } = req.body;
@@ -96,7 +96,7 @@ router.put('/:id', authenticateUser, async (req: Request, res: Response) => {
 });
 
 // Delete a webhook configuration
-router.delete('/:id', authenticateUser, async (req: Request, res: Response) => {
+router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const userId = req.session.userId;
@@ -123,7 +123,85 @@ router.delete('/:id', authenticateUser, async (req: Request, res: Response) => {
   }
 });
 
-// Receive webhooks at the public endpoint: /api/webhooks/receive/:token
+// Shorter webhook endpoints following CrossTrade's approach
+// 1. Main shorthand format: /api/w/:token (similar to CrossTrade's cleaner URLs)
+router.post('/w/:token', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    
+    // Look up the webhook configuration by token
+    const webhookConfig = await getWebhookConfigByToken(token);
+    
+    if (!webhookConfig) {
+      return res.status(404).json({ error: 'Invalid webhook token' });
+    }
+    
+    // Process the webhook
+    const result = await processWebhook(req, webhookConfig);
+    
+    // Log the webhook execution
+    await logWebhookExecution(
+      webhookConfig.id,
+      webhookConfig.userId,
+      webhookConfig.broker,
+      req.body,
+      result,
+      req
+    );
+    
+    // Return the result
+    return res.json(result);
+  } catch (error: any) {
+    console.error('Error processing webhook:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'An error occurred',
+      errors: [error.message || 'Unknown error']
+    });
+  }
+});
+
+// 2. TradingView specific format: /api/w/tv/:token (for TradingView specific format)
+router.post('/w/tv/:token', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    
+    // Look up the webhook configuration by token
+    const webhookConfig = await getWebhookConfigByToken(token);
+    
+    if (!webhookConfig) {
+      return res.status(404).json({ error: 'Invalid webhook token' });
+    }
+    
+    // Override the broker to TradingView for this endpoint
+    const tradingViewConfig = { ...webhookConfig, broker: 'tradingview' };
+    
+    // Process the webhook
+    const result = await processWebhook(req, tradingViewConfig);
+    
+    // Log the webhook execution
+    await logWebhookExecution(
+      webhookConfig.id,
+      webhookConfig.userId,
+      'tradingview',
+      req.body,
+      result,
+      req
+    );
+    
+    // Return the result
+    return res.json(result);
+  } catch (error: any) {
+    console.error('Error processing webhook:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'An error occurred',
+      errors: [error.message || 'Unknown error']
+    });
+  }
+});
+
+// 3. Backwards compatibility for existing usage: /api/webhooks/receive/:token
 router.post('/receive/:token', async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
@@ -152,6 +230,58 @@ router.post('/receive/:token', async (req: Request, res: Response) => {
     return res.json(result);
   } catch (error: any) {
     console.error('Error processing webhook:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'An error occurred',
+      errors: [error.message || 'Unknown error']
+    });
+  }
+});
+
+// 4. Token in JSON payload - most flexible approach for integrations
+router.post('/execute', async (req: Request, res: Response) => {
+  try {
+    // Extract token from the JSON payload
+    const payloadToken = req.body.token || req.body.api_key || req.body.apiKey || req.body.webhook_token;
+    
+    if (!payloadToken) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Token is required in the JSON payload',
+        error: 'Missing token. Add "token", "api_key", "apiKey", or "webhook_token" to your JSON payload.'
+      });
+    }
+    
+    // Look up the webhook configuration by token
+    const webhookConfig = await getWebhookConfigByToken(payloadToken);
+    
+    if (!webhookConfig) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Invalid webhook token',
+        error: 'The provided token was not found or is inactive.'
+      });
+    }
+    
+    console.log(`Webhook found for token ${payloadToken} (broker: ${webhookConfig.broker})`);
+    
+    // Process the webhook
+    const result = await processWebhook(req, webhookConfig);
+    
+    // Log the webhook execution
+    await logWebhookExecution(
+      webhookConfig.id,
+      webhookConfig.userId,
+      webhookConfig.broker,
+      req.body,
+      result,
+      req
+    );
+    
+    // Return the result
+    return res.json(result);
+  } catch (error: any) {
+    console.error('Error processing webhook with token in payload:', error);
     return res.status(500).json({
       success: false,
       message: error.message || 'An error occurred',
