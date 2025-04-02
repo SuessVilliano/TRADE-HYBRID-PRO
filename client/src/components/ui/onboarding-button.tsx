@@ -11,7 +11,7 @@ import {
   CheckCircle2,
   PresentationIcon
 } from 'lucide-react';
-import { useOnboarding } from '@/lib/context/OnboardingProvider';
+import { useOnboarding } from '../../lib/context/OnboardingProvider';
 
 interface OnboardingButtonProps {
   className?: string;
@@ -87,26 +87,30 @@ export function OnboardingButton({ className }: OnboardingButtonProps) {
         <Button 
           variant="outline" 
           size="icon" 
-          className={`fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg z-40 bg-primary text-primary-foreground hover:bg-primary/90 ${className}`}
+          className={`fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-xl z-40 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg border-2 border-blue-400 dark:border-blue-800 ${className}`}
+          title="Help & Tours"
         >
-          <HelpCircle className="h-6 w-6" />
+          <HelpCircle className="h-7 w-7" />
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-80" 
+        className="w-80 bg-white dark:bg-slate-900 border-2 border-blue-200 dark:border-blue-900 shadow-xl" 
         align="end"
         side="top"
         sideOffset={16}
       >
         <div className="space-y-4">
-          <div className="space-y-2">
-            <h4 className="font-medium text-lg">Help & Tours</h4>
-            <p className="text-sm text-muted-foreground">
+          <div className="space-y-2 border-b border-slate-200 dark:border-slate-700 pb-3">
+            <h4 className="font-medium text-lg flex items-center text-slate-900 dark:text-white">
+              <HelpCircle className="h-5 w-5 mr-2 text-blue-500" />
+              Help & Tours
+            </h4>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
               Take a guided tour to learn how to use the platform
             </p>
           </div>
           
-          <div className="space-y-2">
+          <div className="space-y-3">
             {availableTours.map((tour) => {
               const isCompleted = isFlowCompleted(tour.id);
               const Icon = tour.icon;
@@ -114,18 +118,21 @@ export function OnboardingButton({ className }: OnboardingButtonProps) {
               return (
                 <div 
                   key={tour.id}
-                  className="flex items-center justify-between"
+                  className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                 >
                   <div className="flex items-center">
-                    <Icon className="h-5 w-5 mr-2 text-primary" />
-                    <span className="text-sm">{tour.title}</span>
+                    <Icon className="h-5 w-5 mr-2 text-blue-500" />
+                    <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{tour.title}</span>
                     {isCompleted && (
                       <CheckCircle2 className="h-4 w-4 ml-2 text-green-500" />
                     )}
                   </div>
                   <Button 
-                    variant="ghost" 
-                    size="sm" 
+                    variant={isCompleted ? "outline" : "default"} 
+                    size="sm"
+                    className={isCompleted ? 
+                      "border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300" : 
+                      "bg-blue-600 hover:bg-blue-700 text-white"}
                     onClick={() => handleStartTour(tour.id)}
                   >
                     {isCompleted ? 'Replay' : 'Start'}
@@ -135,11 +142,11 @@ export function OnboardingButton({ className }: OnboardingButtonProps) {
             })}
           </div>
           
-          <div className="pt-2 border-t">
+          <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs text-muted-foreground"
+              className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               onClick={handleResetTours}
             >
               Reset all tours

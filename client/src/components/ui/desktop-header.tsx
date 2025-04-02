@@ -14,8 +14,11 @@ import {
   Activity,
   FileText,
   MessageSquare,
-  Bot
+  Bot,
+  Moon,
+  Sun
 } from 'lucide-react';
+import { ThemeToggle } from './theme-toggle';
 // Using direct URL for logo
 // import logo from '../../assets/logo.svg';
 // import logoFull from '../../assets/images/logo-full.jpeg';
@@ -199,8 +202,15 @@ export function DesktopHeader({ className }: DesktopHeaderProps) {
           </nav>
         </div>
         
-        {/* Right section: Wallet, THC info, User */}
+        {/* Right section: Theme Toggle, Wallet, THC info, User */}
         <div className="flex items-center space-x-4">
+          {/* Theme Toggle */}
+          <ThemeToggle 
+            variant="ghost" 
+            size="icon"
+            className="hidden sm:flex hover:bg-slate-700" 
+          />
+          
           {/* THC Balance */}
           <div className="hidden md:flex items-center bg-slate-700/50 rounded-md px-3 py-1.5 text-sm border border-slate-600">
             <Coins className="h-4 w-4 mr-1.5 text-yellow-400" />

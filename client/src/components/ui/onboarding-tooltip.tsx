@@ -133,10 +133,10 @@ export function OnboardingTooltip({ className }: OnboardingTooltipProps) {
       style={{ top: `${position.top}px`, left: `${position.left}px` }}
       ref={tooltipRef}
     >
-      <Card className="w-[350px] shadow-lg border-2 border-primary/20 bg-background/95 backdrop-blur-sm">
-        <CardHeader className="pb-2 bg-background">
+      <Card className="w-[350px] shadow-lg border-2 border-primary/20 bg-white dark:bg-slate-900 backdrop-blur-sm">
+        <CardHeader className="pb-2 bg-white dark:bg-slate-900">
           <div className="flex justify-between items-center">
-            <CardTitle className="text-lg flex items-center">
+            <CardTitle className="text-lg flex items-center text-slate-900 dark:text-white">
               <HelpCircle className="h-5 w-5 mr-2 text-blue-500" />
               {currentStep.title}
             </CardTitle>
@@ -149,13 +149,13 @@ export function OnboardingTooltip({ className }: OnboardingTooltipProps) {
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <CardDescription>
+          <CardDescription className="text-slate-600 dark:text-slate-300">
             Step {currentStepIndex + 1} of {currentFlow.steps.length}
           </CardDescription>
         </CardHeader>
         
         <CardContent>
-          <p className="text-sm">{currentStep.description}</p>
+          <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{currentStep.description}</p>
           
           {/* Progress bar */}
           <div className="w-full h-1 bg-slate-200 dark:bg-slate-700 mt-4 rounded-full overflow-hidden">
@@ -166,12 +166,13 @@ export function OnboardingTooltip({ className }: OnboardingTooltipProps) {
           </div>
         </CardContent>
         
-        <CardFooter className="flex justify-between pt-2">
+        <CardFooter className="flex justify-between pt-2 bg-white dark:bg-slate-900">
           <div>
             {currentStepIndex > 0 && (
               <Button 
                 variant="outline" 
                 size="sm" 
+                className="border-slate-200 dark:border-slate-700 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white"
                 onClick={prevStep}
               >
                 <ArrowLeft className="h-4 w-4 mr-1" />
@@ -184,6 +185,7 @@ export function OnboardingTooltip({ className }: OnboardingTooltipProps) {
             <Button 
               variant="default" 
               size="sm" 
+              className="bg-blue-600 hover:bg-blue-700 text-white"
               onClick={nextStep}
             >
               {currentStepIndex < currentFlow.steps.length - 1 ? (
@@ -201,18 +203,19 @@ export function OnboardingTooltip({ className }: OnboardingTooltipProps) {
       {currentStep.element && (
         <div 
           className="fixed inset-0 z-40 pointer-events-none"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)' }}
         >
           <div className="absolute inset-0 bg-transparent">
             {/* Create a "spotlight" effect */}
             <div
-              className="absolute bg-transparent border-2 border-primary shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]"
+              className="absolute bg-transparent border-3 border-blue-500 shadow-[0_0_0_9999px_rgba(0,0,0,0.7)] box-content"
               style={{
                 top: document.querySelector(currentStep.element)?.getBoundingClientRect().top || 0,
                 left: document.querySelector(currentStep.element)?.getBoundingClientRect().left || 0,
                 width: document.querySelector(currentStep.element)?.getBoundingClientRect().width || 0,
                 height: document.querySelector(currentStep.element)?.getBoundingClientRect().height || 0,
-                borderRadius: '4px',
+                borderRadius: '6px',
+                boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.5), 0 0 10px 3px rgba(59, 130, 246, 0.3)',
               }}
             />
           </div>
