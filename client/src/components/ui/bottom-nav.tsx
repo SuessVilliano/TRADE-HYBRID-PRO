@@ -75,7 +75,8 @@ export function BottomNav({ className = '' }: BottomNavProps) {
   const visibleTabs = React.useMemo(() => {
     return bottomNavTabs
       .filter(t => t.active)
-      .sort((a, b) => a.order - b.order);
+      .sort((a, b) => a.order - b.order)
+      .slice(0, 6); // Limit to maximum 6 buttons to leave space for widgets (reduced from 8)
   }, [bottomNavTabs]);
   
   // State for edit dialog
@@ -140,7 +141,7 @@ export function BottomNav({ className = '' }: BottomNavProps) {
   };
   
   return (
-    <div className={`fixed bottom-0 left-0 right-0 z-50 bg-background border-t shadow-lg ${className}`}>
+    <div className={`fixed bottom-0 left-16 right-16 z-50 bg-background border-t rounded-t-2xl shadow-lg ${className}`}>
       <div className="flex items-center justify-around px-2 py-2">
         {/* Visible tabs */}
         {visibleTabs.map((tab) => (

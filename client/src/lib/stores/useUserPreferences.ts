@@ -104,21 +104,21 @@ const defaultBottomNavTabs: TabConfig[] = [
     id: 'signals',
     label: 'Signals',
     icon: 'LineChart',
-    active: true,
+    active: false, // Changed to inactive
     order: 5
   },
   {
     id: 'journal',
     label: 'Journal',
     icon: 'FileText',
-    active: true,
+    active: false, // Changed to inactive
     order: 6
   },
   {
     id: 'learn',
     label: 'Learn',
     icon: 'BookOpen',
-    active: true,
+    active: false, // Changed to inactive
     order: 7
   },
   {
@@ -132,7 +132,7 @@ const defaultBottomNavTabs: TabConfig[] = [
     id: 'social',
     label: 'Social',
     icon: 'Users',
-    active: false,
+    active: true, // Activated Social tab
     order: 9
   },
   {
@@ -146,7 +146,7 @@ const defaultBottomNavTabs: TabConfig[] = [
     id: 'affiliate',
     label: 'Affiliate',
     icon: 'Share2',
-    active: true,
+    active: false, // Changed to inactive
     order: 11
   },
   {
