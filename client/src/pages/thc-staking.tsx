@@ -99,12 +99,14 @@ export default function StakeAndBake() {
     }
     
     // Check user's THC token membership tier if wallet is connected
-    if (solanaAuth.isWalletAuthenticated) {
+    if (solanaAuth.walletConnected && solanaAuth.isAuthenticated) {
       const checkMembership = async () => {
         try {
-          const membership = await solanaAuth.checkTHCTokenMembership();
-          setMembershipTier(membership.tier);
-          console.log('User membership tier:', membership.tier);
+          // Access the membership tier directly from the context
+          if (solanaAuth.tokenMembership) {
+            setMembershipTier(solanaAuth.tokenMembership.tier);
+            console.log('User membership tier:', solanaAuth.tokenMembership.tier);
+          }
         } catch (error) {
           console.error('Error checking THC token membership:', error);
         }
@@ -114,7 +116,7 @@ export default function StakeAndBake() {
     }
     
     return () => clearTimeout(timer);
-  }, [generateReferralLink, solanaAuth.isWalletAuthenticated, solanaAuth.checkTHCTokenMembership]);
+  }, [generateReferralLink, solanaAuth.walletConnected, solanaAuth.isAuthenticated, solanaAuth.tokenMembership]);
   
   // Calculate estimated rewards
   const estimatedRewards = calculateStakingRewards(
@@ -237,7 +239,7 @@ export default function StakeAndBake() {
             </TabsTrigger>
             <TabsTrigger value="matrix" className="text-lg py-3">
               <Network className="mr-2 h-5 w-5" />
-              Infinite Spillover Matrix
+              Matrix
             </TabsTrigger>
             <TabsTrigger value="acquire" className="text-lg py-3">
               <Rocket className="mr-2 h-5 w-5" />
@@ -451,7 +453,7 @@ export default function StakeAndBake() {
                   <CardHeader>
                     <CardTitle className="flex items-center">
                       <Network className="mr-2 h-5 w-5 text-indigo-500" />
-                      Infinite Spillover Matrix System
+                      Matrix System
                     </CardTitle>
                     <CardDescription>
                       Build your affiliate network and earn passive income through our infinite spillover matrix structure.
@@ -494,7 +496,7 @@ export default function StakeAndBake() {
                           disabled={!connectedWallet}
                           className="w-full"
                         >
-                          {!connectedWallet ? 'Connect Wallet to Create Matrix' : 'Create Your Infinite Spillover Matrix (0.1 SOL)'}
+                          {!connectedWallet ? 'Connect Wallet to Create Matrix' : 'Create Your Matrix (0.1 SOL)'}
                         </Button>
                       </div>
                     ) : (
@@ -958,12 +960,12 @@ export default function StakeAndBake() {
                         Your Current Membership Status
                       </h3>
                       
-                      {solanaAuth.isWalletAuthenticated ? (
+                      {solanaAuth.walletConnected && solanaAuth.isAuthenticated ? (
                         <div>
                           <THCMembershipCard />
                           <p className="text-sm mt-3 text-slate-600 dark:text-slate-400">
                             Your THC token balance determines your membership tier and platform benefits.
-                            {membershipTier === MembershipTier.BASIC && "Upgrade to Advanced tier by acquiring more THC tokens!"}
+                            {membershipTier === MembershipTier.Basic && "Upgrade to Advanced tier by acquiring more THC tokens!"}
                           </p>
                         </div>
                       ) : (
@@ -971,11 +973,11 @@ export default function StakeAndBake() {
                           <p className="text-sm mb-3">Connect your Solana wallet to check your membership status</p>
                           <Button 
                             variant="outline" 
-                            onClick={() => solanaAuth.loginWithSolana()}
-                            disabled={solanaAuth.isAuthenticatingWithSolana}
+                            onClick={() => solanaAuth.login()}
+                            disabled={solanaAuth.isAuthenticating}
                             className="text-sm"
                           >
-                            {solanaAuth.isAuthenticatingWithSolana ? 'Connecting...' : 'Connect Wallet'}
+                            {solanaAuth.isAuthenticating ? 'Connecting...' : 'Connect Wallet'}
                           </Button>
                         </div>
                       )}

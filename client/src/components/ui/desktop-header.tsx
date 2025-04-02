@@ -16,7 +16,7 @@ import {
   MessageSquare,
   Bot
 } from 'lucide-react';
-import logo from '../../assets/logo.png';
+import logo from '../../assets/logo.svg';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useSolanaAuth, MembershipTier } from '../../lib/context/SolanaAuthProvider';
