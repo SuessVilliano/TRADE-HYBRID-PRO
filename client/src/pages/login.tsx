@@ -125,9 +125,16 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
       <div className="w-full max-w-md m-auto bg-gray-800 rounded-lg border border-gray-700 shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-center mb-6">
-          {showRegister ? "Create Account" : "Trade Hybrid"}
-        </h1>
+        <div className="text-center mb-6">
+          <img 
+            src="https://assets.vbt.io/public/files/19952/trade_hybrid_logo.png" 
+            alt="Trade Hybrid Logo" 
+            className="h-16 w-auto object-contain mx-auto mb-4" 
+          />
+          <h1 className="text-3xl font-bold">
+            {showRegister ? "Create Account" : "Welcome Back"}
+          </h1>
+        </div>
         
         {error && (
           <div className="bg-red-800/50 border border-red-600 text-white p-3 rounded mb-4">

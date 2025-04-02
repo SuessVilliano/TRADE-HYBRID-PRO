@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Info, CheckCircle2 } from 'lucide-react';
-import logo from '@/assets/logo.png';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -40,7 +39,11 @@ export default function ForgotPasswordPage() {
       <div className="max-w-md w-full space-y-8 p-8 bg-card rounded-xl shadow-lg border border-border">
         <div className="text-center">
           <div className="flex justify-center">
-            <img src={logo || '/logo.png'} alt="Trade Hybrid Logo" className="h-20 w-auto mb-4" />
+            <img 
+              src="https://assets.vbt.io/public/files/19952/trade_hybrid_logo.png" 
+              alt="Trade Hybrid Logo" 
+              className="h-20 w-auto mb-4" 
+            />
           </div>
           <h2 className="text-3xl font-bold">Reset Password</h2>
           <p className="mt-2 text-muted-foreground">
