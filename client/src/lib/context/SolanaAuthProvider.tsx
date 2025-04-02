@@ -177,20 +177,39 @@ export const SolanaAuthProvider: React.FC<SolanaAuthProviderProps> = ({ children
     setError(null);
     
     try {
-      // First check if wallet adapter is available
-      if (typeof window !== 'undefined' && !window.solana) {
-        setError('Phantom wallet extension not detected. Please install the Phantom wallet browser extension and reload the page.');
-        console.error('Phantom wallet extension not detected');
-        return false;
+      // Try connecting with window.phantom approach first (modern method)
+      if (typeof window !== 'undefined' && window.phantom?.solana) {
+        try {
+          console.log('Detected Phantom wallet via window.phantom.solana, attempting direct connection...');
+          const phantomWallet = window.phantom?.solana;
+          
+          if (!phantomWallet.isConnected) {
+            const resp = await phantomWallet.connect();
+            console.log('Direct Phantom connection successful:', resp.publicKey.toString());
+            
+            // Give wallet adapter context time to update
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        } catch (directConnectErr) {
+          console.warn('Direct Phantom connection failed, falling back to adapter:', directConnectErr);
+          // Continue with wallet adapter approach
+        }
       }
       
-      // First try to connect wallet if not already connected
+      // Continue with wallet adapter approach if we're still not connected
       if (!walletConnected) {
-        console.log('Wallet not connected, attempting to connect...');
+        console.log('Wallet adapter not connected, attempting to connect via adapter...');
         
-        // Check if wallet is available
+        // Check if wallet adapter is installed
+        if (typeof window !== 'undefined' && !window.solana && !window.phantom?.solana) {
+          setError('Phantom wallet extension not detected. Please install the Phantom wallet browser extension and reload the page.');
+          console.error('Phantom wallet extension not detected');
+          return false;
+        }
+        
+        // Check if wallet is available through adapter
         if (!wallet.wallet) {
-          console.log('Wallet not selected, attempting to select Phantom...');
+          console.log('Wallet not selected in adapter, attempting to select Phantom...');
           try {
             // Try multiple wallet selection approaches to increase compatibility
             if (wallet.wallets && wallet.wallets.length > 0) {
@@ -220,22 +239,33 @@ export const SolanaAuthProvider: React.FC<SolanaAuthProviderProps> = ({ children
         }
         
         try {
-          console.log('Attempting to connect to selected wallet...');
+          console.log('Attempting to connect to selected wallet via adapter...');
           await wallet.connect();
         } catch (connectErr) {
-          console.error('Error connecting to wallet:', connectErr);
+          console.error('Error connecting to wallet via adapter:', connectErr);
           setError('Unable to connect to wallet. Please make sure Phantom is unlocked and try again.');
           return false;
         }
       }
       
-      if (!wallet.connected || !wallet.publicKey) {
-        console.error('Wallet seems connected but no public key is available');
+      // Try to get public key from multiple sources
+      const adapterPublicKey = wallet.publicKey?.toString();
+      const directPublicKey = window.phantom?.solana?.publicKey?.toString();
+      const legacyPublicKey = window.solana?.publicKey?.toString();
+      
+      console.log('Public key sources:', {
+        adapter: adapterPublicKey,
+        direct: directPublicKey,
+        legacy: legacyPublicKey
+      });
+      
+      if (!wallet.connected && !adapterPublicKey && !directPublicKey && !legacyPublicKey) {
+        console.error('Wallet seems connected but no public key is available from any source');
         setError('Failed to establish a proper connection with your wallet. Please try refreshing the page.');
         return false;
       }
       
-      console.log('Wallet connected successfully with public key:', wallet.publicKey.toString());
+      console.log('Wallet connected successfully with public key:', adapterPublicKey || directPublicKey || legacyPublicKey);
       
       // Now proceed with authentication
       return await login();

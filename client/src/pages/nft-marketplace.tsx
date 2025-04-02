@@ -256,8 +256,28 @@ export default function NFTMarketplace() {
   const handleCreateNFT = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!auth.isWalletAuthenticated) {
-      toast.error('Please connect your wallet to create an NFT');
+    // Check if Phantom wallet is installed and try to connect
+    if (typeof window !== 'undefined' && window.phantom?.solana) {
+      try {
+        // Connect or verify wallet connection
+        const phantomWallet = window.phantom?.solana;
+        if (!phantomWallet.isConnected) {
+          toast.info('Connecting to wallet...');
+          await phantomWallet.connect();
+          // Update auth context after successful connection
+          auth.connectAndAuthenticate();
+        }
+      } catch (error) {
+        console.error('Error connecting to Phantom wallet:', error);
+        toast.error('Could not connect to wallet', {
+          description: 'Please make sure your Phantom wallet is installed and unlocked.'
+        });
+        return;
+      }
+    } else {
+      toast.error('Phantom wallet not found', {
+        description: 'Please install the Phantom wallet extension and try again.'
+      });
       return;
     }
     

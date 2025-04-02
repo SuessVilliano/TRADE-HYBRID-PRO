@@ -80,6 +80,8 @@ import whopRoutes from './routes/whop-routes'; // Added import for Whop authenti
 import mockPropFirmRoutes from './routes/mock-prop-firm-routes'; // Added import for mock prop firm routes
 import membershipRoutes from './routes/membership-routes'; // Added import for membership routes
 import userWebhooksRoutes from './api/user-webhooks'; // Added import for user webhooks routes
+import webhookRoutes from './routes/webhooks'; // Added import for webhook routes
+import brokerApiRoutes from './routes/broker'; // Added import for broker API routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Market data routes
@@ -226,6 +228,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // User webhooks routes
   app.use("/api/user-webhooks", userWebhooksRoutes);
+  
+  // New broker API routes
+  app.use("/api/broker", brokerApiRoutes);
+  
+  // New webhooks routes for automated trading
+  app.use("/api/webhooks", webhookRoutes);
 
   // News route using default source (bloomberg)
   app.get("/api/rss-feeds/news", (req, res) => {

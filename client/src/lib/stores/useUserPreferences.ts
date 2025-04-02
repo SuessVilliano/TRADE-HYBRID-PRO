@@ -104,14 +104,14 @@ const defaultBottomNavTabs: TabConfig[] = [
     id: 'signals',
     label: 'Signals',
     icon: 'LineChart',
-    active: true, // Active - 3 of 4
+    active: false, // Deactivate to maintain 4-tab limit
     order: 5
   },
   {
     id: 'copy-trading',
     label: 'Copy Trade',
     icon: 'Share2',
-    active: false,
+    active: true, // Activate Copy Trade tab
     order: 6
   },
   {

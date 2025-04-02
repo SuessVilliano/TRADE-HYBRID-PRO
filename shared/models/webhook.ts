@@ -1,0 +1,186 @@
+import { z } from 'zod';
+
+// Broker types supported by our system
+export const BrokerType = {
+  ALPACA: 'alpaca',
+  OANDA: 'oanda',
+  NINJATRADER: 'ninjatrader',
+  TRADOVATE: 'tradovate',
+  TRADINGVIEW: 'tradingview',
+  OTHER: 'other'
+} as const;
+
+export type BrokerTypeValue = typeof BrokerType[keyof typeof BrokerType];
+
+// Define webhook validation schemas
+export const webhookConfigSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  name: z.string().min(1, 'Name is required'),
+  broker: z.enum([
+    BrokerType.ALPACA, 
+    BrokerType.OANDA, 
+    BrokerType.NINJATRADER, 
+    BrokerType.TRADOVATE,
+    BrokerType.TRADINGVIEW, 
+    BrokerType.OTHER
+  ]),
+  token: z.string().min(8, 'Token must be at least 8 characters'),
+  endpoint: z.string().optional(),
+  isActive: z.boolean().default(true),
+  settings: z.record(z.any()).optional(),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
+});
+
+export type WebhookConfig = z.infer<typeof webhookConfigSchema>;
+
+// Define webhook payload schemas for different brokers
+export const alpacaWebhookSchema = z.object({
+  action: z.enum(['buy', 'sell']),
+  symbol: z.string(),
+  qty: z.number().optional(),
+  side: z.enum(['buy', 'sell']).optional(),
+  type: z.enum(['market', 'limit', 'stop', 'stop_limit']).optional(),
+  time_in_force: z.enum(['day', 'gtc', 'opg', 'cls', 'ioc', 'fok']).optional(),
+  limit_price: z.number().optional(),
+  stop_price: z.number().optional(),
+  risk_percent: z.number().optional(),
+  take_profit: z.number().optional(),
+  stop_loss: z.number().optional(),
+  trailing_stop: z.number().optional(),
+  extended_hours: z.boolean().optional(),
+  client_order_id: z.string().optional(),
+});
+
+export type AlpacaWebhookPayload = z.infer<typeof alpacaWebhookSchema>;
+
+export const oandaWebhookSchema = z.object({
+  instrument: z.string(),
+  units: z.number().or(z.string()),
+  side: z.enum(['buy', 'sell']).optional(),
+  type: z.enum(['MARKET', 'LIMIT', 'STOP', 'MARKET_IF_TOUCHED']).optional(),
+  price: z.number().optional(),
+  stopLossOnFill: z.object({
+    price: z.number().optional(),
+    distance: z.number().optional(),
+  }).optional(),
+  takeProfitOnFill: z.object({
+    price: z.number().optional(),
+    distance: z.number().optional(),
+  }).optional(),
+  trailingStopLossOnFill: z.object({
+    distance: z.number(),
+  }).optional(),
+  timeInForce: z.enum(['GTC', 'GTD', 'GFD', 'FOK', 'IOC']).optional(),
+  positionFill: z.enum(['DEFAULT', 'OPEN_ONLY', 'REDUCE_FIRST', 'REDUCE_ONLY']).optional(),
+  reason: z.string().optional(),
+  clientExtensions: z.object({
+    id: z.string().optional(),
+    tag: z.string().optional(),
+    comment: z.string().optional(),
+  }).optional(),
+});
+
+export type OandaWebhookPayload = z.infer<typeof oandaWebhookSchema>;
+
+export const ninjaTraderWebhookSchema = z.object({
+  action: z.enum(['BUY', 'SELL', 'FLATTEN']),
+  symbol: z.string(),
+  quantity: z.number().or(z.string()),
+  orderType: z.enum(['MARKET', 'LIMIT', 'STOP', 'STOP_LIMIT']).optional(),
+  limitPrice: z.number().optional(),
+  stopPrice: z.number().optional(),
+  account: z.string().optional(),
+  template: z.string().optional(),
+  duration: z.enum(['DAY', 'GTC', 'GTD']).optional(),
+  stopLoss: z.number().optional(),
+  takeProfit: z.number().optional(),
+  source: z.string().optional(),
+  comment: z.string().optional(),
+});
+
+export type NinjaTraderWebhookPayload = z.infer<typeof ninjaTraderWebhookSchema>;
+
+// Generic webhook payload that we'll parse based on broker type
+export const genericWebhookSchema = z.object({
+  broker: z.enum([
+    BrokerType.ALPACA, 
+    BrokerType.OANDA, 
+    BrokerType.NINJATRADER, 
+    BrokerType.TRADOVATE,
+    BrokerType.TRADINGVIEW, 
+    BrokerType.OTHER
+  ]).optional(),
+  action: z.enum(['BUY', 'SELL', 'CLOSE', 'FLATTEN', 'ALERT']).optional(),
+  symbol: z.string().optional(),
+  price: z.number().optional(),
+  message: z.string().optional(),
+  payload: z.record(z.any()).optional(),
+});
+
+export type GenericWebhookPayload = z.infer<typeof genericWebhookSchema>;
+
+// TradingView alert format
+export const tradingViewAlertSchema = z.object({
+  strategy: z.object({
+    position_size: z.number().optional(),
+    order_action: z.enum(['buy', 'sell']).optional(),
+    order_contracts: z.number().optional(),
+    order_price: z.number().optional(),
+    order_id: z.string().optional(),
+    market_position: z.enum(['flat', 'long', 'short']).optional(),
+    market_position_size: z.number().optional(),
+    prev_market_position: z.enum(['flat', 'long', 'short']).optional(),
+    prev_market_position_size: z.number().optional(),
+  }).optional(),
+  ticker: z.string().optional(),
+  time: z.string().optional(),
+  exchange: z.string().optional(),
+  price: z.number().optional(),
+  volume: z.number().optional(),
+  position: z.enum(['flat', 'long', 'short']).optional(),
+  action: z.enum(['buy', 'sell']).optional(),
+  quantity: z.number().optional(),
+  comment: z.string().optional(),
+});
+
+export type TradingViewAlertPayload = z.infer<typeof tradingViewAlertSchema>;
+
+// Response to webhook
+export const webhookResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string().optional(),
+  orderId: z.string().optional(),
+  errors: z.array(z.string()).optional(),
+  details: z.record(z.any()).optional(),
+});
+
+export type WebhookResponse = z.infer<typeof webhookResponseSchema>;
+
+// Webhook execution record for audit trail
+export const webhookExecutionSchema = z.object({
+  id: z.string(),
+  webhookId: z.string(),
+  userId: z.string(),
+  broker: z.enum([
+    BrokerType.ALPACA, 
+    BrokerType.OANDA, 
+    BrokerType.NINJATRADER, 
+    BrokerType.TRADOVATE,
+    BrokerType.TRADINGVIEW, 
+    BrokerType.OTHER
+  ]),
+  payload: z.record(z.any()),
+  result: z.object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    orderId: z.string().optional(),
+    errors: z.array(z.string()).optional(),
+  }),
+  timestamp: z.date(),
+  ipAddress: z.string().optional(),
+  userAgent: z.string().optional(),
+});
+
+export type WebhookExecution = z.infer<typeof webhookExecutionSchema>;

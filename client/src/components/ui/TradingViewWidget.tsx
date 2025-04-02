@@ -18,7 +18,7 @@ function TradingViewWidget({
   symbol = 'BITSTAMP:BTCUSD', 
   theme = 'dark', 
   width = '100%', 
-  height = '500px', 
+  height = '600px', 
   interval = "D",
   allow_symbol_change = true,
   allowFullscreen = true,
@@ -45,20 +45,45 @@ function TradingViewWidget({
     };
   }, [isFullscreen, onFullscreenChange]);
 
+  // Handle window resize to ensure the chart always fits the container
+  useEffect(() => {
+    const handleResize = () => {
+      if (container.current) {
+        // Force the widget to redraw with the new dimensions
+        const event = new Event('resize');
+        window.dispatchEvent(event);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   useEffect(() => {
     if (!container.current) return;
     
     // Clear any existing widgets if the component is re-rendering
     container.current.innerHTML = '';
 
-    // Format CME symbols correctly if needed
+    // Format symbol correctly if needed
     let formattedSymbol = symbol;
-    // If it's a futures symbol from CME but doesn't have the CME prefix, add it
+    
+    // Handle different exchange prefixes
+    if (!symbol.includes(':')) {
+      // If no exchange specified, default to BINANCE for crypto pairs
+      if (symbol.endsWith('USD') || symbol.endsWith('USDT')) {
+        formattedSymbol = `BINANCE:${symbol}`;
+      }
+    }
+    
+    // Special case for CME futures
     if ((symbol.includes('MNQ') || symbol.includes('NQ')) && !symbol.includes('CME:')) {
       formattedSymbol = `CME:${symbol.replace('!', '')}`;
     }
     
-    console.log(`Loading chart with symbol: ${formattedSymbol}`);
+    console.log(`Loading TradingView chart with symbol: ${formattedSymbol}`);
 
     // Create and load the TradingView widget script
     const script = document.createElement("script");
@@ -69,27 +94,57 @@ function TradingViewWidget({
       const win = window as any;
       if (win.TradingView && container.current) {
         try {
-          // Create new widget instance
+          // Create new widget instance with advanced settings
           new win.TradingView.widget({
             autosize: true,
             symbol: formattedSymbol,
             interval: interval,
             timezone: "Etc/UTC",
             theme: theme,
-            style: "1",
+            style: "1", // Candlestick
             locale: "en",
-            toolbar_bg: "#f1f3f6",
+            toolbar_bg: theme === "dark" ? "#171b26" : "#f1f3f6",
             enable_publishing: false,
             allow_symbol_change: allow_symbol_change,
             container_id: widgetIdRef.current,
             hide_side_toolbar: false,
+            show_popup_button: true,
+            popup_width: "1200",
+            popup_height: "800",
             studies: [
               "RSI@tv-basicstudies",
               "MASimple@tv-basicstudies",
-              "MACD@tv-basicstudies"
+              "MACD@tv-basicstudies",
+              "BB@tv-basicstudies"
             ],
-            disabled_features: ["header_compare"],
-            enabled_features: ["use_localstorage_for_settings"],
+            drawings_access: { type: "all", tools: [ { name: "Regression Trend" } ] },
+            saved_data_meta_info: { 
+              uid: "tradehybrid", 
+              name: "Trade Hybrid Chart Settings",
+              description: "Trading view configuration for Trade Hybrid platform"
+            },
+            fullscreen: isFullscreen,
+            withdateranges: true,
+            hide_legend: false,
+            allow_hiding_series: true,
+            details: true,
+            hotlist: true,
+            calendar: true,
+            show_interval_dialog: true,
+            enabled_features: [
+              "use_localstorage_for_settings",
+              "side_toolbar_in_fullscreen_mode",
+              "header_fullscreen_button",
+              "study_templates",
+              "control_bar",
+              "header_chart_type",
+              "header_indicators",
+              "header_settings",
+              "header_compare",
+              "header_undo_redo",
+              "header_screenshot",
+              "timeframes_toolbar"
+            ],
             overrides: {
               "paneProperties.background": theme === "dark" ? "#171b26" : "#ffffff",
               "paneProperties.vertGridProperties.color": theme === "dark" ? "#2a2e39" : "#e6e9ec",
@@ -119,12 +174,16 @@ function TradingViewWidget({
     };
   }, [symbol, theme, interval, allow_symbol_change, isFullscreen]); // Rebuild widget when parameters change or fullscreen state changes
 
-  // Use a much larger default height on mobile for better experience
-  const getMobileHeight = () => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      return "80vh"; // Full viewport height on mobile for better UX
+  // Dynamic height calculation based on device
+  const getResponsiveHeight = () => {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth < 640) { // Mobile
+        return isFullscreen ? "100vh" : "80vh";
+      } else if (window.innerWidth < 1024) { // Tablet
+        return isFullscreen ? "100vh" : "85vh";
+      }
     }
-    return height;
+    return isFullscreen ? "100vh" : height;
   };
 
   // Toggle fullscreen state
@@ -140,10 +199,11 @@ function TradingViewWidget({
 
   return (
     <div 
-      className={`tradingview-widget-container relative ${isFullscreen ? 'fixed inset-0 z-50 bg-slate-900 p-4' : ''}`} 
+      className={`tradingview-widget-container relative ${isFullscreen ? 'fixed inset-0 z-[9999] bg-background' : ''}`} 
       style={{ 
-        height: isFullscreen ? '100vh' : getMobileHeight(), 
-        width: isFullscreen ? '100vw' : width 
+        height: getResponsiveHeight(), 
+        width: isFullscreen ? '100vw' : width,
+        maxWidth: '100%'
       }}
     >
       {allowFullscreen && (
@@ -164,9 +224,8 @@ function TradingViewWidget({
         style={{ 
           height: "100%", 
           width: "100%", 
-          minHeight: isFullscreen 
-            ? "calc(100vh - 32px)" 
-            : (typeof window !== 'undefined' && window.innerWidth < 768 ? "70vh" : "300px")
+          minHeight: isFullscreen ? "100vh" : "500px",
+          maxHeight: "100%"
         }}
         className="tradingview-responsive-container"
       />
