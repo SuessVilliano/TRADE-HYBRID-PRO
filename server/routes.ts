@@ -13,6 +13,8 @@ const getSignals = (req: any, res: any) => {
 };
 // Import at the top to avoid circular dependency
 import { processWebhookSignal } from './api/signals';
+import { processUserWebhook, getUserWebhookByToken } from './api/user-webhooks';
+import { processTradingViewAlert } from './api/tradingview-webhooks';
 
 const receiveWebhook = (req: any, res: any) => {
   try {
@@ -31,6 +33,30 @@ const receiveWebhook = (req: any, res: any) => {
   
   // Always return success to prevent the webhook sender from retrying
   return res.json({success: true, message: 'Webhook received'});
+};
+
+// Process user webhook signals
+const receiveUserWebhook = async (req: any, res: any) => {
+  try {
+    const token = req.params.token;
+    
+    if (!token) {
+      return res.status(400).json({ error: 'Missing webhook token' });
+    }
+    
+    // Process the webhook with user token
+    const success = await processUserWebhook(token, req.body);
+    
+    if (!success) {
+      return res.status(404).json({ error: 'Invalid webhook token or webhook is inactive' });
+    }
+    
+    console.log('Received and processed user webhook signal');
+    return res.json({ success: true, message: 'User webhook received' });
+  } catch (error) {
+    console.error('Error processing user webhook:', error);
+    return res.status(500).json({ error: 'Failed to process webhook' });
+  }
 };
 import { getGameLeaderboard, getGamePlayer, submitGameScore } from "./api/game-leaderboard";
 import { getRssFeed, getAvailableSources, getEconomicCalendar } from "./api/rss-feeds";
@@ -52,6 +78,7 @@ import whopRoutes from './routes/whop-routes'; // Added import for Whop authenti
 // import propFirmRoutes from './routes/prop-firm-routes'; // Using mock implementation instead
 import mockPropFirmRoutes from './routes/mock-prop-firm-routes'; // Added import for mock prop firm routes
 import membershipRoutes from './routes/membership-routes'; // Added import for membership routes
+import userWebhooksRoutes from './api/user-webhooks'; // Added import for user webhooks routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Market data routes
@@ -91,6 +118,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Solaris AI forex signals
   app.post("/api/v1/webhooks/OXdqSQ0du1D7gFEEDBUsS", receiveWebhook); // EURUSD & AUDUSD - Solaris AI - forex
+  
+  // User webhook route for custom integrations
+  app.post("/api/webhooks/user/:token", receiveUserWebhook); // Custom user webhooks
+  
+  // TradingView webhook route
+  app.post("/api/webhooks/tradingview/:token", processTradingViewAlert); // TradingView alerts integration
 
   // Test webhooks for Cash Cow formats
   app.post("/api/test/webhook/cashcow", (req, res) => {
@@ -186,6 +219,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Membership routes
   app.use("/api/membership", membershipRoutes);
+  
+  // User webhooks routes
+  app.use("/api/user-webhooks", userWebhooksRoutes);
 
   // News route using default source (bloomberg)
   app.get("/api/rss-feeds/news", (req, res) => {

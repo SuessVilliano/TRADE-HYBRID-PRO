@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import WebhookSettings from '../components/settings/WebhookSettings';
 
 // Simple placeholder component until we implement the full layout
 const LayoutPlaceholder: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -130,6 +131,15 @@ const SettingsPanelPlaceholder: React.FC = () => {
               Delete Account
             </button>
           </div>
+        </div>
+        
+        {/* Webhooks */}
+        <div className="space-y-4 bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
+          <h3 className="text-xl font-semibold text-slate-900 dark:text-white">Webhooks</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+            Receive trading signals from external systems directly into your Trade Hybrid dashboard.
+          </p>
+          <WebhookSettings />
         </div>
       </div>
     </div>

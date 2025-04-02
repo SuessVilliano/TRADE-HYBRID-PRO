@@ -306,6 +306,20 @@ export const userApiKeys = pgTable("user_api_keys", {
 
 export type UserApiKey = typeof userApiKeys.$inferSelect;
 
+// User Webhooks table for webhook URLs to receive trading signals
+export const userWebhooks = pgTable("user_webhooks", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(), // References user ID
+  name: text("name").notNull(), // Display name for the webhook
+  token: text("token").notNull().unique(), // Unique token for webhook URL
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  lastUsedAt: timestamp("last_used_at"),
+  signalCount: integer("signal_count").default(0),
+  isActive: boolean("is_active").default(true),
+});
+
+export type UserWebhook = typeof userWebhooks.$inferSelect;
+
 // Broker types and broker connections for trading platforms
 export const brokerTypes = pgTable("broker_types", {
   id: serial("id").primaryKey(),

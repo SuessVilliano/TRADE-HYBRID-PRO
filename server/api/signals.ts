@@ -66,8 +66,13 @@ interface SignalStorage {
   futures: FuturesSignal[];
 }
 
-// In-memory storage for signals
-const inMemorySignals: SignalStorage = {
+// Track user-specific signals
+interface UserSignals {
+  [userId: string]: SignalStorage;
+}
+
+// Global signals available to everyone
+const globalSignals: SignalStorage = {
   crypto: [
     {
       id: 'paradox-1-1743604123456',
@@ -138,8 +143,22 @@ const inMemorySignals: SignalStorage = {
   ]
 };
 
+// User-specific signals storage
+const userSignals: UserSignals = {};
+
+// Helper method to initialize user signals if needed
+const initializeUserSignals = (userId: string): void => {
+  if (!userSignals[userId]) {
+    userSignals[userId] = {
+      crypto: [],
+      forex: [],
+      futures: []
+    };
+  }
+};
+
 // Function to process webhook signals and add them to the in-memory storage
-export const processWebhookSignal = (payload: any): void => {
+export const processWebhookSignal = (payload: any, userId?: string): void => {
   try {
     // Extract market type from the channel name
     let marketType = 'crypto'; // Default
@@ -151,64 +170,133 @@ export const processWebhookSignal = (payload: any): void => {
       }
     }
     
+    // Support for market_type property from TradingView format
+    if (payload.market_type) {
+      marketType = payload.market_type.toLowerCase();
+    }
+    
     // Parse the payload content
     const content = payload.content || '';
     
-    // Extract signal data
-    const symbolMatch = content.match(/Symbol: ([A-Za-z0-9!_/]+)/);
-    const directionMatch = content.includes('BUY ALERT') ? 'BUY' : 
+    // Extract signal data from content or use metadata if available (for TradingView)
+    let symbol = '';
+    let direction = '';
+    let entryPrice = 0;
+    let stopLoss = 0;
+    let takeProfit = 0;
+    let tp2 = undefined;
+    let tp3 = undefined;
+    
+    // First check if there's a structured metadata object (from TradingView integration)
+    if (payload.metadata) {
+      const meta = payload.metadata;
+      symbol = meta.symbol || '';
+      direction = meta.action || '';
+      entryPrice = meta.levels?.entry || meta.price || 0;
+      stopLoss = meta.levels?.stopLoss || 0;
+      takeProfit = meta.levels?.takeProfit || 0;
+    } else {
+      // Otherwise parse from text content
+      const symbolMatch = content.match(/Symbol: ([A-Za-z0-9!_/]+)/);
+      const directionMatch = content.includes('BUY ALERT') ? 'BUY' : 
                            content.includes('SELL ALERT') ? 'SELL' : '';
-    const entryMatch = content.match(/Entry: ([0-9.]+)/);
-    const slMatch = content.match(/Stop Loss: ([0-9.]+)/);
-    const tpMatch = content.match(/Take Profit: ([0-9.]+)/);
-    
-    if (!symbolMatch || !directionMatch || !entryMatch || !slMatch || !tpMatch) {
-      console.error('Could not parse webhook signal:', content);
-      return;
+      const entryMatch = content.match(/Entry: ([0-9.]+)/);
+      const slMatch = content.match(/Stop Loss: ([0-9.]+)/);
+      const tpMatch = content.match(/Take Profit: ([0-9.]+)/);
+      
+      if (!symbolMatch || !directionMatch || !entryMatch || !slMatch || !tpMatch) {
+        console.error('Could not parse webhook signal:', content);
+        return;
+      }
+      
+      symbol = symbolMatch[1];
+      direction = directionMatch;
+      entryPrice = parseFloat(entryMatch[1]);
+      stopLoss = parseFloat(slMatch[1]);
+      takeProfit = parseFloat(tpMatch[1]);
+      
+      // Extract TP2 and TP3 for futures signals
+      const tp2Match = content.match(/TP2: ([0-9.]+)/);
+      const tp3Match = content.match(/TP3: ([0-9.]+)/);
+      
+      if (tp2Match) tp2 = parseFloat(tp2Match[1]);
+      if (tp3Match) tp3 = parseFloat(tp3Match[1]);
     }
-    
-    // Extract TP2 and TP3 for futures signals
-    const tp2Match = content.match(/TP2: ([0-9.]+)/);
-    const tp3Match = content.match(/TP3: ([0-9.]+)/);
     
     // Base signal properties
     const baseSignal: BaseSignal = {
       id: `${marketType}-${Date.now()}`,
-      Symbol: symbolMatch[1],
-      Asset: symbolMatch[1],
-      Direction: directionMatch,
-      'Entry Price': parseFloat(entryMatch[1]),
-      'Stop Loss': parseFloat(slMatch[1]),
-      'Take Profit': parseFloat(tpMatch[1]),
-      TP1: parseFloat(tpMatch[1]),
+      Symbol: symbol,
+      Asset: symbol,
+      Direction: direction.toUpperCase(),
+      'Entry Price': entryPrice,
+      'Stop Loss': stopLoss,
+      'Take Profit': takeProfit,
+      TP1: takeProfit,
       Status: 'active',
       Date: new Date().toISOString(),
       Time: new Date().toTimeString().substring(0, 8),
-      Provider: marketType === 'forex' ? 'Solaris' : 
+      Provider: userId ? 'Custom' : marketType === 'forex' ? 'Solaris' : 
                 marketType === 'futures' ? 'Hybrid' : 'Paradox',
       Notes: `Signal received via webhook: ${content.substring(0, 50)}...`,
     };
+    
+    // Determine where to store the signal - in user specific storage or global
+    let targetStorage: SignalStorage = globalSignals;
+    
+    if (userId) {
+      // Initialize user signals if this is their first signal
+      initializeUserSignals(userId);
+      targetStorage = userSignals[userId];
+    }
     
     // Add market type specific properties
     if (marketType === 'futures') {
       const futuresSignal: FuturesSignal = {
         ...baseSignal,
         // Add TP2 and TP3 if present
-        ...(tp2Match ? { TP2: parseFloat(tp2Match[1]) } : {}),
-        ...(tp3Match ? { TP3: parseFloat(tp3Match[1]) } : {})
+        ...(tp2 ? { TP2: tp2 } : {}),
+        ...(tp3 ? { TP3: tp3 } : {})
       };
-      inMemorySignals.futures.unshift(futuresSignal);
+      targetStorage.futures.unshift(futuresSignal);
     } else if (marketType === 'forex') {
       const forexSignal: ForexSignal = {
         ...baseSignal
       };
-      inMemorySignals.forex.unshift(forexSignal);
+      targetStorage.forex.unshift(forexSignal);
     } else {
       // Default to crypto
       const cryptoSignal: CryptoSignal = {
         ...baseSignal
       };
-      inMemorySignals.crypto.unshift(cryptoSignal);
+      targetStorage.crypto.unshift(cryptoSignal);
+    }
+    
+    // Send signal to clients via WebSocket if available
+    try {
+      const { MultiplayerServer } = require('../multiplayer');
+      if (MultiplayerServer.instance) {
+        // Broadcast signal to all users or just to the specific user
+        const event = {
+          type: 'trading_signal',
+          data: {
+            signal: baseSignal,
+            marketType,
+            source: userId ? 'webhook' : 'system', 
+            timestamp: new Date().toISOString()
+          }
+        };
+        
+        if (userId) {
+          // User-specific signal
+          MultiplayerServer.instance.sendToUser(userId, event);
+        } else {
+          // Global signal
+          MultiplayerServer.instance.broadcast(event);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to broadcast signal via WebSocket:', err);
     }
     
     console.log(`Added new ${marketType} signal for ${baseSignal.Symbol}`);
@@ -221,22 +309,46 @@ export const processWebhookSignal = (payload: any): void => {
 router.get('/trading-signals', async (req, res) => {
   try {
     const marketType = (req.query.marketType as string || 'crypto').toLowerCase();
+    const userId = (req.query.userId as string) || undefined;
     
     // Get signals based on market type
     let signals: any[] = [];
+    
+    // First get the global signals
     if (marketType === 'crypto') {
-      signals = [...inMemorySignals.crypto];
+      signals = [...globalSignals.crypto];
     } else if (marketType === 'futures') {
-      signals = [...inMemorySignals.futures];
+      signals = [...globalSignals.futures];
     } else if (marketType === 'forex') {
-      signals = [...inMemorySignals.forex];
+      signals = [...globalSignals.forex];
     } else {
       // Return all signals if market type is not recognized
       signals = [
-        ...inMemorySignals.crypto,
-        ...inMemorySignals.futures,
-        ...inMemorySignals.forex
+        ...globalSignals.crypto,
+        ...globalSignals.futures,
+        ...globalSignals.forex
       ];
+    }
+    
+    // Add user-specific signals if userId is provided
+    if (userId && userSignals[userId]) {
+      const userStorage = userSignals[userId];
+      
+      if (marketType === 'crypto') {
+        signals = [...userStorage.crypto, ...signals];
+      } else if (marketType === 'futures') {
+        signals = [...userStorage.futures, ...signals];
+      } else if (marketType === 'forex') {
+        signals = [...userStorage.forex, ...signals];
+      } else {
+        // Add all user signals if market type is not recognized
+        signals = [
+          ...userStorage.crypto,
+          ...userStorage.futures,
+          ...userStorage.forex,
+          ...signals
+        ];
+      }
     }
     
     // Return the signals
