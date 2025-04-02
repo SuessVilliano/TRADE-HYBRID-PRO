@@ -16,7 +16,8 @@ import {
   MessageSquare,
   Bot,
   Moon,
-  Sun
+  Sun,
+  ArrowLeft
 } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
 // Using direct URL for logo
@@ -168,14 +169,36 @@ export function DesktopHeader({ className }: DesktopHeaderProps) {
     <header className={`w-full bg-gradient-to-r from-slate-800 to-slate-900 text-white border-b border-slate-700 py-2 px-4 ${className}`}>
       <div className="flex items-center justify-between">
         {/* Logo and Main Navigation */}
-        <div className="flex items-center space-x-8">
-          <Link to="/dashboard" className="flex items-center space-x-2">
-            {/* Use direct URL for logo */}
+        <div className="flex items-center space-x-4 sm:space-x-8">
+          {/* Back Button - Only Visible on Mobile */}
+          {location.pathname !== '/dashboard' && (
+            <button 
+              onClick={() => window.history.back()}
+              className="lg:hidden flex items-center justify-center h-10 w-10 bg-slate-700 hover:bg-slate-600 rounded-md text-white"
+              aria-label="Go back"
+              title="Go back"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+          )}
+          
+          <Link to="/dashboard" className="flex items-center space-x-2 bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-md">
+            {/* Primary logo with fallback */}
             <img 
               src="https://assets.vbt.io/public/files/19952/trade_hybrid_logo.png" 
               alt="Trade Hybrid Logo" 
-              className="h-8 w-auto object-contain"
+              className="h-8 w-auto min-w-[32px] object-contain"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = "/assets/fallback-logo.png";
+                // If that fails too, show text
+                e.currentTarget.onerror = () => {
+                  e.currentTarget.style.display = 'none';
+                };
+              }}
             />
+            {/* Text fallback for logo */}
+            <span className="text-white font-bold text-lg ml-1">Trade Hybrid</span>
           </Link>
           
           {/* Navigation Tabs */}
