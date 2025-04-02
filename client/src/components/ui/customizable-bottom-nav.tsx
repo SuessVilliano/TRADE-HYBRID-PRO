@@ -110,13 +110,17 @@ export function CustomizableBottomNav({ className = '' }: CustomizableBottomNavP
             to={`/${
               tab.id === 'trading' ? 'trading-space' : 
               tab.id === 'journal' ? 'trade-journal' : 
+              tab.id === 'connect-broker' ? 'broker-connections' :
+              tab.id === 'smart-trade' ? 'trading-ai' :
               tab.id
             }`}
             className={`flex flex-col items-center justify-center flex-1 p-2 rounded-md transition-colors
               ${
                 currentPath.includes(tab.id) || 
                 (tab.id === 'trading' && currentPath.includes('trading-space')) ||
-                (tab.id === 'journal' && currentPath.includes('trade-journal'))
+                (tab.id === 'journal' && currentPath.includes('trade-journal')) ||
+                (tab.id === 'connect-broker' && currentPath.includes('broker-connections')) ||
+                (tab.id === 'smart-trade' && currentPath.includes('trading-ai'))
                 ? 'text-primary bg-primary/10 active:scale-90 active:opacity-70' 
                 : 'text-muted-foreground hover:text-foreground hover:bg-accent active:scale-90 active:opacity-70'
               }`}

@@ -80,67 +80,81 @@ const defaultBottomNavTabs: TabConfig[] = [
     order: 1
   },
   {
+    id: 'connect-broker',
+    label: 'Connect Broker',
+    icon: 'Link',
+    active: true,
+    order: 2
+  },
+  {
+    id: 'smart-trade',
+    label: 'Smart Trade',
+    icon: 'Sparkles',
+    active: true,
+    order: 3
+  },
+  {
     id: 'game',
     label: 'Game',
     icon: 'Gamepad2',
     active: true,
-    order: 2
+    order: 4
   },
   {
     id: 'signals',
     label: 'Signals',
     icon: 'LineChart',
     active: true,
-    order: 3
+    order: 5
   },
   {
     id: 'journal',
     label: 'Journal',
     icon: 'FileText',
     active: true,
-    order: 4
+    order: 6
   },
   {
     id: 'learn',
     label: 'Learn',
     icon: 'BookOpen',
     active: true,
-    order: 5
+    order: 7
   },
   {
     id: 'portfolio',
     label: 'Portfolio',
     icon: 'BarChart3',
     active: false,
-    order: 6
+    order: 8
   },
   {
     id: 'social',
     label: 'Social',
     icon: 'Users',
     active: false,
-    order: 7
+    order: 9
   },
   {
     id: 'marketplace',
     label: 'NFT Market',
     icon: 'Store',
     active: false,
-    order: 8
+    order: 10
   },
   {
     id: 'affiliate',
     label: 'Affiliate',
     icon: 'Share2',
     active: true,
-    order: 9
+    order: 11
   },
   {
     id: 'settings',
     label: 'Settings',
     icon: 'Settings',
     active: false,
-    order: 10
+    order: 12
   }
 ];
 
