@@ -117,9 +117,17 @@ export function CustomizableBottomNav({ className = '' }: CustomizableBottomNavP
                 currentPath.includes(tab.id) || 
                 (tab.id === 'trading' && currentPath.includes('trading-space')) ||
                 (tab.id === 'journal' && currentPath.includes('trade-journal'))
-                ? 'text-primary bg-primary/10' 
-                : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                ? 'text-primary bg-primary/10 active:scale-90 active:opacity-70' 
+                : 'text-muted-foreground hover:text-foreground hover:bg-accent active:scale-90 active:opacity-70'
               }`}
+            onClick={(e) => {
+              // Add visible feedback on press
+              const element = e.currentTarget;
+              element.classList.add('scale-95', 'opacity-80');
+              setTimeout(() => {
+                element.classList.remove('scale-95', 'opacity-80');
+              }, 150);
+            }}
           >
             {getIcon(tab.icon)}
             <span className="text-xs mt-1">{tab.label}</span>
@@ -132,8 +140,16 @@ export function CustomizableBottomNav({ className = '' }: CustomizableBottomNavP
             <Button 
               variant="ghost" 
               size="icon" 
-              className="flex flex-col items-center justify-center flex-1 p-2 rounded-md"
-              onClick={handleOpenEditDialog}
+              className="flex flex-col items-center justify-center flex-1 p-2 rounded-md active:scale-90 active:opacity-70"
+              onClick={(e) => {
+                // Add visible feedback on press
+                const element = e.currentTarget;
+                element.classList.add('scale-95', 'opacity-80');
+                setTimeout(() => {
+                  element.classList.remove('scale-95', 'opacity-80');
+                  handleOpenEditDialog();
+                }, 150);
+              }}
             >
               <Settings className="h-5 w-5" />
               <span className="text-xs mt-1">Customize</span>
