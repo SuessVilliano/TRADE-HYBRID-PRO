@@ -41,6 +41,7 @@ import {
   Save,
   Download,
   Upload,
+  ArrowDown,
 } from 'lucide-react';
 
 // Component types that can be added to the dashboard
