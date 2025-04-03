@@ -15,7 +15,7 @@ import { BottomNavCustomizer } from './bottom-nav-customizer';
 import { useUserPreferences } from '@/lib/stores/useUserPreferences';
 
 export const SettingsPanel = () => {
-  const [theme, setTheme] = useTheme();
+  const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('account');
   
   // Account settings
