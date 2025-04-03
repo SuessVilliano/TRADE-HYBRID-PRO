@@ -34,6 +34,7 @@ import CopyTradingPage from './pages/copy-trading';
 
 // Trading & Markets
 import AdvancedTradingDashboard from './pages/advanced-trading-dashboard';
+import AdvancedChartingDashboard from './pages/advanced-charting-dashboard';
 import TradingDashboard from './pages/trading-dashboard';
 import TradingIndicatorsPage from './pages/trading-indicators';
 import SolanaTradingPage from './pages/solana-trading';
@@ -131,6 +132,7 @@ const App: React.FC = () => {
                 {/* Trading & Markets */}
                 <Route path="/trading-dashboard" element={<ProtectedRoute><AdvancedTradingDashboard /></ProtectedRoute>} />
                 <Route path="/trading-dashboard/custom" element={<ProtectedRoute><TradingDashboard /></ProtectedRoute>} />
+                <Route path="/advanced-charting" element={<ProtectedRoute><AdvancedChartingDashboard /></ProtectedRoute>} />
                 <Route path="/trading/indicators" element={<ProtectedRoute><TradingIndicatorsPage /></ProtectedRoute>} />
                 <Route path="/trading/solana" element={<ProtectedRoute><SolanaTradingPage /></ProtectedRoute>} />
                 <Route path="/dex" element={<ProtectedRoute><SolanaDexEmbedded /></ProtectedRoute>} />
