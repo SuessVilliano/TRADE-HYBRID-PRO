@@ -54,8 +54,47 @@ export default function NewsDashboardSimple() {
         setLoading(false);
       } catch (err) {
         console.error('Error fetching news:', err);
-        setError('Failed to load news. Please try again later.');
-        setLoading(false);
+        
+        // Fallback to local news feed if API fails
+        try {
+          // Use Yahoo Finance RSS as a direct source
+          const fallbackResponse = await axios.get('https://finance.yahoo.com/news/rssindex', {
+            headers: {
+              'Accept': 'application/rss+xml, application/xml, text/xml',
+            }
+          });
+          
+          // Simple XML parsing since we can't use RSS parser directly in the frontend
+          const xmlString = fallbackResponse.data;
+          const parser = new DOMParser();
+          const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+          
+          const items = xmlDoc.querySelectorAll('item');
+          const parsedItems = Array.from(items).map((item, index) => {
+            const title = item.querySelector('title')?.textContent || 'No Title';
+            const link = item.querySelector('link')?.textContent || '#';
+            const pubDate = item.querySelector('pubDate')?.textContent || new Date().toISOString();
+            const description = item.querySelector('description')?.textContent || '';
+            
+            return {
+              id: `news-${index}`,
+              title,
+              link,
+              pubDate,
+              source: 'Yahoo Finance',
+              summary: description
+            };
+          });
+          
+          setNewsItems(parsedItems);
+        } catch (fallbackErr) {
+          console.error('Fallback news fetch failed:', fallbackErr);
+          
+          // If all else fails, provide a meaningful error message
+          setError('Failed to load financial news. Please try again later or check your internet connection.');
+        } finally {
+          setLoading(false);
+        }
       }
     };
 
