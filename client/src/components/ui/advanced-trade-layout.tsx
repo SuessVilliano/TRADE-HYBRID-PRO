@@ -39,6 +39,7 @@ import { useTheme } from '../../lib/hooks/useTheme';
 // Import components directly
 import TradingViewWidget from './TradingViewWidget';
 import TradeSignalsPanel from '../trade/trade-signals-panel';
+import MarketNewsPanel from '../trade/market-news-panel';
 
 // Import useMediaQuery from hooks if available, or define inline
 import { useMediaQuery as useMediaQueryHook } from '../../lib/hooks/useMediaQuery';
@@ -73,54 +74,7 @@ type SidebarTool = 'none' | 'signals' | 'news' | 'smart-trade';
 // Smart panel position
 type PanelPosition = 'docked' | 'undocked' | 'hidden';
 
-// Mock news data
-const mockNewsItems = [
-  {
-    id: '1',
-    title: 'Federal Reserve Announces Interest Rate Decision',
-    summary: 'The Federal Reserve has decided to maintain current interest rates at the target range of 5.25% to 5.50%, citing a need for more economic data.',
-    source: 'Financial Times',
-    published: new Date().toISOString(),
-    tags: ['Fed', 'Interest Rates'],
-    impact: 'high',
-  },
-  {
-    id: '2',
-    title: 'NASDAQ Reaches All-Time High as Tech Stocks Rally',
-    summary: 'Technology stocks led a broad market rally as the NASDAQ Composite reached a new record high, driven by strong earnings from major tech companies.',
-    source: 'Bloomberg',
-    published: new Date(Date.now() - 1800000).toISOString(),
-    tags: ['NASDAQ', 'Technology'],
-    impact: 'medium',
-  },
-  {
-    id: '3',
-    title: 'Bitcoin Surges Past $70,000 Amid Institutional Adoption',
-    summary: 'Bitcoin has climbed above $70,000 for the first time as institutional investors continue to embrace the leading cryptocurrency.',
-    source: 'CoinDesk',
-    published: new Date(Date.now() - 3600000).toISOString(),
-    tags: ['Bitcoin', 'Cryptocurrency'],
-    impact: 'high',
-  },
-  {
-    id: '4',
-    title: 'Crude Oil Prices Fall on Increased OPEC+ Production',
-    summary: 'Oil prices declined following reports that OPEC+ members plan to increase production in the coming months, potentially easing supply constraints.',
-    source: 'Reuters',
-    published: new Date(Date.now() - 7200000).toISOString(),
-    tags: ['Oil', 'OPEC+'],
-    impact: 'medium',
-  },
-  {
-    id: '5',
-    title: 'US Dollar Strengthens Against Major Currencies',
-    summary: 'The US dollar gained strength against a basket of major currencies following stronger-than-expected economic data and hawkish comments from Federal Reserve officials.',
-    source: 'CNBC',
-    published: new Date(Date.now() - 10800000).toISOString(),
-    tags: ['USD', 'Forex'],
-    impact: 'medium',
-  },
-];
+// Layout types and constants
 
 interface AdvancedTradeLayoutProps {
   defaultSymbol?: string;
@@ -282,42 +236,7 @@ export function AdvancedTradeLayout({
           </div>
         </CardHeader>
         <CardContent className="p-0 h-[calc(100%-46px)]">
-          <ScrollArea className="h-full">
-            <div className="p-4">
-              {mockNewsItems.map((item, index) => (
-                <div key={item.id} className="mb-4 bg-slate-900/50 p-3 rounded-md hover:bg-slate-900/80 transition-colors">
-                  <div className="flex items-start gap-2">
-                    <div>
-                      {item.impact === "high" && (
-                        <Badge variant="destructive" className="h-2 w-2 p-0 rounded-full" />
-                      )}
-                      {item.impact === "medium" && (
-                        <Badge variant="default" className="bg-amber-500 h-2 w-2 p-0 rounded-full" />
-                      )}
-                    </div>
-                    <div className="space-y-1">
-                      <h4 className="text-sm font-semibold text-slate-200">{item.title}</h4>
-                      <p className="text-xs text-slate-400">{item.summary}</p>
-                      <div className="flex gap-2 flex-wrap pt-1">
-                        <Badge variant="outline" className="text-xs bg-slate-800 border-slate-700 text-slate-300">
-                          {new Date(item.published).toLocaleTimeString()}
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs bg-blue-900/50 text-blue-300">
-                          {item.source}
-                        </Badge>
-                        {item.tags.map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs border-slate-700 bg-transparent">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  {index < mockNewsItems.length - 1 && <Separator className="my-4 bg-slate-700/50" />}
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
+          <MarketNewsPanel />
         </CardContent>
       </Card>
     );
@@ -563,9 +482,6 @@ export function AdvancedTradeLayout({
           transition={{ duration: 0.2 }}
           drag
           dragConstraints={containerRef}
-          dragElastic={0.1}
-          dragMomentum={false}
-          dragHandles={[".draggable-header"]}
           onDragEnd={(e, info) => {
             setUndockedPosition({
               x: undockedPosition.x + info.offset.x,
@@ -573,33 +489,31 @@ export function AdvancedTradeLayout({
             });
           }}
         >
-          <div className="relative">
-            {/* Outer panel with shadow and border effects */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 p-[1px] rounded-lg">
-              <div className="w-full h-full bg-slate-800 rounded-lg overflow-hidden">
-                {/* Custom draggable header with a grabber icon */}
-                <div className="px-4 py-3 bg-slate-800 border-b border-slate-700 flex flex-row justify-between items-center cursor-grab draggable-header">
-                  <span className="text-sm font-medium flex items-center text-slate-200">
-                    <BarChart className="h-4 w-4 mr-2 text-blue-400" />
-                    Smart Trade Panel
-                    <span className="ml-2 text-xs text-slate-400">(Drag to move)</span>
-                  </span>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="h-7 w-7 text-blue-400 hover:text-blue-300 hover:bg-slate-700"
-                    onClick={toggleSmartPanelPosition}
-                    title="Dock panel"
-                  >
-                    <MoveLeft className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                {/* Panel content */}
-                <div className="p-0 h-[calc(100%-46px)] overflow-auto">
-                  <SmartTradePanel symbol={symbol} asCard={false} />
-                </div>
-              </div>
+          <div className="bg-slate-800 rounded-lg overflow-hidden border border-slate-700/50 shadow-2xl">
+            {/* Gradient border effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-lg pointer-events-none" />
+            
+            {/* Draggable header */}
+            <div className="px-4 py-3 bg-slate-800 border-b border-slate-700 flex flex-row justify-between items-center cursor-move">
+              <span className="text-sm font-medium flex items-center text-slate-200">
+                <BarChart className="h-4 w-4 mr-2 text-blue-400" />
+                Smart Trade Panel
+                <span className="ml-2 text-xs text-slate-400">(Drag to move)</span>
+              </span>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="h-7 w-7 text-blue-400 hover:text-blue-300 hover:bg-slate-700"
+                onClick={toggleSmartPanelPosition}
+                title="Dock panel"
+              >
+                <MoveLeft className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {/* Panel content */}
+            <div className="p-0 h-[calc(100%-46px)] overflow-auto">
+              <SmartTradePanel symbol={symbol} asCard={false} />
             </div>
           </div>
         </motion.div>
