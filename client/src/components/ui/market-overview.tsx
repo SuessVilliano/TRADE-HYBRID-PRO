@@ -1,270 +1,110 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 
 interface MarketOverviewProps {
-  width?: string;
-  height?: string;
-  colorTheme?: 'light' | 'dark';
-  dateRange?: string;
-  showChart?: boolean;
-  locale?: string;
-  largeChartUrl?: string;
-  isTransparent?: boolean;
-  showSymbolLogo?: boolean;
-  showFloatingTooltip?: boolean;
-  plotLineColorGrowing?: string;
-  plotLineColorFalling?: string;
-  gridLineColor?: string;
-  scaleFontColor?: string;
-  belowLineFillColorGrowing?: string;
-  belowLineFillColorFalling?: string;
-  belowLineFillColorGrowingBottom?: string;
-  belowLineFillColorFallingBottom?: string;
-  symbolActiveColor?: string;
-  tabs?: Array<{
-    title: string;
-    symbols: Array<{
-      s: string;
-      d: string;
-    }>;
-    originalTitle?: string;
-  }>;
+  className?: string;
 }
 
-export function MarketOverview({
-  width = '100%',
-  height = '100%',
-  colorTheme = 'dark',
-  dateRange = '12M',
-  showChart = true,
-  locale = 'en',
-  largeChartUrl = '',
-  isTransparent = true, // Making transparent so we can style container ourselves
-  showSymbolLogo = true,
-  showFloatingTooltip = true,
-  // Cyberpunk-themed colors (purple and aqua blue) for growing/falling
-  plotLineColorGrowing = 'rgba(147, 51, 234, 1)', // Purple
-  plotLineColorFalling = 'rgba(6, 182, 212, 1)', // Aqua blue
-  gridLineColor = 'rgba(30, 30, 40, 0.5)', // Dark grid lines
-  scaleFontColor = 'rgba(248, 250, 252, 0.8)', // Lighter text for better visibility
-  belowLineFillColorGrowing = 'rgba(147, 51, 234, 0.15)', // Transparent purple
-  belowLineFillColorFalling = 'rgba(6, 182, 212, 0.15)', // Transparent aqua
-  belowLineFillColorGrowingBottom = 'rgba(147, 51, 234, 0)', // Fade to transparent
-  belowLineFillColorFallingBottom = 'rgba(6, 182, 212, 0)', // Fade to transparent
-  symbolActiveColor = 'rgba(147, 51, 234, 0.2)', // Active symbol highlight
-  tabs = [
-    {
-      title: 'Indices',
-      symbols: [
-        {
-          s: 'FOREXCOM:SPXUSD',
-          d: 'S&P 500'
-        },
-        {
-          s: 'FOREXCOM:NSXUSD',
-          d: 'US 100'
-        },
-        {
-          s: 'FOREXCOM:DJI',
-          d: 'Dow 30'
-        },
-        {
-          s: 'INDEX:NKY',
-          d: 'Nikkei 225'
-        },
-        {
-          s: 'INDEX:DEU40',
-          d: 'DAX Index'
-        },
-        {
-          s: 'FOREXCOM:UKXGBP',
-          d: 'UK 100'
-        }
-      ],
-      originalTitle: 'Indices'
-    },
-    {
-      title: 'Futures',
-      symbols: [
-        {
-          s: 'CME_MINI:ES1!',
-          d: 'S&P 500'
-        },
-        {
-          s: 'CME:6E1!',
-          d: 'Euro'
-        },
-        {
-          s: 'COMEX:GC1!',
-          d: 'Gold'
-        },
-        {
-          s: 'NYMEX:CL1!',
-          d: 'Oil'
-        },
-        {
-          s: 'NYMEX:NG1!',
-          d: 'Gas'
-        },
-        {
-          s: 'CBOT:ZC1!',
-          d: 'Corn'
-        }
-      ],
-      originalTitle: 'Futures'
-    },
-    {
-      title: 'Crypto',
-      symbols: [
-        {
-          s: 'BITSTAMP:BTCUSD',
-          d: 'Bitcoin'
-        },
-        {
-          s: 'BITSTAMP:ETHUSD',
-          d: 'Ethereum'
-        },
-        {
-          s: 'BINANCE:SOLUSDT',
-          d: 'Solana'
-        },
-        {
-          s: 'BINANCE:DOGEUSDT',
-          d: 'Dogecoin'
-        },
-        {
-          s: 'BINANCE:AVAXUSDT',
-          d: 'Avalanche'
-        },
-        {
-          s: 'BINANCE:MATICUSDT',
-          d: 'Polygon'
-        }
-      ],
-      originalTitle: 'Crypto'
-    },
-    {
-      title: 'Forex',
-      symbols: [
-        {
-          s: 'FX:EURUSD',
-          d: 'EUR to USD'
-        },
-        {
-          s: 'FX:GBPUSD',
-          d: 'GBP to USD'
-        },
-        {
-          s: 'FX:USDJPY',
-          d: 'USD to JPY'
-        },
-        {
-          s: 'FX:USDCHF',
-          d: 'USD to CHF'
-        },
-        {
-          s: 'FX:AUDUSD',
-          d: 'AUD to USD'
-        },
-        {
-          s: 'FX:USDCAD',
-          d: 'USD to CAD'
-        }
-      ],
-      originalTitle: 'Forex'
-    }
-  ]
-}: MarketOverviewProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js';
-    script.async = true;
-    script.type = 'text/javascript';
-    script.innerHTML = JSON.stringify({
-      width,
-      height,
-      colorTheme,
-      dateRange,
-      showChart,
-      locale,
-      largeChartUrl,
-      isTransparent,
-      showSymbolLogo,
-      showFloatingTooltip,
-      plotLineColorGrowing,
-      plotLineColorFalling,
-      gridLineColor,
-      scaleFontColor,
-      belowLineFillColorGrowing,
-      belowLineFillColorFalling,
-      belowLineFillColorGrowingBottom,
-      belowLineFillColorFallingBottom,
-      symbolActiveColor,
-      tabs
-    });
-
-    if (containerRef.current) {
-      // Clear any existing widgets
-      const widgetContainer = containerRef.current.querySelector('.tradingview-widget-container__widget');
-      if (widgetContainer) {
-        widgetContainer.innerHTML = '';
-      }
-      
-      // Append the new script
-      const scriptContainer = containerRef.current.querySelector('.tradingview-widget-script-container');
-      if (scriptContainer) {
-        scriptContainer.innerHTML = '';
-        scriptContainer.appendChild(script);
-      }
-    }
-
-    return () => {
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    };
-  }, [
-    width, height, colorTheme, dateRange, showChart, locale, largeChartUrl, 
-    isTransparent, showSymbolLogo, showFloatingTooltip, plotLineColorGrowing, 
-    plotLineColorFalling, gridLineColor, scaleFontColor, belowLineFillColorGrowing, 
-    belowLineFillColorFalling, belowLineFillColorGrowingBottom, belowLineFillColorFallingBottom, 
-    symbolActiveColor, tabs
-  ]);
-
+export function MarketOverview({ className }: MarketOverviewProps) {
   return (
-    <div 
-      className="tradingview-widget-container rounded-md shadow-lg overflow-hidden border border-secondary/30 shadow-[0_0_10px_rgba(var(--secondary),0.15)]" 
-      ref={containerRef}
-      style={{
-        background: 'linear-gradient(to bottom, rgba(20, 20, 30, 0.95), rgba(15, 15, 20, 0.97))',
-      }}
-    >
-      <div className="tradingview-widget-container__widget"></div>
-      <div className="tradingview-widget-script-container"></div>
-      <div className="tradingview-widget-copyright" style={{ 
-        fontSize: '11px', 
-        padding: '4px 12px', 
-        textAlign: 'right',
-        borderTop: '1px solid rgba(6, 182, 212, 0.2)', // Light secondary border
-        background: 'rgba(10, 10, 15, 0.7)',
-      }}>
-        <a 
-          href="https://www.tradingview.com/" 
-          rel="noopener noreferrer" 
-          target="_blank"
-          style={{ 
-            color: 'rgba(6, 182, 212, 0.8)', // Secondary color
-            textDecoration: 'none',
-            fontWeight: 'bold'
-          }}
-          className="hover:text-secondary transition-colors"
-        >
-          <span className="blue-text">Track all markets on TradingView</span>
-        </a>
+    <div className={`w-full h-full bg-slate-800 rounded-md flex flex-col ${className}`}>
+      <div className="p-3 border-b border-slate-700">
+        <div className="font-medium">Market Overview</div>
+      </div>
+      
+      <div className="p-2 flex-grow overflow-y-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-slate-800 text-slate-400">
+              <th className="p-2 text-left">Name</th>
+              <th className="p-2 text-right">Price</th>
+              <th className="p-2 text-right">24h %</th>
+              <th className="p-2 text-right">7d %</th>
+              <th className="p-2 text-right">Market Cap</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-b border-slate-700 hover:bg-slate-700/50">
+              <td className="p-2">
+                <div className="flex items-center">
+                  <div className="w-6 h-6 bg-orange-500 rounded-full mr-2"></div>
+                  <div>
+                    <div>Bitcoin</div>
+                    <div className="text-xs text-slate-400">BTC</div>
+                  </div>
+                </div>
+              </td>
+              <td className="p-2 text-right">$28,422.63</td>
+              <td className="p-2 text-right text-green-500">+1.24%</td>
+              <td className="p-2 text-right text-red-500">-2.54%</td>
+              <td className="p-2 text-right">$550.9B</td>
+            </tr>
+            
+            <tr className="border-b border-slate-700 hover:bg-slate-700/50">
+              <td className="p-2">
+                <div className="flex items-center">
+                  <div className="w-6 h-6 bg-blue-500 rounded-full mr-2"></div>
+                  <div>
+                    <div>Ethereum</div>
+                    <div className="text-xs text-slate-400">ETH</div>
+                  </div>
+                </div>
+              </td>
+              <td className="p-2 text-right">$1,732.84</td>
+              <td className="p-2 text-right text-green-500">+2.67%</td>
+              <td className="p-2 text-right text-green-500">+1.12%</td>
+              <td className="p-2 text-right">$208.2B</td>
+            </tr>
+            
+            <tr className="border-b border-slate-700 hover:bg-slate-700/50">
+              <td className="p-2">
+                <div className="flex items-center">
+                  <div className="w-6 h-6 bg-green-500 rounded-full mr-2"></div>
+                  <div>
+                    <div>Solana</div>
+                    <div className="text-xs text-slate-400">SOL</div>
+                  </div>
+                </div>
+              </td>
+              <td className="p-2 text-right">$24.89</td>
+              <td className="p-2 text-right text-green-500">+5.34%</td>
+              <td className="p-2 text-right text-green-500">+12.76%</td>
+              <td className="p-2 text-right">$10.3B</td>
+            </tr>
+            
+            <tr className="border-b border-slate-700 hover:bg-slate-700/50">
+              <td className="p-2">
+                <div className="flex items-center">
+                  <div className="w-6 h-6 bg-yellow-500 rounded-full mr-2"></div>
+                  <div>
+                    <div>Binance Coin</div>
+                    <div className="text-xs text-slate-400">BNB</div>
+                  </div>
+                </div>
+              </td>
+              <td className="p-2 text-right">$213.67</td>
+              <td className="p-2 text-right text-red-500">-0.87%</td>
+              <td className="p-2 text-right text-red-500">-4.23%</td>
+              <td className="p-2 text-right">$32.8B</td>
+            </tr>
+            
+            <tr className="border-b border-slate-700 hover:bg-slate-700/50">
+              <td className="p-2">
+                <div className="flex items-center">
+                  <div className="w-6 h-6 bg-gray-500 rounded-full mr-2"></div>
+                  <div>
+                    <div>Cardano</div>
+                    <div className="text-xs text-slate-400">ADA</div>
+                  </div>
+                </div>
+              </td>
+              <td className="p-2 text-right">$0.27</td>
+              <td className="p-2 text-right text-green-500">+1.12%</td>
+              <td className="p-2 text-right text-green-500">+3.45%</td>
+              <td className="p-2 text-right">$9.5B</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
-
-export default MarketOverview;

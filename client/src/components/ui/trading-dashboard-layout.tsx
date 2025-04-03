@@ -1,28 +1,22 @@
-import React, { ReactNode } from 'react';
+import React, { useState, ReactNode } from 'react';
 import { CollapsibleTradingSidebar } from './collapsible-trading-sidebar';
 
 interface TradingDashboardLayoutProps {
   children: ReactNode;
-  className?: string;
-  sidebarVisible?: boolean;
 }
 
-export function TradingDashboardLayout({ 
-  children, 
-  className = "",
-  sidebarVisible = true
-}: TradingDashboardLayoutProps) {
+export function TradingDashboardLayout({ children }: TradingDashboardLayoutProps) {
+  const [collapsed, setCollapsed] = useState(false);
+  
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
-      {/* Collapsible Trading Sidebar */}
-      {sidebarVisible && <CollapsibleTradingSidebar />}
-      
-      {/* Main Content */}
-      <div 
-        className={`transition-all duration-300 ${sidebarVisible ? 'pl-16' : ''}`}
-      >
+    <div className="flex h-screen bg-slate-900 text-white">
+      <CollapsibleTradingSidebar 
+        collapsed={collapsed} 
+        onToggle={() => setCollapsed(!collapsed)} 
+      />
+      <main className={`flex-1 transition-all duration-300 ease-in-out ${collapsed ? 'ml-[60px]' : 'ml-[240px]'}`}>
         {children}
-      </div>
+      </main>
     </div>
   );
 }
