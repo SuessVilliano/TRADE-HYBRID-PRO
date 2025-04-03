@@ -127,7 +127,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md m-auto bg-gray-800 rounded-lg border border-gray-700 shadow-lg p-8">
         <div className="text-center mb-6">
           <img 
-            src="https://assets.vbt.io/public/files/19952/trade_hybrid_logo.png" 
+            src="/images/trade_hybrid_logo.png" 
             alt="Trade Hybrid Logo" 
             className="h-16 w-auto object-contain mx-auto mb-4" 
           />

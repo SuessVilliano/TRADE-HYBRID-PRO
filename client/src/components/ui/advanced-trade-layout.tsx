@@ -327,13 +327,20 @@ export function AdvancedTradeLayout({
         {/* Left Sidebar Menu */}
         {!isMobile && !chartMaximized && (
           <div className="h-full w-16 bg-slate-800 border-r border-slate-700 flex flex-col items-center py-4 z-30">
-            {/* Theme Toggle */}
+            {/* Logo */}
             <div className="mb-4">
-              <ThemeToggle 
-                variant="ghost" 
-                size="icon"
-                className="hover:bg-slate-700" 
-              />
+              <div className="flex flex-col items-center">
+                <img 
+                  src="/images/trade_hybrid_logo.png" 
+                  alt="Trade Hybrid Logo" 
+                  className="h-10 w-auto object-contain mb-2" 
+                />
+                <ThemeToggle 
+                  variant="ghost" 
+                  size="icon"
+                  className="hover:bg-slate-700" 
+                />
+              </div>
             </div>
             
             <div className="flex flex-col gap-3 items-center">
