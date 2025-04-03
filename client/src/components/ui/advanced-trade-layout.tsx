@@ -13,7 +13,17 @@ import {
   BellRing,
   SignalHigh,
   Clock,
-  Newspaper
+  Newspaper,
+  AlignLeft,
+  Mail,
+  CalendarDays,
+  Bot,
+  Lightbulb,
+  ServerCrash,
+  CircleHelp,
+  Wallet,
+  Zap,
+  Stars
 } from 'lucide-react';
 import DexChart from './dex-chart';
 import { SmartTradePanel } from './smart-trade-panel';
@@ -23,13 +33,24 @@ import { ScrollArea } from './scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
 import { Badge } from './badge';
 import { Separator } from './separator';
+import { ThemeToggle } from './theme-toggle';
+import { useTheme } from '../../lib/hooks/useTheme';
 
 // Import components directly
 import TradingViewWidget from './TradingViewWidget';
 import TradeSignalsPanel from '../trade/trade-signals-panel';
 
-// Define useMediaQuery hook directly here to avoid import issues
+// Import useMediaQuery from hooks if available, or define inline
+import { useMediaQuery as useMediaQueryHook } from '../../lib/hooks/useMediaQuery';
+
+// Define useMediaQuery hook as fallback
 function useMediaQuery(query: string): boolean {
+  // Try to use the imported hook if available
+  if (typeof useMediaQueryHook === 'function') {
+    return useMediaQueryHook(query);
+  }
+  
+  // Fallback implementation
   const [matches, setMatches] = useState(false);
   
   useEffect(() => {
@@ -217,23 +238,23 @@ export function AdvancedTradeLayout({
   const renderTradeSignalsPanel = () => {
     return (
       <Card className="h-full overflow-hidden bg-slate-800 border-0 rounded-none">
-        <CardHeader className="px-3 py-2 bg-slate-800 border-b border-slate-700 flex flex-row justify-between items-center">
-          <CardTitle className="text-sm font-medium flex items-center">
-            <SignalHigh className="h-4 w-4 mr-2" />
+        <CardHeader className="px-4 py-3 bg-slate-800 border-b border-slate-700 flex flex-row justify-between items-center">
+          <CardTitle className="text-sm font-medium flex items-center text-slate-200">
+            <SignalHigh className="h-4 w-4 mr-2 text-blue-400" />
             Trading Signals
           </CardTitle>
           <div className="flex items-center gap-1">
             <Button 
               variant="ghost" 
               size="icon"
-              className="h-7 w-7 text-slate-400 hover:text-white"
+              className="h-7 w-7 text-slate-400 hover:text-white hover:bg-slate-700"
               onClick={() => toggleTool('none')}
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-0 h-[calc(100%-36px)] overflow-auto">
+        <CardContent className="p-0 h-[calc(100%-46px)] overflow-auto">
           <TradeSignalsPanel />
         </CardContent>
       </Card>
@@ -244,27 +265,27 @@ export function AdvancedTradeLayout({
   const renderNewsPanel = () => {
     return (
       <Card className="h-full overflow-hidden bg-slate-800 border-0 rounded-none">
-        <CardHeader className="px-3 py-2 bg-slate-800 border-b border-slate-700 flex flex-row justify-between items-center">
-          <CardTitle className="text-sm font-medium flex items-center">
-            <Newspaper className="h-4 w-4 mr-2" />
+        <CardHeader className="px-4 py-3 bg-slate-800 border-b border-slate-700 flex flex-row justify-between items-center">
+          <CardTitle className="text-sm font-medium flex items-center text-slate-200">
+            <Newspaper className="h-4 w-4 mr-2 text-blue-400" />
             Market News
           </CardTitle>
           <div className="flex items-center gap-1">
             <Button 
               variant="ghost" 
               size="icon"
-              className="h-7 w-7 text-slate-400 hover:text-white"
+              className="h-7 w-7 text-slate-400 hover:text-white hover:bg-slate-700"
               onClick={() => toggleTool('none')}
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-0 h-[calc(100%-36px)]">
+        <CardContent className="p-0 h-[calc(100%-46px)]">
           <ScrollArea className="h-full">
             <div className="p-4">
               {mockNewsItems.map((item, index) => (
-                <div key={item.id} className="mb-4">
+                <div key={item.id} className="mb-4 bg-slate-900/50 p-3 rounded-md hover:bg-slate-900/80 transition-colors">
                   <div className="flex items-start gap-2">
                     <div>
                       {item.impact === "high" && (
@@ -275,24 +296,24 @@ export function AdvancedTradeLayout({
                       )}
                     </div>
                     <div className="space-y-1">
-                      <h4 className="text-sm font-semibold">{item.title}</h4>
-                      <p className="text-xs text-muted-foreground">{item.summary}</p>
-                      <div className="flex gap-2 flex-wrap">
-                        <Badge variant="outline" className="text-xs">
+                      <h4 className="text-sm font-semibold text-slate-200">{item.title}</h4>
+                      <p className="text-xs text-slate-400">{item.summary}</p>
+                      <div className="flex gap-2 flex-wrap pt-1">
+                        <Badge variant="outline" className="text-xs bg-slate-800 border-slate-700 text-slate-300">
                           {new Date(item.published).toLocaleTimeString()}
                         </Badge>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-xs bg-blue-900/50 text-blue-300">
                           {item.source}
                         </Badge>
                         {item.tags.map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs">
+                          <Badge key={tag} variant="outline" className="text-xs border-slate-700 bg-transparent">
                             {tag}
                           </Badge>
                         ))}
                       </div>
                     </div>
                   </div>
-                  {index < mockNewsItems.length - 1 && <Separator className="my-4" />}
+                  {index < mockNewsItems.length - 1 && <Separator className="my-4 bg-slate-700/50" />}
                 </div>
               ))}
             </div>
@@ -306,15 +327,18 @@ export function AdvancedTradeLayout({
   const renderSmartTradePanel = (forUndocked = false) => {
     return (
       <Card className={`h-full overflow-hidden bg-slate-800 ${!forUndocked ? 'border-0 rounded-none' : 'border border-slate-700 rounded-lg shadow-xl'}`}>
-        <CardHeader className="px-3 py-2 bg-slate-800 border-b border-slate-700 flex flex-row justify-between items-center">
-          <CardTitle className="text-sm font-medium">Smart Trade Panel</CardTitle>
+        <CardHeader className="px-4 py-3 bg-slate-800 border-b border-slate-700 flex flex-row justify-between items-center">
+          <CardTitle className="text-sm font-medium flex items-center text-slate-200">
+            <BarChart className="h-4 w-4 mr-2 text-blue-400" />
+            Smart Trade Panel
+          </CardTitle>
           <div className="flex items-center gap-1">
             {!forUndocked ? (
               <>
                 <Button 
                   variant="ghost" 
                   size="icon"
-                  className="h-7 w-7 text-slate-400 hover:text-white"
+                  className="h-7 w-7 text-slate-400 hover:text-white hover:bg-slate-700"
                   onClick={toggleSmartPanelPosition}
                   title="Undock panel"
                 >
@@ -323,7 +347,7 @@ export function AdvancedTradeLayout({
                 <Button 
                   variant="ghost" 
                   size="icon"
-                  className="h-7 w-7 text-red-400 hover:text-red-300"
+                  className="h-7 w-7 text-red-400 hover:text-red-300 hover:bg-slate-700"
                   onClick={hideSmartPanel}
                   title="Hide panel"
                 >
@@ -334,7 +358,7 @@ export function AdvancedTradeLayout({
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="h-7 w-7 text-blue-400 hover:text-blue-300"
+                className="h-7 w-7 text-blue-400 hover:text-blue-300 hover:bg-slate-700"
                 onClick={toggleSmartPanelPosition}
                 title="Dock panel"
               >
@@ -343,7 +367,7 @@ export function AdvancedTradeLayout({
             )}
           </div>
         </CardHeader>
-        <CardContent className="p-0 h-[calc(100%-36px)] overflow-auto">
+        <CardContent className="p-0 h-[calc(100%-46px)] overflow-auto">
           <SmartTradePanel symbol={symbol} asCard={false} />
         </CardContent>
       </Card>
@@ -381,41 +405,101 @@ export function AdvancedTradeLayout({
       
       {/* Main Layout */}
       <div className="flex h-full">
-        {/* Main Chart Area */}
-        <div className="flex-grow h-full relative">
-          {!isMobile && !chartMaximized && (
-            <div className="absolute left-3 top-20 z-30 bg-slate-800/90 border border-slate-700 rounded-md shadow-lg">
-              <div className="flex flex-col gap-1 p-1">
+        {/* Left Sidebar Menu */}
+        {!isMobile && !chartMaximized && (
+          <div className="h-full w-16 bg-slate-800 border-r border-slate-700 flex flex-col items-center py-4 z-30">
+            {/* Theme Toggle */}
+            <div className="mb-4">
+              <ThemeToggle 
+                variant="ghost" 
+                size="icon"
+                className="hover:bg-slate-700" 
+              />
+            </div>
+            
+            <div className="flex flex-col gap-3 items-center">
+              <div className="flex flex-col gap-1 items-center">
                 <Button 
                   variant={activeTool === 'signals' ? "default" : "ghost"} 
                   size="icon"
-                  className="h-10 w-10"
+                  className={`h-10 w-10 ${activeTool === 'signals' ? 'bg-blue-600 hover:bg-blue-500' : 'hover:bg-slate-700'}`}
                   onClick={() => toggleTool('signals')}
                   title="Trading Signals"
                 >
                   <SignalHigh className="h-5 w-5" />
                 </Button>
+                <span className="text-xs text-slate-400">Signals</span>
+              </div>
+              
+              <div className="flex flex-col gap-1 items-center">
                 <Button 
                   variant={activeTool === 'news' ? "default" : "ghost"} 
                   size="icon"
-                  className="h-10 w-10"
+                  className={`h-10 w-10 ${activeTool === 'news' ? 'bg-blue-600 hover:bg-blue-500' : 'hover:bg-slate-700'}`}
                   onClick={() => toggleTool('news')}
                   title="Market News"
                 >
                   <Newspaper className="h-5 w-5" />
                 </Button>
+                <span className="text-xs text-slate-400">News</span>
+              </div>
+              
+              <div className="flex flex-col gap-1 items-center">
                 <Button 
                   variant={activeTool === 'smart-trade' ? "default" : "ghost"} 
                   size="icon"
-                  className="h-10 w-10"
+                  className={`h-10 w-10 ${activeTool === 'smart-trade' ? 'bg-blue-600 hover:bg-blue-500' : 'hover:bg-slate-700'}`}
                   onClick={() => toggleTool('smart-trade')}
                   title="Smart Trade Panel"
                 >
                   <BarChart className="h-5 w-5" />
                 </Button>
+                <span className="text-xs text-slate-400">Smart Trade</span>
               </div>
             </div>
-          )}
+            
+            <div className="mt-auto flex flex-col gap-3 items-center">
+              <div className="flex flex-col gap-1 items-center">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="h-10 w-10 hover:bg-slate-700"
+                  title="Wallet"
+                >
+                  <Wallet className="h-5 w-5" />
+                </Button>
+                <span className="text-xs text-slate-400">Wallet</span>
+              </div>
+              
+              <div className="flex flex-col gap-1 items-center">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="h-10 w-10 hover:bg-slate-700"
+                  title="Settings"
+                >
+                  <Zap className="h-5 w-5" />
+                </Button>
+                <span className="text-xs text-slate-400">Quick</span>
+              </div>
+              
+              <div className="flex flex-col gap-1 items-center">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="h-10 w-10 hover:bg-slate-700"
+                  title="Help"
+                >
+                  <CircleHelp className="h-5 w-5" />
+                </Button>
+                <span className="text-xs text-slate-400">Help</span>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Main Chart Area */}
+        <div className="flex-grow h-full relative">
           <div className="h-full relative overflow-hidden">
             <TradingViewWidget
               symbol={symbol}
@@ -467,17 +551,21 @@ export function AdvancedTradeLayout({
       {/* Undocked Smart Trade Panel */}
       {smartPanelPosition === 'undocked' && !chartMaximized && (
         <motion.div
-          className="fixed z-40"
+          className="fixed z-40 rounded-lg overflow-hidden shadow-2xl border border-slate-700"
           style={{
             top: undockedPosition.y,
             left: undockedPosition.x,
             width: 400,
             height: 500,
           }}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.2 }}
           drag
           dragConstraints={containerRef}
           dragElastic={0.1}
           dragMomentum={false}
+          dragHandles={[".draggable-header"]}
           onDragEnd={(e, info) => {
             setUndockedPosition({
               x: undockedPosition.x + info.offset.x,
@@ -485,7 +573,35 @@ export function AdvancedTradeLayout({
             });
           }}
         >
-          {renderSmartTradePanel(true)}
+          <div className="relative">
+            {/* Outer panel with shadow and border effects */}
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 p-[1px] rounded-lg">
+              <div className="w-full h-full bg-slate-800 rounded-lg overflow-hidden">
+                {/* Custom draggable header with a grabber icon */}
+                <div className="px-4 py-3 bg-slate-800 border-b border-slate-700 flex flex-row justify-between items-center cursor-grab draggable-header">
+                  <span className="text-sm font-medium flex items-center text-slate-200">
+                    <BarChart className="h-4 w-4 mr-2 text-blue-400" />
+                    Smart Trade Panel
+                    <span className="ml-2 text-xs text-slate-400">(Drag to move)</span>
+                  </span>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="h-7 w-7 text-blue-400 hover:text-blue-300 hover:bg-slate-700"
+                    onClick={toggleSmartPanelPosition}
+                    title="Dock panel"
+                  >
+                    <MoveLeft className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                {/* Panel content */}
+                <div className="p-0 h-[calc(100%-46px)] overflow-auto">
+                  <SmartTradePanel symbol={symbol} asCard={false} />
+                </div>
+              </div>
+            </div>
+          </div>
         </motion.div>
       )}
     </div>
