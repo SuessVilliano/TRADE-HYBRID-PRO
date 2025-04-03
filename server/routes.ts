@@ -91,6 +91,7 @@ import investmentsRoutes from './api/investments'; // Import for investments rou
 import investmentPerformanceRoutes from './api/investment-performance'; // Import for investment performance routes
 import feeSettingsRoutes from './api/fee-settings'; // Import for fee settings routes
 import companyRevenueRoutes from './api/company-revenue'; // Import for company revenue routes
+import signalSubscriptionsRoutes from './api/signal-subscriptions'; // Import for signal subscriptions routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Market data routes
@@ -250,6 +251,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/investment-performance", investmentPerformanceRoutes);
   app.use("/api/fee-settings", feeSettingsRoutes);
   app.use("/api/company-revenue", companyRevenueRoutes);
+  
+  // Signal Subscriptions routes
+  app.use("/api/signal-subscriptions", signalSubscriptionsRoutes);
 
   // News route using default source (bloomberg)
   app.get("/api/rss-feeds/news", (req, res) => {

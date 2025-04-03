@@ -6,8 +6,9 @@ import { NotificationSettingsDialog } from '@/components/ui/notification-setting
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { BellPlus, BellRing, Bell, Info } from 'lucide-react';
+import { BellPlus, BellRing, Bell, Info, Settings } from 'lucide-react';
 import useLocalStorage from '@/lib/hooks/useLocalStorage';
+import { SignalSubscriptionManager } from '@/components/ui/signal-subscription-manager';
 
 export default function TradingSignalsPage() {
   const [apiKeyStatus] = useState(true); // Simulate API key being valid
@@ -34,7 +35,7 @@ export default function TradingSignalsPage() {
       </div>
       
       <Tabs defaultValue="signals" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
           <TabsTrigger value="signals" className="flex items-center gap-1.5">
             <BellRing className="h-4 w-4" />
             Live Signals
@@ -43,6 +44,13 @@ export default function TradingSignalsPage() {
             <BellPlus className="h-4 w-4" />
             Saved Signals
             <Badge variant="outline" className="ml-1 bg-primary/20 text-primary">
+              New
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger value="subscriptions" className="flex items-center gap-1.5">
+            <Settings className="h-4 w-4" />
+            Signal Providers
+            <Badge variant="outline" className="ml-1 bg-green-500/20 text-green-500">
               New
             </Badge>
           </TabsTrigger>
@@ -131,6 +139,46 @@ export default function TradingSignalsPage() {
                     <p className="text-sm mt-1">You can also create your own custom signals and price alerts using the "Create Signal" button.</p>
                   </li>
                 </ol>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="subscriptions" className="mt-0">
+          <PopupContainer padding>
+            <SignalSubscriptionManager />
+          </PopupContainer>
+          
+          <div className="mt-8 max-w-3xl mx-auto">
+            <div className="space-y-4 text-slate-300">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Settings className="h-5 w-5 text-green-500" />
+                About Signal Providers
+              </h2>
+              
+              <p>
+                Subscribe to signal providers to receive their trading signals directly in your dashboard. Each provider has a unique trading style and focus, allowing you to diversify your signal sources.
+              </p>
+              
+              <div className="mt-6 bg-green-900/30 border border-green-500/40 p-4 rounded-md">
+                <h3 className="font-bold text-green-400 mb-2">Provider Features</h3>
+                <ul className="list-disc pl-5 space-y-1 text-slate-300 mb-4">
+                  <li><span className="font-semibold">Paradox Signals</span> - AI-powered signals with high precision entry and exit points</li>
+                  <li><span className="font-semibold">Solaris Signals</span> - Expert-driven technical analysis focusing on market reversals</li>
+                  <li><span className="font-semibold">Trade Hybrid</span> - Proprietary blend of AI and expert analysis for balanced trading approaches</li>
+                  <li><span className="font-semibold">Notifications</span> - Configure how you receive signal alerts for each provider</li>
+                  <li><span className="font-semibold">Auto-trading</span> - Enable auto-trading to automatically execute trades based on signals (Premium feature)</li>
+                </ul>
+              </div>
+              
+              <div className="mt-4 bg-green-500/10 border border-green-500/30 p-4 rounded-md">
+                <h3 className="font-bold text-green-500 mb-2">New Feature: Signal Provider Subscriptions</h3>
+                <p className="mb-3">
+                  Rather than subscribing to individual signals, you can now subscribe to entire signal providers. This ensures you never miss a trading opportunity from your favorite analysts and AI systems.
+                </p>
+                <p>
+                  Each subscription can be configured with different notification preferences and auto-trading settings.
+                </p>
               </div>
             </div>
           </div>

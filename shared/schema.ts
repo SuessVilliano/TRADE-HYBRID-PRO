@@ -297,6 +297,7 @@ export type Certificate = typeof certificates.$inferSelect;
 // Trade signals status enum
 export const tradeSignalStatusEnum = pgEnum('trade_signal_status', ['active', 'closed', 'cancelled']);
 export const tradeSignalSideEnum = pgEnum('trade_signal_side', ['buy', 'sell']);
+export const signalProviderEnum = pgEnum('signal_provider', ['paradox', 'solaris', 'hybrid', 'custom']);
 
 // Trade signals table
 export const tradeSignals = pgTable("trade_signals", {
@@ -339,9 +340,24 @@ export const copyTradeLogsRelations = relations(copyTradeLogs, ({ one }) => ({
   }),
 }));
 
+// Signal subscriptions table for users subscribing to trading signals
+export const signalSubscriptions = pgTable("signal_subscriptions", {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  providerId: text('provider_id').notNull(), // Signal provider ID or source
+  symbol: text('symbol'), // Optional: subscribe to specific symbol only
+  status: text('status').notNull().default('active'), // 'active', 'paused', 'cancelled'
+  notificationsEnabled: boolean('notifications_enabled').default(true),
+  autoTrade: boolean('auto_trade').default(false), // Execute trades automatically 
+  autoTradeSettings: jsonb('auto_trade_settings'), // Position size, risk limits, etc.
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
 // Main trade signal and copy log types
 export type TradeSignal = typeof tradeSignals.$inferSelect;
 export type CopyTradeLog = typeof copyTradeLogs.$inferSelect;
+export type SignalSubscription = typeof signalSubscriptions.$inferSelect;
 
 // API Keys table for storing user API keys
 export const userApiKeys = pgTable("user_api_keys", {
