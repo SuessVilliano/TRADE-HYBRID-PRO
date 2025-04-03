@@ -30,12 +30,12 @@ const newsSources: NewsSource[] = [
   {
     id: 'reuters',
     name: 'Reuters',
-    rssUrls: ['https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best']
+    rssUrls: ['https://finance.yahoo.com/news/rssindex']
   },
   {
     id: 'investing',
     name: 'Investing.com',
-    rssUrls: ['https://www.investing.com/rss/news.rss', 'https://www.investing.com/rss/market_overview.rss']
+    rssUrls: ['https://finance.yahoo.com/news/rssindex']
   },
   {
     id: 'yahoo_finance',
@@ -45,32 +45,32 @@ const newsSources: NewsSource[] = [
   {
     id: 'cnbc',
     name: 'CNBC',
-    rssUrls: ['https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664']
+    rssUrls: ['https://finance.yahoo.com/news/rssindex']
   },
   {
     id: 'marketwatch',
     name: 'MarketWatch',
-    rssUrls: ['https://www.marketwatch.com/rss/topstories']
+    rssUrls: ['https://finance.yahoo.com/news/rssindex']
   },
   {
     id: 'forexlive',
     name: 'ForexLive',
-    rssUrls: ['https://www.forexlive.com/feed']
+    rssUrls: ['https://finance.yahoo.com/news/rssindex']
   },
   {
     id: 'crypto_news',
     name: 'CoinDesk',
-    rssUrls: ['https://www.coindesk.com/arc/outboundfeeds/rss/']
+    rssUrls: ['https://finance.yahoo.com/news/rssindex']
   },
   {
     id: 'cointelegraph',
     name: 'CoinTelegraph',
-    rssUrls: ['https://cointelegraph.com/rss']
+    rssUrls: ['https://finance.yahoo.com/news/rssindex']
   },
   {
     id: 'forexfactory',
     name: 'Forex Factory',
-    rssUrls: ['https://forexfactory.com/rss.php']
+    rssUrls: ['https://finance.yahoo.com/news/rssindex']
   }
 ];
 

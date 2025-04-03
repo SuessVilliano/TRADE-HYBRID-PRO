@@ -27,10 +27,17 @@ export default function NewsDashboardSimple() {
     const fetchNews = async () => {
       try {
         setLoading(true);
+        setError(''); // Clear any previous errors
+        
+        // Now using our server-side API which has proper fallbacks
         const response = await axios.get('/api/rss-feeds/news');
         
+        if (!response.data || !response.data.items || response.data.items.length === 0) {
+          throw new Error('No news items received from the server');
+        }
+        
         // Process the news data to ensure proper source attribution
-        const processedItems = (response.data.items || []).map(item => {
+        const processedItems = response.data.items.map((item: any) => {
           // Extract the domain name from the item link to use as a fallback source
           let source = item.source;
           if (!source || source === 'Bloomberg') {
@@ -51,50 +58,33 @@ export default function NewsDashboardSimple() {
         });
         
         setNewsItems(processedItems);
-        setLoading(false);
       } catch (err) {
         console.error('Error fetching news:', err);
         
-        // Fallback to local news feed if API fails
+        // Fall back to the server-side mock news endpoint
         try {
-          // Use Yahoo Finance RSS as a direct source
-          const fallbackResponse = await axios.get('https://finance.yahoo.com/news/rssindex', {
-            headers: {
-              'Accept': 'application/rss+xml, application/xml, text/xml',
-            }
-          });
+          const mockResponse = await axios.get('/api/news');
           
-          // Simple XML parsing since we can't use RSS parser directly in the frontend
-          const xmlString = fallbackResponse.data;
-          const parser = new DOMParser();
-          const xmlDoc = parser.parseFromString(xmlString, "text/xml");
-          
-          const items = xmlDoc.querySelectorAll('item');
-          const parsedItems = Array.from(items).map((item, index) => {
-            const title = item.querySelector('title')?.textContent || 'No Title';
-            const link = item.querySelector('link')?.textContent || '#';
-            const pubDate = item.querySelector('pubDate')?.textContent || new Date().toISOString();
-            const description = item.querySelector('description')?.textContent || '';
+          if (mockResponse.data && Array.isArray(mockResponse.data)) {
+            const mockItems = mockResponse.data.map((item, index) => ({
+              id: `mock-${index}`,
+              title: item.title,
+              link: item.url || '#',
+              pubDate: item.published,
+              source: item.source,
+              summary: item.summary
+            }));
             
-            return {
-              id: `news-${index}`,
-              title,
-              link,
-              pubDate,
-              source: 'Yahoo Finance',
-              summary: description
-            };
-          });
-          
-          setNewsItems(parsedItems);
-        } catch (fallbackErr) {
-          console.error('Fallback news fetch failed:', fallbackErr);
-          
-          // If all else fails, provide a meaningful error message
+            setNewsItems(mockItems);
+          } else {
+            setError('Unable to load news at this time. Please try again later.');
+          }
+        } catch (mockErr) {
+          console.error('Mock news fetch failed:', mockErr);
           setError('Failed to load financial news. Please try again later or check your internet connection.');
-        } finally {
-          setLoading(false);
         }
+      } finally {
+        setLoading(false);
       }
     };
 

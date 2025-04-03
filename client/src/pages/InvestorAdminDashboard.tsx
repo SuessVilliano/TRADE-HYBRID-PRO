@@ -108,78 +108,111 @@ const InvestorAdminDashboard: React.FC = () => {
     try {
       setLoading(true);
       
-      // Fetch all investors
-      const investorsResponse = await fetch('/api/investors');
-      const investorsData = await investorsResponse.json();
-      setInvestors(investorsData || []);
+      // Initialize data to empty arrays/objects to prevent undefined errors
+      let investorsData: any[] = [];
+      let investmentsData: any[] = [];
+      let performanceData: any[] = [];
+      let revenueData = {
+        total_revenue: 0,
+        performance_fee_revenue: 0,
+        setup_fee_revenue: 0,
+        broker_processing_fee_revenue: 0
+      };
+      let feeSettingsData = {
+        id: 1,
+        name: "Default",
+        defaultPerformanceFeePercent: 20,
+        defaultSetupFee: 100,
+        defaultMonthlyFee: 0,
+        defaultBrokerProcessingFeePercent: 0.5,
+        defaultBrokerProcessingFeeFlat: 10
+      };
       
-      // Fetch all investments
-      const investmentsResponse = await fetch('/api/investments');
-      const investmentsData = await investmentsResponse.json();
-      setInvestments(investmentsData || []);
+      // Fetch all investors with proper error handling
+      try {
+        const investorsResponse = await fetch('/api/investors');
+        if (investorsResponse.ok) {
+          const data = await investorsResponse.json();
+          if (Array.isArray(data)) {
+            investorsData = data;
+          }
+        } else {
+          console.warn('Failed to fetch investors, status:', investorsResponse.status);
+        }
+      } catch (err) {
+        console.error('Error fetching investors:', err);
+      }
+      setInvestors(investorsData);
       
-      // Fetch performance records
-      const performanceResponse = await fetch('/api/investment-performance');
-      const performanceData = await performanceResponse.json();
-      setPerformanceRecords(performanceData || []);
+      // Fetch all investments with proper error handling
+      try {
+        const investmentsResponse = await fetch('/api/investments');
+        if (investmentsResponse.ok) {
+          const data = await investmentsResponse.json();
+          if (Array.isArray(data)) {
+            investmentsData = data;
+          }
+        } else {
+          console.warn('Failed to fetch investments, status:', investmentsResponse.status);
+        }
+      } catch (err) {
+        console.error('Error fetching investments:', err);
+      }
+      setInvestments(investmentsData);
       
-      // Fetch company revenue - Handle 404 case for empty table
+      // Fetch performance records with proper error handling
+      try {
+        const performanceResponse = await fetch('/api/investment-performance');
+        if (performanceResponse.ok) {
+          const data = await performanceResponse.json();
+          if (Array.isArray(data)) {
+            performanceData = data;
+          }
+        } else {
+          console.warn('Failed to fetch performance records, status:', performanceResponse.status);
+        }
+      } catch (err) {
+        console.error('Error fetching performance records:', err);
+      }
+      setPerformanceRecords(performanceData);
+      
+      // Fetch company revenue with proper error handling
       try {
         const revenueResponse = await fetch('/api/company-revenue');
         if (revenueResponse.ok) {
-          const revenueData = await revenueResponse.json();
-          setCompanyRevenue(revenueData);
+          const data = await revenueResponse.json();
+          if (data && typeof data === 'object') {
+            revenueData = data;
+          }
         } else {
-          // If no revenue exists yet, use default empty object
-          setCompanyRevenue({
-            total_revenue: 0,
-            performance_fee_revenue: 0,
-            setup_fee_revenue: 0,
-            broker_processing_fee_revenue: 0
-          });
+          console.warn('No company revenue data found, status:', revenueResponse.status);
         }
-      } catch (revenueError) {
-        console.warn('No company revenue data found:', revenueError);
-        setCompanyRevenue({
-          total_revenue: 0,
-          performance_fee_revenue: 0,
-          setup_fee_revenue: 0,
-          broker_processing_fee_revenue: 0
-        });
+      } catch (err) {
+        console.warn('Error fetching company revenue:', err);
       }
+      setCompanyRevenue(revenueData);
       
-      // Fetch fee settings - should always have at least the default
+      // Fetch fee settings with proper error handling
       try {
         const feeSettingsResponse = await fetch('/api/fee-settings');
         if (feeSettingsResponse.ok) {
-          const feeSettingsData = await feeSettingsResponse.json();
-          setFeeSettings(feeSettingsData);
+          const data = await feeSettingsResponse.json();
+          if (data && typeof data === 'object') {
+            feeSettingsData = data;
+          }
         } else {
-          // Default fee settings
-          setFeeSettings({
-            default_performance_fee_percent: 20,
-            default_setup_fee: 100,
-            default_monthly_fee: 0,
-            default_broker_processing_fee_percent: 0.5,
-            default_broker_processing_fee_flat: 10
-          });
+          console.warn('Failed to fetch fee settings, status:', feeSettingsResponse.status);
         }
-      } catch (feeError) {
-        console.warn('Error fetching fee settings, using defaults:', feeError);
-        setFeeSettings({
-          default_performance_fee_percent: 20,
-          default_setup_fee: 100,
-          default_monthly_fee: 0,
-          default_broker_processing_fee_percent: 0.5,
-          default_broker_processing_fee_flat: 10
-        });
+      } catch (err) {
+        console.warn('Error fetching fee settings:', err);
       }
+      setFeeSettings(feeSettingsData);
       
     } catch (error) {
       console.error('Error fetching admin data:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load admin data. Please try again later.',
+        description: 'Failed to load some admin data. The page may have limited functionality.',
         variant: 'destructive',
       });
     } finally {
