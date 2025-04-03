@@ -383,8 +383,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         [key: string]: string;
       }
       
-      // Determine which sources to fetch from
-      const sourcesToFetch = ['bloomberg', 'yahoo_finance', 'forexfactory', 'cme', 'cnbc', 'investing'];
+      // Determine which sources to fetch from - only use sources with working feeds
+      const sourcesToFetch = ['cnbc', 'investing'];
       let allItems: any[] = [];
       const limit = parseInt(req.query.limit as string) || 10;
       const itemsPerSource = Math.max(3, Math.ceil(limit / sourcesToFetch.length));

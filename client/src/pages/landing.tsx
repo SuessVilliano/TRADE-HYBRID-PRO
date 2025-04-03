@@ -41,6 +41,11 @@ const LandingPage: React.FC = () => {
                     Login
                   </Button>
                 </Link>
+                <Link to="/wallet">
+                  <Button variant="outline" className="border-gray-600">
+                    Connect Wallet
+                  </Button>
+                </Link>
                 <Link to="/register">
                   <Button className="bg-blue-600 hover:bg-blue-700">
                     Register

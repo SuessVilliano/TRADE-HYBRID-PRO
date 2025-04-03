@@ -26,9 +26,7 @@ const newsSources: NewsSource[] = [
     id: 'bloomberg',
     name: 'Bloomberg',
     rssUrls: [
-      'https://www.bloomberg.com/feed/podcast/etf-report',
-      'https://www.bloomberg.com/feed/podcast/masters-in-business',
-      'https://www.bloomberg.com/feed/podcast/odd-lots'
+      'https://feeds.bloomberg.com/markets/news.rss'
     ]
   },
   {
@@ -84,14 +82,15 @@ const newsSources: NewsSource[] = [
     id: 'forexfactory',
     name: 'Forex Factory',
     rssUrls: [
-      'https://www.forexfactory.com/rss?type=news',
-      'https://www.forexfactory.com/rss?type=calendar'
+      // Removed problematic Forex Factory feeds that were causing XML parsing errors
     ]
   },
   {
     id: 'cme',
     name: 'CME Group',
-    rssUrls: ['https://www.cmegroup.com/rss/cme-group-press-releases.rss']
+    rssUrls: [
+      // Removed CME Group feed that was returning 404
+    ]
   }
 ];
 
