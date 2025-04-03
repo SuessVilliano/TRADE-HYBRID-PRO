@@ -11,11 +11,16 @@ import { MainLayout } from '@/components/ui/main-layout';
 
 export default function WalletConnectOnboarding() {
   const navigate = useNavigate();
-  const { currentFlow, currentStepIndex, nextStep, prevStep, skipOnboarding } = useOnboarding();
+  const { currentFlow, currentStepIndex, nextStep, prevStep, skipOnboarding, startOnboarding } = useOnboarding();
   const [step, setStep] = useState<number>(0);
   const [connecting, setConnecting] = useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
+  
+  // Start the wallet connection flow when component mounts
+  useEffect(() => {
+    startOnboarding('wallet-connection');
+  }, [startOnboarding]);
 
   // Set up the steps for the onboarding process
   const steps = [
