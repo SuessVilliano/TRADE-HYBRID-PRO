@@ -178,9 +178,9 @@ function TradingViewWidget({
   const getResponsiveHeight = () => {
     if (typeof window !== 'undefined') {
       if (window.innerWidth < 640) { // Mobile
-        return isFullscreen ? "100vh" : "80vh";
+        return isFullscreen ? "100vh" : "90vh";
       } else if (window.innerWidth < 1024) { // Tablet
-        return isFullscreen ? "100vh" : "85vh";
+        return isFullscreen ? "100vh" : "90vh";
       }
     }
     return isFullscreen ? "100vh" : height;
@@ -211,10 +211,10 @@ function TradingViewWidget({
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 rounded-full bg-slate-800/70 hover:bg-slate-700"
+            className="h-10 w-10 rounded-full bg-slate-800/80 hover:bg-slate-700"
             onClick={toggleFullscreen}
           >
-            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
           </Button>
         </div>
       )}

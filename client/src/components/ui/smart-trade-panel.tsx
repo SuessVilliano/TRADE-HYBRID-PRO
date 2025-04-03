@@ -299,25 +299,25 @@ export function SmartTradePanel({
             <Button 
               size="sm" 
               variant="outline" 
-              className={cn("h-7 px-2 text-xs", orderType === 'percentage' && "bg-slate-700")}
+              className={cn("h-10 px-3 text-sm", orderType === 'percentage' && "bg-slate-700")}
               onClick={() => setOrderType('percentage')}
             >
-              <Percent className="h-3 w-3 mr-1" />
+              <Percent className="h-4 w-4 mr-1" />
               %
             </Button>
             <Button 
               size="sm" 
               variant="outline" 
-              className={cn("h-7 px-2 text-xs", orderType === 'fixed' && "bg-slate-700")}
+              className={cn("h-10 px-3 text-sm", orderType === 'fixed' && "bg-slate-700")}
               onClick={() => setOrderType('fixed')}
             >
-              <DollarSign className="h-3 w-3 mr-1" />
+              <DollarSign className="h-4 w-4 mr-1" />
               USD
             </Button>
           </div>
         </div>
         
-        <div className="pt-2 pb-6 px-1">
+        <div className="pt-4 pb-8 px-2">
           <Slider defaultValue={positionSize} max={100} step={5} onValueChange={handlePositionSizeChange} />
         </div>
         
@@ -327,7 +327,7 @@ export function SmartTradePanel({
               key={value}
               size="sm"
               variant="outline"
-              className={cn("w-full h-8 px-2 text-xs", positionSize[0] === value && "bg-slate-700")}
+              className={cn("w-full h-10 px-2 text-base", positionSize[0] === value && "bg-slate-700")}
               onClick={() => setPositionSize([value])}
             >
               {value}%
@@ -349,7 +349,7 @@ export function SmartTradePanel({
         
         {useLeverage && (
           <>
-            <div className="pt-2 pb-6 px-1">
+            <div className="pt-4 pb-8 px-2">
               <Slider 
                 defaultValue={[leverage]} 
                 min={1} 
@@ -364,7 +364,7 @@ export function SmartTradePanel({
                 <AlertTriangle className="h-4 w-4 mr-1" />
                 Using {leverage}x Leverage
               </div>
-              <Button size="sm" variant="ghost" className="h-7 px-2 py-0 text-xs">
+              <Button size="sm" variant="ghost" className="h-9 px-3 py-1 text-sm">
                 Info
               </Button>
             </div>
