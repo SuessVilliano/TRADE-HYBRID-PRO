@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, real, jsonb, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, real, jsonb, pgEnum, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -933,6 +933,21 @@ export type ChatRoomMember = typeof chatRoomMembers.$inferSelect;
 export type DirectMessageConversation = typeof directMessageConversations.$inferSelect;
 export type DirectMessage = typeof directMessages.$inferSelect;
 export type DirectMessageReaction = typeof directMessageReactions.$inferSelect;
+
+// Push Notifications System
+// Push Subscriptions table for Web Push Notifications
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: text("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dhKey: text("p256dh_key"),
+  authKey: text("auth_key"),
+  expirationTime: timestamp("expiration_time"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 
 // Export trading signal types
 // These export the primary type aliases for trade signals and copy logs throughout the codebase

@@ -1,4 +1,4 @@
-import { users, userWebhooks, type User, type InsertUser, type UserWebhook } from "@shared/schema";
+import { users, userWebhooks, pushSubscriptions, type User, type InsertUser, type UserWebhook, type PushSubscription } from "@shared/schema";
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { neon } from '@neondatabase/serverless';
 import { eq } from 'drizzle-orm';
@@ -7,19 +7,21 @@ import { eq } from 'drizzle-orm';
 // This assumes DATABASE_URL environment variable is set
 const sql = neon(process.env.DATABASE_URL!);
 // Define schema to make TypeScript happy
-const db = drizzle(sql, { schema: { users, userWebhooks } });
+const db = drizzle(sql, { schema: { users, userWebhooks, pushSubscriptions } });
 
 // Drizzle ORM storage implementation
 export const storage = {
   schema: {
     users,
     userWebhooks,
+    pushSubscriptions,
   },
   
   // Query builder
   query: {
     users: db.query.users,
     userWebhooks: db.query.userWebhooks,
+    pushSubscriptions: db.query.pushSubscriptions,
   },
   
   // CRUD operations

@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import TestNotificationButton from '@/components/ui/test-notification-button';
 import { PopupContainer } from '@/components/ui/popup-container';
+import { PushNotificationToggle } from '@/components/ui/push-notification-toggle';
 
 export interface NotificationSettingsInterface {
   enabled: boolean;
@@ -227,6 +228,16 @@ export default function NotificationSettingsPage() {
                       checked={settings.browser}
                       onCheckedChange={(checked) => updateSetting('browser', checked)}
                       disabled={!settings.enabled}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="push-notifications" className="font-medium">Push Notifications</Label>
+                      <p className="text-sm text-slate-400">Receive notifications when the browser is closed</p>
+                    </div>
+                    <PushNotificationToggle 
+                      disabled={!settings.enabled || !settings.browser}
                     />
                   </div>
                   

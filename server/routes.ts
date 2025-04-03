@@ -5,6 +5,7 @@ import { getMarketData, getCurrentPrice, getSymbols } from "./api/market";
 import { getNews, getTopicNews } from "./api/news";
 import { getLeaderboard, getTrader } from "./api/leaderboard";
 import { getBots, getBot, createBot, updateBot, deleteBot, runBot, stopBot } from "./api/bots";
+import notificationsRouter from "./api/notifications";
 
 // We'll create separate functions to directly use our signals-api
 const getSignals = (req: any, res: any) => {
@@ -374,6 +375,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Signal Subscriptions routes
   app.use("/api/signal-subscriptions", signalSubscriptionsRoutes);
+  
+  // Push Notifications routes
+  app.use("/api/notifications", notificationsRouter);
 
   // News route using multiple sources
   app.get("/api/rss-feeds/news", async (req, res) => {
