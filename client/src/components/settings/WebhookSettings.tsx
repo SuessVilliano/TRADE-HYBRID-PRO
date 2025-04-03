@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { 
   Card, 
@@ -43,6 +43,12 @@ interface UserWebhook {
   lastUsedAt: string | null;
   createdAt: string;
   isActive: boolean;
+  // Status information
+  status?: 'online' | 'offline' | 'error';
+  lastCheckTime?: string;
+  lastSuccessTime?: string | null;
+  errorMessage?: string;
+  responseTime?: number;
 }
 
 export function WebhookSettings() {
@@ -54,13 +60,85 @@ export function WebhookSettings() {
   const [webhookToRegenerate, setWebhookToRegenerate] = useState<number | null>(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isCopied, setIsCopied] = useState<{[key: string]: boolean}>({});
+  // WebSocket reference
+  const wsRef = useRef<WebSocket | null>(null);
+  const [wsConnected, setWsConnected] = useState(false);
   
   const { toast } = useToast();
   
   // Fetch webhooks on component mount
   useEffect(() => {
     fetchWebhooks();
+    setupWebSocket();
+    
+    // Cleanup WebSocket connection when component unmounts
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
   }, []);
+  
+  // Set up WebSocket connection for real-time updates
+  const setupWebSocket = () => {
+    // Use secure connection in production
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+    
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+      setWsConnected(true);
+    };
+    
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+      setWsConnected(false);
+      
+      // Attempt to reconnect after a delay
+      setTimeout(() => {
+        if (document.visibilityState !== 'hidden') {
+          setupWebSocket();
+        }
+      }, 3000);
+    };
+    
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setWsConnected(false);
+    };
+    
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        
+        // Handle webhook status updates
+        if (message.type === 'webhook_status_update') {
+          const { webhookId, status } = message.data;
+          
+          // Update the status of the affected webhook
+          setWebhooks(prevWebhooks => 
+            prevWebhooks.map(webhook => 
+              webhook.id === webhookId 
+                ? { 
+                    ...webhook, 
+                    status: status.status,
+                    lastCheckTime: status.lastCheckTime,
+                    lastSuccessTime: status.lastSuccessTime,
+                    errorMessage: status.errorMessage,
+                    responseTime: status.responseTime
+                  } 
+                : webhook
+            )
+          );
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+  };
   
   // Fetch webhooks from server
   const fetchWebhooks = async () => {
@@ -482,8 +560,36 @@ export function WebhookSettings() {
                   </div>
                 </div>
                 
-                <div className="mt-4 text-xs text-muted-foreground">
-                  <p>Last used: {formatDate(webhook.lastUsedAt)}</p>
+                <div className="mt-4 text-xs">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium">Status:</span>
+                    {webhook.status ? (
+                      <span className={`px-2 py-0.5 rounded-full ${
+                        webhook.status === 'online' 
+                          ? 'bg-green-100 text-green-800' 
+                          : webhook.status === 'offline' 
+                            ? 'bg-yellow-100 text-yellow-800' 
+                            : 'bg-red-100 text-red-800'
+                      }`}>
+                        {webhook.status === 'online' 
+                          ? 'Online' 
+                          : webhook.status === 'offline' 
+                            ? 'Offline' 
+                            : 'Error'}
+                        {webhook.responseTime && webhook.status === 'online' && (
+                          <span className="ml-1">({webhook.responseTime}ms)</span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-800">Unknown</span>
+                    )}
+                  </div>
+                  {webhook.errorMessage && (
+                    <p className="text-red-600 mb-1">Error: {webhook.errorMessage}</p>
+                  )}
+                  <p className="text-muted-foreground">Last checked: {webhook.lastCheckTime ? formatDate(webhook.lastCheckTime) : 'Never'}</p>
+                  <p className="text-muted-foreground">Last success: {webhook.lastSuccessTime ? formatDate(webhook.lastSuccessTime) : 'Never'}</p>
+                  <p className="text-muted-foreground">Last used: {formatDate(webhook.lastUsedAt)}</p>
                 </div>
               </div>
             ))}

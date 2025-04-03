@@ -53,10 +53,21 @@ router.get('/', async (req, res) => {
     }));
     
     // Return masked tokens (only show last 8 chars) for security
-    const maskedWebhooks = webhooks.map((webhook) => ({
-      ...webhook,
-      token: `********${webhook.token.substring(webhook.token.length - 8)}`
-    }));
+    // And include status information for each webhook
+    const maskedWebhooks = webhooks.map((webhook) => {
+      // Get status info for this webhook
+      const status = getWebhookStatus(webhook.id);
+      
+      return {
+        ...webhook,
+        token: `********${webhook.token.substring(webhook.token.length - 8)}`,
+        status: status.status,
+        lastCheckTime: status.lastCheckTime,
+        lastSuccessTime: status.lastSuccessTime,
+        errorMessage: status.errorMessage,
+        responseTime: status.responseTime
+      };
+    });
     
     return res.json({ webhooks: maskedWebhooks });
   } catch (error) {
@@ -341,17 +352,163 @@ export const getUserWebhookByToken = async (token: string): Promise<UserWebhook 
   }
 };
 
+// Webhook processing status tracking
+interface WebhookStatus {
+  id: number;
+  status: 'online' | 'offline' | 'error';
+  lastCheckTime: Date;
+  lastSuccessTime: Date | null;
+  errorMessage?: string;
+  responseTime?: number;
+}
+
+// Store webhook status in memory
+const webhookStatusMap: Map<number, WebhookStatus> = new Map();
+
+// Get current status of a webhook
+export const getWebhookStatus = (webhookId: number): WebhookStatus => {
+  if (!webhookStatusMap.has(webhookId)) {
+    // Default to offline if not in our status map
+    webhookStatusMap.set(webhookId, {
+      id: webhookId,
+      status: 'offline',
+      lastCheckTime: new Date(),
+      lastSuccessTime: null
+    });
+  }
+  
+  return webhookStatusMap.get(webhookId)!;
+};
+
+// Update webhook status
+export const updateWebhookStatus = (
+  webhookId: number, 
+  status: 'online' | 'offline' | 'error', 
+  errorMessage?: string,
+  responseTime?: number
+): void => {
+  const now = new Date();
+  const currentStatus = webhookStatusMap.get(webhookId) || {
+    id: webhookId,
+    status: 'offline',
+    lastCheckTime: now,
+    lastSuccessTime: null
+  };
+  
+  const newStatus: WebhookStatus = {
+    ...currentStatus,
+    status,
+    lastCheckTime: now,
+    lastSuccessTime: status === 'online' ? now : currentStatus.lastSuccessTime,
+    errorMessage: status === 'error' ? errorMessage : undefined,
+    responseTime: responseTime || currentStatus.responseTime
+  };
+  
+  webhookStatusMap.set(webhookId, newStatus);
+  
+  // Notify connected clients via WebSocket if available
+  try {
+    const { MultiplayerServer } = require('../multiplayer');
+    if (MultiplayerServer.instance) {
+      // Broadcast webhook status update
+      MultiplayerServer.instance.broadcast({
+        type: 'webhook_status_update',
+        data: {
+          webhookId,
+          status: newStatus
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Failed to broadcast webhook status update:', error);
+  }
+};
+
+// Get status for all webhooks of a user
+router.get('/status', async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    
+    // For demo purposes, let's use a demo user if not authenticated
+    let userId = authReq.session.userId || 'demo-user-123';
+    
+    // If we're using the demo user, log it
+    if (!authReq.session.userId) {
+      console.log('Using demo user ID for fetching webhook status: demo-user-123');
+    }
+    
+    // Get all user webhooks
+    const query = `
+      SELECT id FROM user_webhooks
+      WHERE user_id = '${userId}'
+    `;
+    
+    const rows = await executeQueryFromFile(query);
+    
+    // Get status for each webhook
+    const statusList = rows.map(row => {
+      const webhookId = row.id;
+      return getWebhookStatus(webhookId);
+    });
+    
+    return res.json({ statuses: statusList });
+  } catch (error) {
+    console.error('Error fetching webhook statuses:', error);
+    return res.status(500).json({ error: 'Failed to fetch webhook statuses' });
+  }
+});
+
+// Get status for a specific webhook
+router.get('/:webhookId/status', async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const { webhookId } = req.params;
+    
+    // For demo purposes, let's use a demo user if not authenticated
+    let userId = authReq.session.userId || 'demo-user-123';
+    
+    // Verify the webhook belongs to the user
+    const query = `
+      SELECT id FROM user_webhooks
+      WHERE user_id = '${userId}' AND id = ${parseInt(webhookId)}
+    `;
+    
+    const result = await executeQueryFromFile(query);
+    
+    if (!result || result.length === 0) {
+      return res.status(404).json({ error: 'Webhook not found or does not belong to you' });
+    }
+    
+    // Get status for this webhook
+    const status = getWebhookStatus(parseInt(webhookId));
+    
+    return res.json({ status });
+  } catch (error) {
+    console.error('Error fetching webhook status:', error);
+    return res.status(500).json({ error: 'Failed to fetch webhook status' });
+  }
+});
+
 // Process a webhook signal from a user webhook
 export const processUserWebhook = async (token: string, payload: any): Promise<boolean> => {
+  const startTime = Date.now();
+  let webhookId: number | null = null;
+  
   try {
     // Find webhook by token
     const webhook = await getUserWebhookByToken(token);
     
     if (!webhook || !webhook.isActive) {
       console.error('Invalid webhook token or webhook is inactive');
+      // If we have a webhook ID, update its status
+      if (webhook) {
+        webhookId = webhook.id;
+        updateWebhookStatus(webhookId, 'error', 'Webhook is inactive');
+      }
       return false;
     }
     
+    webhookId = webhook.id;
     console.log('Processing webhook signal for userId:', webhook.userId);
     
     // Update the webhook's lastUsedAt and signalCount
@@ -383,10 +540,21 @@ export const processUserWebhook = async (token: string, payload: any): Promise<b
     // Process the webhook signal using the userId to properly store user-specific signals
     processWebhookSignal(enrichedPayload, webhook.userId);
     
-    console.log('Successfully processed webhook signal');
+    // Calculate response time and update webhook status
+    const responseTime = Date.now() - startTime;
+    updateWebhookStatus(webhook.id, 'online', undefined, responseTime);
+    
+    console.log('Successfully processed webhook signal in', responseTime, 'ms');
     return true;
   } catch (error) {
     console.error('Error processing user webhook:', error);
+    
+    // Update webhook status if we have its ID
+    if (webhookId) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      updateWebhookStatus(webhookId, 'error', errorMessage);
+    }
+    
     return false;
   }
 };

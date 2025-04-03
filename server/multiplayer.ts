@@ -22,7 +22,7 @@ interface ChatMessage {
 }
 
 interface WSMessage {
-  type: 'player_update' | 'chat_message' | 'join' | 'leave' | 'trade_offer' | 'friend_request' | 'friend_response' | 'voice_status' | 'voice_data' | 'ping' | 'user_status' | 'social_activity' | 'trading_signal';
+  type: 'player_update' | 'chat_message' | 'join' | 'leave' | 'trade_offer' | 'friend_request' | 'friend_response' | 'voice_status' | 'voice_data' | 'ping' | 'user_status' | 'social_activity' | 'trading_signal' | 'webhook_status_update';
   data: any;
 }
 
@@ -169,6 +169,9 @@ export class MultiplayerServer {
         break;
       case 'social_activity':
         this.handleSocialActivity(clientId, message.data);
+        break;
+      case 'webhook_status_update':
+        this.handleWebhookStatusUpdate(clientId, message.data);
         break;
       default:
         // Ignore unknown message types
@@ -504,6 +507,23 @@ export class MultiplayerServer {
       this.broadcast({
         type: 'chat_message',
         data: chatMessage
+      });
+    }
+  }
+  
+  private handleWebhookStatusUpdate(clientId: string, data: any) {
+    // Broadcast webhook status updates to all connected clients
+    // This allows real-time status updates to be displayed in the UI
+    if (data && data.webhookId) {
+      log(`Broadcasting webhook status update for webhook ID: ${data.webhookId}`, 'ws');
+      
+      this.broadcast({
+        type: 'webhook_status_update',
+        data: {
+          webhookId: data.webhookId,
+          status: data.status,
+          timestamp: Date.now()
+        }
       });
     }
   }
