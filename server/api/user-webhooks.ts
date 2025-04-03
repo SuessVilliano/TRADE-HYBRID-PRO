@@ -31,14 +31,29 @@ router.get('/', async (req, res) => {
       console.log('Using demo user ID for fetching webhooks: demo-user-123');
     }
     
-    // Get webhooks from database
-    const webhooks = await storage.query.userWebhooks.findMany({
-      where: eq(storage.schema.userWebhooks.userId, userId),
-      orderBy: [desc(storage.schema.userWebhooks.createdAt)]
-    });
+    // Get webhooks from database using raw SQL
+    const query = `
+      SELECT * FROM user_webhooks
+      WHERE user_id = '${userId}'
+      ORDER BY created_at DESC
+    `;
+    
+    const rows = await executeQueryFromFile(query);
+    
+    // Convert rows to webhook objects and mask tokens for security
+    const webhooks = rows.map(row => ({
+      id: row.id,
+      userId: row.user_id,
+      name: row.name,
+      token: row.token,
+      createdAt: new Date(row.created_at),
+      lastUsedAt: row.last_used_at ? new Date(row.last_used_at) : null,
+      signalCount: row.signal_count || 0,
+      isActive: row.is_active !== false
+    }));
     
     // Return masked tokens (only show last 8 chars) for security
-    const maskedWebhooks = webhooks.map((webhook: UserWebhook) => ({
+    const maskedWebhooks = webhooks.map((webhook) => ({
       ...webhook,
       token: `********${webhook.token.substring(webhook.token.length - 8)}`
     }));
@@ -71,23 +86,42 @@ router.post('/', async (req, res) => {
     // Generate a random token (64 characters long)
     const token = crypto.randomBytes(32).toString('hex');
     
-    // Create webhook in database
-    const webhook = await storage.insert(storage.schema.userWebhooks).values({
-      userId,
-      name,
-      token,
-      createdAt: new Date(), // Using Date object directly is compatible with the schema
-      lastUsedAt: null,
-      signalCount: 0,
-      isActive: true
-    }).returning();
+    // Create webhook in database using raw SQL since the ORM insert is having issues
+    const now = new Date().toISOString();
     
-    // Return the full webhook with token to user
+    // Using the executeQueryFromFile function that already works
+    const query = `
+      INSERT INTO user_webhooks (user_id, name, token, created_at, last_used_at, signal_count, is_active)
+      VALUES ('${userId}', '${name}', '${token}', '${now}', NULL, 0, TRUE)
+      RETURNING id, user_id, name, token, created_at, last_used_at, signal_count, is_active;
+    `;
+    
+    const result = await executeQueryFromFile(query);
+    
+    if (!result || result.length === 0) {
+      console.error('Failed to insert webhook into database');
+      return res.status(500).json({ error: 'Failed to create webhook' });
+    }
+    
+    // Format the webhook data to match our schema
+    const webhook = {
+      id: result[0].id,
+      userId: result[0].user_id,
+      name: result[0].name,
+      token: result[0].token,
+      createdAt: new Date(result[0].created_at),
+      lastUsedAt: result[0].last_used_at ? new Date(result[0].last_used_at) : null,
+      signalCount: result[0].signal_count || 0,
+      isActive: result[0].is_active !== false
+    };
+    
     // Generate a cleaner webhook URL format
-    const webhookUrl = `https://pro.tradehybrid.club/wh/${token.substring(0, 12)}`;
+    const webhookUrl = `https://pro.tradehybrid.club/api/wh/tv/${token.substring(0, 12)}`;
+    
+    console.log('Successfully created webhook:', webhook.name);
     
     return res.status(201).json({ 
-      webhook: webhook[0],
+      webhook: webhook,
       webhookUrl: webhookUrl
     });
   } catch (error) {
@@ -110,16 +144,20 @@ router.delete('/:webhookId', async (req, res) => {
     }
     const { webhookId } = req.params;
     
-    // Delete webhook from database if it belongs to user
-    const result = await storage.delete(storage.schema.userWebhooks)
-      .where(
-        eq(storage.schema.userWebhooks.userId, userId) &&
-        eq(storage.schema.userWebhooks.id, parseInt(webhookId))
-      );
+    // Delete webhook from database using raw SQL
+    const query = `
+      DELETE FROM user_webhooks
+      WHERE user_id = '${userId}' AND id = ${parseInt(webhookId)}
+      RETURNING id;
+    `;
     
-    if (!result || result.rowCount === 0) {
+    const result = await executeQueryFromFile(query);
+    
+    if (!result || result.length === 0) {
       return res.status(404).json({ error: 'Webhook not found or does not belong to you' });
     }
+    
+    console.log('Successfully deleted webhook with ID:', webhookId);
     
     return res.status(200).json({ success: true });
   } catch (error) {
@@ -145,25 +183,39 @@ router.post('/:webhookId/regenerate', async (req, res) => {
     // Generate a new token
     const token = crypto.randomBytes(32).toString('hex');
     
-    // Update webhook in database if it belongs to user
-    const result = await storage.update(storage.schema.userWebhooks)
-      .set({ token })
-      .where(
-        eq(storage.schema.userWebhooks.userId, userId) &&
-        eq(storage.schema.userWebhooks.id, parseInt(webhookId))
-      )
-      .returning();
+    // Update webhook in database using raw SQL
+    const query = `
+      UPDATE user_webhooks
+      SET token = '${token}'
+      WHERE user_id = '${userId}' AND id = ${parseInt(webhookId)}
+      RETURNING id, user_id, name, token, created_at, last_used_at, signal_count, is_active;
+    `;
+    
+    const result = await executeQueryFromFile(query);
     
     if (!result || result.length === 0) {
       return res.status(404).json({ error: 'Webhook not found or does not belong to you' });
     }
     
-    // Return the full webhook with new token to user
-    // Generate a cleaner webhook URL format
-    const webhookUrl = `https://pro.tradehybrid.club/wh/${token.substring(0, 12)}`;
+    // Format the webhook data to match our schema
+    const webhook = {
+      id: result[0].id,
+      userId: result[0].user_id,
+      name: result[0].name,
+      token: result[0].token,
+      createdAt: new Date(result[0].created_at),
+      lastUsedAt: result[0].last_used_at ? new Date(result[0].last_used_at) : null,
+      signalCount: result[0].signal_count || 0,
+      isActive: result[0].is_active !== false
+    };
+    
+    // Generate a cleaner webhook URL format for TradingView
+    const webhookUrl = `https://pro.tradehybrid.club/api/wh/tv/${token.substring(0, 12)}`;
+    
+    console.log('Successfully regenerated webhook token for:', webhook.name);
     
     return res.json({ 
-      webhook: result[0],
+      webhook: webhook,
       webhookUrl: webhookUrl
     });
   } catch (error) {
