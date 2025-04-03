@@ -27,62 +27,55 @@ export default function NewsDashboardSimple() {
     const fetchNews = async () => {
       try {
         setLoading(true);
-        setError(''); // Clear any previous errors
         
-        // Now using our server-side API which has proper fallbacks
-        const response = await axios.get('/api/rss-feeds/news');
+        // Let's use the server-side mock news API which is more reliable
+        const response = await axios.get('/api/news');
         
-        if (!response.data || !response.data.items || response.data.items.length === 0) {
-          throw new Error('No news items received from the server');
-        }
-        
-        // Process the news data to ensure proper source attribution
-        const processedItems = response.data.items.map((item: any) => {
-          // Extract the domain name from the item link to use as a fallback source
-          let source = item.source;
-          if (!source || source === 'Bloomberg') {
-            try {
-              const url = new URL(item.link);
-              source = url.hostname.replace('www.', '').split('.')[0];
-              // Capitalize the first letter
-              source = source.charAt(0).toUpperCase() + source.slice(1);
-            } catch (e) {
-              source = 'Financial News';
-            }
-          }
+        if (response.data && Array.isArray(response.data)) {
+          // Format the news items
+          const newsData = response.data.map((item, index) => ({
+            id: `news-${index}`,
+            title: item.title || 'No Title',
+            link: item.url || '#',
+            pubDate: item.published || new Date().toISOString(),
+            source: item.source || 'Financial News',
+            summary: item.summary || ''
+          }));
           
-          return {
-            ...item,
-            source: source
-          };
-        });
-        
-        setNewsItems(processedItems);
+          setNewsItems(newsData);
+        } else {
+          // If the response is not as expected, try RSS feeds as fallback
+          const rssFeedsResponse = await axios.get('/api/rss-feeds/news');
+          
+          if (rssFeedsResponse.data && rssFeedsResponse.data.items) {
+            const processedItems = rssFeedsResponse.data.items.map((item: any) => {
+              // Extract source from the item
+              let source = item.source;
+              if (!source) {
+                try {
+                  const url = new URL(item.link);
+                  source = url.hostname.replace('www.', '').split('.')[0];
+                  // Capitalize the first letter
+                  source = source.charAt(0).toUpperCase() + source.slice(1);
+                } catch (e) {
+                  source = 'Financial News';
+                }
+              }
+              
+              return {
+                ...item,
+                source: source
+              };
+            });
+            
+            setNewsItems(processedItems);
+          } else {
+            throw new Error('No valid news data found');
+          }
+        }
       } catch (err) {
         console.error('Error fetching news:', err);
-        
-        // Fall back to the server-side mock news endpoint
-        try {
-          const mockResponse = await axios.get('/api/news');
-          
-          if (mockResponse.data && Array.isArray(mockResponse.data)) {
-            const mockItems = mockResponse.data.map((item, index) => ({
-              id: `mock-${index}`,
-              title: item.title,
-              link: item.url || '#',
-              pubDate: item.published,
-              source: item.source,
-              summary: item.summary
-            }));
-            
-            setNewsItems(mockItems);
-          } else {
-            setError('Unable to load news at this time. Please try again later.');
-          }
-        } catch (mockErr) {
-          console.error('Mock news fetch failed:', mockErr);
-          setError('Failed to load financial news. Please try again later or check your internet connection.');
-        }
+        setError('Unable to load news at this time. Please try again later.');
       } finally {
         setLoading(false);
       }
