@@ -2,14 +2,14 @@ import * as React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { PageHeading } from '@/components/ui/page-heading';
 import { usePageTitle } from '@/lib/hooks/usePageTitle';
-import { Layout } from '@/components/ui/layout';
 import { TradingBotsManager } from '@/components/ui/trading-bots-manager';
+import { TradingDashboardLayout } from '@/components/ui/trading-dashboard-layout';
 
 export default function TradingBotsPage() {
   usePageTitle('Trading Bots');
 
   return (
-    <Layout>
+    <TradingDashboardLayout>
       <Helmet>
         <title>Trading Bots | TradeHybrid</title>
         <meta 
@@ -29,6 +29,6 @@ export default function TradingBotsPage() {
           <TradingBotsManager className="w-full" />
         </div>
       </div>
-    </Layout>
+    </TradingDashboardLayout>
   );
 }
