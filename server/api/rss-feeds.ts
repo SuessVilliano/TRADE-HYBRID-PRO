@@ -23,24 +23,49 @@ interface NewsSource {
 // Available RSS news sources
 const newsSources: NewsSource[] = [
   {
-    id: 'bloomberg',
-    name: 'Bloomberg',
-    rssUrls: [
-      'https://feeds.bloomberg.com/markets/news.rss'
-    ]
+    id: 'forexfactory',
+    name: 'Forex Factory',
+    rssUrls: ['http://www.forexfactory.com/rss.php']
   },
   {
-    id: 'reuters',
-    name: 'Reuters',
-    rssUrls: ['https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best']
+    id: 'fxstreet',
+    name: 'FXStreet',
+    rssUrls: ['http://www.fxstreet.com/syndicate/rss/']
+  },
+  {
+    id: 'dailyforex',
+    name: 'DailyForex',
+    rssUrls: ['https://www.dailyforex.com/forex-rss']
+  },
+  {
+    id: 'cmegroup',
+    name: 'CME Group',
+    rssUrls: ['https://www.cmegroup.com/rss.html']
   },
   {
     id: 'investing',
-    name: 'Investing.com',
-    rssUrls: [
-      'https://www.investing.com/rss/news.rss',
-      'https://www.investing.com/rss/market_overview.rss'
-    ]
+    name: 'Investing.com Futures',
+    rssUrls: ['https://www.investing.com/rss/news.rss']
+  },
+  {
+    id: 'cointelegraph',
+    name: 'CoinTelegraph',
+    rssUrls: ['https://cointelegraph.com/rss']
+  },
+  {
+    id: 'coindesk',
+    name: 'CoinDesk',
+    rssUrls: ['https://www.coindesk.com/arc/outboundfeeds/rss/']
+  },
+  {
+    id: 'marketwatch',
+    name: 'MarketWatch',
+    rssUrls: ['https://www.marketwatch.com/rss/topstories']
+  },
+  {
+    id: 'nasdaq',
+    name: 'Nasdaq',
+    rssUrls: ['https://www.nasdaq.com/feed/rssoutbound']
   },
   {
     id: 'yahoo_finance',
@@ -53,43 +78,6 @@ const newsSources: NewsSource[] = [
     rssUrls: [
       'https://www.cnbc.com/id/10000664/device/rss/rss.html', // Top News
       'https://www.cnbc.com/id/15837362/device/rss/rss.html'  // Economy
-    ]
-  },
-  {
-    id: 'marketwatch',
-    name: 'MarketWatch',
-    rssUrls: [
-      'https://www.marketwatch.com/rss/topstories',
-      'https://www.marketwatch.com/rss/marketpulse'
-    ]
-  },
-  {
-    id: 'forexlive',
-    name: 'ForexLive',
-    rssUrls: ['https://www.forexlive.com/feed']
-  },
-  {
-    id: 'crypto_news',
-    name: 'CoinDesk',
-    rssUrls: ['https://www.coindesk.com/arc/outboundfeeds/rss/']
-  },
-  {
-    id: 'cointelegraph',
-    name: 'CoinTelegraph',
-    rssUrls: ['https://cointelegraph.com/rss']
-  },
-  {
-    id: 'forexfactory',
-    name: 'Forex Factory',
-    rssUrls: [
-      // Removed problematic Forex Factory feeds that were causing XML parsing errors
-    ]
-  },
-  {
-    id: 'cme',
-    name: 'CME Group',
-    rssUrls: [
-      // Removed CME Group feed that was returning 404
     ]
   }
 ];

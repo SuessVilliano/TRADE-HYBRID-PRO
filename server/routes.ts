@@ -305,6 +305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // RSS Feeds and Economic Calendar routes
   app.get("/api/rss-feeds/feed/:sourceId", getRssFeed);
+  app.get("/api/rss-feeds/source/:sourceId", getRssFeed);
   app.get("/api/rss-feeds/sources", getAvailableSources);
   app.get("/api/rss-feeds/economic-calendar", getEconomicCalendar);
 
