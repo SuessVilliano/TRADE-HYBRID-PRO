@@ -18,6 +18,8 @@ import { MarketSentiment } from './market-sentiment';
 import { PortfolioSummary } from './portfolio-summary';
 import { MarketDepth } from './market-depth';
 import { TradingOrdersTable } from './trading-orders-table';
+import { RecentTrades } from './recent-trades';
+import { AlertsPanel } from './alerts-panel';
 
 interface WidgetComponentProps {
   symbol: string;
@@ -64,12 +66,16 @@ function getWidgetComponent(type: string, props: WidgetComponentProps) {
       return <MarketOverview />;
     case 'order-book':
       return <OrderBook symbol={props.symbol} />;
+    case 'recent-trades':
+      return <RecentTrades symbol={props.symbol} />;
     case 'trade-signals':
       return <TradeSignals symbol={props.symbol} />;
     case 'trading-insights':
       return <PersonalizedTradingInsights symbol={props.symbol} />;
     case 'smart-trade':
       return <SmartTradePanel symbol={props.symbol} />;
+    case 'alerts':
+      return <AlertsPanel symbol={props.symbol} />;
     default:
       return <div className="p-4 text-center text-slate-400">Widget not found</div>;
   }
@@ -259,6 +265,8 @@ export function DraggableTradingDashboard({
     { id: 'sentiment', title: 'Market Sentiment', type: 'sentiment' },
     { id: 'market-overview', title: 'Market Overview', type: 'market-overview' },
     { id: 'order-book', title: 'Order Book', type: 'order-book' },
+    { id: 'recent-trades', title: 'Recent Trades', type: 'recent-trades' },
+    { id: 'alerts', title: 'Price Alerts', type: 'alerts' },
     { id: 'trade-signals', title: 'AI Trading Signals', type: 'trade-signals' },
     { id: 'trading-insights', title: 'Personalized Trading Insights', type: 'trading-insights' },
     { id: 'smart-trade', title: 'AI Trade Assistant', type: 'smart-trade' },
