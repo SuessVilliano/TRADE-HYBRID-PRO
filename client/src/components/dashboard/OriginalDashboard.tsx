@@ -196,6 +196,22 @@ const dashboardItems: DashboardItem[] = [
     category: 'Services'
   },
   {
+    id: 'investor-dashboard',
+    name: 'Investor Dashboard',
+    icon: <LineChart className="h-5 w-5" />,
+    path: '/investors',
+    description: 'Manage your investments and track performance',
+    category: 'Services'
+  },
+  {
+    id: 'investor-admin',
+    name: 'Investor Admin',
+    icon: <Users className="h-5 w-5" />,
+    path: '/investors/admin',
+    description: 'Administrative dashboard for managing investors',
+    category: 'Services'
+  },
+  {
     id: 'affiliate',
     name: 'Affiliate Program',
     icon: <Users className="h-5 w-5" />,
@@ -308,6 +324,11 @@ const OriginalDashboard: React.FC<OriginalDashboardProps> = ({ className = '' })
           <div className="mt-8 bg-gray-800 border border-gray-700 rounded-lg p-4">
             <h2 className="text-xl font-bold mb-2">Quick Actions</h2>
             <div className="flex flex-wrap gap-2">
+              <Link to="/investors">
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  Investor Dashboard
+                </Button>
+              </Link>
               <Button className="bg-blue-600 hover:bg-blue-700">
                 Connect Broker
               </Button>
