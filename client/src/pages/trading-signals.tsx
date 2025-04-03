@@ -11,7 +11,7 @@ import useLocalStorage from '@/lib/hooks/useLocalStorage';
 import { SignalSubscriptionManager } from '@/components/ui/signal-subscription-manager';
 
 export default function TradingSignalsPage() {
-  const [apiKeyStatus] = useState(true); // Simulate API key being valid
+  const [apiKeyStatus] = useState(true); // Set to true to enable signals by default
   const [savedSignals, setSavedSignals] = useLocalStorage<SavedSignal[]>('saved-signals', []);
   
   // Handle adding a new signal

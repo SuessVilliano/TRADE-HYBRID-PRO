@@ -6,10 +6,39 @@ import { getNews, getTopicNews } from "./api/news";
 import { getLeaderboard, getTrader } from "./api/leaderboard";
 import { getBots, getBot, createBot, updateBot, deleteBot, runBot, stopBot } from "./api/bots";
 
-// We'll create separate functions since we have a new signals implementation
+// We'll create separate functions to directly use our signals-api
 const getSignals = (req: any, res: any) => {
-  // This is just a wrapper to redirect to the new endpoint
-  res.redirect(307, `/api/sheets/trading-signals?marketType=crypto`);
+  // Extract market type from query params
+  const marketType = req.query.marketType || 'crypto';
+  const userId = req.query.userId || undefined;
+  
+  // Forward to our signals API
+  req.url = `/api/signals/trading-signals?marketType=${marketType}`;
+  if (userId) {
+    req.url += `&userId=${userId}`;
+  }
+  
+  // Call the handler directly
+  import('./api/signals').then(signalsModule => {
+    const router = signalsModule.default;
+    // Find the trading-signals route handler
+    const routes = router.stack;
+    const route = routes.find((r: any) => 
+      r.route && r.route.path === '/trading-signals'
+    );
+    
+    if (route && route.route && route.route.stack && route.route.stack.length > 0) {
+      // Call the handler directly
+      const handler = route.route.stack[0].handle;
+      handler(req, res);
+    } else {
+      // Fallback to redirect if we can't find the handler
+      res.redirect(307, `/api/signals/trading-signals?marketType=${marketType}`);
+    }
+  }).catch(err => {
+    console.error('Error importing signals module:', err);
+    res.status(500).json({ error: 'Failed to load signals module' });
+  });
 };
 // Import at the top to avoid circular dependency
 import { processWebhookSignal } from './api/signals';
@@ -212,8 +241,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Google Sheets Signals routes
   app.use("/api/sheets", googleSheetsSignalsRoutes);
   
-  // Trading Signals API routes
-  app.use("/api/sheets", sheetsSignalsRoutes);
+  // Trading Signals API routes - mount explicitly to handle direct requests
+  app.use("/api/signals", googleSheetsSignalsRoutes);
   
   // OpenAI API proxy routes
   app.use("/api/openai-proxy", openAIProxyRoutes);
