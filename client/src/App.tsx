@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+const SimpleChartingDashboard = React.lazy(() => import('./pages/simple-charting'));
 import { AuthProvider } from './lib/context/AuthContext';
 import { SolanaAuthProvider } from './lib/context/SolanaAuthProvider';
 import { SolanaWalletProvider } from './lib/context/SolanaWalletProvider';
@@ -104,6 +105,7 @@ const App: React.FC = () => {
                 {/* Public routes */}
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/trading-freedom-podcast" element={<TradingFreedomPodcast />} />
+                <Route path="/simple-charting" element={<React.Suspense fallback={<div>Loading chart...</div>}><SimpleChartingDashboard /></React.Suspense>} />
                 
                 {/* Auth routes */}
                 <Route path="/login" element={<LoginPage />} />

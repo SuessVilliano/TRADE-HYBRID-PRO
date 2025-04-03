@@ -24,9 +24,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
 import { Badge } from './badge';
 import { Separator } from './separator';
 
-// Import TradingViewWidget
-const TradingViewWidgetLazy = React.lazy(() => import('./TradingViewWidget'));
-const TradingSignalsLazy = React.lazy(() => import('../trade/trade-signals-panel'));
+// Import components directly
+import TradingViewWidget from './TradingViewWidget';
+import TradeSignalsPanel from '../trade/trade-signals-panel';
 
 // Define useMediaQuery hook directly here to avoid import issues
 function useMediaQuery(query: string): boolean {
@@ -234,9 +234,7 @@ export function AdvancedTradeLayout({
           </div>
         </CardHeader>
         <CardContent className="p-0 h-[calc(100%-36px)] overflow-auto">
-          <React.Suspense fallback={<div className="flex items-center justify-center h-full">Loading signals...</div>}>
-            <TradingSignalsLazy />
-          </React.Suspense>
+          <TradeSignalsPanel />
         </CardContent>
       </Card>
     );
@@ -419,15 +417,13 @@ export function AdvancedTradeLayout({
             </div>
           )}
           <div className="h-full relative overflow-hidden">
-            <React.Suspense fallback={<div>Loading chart...</div>}>
-              <TradingViewWidgetLazy
-                symbol={symbol}
-                theme="dark"
-                width="100%"
-                height="100%"
-                allow_symbol_change={true}
-              />
-            </React.Suspense>
+            <TradingViewWidget
+              symbol={symbol}
+              theme="dark"
+              width="100%"
+              height="100%"
+              allow_symbol_change={true}
+            />
           </div>
         </div>
         

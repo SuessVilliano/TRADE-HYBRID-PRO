@@ -1,248 +1,157 @@
-export interface TradeSignal {
+// Trade Signal Types
+export type TradeSignal = {
   id: string;
   symbol: string;
   type: 'buy' | 'sell';
   entry: number;
   stopLoss: number;
   takeProfit: number;
-  risk: number;
-  source: string;
-  notes?: string;
   timestamp: Date;
-}
+  source: string;
+  risk: number;
+  notes?: string;
+};
 
-export interface TradeExecution {
-  id: string;
-  signalId: string;
-  status: 'pending' | 'executed' | 'failed' | 'canceled';
-  executedAt: Date;
-  brokerId?: string;
-  orderReference?: string;
-  error?: string;
-}
-
-// Event types for trade signal service
-type TradeSignalEvent = 'signal_added' | 'execution_created' | 'execution_updated' | 'abatev_copy' | 'abatev_execute';
+// Event handlers
+type SignalEventType = 'signal_added' | 'signal_updated' | 'signal_removed';
+type SignalEventHandler = (signal: TradeSignal) => void;
 
 class TradeSignalService {
   private signals: TradeSignal[] = [];
-  private executions: TradeExecution[] = [];
-  private callbacks: Map<string, Function[]> = new Map();
+  private eventHandlers: Record<SignalEventType, SignalEventHandler[]> = {
+    signal_added: [],
+    signal_updated: [],
+    signal_removed: []
+  };
 
   constructor() {
-    this.loadFromStorage();
-    
-    // For demo purposes, initialize with mock signals if none exist
-    if (this.signals.length === 0) {
-      this.initializeMockSignals();
-    }
+    // Add some mock data for development
+    this.initializeMockData();
   }
 
+  // Subscribe to signal events
+  subscribe(event: SignalEventType, handler: SignalEventHandler): void {
+    this.eventHandlers[event].push(handler);
+  }
+
+  // Unsubscribe from signal events
+  unsubscribe(event: SignalEventType, handler: SignalEventHandler): void {
+    this.eventHandlers[event] = this.eventHandlers[event].filter(h => h !== handler);
+  }
+
+  // Trigger event
+  private triggerEvent(event: SignalEventType, signal: TradeSignal): void {
+    this.eventHandlers[event].forEach(handler => handler(signal));
+  }
+
+  // Add a new signal
+  addSignal(signal: TradeSignal): void {
+    this.signals.unshift(signal); // Add to beginning of array
+    this.triggerEvent('signal_added', signal);
+  }
+
+  // Get all signals
   getAllSignals(): TradeSignal[] {
-    return [...this.signals];
+    return [...this.signals]; // Return a copy to prevent direct modification
   }
 
-  getSignalById(id: string): TradeSignal | undefined {
-    return this.signals.find(signal => signal.id === id);
-  }
-
-  addSignal(signal: Omit<TradeSignal, 'id' | 'timestamp'>): TradeSignal {
-    const newSignal: TradeSignal = {
-      id: this.generateId(),
-      ...signal,
-      timestamp: new Date()
-    };
-
-    this.signals.push(newSignal);
-    this.saveToStorage();
-    this.triggerCallbacks('signal_added', newSignal);
-
-    return newSignal;
-  }
-
-  executeSignal(signalId: string, brokerId?: string): TradeExecution {
-    const signal = this.getSignalById(signalId);
-    if (!signal) {
-      throw new Error(`Signal with id ${signalId} not found`);
-    }
-
-    const execution: TradeExecution = {
-      id: this.generateId(),
-      signalId,
-      status: 'pending',
-      executedAt: new Date(),
-      brokerId
-    };
-
-    this.executions.push(execution);
-    this.saveToStorage();
-    this.triggerCallbacks('execution_created', execution);
-
-    // In a real implementation, we would integrate with the broker API here
-    
-    // For demo purposes, simulate successful execution after delay
-    setTimeout(() => {
-      execution.status = 'executed';
-      execution.orderReference = `ORD-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-      this.saveToStorage();
-      this.triggerCallbacks('execution_updated', execution);
-    }, 2000);
-
-    return execution;
-  }
-
-  getExecutionsForSignal(signalId: string): TradeExecution[] {
-    return this.executions.filter(execution => execution.signalId === signalId);
-  }
-
-  subscribe(event: TradeSignalEvent, callback: Function): void {
-    if (!this.callbacks.has(event)) {
-      this.callbacks.set(event, []);
-    }
-    this.callbacks.get(event)?.push(callback);
-  }
-
-  unsubscribe(event: TradeSignalEvent, callback: Function): void {
-    if (!this.callbacks.has(event)) return;
-    
-    const callbacks = this.callbacks.get(event);
-    if (!callbacks) return;
-    
-    const index = callbacks.indexOf(callback);
-    if (index !== -1) {
-      callbacks.splice(index, 1);
-      this.callbacks.set(event, callbacks);
-    }
-  }
-
-  // Signal copying for ABATEV panel
-  copySignalToABATEV(signalId: string): boolean {
-    const signal = this.getSignalById(signalId);
-    if (!signal) return false;
-    
-    // Trigger ABATEV copy event with the signal ID
-    this.triggerCallbacks('abatev_copy', signalId);
-    
-    return true;
-  }
-
-  // Signal execution via ABATEV
-  executeSignalViaABATEV(signalId: string): boolean {
-    const signal = this.getSignalById(signalId);
-    if (!signal) return false;
-    
-    // Create an execution record for tracking
-    const execution: TradeExecution = {
-      id: this.generateId(),
-      signalId,
-      status: 'pending',
-      executedAt: new Date(),
-      brokerId: 'abatev'
-    };
-    
-    this.executions.push(execution);
-    this.saveToStorage();
-    
-    // Trigger ABATEV execute event with the signal ID
-    this.triggerCallbacks('abatev_execute', signalId);
-    
-    return true;
-  }
-
-  private initializeMockSignals(): void {
-    const mockSignals = [
+  // Initialize mock data
+  private initializeMockData(): void {
+    const mockSignals: TradeSignal[] = [
       {
-        symbol: 'BTC/USD',
-        type: 'buy' as const,
-        entry: 65450,
-        stopLoss: 64320,
-        takeProfit: 68900,
-        risk: 1.5,
-        source: 'AI Forecast',
-        notes: 'Strong bullish divergence on 4h chart'
-      },
-      {
-        symbol: 'ETH/USD',
-        type: 'sell' as const,
-        entry: 3280,
-        stopLoss: 3420,
-        takeProfit: 2950,
+        id: '1',
+        symbol: 'BTCUSDT',
+        type: 'buy',
+        entry: 68420.50,
+        stopLoss: 67000.00,
+        takeProfit: 72000.00,
+        timestamp: new Date(Date.now() - 1000 * 60 * 15),
+        source: 'AI Signal',
         risk: 2,
-        source: 'Tech Patterns',
-        notes: 'Double top formation with decreasing volume'
+        notes: 'Strong support at $67,000 with increasing volume'
       },
       {
-        symbol: 'EUR/USD',
-        type: 'buy' as const,
-        entry: 1.0952,
-        stopLoss: 1.0920,
-        takeProfit: 1.1050,
+        id: '2',
+        symbol: 'ETHUSDT',
+        type: 'buy',
+        entry: 3450.75,
+        stopLoss: 3350.00,
+        takeProfit: 3650.00,
+        timestamp: new Date(Date.now() - 1000 * 60 * 45),
+        source: 'TradingView',
         risk: 1,
-        source: 'Economic Calendar',
-        notes: 'Potential trend continuation after US inflation data'
-      }
+        notes: 'Breaking out of bullish flag pattern on 4h chart'
+      },
+      {
+        id: '3',
+        symbol: 'SOLUSDT',
+        type: 'sell',
+        entry: 147.50,
+        stopLoss: 154.00,
+        takeProfit: 130.00,
+        timestamp: new Date(Date.now() - 1000 * 60 * 120),
+        source: 'Community',
+        risk: 3,
+        notes: 'Bearish divergence on RSI, approaching resistance'
+      },
+      {
+        id: '4',
+        symbol: 'DOGEUSDT',
+        type: 'buy',
+        entry: 0.1235,
+        stopLoss: 0.1180,
+        takeProfit: 0.1350,
+        timestamp: new Date(Date.now() - 1000 * 60 * 180),
+        source: 'AI Signal',
+        risk: 2,
+        notes: 'Positive sentiment analysis from social media data'
+      },
+      {
+        id: '5',
+        symbol: 'AVAXUSDT',
+        type: 'sell',
+        entry: 28.75,
+        stopLoss: 30.50,
+        takeProfit: 24.00,
+        timestamp: new Date(Date.now() - 1000 * 60 * 240),
+        source: 'Oscillator',
+        risk: 2,
+        notes: 'Overbought on multiple timeframes'
+      },
+      {
+        id: '6',
+        symbol: 'BNBUSDT',
+        type: 'buy',
+        entry: 572.50,
+        stopLoss: 550.00,
+        takeProfit: 620.00,
+        timestamp: new Date(Date.now() - 1000 * 60 * 300),
+        source: 'Pattern',
+        risk: 1,
+        notes: 'Double bottom pattern with increasing buy volume'
+      },
     ];
 
-    for (const mockSignal of mockSignals) {
-        const mockSignalWithId: TradeSignal = {
-          id: this.generateId(),
-          ...mockSignal,
-          timestamp: new Date(Date.now() - Math.floor(Math.random() * 1000 * 60 * 60 * 24))
-        };
-        this.signals.push(mockSignalWithId);
-    }
-
-    this.saveToStorage();
+    this.signals = mockSignals;
   }
 
-  private triggerCallbacks(event: string, data: any): void {
-    const callbacks = this.callbacks.get(event);
-    if (!callbacks) return;
-    
-    for (const callback of callbacks) {
-      try {
-        callback(data);
-      } catch (error) {
-        console.error(`Error in trade signal service ${event} callback:`, error);
-      }
-    }
+  // Search signals by symbol
+  searchBySymbol(query: string): TradeSignal[] {
+    return this.signals.filter(signal => 
+      signal.symbol.toLowerCase().includes(query.toLowerCase())
+    );
   }
 
-  private saveToStorage(): void {
-    try {
-      localStorage.setItem('trade_signals', JSON.stringify(this.signals));
-      localStorage.setItem('trade_executions', JSON.stringify(this.executions));
-    } catch (error) {
-      console.error('Error saving trade signals to storage:', error);
-    }
+  // Filter signals by type
+  filterByType(type: 'buy' | 'sell'): TradeSignal[] {
+    return this.signals.filter(signal => signal.type === type);
   }
 
-  private loadFromStorage(): void {
-    try {
-      const signalsData = localStorage.getItem('trade_signals');
-      const executionsData = localStorage.getItem('trade_executions');
-      
-      if (signalsData) {
-        this.signals = JSON.parse(signalsData).map((signal: any) => ({
-          ...signal,
-          timestamp: new Date(signal.timestamp)
-        }));
-      }
-      
-      if (executionsData) {
-        this.executions = JSON.parse(executionsData).map((execution: any) => ({
-          ...execution,
-          executedAt: new Date(execution.executedAt)
-        }));
-      }
-    } catch (error) {
-      console.error('Error loading trade signals from storage:', error);
-    }
-  }
-
-  private generateId(): string {
-    return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+  // Filter signals by source
+  filterBySource(source: string): TradeSignal[] {
+    return this.signals.filter(signal => signal.source === source);
   }
 }
 
+// Export singleton instance
 export const tradeSignalService = new TradeSignalService();
