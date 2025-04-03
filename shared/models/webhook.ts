@@ -17,14 +17,7 @@ export const webhookConfigSchema = z.object({
   id: z.string(),
   userId: z.string(),
   name: z.string().min(1, 'Name is required'),
-  broker: z.enum([
-    BrokerType.ALPACA, 
-    BrokerType.OANDA, 
-    BrokerType.NINJATRADER, 
-    BrokerType.TRADOVATE,
-    BrokerType.TRADINGVIEW, 
-    BrokerType.OTHER
-  ]),
+  broker: z.string().min(1, 'Broker is required'),
   token: z.string().min(8, 'Token must be at least 8 characters'),
   endpoint: z.string().optional(),
   isActive: z.boolean().default(true),
@@ -128,14 +121,7 @@ export const genericWebhookSchema = z.object({
   apiKey: z.string().optional(),
   webhook_token: z.string().optional(),
   
-  broker: z.enum([
-    BrokerType.ALPACA, 
-    BrokerType.OANDA, 
-    BrokerType.NINJATRADER, 
-    BrokerType.TRADOVATE,
-    BrokerType.TRADINGVIEW, 
-    BrokerType.OTHER
-  ]).optional(),
+  broker: z.string().min(1, 'Broker is required').optional(),
   action: z.enum(['BUY', 'SELL', 'CLOSE', 'FLATTEN', 'ALERT']).optional(),
   symbol: z.string().optional(),
   price: z.number().optional(),
@@ -193,14 +179,7 @@ export const webhookExecutionSchema = z.object({
   id: z.string(),
   webhookId: z.string(),
   userId: z.string(),
-  broker: z.enum([
-    BrokerType.ALPACA, 
-    BrokerType.OANDA, 
-    BrokerType.NINJATRADER, 
-    BrokerType.TRADOVATE,
-    BrokerType.TRADINGVIEW, 
-    BrokerType.OTHER
-  ]),
+  broker: z.string().min(1, 'Broker is required'),
   payload: z.record(z.any()),
   result: z.object({
     success: z.boolean(),
@@ -214,3 +193,43 @@ export const webhookExecutionSchema = z.object({
 });
 
 export type WebhookExecution = z.infer<typeof webhookExecutionSchema>;
+
+// Performance tracking models
+export const webhookPerformanceMetricSchema = z.object({
+  id: z.string(),
+  webhookId: z.string(),
+  responseTime: z.number(),
+  success: z.boolean(),
+  timestamp: z.date(),
+  endpoint: z.string(),
+  errorMessage: z.string().optional(),
+});
+
+export type WebhookPerformanceMetric = z.infer<typeof webhookPerformanceMetricSchema>;
+
+// Error insights model
+export const errorInsightSchema = z.object({
+  id: z.string(),
+  webhookId: z.string(),
+  errorPattern: z.string(),
+  suggestedFix: z.string(),
+  severity: z.enum(['low', 'medium', 'high']),
+  timestamp: z.date(),
+  frequency: z.number(),
+});
+
+export type ErrorInsight = z.infer<typeof errorInsightSchema>;
+
+// Latency heatmap data model
+export const latencyHeatmapDataSchema = z.object({
+  hour: z.number(),
+  count: z.number(),
+  totalResponseTime: z.number(),
+  errors: z.number(),
+  averageResponseTime: z.number(),
+  errorRate: z.number(),
+  intensity: z.number(),
+  responseColor: z.string(),
+});
+
+export type LatencyHeatmapData = z.infer<typeof latencyHeatmapDataSchema>;

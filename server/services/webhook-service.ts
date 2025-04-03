@@ -16,6 +16,32 @@ import { generateId } from '../utils';
 const webhookConfigs = new Map<string, WebhookConfig>();
 const webhookExecutions = new Map<string, any>();
 
+// For tracking performance metrics
+interface WebhookPerformanceMetric {
+  id: string;
+  webhookId: string;
+  responseTime: number;
+  success: boolean;
+  timestamp: Date;
+  endpoint: string;
+  errorMessage?: string;
+}
+
+const performanceMetrics: WebhookPerformanceMetric[] = [];
+
+// For AI-powered error insights
+interface ErrorInsight {
+  id: string;
+  webhookId: string;
+  errorPattern: string;
+  suggestedFix: string;
+  severity: 'low' | 'medium' | 'high';
+  timestamp: Date;
+  frequency: number; // How many times this error has occurred
+}
+
+const errorInsights: Map<string, ErrorInsight> = new Map();
+
 /**
  * Get a webhook config by token
  */
@@ -47,7 +73,7 @@ export const createWebhookConfig = async (
     id: generateId(),
     userId,
     name,
-    broker: broker as any, // Cast to satisfy TypeScript
+    broker, // No need to cast anymore as we've updated the type
     token,
     isActive: true,
     settings: settings || {},
@@ -114,7 +140,7 @@ const generateWebhookToken = (): string => {
  */
 export const processWebhook = async (
   req: Request,
-  webhookConfig: WebhookConfig
+  webhookConfig: Omit<WebhookConfig, 'broker'> & { broker: string }
 ): Promise<WebhookResponse> => {
   try {
     const { broker } = webhookConfig;
@@ -199,8 +225,10 @@ export const logWebhookExecution = async (
   broker: string,
   payload: any,
   result: any,
-  req: Request
+  req: Request,
+  responseTime?: number
 ): Promise<void> => {
+  const timestamp = new Date();
   const execution = {
     id: generateId(),
     webhookId,
@@ -208,9 +236,10 @@ export const logWebhookExecution = async (
     broker,
     payload,
     result,
-    timestamp: new Date(),
+    timestamp,
     ipAddress: req.ip,
-    userAgent: req.headers['user-agent'] || 'unknown'
+    userAgent: req.headers['user-agent'] || 'unknown',
+    responseTime: responseTime || 0
   };
   
   // In a real app, this would save to a database
@@ -218,6 +247,148 @@ export const logWebhookExecution = async (
   
   // Also log to console for debugging
   console.log(`Webhook execution logged: ${execution.id}`);
+  
+  // Record performance metrics
+  if (responseTime) {
+    const performanceMetric: WebhookPerformanceMetric = {
+      id: generateId(),
+      webhookId,
+      responseTime,
+      success: result.success,
+      timestamp,
+      endpoint: req.originalUrl || req.url,
+      errorMessage: result.success ? undefined : (result.message || 'Unknown error')
+    };
+    
+    // Store the performance metric
+    performanceMetrics.push(performanceMetric);
+    
+    // Keep only the last 100 metrics to avoid memory issues
+    if (performanceMetrics.length > 100) {
+      performanceMetrics.shift();
+    }
+    
+    // If there was an error, analyze it for insights
+    if (!result.success && result.errors && result.errors.length > 0) {
+      analyzeErrorForInsights(webhookId, result.errors[0], timestamp);
+    }
+  }
+};
+
+/**
+ * Get performance metrics for a webhook
+ */
+export const getWebhookPerformanceMetrics = async (webhookId: string): Promise<WebhookPerformanceMetric[]> => {
+  return performanceMetrics.filter(metric => metric.webhookId === webhookId);
+};
+
+/**
+ * Get all webhooks for a user
+ */
+export const getWebhooksForUser = async (userId: string): Promise<WebhookConfig[]> => {
+  return Array.from(webhookConfigs.values()).filter(webhook => webhook.userId === userId);
+};
+
+/**
+ * Get the error insights for a webhook
+ */
+export const getErrorInsightsForWebhook = async (webhookId: string): Promise<ErrorInsight[]> => {
+  return Array.from(errorInsights.values()).filter(insight => insight.webhookId === webhookId);
+};
+
+/**
+ * Analyze an error and generate insights
+ */
+const analyzeErrorForInsights = (webhookId: string, error: string, timestamp: Date): void => {
+  // Simple error pattern detection
+  const errorPatterns = [
+    {
+      pattern: /invalid token/i,
+      errorType: 'auth_token_invalid',
+      suggestion: 'Check if the webhook token is correct and that the webhook is active. You may need to regenerate the token.',
+      severity: 'high'
+    },
+    {
+      pattern: /missing (.*?) field/i,
+      errorType: 'missing_field',
+      suggestion: 'Ensure all required fields are included in your webhook payload. Check the documentation for the required format.',
+      severity: 'medium'
+    },
+    {
+      pattern: /timeout/i,
+      errorType: 'timeout_error',
+      suggestion: 'The broker API might be experiencing high load or connectivity issues. Try again later or check your network connection.',
+      severity: 'medium'
+    },
+    {
+      pattern: /permission denied|unauthorized|forbidden/i,
+      errorType: 'permission_error',
+      suggestion: 'Check if your API credentials have the necessary permissions for trading. You may need to update your broker API settings.',
+      severity: 'high'
+    },
+    {
+      pattern: /rate limit/i,
+      errorType: 'rate_limit',
+      suggestion: 'You are sending too many requests to the broker API. Reduce the frequency of requests or contact the broker to increase your limits.',
+      severity: 'medium'
+    },
+    {
+      pattern: /invalid (symbol|instrument)/i,
+      errorType: 'invalid_symbol',
+      suggestion: 'The trading symbol format may be incorrect. Check broker requirements for proper symbol formatting.',
+      severity: 'medium'
+    },
+    {
+      pattern: /insufficient funds/i,
+      errorType: 'insufficient_funds',
+      suggestion: 'Your broker account does not have enough balance to execute this trade. Check your account balance.',
+      severity: 'high'
+    },
+    {
+      pattern: /market closed/i,
+      errorType: 'market_closed',
+      suggestion: 'The market is currently closed for this instrument. Check trading hours for this market.',
+      severity: 'medium'
+    },
+    {
+      pattern: /json parse error|syntax error/i,
+      errorType: 'payload_format_error',
+      suggestion: 'Your webhook payload has invalid JSON format. Check for syntax errors in your payload.',
+      severity: 'medium'
+    },
+    {
+      pattern: /internal server error/i,
+      errorType: 'server_error',
+      suggestion: 'The broker API is experiencing internal issues. Wait and try again later.',
+      severity: 'low'
+    }
+  ];
+  
+  // Find matching error pattern
+  const matchedPattern = errorPatterns.find(pattern => error.match(pattern.pattern));
+  
+  if (matchedPattern) {
+    const errorKey = `${webhookId}-${matchedPattern.errorType}`;
+    
+    // Update existing insight or create new one
+    if (errorInsights.has(errorKey)) {
+      const insight = errorInsights.get(errorKey)!;
+      insight.frequency += 1;
+      insight.timestamp = timestamp; // Update timestamp to most recent occurrence
+      errorInsights.set(errorKey, insight);
+    } else {
+      const newInsight: ErrorInsight = {
+        id: generateId(),
+        webhookId,
+        errorPattern: matchedPattern.errorType,
+        suggestedFix: matchedPattern.suggestion,
+        severity: matchedPattern.severity as any,
+        timestamp,
+        frequency: 1
+      };
+      errorInsights.set(errorKey, newInsight);
+    }
+  }
 };
 
 // Validation functions
@@ -297,7 +468,7 @@ function convertTradingViewToNinjaTrader(payload: any) {
 }
 
 // Trade execution functions
-async function executeAlpacaTrade(payload: any, config: WebhookConfig): Promise<WebhookResponse> {
+async function executeAlpacaTrade(payload: any, config: Omit<WebhookConfig, 'broker'> & { broker: string }): Promise<WebhookResponse> {
   try {
     console.log('Executing Alpaca trade:', JSON.stringify(payload));
     
@@ -328,7 +499,7 @@ async function executeAlpacaTrade(payload: any, config: WebhookConfig): Promise<
   }
 }
 
-async function executeOandaTrade(payload: any, config: WebhookConfig): Promise<WebhookResponse> {
+async function executeOandaTrade(payload: any, config: Omit<WebhookConfig, 'broker'> & { broker: string }): Promise<WebhookResponse> {
   try {
     console.log('Executing Oanda trade:', JSON.stringify(payload));
     
@@ -358,7 +529,7 @@ async function executeOandaTrade(payload: any, config: WebhookConfig): Promise<W
   }
 }
 
-async function executeNinjaTraderTrade(payload: any, config: WebhookConfig): Promise<WebhookResponse> {
+async function executeNinjaTraderTrade(payload: any, config: Omit<WebhookConfig, 'broker'> & { broker: string }): Promise<WebhookResponse> {
   try {
     console.log('Executing NinjaTrader trade:', JSON.stringify(payload));
     

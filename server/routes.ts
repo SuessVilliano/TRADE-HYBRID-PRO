@@ -80,7 +80,7 @@ import whopRoutes from './routes/whop-routes'; // Added import for Whop authenti
 import mockPropFirmRoutes from './routes/mock-prop-firm-routes'; // Added import for mock prop firm routes
 import membershipRoutes from './routes/membership-routes'; // Added import for membership routes
 import userWebhooksRoutes from './api/user-webhooks'; // Added import for user webhooks routes
-import webhookRoutes from './routes/webhooks'; // Added import for webhook routes
+import webhookRoutes from './routes/webhooks-fixed'; // Added import for webhook routes (using fixed version)
 import brokerApiRoutes from './routes/broker'; // Added import for broker API routes
 
 export async function registerRoutes(app: Express): Promise<Server> {

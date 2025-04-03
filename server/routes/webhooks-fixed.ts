@@ -322,7 +322,7 @@ router.get('/:id/performance', authMiddleware, async (req: Request, res: Respons
     }
     
     // Get the webhook to verify ownership
-    const webhooks = await getWebhooksForUser(userId);
+    const webhooks = await getWebhooksForUser(userId.toString());
     const webhook = webhooks.find(w => w.id === id);
     
     if (!webhook) {
@@ -362,7 +362,7 @@ router.get('/:id/error-insights', authMiddleware, async (req: Request, res: Resp
     }
     
     // Get the webhook to verify ownership
-    const webhooks = await getWebhooksForUser(userId);
+    const webhooks = await getWebhooksForUser(userId.toString());
     const webhook = webhooks.find(w => w.id === id);
     
     if (!webhook) {
@@ -408,7 +408,7 @@ router.post('/:id/test', authMiddleware, async (req: Request, res: Response) => 
     }
     
     // Get the webhook
-    const webhooks = await getWebhooksForUser(userId);
+    const webhooks = await getWebhooksForUser(userId.toString());
     const webhook = webhooks.find(w => w.id === id);
     
     if (!webhook) {
@@ -480,7 +480,7 @@ router.post('/:id/test', authMiddleware, async (req: Request, res: Response) => 
     const startTime = Date.now();
     
     // Process the webhook with proper type casting to satisfy TypeScript
-    const result = await processWebhook(testReq as Request, webhook);
+    const result = await processWebhook(testReq as unknown as Request, webhook);
     
     // Calculate response time
     const responseTime = Date.now() - startTime;

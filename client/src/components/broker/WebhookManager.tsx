@@ -1,37 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Button, 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Label,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  Switch,
-  Alert,
-  AlertDescription,
-  AlertTitle,
-  Separator,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from "@/components/ui";
-import { Copy, ChevronsUpDown, AlertCircle, Check, Cog, Lock, RefreshCw, Clipboard, Loader2, X } from 'lucide-react';
+// Using individual imports instead of the index.ts to avoid type errors
+import { Button } from "../ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
+import { Input } from "../ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Label } from "../ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Switch } from "../ui/switch";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Separator } from "../ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Badge } from "../ui/badge";
+import { Progress } from "../ui/progress";
+
+// Missing components - would need to be defined:
+// Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetTrigger,
+// Tooltip, TooltipContent, TooltipProvider, TooltipTrigger
+import { Copy, ChevronsUpDown, AlertCircle, Check, Cog, Lock, RefreshCw, Clipboard, Loader2, X, 
+  ChartBar, Activity, BarChart4, Zap, Terminal, Network, Eye, History, LineChart } from 'lucide-react';
 import { toast } from 'sonner';
 
 // The available broker types
@@ -55,6 +41,56 @@ interface WebhookConfig {
   settings?: Record<string, any>;
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+interface WebhookPerformanceMetric {
+  id: string;
+  webhookId: string;
+  responseTime: number;
+  success: boolean;
+  timestamp: Date;
+  endpoint: string;
+  errorMessage?: string;
+}
+
+interface ErrorInsight {
+  id: string;
+  webhookId: string;
+  errorPattern: string;
+  suggestedFix: string;
+  severity: 'low' | 'medium' | 'high';
+  timestamp: Date;
+  frequency: number;
+}
+
+interface LatencyHeatmapData {
+  hour: number;
+  count: number;
+  totalResponseTime: number;
+  errors: number;
+  averageResponseTime: number;
+  errorRate: number;
+  intensity: number;
+  responseColor: string;
+}
+
+interface PerformanceData {
+  metrics: WebhookPerformanceMetric[];
+  latencyHeatmap: LatencyHeatmapData[];
+  summary: {
+    totalRequests: number;
+    successRate: number;
+    averageResponseTime: number;
+    maxResponseTime: number;
+    minResponseTime: number;
+  }
+}
+
+interface ErrorInsightsData {
+  insights: ErrorInsight[];
+  hasCriticalIssues: boolean;
+  mostCommonError: ErrorInsight | null;
+  totalErrors: number;
 }
 
 // Simplified API client for webhook operations
@@ -110,6 +146,41 @@ const webhookApi = {
     if (!response.ok) {
       throw new Error('Failed to delete webhook');
     }
+  },
+  
+  // Get performance metrics for a webhook
+  getWebhookPerformance: async (id: string): Promise<any> => {
+    const response = await fetch(`/api/webhooks/${id}/performance`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch webhook performance metrics');
+    }
+    
+    return await response.json();
+  },
+  
+  // Get error insights for a webhook
+  getWebhookErrorInsights: async (id: string): Promise<any> => {
+    const response = await fetch(`/api/webhooks/${id}/error-insights`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch webhook error insights');
+    }
+    
+    return await response.json();
+  },
+  
+  // Test a webhook with sample data
+  testWebhook: async (id: string): Promise<any> => {
+    const response = await fetch(`/api/webhooks/${id}/test`, {
+      method: 'POST'
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to test webhook');
+    }
+    
+    return await response.json();
   }
 };
 
@@ -230,6 +301,14 @@ const WebhookListItem: React.FC<WebhookListItemProps> = ({
   const [testResult, setTestResult] = useState<any>(null);
   const [showTestResult, setShowTestResult] = useState(false);
   
+  // New states for performance metrics and error insights
+  const [performanceData, setPerformanceData] = useState<PerformanceData | null>(null);
+  const [errorInsights, setErrorInsights] = useState<ErrorInsightsData | null>(null);
+  const [loadingPerformance, setLoadingPerformance] = useState(false);
+  const [loadingInsights, setLoadingInsights] = useState(false);
+  const [showPerformance, setShowPerformance] = useState(false);
+  const [showInsights, setShowInsights] = useState(false);
+  
   // Create shorter, cleaner URLs based on CrossTrade's approach
   const baseUrl = window.location.origin;
   const shortUrl = `${baseUrl}/api/w/${webhook.token}`;
@@ -249,6 +328,44 @@ const WebhookListItem: React.FC<WebhookListItemProps> = ({
   const getBrokerName = (brokerId: string) => {
     const broker = brokerTypes.find(b => b.id === brokerId);
     return broker ? broker.name : brokerId;
+  };
+  
+  // Function to fetch performance metrics
+  const fetchPerformanceMetrics = async () => {
+    if (!webhook.id) return;
+    
+    setLoadingPerformance(true);
+    try {
+      const data = await webhookApi.getWebhookPerformance(webhook.id);
+      setPerformanceData(data);
+      setShowPerformance(true);
+    } catch (error: any) {
+      console.error('Error fetching performance metrics:', error);
+      toast.error('Failed to load performance metrics', {
+        description: error.message || 'An error occurred'
+      });
+    } finally {
+      setLoadingPerformance(false);
+    }
+  };
+  
+  // Function to fetch error insights
+  const fetchErrorInsights = async () => {
+    if (!webhook.id) return;
+    
+    setLoadingInsights(true);
+    try {
+      const data = await webhookApi.getWebhookErrorInsights(webhook.id);
+      setErrorInsights(data);
+      setShowInsights(true);
+    } catch (error: any) {
+      console.error('Error fetching error insights:', error);
+      toast.error('Failed to load error insights', {
+        description: error.message || 'An error occurred'
+      });
+    } finally {
+      setLoadingInsights(false);
+    }
   };
   
   // Function to test the webhook with sample data
@@ -533,6 +650,255 @@ const WebhookListItem: React.FC<WebhookListItemProps> = ({
             </div>
           </div>
         )}
+        
+        {/* Performance Metrics Sheet */}
+        <Sheet open={showPerformance} onOpenChange={setShowPerformance}>
+          <SheetTrigger asChild>
+            <Button
+              variant="link"
+              size="sm"
+              className="mt-3 p-0 h-auto text-xs mr-4"
+              onClick={fetchPerformanceMetrics}
+              disabled={loadingPerformance}
+            >
+              {loadingPerformance ? (
+                <>
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  Loading performance...
+                </>
+              ) : (
+                <>
+                  <Activity className="h-3 w-3 mr-1" />
+                  View performance metrics
+                </>
+              )}
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="overflow-y-auto w-[400px] sm:max-w-md">
+            <SheetHeader>
+              <SheetTitle>Performance Metrics</SheetTitle>
+              <SheetDescription>
+                Webhook execution performance for {webhook.name}
+              </SheetDescription>
+            </SheetHeader>
+            
+            {performanceData ? (
+              <div className="py-4 space-y-4">
+                {/* Summary Statistics */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Card className="p-3">
+                    <div className="text-xs text-muted-foreground">Success Rate</div>
+                    <div className="text-lg font-semibold mt-1">
+                      {performanceData.summary.successRate.toFixed(1)}%
+                    </div>
+                    <Progress 
+                      value={performanceData.summary.successRate} 
+                      className="h-1 mt-1" 
+                    />
+                  </Card>
+                  <Card className="p-3">
+                    <div className="text-xs text-muted-foreground">Total Requests</div>
+                    <div className="text-lg font-semibold mt-1">
+                      {performanceData.summary.totalRequests}
+                    </div>
+                  </Card>
+                  <Card className="p-3">
+                    <div className="text-xs text-muted-foreground">Avg Response Time</div>
+                    <div className="text-lg font-semibold mt-1">
+                      {performanceData.summary.averageResponseTime.toFixed(0)}ms
+                    </div>
+                  </Card>
+                  <Card className="p-3">
+                    <div className="text-xs text-muted-foreground">Max Response Time</div>
+                    <div className="text-lg font-semibold mt-1">
+                      {performanceData.summary.maxResponseTime.toFixed(0)}ms
+                    </div>
+                  </Card>
+                </div>
+                
+                {/* Latency Heatmap */}
+                <Card className="p-4">
+                  <CardTitle className="text-sm mb-3">Response Time Heatmap</CardTitle>
+                  <div className="grid grid-cols-24 gap-1 h-8">
+                    {performanceData.latencyHeatmap.map((bucket, hour) => (
+                      <div 
+                        key={hour}
+                        className="h-full rounded-sm relative group"
+                        style={{ 
+                          backgroundColor: bucket.count ? bucket.responseColor : '#e2e8f0',
+                          opacity: bucket.count ? 0.2 + bucket.intensity * 0.8 : 0.2
+                        }}
+                      >
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="w-full h-full"/>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="text-xs">
+                                <div className="font-semibold">{hour}:00 - {hour}:59</div>
+                                <div>Requests: {bucket.count}</div>
+                                {bucket.count > 0 && (
+                                  <>
+                                    <div>Avg time: {bucket.averageResponseTime.toFixed(0)}ms</div>
+                                    <div>Error rate: {bucket.errorRate.toFixed(1)}%</div>
+                                  </>
+                                )}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-2 flex justify-between">
+                    <span>12 AM</span>
+                    <span>12 PM</span>
+                    <span>11 PM</span>
+                  </div>
+                </Card>
+                
+                {/* Recent Metrics List */}
+                <Card className="p-4">
+                  <CardTitle className="text-sm mb-3">Recent Executions</CardTitle>
+                  {performanceData.metrics.length > 0 ? (
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                      {performanceData.metrics.slice(0, 10).map((metric) => (
+                        <div key={metric.id} className="flex justify-between text-xs p-2 border rounded-md">
+                          <div>
+                            <span className={`mr-2 inline-block w-2 h-2 rounded-full ${metric.success ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                            {new Date(metric.timestamp).toLocaleString()}
+                          </div>
+                          <div className="font-mono">
+                            {metric.responseTime}ms
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center text-muted-foreground text-xs p-4">
+                      No execution data available yet
+                    </div>
+                  )}
+                </Card>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-40">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
+        
+        {/* Error Insights Sheet */}
+        <Sheet open={showInsights} onOpenChange={setShowInsights}>
+          <SheetTrigger asChild>
+            <Button
+              variant="link"
+              size="sm"
+              className="mt-3 p-0 h-auto text-xs"
+              onClick={fetchErrorInsights}
+              disabled={loadingInsights}
+            >
+              {loadingInsights ? (
+                <>
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  Loading insights...
+                </>
+              ) : (
+                <>
+                  <Zap className="h-3 w-3 mr-1" />
+                  View AI error insights
+                </>
+              )}
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="overflow-y-auto w-[400px] sm:max-w-md">
+            <SheetHeader>
+              <SheetTitle>AI-Powered Error Insights</SheetTitle>
+              <SheetDescription>
+                Intelligent analysis of webhook errors for {webhook.name}
+              </SheetDescription>
+            </SheetHeader>
+            
+            {errorInsights ? (
+              <div className="py-4 space-y-4">
+                {/* Summary */}
+                {errorInsights.insights.length > 0 ? (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm font-medium">
+                        {errorInsights.totalErrors} errors detected
+                      </div>
+                      {errorInsights.hasCriticalIssues && (
+                        <Badge variant="destructive">Critical Issues Detected</Badge>
+                      )}
+                    </div>
+                    
+                    {/* Most Common Error */}
+                    {errorInsights.mostCommonError && (
+                      <Card className="p-4 border-l-4 border-l-amber-500">
+                        <CardTitle className="text-sm mb-1">Most Common Error</CardTitle>
+                        <div className="text-xs text-muted-foreground mb-2">
+                          Occurred {errorInsights.mostCommonError.frequency} times
+                        </div>
+                        <div className="text-sm mb-3">
+                          {errorInsights.mostCommonError.errorPattern}
+                        </div>
+                        <div className="bg-muted p-3 rounded-md text-xs">
+                          <span className="font-semibold block mb-1">AI Suggested Fix:</span>
+                          {errorInsights.mostCommonError.suggestedFix}
+                        </div>
+                      </Card>
+                    )}
+                    
+                    {/* All Insights */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-medium">All Error Insights</h4>
+                      {errorInsights.insights.map((insight) => (
+                        <Card key={insight.id} className="p-3">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="text-xs font-medium">
+                              {insight.errorPattern.substring(0, 60)}
+                              {insight.errorPattern.length > 60 ? '...' : ''}
+                            </div>
+                            <Badge 
+                              variant={
+                                insight.severity === 'high' ? 'destructive' : 
+                                insight.severity === 'medium' ? 'default' : 'outline'
+                              }
+                              className="ml-2 text-[10px]"
+                            >
+                              {insight.severity}
+                            </Badge>
+                          </div>
+                          <div className="text-xs bg-muted p-2 rounded">
+                            {insight.suggestedFix}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground mt-1">
+                            Occurred {insight.frequency} times • Last seen {new Date(insight.timestamp).toLocaleDateString()}
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-40 text-center">
+                    <Check className="h-12 w-12 text-green-500 mb-2" />
+                    <div className="text-lg font-medium">No errors detected!</div>
+                    <div className="text-sm text-muted-foreground">
+                      Your webhook is working perfectly
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-40">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
         
         {/* TradingView Setup Guide (shown when clicked) */}
         {webhook.broker === 'tradingview' && (
