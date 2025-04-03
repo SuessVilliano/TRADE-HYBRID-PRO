@@ -1,0 +1,74 @@
+Here’s a structured and detailed request for the Investor’s Dashboard that you can send to Replit:
+
+⸻
+
+Investor’s Dashboard - Replit Development Request
+
+We need to create an Investor’s Dashboard within our application to manage and track investor funds under Hybrid Holdings. Currently, investors deposit money, we trade and compound their funds, and we send out monthly reports. The dashboard should allow us to manually input performance data while automating fee calculations and visualizing investor accounts.
+
+⸻
+
+1. Core Features of the Investor’s Dashboard
+
+A. Investor Management
+	•	Ability to create an investor profile with:
+	•	Investor’s name
+	•	Amount deposited
+	•	Date of deposit
+	•	Investment type (e.g., personal, prop firm management, hybrid fund)
+	•	List of all investors with sortable/filterable options.
+
+B. Investment Performance Tracking
+	•	A manual input field where we enter the percentage return for the period (e.g., “1% gain this month”).
+	•	System automatically updates each investor’s balance based on the percentage entered.
+
+C. Fee Calculation (Based on Our Google Sheet)
+	•	Performance Fee (calculated as a percentage of profits).
+	•	Setup Fee (one-time, per investment).
+	•	Broker Processing Fees (monthly, deducted from profits).
+	•	Net Profit Calculation after deducting fees.
+	•	Display total company revenue from fees in a summary section.
+
+D. Investor Report Generation
+	•	Generate monthly investor reports summarizing:
+	•	Initial deposit
+	•	Profits/losses
+	•	Fees deducted
+	•	Updated balance
+	•	Ability to export reports as PDFs for investor records.
+
+E. Investor Dashboard UI
+	•	Visual charts/graphs showing individual investor growth over time.
+	•	Total assets under management (AUM) displayed at the top.
+	•	Breakdown of monthly returns vs. fees collected.
+	•	Investor login or restricted admin-only view—optional but useful if we decide to offer investor access in the future.
+
+F. Prop Firm Account Management
+	•	Allow investors to fund a prop firm account through us and track performance.
+	•	Investors should be able to see performance reports for prop firms we manage for them.
+
+⸻
+
+2. Functionality & Automation Requests
+	•	Ability to manually enter a monthly return percentage and have all accounts update dynamically.
+	•	Auto-calculation of fees based on the formulas in our Google Sheet (which I will provide).
+	•	Ability to manually add or remove investors and adjust deposit amounts if necessary.
+	•	Generate automated profit/loss statements per investor.
+	•	Exportable data for record-keeping (CSV or PDF).
+
+⸻
+
+3. Integration & Implementation in Replit
+	•	Build this inside Replit, ensuring it integrates smoothly with our existing app.
+	•	Design a clean, professional UI with charts and tables.
+	•	Ensure all calculations are accurate and dynamically update.
+
+⸻
+
+Final Notes
+
+This feature will allow us to manage investor funds more efficiently, track performance, and automate key financial calculations. Let me know what’s feasible within Replit and if you need additional details from our Google Sheet.
+
+⸻
+
+This version makes sure Replit’s agent understands exactly what needs to be built while also adding key elements like export options, fee tracking, and UI considerations. Once you send me the Google Sheet, I can refine the fee structure details further. Let me know if you want any tweaks!
