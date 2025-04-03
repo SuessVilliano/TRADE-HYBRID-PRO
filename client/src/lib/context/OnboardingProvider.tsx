@@ -417,6 +417,112 @@ const onboardingFlows: OnboardingFlow[] = [
         ]
       }
     ]
+  },
+  {
+    id: 'wallet-connection',
+    title: 'Wallet Connection Guide',
+    path: '/wallet',
+    completed: false,
+    steps: [
+      {
+        id: 'wallet-welcome',
+        title: 'Connect Your Crypto Wallet',
+        description: 'Let\'s connect your cryptocurrency wallet to enable trading, staking, and other blockchain features on Trade Hybrid.',
+        position: 'center',
+        actions: [
+          {
+            label: 'Get Started',
+            action: () => {}
+          }
+        ]
+      },
+      {
+        id: 'what-is-wallet',
+        title: 'What is a Crypto Wallet?',
+        description: 'A cryptocurrency wallet is a secure digital tool that allows you to store, send, and receive digital assets. It\'s your personal interface to the blockchain ecosystem.',
+        position: 'center',
+        actions: [
+          {
+            label: 'Next',
+            action: () => {}
+          }
+        ]
+      },
+      {
+        id: 'wallet-options',
+        title: 'Choose Your Wallet',
+        description: 'We support several popular wallets. Select the one you\'re most comfortable with. MetaMask and Phantom are great options for beginners.',
+        element: '.wallet-options, .connect-wallet-button',
+        position: 'bottom',
+        actions: [
+          {
+            label: 'Next',
+            action: () => {}
+          }
+        ]
+      },
+      {
+        id: 'browser-extension',
+        title: 'Browser Extension Required',
+        description: 'Most wallets require a browser extension. If you don\'t have your wallet installed yet, you\'ll be prompted to install it.',
+        position: 'right',
+        actions: [
+          {
+            label: 'Next',
+            action: () => {}
+          }
+        ]
+      },
+      {
+        id: 'connection-permissions',
+        title: 'Connection Permissions',
+        description: 'When connecting your wallet, you\'ll be asked to approve the connection. This only gives Trade Hybrid permission to view your public address, not your funds.',
+        position: 'left',
+        actions: [
+          {
+            label: 'Next',
+            action: () => {}
+          }
+        ]
+      },
+      {
+        id: 'security-tips',
+        title: 'Security Best Practices',
+        description: 'Never share your wallet\'s recovery phrase or private keys with anyone. Always verify the site URL before connecting your wallet. Consider using a hardware wallet for enhanced security.',
+        position: 'center',
+        actions: [
+          {
+            label: 'Next',
+            action: () => {}
+          }
+        ]
+      },
+      {
+        id: 'connect-now',
+        title: 'Connect Your Wallet Now',
+        description: 'Click the "Connect Wallet" button to begin the connection process. Follow the prompts from your wallet to complete the connection.',
+        element: '.wallet-connect-button, .wallet-options',
+        position: 'bottom',
+        actions: [
+          {
+            label: 'Next',
+            action: () => {}
+          }
+        ]
+      },
+      {
+        id: 'wallet-finish',
+        title: 'Wallet Successfully Connected!',
+        description: 'Congratulations! Your wallet is now connected to Trade Hybrid. You can now access all blockchain-related features of the platform.',
+        position: 'center',
+        actions: [
+          {
+            label: 'Finish Tour',
+            action: () => {}
+          }
+        ]
+      }
+    ]
   }
 ];
 
