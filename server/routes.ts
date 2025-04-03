@@ -375,25 +375,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Signal Subscriptions routes
   app.use("/api/signal-subscriptions", signalSubscriptionsRoutes);
 
-  // News route using Yahoo Finance as default source (more reliable RSS feed)
-  app.get("/api/rss-feeds/news", (req, res) => {
-    // Create a modified request with the sourceId parameter
-    const modifiedReq = Object.create(req);
-
-    // Define proper type for the params
-    interface RequestParams {
-      sourceId: string;
-      [key: string]: string;
+  // News route using multiple sources
+  app.get("/api/rss-feeds/news", async (req, res) => {
+    try {
+      interface RequestParams {
+        sourceId: string;
+        [key: string]: string;
+      }
+      
+      // Determine which sources to fetch from
+      const sourcesToFetch = ['bloomberg', 'yahoo_finance', 'forexfactory', 'cme', 'cnbc', 'investing'];
+      let allItems: any[] = [];
+      const limit = parseInt(req.query.limit as string) || 10;
+      const itemsPerSource = Math.max(3, Math.ceil(limit / sourcesToFetch.length));
+      
+      console.log(`Fetching news from multiple sources: ${sourcesToFetch.join(', ')}`);
+      
+      // Fetch from each source
+      for (const sourceId of sourcesToFetch) {
+        const modifiedReq = Object.create(req);
+        modifiedReq.params = { 
+          ...(req.params || {}), 
+          sourceId: sourceId 
+        } as RequestParams;
+        
+        // Create a promise with a timeout for this source
+        const sourcePromise = new Promise<any[]>(async (resolve) => {
+          try {
+            // Create a response object that we can manipulate
+            const responseObj: any = {
+              json: (data: any) => {
+                if (data && data.items && Array.isArray(data.items)) {
+                  resolve(data.items);
+                } else {
+                  resolve([]);
+                }
+              },
+              status: () => ({ json: () => resolve([]) })
+            };
+            
+            // Call the RSS feed handler for this source
+            await getRssFeed(modifiedReq, responseObj);
+          } catch (error) {
+            console.error(`Error fetching from ${sourceId}:`, error);
+            resolve([]);
+          }
+        });
+        
+        // Add a timeout for each source
+        const timeoutPromise = new Promise<any[]>((resolve) => {
+          setTimeout(() => {
+            console.log(`Timeout for source ${sourceId}`);
+            resolve([]);
+          }, 5000); // 5 second timeout
+        });
+        
+        // Race the source fetch against the timeout
+        const sourceItems = await Promise.race([sourcePromise, timeoutPromise]);
+        allItems = [...allItems, ...sourceItems.slice(0, itemsPerSource)];
+      }
+      
+      // Sort by date (most recent first)
+      allItems.sort((a, b) => {
+        const dateA = a.pubDate ? new Date(a.pubDate) : new Date(0);
+        const dateB = b.pubDate ? new Date(b.pubDate) : new Date(0);
+        return dateB.getTime() - dateA.getTime();
+      });
+      
+      // Limit final results
+      const finalItems = allItems.slice(0, limit);
+      
+      console.log(`Returning ${finalItems.length} news items from multiple sources`);
+      return res.json({ items: finalItems });
+      
+    } catch (error) {
+      console.error('Error handling multi-source news request:', error);
+      return res.status(500).json({ error: 'Failed to fetch news from multiple sources' });
     }
-
-    // Create params object with correct type
-    modifiedReq.params = { 
-      ...(req.params || {}), 
-      sourceId: 'yahoo_finance' 
-    } as RequestParams;
-
-    console.log('Fetching news from Yahoo Finance RSS feed');
-    return getRssFeed(modifiedReq, res);
   });
 
   // Trader routes - Mock trading functionality

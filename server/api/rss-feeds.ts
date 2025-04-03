@@ -25,17 +25,24 @@ const newsSources: NewsSource[] = [
   {
     id: 'bloomberg',
     name: 'Bloomberg',
-    rssUrls: ['https://finance.yahoo.com/news/rssindex']
+    rssUrls: [
+      'https://www.bloomberg.com/feed/podcast/etf-report',
+      'https://www.bloomberg.com/feed/podcast/masters-in-business',
+      'https://www.bloomberg.com/feed/podcast/odd-lots'
+    ]
   },
   {
     id: 'reuters',
     name: 'Reuters',
-    rssUrls: ['https://finance.yahoo.com/news/rssindex']
+    rssUrls: ['https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best']
   },
   {
     id: 'investing',
     name: 'Investing.com',
-    rssUrls: ['https://finance.yahoo.com/news/rssindex']
+    rssUrls: [
+      'https://www.investing.com/rss/news.rss',
+      'https://www.investing.com/rss/market_overview.rss'
+    ]
   },
   {
     id: 'yahoo_finance',
@@ -45,40 +52,65 @@ const newsSources: NewsSource[] = [
   {
     id: 'cnbc',
     name: 'CNBC',
-    rssUrls: ['https://finance.yahoo.com/news/rssindex']
+    rssUrls: [
+      'https://www.cnbc.com/id/10000664/device/rss/rss.html', // Top News
+      'https://www.cnbc.com/id/15837362/device/rss/rss.html'  // Economy
+    ]
   },
   {
     id: 'marketwatch',
     name: 'MarketWatch',
-    rssUrls: ['https://finance.yahoo.com/news/rssindex']
+    rssUrls: [
+      'https://www.marketwatch.com/rss/topstories',
+      'https://www.marketwatch.com/rss/marketpulse'
+    ]
   },
   {
     id: 'forexlive',
     name: 'ForexLive',
-    rssUrls: ['https://finance.yahoo.com/news/rssindex']
+    rssUrls: ['https://www.forexlive.com/feed']
   },
   {
     id: 'crypto_news',
     name: 'CoinDesk',
-    rssUrls: ['https://finance.yahoo.com/news/rssindex']
+    rssUrls: ['https://www.coindesk.com/arc/outboundfeeds/rss/']
   },
   {
     id: 'cointelegraph',
     name: 'CoinTelegraph',
-    rssUrls: ['https://finance.yahoo.com/news/rssindex']
+    rssUrls: ['https://cointelegraph.com/rss']
   },
   {
     id: 'forexfactory',
     name: 'Forex Factory',
-    rssUrls: ['https://finance.yahoo.com/news/rssindex']
+    rssUrls: [
+      'https://www.forexfactory.com/rss?type=news',
+      'https://www.forexfactory.com/rss?type=calendar'
+    ]
+  },
+  {
+    id: 'cme',
+    name: 'CME Group',
+    rssUrls: ['https://www.cmegroup.com/rss/cme-group-press-releases.rss']
   }
 ];
 
-// Function to fetch and parse RSS feed
+// Function to fetch and parse RSS feed with timeout
 async function fetchRssFeed(url: string, limit: number = 10) {
   try {
-    const feed = await parser.parseURL(url);
-    return feed.items.slice(0, limit);
+    // Create a promise that times out after 3 seconds
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(`Timeout fetching RSS feed from ${url}`)), 3000);
+    });
+    
+    // Create the feed parsing promise
+    const feedPromise = parser.parseURL(url);
+    
+    // Race between timeout and feed parsing
+    const feed = await Promise.race([feedPromise, timeoutPromise]) as any;
+    
+    console.log(`Successfully fetched ${feed.items?.length || 0} items from ${url}`);
+    return feed.items?.slice(0, limit) || [];
   } catch (error) {
     console.error(`Error fetching RSS feed from ${url}:`, error);
     return [];
