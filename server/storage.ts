@@ -44,4 +44,17 @@ export const storage = {
   insert: db.insert,
   update: db.update,
   delete: db.delete,
+  
+  // Expose db instance for special cases
+  db,
+  sql,
+  
+  // Raw SQL queries - modified to correctly use the neon driver
+  async execute(query: string): Promise<any[]> {
+    // We should directly execute the query using the sql client
+    // The db.execute expects an SQLWrapper which sql`` generates, not a plain string
+    const result = await sql.query(query);
+    // Convert the result to an array to match the expected return type
+    return Array.isArray(result) ? result : result.rows || [];
+  }
 };

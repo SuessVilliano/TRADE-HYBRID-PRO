@@ -30,7 +30,7 @@ const getSignals = (req: any, res: any) => {
     if (route && route.route && route.route.stack && route.route.stack.length > 0) {
       // Call the handler directly
       const handler = route.route.stack[0].handle;
-      handler(req, res);
+      handler(req, res, () => {});
     } else {
       // Fallback to redirect if we can't find the handler
       res.redirect(307, `/api/signals/trading-signals?marketType=${marketType}`);
@@ -42,7 +42,7 @@ const getSignals = (req: any, res: any) => {
 };
 // Import at the top to avoid circular dependency
 import { processWebhookSignal } from './api/signals';
-import { processUserWebhook, getUserWebhookByToken } from './api/user-webhooks';
+import { processUserWebhook, getUserWebhookByToken, executeQueryFromFile } from './api/user-webhooks';
 import { processTradingViewWebhook } from './api/tradingview-webhooks';
 
 const receiveWebhook = (req: any, res: any) => {
@@ -164,8 +164,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User webhook route for custom integrations
   app.post("/api/webhooks/user/:token", receiveUserWebhook); // Custom user webhooks
   
-  // TradingView webhook route
-  app.post("/api/webhooks/tradingview/:token", processTradingViewWebhook); // TradingView alerts integration
+  // Shortened webhook URL route - /wh/ prefix for cleaner, shorter URLs
+  app.post("/wh/:token", async (req, res) => {
+    if (!req.params.token) {
+      return res.status(400).json({ error: 'Missing webhook token' });
+    }
+    
+    console.log('Received webhook request on shortened URL:', req.params.token);
+    
+    // The shortened URL uses only the first 12 characters of the token
+    // We need to look up the full token in our database
+    const partialToken = req.params.token;
+    
+    try {
+      // Query the database for webhooks that start with this token prefix
+      const query = `
+        SELECT * FROM user_webhooks 
+        WHERE token LIKE '${partialToken}%' 
+        LIMIT 1
+      `;
+      
+      // Use executeQueryFromFile instead of storage.execute
+      const rows = await executeQueryFromFile(query);
+      
+      if (rows && rows.length > 0) {
+        // We found a matching webhook, use its full token
+        const webhook = rows[0];
+        const fullToken = webhook.token;
+        
+        // Now process the webhook with the full token
+        const success = await processUserWebhook(fullToken, req.body);
+        
+        if (!success) {
+          return res.status(404).json({ error: 'Invalid webhook or webhook is inactive' });
+        }
+        
+        console.log('Successfully processed shortened webhook URL');
+        return res.json({ success: true, message: 'Webhook received' });
+      } else {
+        console.error('No webhook found with token starting with:', partialToken);
+        return res.status(404).json({ error: 'Webhook not found' });
+      }
+    } catch (error) {
+      console.error('Error processing shortened webhook URL:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+  
+  // TradingView webhook routes (both traditional and shortened URL formats)
+  app.post("/api/webhooks/tradingview/:token", processTradingViewWebhook); // Traditional TradingView alerts integration
+  
+  // Shortened TradingView webhook URL handler
+  app.post("/api/wh/tv/:token", async (req, res) => {
+    if (!req.params.token) {
+      return res.status(400).json({ error: 'Missing webhook token' });
+    }
+    
+    console.log('Received shortened TradingView webhook:', req.params.token);
+    
+    // The shortened URL uses only the first 12 characters of the token
+    // We need to look up the full token in our database
+    const partialToken = req.params.token;
+    
+    try {
+      // Query the database for webhooks that start with this token prefix
+      const query = `
+        SELECT * FROM user_webhooks 
+        WHERE token LIKE '${partialToken}%' 
+        LIMIT 1
+      `;
+      
+      // Use executeQueryFromFile to find the webhook
+      const rows = await executeQueryFromFile(query);
+      
+      if (rows && rows.length > 0) {
+        // We found a matching webhook, use its full token
+        const webhook = rows[0];
+        const fullToken = webhook.token;
+        
+        // Create a modified request with the full token
+        const modifiedReq = Object.create(req);
+        modifiedReq.params = { ...req.params, token: fullToken };
+        
+        // Now process the TradingView webhook with the full token
+        return processTradingViewWebhook(modifiedReq, res);
+      } else {
+        console.error('No webhook found with token starting with:', partialToken);
+        return res.status(404).json({ error: 'Webhook not found' });
+      }
+    } catch (error) {
+      console.error('Error processing shortened TradingView webhook URL:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  });
 
   // Test webhooks for Cash Cow formats
   app.post("/api/test/webhook/cashcow", (req, res) => {

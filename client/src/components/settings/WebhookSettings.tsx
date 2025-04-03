@@ -207,8 +207,8 @@ export function WebhookSettings() {
   
   // Get webhook URL
   const getWebhookUrl = (token: string) => {
-    const baseUrl = window.location.origin;
-    return `${baseUrl}/api/webhooks/user/${token}`;
+    // New cleaner format using pro.tradehybrid.club domain
+    return `https://pro.tradehybrid.club/wh/${token.substring(0, 12)}`;
   };
   
   // Example signal payload format
@@ -443,7 +443,7 @@ export function WebhookSettings() {
                   <Label className="text-xs font-medium">TradingView Webhook URL</Label>
                   <div className="mt-1 flex items-center gap-2">
                     <Input
-                      value={`${window.location.origin}/api/webhooks/tradingview/${webhook.token}`}
+                      value={`https://pro.tradehybrid.club/api/wh/tv/${webhook.token.substring(0, 12)}`}
                       readOnly
                       className="font-mono text-xs"
                     />
@@ -451,14 +451,14 @@ export function WebhookSettings() {
                       variant="default"
                       size="sm"
                       className="shrink-0"
-                      onClick={() => copyToClipboard(`${window.location.origin}/api/webhooks/tradingview/${webhook.token}`, 'tv-url-' + webhook.id)}
+                      onClick={() => copyToClipboard(`https://pro.tradehybrid.club/api/wh/tv/${webhook.token.substring(0, 12)}`, 'tv-url-' + webhook.id)}
                     >
                       {isCopied['tv-url-' + webhook.id] ? 'Copied!' : 'Copy URL'}
                       <Copy className="ml-2 h-3 w-3" />
                     </Button>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Use this URL when setting up alerts in TradingView
+                    Use this URL when setting up alerts in TradingView (shortened format for convenience)
                   </p>
                 </div>
                 
@@ -549,7 +549,7 @@ export function WebhookSettings() {
               <li>Create a webhook in Trade Hybrid and copy its token</li>
               <li>In TradingView, go to Alerts or Strategy Tester</li>
               <li>Create a new alert or enable alerts in your strategy</li>
-              <li>Set webhook URL to: <span className="font-mono">{window.location.origin}/api/webhooks/tradingview/<strong>{webhooks[0]?.token || 'your-token'}</strong></span></li>
+              <li>Set webhook URL to: <span className="font-mono">https://pro.tradehybrid.club/api/wh/tv/<strong>{webhooks[0]?.token?.substring(0, 12) || 'your-token'}</strong></span></li>
               <li>Copy the template format above and paste it in TradingView's "Message" field (use Webhook URL format)</li>
               <li>For best results, name your plots in TradingView for stop loss and take profits (e.g., "Stop Loss", "Take Profit")</li>
               <li>Test your alert - signals will appear instantly in your trading dashboard and signals panel</li>
