@@ -14,9 +14,10 @@ import { toast } from 'sonner';
 interface PushNotificationToggleProps {
   className?: string;
   disabled?: boolean;
+  userId?: number;
 }
 
-export function PushNotificationToggle({ className, disabled }: PushNotificationToggleProps) {
+export function PushNotificationToggle({ className, disabled, userId }: PushNotificationToggleProps) {
   // State for tracking if push notifications are supported
   const [supported, setSupported] = useState(false);
   
@@ -34,8 +35,8 @@ export function PushNotificationToggle({ className, disabled }: PushNotification
       setSupported(isSupported);
       
       if (isSupported) {
-        // Initialize the push notification service
-        await pushNotificationService.initialize();
+        // Initialize the push notification service with the user ID
+        await pushNotificationService.initialize(userId);
         
         // Check if we're already subscribed
         const isSubscribed = await pushNotificationService.isSubscribed();
@@ -46,7 +47,7 @@ export function PushNotificationToggle({ className, disabled }: PushNotification
     };
     
     initializeComponent();
-  }, []);
+  }, [userId]);
 
   // Handle the toggle change
   const handleToggleChange = async (checked: boolean) => {

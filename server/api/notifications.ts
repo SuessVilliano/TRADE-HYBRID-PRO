@@ -9,6 +9,11 @@ import { Router } from 'express';
 import { storage } from '../storage';
 import { pushSubscriptions, type PushSubscription } from '../../shared/schema';
 import { eq, and } from 'drizzle-orm';
+import {
+  areVapidKeysConfigured,
+  sendPushNotificationsToUser,
+  sendPushNotificationsToAll
+} from '../lib/push-notification-helper';
 
 // Use the database instance from storage
 const db = storage.db;
@@ -37,27 +42,27 @@ router.post('/push/subscribe', async (req, res) => {
     // Check if the subscription already exists
     const existingSubscription = await db.query.pushSubscriptions.findFirst({
       where: and(
-        eq(pushSubscriptions.endpoint, endpoint),
-        eq(pushSubscriptions.userId, userId)
+        eq(storage.schema.pushSubscriptions.endpoint, endpoint),
+        eq(storage.schema.pushSubscriptions.userId, userId)
       )
     });
 
     if (existingSubscription) {
       // Update the existing subscription
-      await db.update(pushSubscriptions)
+      await db.update(storage.schema.pushSubscriptions)
         .set({
           p256dhKey: keys.p256dh,
           authKey: keys.auth,
           expirationTime: expirationTime ? new Date(expirationTime) : null,
           updatedAt: new Date()
         })
-        .where(eq(pushSubscriptions.id, existingSubscription.id));
+        .where(eq(storage.schema.pushSubscriptions.id, existingSubscription.id));
       
       return res.json({ success: true, id: existingSubscription.id });
     }
 
     // Insert a new subscription
-    await db.insert(pushSubscriptions).values({
+    await db.insert(storage.schema.pushSubscriptions).values({
       id,
       userId,
       endpoint,
@@ -85,11 +90,11 @@ router.post('/push/unsubscribe', async (req, res) => {
     }
 
     // Delete the subscription
-    await db.delete(pushSubscriptions)
+    await db.delete(storage.schema.pushSubscriptions)
       .where(
         and(
-          eq(pushSubscriptions.endpoint, endpoint),
-          eq(pushSubscriptions.userId, userId)
+          eq(storage.schema.pushSubscriptions.endpoint, endpoint),
+          eq(storage.schema.pushSubscriptions.userId, userId)
         )
       );
 
@@ -109,71 +114,30 @@ router.post('/push/test', async (req, res) => {
       return res.status(400).json({ error: 'Missing user ID' });
     }
 
-    // Find all subscriptions for the user
-    const subscriptions = await db.query.pushSubscriptions.findMany({
-      where: eq(pushSubscriptions.userId, userId)
+    // Check if VAPID keys are configured
+    if (!areVapidKeysConfigured()) {
+      console.warn('VAPID keys are not configured. Push notifications will be logged only.');
+    }
+
+    // Send a test notification
+    const result = await sendPushNotificationsToUser(userId, {
+      title: 'Test Notification',
+      body: 'This is a test push notification from Trade Hybrid',
+      icon: '/logo.png',
+      badge: '/badge.png',
+      data: {
+        url: '/notifications'
+      }
     });
 
-    if (!subscriptions.length) {
+    if (result.total === 0) {
       return res.status(404).json({ error: 'No subscriptions found for this user' });
     }
 
-    // In a production environment, we would use web-push to send notifications
-    // but since we're having trouble installing it, we'll just return success
-    console.log(`Would send push notifications to ${subscriptions.length} subscriptions`);
-    
-    // Here's the code that would be used if web-push was installed:
-    /*
-    const webpush = require('web-push');
-    
-    // Configure web-push with VAPID keys
-    webpush.setVapidDetails(
-      'mailto:contact@tradehybrid.com',
-      process.env.VAPID_PUBLIC_KEY,
-      process.env.VAPID_PRIVATE_KEY
-    );
-
-    // Send notifications to all subscriptions
-    const results = await Promise.allSettled(
-      subscriptions.map(async (sub) => {
-        const pushSubscription = {
-          endpoint: sub.endpoint,
-          keys: {
-            p256dh: sub.p256dhKey,
-            auth: sub.authKey
-          }
-        };
-
-        try {
-          return await webpush.sendNotification(
-            pushSubscription,
-            JSON.stringify({
-              title: 'Test Notification',
-              body: 'This is a test push notification from Trade Hybrid',
-              icon: '/logo.png',
-              badge: '/badge.png',
-              data: {
-                url: '/notifications'
-              }
-            })
-          );
-        } catch (error) {
-          console.error(`Error sending notification to ${sub.id}:`, error);
-          
-          // If the subscription is no longer valid, remove it
-          if (error.statusCode === 404 || error.statusCode === 410) {
-            await db.delete(pushSubscriptions).where(eq(pushSubscriptions.id, sub.id));
-          }
-          
-          throw error;
-        }
-      })
-    );
-    */
-
-    return res.json({ 
-      success: true, 
-      message: `Test notifications would be sent to ${subscriptions.length} subscriptions`
+    return res.json({
+      success: true,
+      message: `Test notifications sent to ${result.successful} of ${result.total} subscriptions`,
+      stats: result
     });
   } catch (error) {
     console.error('Error testing push notifications:', error);
@@ -192,7 +156,7 @@ router.get('/push/subscriptions/:userId', async (req, res) => {
 
     // Find all subscriptions for the user
     const subscriptions = await db.query.pushSubscriptions.findMany({
-      where: eq(pushSubscriptions.userId, userId)
+      where: eq(storage.schema.pushSubscriptions.userId, userId)
     });
 
     return res.json({ 
@@ -219,18 +183,30 @@ router.post('/push/send', async (req, res) => {
       return res.status(400).json({ error: 'Title and body are required' });
     }
 
-    // Find subscriptions (for a specific user or all users)
-    let subscriptions: PushSubscription[] = [];
-    
-    if (userId) {
-      subscriptions = await db.query.pushSubscriptions.findMany({
-        where: eq(pushSubscriptions.userId, userId)
-      });
-    } else {
-      subscriptions = await db.query.pushSubscriptions.findMany();
+    // Check if VAPID keys are configured
+    if (!areVapidKeysConfigured()) {
+      console.warn('VAPID keys are not configured. Push notifications will be logged only.');
     }
 
-    if (!subscriptions.length) {
+    // Prepare the notification payload
+    const payload = {
+      title,
+      body,
+      icon: icon || '/logo.png',
+      badge: badge || '/badge.png',
+      url: url || '/notifications',
+      data
+    };
+
+    // Send notifications to a specific user or all users
+    let result;
+    if (userId) {
+      result = await sendPushNotificationsToUser(userId, payload);
+    } else {
+      result = await sendPushNotificationsToAll(payload);
+    }
+
+    if (result.total === 0) {
       return res.status(404).json({ 
         error: userId 
           ? 'No subscriptions found for this user' 
@@ -238,74 +214,10 @@ router.post('/push/send', async (req, res) => {
       });
     }
 
-    // In a production environment, we would use web-push to send notifications
-    console.log(`Would send push notifications to ${subscriptions.length} subscriptions`);
-    console.log('Notification content:', { title, body, icon, badge, url, data });
-    
-    // Here's the code that would be used if web-push was installed:
-    /*
-    const webpush = require('web-push');
-    
-    // Configure web-push with VAPID keys
-    webpush.setVapidDetails(
-      'mailto:contact@tradehybrid.com',
-      process.env.VAPID_PUBLIC_KEY,
-      process.env.VAPID_PRIVATE_KEY
-    );
-
-    // Send notifications to all subscriptions
-    const results = await Promise.allSettled(
-      subscriptions.map(async (sub) => {
-        const pushSubscription = {
-          endpoint: sub.endpoint,
-          keys: {
-            p256dh: sub.p256dhKey,
-            auth: sub.authKey
-          }
-        };
-
-        try {
-          return await webpush.sendNotification(
-            pushSubscription,
-            JSON.stringify({
-              title,
-              body,
-              icon: icon || '/logo.png',
-              badge: badge || '/badge.png',
-              data: {
-                url: url || '/notifications',
-                ...data
-              }
-            })
-          );
-        } catch (error) {
-          console.error(`Error sending notification to ${sub.id}:`, error);
-          
-          // If the subscription is no longer valid, remove it
-          if (error.statusCode === 404 || error.statusCode === 410) {
-            await db.delete(pushSubscriptions).where(eq(pushSubscriptions.id, sub.id));
-          }
-          
-          throw error;
-        }
-      })
-    );
-
-    // Count successes and failures
-    const successful = results.filter(r => r.status === 'fulfilled').length;
-    const failed = results.filter(r => r.status === 'rejected').length;
-    */
-
     return res.json({ 
       success: true, 
-      message: `Notifications would be sent to ${subscriptions.length} subscriptions`,
-      /*
-      stats: {
-        total: subscriptions.length,
-        successful,
-        failed
-      }
-      */
+      message: `Notifications sent to ${result.successful} of ${result.total} subscriptions`,
+      stats: result
     });
   } catch (error) {
     console.error('Error sending push notifications:', error);

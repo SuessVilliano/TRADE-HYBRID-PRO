@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
   SIGNALS: `${API_BASE_URL}/signals`,
   BOTS: `${API_BASE_URL}/bots`,
   GAME: `${API_BASE_URL}/game`,
+  NOTIFICATIONS: `${API_BASE_URL}/notifications`,
 };
 
 // Supported brokers with API integration details

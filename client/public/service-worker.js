@@ -166,6 +166,7 @@ self.addEventListener('pushsubscriptionchange', (event) => {
     self.registration.pushManager.subscribe({ userVisibleOnly: true })
       .then((subscription) => {
         // Send the new subscription to the server
+        // Import API_ENDPOINTS not possible in service worker, so we use the path directly
         return fetch('/api/notifications/push/subscribe', {
           method: 'POST',
           headers: {

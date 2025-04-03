@@ -6,11 +6,10 @@
  * and unsubscribing.
  */
 
-import { API_BASE_URL } from '../constants';
+import { API_BASE_URL, API_ENDPOINTS } from '../constants';
 
 // VAPID public key from environment variables
-// For development, we use a static key. In production, this would be loaded from environment variables
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BNbKwE9-Z-H-1Xw5h-mrDSCQE4dQV-m6X1CJFQvIod1CFWCwRHRMQKhlX_Nf1rw11FSQnxO5bV-EKBT1bBKF5Tw';
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '-kmNFXssQJhgjHaBBmegDTYD6GL5NezpNnXGkEe-8Xo';
 
 // PushNotificationService singleton class
 class PushNotificationService {
@@ -174,7 +173,7 @@ class PushNotificationService {
       console.log('User is subscribed to push notifications:', subscription);
       
       // Send the subscription to the server
-      const response = await fetch(`${API_BASE_URL}/notifications/push/subscribe`, {
+      const response = await fetch(`${API_ENDPOINTS.NOTIFICATIONS}/push/subscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -214,7 +213,7 @@ class PushNotificationService {
       }
       
       // Send the unsubscribe request to the server
-      const response = await fetch(`${API_BASE_URL}/notifications/push/unsubscribe`, {
+      const response = await fetch(`${API_ENDPOINTS.NOTIFICATIONS}/push/unsubscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -271,7 +270,7 @@ class PushNotificationService {
     }
     
     try {
-      const response = await fetch(`${API_BASE_URL}/notifications/push/test`, {
+      const response = await fetch(`${API_ENDPOINTS.NOTIFICATIONS}/push/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

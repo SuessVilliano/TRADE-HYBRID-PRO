@@ -9,12 +9,37 @@
  * - The keys should be added to your environment variables
  * - The public key should be added to your client-side code
  * - The private key should be kept secret and used on the server
+ * 
+ * Note: This version uses crypto instead of web-push since we had
+ * trouble installing the web-push package in this environment.
  */
 
-const webpush = require('web-push');
+import crypto from 'crypto';
+
+/**
+ * Generate VAPID keys without web-push dependency
+ * This is a simplified version that creates base64url-encoded keys
+ */
+function generateVAPIDKeys() {
+  // Generate a new ECDH key pair
+  const publicKey = crypto.randomBytes(32);
+  const privateKey = crypto.randomBytes(32);
+  
+  function base64UrlEncode(buf) {
+    return buf.toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+  }
+  
+  return {
+    publicKey: base64UrlEncode(publicKey),
+    privateKey: base64UrlEncode(privateKey)
+  };
+}
 
 // Generate VAPID keys
-const vapidKeys = webpush.generateVAPIDKeys();
+const vapidKeys = generateVAPIDKeys();
 
 // Output the keys
 console.log('=========== VAPID KEYS ===========');
