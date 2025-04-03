@@ -110,43 +110,70 @@ const InvestorAdminDashboard: React.FC = () => {
       
       // Fetch all investors
       const investorsResponse = await fetch('/api/investors');
-      if (!investorsResponse.ok) {
-        throw new Error('Failed to fetch investors');
-      }
       const investorsData = await investorsResponse.json();
-      setInvestors(investorsData);
+      setInvestors(investorsData || []);
       
       // Fetch all investments
       const investmentsResponse = await fetch('/api/investments');
-      if (!investmentsResponse.ok) {
-        throw new Error('Failed to fetch investments');
-      }
       const investmentsData = await investmentsResponse.json();
-      setInvestments(investmentsData);
+      setInvestments(investmentsData || []);
       
       // Fetch performance records
       const performanceResponse = await fetch('/api/investment-performance');
-      if (!performanceResponse.ok) {
-        throw new Error('Failed to fetch performance records');
-      }
       const performanceData = await performanceResponse.json();
-      setPerformanceRecords(performanceData);
+      setPerformanceRecords(performanceData || []);
       
-      // Fetch company revenue
-      const revenueResponse = await fetch('/api/company-revenue');
-      if (!revenueResponse.ok) {
-        throw new Error('Failed to fetch company revenue');
+      // Fetch company revenue - Handle 404 case for empty table
+      try {
+        const revenueResponse = await fetch('/api/company-revenue');
+        if (revenueResponse.ok) {
+          const revenueData = await revenueResponse.json();
+          setCompanyRevenue(revenueData);
+        } else {
+          // If no revenue exists yet, use default empty object
+          setCompanyRevenue({
+            total_revenue: 0,
+            performance_fee_revenue: 0,
+            setup_fee_revenue: 0,
+            broker_processing_fee_revenue: 0
+          });
+        }
+      } catch (revenueError) {
+        console.warn('No company revenue data found:', revenueError);
+        setCompanyRevenue({
+          total_revenue: 0,
+          performance_fee_revenue: 0,
+          setup_fee_revenue: 0,
+          broker_processing_fee_revenue: 0
+        });
       }
-      const revenueData = await revenueResponse.json();
-      setCompanyRevenue(revenueData);
       
-      // Fetch fee settings
-      const feeSettingsResponse = await fetch('/api/fee-settings');
-      if (!feeSettingsResponse.ok) {
-        throw new Error('Failed to fetch fee settings');
+      // Fetch fee settings - should always have at least the default
+      try {
+        const feeSettingsResponse = await fetch('/api/fee-settings');
+        if (feeSettingsResponse.ok) {
+          const feeSettingsData = await feeSettingsResponse.json();
+          setFeeSettings(feeSettingsData);
+        } else {
+          // Default fee settings
+          setFeeSettings({
+            default_performance_fee_percent: 20,
+            default_setup_fee: 100,
+            default_monthly_fee: 0,
+            default_broker_processing_fee_percent: 0.5,
+            default_broker_processing_fee_flat: 10
+          });
+        }
+      } catch (feeError) {
+        console.warn('Error fetching fee settings, using defaults:', feeError);
+        setFeeSettings({
+          default_performance_fee_percent: 20,
+          default_setup_fee: 100,
+          default_monthly_fee: 0,
+          default_broker_processing_fee_percent: 0.5,
+          default_broker_processing_fee_flat: 10
+        });
       }
-      const feeSettingsData = await feeSettingsResponse.json();
-      setFeeSettings(feeSettingsData);
       
     } catch (error) {
       console.error('Error fetching admin data:', error);
@@ -443,6 +470,136 @@ const InvestorAdminDashboard: React.FC = () => {
         <div className="flex justify-center items-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <span className="ml-2">Loading investor dashboard...</span>
+        </div>
+      </div>
+    );
+  }
+  
+  // If no data is loaded yet, show an empty state with the option to add data
+  if (investors.length === 0) {
+    return (
+      <div className="container px-4 mx-auto py-12">
+        <div className="flex flex-col items-center justify-center h-64 text-center">
+          <div className="mb-4 p-4 rounded-full bg-primary/10">
+            <Users className="h-8 w-8 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">No Investors Yet</h2>
+          <p className="text-muted-foreground mb-6 max-w-md">
+            Get started by adding your first investor to the platform.
+            Once added, you can create investments and track performance.
+          </p>
+          <Button 
+            onClick={() => setIsAddInvestorDialogOpen(true)}
+            className="flex items-center"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add First Investor
+          </Button>
+          
+          {/* Add Investor Dialog */}
+          <Dialog open={isAddInvestorDialogOpen} onOpenChange={setIsAddInvestorDialogOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add New Investor</DialogTitle>
+                <DialogDescription>
+                  Enter the investor's details below to create a new investor profile.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <form onSubmit={handleAddInvestor}>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="name" className="text-right">
+                      Name
+                    </Label>
+                    <Input
+                      id="name"
+                      value={newInvestor.name}
+                      onChange={(e) => setNewInvestor({...newInvestor, name: e.target.value})}
+                      className="col-span-3"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="email" className="text-right">
+                      Email
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={newInvestor.email}
+                      onChange={(e) => setNewInvestor({...newInvestor, email: e.target.value})}
+                      className="col-span-3"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="phone" className="text-right">
+                      Phone
+                    </Label>
+                    <Input
+                      id="phone"
+                      value={newInvestor.phone}
+                      onChange={(e) => setNewInvestor({...newInvestor, phone: e.target.value})}
+                      className="col-span-3"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="address" className="text-right">
+                      Address
+                    </Label>
+                    <Input
+                      id="address"
+                      value={newInvestor.address}
+                      onChange={(e) => setNewInvestor({...newInvestor, address: e.target.value})}
+                      className="col-span-3"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="status" className="text-right">
+                      Status
+                    </Label>
+                    <Select 
+                      value={newInvestor.status} 
+                      onValueChange={(value) => setNewInvestor({...newInvestor, status: value})}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="notes" className="text-right">
+                      Notes
+                    </Label>
+                    <Input
+                      id="notes"
+                      value={newInvestor.notes}
+                      onChange={(e) => setNewInvestor({...newInvestor, notes: e.target.value})}
+                      className="col-span-3"
+                    />
+                  </div>
+                </div>
+                
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsAddInvestorDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">Add Investor</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     );
