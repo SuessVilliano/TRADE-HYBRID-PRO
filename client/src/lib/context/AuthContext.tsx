@@ -5,6 +5,7 @@ import { authService } from '../services/auth-service';
 interface AuthContextType {
   isAuthenticated: boolean;
   currentUser: any | null;
+  user: any | null; // Adding user as alias for currentUser for backward compatibility
   login: (whopId: string) => Promise<any>;
   loginWithDemo: () => Promise<any>;
   getCurrentUser: () => Promise<any>;
@@ -59,6 +60,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const value = {
     isAuthenticated,
     currentUser,
+    user: currentUser, // Add user as alias for currentUser
     
     login: async (whopId: string) => {
       const userData = await authService.login(whopId);

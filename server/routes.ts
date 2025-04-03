@@ -78,10 +78,19 @@ import authRoutes from './routes/auth-routes'; // Added import for authenticatio
 import whopRoutes from './routes/whop-routes'; // Added import for Whop authentication routes
 // import propFirmRoutes from './routes/prop-firm-routes'; // Using mock implementation instead
 import mockPropFirmRoutes from './routes/mock-prop-firm-routes'; // Added import for mock prop firm routes
+
+// Import routes
 import membershipRoutes from './routes/membership-routes'; // Added import for membership routes
 import userWebhooksRoutes from './api/user-webhooks'; // Added import for user webhooks routes
 import webhookRoutes from './routes/webhooks-fixed'; // Added import for webhook routes (using fixed version)
 import brokerApiRoutes from './routes/broker'; // Added import for broker API routes
+
+// Import Investor dashboard routes
+import investorsRoutes from './api/investors'; // Import for investor routes
+import investmentsRoutes from './api/investments'; // Import for investments routes
+import investmentPerformanceRoutes from './api/investment-performance'; // Import for investment performance routes
+import feeSettingsRoutes from './api/fee-settings'; // Import for fee settings routes
+import companyRevenueRoutes from './api/company-revenue'; // Import for company revenue routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Market data routes
@@ -234,6 +243,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // New webhooks routes for automated trading
   app.use("/api/webhooks", webhookRoutes);
+  
+  // Investor Dashboard routes
+  app.use("/api/investors", investorsRoutes);
+  app.use("/api/investments", investmentsRoutes);
+  app.use("/api/investment-performance", investmentPerformanceRoutes);
+  app.use("/api/fee-settings", feeSettingsRoutes);
+  app.use("/api/company-revenue", companyRevenueRoutes);
 
   // News route using default source (bloomberg)
   app.get("/api/rss-feeds/news", (req, res) => {

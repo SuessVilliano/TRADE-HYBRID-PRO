@@ -597,6 +597,138 @@ export const insertPropFirmChallengeSchema = createInsertSchema(propFirmChalleng
 export const insertPropFirmAccountSchema = createInsertSchema(propFirmAccounts);
 export const insertPropFirmTradeSchema = createInsertSchema(propFirmTrades);
 
+// Investor Management System Tables
+
+// Types of investments
+export const investmentTypeEnum = pgEnum('investment_type', ['personal', 'prop_firm_management', 'hybrid_fund']);
+
+// Investors table
+export const investors = pgTable("investors", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  address: text("address"),
+  userId: integer("user_id").references(() => users.id), // If investor has a user account
+  joinDate: timestamp("join_date").notNull().defaultNow(),
+  status: text("status").notNull().default('active'), // 'active', 'inactive', 'pending', 'closed'
+  notes: text("notes"),
+  tags: jsonb("tags"), // For categorizing investors
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Investments table
+export const investments = pgTable("investments", {
+  id: serial("id").primaryKey(),
+  investorId: integer("investor_id").notNull().references(() => investors.id),
+  type: investmentTypeEnum("type").notNull(), // 'personal', 'prop_firm_management', 'hybrid_fund'
+  name: text("name").notNull(), // Name of the investment
+  initialDeposit: real("initial_deposit").notNull(),
+  currentBalance: real("current_balance").notNull(), // Updated by system based on performance
+  depositDate: timestamp("deposit_date").notNull(),
+  status: text("status").notNull().default('active'), // 'active', 'closed', 'pending'
+  propFirmAccountId: integer("prop_firm_account_id").references(() => propFirmAccounts.id), // For prop firm investments
+  monthlyFee: real("monthly_fee").default(0), // Monthly fee amount (if applicable)
+  performanceFeePercent: real("performance_fee_percent").default(20), // Performance fee percentage
+  setupFee: real("setup_fee").default(0), // One-time setup fee
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Performance records (monthly)
+export const investmentPerformance = pgTable("investment_performance", {
+  id: serial("id").primaryKey(),
+  investmentId: integer("investment_id").notNull().references(() => investments.id),
+  period: text("period").notNull(), // Format: YYYY-MM
+  startBalance: real("start_balance").notNull(),
+  endBalance: real("end_balance").notNull(),
+  percentReturn: real("percent_return").notNull(), // Percentage return for the period
+  grossProfit: real("gross_profit").notNull(), // Gross profit amount
+  performanceFee: real("performance_fee").notNull(), // Performance fee amount
+  setupFee: real("setup_fee").notNull(), // Setup fee (usually only on first record)
+  brokerProcessingFee: real("broker_processing_fee").notNull(), // Broker processing fees
+  otherFees: real("other_fees").default(0), // Any other fees
+  netProfit: real("net_profit").notNull(), // Net profit after fees
+  notes: text("notes"),
+  reportGenerated: boolean("report_generated").default(false), // Whether a report has been generated
+  reportUrl: text("report_url"), // URL to the generated report
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Company revenue from investor fees
+export const companyRevenue = pgTable("company_revenue", {
+  id: serial("id").primaryKey(),
+  period: text("period").notNull(), // Format: YYYY-MM
+  performanceFeeRevenue: real("performance_fee_revenue").notNull().default(0),
+  setupFeeRevenue: real("setup_fee_revenue").notNull().default(0),
+  brokerProcessingFeeRevenue: real("broker_processing_fee_revenue").notNull().default(0),
+  otherFeeRevenue: real("other_fee_revenue").notNull().default(0),
+  totalRevenue: real("total_revenue").notNull().default(0),
+  // Summary statistics
+  totalInvestorCount: integer("total_investor_count").notNull().default(0),
+  totalAssetsUnderManagement: real("total_assets_under_management").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Fee settings and configurations
+export const feeSettings = pgTable("fee_settings", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  defaultPerformanceFeePercent: real("default_performance_fee_percent").notNull().default(20),
+  defaultSetupFee: real("default_setup_fee").notNull().default(0),
+  defaultMonthlyFee: real("default_monthly_fee").notNull().default(0),
+  defaultBrokerProcessingFeePercent: real("default_broker_processing_fee_percent").notNull().default(0),
+  defaultBrokerProcessingFeeFlat: real("default_broker_processing_fee_flat").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  effectiveDate: timestamp("effective_date").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Relations for investor management tables
+export const investorsRelations = relations(investors, ({ one, many }) => ({
+  user: one(users, {
+    fields: [investors.userId],
+    references: [users.id],
+  }),
+  investments: many(investments),
+}));
+
+export const investmentsRelations = relations(investments, ({ one, many }) => ({
+  investor: one(investors, {
+    fields: [investments.investorId],
+    references: [investors.id],
+  }),
+  propFirmAccount: one(propFirmAccounts, {
+    fields: [investments.propFirmAccountId],
+    references: [propFirmAccounts.id],
+  }),
+  performanceRecords: many(investmentPerformance),
+}));
+
+export const investmentPerformanceRelations = relations(investmentPerformance, ({ one }) => ({
+  investment: one(investments, {
+    fields: [investmentPerformance.investmentId],
+    references: [investments.id],
+  }),
+}));
+
+// Export types for investor management tables
+export type Investor = typeof investors.$inferSelect;
+export type Investment = typeof investments.$inferSelect;
+export type InvestmentPerformance = typeof investmentPerformance.$inferSelect;
+export type CompanyRevenue = typeof companyRevenue.$inferSelect;
+export type FeeSettings = typeof feeSettings.$inferSelect;
+
+// Insert schemas for investor management
+export const insertInvestorSchema = createInsertSchema(investors);
+export const insertInvestmentSchema = createInsertSchema(investments);
+export const insertInvestmentPerformanceSchema = createInsertSchema(investmentPerformance);
+
 // Chat system - Social networking features
 // Chat room types enum
 export const chatRoomTypeEnum = pgEnum('chat_room_type', ['public', 'private', 'group', 'trading']);

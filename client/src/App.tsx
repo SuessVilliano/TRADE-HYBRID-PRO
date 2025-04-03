@@ -68,6 +68,11 @@ import PropFirmAdminDashboardPage from './pages/PropFirmAdminDashboard';
 import PropFirmChallengeSignupPage from './pages/PropFirmChallengeSignup';
 import PropFirmAccountDetailsPage from './pages/PropFirmAccountDetails';
 
+// Investor Dashboard Pages
+import InvestorDashboardPage from './pages/InvestorDashboard';
+import InvestorAdminDashboardPage from './pages/InvestorAdminDashboard';
+import InvestmentDetailsPage from './pages/InvestmentDetails';
+
 // NFT & Crypto
 import NftMarketplacePage from './pages/nft-marketplace';
 import NftMarketplaceSimplePage from './pages/nft-marketplace-simple';
@@ -157,6 +162,11 @@ const App: React.FC = () => {
                 <Route path="/prop-firm/admin" element={<ProtectedRoute><PropFirmAdminDashboardPage /></ProtectedRoute>} />
                 <Route path="/prop-firm/challenge" element={<ProtectedRoute><PropFirmChallengeSignupPage /></ProtectedRoute>} />
                 <Route path="/prop-firm/account/:accountId" element={<ProtectedRoute><PropFirmAccountDetailsPage /></ProtectedRoute>} />
+                
+                {/* Investor Dashboard */}
+                <Route path="/investors" element={<ProtectedRoute><InvestorDashboardPage /></ProtectedRoute>} />
+                <Route path="/investors/admin" element={<ProtectedRoute><InvestorAdminDashboardPage /></ProtectedRoute>} />
+                <Route path="/investors/investment/:investmentId" element={<ProtectedRoute><InvestmentDetailsPage /></ProtectedRoute>} />
                 
                 {/* NFT & Crypto */}
                 <Route path="/nft-marketplace" element={<ProtectedRoute><NftMarketplacePage /></ProtectedRoute>} />
