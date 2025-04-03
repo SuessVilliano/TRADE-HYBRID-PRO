@@ -225,4 +225,55 @@ router.post('/push/send', async (req, res) => {
   }
 });
 
+// Test push notifications
+router.post('/push/test', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+    
+    const numericUserId = Number(userId);
+    
+    if (isNaN(numericUserId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+    
+    // Check if VAPID keys are configured
+    if (!areVapidKeysConfigured()) {
+      console.warn('VAPID keys are not configured. Push notifications will be logged only.');
+    }
+    
+    // Create a test notification payload
+    const payload = {
+      title: 'Test Notification',
+      body: 'This is a test push notification! If you can see this, push notifications are working correctly.',
+      icon: '/logo.png',
+      badge: '/badge.png',
+      url: '/notifications',
+      data: {
+        test: true,
+        timestamp: new Date().toISOString()
+      }
+    };
+    
+    // Send the test notification to the user
+    const result = await sendPushNotificationsToUser(numericUserId, payload);
+    
+    if (result.total === 0) {
+      return res.status(404).json({ error: 'No subscriptions found for this user' });
+    }
+    
+    return res.json({
+      success: true,
+      message: `Test notification sent to ${result.successful} of ${result.total} subscriptions`,
+      stats: result
+    });
+  } catch (error) {
+    console.error('Error sending test push notification:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;
