@@ -4,7 +4,8 @@ import { Separator } from '../components/ui/separator';
 import { PopupContainer } from '../components/ui/popup-container';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Search, RefreshCw, Filter } from 'lucide-react';
+import { Search, RefreshCw, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 interface NewsItem {
@@ -119,10 +120,21 @@ export default function NewsDashboardSimple() {
     });
   }, [newsItems, searchTerm, filterSource]);
 
+  const navigate = useNavigate();
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Financial News</h1>
+        <div className="flex items-center">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="mr-4 p-2 hover:bg-slate-700 rounded-full"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-5 w-5 text-slate-300" />
+          </button>
+          <h1 className="text-3xl font-bold">Financial News</h1>
+        </div>
         
         <div className="flex flex-col md:flex-row gap-4 mt-4 md:mt-0 w-full md:w-auto">
           {/* Search box */}

@@ -375,7 +375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Signal Subscriptions routes
   app.use("/api/signal-subscriptions", signalSubscriptionsRoutes);
 
-  // News route using default source (bloomberg)
+  // News route using Yahoo Finance as default source (more reliable RSS feed)
   app.get("/api/rss-feeds/news", (req, res) => {
     // Create a modified request with the sourceId parameter
     const modifiedReq = Object.create(req);
@@ -389,9 +389,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Create params object with correct type
     modifiedReq.params = { 
       ...(req.params || {}), 
-      sourceId: 'bloomberg' 
+      sourceId: 'yahoo_finance' 
     } as RequestParams;
 
+    console.log('Fetching news from Yahoo Finance RSS feed');
     return getRssFeed(modifiedReq, res);
   });
 
