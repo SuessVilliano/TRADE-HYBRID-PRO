@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { useOnboarding } from '@/lib/context/OnboardingProvider';
 import { toast } from 'sonner';
 import { AlertCircle, AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, HelpCircle, Info, Link, Wallet } from 'lucide-react';
+import { MainLayout } from '@/components/ui/main-layout';
 
 export default function WalletConnectOnboarding() {
   const navigate = useNavigate();
@@ -343,55 +344,57 @@ export default function WalletConnectOnboarding() {
   };
   
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl">{steps[step].title}</CardTitle>
-            <div className="text-sm text-muted-foreground">
-              Step {step + 1} of {steps.length}
+    <MainLayout>
+      <div className="flex items-center justify-center p-4 h-full">
+        <Card className="w-full max-w-2xl">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-2xl">{steps[step].title}</CardTitle>
+              <div className="text-sm text-muted-foreground">
+                Step {step + 1} of {steps.length}
+              </div>
             </div>
-          </div>
-          <CardDescription>
-            {steps[step].description}
-          </CardDescription>
-          <div className="w-full bg-muted h-1 mt-2 rounded-full overflow-hidden">
-            <div 
-              className="bg-primary h-full transition-all duration-300 ease-in-out" 
-              style={{ width: `${((step + 1) / steps.length) * 100}%` }}
-            ></div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {steps[step].content}
-        </CardContent>
-        <CardFooter className="flex items-center justify-between border-t p-4">
-          <Button
-            variant="outline"
-            onClick={handlePrev}
-            disabled={step === 0}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Previous
-          </Button>
-          
-          <Button
-            onClick={handleNext}
-          >
-            {step === steps.length - 1 ? (
-              <>
-                Finish
-                <CheckCircle2 className="ml-2 h-4 w-4" />
-              </>
-            ) : (
-              <>
-                Next
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </>
-            )}
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+            <CardDescription>
+              {steps[step].description}
+            </CardDescription>
+            <div className="w-full bg-muted h-1 mt-2 rounded-full overflow-hidden">
+              <div 
+                className="bg-primary h-full transition-all duration-300 ease-in-out" 
+                style={{ width: `${((step + 1) / steps.length) * 100}%` }}
+              ></div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {steps[step].content}
+          </CardContent>
+          <CardFooter className="flex items-center justify-between border-t p-4">
+            <Button
+              variant="outline"
+              onClick={handlePrev}
+              disabled={step === 0}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Previous
+            </Button>
+            
+            <Button
+              onClick={handleNext}
+            >
+              {step === steps.length - 1 ? (
+                <>
+                  Finish
+                  <CheckCircle2 className="ml-2 h-4 w-4" />
+                </>
+              ) : (
+                <>
+                  Next
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    </MainLayout>
   );
 }
