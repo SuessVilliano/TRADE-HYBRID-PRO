@@ -14,7 +14,8 @@ import {
   LineChartIcon,
   MessageCircle,
   LogOut,
-  User
+  User,
+  Globe
 } from 'lucide-react';
 import { Button } from './button';
 
@@ -90,6 +91,11 @@ export function CollapsibleTradingSidebar({ collapsed, onToggle }: CollapsibleTr
       icon: <Book size={18} />,
       label: 'Learning',
       path: '/learning-center'
+    },
+    {
+      icon: <Globe size={18} />,
+      label: 'News',
+      path: '/news'
     }
   ];
   

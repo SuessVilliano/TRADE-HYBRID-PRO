@@ -22,7 +22,7 @@ export default function NewsDashboard() {
   
   return (
     <>
-      <div className="container px-4 py-6 max-w-7xl mx-auto">
+      <div className="px-6 py-4 overflow-y-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Financial News Dashboard</h1>
@@ -87,30 +87,9 @@ export default function NewsDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Tabs defaultValue="screener" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="screener">Scanner</TabsTrigger>
-                    <TabsTrigger value="heatmap">Heat Map</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="screener">
-                    <div className="bg-slate-900 border border-slate-700 rounded-lg overflow-hidden h-[400px]">
-                      <div
-                        id="tv_screener_widget_alt"
-                        style={{ height: "100%" }}
-                        className="flex items-center justify-center"
-                      />
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="heatmap">
-                    <div className="bg-slate-900 border border-slate-700 rounded-lg overflow-hidden h-[400px]">
-                      <div
-                        id="tv_heatmap_widget_alt"
-                        style={{ height: "100%" }}
-                        className="flex items-center justify-center"
-                      />
-                    </div>
-                  </TabsContent>
-                </Tabs>
+                <div className="bg-slate-900 border border-slate-700 rounded-lg overflow-hidden h-[400px]">
+                  <TradingViewTools height="400px" defaultTab="screener" />
+                </div>
               </CardContent>
             </Card>
           </div>

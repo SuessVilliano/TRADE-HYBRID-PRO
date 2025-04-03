@@ -26,7 +26,7 @@ import Leaderboard from './pages/leaderboard';
 import ProfileView from './pages/profile';
 import SettingsView from './pages/settings';
 import BotsView from './pages/trading-bots';
-import NewsView from './pages/news-dashboard';
+import NewsView from './pages/NewsView';
 import NewsSimpleView from './pages/news-dashboard-simple';
 import LandingPage from './pages/landing';
 import EventsPage from './pages/events';
