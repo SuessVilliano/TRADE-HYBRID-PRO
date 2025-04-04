@@ -1,73 +1,83 @@
-import React, { useState } from 'react';
-import { Wallet } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Wallet, ExternalLink } from 'lucide-react';
 import { Button } from './button';
+import { cn } from '../../lib/utils';
 import { CryptoWalletOnboardingModal } from './crypto-wallet-onboarding-modal';
 
+// Import Solana wallet adapter components
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+
 interface SimpleWalletStatusProps {
-  isConnected?: boolean;
-  walletAddress?: string;
   className?: string;
 }
 
-export function SimpleWalletStatus({ 
-  isConnected = false, 
-  walletAddress, 
-  className = ''
-}: SimpleWalletStatusProps) {
+export function SimpleWalletStatus({ className }: SimpleWalletStatusProps) {
   const [showWalletModal, setShowWalletModal] = useState(false);
-  const [connected, setConnected] = useState(isConnected);
   
-  // Mock wallet address if not provided
-  const displayAddress = walletAddress || (connected ? "0x7F5e...4C93" : undefined);
+  // Get Solana wallet from the wallet adapter
+  const { connected, publicKey, disconnect } = useWallet();
   
-  // Function to truncate address for display
-  const truncateAddress = (address: string) => {
-    if (!address) return '';
-    if (address.length <= 10) return address;
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
-  
-  const handleOpenModal = () => {
+  // Format public key for display
+  const formattedAddress = publicKey 
+    ? `${publicKey.toString().slice(0, 4)}...${publicKey.toString().slice(-4)}` 
+    : '';
+
+  const handleConnect = () => {
     setShowWalletModal(true);
   };
-  
-  const handleCloseModal = () => {
-    setShowWalletModal(false);
-    // Simulate successful connection when modal closes
-    setConnected(true);
+
+  const handleDisconnect = () => {
+    disconnect();
   };
 
   return (
-    <div className={`${className}`}>
+    <>
       {connected ? (
-        <div className="flex items-center gap-2 bg-secondary/40 rounded-md p-2">
-          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-          <span className="text-sm font-medium">{truncateAddress(displayAddress || '')}</span>
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "flex items-center justify-between w-full border-slate-700 bg-slate-800/40 hover:bg-slate-800",
+            className
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+              <Wallet className="h-3 w-3 text-green-600" />
+            </div>
+            <div className="text-left">
+              <span className="text-xs font-mono">{formattedAddress}</span>
+            </div>
+          </div>
           <Button 
             variant="ghost" 
-            size="sm" 
-            className="ml-auto h-7 px-2"
-            onClick={handleOpenModal}
+            size="icon" 
+            className="h-6 w-6 ml-2 text-slate-400 hover:text-red-400 hover:bg-slate-700"
+            onClick={handleDisconnect}
           >
-            Change
+            <ExternalLink size={12} />
           </Button>
-        </div>
+        </Button>
       ) : (
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-full flex items-center gap-2"
-          onClick={handleOpenModal}
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "w-full border-slate-700 hover:bg-slate-800 flex items-center gap-2",
+            className
+          )}
+          onClick={handleConnect}
         >
-          <Wallet size={14} />
-          Connect Wallet
+          <Wallet size={16} className="mr-1" />
+          <span>Connect Wallet</span>
         </Button>
       )}
       
-      <CryptoWalletOnboardingModal
+      <CryptoWalletOnboardingModal 
         isOpen={showWalletModal}
-        onClose={handleCloseModal}
+        onClose={() => setShowWalletModal(false)}
       />
-    </div>
+    </>
   );
 }

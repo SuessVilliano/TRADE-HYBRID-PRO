@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Wallet, ArrowRight, AlertCircle } from 'lucide-react';
 import { Button } from './button';
 import { Card, CardContent } from './card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
+
+// Import Solana wallet adapter
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletName } from '@solana/wallet-adapter-base';
 
 interface CryptoWalletOnboardingModalProps {
   isOpen: boolean;
@@ -20,20 +24,69 @@ export function CryptoWalletOnboardingModal({
   const [activeStep, setActiveStep] = useState(currentStep);
   const [connecting, setConnecting] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
-
-  const handleConnect = (walletName: string) => {
-    setSelectedWallet(walletName);
-    setConnecting(true);
-    
-    // Simulate connection
-    setTimeout(() => {
+  const [error, setError] = useState<string | null>(null);
+  
+  // Get wallet functions from Solana wallet adapter
+  const { select, connect, connected, wallet, publicKey } = useWallet();
+  
+  // Check if wallet is connected on component mount or when connected state changes
+  useEffect(() => {
+    if (connected && publicKey && activeStep === 2) {
       setConnecting(false);
-      if (activeStep < totalSteps) {
-        setActiveStep(prev => prev + 1);
+      setSelectedWallet(wallet?.adapter.name || null);
+      setActiveStep(3);
+    }
+  }, [connected, publicKey, wallet, activeStep]);
+
+  const handleConnect = async (walletName: string) => {
+    try {
+      setSelectedWallet(walletName);
+      setConnecting(true);
+      setError(null);
+      
+      // Use the actual wallet adapter
+      // For Phantom wallet (Solana)
+      if (walletName === "Phantom") {
+        // First check if Phantom is installed
+        const phantomWalletName = 'Phantom' as WalletName;
+        
+        try {
+          // Select the wallet
+          select(phantomWalletName);
+          
+          // Connect after a short delay to allow UI update
+          setTimeout(async () => {
+            try {
+              await connect();
+              // The useEffect will handle the success case
+            } catch (err) {
+              console.error('Failed to connect to wallet:', err);
+              setConnecting(false);
+              setError('Failed to connect to wallet. Please make sure it is installed and try again.');
+            }
+          }, 500);
+        } catch (err) {
+          console.error('Error selecting wallet:', err);
+          setConnecting(false);
+          setError('Could not find wallet. Please make sure it is installed.');
+        }
       } else {
-        onClose();
+        // For other wallets, show a simulated connection for demo purposes
+        // In a real app, you would implement specific adapters for each wallet
+        setTimeout(() => {
+          setConnecting(false);
+          if (activeStep < totalSteps) {
+            setActiveStep(prev => prev + 1);
+          } else {
+            onClose();
+          }
+        }, 1500);
       }
-    }, 1500);
+    } catch (error) {
+      console.error('Connection error:', error);
+      setConnecting(false);
+      setError('An error occurred while connecting. Please try again.');
+    }
   };
 
   const handleBack = () => {
@@ -315,8 +368,19 @@ export function CryptoWalletOnboardingModal({
                       Your {selectedWallet} wallet has been successfully connected to TradeHybrid.
                     </p>
                     <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md w-full mt-2">
-                      <p className="font-mono text-sm truncate">0x7F5e...4C93</p>
+                      <p className="font-mono text-sm truncate">
+                        {publicKey ? publicKey.toString() : "Wallet not connected"}
+                      </p>
                     </div>
+                    
+                    {error && (
+                      <div className="bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200 p-3 rounded-md w-full mt-2">
+                        <div className="flex items-center gap-2">
+                          <AlertCircle size={16} />
+                          <p className="text-sm">{error}</p>
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
