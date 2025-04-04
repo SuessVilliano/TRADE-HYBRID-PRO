@@ -96,8 +96,8 @@ export function CollapsibleTradingSidebar({ collapsed, onToggle }: CollapsibleTr
     },
     {
       icon: <Book size={18} />,
-      label: 'Learning',
-      path: '/learning-center'
+      label: 'Learning Center',
+      path: '/learning-center/courses'
     },
     {
       icon: <Globe size={18} />,

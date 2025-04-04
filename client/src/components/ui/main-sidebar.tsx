@@ -204,15 +204,15 @@ export const MainSidebar: React.FC<{ onClose?: () => void, mobile?: boolean }> =
           href="#" 
           icon={<BookOpen className="h-5 w-5" />} 
           label="Education" 
-          active={isActive("/learn") || isActive("/learning")}
+          active={isActive("/learn") || isActive("/learning") || isActive("/learning-center")}
           expanded={expandedSections.learning}
           onExpand={() => toggleSection('learning')}
         >
           <NavItem 
-            href="/learn" 
+            href="/learning-center/courses" 
             icon={<BookOpen className="h-4 w-4" />} 
             label="Learning Center" 
-            active={isActive("/learn")} 
+            active={isActive("/learning-center")} 
             onClick={mobile ? onClose : undefined}
           />
           <NavItem 

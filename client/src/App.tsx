@@ -51,6 +51,9 @@ import LearningModuleDetailPage from './pages/learning-module-detail';
 import LearnEmbeddedPage from './pages/learn-embedded';
 import EducationalGamesPage from './pages/educational-games';
 import TradingFreedomPodcast from './pages/trading-freedom-podcast';
+import LearningCenterPage from './pages/learning-center';
+import CourseDetail from './components/learning/CourseDetail';
+import LessonDetail from './components/learning/LessonDetail';
 
 // Game Center
 import GamePage from './pages/game';
@@ -151,6 +154,12 @@ const App: React.FC = () => {
                   <Route path="/learn/:moduleId" element={<ProtectedRoute><LearningModuleDetailPage /></ProtectedRoute>} />
                   <Route path="/learn-embed" element={<ProtectedRoute><LearnEmbeddedPage /></ProtectedRoute>} />
                   <Route path="/educational-games" element={<ProtectedRoute><EducationalGamesPage /></ProtectedRoute>} />
+                  
+                  {/* Learning Center Routes */}
+                  <Route path="/learning-center" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
+                  <Route path="/learning-center/:tab" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
+                  <Route path="/learning-center/courses/:courseId" element={<ProtectedRoute><CourseDetail /></ProtectedRoute>} />
+                  <Route path="/learning-center/courses/:courseId/lessons/:lessonId" element={<ProtectedRoute><LessonDetail /></ProtectedRoute>} />
                   
                   {/* Game Center */}
                   <Route path="/game" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />

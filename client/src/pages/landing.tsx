@@ -277,7 +277,7 @@ const LandingPage: React.FC = () => {
                   description="Practice in risk-free environments before trading real capital"
                 />
               </div>
-              <Link to="/learn">
+              <Link to="/learning-center/courses">
                 <Button className="bg-green-600 hover:bg-green-700">
                   Explore Learning Center
                 </Button>
@@ -412,7 +412,7 @@ const LandingPage: React.FC = () => {
               <ul className="space-y-2 text-gray-400">
                 <li><Link to="/features" className="hover:text-blue-400">Features</Link></li>
                 <li><Link to="/pricing" className="hover:text-blue-400">Pricing</Link></li>
-                <li><Link to="/learn" className="hover:text-blue-400">Learning Center</Link></li>
+                <li><Link to="/learning-center/courses" className="hover:text-blue-400">Learning Center</Link></li>
                 <li><Link to="/contact" className="hover:text-blue-400">Contact Us</Link></li>
               </ul>
             </div>
@@ -509,7 +509,7 @@ const LearningModule: React.FC<{
     </div>
     <div className="flex justify-between text-xs">
       <span className="text-gray-500">{progress}% complete</span>
-      <Link to="/learn" className="text-green-400 hover:text-green-300">
+      <Link to="/learning-center/courses" className="text-green-400 hover:text-green-300">
         {progress === 100 ? 'Completed' : 'Continue'}
       </Link>
     </div>
