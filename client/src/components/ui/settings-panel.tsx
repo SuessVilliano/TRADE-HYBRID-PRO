@@ -517,6 +517,16 @@ export const SettingsPanel = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div>
+                    <Label className="text-lg">Webhook Management</Label>
+                    <p className="text-sm text-gray-500">Create and manage webhooks for trading signals</p>
+                  </div>
+                  <Button variant="outline" onClick={() => window.location.href = '/webhook-settings'}>Manage</Button>
+                </div>
+              </div>
+              <Separator />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
                     <Label className="text-lg">Wallet Connections</Label>
                     <p className="text-sm text-gray-500">Connect your crypto wallets</p>
                   </div>
