@@ -15,10 +15,11 @@ import {
   MessageCircle,
   LogOut,
   User,
-  Globe
+  Globe,
+  Sparkles,
+  Link as LinkIcon
 } from 'lucide-react';
 import { Button } from './button';
-import { QuickActions } from './quick-actions';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -122,9 +123,6 @@ export function CollapsibleTradingSidebar({ collapsed, onToggle }: CollapsibleTr
         </Button>
       </div>
       
-      {/* Quick Actions Section */}
-      <QuickActions collapsed={collapsed} className="mb-4 mt-2 border-b border-slate-800 pb-4" />
-      
       {/* Main Navigation */}
       <div className="space-y-1 px-2">
         {navItems.map((item, index) => (
@@ -142,6 +140,30 @@ export function CollapsibleTradingSidebar({ collapsed, onToggle }: CollapsibleTr
       
       <div className="absolute bottom-0 left-0 right-0 p-2 border-t border-slate-800">
         <div className="space-y-1">
+          {/* Quick Action Buttons - Smart Trade and Connect Broker */}
+          <div className={`grid ${collapsed ? 'grid-cols-1' : 'grid-cols-2'} gap-2 mb-3 mt-2`}>
+            <Button
+              variant="default"
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 w-full"
+              onClick={() => navigate('/trading-dashboard/custom')}
+            >
+              <Sparkles size={16} className="mr-1" />
+              {!collapsed && <span>Smart Trade</span>}
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full border-slate-700"
+              onClick={() => navigate('/broker-connections')}
+            >
+              <LinkIcon size={16} className="mr-1" />
+              {!collapsed && <span>Connect Broker</span>}
+            </Button>
+          </div>
+          
+          {/* Settings and Help */}
           <NavItem
             icon={<Settings size={18} />}
             label="Settings"
@@ -160,6 +182,7 @@ export function CollapsibleTradingSidebar({ collapsed, onToggle }: CollapsibleTr
             onClick={() => navigate('/help-center')}
           />
           
+          {/* User Profile */}
           {collapsed ? (
             <NavItem
               icon={<User size={18} />}
