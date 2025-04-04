@@ -47,7 +47,13 @@ const InvestorDashboardPage: React.FC = () => {
   const [performanceRecords, setPerformanceRecords] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('overview');
 
+  // Track data loading with a ref to prevent duplicate requests
+  const dataFetchedRef = React.useRef(false);
+  
   useEffect(() => {
+    // Prevent multiple fetches in development mode with React strict mode
+    if (dataFetchedRef.current) return;
+    
     // Fetch investor information
     const fetchInvestorData = async () => {
       try {
@@ -62,6 +68,12 @@ const InvestorDashboardPage: React.FC = () => {
         const investorData = await investorResponse.json();
         setInvestor(investorData);
         
+        if (!investorData || !investorData.id) {
+          console.error('Invalid investor data received');
+          setLoading(false);
+          return;
+        }
+        
         // Fetch investments
         const investmentsResponse = await fetch(`/api/investments?investorId=${investorData.id}`);
         if (!investmentsResponse.ok) {
@@ -69,16 +81,38 @@ const InvestorDashboardPage: React.FC = () => {
         }
         
         const investmentsData = await investmentsResponse.json();
-        setInvestments(investmentsData);
+        setInvestments(investmentsData || []);
         
-        // Fetch performance records
-        const performanceResponse = await fetch(`/api/investment-performance?investorId=${investorData.id}`);
-        if (!performanceResponse.ok) {
-          throw new Error('Failed to fetch performance records');
+        // Fetch performance records - check valid investments
+        if (investmentsData && investmentsData.length > 0) {
+          try {
+            const performanceResponse = await fetch(`/api/investment-performance?investorId=${investorData.id}`);
+            if (!performanceResponse.ok) {
+              console.error('Performance records fetch returned status:', performanceResponse.status);
+              // Don't throw error, just log and continue with empty array
+              setPerformanceRecords([]);
+            } else {
+              const performanceData = await performanceResponse.json();
+              // Ensure we have proper array data
+              if (Array.isArray(performanceData)) {
+                setPerformanceRecords(performanceData);
+              } else {
+                console.error('Invalid performance data format:', performanceData);
+                setPerformanceRecords([]);
+              }
+            }
+          } catch (perfError) {
+            console.error('Error fetching performance records:', perfError);
+            // Don't fail entire load, just set empty performance records
+            setPerformanceRecords([]);
+          }
+        } else {
+          // No investments, so no performance to fetch
+          setPerformanceRecords([]);
         }
         
-        const performanceData = await performanceResponse.json();
-        setPerformanceRecords(performanceData);
+        // Mark data as fetched to prevent duplicate requests
+        dataFetchedRef.current = true;
         
       } catch (error) {
         console.error('Error fetching investor data:', error);
@@ -87,6 +121,10 @@ const InvestorDashboardPage: React.FC = () => {
           description: 'Failed to load your investment data. Please try again later.',
           variant: 'destructive',
         });
+        // Set default empty values on error
+        setInvestor(null);
+        setInvestments([]);
+        setPerformanceRecords([]);
       } finally {
         setLoading(false);
       }
@@ -117,17 +155,24 @@ const InvestorDashboardPage: React.FC = () => {
 
   // Calculate monthly performance data for chart
   const getMonthlyPerformanceData = () => {
+    // Safety check
+    if (!performanceRecords || performanceRecords.length === 0) {
+      return [];
+    }
+    
     // Group performance records by month
     const monthlyData: Record<string, number> = {};
     
     performanceRecords.forEach(record => {
+      if (!record.period) return; // Skip invalid records
+      
       if (monthlyData[record.period]) {
         // Weighted average based on investment size
         const existingValue = monthlyData[record.period];
-        const recordWeight = record.start_balance / totalPortfolioValue;
-        monthlyData[record.period] = existingValue + (record.percent_return * recordWeight);
+        const recordWeight = (record.startBalance || 0) / Math.max(totalPortfolioValue, 1);
+        monthlyData[record.period] = existingValue + ((record.percentReturn || 0) * recordWeight);
       } else {
-        monthlyData[record.period] = record.percent_return;
+        monthlyData[record.period] = record.percentReturn || 0;
       }
     });
     
@@ -240,7 +285,12 @@ const InvestorDashboardPage: React.FC = () => {
             <h1 className="text-3xl font-bold">Investor Dashboard</h1>
             <Button 
               variant="outline" 
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                // Reset fetch state to allow refetching
+                dataFetchedRef.current = false;
+                // Then force a re-render to trigger the data fetch
+                setLoading(true);
+              }}
             >
               Refresh Data
             </Button>
@@ -291,7 +341,7 @@ const InvestorDashboardPage: React.FC = () => {
                   <p className="text-sm font-medium">Latest Performance</p>
                   <h3 className="text-2xl font-bold mt-1">
                     {performanceRecords.length > 0
-                      ? formatPercent(performanceRecords[0].percent_return)
+                      ? formatPercent(performanceRecords[0].percentReturn || 0)
                       : '0%'}
                   </h3>
                 </div>
@@ -299,7 +349,7 @@ const InvestorDashboardPage: React.FC = () => {
               </div>
               <div className="mt-4 text-xs text-muted-foreground">
                 <span className="font-medium">
-                  {performanceRecords.length > 0
+                  {performanceRecords.length > 0 && performanceRecords[0].period
                     ? performanceRecords[0].period
                     : 'No data yet'}
                 </span> period
@@ -481,19 +531,19 @@ const InvestorDashboardPage: React.FC = () => {
                 {performanceRecords.length > 0 ? (
                   <div className="space-y-4">
                     {performanceRecords.map((record) => {
-                      const investment = investments.find(i => i.id === record.investment_id);
+                      const investment = investments.find(i => i.id === record.investmentId);
                       
                       return (
                         <Card key={record.id} className="bg-muted/40">
                           <CardContent className="pt-4 pb-4">
                             <div className="flex justify-between items-center mb-2">
-                              <h4 className="text-lg font-semibold">{investment?.name || `Investment #${record.investment_id}`}</h4>
+                              <h4 className="text-lg font-semibold">{investment?.name || `Investment #${record.investmentId}`}</h4>
                               <div className="flex items-center gap-2">
                                 <Badge>{record.period}</Badge>
                                 <span 
-                                  className={`font-semibold ${record.percent_return >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                                  className={`font-semibold ${record.percentReturn >= 0 ? 'text-green-500' : 'text-red-500'}`}
                                 >
-                                  {formatPercent(record.percent_return)}
+                                  {formatPercent(record.percentReturn || 0)}
                                 </span>
                               </div>
                             </div>
@@ -503,43 +553,43 @@ const InvestorDashboardPage: React.FC = () => {
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
                               <div>
                                 <p className="text-sm text-muted-foreground">Start Balance</p>
-                                <p className="font-medium">{formatCurrency(record.start_balance)}</p>
+                                <p className="font-medium">{formatCurrency(record.startBalance || 0)}</p>
                               </div>
                               <div>
                                 <p className="text-sm text-muted-foreground">End Balance</p>
-                                <p className="font-medium">{formatCurrency(record.end_balance)}</p>
+                                <p className="font-medium">{formatCurrency(record.endBalance || 0)}</p>
                               </div>
                               <div>
                                 <p className="text-sm text-muted-foreground">Gross Profit</p>
-                                <p className="font-medium">{formatCurrency(record.gross_profit)}</p>
+                                <p className="font-medium">{formatCurrency(record.grossProfit || 0)}</p>
                               </div>
                               <div>
                                 <p className="text-sm text-muted-foreground">Net Profit</p>
-                                <p className="font-medium">{formatCurrency(record.net_profit)}</p>
+                                <p className="font-medium">{formatCurrency(record.netProfit || 0)}</p>
                               </div>
                             </div>
                             
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                               <div>
                                 <p className="text-sm text-muted-foreground">Performance Fee</p>
-                                <p className="font-medium">{formatCurrency(record.performance_fee)}</p>
+                                <p className="font-medium">{formatCurrency(record.performanceFee || 0)}</p>
                               </div>
-                              {record.setup_fee > 0 && (
+                              {(record.setupFee || 0) > 0 && (
                                 <div>
                                   <p className="text-sm text-muted-foreground">Setup Fee</p>
-                                  <p className="font-medium">{formatCurrency(record.setup_fee)}</p>
+                                  <p className="font-medium">{formatCurrency(record.setupFee || 0)}</p>
                                 </div>
                               )}
-                              {record.broker_processing_fee > 0 && (
+                              {(record.brokerProcessingFee || 0) > 0 && (
                                 <div>
                                   <p className="text-sm text-muted-foreground">Broker Fee</p>
-                                  <p className="font-medium">{formatCurrency(record.broker_processing_fee)}</p>
+                                  <p className="font-medium">{formatCurrency(record.brokerProcessingFee || 0)}</p>
                                 </div>
                               )}
-                              {record.other_fees > 0 && (
+                              {(record.otherFees || 0) > 0 && (
                                 <div>
                                   <p className="text-sm text-muted-foreground">Other Fees</p>
-                                  <p className="font-medium">{formatCurrency(record.other_fees)}</p>
+                                  <p className="font-medium">{formatCurrency(record.otherFees || 0)}</p>
                                 </div>
                               )}
                             </div>
@@ -571,25 +621,25 @@ const InvestorDashboardPage: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {performanceRecords.filter(r => r.report_generated).length > 0 ? (
+                {performanceRecords.filter(r => r.reportGenerated).length > 0 ? (
                   <div className="space-y-4">
                     {performanceRecords
-                      .filter(r => r.report_generated)
+                      .filter(r => r.reportGenerated)
                       .map((record) => {
-                        const investment = investments.find(i => i.id === record.investment_id);
+                        const investment = investments.find(i => i.id === record.investmentId);
                         
                         return (
                           <div key={record.id} className="flex items-center justify-between p-4 border rounded-lg">
                             <div>
-                              <h4 className="font-semibold">{investment?.name || `Investment #${record.investment_id}`}</h4>
+                              <h4 className="font-semibold">{investment?.name || `Investment #${record.investmentId}`}</h4>
                               <p className="text-sm text-muted-foreground">
-                                {record.period} - {formatPercent(record.percent_return)} return
+                                {record.period} - {formatPercent(record.percentReturn || 0)} return
                               </p>
                             </div>
                             <Button 
                               variant="outline" 
                               size="sm"
-                              onClick={() => downloadReport(record.report_url)}
+                              onClick={() => downloadReport(record.reportUrl || '')}
                             >
                               <Download className="h-4 w-4 mr-2" />
                               Download

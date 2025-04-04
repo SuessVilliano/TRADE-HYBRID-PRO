@@ -8,7 +8,7 @@ import {
   investors,
   insertInvestmentPerformanceSchema 
 } from '../../shared/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, inArray } from 'drizzle-orm';
 
 const router = express.Router();
 
@@ -17,54 +17,99 @@ export const getInvestmentPerformance = async (req: express.Request, res: expres
   try {
     console.log('Fetching investment performance with query params:', req.query);
     
-    // Build query to get real performance data from database
-    let query = db.select().from(investmentPerformance);
-    
-    // Apply filters based on query parameters
-    if (req.query.investmentId) {
-      const investmentId = parseInt(req.query.investmentId as string);
-      query = query.where(eq(investmentPerformance.investmentId, investmentId));
-    }
-    
     // Filter by investor ID if provided
     if (req.query.investorId) {
-      const investorId = parseInt(req.query.investorId as string);
-      // First get investment IDs for this investor
-      const investmentsForInvestor = await db
-        .select({ id: investments.id })
-        .from(investments)
-        .where(eq(investments.investorId, investorId));
-      
-      const investmentIds = investmentsForInvestor.map(inv => inv.id);
-      
-      if (investmentIds.length === 0) {
-        // No investments found for this investor
-        return res.json([]);
+      try {
+        const investorId = parseInt(req.query.investorId as string);
+        
+        // First get investment IDs for this investor
+        const investmentsForInvestor = await db
+          .select({ id: investments.id })
+          .from(investments)
+          .where(eq(investments.investorId, investorId));
+        
+        const investmentIds = investmentsForInvestor.map(inv => inv.id);
+        
+        if (investmentIds.length === 0) {
+          // No investments found for this investor
+          return res.json([]);
+        }
+        
+        // Get performance records for these investments
+        let performanceRecords;
+        if (investmentIds.length === 1) {
+          performanceRecords = await db
+            .select()
+            .from(investmentPerformance)
+            .where(eq(investmentPerformance.investmentId, investmentIds[0]))
+            .orderBy(desc(investmentPerformance.period));
+        } else {
+          performanceRecords = await db
+            .select()
+            .from(investmentPerformance)
+            .where(inArray(investmentPerformance.investmentId, investmentIds))
+            .orderBy(desc(investmentPerformance.period));
+        }
+        
+        // Return the records
+        return res.json(performanceRecords);
+      } catch (error) {
+        console.error('Error processing investor performance:', error);
+        return res.status(500).json({ error: 'Failed to fetch investor performance records' });
       }
-      
-      // Add the filter for investment IDs
-      if (investmentIds.length === 1) {
-        query = query.where(eq(investmentPerformance.investmentId, investmentIds[0]));
-      } else {
-        query = query.where(
-          investmentPerformance.investmentId.in(investmentIds)
-        );
+    }
+    
+    // Filter by investment ID if provided
+    if (req.query.investmentId) {
+      try {
+        const investmentId = parseInt(req.query.investmentId as string);
+        
+        const performanceRecords = await db
+          .select()
+          .from(investmentPerformance)
+          .where(eq(investmentPerformance.investmentId, investmentId))
+          .orderBy(desc(investmentPerformance.period));
+          
+        return res.json(performanceRecords);
+      } catch (error) {
+        console.error('Error fetching investment performance:', error);
+        return res.status(500).json({ error: 'Failed to fetch investment performance records' });
       }
     }
     
     // Filter by period if provided
     if (req.query.period) {
-      const period = req.query.period as string;
-      query = query.where(eq(investmentPerformance.period, period));
+      try {
+        const period = req.query.period as string;
+        
+        const performanceRecords = await db
+          .select()
+          .from(investmentPerformance)
+          .where(eq(investmentPerformance.period, period))
+          .orderBy(desc(investmentPerformance.period));
+          
+        return res.json(performanceRecords);
+      } catch (error) {
+        console.error('Error fetching period performance:', error);
+        return res.status(500).json({ error: 'Failed to fetch period performance records' });
+      }
     }
     
-    // Execute the query and get the results
-    const performanceRecords = await query.orderBy(desc(investmentPerformance.period));
-    
-    // Return the real data from database
-    return res.json(performanceRecords);
+    // No filters, return all records
+    try {
+      const performanceRecords = await db
+        .select()
+        .from(investmentPerformance)
+        .orderBy(desc(investmentPerformance.period));
+      
+      // Return the real data from database
+      return res.json(performanceRecords);
+    } catch (error) {
+      console.error('Error fetching all performance records:', error);
+      return res.status(500).json({ error: 'Failed to fetch performance records' });
+    }
   } catch (error) {
-    console.error('Error fetching performance records:', error);
+    console.error('Error in getInvestmentPerformance:', error);
     res.status(500).json({ error: 'Failed to fetch performance records' });
   }
 };
@@ -101,12 +146,24 @@ export const getInvestorPerformance = async (req: express.Request, res: express.
       return res.json([]);
     }
     
-    // Get performance records for all these investments
-    const performanceRecords = await db
-      .select()
-      .from(investmentPerformance)
-      .where(investmentPerformance.investmentId.in(investmentIds))
-      .orderBy(desc(investmentPerformance.period));
+    let performanceRecords: any[] = [];
+    
+    // Process each investment ID separately to avoid type errors
+    for (const invId of investmentIds) {
+      const records = await db
+        .select()
+        .from(investmentPerformance)
+        .where(eq(investmentPerformance.investmentId, invId));
+        
+      performanceRecords = [...performanceRecords, ...records];
+    }
+    
+    // Sort all records by period descending
+    performanceRecords.sort((a, b) => {
+      if (a.period < b.period) return 1;
+      if (a.period > b.period) return -1;
+      return 0;
+    });
     
     res.json(performanceRecords);
   } catch (error) {
@@ -295,8 +352,9 @@ export const updateAllInvestmentsPerformance = async (req: express.Request, res:
       const endBalance = startBalance + grossProfit;
       
       // Calculate fees
+      const performanceFeePercent = investment.performanceFeePercent || feeSetting.defaultPerformanceFeePercent || 20;
       const performanceFee = grossProfit > 0 
-        ? grossProfit * (investment.performanceFeePercent / 100) 
+        ? grossProfit * (performanceFeePercent / 100) 
         : 0;
       
       // Setup fee is only applied on the first performance record
