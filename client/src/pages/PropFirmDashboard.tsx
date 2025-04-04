@@ -10,8 +10,9 @@ import { useToast } from '@/components/ui/use-toast';
 import { Loader2, AlertCircle, CheckCircle, Clock, DollarSign, ChevronRight, TrendingUp, BarChart2 } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { formatCurrency, formatPercent } from '@/lib/utils';
+import { TradingDashboardLayout } from '@/components/ui/trading-dashboard-layout';
 
-const PropFirmDashboard: React.FC = () => {
+const PropFirmDashboardPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -193,17 +194,18 @@ const PropFirmDashboard: React.FC = () => {
   };
 
   return (
-    <div className="container px-4 mx-auto py-6">
-      <div className="flex flex-col space-y-4">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Proprietary Trading Firm</h1>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/prop-firm/challenges')}
-          >
-            View All Challenges
-          </Button>
-        </div>
+    <TradingDashboardLayout>
+      <div className="container px-4 mx-auto py-6">
+        <div className="flex flex-col space-y-4">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold">Proprietary Trading Firm</h1>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/prop-firm/challenges')}
+            >
+              View All Challenges
+            </Button>
+          </div>
         
         <p className="text-muted-foreground mb-6">
           Trade with our capital after proving your skills through trading challenges.
@@ -402,7 +404,8 @@ const PropFirmDashboard: React.FC = () => {
         </Tabs>
       </div>
     </div>
+  </TradingDashboardLayout>
   );
 };
 
-export default PropFirmDashboard;
+export default PropFirmDashboardPage;

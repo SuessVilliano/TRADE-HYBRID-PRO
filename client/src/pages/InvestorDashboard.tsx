@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { formatCurrency, formatPercent, formatDate } from '@/lib/utils';
+import { TradingDashboardLayout } from '@/components/ui/trading-dashboard-layout';
 
 // For data visualization, we're using recharts
 import { 
@@ -35,7 +36,7 @@ import {
   Legend
 } from 'recharts';
 
-const InvestorDashboard: React.FC = () => {
+const InvestorDashboardPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -232,17 +233,18 @@ const InvestorDashboard: React.FC = () => {
   }
 
   return (
-    <div className="container px-4 mx-auto py-6">
-      <div className="flex flex-col space-y-4">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Investor Dashboard</h1>
-          <Button 
-            variant="outline" 
-            onClick={() => window.location.reload()}
-          >
-            Refresh Data
-          </Button>
-        </div>
+    <TradingDashboardLayout>
+      <div className="container px-4 mx-auto py-6">
+        <div className="flex flex-col space-y-4">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold">Investor Dashboard</h1>
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.reload()}
+            >
+              Refresh Data
+            </Button>
+          </div>
         
         <p className="text-muted-foreground mb-6">
           Welcome back, {investor.name}. Here's the current status of your investments.
@@ -612,7 +614,8 @@ const InvestorDashboard: React.FC = () => {
         </Tabs>
       </div>
     </div>
+  </TradingDashboardLayout>
   );
 };
 
-export default InvestorDashboard;
+export default InvestorDashboardPage;
