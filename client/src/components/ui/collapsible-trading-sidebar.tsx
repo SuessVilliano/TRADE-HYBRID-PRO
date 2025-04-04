@@ -60,12 +60,12 @@ export function CollapsibleTradingSidebar({ collapsed, onToggle }: CollapsibleTr
     {
       icon: <LineChart size={18} />,
       label: 'Trade',
-      path: '/trade'
+      path: '/trading-dashboard/custom'
     },
     {
       icon: <BrainCircuit size={18} />,
       label: 'AI Analysis',
-      path: '/ai-market-analysis'
+      path: '/ai-analysis'
     },
     {
       icon: <Bot size={18} />,
@@ -75,17 +75,17 @@ export function CollapsibleTradingSidebar({ collapsed, onToggle }: CollapsibleTr
     {
       icon: <MessageCircle size={18} />,
       label: 'AI Chat',
-      path: '/ai-chat'
+      path: '/ai-assistant'
     },
     {
       icon: <LineChartIcon size={18} />,
       label: 'Market Data',
-      path: '/market-data'
+      path: '/market-overview'
     },
     {
       icon: <Wallet size={18} />,
       label: 'Portfolio',
-      path: '/portfolio'
+      path: '/portfolio-dashboard'
     },
     {
       icon: <Book size={18} />,
@@ -129,7 +129,7 @@ export function CollapsibleTradingSidebar({ collapsed, onToggle }: CollapsibleTr
             label={item.label}
             path={item.path}
             collapsed={collapsed}
-            active={location.pathname === item.path}
+            active={location.pathname.startsWith(item.path)}
             onClick={() => navigate(item.path)}
           />
         ))}
@@ -140,32 +140,35 @@ export function CollapsibleTradingSidebar({ collapsed, onToggle }: CollapsibleTr
           <NavItem
             icon={<Settings size={18} />}
             label="Settings"
-            path="/settings"
+            path="/user-settings"
             collapsed={collapsed}
-            active={location.pathname === '/settings'}
-            onClick={() => navigate('/settings')}
+            active={location.pathname.startsWith('/user-settings')}
+            onClick={() => navigate('/user-settings')}
           />
           
           <NavItem
             icon={<HelpCircle size={18} />}
             label="Help & Support"
-            path="/support"
+            path="/help-center"
             collapsed={collapsed}
-            active={location.pathname === '/support'}
-            onClick={() => navigate('/support')}
+            active={location.pathname.startsWith('/help-center')}
+            onClick={() => navigate('/help-center')}
           />
           
           {collapsed ? (
             <NavItem
               icon={<User size={18} />}
               label="Profile"
-              path="/profile"
+              path="/user-profile"
               collapsed={collapsed}
-              active={location.pathname === '/profile'}
-              onClick={() => navigate('/profile')}
+              active={location.pathname.startsWith('/user-profile')}
+              onClick={() => navigate('/user-profile')}
             />
           ) : (
-            <div className="flex items-center gap-3 px-3 py-2 mt-2 rounded-md bg-slate-800/40">
+            <div 
+              className="flex items-center gap-3 px-3 py-2 mt-2 rounded-md bg-slate-800/40 cursor-pointer"
+              onClick={() => navigate('/user-profile')}
+            >
               <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium">
                 TH
               </div>
