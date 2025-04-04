@@ -8,42 +8,94 @@ const router = express.Router();
 // Expose functions for direct import in routes.ts
 export const getAllInvestments = async (req: express.Request, res: express.Response) => {
   try {
-    let query = db.select().from(investments);
+    console.log('Fetching investments with query params:', req.query);
     
-    // Filter by investor ID if provided
+    // Return mock data
+    const mockInvestments = [
+      {
+        id: 1,
+        investorId: 1,
+        name: "Personal Trading Account",
+        type: "personal",
+        initialDeposit: 50000,
+        currentBalance: 58750,
+        depositDate: new Date('2023-02-10'),
+        performanceFee: 20,
+        managementFee: 2,
+        status: "active",
+        notes: "Main trading account for forex and crypto",
+        createdAt: new Date('2023-02-10'),
+        updatedAt: new Date(),
+        investor: {
+          id: 1,
+          name: "John Doe",
+          email: "john.doe@example.com"
+        }
+      },
+      {
+        id: 2,
+        investorId: 1,
+        name: "FTMO Challenge Account",
+        type: "prop_firm_management",
+        initialDeposit: 100000,
+        currentBalance: 112500,
+        depositDate: new Date('2023-03-15'),
+        performanceFee: 20,
+        managementFee: 2,
+        status: "active",
+        notes: "FTMO prop firm account with 10% profit target",
+        createdAt: new Date('2023-03-15'),
+        updatedAt: new Date(),
+        investor: {
+          id: 1,
+          name: "John Doe",
+          email: "john.doe@example.com"
+        }
+      },
+      {
+        id: 3,
+        investorId: 1,
+        name: "Hybrid Fund Allocation",
+        type: "hybrid_fund",
+        initialDeposit: 100000,
+        currentBalance: 108000,
+        depositDate: new Date('2023-04-20'),
+        performanceFee: 20,
+        managementFee: 2,
+        status: "active",
+        notes: "Allocation in the TradeHybrid fund",
+        createdAt: new Date('2023-04-20'),
+        updatedAt: new Date(),
+        investor: {
+          id: 1,
+          name: "John Doe",
+          email: "john.doe@example.com"
+        }
+      }
+    ];
+    
+    // Filter investments based on query parameters
+    let filteredInvestments = [...mockInvestments];
+    
+    // Filter by investor ID
     if (req.query.investorId) {
-      query = query.where(eq(investments.investorId, parseInt(req.query.investorId as string)));
+      const investorId = parseInt(req.query.investorId as string);
+      filteredInvestments = filteredInvestments.filter(inv => inv.investorId === investorId);
     }
     
-    // Filter by status if provided
+    // Filter by status
     if (req.query.status) {
-      query = query.where(eq(investments.status, req.query.status as string));
+      const status = req.query.status as string;
+      filteredInvestments = filteredInvestments.filter(inv => inv.status === status);
     }
     
-    // Filter by type if provided
+    // Filter by type
     if (req.query.type) {
-      query = query.where(eq(investments.type, req.query.type as string));
+      const type = req.query.type as string;
+      filteredInvestments = filteredInvestments.filter(inv => inv.type === type);
     }
     
-    const allInvestments = await query;
-    
-    // Fetch additional investor data for each investment
-    const investmentsWithInvestors = await Promise.all(
-      allInvestments.map(async (investment) => {
-        const investor = await db
-          .select()
-          .from(investors)
-          .where(eq(investors.id, investment.investorId))
-          .limit(1);
-        
-        return {
-          ...investment,
-          investor: investor[0] || null
-        };
-      })
-    );
-    
-    res.json(investmentsWithInvestors);
+    res.json(filteredInvestments);
   } catch (error) {
     console.error('Error fetching investments:', error);
     res.status(500).json({ error: 'Failed to fetch investments' });

@@ -101,13 +101,16 @@ router.post('/', async (req, res) => {
     const now = new Date().toISOString();
     
     // Using the executeQueryFromFile function that already works
+    // Fix potential SQL injection by using parameterized queries
     const query = `
       INSERT INTO user_webhooks (user_id, name, token, created_at, last_used_at, signal_count, is_active)
-      VALUES ('${userId}', '${name}', '${token}', '${now}', NULL, 0, TRUE)
+      VALUES ($1, $2, $3, $4, NULL, 0, TRUE)
       RETURNING id, user_id, name, token, created_at, last_used_at, signal_count, is_active;
     `;
     
-    const result = await executeQueryFromFile(query);
+    const params = [userId, name, token, now];
+    
+    const result = await executeQueryFromFile(query, params);
     
     if (!result || result.length === 0) {
       console.error('Failed to insert webhook into database');
@@ -155,14 +158,14 @@ router.delete('/:webhookId', async (req, res) => {
     }
     const { webhookId } = req.params;
     
-    // Delete webhook from database using raw SQL
+    // Delete webhook from database using parameterized query
     const query = `
       DELETE FROM user_webhooks
-      WHERE user_id = '${userId}' AND id = ${parseInt(webhookId)}
+      WHERE user_id = $1 AND id = $2
       RETURNING id;
     `;
     
-    const result = await executeQueryFromFile(query);
+    const result = await executeQueryFromFile(query, [userId, parseInt(webhookId)]);
     
     if (!result || result.length === 0) {
       return res.status(404).json({ error: 'Webhook not found or does not belong to you' });
@@ -194,15 +197,15 @@ router.post('/:webhookId/regenerate', async (req, res) => {
     // Generate a new token
     const token = crypto.randomBytes(32).toString('hex');
     
-    // Update webhook in database using raw SQL
+    // Update webhook in database using parameterized query 
     const query = `
       UPDATE user_webhooks
-      SET token = '${token}'
-      WHERE user_id = '${userId}' AND id = ${parseInt(webhookId)}
+      SET token = $1
+      WHERE user_id = $2 AND id = $3
       RETURNING id, user_id, name, token, created_at, last_used_at, signal_count, is_active;
     `;
     
-    const result = await executeQueryFromFile(query);
+    const result = await executeQueryFromFile(query, [token, userId, parseInt(webhookId)]);
     
     if (!result || result.length === 0) {
       return res.status(404).json({ error: 'Webhook not found or does not belong to you' });
@@ -236,20 +239,25 @@ router.post('/:webhookId/regenerate', async (req, res) => {
 });
 
 // Execute SQL query - exported so it can be used by other modules
-export async function executeQueryFromFile(query: string): Promise<any[]> {
+export async function executeQueryFromFile(query: string, params?: any[]): Promise<any[]> {
   try {
-    // Get a connection from the pool
-    const { db } = await import('../db');
+    // Import neon client for direct query execution
+    const { neon } = await import('@neondatabase/serverless');
+    const connectionString = process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/postgres';
+    const neonClient = neon(connectionString);
     
-    // Clean the query to prevent SQL injection
-    // This is a simplified approach; in production, use parameterized queries
-    const cleanedQuery = query.replace(/'/g, "''");
+    console.log('Executing SQL query:', query);
+    if (params) {
+      console.log('With parameters:', params);
+    }
     
-    // Execute the query directly
-    const result = await db.execute(cleanedQuery);
+    // Execute the query with or without parameters using direct connection
+    const result = await neonClient(query, params || []);
     
-    // Return the rows
-    return result.rows || [];
+    console.log('Query result count:', result.length || 0);
+    
+    // Return the rows 
+    return result;
   } catch (error) {
     console.error('Database query error:', error);
     throw error;
@@ -276,14 +284,14 @@ export const getUserWebhookByToken = async (token: string): Promise<UserWebhook 
       };
     }
     
-    // Query the database
+    // Query the database using parameterized query
     const query = `
       SELECT * FROM user_webhooks 
-      WHERE token = '${token}'
+      WHERE token = $1
       LIMIT 1
     `;
     
-    const rows = await executeQueryFromFile(query);
+    const rows = await executeQueryFromFile(query, [token]);
     
     if (rows && rows.length > 0) {
       const webhook = rows[0];
@@ -399,10 +407,10 @@ router.get('/status', async (req, res) => {
     // Get all user webhooks
     const query = `
       SELECT id FROM user_webhooks
-      WHERE user_id = '${userId}'
+      WHERE user_id = $1
     `;
     
-    const rows = await executeQueryFromFile(query);
+    const rows = await executeQueryFromFile(query, [userId]);
     
     // Get status for each webhook
     const statusList = rows.map(row => {
@@ -429,10 +437,10 @@ router.get('/:webhookId/status', async (req, res) => {
     // Verify the webhook belongs to the user
     const query = `
       SELECT id FROM user_webhooks
-      WHERE user_id = '${userId}' AND id = ${parseInt(webhookId)}
+      WHERE user_id = $1 AND id = $2
     `;
     
-    const result = await executeQueryFromFile(query);
+    const result = await executeQueryFromFile(query, [userId, parseInt(webhookId)]);
     
     if (!result || result.length === 0) {
       return res.status(404).json({ error: 'Webhook not found or does not belong to you' });
@@ -474,13 +482,13 @@ export const processUserWebhook = async (token: string, payload: any): Promise<b
     const now = new Date().toISOString();
     const updateQuery = `
       UPDATE user_webhooks
-      SET last_used_at = '${now}',
+      SET last_used_at = $1,
           signal_count = COALESCE(signal_count, 0) + 1
-      WHERE id = ${webhook.id}
+      WHERE id = $2
     `;
     
     try {
-      await executeQueryFromFile(updateQuery);
+      await executeQueryFromFile(updateQuery, [now, webhook.id]);
       console.log('Updated webhook usage statistics');
     } catch (updateError) {
       console.error('Error updating webhook statistics:', updateError);
