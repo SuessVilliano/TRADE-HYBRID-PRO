@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LineChart, BarChart3, Signal, Bot, BookOpen, Users, FileText, 
-  Settings, Cpu, Calendar, MessageSquare, Podcast, Zap, Activity, BrainCircuit } from 'lucide-react';
+  Settings, Cpu, Calendar, MessageSquare, Podcast, Zap, Activity, BrainCircuit, Wallet } from 'lucide-react';
 import { Button } from '../ui/button';
+import { CryptoWalletOnboardingModal } from '../ui/crypto-wallet-onboarding-modal';
 
 // Define dashboard item type
 interface DashboardItem {
@@ -245,6 +246,7 @@ interface OriginalDashboardProps {
 
 const OriginalDashboard: React.FC<OriginalDashboardProps> = ({ className = '' }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showWalletModal, setShowWalletModal] = useState(false);
   
   // Filter dashboard items based on search term
   const filteredItems = dashboardItems.filter(item => 
@@ -329,8 +331,18 @@ const OriginalDashboard: React.FC<OriginalDashboardProps> = ({ className = '' })
                   Investor Dashboard
                 </Button>
               </Link>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                Connect Broker
+              <Link to="/broker-connections">
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  Connect Broker
+                </Button>
+              </Link>
+              <Button 
+                variant="outline" 
+                className="border-gray-600 flex items-center gap-2"
+                onClick={() => setShowWalletModal(true)}
+              >
+                <Wallet size={16} />
+                Connect Wallet
               </Button>
               <Button variant="outline" className="border-gray-600">
                 View Tutorial
@@ -338,13 +350,21 @@ const OriginalDashboard: React.FC<OriginalDashboardProps> = ({ className = '' })
               <Button variant="outline" className="border-gray-600">
                 Import Trades
               </Button>
-              <Button variant="outline" className="border-gray-600">
-                Join Discord
-              </Button>
+              <Link to="/smart-trade-explainer">
+                <Button variant="outline" className="border-gray-600">
+                  Smart Trade
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
       </div>
+      
+      {/* Crypto Wallet Connection Modal */}
+      <CryptoWalletOnboardingModal 
+        isOpen={showWalletModal}
+        onClose={() => setShowWalletModal(false)}
+      />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   ChevronLeft, 
@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Button } from './button';
 import { useTheme } from '../../lib/hooks/useTheme';
+import { SimpleWalletStatus } from './simple-wallet-status';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -222,6 +223,13 @@ export function CollapsibleTradingSidebar({ collapsed, onToggle }: CollapsibleTr
             </div>
           )}
         </div>
+      </div>
+      
+      {/* Wallet Status/Connect Button */}
+      <div className="px-2 mt-2">
+        <SimpleWalletStatus 
+          className={collapsed ? "w-full p-0" : "w-full"}
+        />
       </div>
     </div>
   );
