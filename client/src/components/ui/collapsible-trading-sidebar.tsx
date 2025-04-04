@@ -17,9 +17,12 @@ import {
   User,
   Globe,
   Sparkles,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { Button } from './button';
+import { useTheme } from '../../lib/hooks/useTheme';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -52,6 +55,7 @@ function NavItem({ icon, label, path, collapsed, active, onClick }: NavItemProps
 export function CollapsibleTradingSidebar({ collapsed, onToggle }: CollapsibleTradingSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme, resolvedTheme, toggleTheme } = useTheme();
   
   const navItems = [
     {
@@ -181,6 +185,17 @@ export function CollapsibleTradingSidebar({ collapsed, onToggle }: CollapsibleTr
             active={location.pathname.startsWith('/help-center')}
             onClick={() => navigate('/help-center')}
           />
+          
+          {/* Theme Toggle */}
+          <Button
+            variant="ghost"
+            className={`w-full justify-${collapsed ? 'center' : 'start'} gap-3 px-3 transition-all duration-300 mb-1
+              text-slate-400 hover:text-white hover:bg-slate-800/60`}
+            onClick={toggleTheme}
+          >
+            {resolvedTheme === 'light' ? <Sun size={18} /> : <Moon size={18} />}
+            {!collapsed && <span>{resolvedTheme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>}
+          </Button>
           
           {/* User Profile */}
           {collapsed ? (
