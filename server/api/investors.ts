@@ -1,6 +1,6 @@
 import express from 'express';
 import { db } from '../db';
-import { investors, insertInvestorSchema } from '../../shared/schema';
+import { investors, investments, insertInvestorSchema } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 
 const router = express.Router();
@@ -103,30 +103,47 @@ export const deleteInvestor = async (req: express.Request, res: express.Response
 
 // Get investor profile for current user
 router.get('/me', async (req, res) => {
-  // For demo purposes, always return a sample investor profile
   try {
     console.log('Fetching investor profile for current user');
     
-    // Return sample investor data
-    const sampleInvestor = {
-      id: 1,
-      userId: '1',
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      phone: '+1 (555) 123-4567',
-      joinDate: new Date('2023-01-15'),
-      status: 'active',
-      investmentPreferences: {
-        riskTolerance: 'moderate',
-        preferredAssets: ['crypto', 'stocks', 'forex'],
-        investmentGoals: 'Growth and passive income'
-      },
-      totalInvested: 250000,
-      createdAt: new Date('2023-01-15'),
-      updatedAt: new Date()
-    };
+    // Check if user is authenticated and get user ID
+    // For now, use a default user ID for testing
+    // In a production environment, this would come from the authenticated session
+    const userId = 1; // Assuming user with ID 1 exists
     
-    res.json(sampleInvestor);
+    // The commented code below would be used in a properly authenticated context
+    // const userId = (req.session as any)?.user?.id;
+    // if (!userId) {
+    //   return res.status(401).json({ error: 'Not authenticated' });
+    // }
+    
+    // Look up investor by user ID
+    const investor = await db
+      .select()
+      .from(investors)
+      .where(eq(investors.userId, userId))
+      .limit(1);
+    
+    if (investor.length === 0) {
+      return res.status(404).json({ error: 'No investor profile found for this user' });
+    }
+    
+    // Calculate total invested amount
+    const investorInvestments = await db
+      .select()
+      .from(investments)
+      .where(eq(investments.investorId, investor[0].id));
+    
+    const totalInvested = investorInvestments.reduce(
+      (sum, inv) => sum + (inv.initialDeposit || 0), 
+      0
+    );
+    
+    // Return investor data with calculated fields
+    res.json({
+      ...investor[0],
+      totalInvested
+    });
   } catch (error) {
     console.error('Error fetching investor profile:', error);
     res.status(500).json({ error: 'Failed to fetch investor profile' });

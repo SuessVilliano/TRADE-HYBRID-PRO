@@ -72,8 +72,38 @@ const InvestorAdminDashboard: React.FC = () => {
     phone: '',
     address: '',
     status: 'active',
-    notes: ''
+    notes: '',
+    tags: JSON.stringify(['investor']), // Default tags
+    userId: '' // Link to user account if applicable
   });
+  
+  // Fee template presets for quick application
+  const [feeTemplates, setFeeTemplates] = useState([
+    { 
+      name: 'Standard Performance Fee', 
+      performanceFeePercent: 20, 
+      setupFee: 100, 
+      monthlyFee: 0 
+    },
+    { 
+      name: 'Premium Package', 
+      performanceFeePercent: 25, 
+      setupFee: 250, 
+      monthlyFee: 50 
+    },
+    { 
+      name: 'Institutional Rate', 
+      performanceFeePercent: 15, 
+      setupFee: 500, 
+      monthlyFee: 100 
+    },
+    { 
+      name: 'VIP Client', 
+      performanceFeePercent: 30, 
+      setupFee: 0, 
+      monthlyFee: 0 
+    }
+  ]);
 
   // States for new investment form
   const [newInvestment, setNewInvestment] = useState({
@@ -86,6 +116,7 @@ const InvestorAdminDashboard: React.FC = () => {
     propFirmAccountId: '',
     performanceFeePercent: '20',
     setupFee: '100',
+    monthlyFee: '0',
     notes: ''
   });
 
@@ -252,7 +283,9 @@ const InvestorAdminDashboard: React.FC = () => {
         phone: '',
         address: '',
         status: 'active',
-        notes: ''
+        notes: '',
+        tags: JSON.stringify(['investor']),
+        userId: ''
       });
       setIsAddInvestorDialogOpen(false);
       
@@ -281,6 +314,7 @@ const InvestorAdminDashboard: React.FC = () => {
           currentBalance: parseFloat(newInvestment.initialDeposit),
           performanceFeePercent: parseFloat(newInvestment.performanceFeePercent),
           setupFee: parseFloat(newInvestment.setupFee),
+          monthlyFee: parseFloat(newInvestment.monthlyFee),
           propFirmAccountId: newInvestment.propFirmAccountId.length > 0 ? parseInt(newInvestment.propFirmAccountId) : null
         }),
       });
@@ -309,6 +343,7 @@ const InvestorAdminDashboard: React.FC = () => {
         propFirmAccountId: '',
         performanceFeePercent: '20',
         setupFee: '100',
+        monthlyFee: '0',
         notes: ''
       });
       setIsAddInvestmentDialogOpen(false);
@@ -1002,6 +1037,8 @@ const InvestorAdminDashboard: React.FC = () => {
                           <TableHead>Email</TableHead>
                           <TableHead>Phone</TableHead>
                           <TableHead>Join Date</TableHead>
+                          <TableHead>Investments</TableHead>
+                          <TableHead>Total Balance</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Actions</TableHead>
                         </TableRow>
@@ -1021,9 +1058,20 @@ const InvestorAdminDashboard: React.FC = () => {
                             <TableCell>{investor.phone || '-'}</TableCell>
                             <TableCell>{formatDate(investor.join_date)}</TableCell>
                             <TableCell>
+                              {investments.filter(inv => inv.investorId === investor.id).length}
+                            </TableCell>
+                            <TableCell>
+                              {formatCurrency(
+                                investments
+                                  .filter(inv => inv.investorId === investor.id)
+                                  .reduce((sum, inv) => sum + (inv.currentBalance || 0), 0)
+                              )}
+                            </TableCell>
+                            <TableCell>
                               <Badge 
                                 className={
                                   investor.status === 'active' ? 'bg-green-500 hover:bg-green-600' :
+                                  investor.status === 'pending' ? 'bg-yellow-500 hover:bg-yellow-600' :
                                   'bg-red-500 hover:bg-red-600'
                                 }
                               >
@@ -1038,6 +1086,19 @@ const InvestorAdminDashboard: React.FC = () => {
                                   onClick={() => setSelectedInvestor(investor)}
                                 >
                                   <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => {
+                                    setNewInvestment({
+                                      ...newInvestment,
+                                      investorId: investor.id.toString()
+                                    });
+                                    setIsAddInvestmentDialogOpen(true);
+                                  }}
+                                >
+                                  <Plus className="h-4 w-4" />
                                 </Button>
                               </div>
                             </TableCell>
@@ -1330,6 +1391,64 @@ const InvestorAdminDashboard: React.FC = () => {
                   className="col-span-3"
                 />
               </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="userId" className="text-right">
+                  User ID
+                </Label>
+                <Input
+                  id="userId"
+                  value={newInvestor.userId}
+                  onChange={(e) => setNewInvestor({...newInvestor, userId: e.target.value})}
+                  className="col-span-3"
+                  placeholder="Link to existing user (optional)"
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-start gap-4 mt-4">
+                <Label className="text-right mt-2">
+                  Fee Templates
+                </Label>
+                <div className="col-span-3">
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    {feeTemplates.map((template, index) => (
+                      <Button
+                        key={index}
+                        type="button" 
+                        variant="outline"
+                        className="h-auto py-2 px-3 justify-start items-start text-left"
+                        onClick={() => {
+                          // Apply template to new investment form
+                          setNewInvestment({
+                            ...newInvestment,
+                            performanceFeePercent: template.performanceFeePercent.toString(),
+                            setupFee: template.setupFee.toString(),
+                            monthlyFee: template.monthlyFee.toString()
+                          });
+                          
+                          toast({
+                            title: 'Template Applied',
+                            description: `Applied "${template.name}" fee structure`,
+                            variant: 'default',
+                          });
+                        }}
+                      >
+                        <div>
+                          <div className="font-medium text-sm">{template.name}</div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Performance: {template.performanceFeePercent}% | 
+                            Setup: ${template.setupFee} | 
+                            Monthly: ${template.monthlyFee}
+                          </div>
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Click a template to apply it when creating a new investment.
+                  </div>
+                </div>
+              </div>
             </div>
             
             <DialogFooter>
@@ -1496,6 +1615,20 @@ const InvestorAdminDashboard: React.FC = () => {
                   step="0.01"
                   value={newInvestment.setupFee}
                   onChange={(e) => setNewInvestment({...newInvestment, setupFee: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="monthlyFee" className="text-right">
+                  Monthly Fee
+                </Label>
+                <Input
+                  id="monthlyFee"
+                  type="number"
+                  step="0.01"
+                  value={newInvestment.monthlyFee}
+                  onChange={(e) => setNewInvestment({...newInvestment, monthlyFee: e.target.value})}
                   className="col-span-3"
                 />
               </div>

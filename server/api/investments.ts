@@ -10,92 +10,56 @@ export const getAllInvestments = async (req: express.Request, res: express.Respo
   try {
     console.log('Fetching investments with query params:', req.query);
     
-    // Return mock data
-    const mockInvestments = [
-      {
-        id: 1,
-        investorId: 1,
-        name: "Personal Trading Account",
-        type: "personal",
-        initialDeposit: 50000,
-        currentBalance: 58750,
-        depositDate: new Date('2023-02-10'),
-        performanceFee: 20,
-        managementFee: 2,
-        status: "active",
-        notes: "Main trading account for forex and crypto",
-        createdAt: new Date('2023-02-10'),
-        updatedAt: new Date(),
-        investor: {
-          id: 1,
-          name: "John Doe",
-          email: "john.doe@example.com"
-        }
-      },
-      {
-        id: 2,
-        investorId: 1,
-        name: "FTMO Challenge Account",
-        type: "prop_firm_management",
-        initialDeposit: 100000,
-        currentBalance: 112500,
-        depositDate: new Date('2023-03-15'),
-        performanceFee: 20,
-        managementFee: 2,
-        status: "active",
-        notes: "FTMO prop firm account with 10% profit target",
-        createdAt: new Date('2023-03-15'),
-        updatedAt: new Date(),
-        investor: {
-          id: 1,
-          name: "John Doe",
-          email: "john.doe@example.com"
-        }
-      },
-      {
-        id: 3,
-        investorId: 1,
-        name: "Hybrid Fund Allocation",
-        type: "hybrid_fund",
-        initialDeposit: 100000,
-        currentBalance: 108000,
-        depositDate: new Date('2023-04-20'),
-        performanceFee: 20,
-        managementFee: 2,
-        status: "active",
-        notes: "Allocation in the TradeHybrid fund",
-        createdAt: new Date('2023-04-20'),
-        updatedAt: new Date(),
-        investor: {
-          id: 1,
-          name: "John Doe",
-          email: "john.doe@example.com"
-        }
-      }
-    ];
+    // Build query conditions based on filters
+    let query = db.select({
+      investment: investments,
+      investor: investors
+    })
+    .from(investments)
+    .leftJoin(investors, eq(investments.investorId, investors.id));
     
-    // Filter investments based on query parameters
-    let filteredInvestments = [...mockInvestments];
+    // Apply filters
+    const whereConditions = [];
     
     // Filter by investor ID
     if (req.query.investorId) {
       const investorId = parseInt(req.query.investorId as string);
-      filteredInvestments = filteredInvestments.filter(inv => inv.investorId === investorId);
+      whereConditions.push(eq(investments.investorId, investorId));
     }
     
     // Filter by status
-    if (req.query.status) {
+    if (req.query.status && req.query.status !== 'all') {
       const status = req.query.status as string;
-      filteredInvestments = filteredInvestments.filter(inv => inv.status === status);
+      whereConditions.push(eq(investments.status, status));
     }
     
     // Filter by type
-    if (req.query.type) {
+    if (req.query.type && req.query.type !== 'all') {
       const type = req.query.type as string;
-      filteredInvestments = filteredInvestments.filter(inv => inv.type === type);
+      whereConditions.push(eq(investments.type, type as any));
     }
     
-    res.json(filteredInvestments);
+    // Apply all conditions if any exist
+    if (whereConditions.length > 0) {
+      // Use type assertion to help TypeScript understand this is a valid operation
+      // Type system struggles with complex query builders sometimes
+      (query as any) = query.where(and(...whereConditions));
+    }
+    
+    // Execute the query
+    const results = await query;
+    
+    // Format the results to match the expected response structure
+    const formattedInvestments = results.map(result => ({
+      ...result.investment,
+      investor: result.investor ? {
+        id: result.investor.id,
+        name: result.investor.name,
+        email: result.investor.email
+      } : null
+    }));
+    
+    res.json(formattedInvestments);
   } catch (error) {
     console.error('Error fetching investments:', error);
     res.status(500).json({ error: 'Failed to fetch investments' });
