@@ -34,6 +34,7 @@ import NotFoundPage from './pages/not-found';
 import SocialNetworkPage from './pages/social-network';
 import CopyTradingPage from './pages/copy-trading';
 import WalletConnectOnboarding from './pages/wallet-connect-onboarding';
+import WebhookSettingsPage from './pages/webhook-settings';
 
 // Trading & Markets
 import AdvancedTradingDashboard from './pages/advanced-trading-dashboard';
@@ -128,6 +129,7 @@ const App: React.FC = () => {
                   <Route path="/profile" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
                   <Route path="/settings" element={<ProtectedRoute><SettingsView /></ProtectedRoute>} />
                   <Route path="/notification-settings" element={<ProtectedRoute><NotificationSettingsPage /></ProtectedRoute>} />
+                  <Route path="/webhook-settings" element={<ProtectedRoute><WebhookSettingsPage /></ProtectedRoute>} />
                   <Route path="/trading-bots" element={<ProtectedRoute><BotsView /></ProtectedRoute>} />
                   {/* Redirect for backward compatibility */}
                   <Route path="/bots" element={<Navigate to="/trading-bots" replace />} />
