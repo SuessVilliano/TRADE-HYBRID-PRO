@@ -264,7 +264,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
             {formatDuration(course.duration)}
           </span>
           <a
-            href={`/learning-center/course/${course.id}`}
+            href={`/learning-center/courses/${course.id}`}
             className="bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded transition-colors"
           >
             View Course

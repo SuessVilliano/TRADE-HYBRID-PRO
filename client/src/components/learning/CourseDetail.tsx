@@ -122,7 +122,7 @@ const CourseDetail: React.FC = () => {
         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded">
           <p>Course not found. Please go back to the Learning Center.</p>
           <button
-            onClick={() => navigate('/learning')}
+            onClick={() => navigate('/learning-center/courses')}
             className="mt-2 px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark"
           >
             Back to Learning Center
@@ -135,7 +135,7 @@ const CourseDetail: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <button
-        onClick={() => navigate('/learning')}
+        onClick={() => navigate('/learning-center/courses')}
         className="flex items-center text-primary hover:text-primary-dark mb-4"
       >
         <svg className="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
