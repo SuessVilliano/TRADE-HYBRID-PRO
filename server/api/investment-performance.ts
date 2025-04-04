@@ -17,176 +17,52 @@ export const getInvestmentPerformance = async (req: express.Request, res: expres
   try {
     console.log('Fetching investment performance with query params:', req.query);
     
-    // Return mock investment performance data
-    const mockPerformanceData = [
-      {
-        id: 1,
-        investmentId: 1, // Personal Trading Account
-        period: '2023-04',
-        start_balance: 50000,
-        end_balance: 52500,
-        deposits: 0,
-        withdrawals: 0,
-        percent_return: 5.0,
-        net_profit: 2500,
-        performance_fee_amount: 500,
-        management_fee_amount: 83.33,
-        createdAt: new Date('2023-05-01'),
-        updatedAt: new Date('2023-05-01')
-      },
-      {
-        id: 2,
-        investmentId: 1, // Personal Trading Account
-        period: '2023-05',
-        start_balance: 52500,
-        end_balance: 54600,
-        deposits: 0,
-        withdrawals: 0,
-        percent_return: 4.0,
-        net_profit: 2100,
-        performance_fee_amount: 420,
-        management_fee_amount: 87.5,
-        createdAt: new Date('2023-06-01'),
-        updatedAt: new Date('2023-06-01')
-      },
-      {
-        id: 3,
-        investmentId: 1, // Personal Trading Account
-        period: '2023-06',
-        start_balance: 54600,
-        end_balance: 53508,
-        deposits: 0,
-        withdrawals: 0,
-        percent_return: -2.0,
-        net_profit: -1092,
-        performance_fee_amount: 0,
-        management_fee_amount: 91.0,
-        createdAt: new Date('2023-07-01'),
-        updatedAt: new Date('2023-07-01')
-      },
-      {
-        id: 4,
-        investmentId: 2, // FTMO Challenge Account
-        period: '2023-04',
-        start_balance: 100000,
-        end_balance: 103000,
-        deposits: 0,
-        withdrawals: 0,
-        percent_return: 3.0,
-        net_profit: 3000,
-        performance_fee_amount: 600,
-        management_fee_amount: 166.67,
-        createdAt: new Date('2023-05-01'),
-        updatedAt: new Date('2023-05-01')
-      },
-      {
-        id: 5,
-        investmentId: 2, // FTMO Challenge Account
-        period: '2023-05',
-        start_balance: 103000,
-        end_balance: 107120,
-        deposits: 0,
-        withdrawals: 0,
-        percent_return: 4.0,
-        net_profit: 4120,
-        performance_fee_amount: 824,
-        management_fee_amount: 171.67,
-        createdAt: new Date('2023-06-01'),
-        updatedAt: new Date('2023-06-01')
-      },
-      {
-        id: 6,
-        investmentId: 2, // FTMO Challenge Account
-        period: '2023-06',
-        start_balance: 107120,
-        end_balance: 112476,
-        deposits: 0,
-        withdrawals: 0,
-        percent_return: 5.0,
-        net_profit: 5356,
-        performance_fee_amount: 1071.2,
-        management_fee_amount: 178.53,
-        createdAt: new Date('2023-07-01'),
-        updatedAt: new Date('2023-07-01')
-      },
-      {
-        id: 7,
-        investmentId: 3, // Hybrid Fund Allocation
-        period: '2023-04',
-        start_balance: 100000,
-        end_balance: 102000,
-        deposits: 0,
-        withdrawals: 0,
-        percent_return: 2.0,
-        net_profit: 2000,
-        performance_fee_amount: 400,
-        management_fee_amount: 166.67,
-        createdAt: new Date('2023-05-01'),
-        updatedAt: new Date('2023-05-01')
-      },
-      {
-        id: 8,
-        investmentId: 3, // Hybrid Fund Allocation
-        period: '2023-05',
-        start_balance: 102000,
-        end_balance: 104040,
-        deposits: 0,
-        withdrawals: 0,
-        percent_return: 2.0,
-        net_profit: 2040,
-        performance_fee_amount: 408,
-        management_fee_amount: 170.0,
-        createdAt: new Date('2023-06-01'),
-        updatedAt: new Date('2023-06-01')
-      },
-      {
-        id: 9,
-        investmentId: 3, // Hybrid Fund Allocation
-        period: '2023-06',
-        start_balance: 104040,
-        end_balance: 108000,
-        deposits: 0,
-        withdrawals: 0,
-        percent_return: 3.8,
-        net_profit: 3960,
-        performance_fee_amount: 792,
-        management_fee_amount: 173.4,
-        createdAt: new Date('2023-07-01'),
-        updatedAt: new Date('2023-07-01')
-      }
-    ];
+    // Build query to get real performance data from database
+    let query = db.select().from(investmentPerformance);
     
-    // Filter by investment ID if provided
-    let filteredData = [...mockPerformanceData];
-    
+    // Apply filters based on query parameters
     if (req.query.investmentId) {
       const investmentId = parseInt(req.query.investmentId as string);
-      filteredData = filteredData.filter(record => record.investmentId === investmentId);
+      query = query.where(eq(investmentPerformance.investmentId, investmentId));
     }
     
     // Filter by investor ID if provided
     if (req.query.investorId) {
-      // In our mock data, all investments (1, 2, 3) belong to investor ID 1
       const investorId = parseInt(req.query.investorId as string);
+      // First get investment IDs for this investor
+      const investmentsForInvestor = await db
+        .select({ id: investments.id })
+        .from(investments)
+        .where(eq(investments.investorId, investorId));
       
-      if (investorId !== 1) {
+      const investmentIds = investmentsForInvestor.map(inv => inv.id);
+      
+      if (investmentIds.length === 0) {
         // No investments found for this investor
         return res.json([]);
       }
-      // If investorId is 1, keep all records (or the already filtered ones)
+      
+      // Add the filter for investment IDs
+      if (investmentIds.length === 1) {
+        query = query.where(eq(investmentPerformance.investmentId, investmentIds[0]));
+      } else {
+        query = query.where(
+          investmentPerformance.investmentId.in(investmentIds)
+        );
+      }
     }
     
     // Filter by period if provided
     if (req.query.period) {
       const period = req.query.period as string;
-      filteredData = filteredData.filter(record => record.period === period);
+      query = query.where(eq(investmentPerformance.period, period));
     }
     
-    // Sort by period descending (most recent first)
-    filteredData.sort((a, b) => b.period.localeCompare(a.period));
+    // Execute the query and get the results
+    const performanceRecords = await query.orderBy(desc(investmentPerformance.period));
     
-    // Return the filtered mock data
-    res.json(filteredData);
+    // Return the real data from database
+    return res.json(performanceRecords);
   } catch (error) {
     console.error('Error fetching performance records:', error);
     res.status(500).json({ error: 'Failed to fetch performance records' });
@@ -528,15 +404,16 @@ export const updateAllInvestmentsPerformance = async (req: express.Request, res:
       records: performanceRecords
     });
   } catch (error) {
-    console.error('Error updating all investments performance:', error);
-    res.status(500).json({ error: 'Failed to update performance' });
+    console.error('Error updating investments performance:', error);
+    res.status(500).json({ error: 'Failed to update investments performance' });
   }
 };
 
-// Update performance for all investments
-router.post('/update-all', updateAllInvestmentsPerformance);
+// Add bulk update route
+router.post('/bulk-update', updateAllInvestmentsPerformance);
 
-// Generate reports for all performance records without reports
+// Add route for generating reports
 router.post('/generate-reports', generatePerformanceReport);
 
+// Register the router
 export default router;
