@@ -18,6 +18,7 @@ import {
   Globe
 } from 'lucide-react';
 import { Button } from './button';
+import { QuickActions } from './quick-actions';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -121,6 +122,10 @@ export function CollapsibleTradingSidebar({ collapsed, onToggle }: CollapsibleTr
         </Button>
       </div>
       
+      {/* Quick Actions Section */}
+      <QuickActions collapsed={collapsed} className="mb-4 mt-2 border-b border-slate-800 pb-4" />
+      
+      {/* Main Navigation */}
       <div className="space-y-1 px-2">
         {navItems.map((item, index) => (
           <NavItem
