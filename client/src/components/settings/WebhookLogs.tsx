@@ -43,6 +43,7 @@ export function WebhookLogs() {
   const [logs, setLogs] = useState<WebhookLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Load webhook logs on component mount
@@ -53,11 +54,18 @@ export function WebhookLogs() {
   // Fetch webhook logs from server
   const fetchLogs = async () => {
     setIsRefreshing(true);
+    setError(null);
     try {
       const response = await axios.get('/api/webhooks/logs');
-      setLogs(response.data.logs);
-    } catch (error) {
+      if (response.data && response.data.logs) {
+        setLogs(response.data.logs);
+      } else {
+        setLogs([]);
+        setError('No logs were returned from the server');
+      }
+    } catch (error: any) {
       console.error('Error fetching webhook logs:', error);
+      setError(error.message || 'Failed to fetch webhook logs');
       toast({
         title: 'Error',
         description: 'Failed to fetch webhook logs',
@@ -144,6 +152,19 @@ export function WebhookLogs() {
         {isLoading ? (
           <div className="py-8 flex justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12 border rounded-lg bg-background">
+            <AlertCircle className="mx-auto h-12 w-12 text-destructive" />
+            <h3 className="mt-4 text-lg font-medium">Error loading webhook logs</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {error}
+            </p>
+            <div className="mt-4">
+              <Button variant="outline" onClick={fetchLogs}>
+                Try Again
+              </Button>
+            </div>
           </div>
         ) : logs.length === 0 ? (
           <div className="text-center py-12 border rounded-lg bg-background">

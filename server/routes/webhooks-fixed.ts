@@ -8,7 +8,8 @@ import {
   logWebhookExecution,
   getWebhooksForUser,
   getWebhookPerformanceMetrics,
-  getErrorInsightsForWebhook
+  getErrorInsightsForWebhook,
+  getWebhookExecutionLogs
 } from '../services/webhook-service';
 import { WebhookConfig } from '../../shared/models/webhook';
 import authMiddleware from '../middleware/auth';
@@ -347,6 +348,25 @@ router.get('/:id/performance', authMiddleware, async (req: Request, res: Respons
     });
   } catch (error: any) {
     console.error('Error getting webhook performance metrics:', error);
+    return res.status(500).json({ error: error.message || 'An error occurred' });
+  }
+});
+
+// Get webhook execution logs
+router.get('/logs', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const userId = req.session.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    // Get webhook logs for this user
+    const logs = await getWebhookExecutionLogs({ userId: userId.toString() });
+    
+    return res.json({ logs });
+  } catch (error: any) {
+    console.error('Error getting webhook logs:', error);
     return res.status(500).json({ error: error.message || 'An error occurred' });
   }
 });
