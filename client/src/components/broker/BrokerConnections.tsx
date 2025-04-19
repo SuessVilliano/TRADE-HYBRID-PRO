@@ -19,9 +19,6 @@ import {
   TabsList,
   TabsTrigger,
   Switch,
-  Alert,
-  AlertDescription,
-  AlertTitle,
   Separator,
   Dialog,
   DialogContent,
@@ -903,14 +900,36 @@ export const BrokerConnections: React.FC = () => {
               <CardFooter className="border-t p-4 text-xs text-muted-foreground">
                 <div>
                   <p>NinjaTrader requires a companion application running on your computer to receive and execute trade commands.</p>
-                  <p className="mt-2">
-                    <a 
-                      href="#"
-                      className="text-primary hover:underline"
-                    >
-                      Download NinjaTrader Companion App
-                    </a>
-                  </p>
+                  <div className="mt-2 space-y-2">
+                    <p>
+                      <a 
+                        href="/downloads/TradeHybridNinjaTraderConnector.zip" 
+                        download
+                        className="text-primary hover:underline flex items-center font-medium"
+                      >
+                        <span className="mr-1">📦</span> Download NinjaTrader Connector Package (ZIP)
+                      </a>
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">Individual files:</p>
+                    <p>
+                      <a 
+                        href="/downloads/TradeHybridNinjaConnector.cs" 
+                        download
+                        className="text-primary hover:underline flex items-center text-xs"
+                      >
+                        <span className="mr-1">📄</span> Connector Script (.cs)
+                      </a>
+                    </p>
+                    <p>
+                      <a 
+                        href="/downloads/NinjaTraderConnector_Installation_Guide.md" 
+                        download
+                        className="text-primary hover:underline flex items-center text-xs"
+                      >
+                        <span className="mr-1">📝</span> Installation Guide (.md)
+                      </a>
+                    </p>
+                  </div>
                 </div>
               </CardFooter>
             )}
