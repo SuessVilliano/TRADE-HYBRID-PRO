@@ -46,54 +46,70 @@ export const useMarketData = (): MarketDataHook => {
       setError(null);
       
       try {
-        // In a real implementation, this would call an actual API to get historical data
-        // For now, we'll simulate with generated data
+        // Use Alpaca API for real market data
+        console.log(`Fetching real market data for ${symbol}`);
         
-        // In a real API, this would be called like:
-        // const response = await axios.get(`/api/market-data?symbol=${symbol}&interval=1h&limit=100`);
-        // const data = response.data;
+        // Extract the ticker symbol from formats like BINANCE:BTCUSDT or BTCUSD
+        const cleanSymbol = symbol.includes(':') ? symbol.split(':')[1] : symbol;
         
-        // Generate simulated market data
-        const simulatedData: MarketData[] = [];
-        let basePrice = symbol.includes('BTC') ? 60000 : 
-                       symbol.includes('ETH') ? 3000 : 
-                       symbol.includes('SOL') ? 100 : 
-                       symbol.includes('XAU') ? 2000 : 1000;
-        
-        const now = Date.now();
-        
-        // Generate 100 candles (1h intervals)
-        for (let i = 0; i < 100; i++) {
-          const timestamp = now - (99 - i) * 60 * 60 * 1000; // 1h intervals back in time
-          const volatility = basePrice * (0.005 + Math.random() * 0.01); // 0.5-1.5% volatility
-          
-          // Add some trend to the data
-          if (i > 0) {
-            basePrice = simulatedData[i - 1].close;
+        // Use Axios to fetch real data from our API endpoint
+        const response = await axios.get(`/api/market-data/history`, {
+          params: {
+            symbol: cleanSymbol,
+            interval: '1h',
+            limit: 100
           }
-          
-          const change = (Math.random() - 0.45) * volatility; // Slightly bullish bias
-          const open = basePrice;
-          const close = basePrice + change;
-          const high = Math.max(open, close) + Math.random() * volatility * 0.5;
-          const low = Math.min(open, close) - Math.random() * volatility * 0.5;
-          const volume = 1000 + Math.random() * 9000; // 1000-10000 volume
-          
-          simulatedData.push({
-            open,
-            high,
-            low,
-            close,
-            volume,
-            timestamp
-          });
-        }
+        });
         
-        setMarketData(simulatedData);
-        setCurrentPrice(simulatedData[simulatedData.length - 1].close);
+        if (response.data && Array.isArray(response.data.bars)) {
+          // Transform the API response into our MarketData format
+          const realData: MarketData[] = response.data.bars.map((bar: any) => ({
+            open: parseFloat(bar.o),
+            high: parseFloat(bar.h),
+            low: parseFloat(bar.l),
+            close: parseFloat(bar.c),
+            volume: parseFloat(bar.v),
+            timestamp: new Date(bar.t).getTime()
+          }));
+          
+          setMarketData(realData);
+          
+          // Set current price from the latest candle
+          if (realData.length > 0) {
+            setCurrentPrice(realData[realData.length - 1].close);
+          }
+        } else {
+          // If the expected data format is not found, try an alternate approach
+          const alpacaResponse = await axios.get(`/api/alpaca/bars`, {
+            params: {
+              symbol: cleanSymbol,
+              timeframe: '1H',
+              limit: 100
+            }
+          });
+          
+          if (alpacaResponse.data && Array.isArray(alpacaResponse.data)) {
+            const alpacaData: MarketData[] = alpacaResponse.data.map((bar: any) => ({
+              open: parseFloat(bar.o),
+              high: parseFloat(bar.h),
+              low: parseFloat(bar.l),
+              close: parseFloat(bar.c),
+              volume: parseFloat(bar.v),
+              timestamp: new Date(bar.t).getTime()
+            }));
+            
+            setMarketData(alpacaData);
+            
+            if (alpacaData.length > 0) {
+              setCurrentPrice(alpacaData[alpacaData.length - 1].close);
+            }
+          } else {
+            throw new Error('Invalid data format received from all API endpoints');
+          }
+        }
       } catch (err) {
         console.error('Error fetching market data:', err);
-        setError('Failed to fetch market data');
+        setError('Failed to fetch market data. Please check API connectivity.');
       } finally {
         setLoading(false);
       }
@@ -101,14 +117,23 @@ export const useMarketData = (): MarketDataHook => {
     
     fetchData();
     
-    // Set up a refresh interval
-    const interval = setInterval(() => {
-      if (marketData.length > 0) {
-        // Update current price with some random movement
-        const lastPrice = marketData[marketData.length - 1].close;
-        const volatility = lastPrice * 0.0025; // 0.25% volatility
-        const newPrice = lastPrice + (Math.random() - 0.5) * volatility * 2;
-        setCurrentPrice(newPrice);
+    // Set up a real-time data refresh interval (5 seconds)
+    const interval = setInterval(async () => {
+      try {
+        if (!loading) {
+          // Fetch just the latest price for real-time updates
+          const cleanSymbol = symbol.includes(':') ? symbol.split(':')[1] : symbol;
+          const quoteResponse = await axios.get(`/api/market-data/quote`, {
+            params: { symbol: cleanSymbol }
+          });
+          
+          if (quoteResponse.data && quoteResponse.data.price) {
+            setCurrentPrice(parseFloat(quoteResponse.data.price));
+          }
+        }
+      } catch (err) {
+        console.error('Error updating real-time price:', err);
+        // Don't set error state for background updates to avoid UI disruption
       }
     }, 5000);
     
@@ -117,15 +142,29 @@ export const useMarketData = (): MarketDataHook => {
 
   // Function to place a trade order
   const placeOrder = async (tradeSuggestion: TradeSuggestion): Promise<boolean> => {
-    // In a real implementation, this would call an API to place an order with your broker
-    // For now, we'll just log it and return success
-    
-    console.log('Placing order:', tradeSuggestion);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    return true;
+    try {
+      // Send order to broker API
+      const response = await axios.post('/api/broker/order', {
+        symbol: tradeSuggestion.symbol,
+        side: tradeSuggestion.action,
+        quantity: 1, // Default quantity, should be configurable
+        type: 'market',
+        timeInForce: 'day',
+        stopLoss: tradeSuggestion.stopLoss,
+        takeProfit: tradeSuggestion.takeProfit[0] // Use first take profit level
+      });
+      
+      if (response.data && response.data.success) {
+        console.log('Order placed successfully:', response.data);
+        return true;
+      } else {
+        console.error('Order placement failed:', response.data);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error placing order:', error);
+      return false;
+    }
   };
 
   return {
