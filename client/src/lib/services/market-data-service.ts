@@ -1,445 +1,308 @@
-import { rapidApiService } from './rapid-api-service';
-import { cnbcService } from './cnbc-service';
-import { fidelityService } from './fidelity-service';
-import { moralisService } from './moralis-service';
+import axios from 'axios';
 
-export interface MarketDataResponse {
-  symbol: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  volume: number;
-  high: number;
-  low: number;
-  open: number;
-  close: number;
-  timestamp: number;
-}
-
-export interface EnhancedMarketData extends MarketDataResponse {
-  name?: string;
-  industry?: string;
-  sector?: string;
-  marketCap?: number;
-  peRatio?: number;
-  dividendYield?: number;
-  analystRating?: number;
-  targetPrice?: number;
-  dataProvider?: string;
-}
-
-export interface CryptoMarketData {
-  symbol: string;
+// Types for market data
+export interface MarketDataSource {
+  id: string;
   name: string;
-  price: number;
-  change: number;
-  marketCap: number;
-  volume: number;
-  rank: number;
-  iconUrl: string;
-}
-
-export interface MarketMoversData {
-  gainers: Array<{
-    symbol: string;
-    name: string;
-    price: number;
-    change: number;
-    changePercent: number;
-  }>;
-  losers: Array<{
-    symbol: string;
-    name: string;
-    price: number;
-    change: number;
-    changePercent: number;
-  }>;
-}
-
-export interface NewsArticle {
-  title: string;
-  url: string;
   description: string;
-  source: string;
-  publishedAt: string;
-  imageUrl: string;
+  type: 'free' | 'premium' | 'enterprise';
+  asset_classes: string[];
+  endpoints: string[];
+  logo: string;
+  requires_api_key: boolean;
+  documentation_url: string;
 }
 
-export class MarketDataService {
-  private initialized = false;
+export interface MarketDataResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+class MarketDataService {
+  private apiKeys: Record<string, string> = {};
+  private baseUrl = '/api/market-data';
   
-  constructor() {}
-
-  async initialize(): Promise<boolean> {
-    if (!this.initialized) {
-      try {
-        // Initialize all data service dependencies
-        await Promise.all([
-          rapidApiService.initialize(),
-          cnbcService.initialize(),
-          fidelityService.initialize(),
-          moralisService.initialize()
-        ]);
-        
-        this.initialized = true;
-        return true;
-      } catch (error) {
-        console.error('Failed to initialize MarketDataService:', error);
-        return false;
-      }
+  // Additional market data sources
+  private dataSources: MarketDataSource[] = [
+    {
+      id: 'finnhub',
+      name: 'Finnhub',
+      description: 'Real-time RESTful APIs for stocks, forex, and crypto',
+      type: 'premium',
+      asset_classes: ['Stocks', 'Forex', 'Crypto', 'Indices'],
+      endpoints: ['/quote', '/candle', '/news', '/sentiment'],
+      logo: '/logos/finnhub.svg',
+      requires_api_key: true,
+      documentation_url: 'https://finnhub.io/docs/api'
+    },
+    {
+      id: 'polygon',
+      name: 'Polygon.io',
+      description: 'Financial market data platform for stocks, options, forex and crypto',
+      type: 'premium',
+      asset_classes: ['Stocks', 'Options', 'Forex', 'Crypto'],
+      endpoints: ['/tickers', '/quotes', '/trades', '/aggregates'],
+      logo: '/logos/polygon.svg',
+      requires_api_key: true,
+      documentation_url: 'https://polygon.io/docs'
+    },
+    {
+      id: 'coinapi',
+      name: 'CoinAPI',
+      description: 'All cryptocurrency exchanges integrated under a single API',
+      type: 'premium',
+      asset_classes: ['Crypto'],
+      endpoints: ['/ohlcv', '/trades', '/quotes', '/orderbooks'],
+      logo: '/logos/coinapi.svg',
+      requires_api_key: true,
+      documentation_url: 'https://docs.coinapi.io/'
+    },
+    {
+      id: 'alpha_vantage',
+      name: 'Alpha Vantage',
+      description: 'Realtime and historical market data with powerful technical indicators',
+      type: 'premium',
+      asset_classes: ['Stocks', 'Forex', 'Crypto', 'Commodities'],
+      endpoints: ['/time_series', '/technical_indicators', '/forex', '/crypto'],
+      logo: '/logos/alpha-vantage.svg',
+      requires_api_key: true,
+      documentation_url: 'https://www.alphavantage.co/documentation/'
+    },
+    {
+      id: 'marketstack',
+      name: 'Marketstack',
+      description: 'Real-time, intraday and historical market data API',
+      type: 'premium',
+      asset_classes: ['Stocks'],
+      endpoints: ['/eod', '/intraday', '/tickers', '/exchanges'],
+      logo: '/logos/marketstack.svg',
+      requires_api_key: true,
+      documentation_url: 'https://marketstack.com/documentation'
+    },
+    {
+      id: 'iex_cloud',
+      name: 'IEX Cloud',
+      description: 'Financial data infrastructure for developers and enterprises',
+      type: 'enterprise',
+      asset_classes: ['Stocks', 'ETFs', 'Mutual Funds', 'Forex', 'Crypto'],
+      endpoints: ['/stock', '/forex', '/crypto', '/options', '/commodities'],
+      logo: '/logos/iex-cloud.svg',
+      requires_api_key: true,
+      documentation_url: 'https://iexcloud.io/docs/api/'
+    },
+    {
+      id: 'fmp',
+      name: 'Financial Modeling Prep',
+      description: 'Financial statements, stock prices, ratios and economic data',
+      type: 'premium',
+      asset_classes: ['Stocks', 'ETFs', 'Mutual Funds', 'Indices'],
+      endpoints: ['/quote', '/profile', '/financial-statements', '/historical-price'],
+      logo: '/logos/fmp.svg',
+      requires_api_key: true,
+      documentation_url: 'https://site.financialmodelingprep.com/developer/docs/'
+    },
+    {
+      id: 'tradier',
+      name: 'Tradier Market Data',
+      description: 'Comprehensive market data API for stocks and options',
+      type: 'premium',
+      asset_classes: ['Stocks', 'Options'],
+      endpoints: ['/quotes', '/history', '/options/chains', '/markets/calendar'],
+      logo: '/logos/tradier.svg',
+      requires_api_key: true,
+      documentation_url: 'https://documentation.tradier.com/'
     }
-    return true;
+  ];
+
+  // Get all available data sources
+  public getDataSources(): MarketDataSource[] {
+    return this.dataSources;
   }
 
-  private async ensureInitialized() {
-    if (!this.initialized) {
-      await this.initialize();
-    }
-  }
-
-  /**
-   * Get real-time stock data for a symbol
-   */
-  async getStockData(symbol: string): Promise<MarketDataResponse | null> {
-    await this.ensureInitialized();
-    
+  // Save an API key for a specific data source
+  public setApiKey(sourceId: string, apiKey: string): void {
+    this.apiKeys[sourceId] = apiKey;
+    // Save to localStorage for persistence
     try {
-      const data = await rapidApiService.getStockData(symbol);
-      
-      if (!data || !data['Time Series (Daily)']) {
-        return null;
-      }
-      
-      // Get the most recent data point
-      const timeSeriesData = data['Time Series (Daily)'];
-      const latestDate = Object.keys(timeSeriesData)[0];
-      const latestData = timeSeriesData[latestDate];
-      
-      const previousDate = Object.keys(timeSeriesData)[1];
-      const previousData = timeSeriesData[previousDate];
-      
-      const currentPrice = parseFloat(latestData['4. close']);
-      const previousPrice = parseFloat(previousData['4. close']);
-      const change = currentPrice - previousPrice;
-      const changePercent = (change / previousPrice) * 100;
-      
-      return {
-        symbol,
-        price: currentPrice,
-        change,
-        changePercent,
-        volume: parseFloat(latestData['5. volume']),
-        high: parseFloat(latestData['2. high']),
-        low: parseFloat(latestData['3. low']),
-        open: parseFloat(latestData['1. open']),
-        close: currentPrice,
-        timestamp: new Date(latestDate).getTime()
-      };
+      const savedKeys = JSON.parse(localStorage.getItem('market_data_api_keys') || '{}');
+      savedKeys[sourceId] = apiKey;
+      localStorage.setItem('market_data_api_keys', JSON.stringify(savedKeys));
     } catch (error) {
-      console.error(`Error fetching stock data for ${symbol}:`, error);
-      return null;
+      console.error('Error saving API key to localStorage:', error);
     }
   }
 
-  /**
-   * Get cryptocurrency data
-   */
-  async getCryptoData(limit: number = 10): Promise<CryptoMarketData[]> {
-    await this.ensureInitialized();
-    
+  // Load saved API keys
+  public loadSavedApiKeys(): void {
     try {
-      // Try to get data from Moralis first, which is faster and more reliable for mobile
-      const moralisData = await moralisService.getMarketData(undefined, limit);
-      
-      if (moralisData && moralisData.length > 0) {
-        console.log('Using Moralis for crypto data');
-        return moralisData.map(token => ({
-          symbol: token.symbol,
-          name: token.name,
-          price: token.usd_price || 0,
-          change: token.price_change_24h || 0,
-          marketCap: token.market_cap || 0,
-          volume: 0, // Not available from our basic implementation
-          rank: 0, // Not available from our basic implementation
-          iconUrl: `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${token.symbol.toLowerCase()}.png`
-        }));
-      }
-      
-      // Fall back to RapidAPI if Moralis fails
-      const data = await rapidApiService.getCryptoData(limit);
-      
-      if (!data || !data.data || !data.data.coins) {
-        return [];
-      }
-      
-      return data.data?.coins?.map((coin: any) => ({
-        symbol: coin.symbol,
-        name: coin.name,
-        price: parseFloat(coin.price),
-        change: parseFloat(coin.change),
-        marketCap: parseFloat(coin.marketCap),
-        volume: parseFloat(coin.volume24h || '0'),
-        rank: coin.rank,
-        iconUrl: coin.iconUrl
-      })) || [];
+      const savedKeys = JSON.parse(localStorage.getItem('market_data_api_keys') || '{}');
+      this.apiKeys = savedKeys;
     } catch (error) {
-      console.error('Error fetching crypto data:', error);
-      
-      // Try RapidAPI as a backup if Moralis fails
-      try {
-        const data = await rapidApiService.getCryptoData(limit);
-        
-        if (!data || !data.data || !data.data.coins) {
-          return [];
-        }
-        
-        return data.data?.coins?.map((coin: any) => ({
-          symbol: coin.symbol,
-          name: coin.name,
-          price: parseFloat(coin.price),
-          change: parseFloat(coin.change),
-          marketCap: parseFloat(coin.marketCap),
-          volume: parseFloat(coin.volume24h || '0'),
-          rank: coin.rank,
-          iconUrl: coin.iconUrl
-        })) || [];
-      } catch (backupError) {
-        console.error('Both Moralis and RapidAPI failed for crypto data:', backupError);
-        return [];
+      console.error('Error loading API keys from localStorage:', error);
+    }
+  }
+
+  // Get an API key for a specific data source
+  public getApiKey(sourceId: string): string | undefined {
+    return this.apiKeys[sourceId];
+  }
+
+  // Check if a data source has an API key configured
+  public hasApiKey(sourceId: string): boolean {
+    return !!this.apiKeys[sourceId];
+  }
+
+  // Get stock quotes from a specific data source
+  public async getStockQuote(sourceId: string, symbol: string): Promise<MarketDataResponse<any>> {
+    try {
+      const apiKey = this.getApiKey(sourceId);
+      if (!apiKey) {
+        return { success: false, error: 'API key not configured for this data source' };
       }
-    }
-  }
 
-  /**
-   * Get market movers (top gainers and losers)
-   */
-  async getMarketMovers(): Promise<MarketMoversData> {
-    await this.ensureInitialized();
-    
-    try {
-      const gainersData = await rapidApiService.getMarketMovers('percent_change_gainers');
-      const losersData = await rapidApiService.getMarketMovers('percent_change_losers');
-      
-      const gainers = gainersData.data?.slice(0, 5).map((item: any) => ({
-        symbol: item.s,
-        name: item.description || item.s,
-        price: parseFloat(item.last),
-        change: parseFloat(item.change),
-        changePercent: parseFloat(item.change_percentage)
-      })) || [];
-      
-      const losers = losersData.data?.slice(0, 5).map((item: any) => ({
-        symbol: item.s,
-        name: item.description || item.s,
-        price: parseFloat(item.last),
-        change: parseFloat(item.change),
-        changePercent: parseFloat(item.change_percentage)
-      })) || [];
-      
-      return { gainers, losers };
-    } catch (error) {
-      console.error('Error fetching market movers:', error);
-      return { gainers: [], losers: [] };
-    }
-  }
-
-  /**
-   * Get financial news for a specific symbol or general market
-   */
-  async getNews(query?: string): Promise<NewsArticle[]> {
-    await this.ensureInitialized();
-    
-    try {
-      const searchQuery = query || 'stock market financial trading';
-      const newsData = await rapidApiService.getNews(searchQuery, 10);
-      
-      if (!newsData || !newsData.articles) {
-        return [];
-      }
-      
-      return newsData.articles.map(article => ({
-        title: article.title,
-        url: article.link,
-        description: article.description,
-        source: article.source,
-        publishedAt: article.date,
-        imageUrl: article.imageUrl || ''
-      }));
-    } catch (error) {
-      console.error('Error fetching news:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Get options data for a symbol
-   */
-  async getOptionsData(symbol: string): Promise<any> {
-    await this.ensureInitialized();
-    
-    try {
-      const optionsData = await rapidApiService.getOptionsData(symbol);
-      return optionsData;
-    } catch (error) {
-      console.error(`Error fetching options data for ${symbol}:`, error);
-      return null;
-    }
-  }
-
-  /**
-   * Get stock statistics and information
-   */
-  async getStockStats(symbol: string): Promise<any> {
-    await this.ensureInitialized();
-    
-    try {
-      // Format symbol for BB Finance API (lowercase with ':us' suffix)
-      const formattedSymbol = `${symbol.toLowerCase()}:us`;
-      
-      const data = await rapidApiService.makeRequest({
-        host: 'bb-finance.p.rapidapi.com',
-        path: '/stock/get-statistics',
-        params: {
-          id: formattedSymbol,
-          template: 'STOCK'
-        }
+      const response = await axios.get(`${this.baseUrl}/${sourceId}/quote`, {
+        params: { symbol, apiKey }
       });
-      
-      return data;
+
+      return { success: true, data: response.data };
     } catch (error) {
-      console.error(`Error fetching stock stats for ${symbol}:`, error);
-      return null;
+      console.error(`Error fetching stock quote from ${sourceId}:`, error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      };
     }
   }
 
-  /**
-   * Get enhanced stock data from multiple sources
-   * Aggregates data from Alpha Vantage, CNBC, and Fidelity
-   */
-  async getEnhancedStockData(symbol: string): Promise<EnhancedMarketData | null> {
-    await this.ensureInitialized();
-    
+  // Get historical price data from a specific data source
+  public async getHistoricalPrices(
+    sourceId: string, 
+    symbol: string, 
+    interval: 'day' | 'hour' | 'minute' = 'day',
+    from?: string,
+    to?: string
+  ): Promise<MarketDataResponse<any>> {
     try {
-      // First get basic stock data from Alpha Vantage
-      const basicData = await this.getStockData(symbol);
-      
-      if (!basicData) {
-        return null;
+      const apiKey = this.getApiKey(sourceId);
+      if (!apiKey) {
+        return { success: false, error: 'API key not configured for this data source' };
       }
-      
-      // Create enhanced data object starting with basic data
-      const enhancedData: EnhancedMarketData = {
-        ...basicData,
-        dataProvider: 'Trade Hybrid Aggregated Data'
-      };
-      
-      // Run parallel requests to get additional data
-      const [cnbcData, fidelityData, fidelityResearch] = await Promise.allSettled([
-        cnbcService.getSymbolInfo(symbol),
-        fidelityService.getQuote(symbol),
-        fidelityService.getResearch(symbol)
-      ]);
-      
-      // Add CNBC data if available
-      if (cnbcData.status === 'fulfilled' && cnbcData.value) {
-        enhancedData.name = cnbcData.value.symbolDesc || cnbcData.value.securityName;
-        enhancedData.industry = cnbcData.value.industry;
-        enhancedData.sector = cnbcData.value.sector;
-      }
-      
-      // Add Fidelity quote data if available
-      if (fidelityData.status === 'fulfilled' && fidelityData.value) {
-        // If we couldn't get price from Alpha Vantage, use Fidelity data
-        if (!enhancedData.price && fidelityData.value.price) {
-          enhancedData.price = fidelityData.value.price;
-          enhancedData.change = fidelityData.value.change;
-          enhancedData.changePercent = fidelityData.value.percentChange;
-        }
-        
-        // Add additional Fidelity data points
-        enhancedData.marketCap = fidelityData.value.marketCap;
-        enhancedData.peRatio = fidelityData.value.peRatio;
-        enhancedData.dividendYield = fidelityData.value.dividendYield;
-        
-        // Override name if we don't have it yet
-        if (!enhancedData.name && fidelityData.value.name) {
-          enhancedData.name = fidelityData.value.name;
-        }
-      }
-      
-      // Add Fidelity research data if available
-      if (fidelityResearch.status === 'fulfilled' && fidelityResearch.value) {
-        enhancedData.analystRating = fidelityResearch.value.analystRating;
-        enhancedData.targetPrice = fidelityResearch.value.targetPrice;
-      }
-      
-      return enhancedData;
+
+      const response = await axios.get(`${this.baseUrl}/${sourceId}/historical`, {
+        params: { symbol, interval, from, to, apiKey }
+      });
+
+      return { success: true, data: response.data };
     } catch (error) {
-      console.error(`Error fetching enhanced stock data for ${symbol}:`, error);
-      
-      // Try to return at least basic data if we have it
-      const basicData = await this.getStockData(symbol);
-      if (basicData) {
-        return {
-          ...basicData,
-          dataProvider: 'Alpha Vantage (Limited Data)'
-        };
-      }
-      
-      return null;
+      console.error(`Error fetching historical prices from ${sourceId}:`, error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      };
     }
   }
-  
-  /**
-   * Cross-reference and search for symbols
-   */
-  async searchSymbols(query: string): Promise<any[]> {
-    await this.ensureInitialized();
-    
+
+  // Get company information from a specific data source
+  public async getCompanyInfo(sourceId: string, symbol: string): Promise<MarketDataResponse<any>> {
     try {
-      // Get results from multiple sources
-      const [cnbcResults, fidelityResults] = await Promise.allSettled([
-        cnbcService.searchSymbols(query),
-        fidelityService.autoComplete(query)
-      ]);
-      
-      const results: any[] = [];
-      
-      // Add CNBC results
-      if (cnbcResults.status === 'fulfilled' && cnbcResults.value) {
-        results.push(...cnbcResults.value.map((item: any) => ({
-          symbol: item.symbolName,
-          name: item.securityName,
-          type: item.securityType,
-          exchange: item.exchange,
-          source: 'CNBC'
-        })));
+      const apiKey = this.getApiKey(sourceId);
+      if (!apiKey) {
+        return { success: false, error: 'API key not configured for this data source' };
       }
-      
-      // Add Fidelity results
-      if (fidelityResults.status === 'fulfilled' && fidelityResults.value) {
-        results.push(...fidelityResults.value.map((item: any) => ({
-          symbol: item.symbol,
-          name: item.name,
-          type: item.securityType,
-          exchange: item.exchange,
-          score: item.score,
-          source: 'Fidelity'
-        })));
-      }
-      
-      // Remove duplicates and sort by symbol
-      const uniqueResults = results.filter((item, index, self) => 
-        index === self.findIndex((t) => t.symbol === item.symbol)
-      );
-      
-      return uniqueResults.sort((a, b) => a.symbol.localeCompare(b.symbol));
+
+      const response = await axios.get(`${this.baseUrl}/${sourceId}/company`, {
+        params: { symbol, apiKey }
+      });
+
+      return { success: true, data: response.data };
     } catch (error) {
-      console.error(`Error searching symbols for "${query}":`, error);
-      return [];
+      console.error(`Error fetching company info from ${sourceId}:`, error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      };
+    }
+  }
+
+  // Get news from a specific data source
+  public async getMarketNews(
+    sourceId: string, 
+    symbol?: string,
+    category?: string,
+    limit: number = 10
+  ): Promise<MarketDataResponse<any>> {
+    try {
+      const apiKey = this.getApiKey(sourceId);
+      if (!apiKey) {
+        return { success: false, error: 'API key not configured for this data source' };
+      }
+
+      const response = await axios.get(`${this.baseUrl}/${sourceId}/news`, {
+        params: { symbol, category, limit, apiKey }
+      });
+
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error(`Error fetching news from ${sourceId}:`, error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      };
+    }
+  }
+
+  // Get forex data from a specific data source
+  public async getForexData(
+    sourceId: string,
+    base: string,
+    quote: string
+  ): Promise<MarketDataResponse<any>> {
+    try {
+      const apiKey = this.getApiKey(sourceId);
+      if (!apiKey) {
+        return { success: false, error: 'API key not configured for this data source' };
+      }
+
+      const response = await axios.get(`${this.baseUrl}/${sourceId}/forex`, {
+        params: { base, quote, apiKey }
+      });
+
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error(`Error fetching forex data from ${sourceId}:`, error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      };
+    }
+  }
+
+  // Get crypto data from a specific data source
+  public async getCryptoData(
+    sourceId: string,
+    symbol: string
+  ): Promise<MarketDataResponse<any>> {
+    try {
+      const apiKey = this.getApiKey(sourceId);
+      if (!apiKey) {
+        return { success: false, error: 'API key not configured for this data source' };
+      }
+
+      const response = await axios.get(`${this.baseUrl}/${sourceId}/crypto`, {
+        params: { symbol, apiKey }
+      });
+
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error(`Error fetching crypto data from ${sourceId}:`, error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      };
     }
   }
 }
 
-// Export singleton instance
 export const marketDataService = new MarketDataService();
+export default marketDataService;
