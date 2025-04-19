@@ -1,277 +1,88 @@
-import { BrokerService, MarketData, AccountBalance, BrokerPosition, OrderHistory } from './broker-service';
-import { check_secrets } from '../utils';
-import { config } from '../config';
+import axios from 'axios';
+import {
+  AccountBalance,
+  BrokerPosition,
+  BrokerService,
+  MarketData,
+  OrderHistory
+} from './broker-service';
 
-interface AlpacaQuote {
-  symbol: string;
-  bid: number;
-  ask: number;
-  bidSize: number;
-  askSize: number;
-  timestamp: number;
-}
-
-interface AlpacaTraderAccount {
-  account_id: string;
-  name: string;
-  balance: number;
-  pnl: number;
-  status: string;
-}
-
-// Enhanced AlpacaService with broker capabilities
+/**
+ * Alpaca API service implementation
+ * Connects to the Alpaca Trading API
+ */
 export class AlpacaService implements BrokerService {
+  private apiKey: string;
+  private apiSecret: string;
   private baseUrl: string;
-  private headers: { [key: string]: string };
+  private isConnected: boolean = false;
+  private marketDataCallbacks: Map<string, ((data: MarketData) => void)[]> = new Map();
+  private webSocketConnection: WebSocket | null = null;
 
-  constructor(apiKey?: string, secretKey?: string) {
-    this.baseUrl = 'https://paper-api.alpaca.markets/v2';
-    this.headers = {
-      'APCA-API-KEY-ID': apiKey || config.ALPACA_API_KEY || '',
-      'APCA-API-SECRET-KEY': secretKey || config.ALPACA_API_SECRET || '',
-      'Content-Type': 'application/json'
-    };
-  }
-
-  async getAllTraderAccounts(): Promise<AlpacaTraderAccount[]> {
-    const response = await fetch(`${this.baseUrl}/accounts`, {
-      headers: this.headers
-    });
-    return response.json();
-  }
-
-  async getAccountBalance(): Promise<AccountBalance> {
-    const response = await fetch(`${this.baseUrl}/account`, {
-      headers: this.headers
-    });
-    const data = await response.json();
-    return {
-      asset: 'USD',
-      free: parseFloat(data.cash),
-      locked: parseFloat(data.locked),
-      total: parseFloat(data.portfolio_value)
-    };
-  }
-
-  async getPositions(): Promise<TradePosition[]> {
-    const response = await fetch(`${this.baseUrl}/positions`, {
-      headers: this.headers
-    });
-    const data = await response.json();
-    return data.map((pos: any) => ({
-      symbol: pos.symbol,
-      side: pos.side as 'long' | 'short',
-      entryPrice: parseFloat(pos.avg_entry_price),
-      size: parseFloat(pos.qty),
-      markPrice: parseFloat(pos.current_price),
-      unrealizedPnl: parseFloat(pos.unrealized_pl)
-    }));
-  }
-
-interface AlpacaPosition {
-  asset_id: string;
-  symbol: string;
-  qty: string;
-  side: string;
-  market_value: number;
-  cost_basis: number;
-  unrealized_pl: number;
-  unrealized_plpc: number;
-  avg_entry_price: string;
-  current_price: string;
-}
-
-export class HybridHoldingsService implements BrokerService {
-  private baseUrl: string;
-  private dataUrl: string;
-  private websocketUrl: string;
-  private analytics: {
-    traderAnalytics: Map<string, any>;
-    globalMetrics: any;
-  } = {
-    traderAnalytics: new Map(),
-    globalMetrics: {}
-  };
-  private webSocketConnections: Map<string, WebSocket> = new Map();
-  private authenticated: boolean = false;
-
-  async getTraderAnalytics(timeframe: string): Promise<any> {
-    // Implement analytics calculation logic here
-    return {
-      totalVolume: 1250000,
-      profitLoss: 12.5,
-      winRate: 68,
-      activeTraders: 42,
-      riskMetrics: {
-        drawdown: -8.5,
-        sharpeRatio: 1.8,
-        volatility: 12.4
-      },
-      performance: {
-        daily: 1.2,
-        weekly: 4.5,
-        monthly: 12.8,
-        yearly: 42.5
-      }
-    };
-  }
-
-  async getPersonalAnalytics(timeframe: string): Promise<any> {
-    // Implement personal analytics calculation logic here
-    return {
-      totalVolume: 50000,
-      profitLoss: 8.2,
-      winRate: 65,
-      riskMetrics: {
-        drawdown: -5.2,
-        sharpeRatio: 1.5,
-        volatility: 9.8
-      },
-      performance: {
-        daily: 0.8,
-        weekly: 3.2,
-        monthly: 8.5,
-        yearly: 28.4
-      }
-    };
-  }
-  
-  constructor(
-    private apiKey: string = '',
-    private apiSecret: string = '', 
-    private isDemo: boolean = true
-  ) {
-    // Use the broker API URL if provided in config, fallback to paper trading URL
-    this.baseUrl = config.ALPACA_API_URL || 'https://paper-api.alpaca.markets';
-    this.dataUrl = 'https://data.alpaca.markets';
+  constructor(apiKey: string, apiSecret: string, usePaperTrading: boolean = true) {
+    this.apiKey = apiKey;
+    this.apiSecret = apiSecret;
     
-    // If API keys are provided, use them, otherwise use from config or env
-    this.apiKey = apiKey || config.ALPACA_API_KEY || '';
-    this.apiSecret = apiSecret || config.ALPACA_API_SECRET || '';
+    // Base URL depends on whether we're using paper trading
+    this.baseUrl = usePaperTrading 
+      ? 'https://paper-api.alpaca.markets/v2' 
+      : 'https://api.alpaca.markets/v2';
     
-    // Log the first few characters of the key being used (for debugging)
-    if (this.apiKey) {
-      console.log(`Client using Alpaca API Key: ${this.apiKey.substring(0, 4)}...`);
-    }
-    
-    this.websocketUrl = 'wss://stream.data.alpaca.markets/v2';
+    console.log('AlpacaService initialized with', 
+      usePaperTrading ? 'paper trading' : 'live trading');
   }
 
   async connect(): Promise<void> {
-    // Check if API keys are available
-    if (!this.apiKey || !this.apiSecret) {
-      try {
-        const hasSecrets = await check_secrets(['ALPACA_API_KEY', 'ALPACA_API_SECRET']);
-        if (!hasSecrets) {
-          throw new Error('Alpaca API keys not found in environment variables');
-        }
-        this.apiKey = config.ALPACA_API_KEY || '';
-        this.apiSecret = config.ALPACA_API_SECRET || '';
-      } catch (error) {
-        console.error('Failed to retrieve Alpaca API keys:', error);
-        throw error;
-      }
-    }
-
     try {
-      // Make a test call to verify credentials
-      const response = await this.request('/v2/account');
-      console.log('Connected to Alpaca API successfully');
-      this.authenticated = true;
+      // Test connection by getting account info
+      await this.getAccount();
+      
+      this.isConnected = true;
+      console.log('Successfully connected to Alpaca Trading API');
+      
+      // Setup WebSocket for real-time data
+      this.setupWebSocket();
+      
+      return Promise.resolve();
     } catch (error) {
       console.error('Failed to connect to Alpaca API:', error);
+      this.isConnected = false;
+      throw new Error('Could not connect to Alpaca API');
+    }
+  }
+
+  async getBalance(): Promise<AccountBalance> {
+    try {
+      const account = await this.getAccount();
+      
+      return {
+        total: parseFloat(account.portfolio_value),
+        cash: parseFloat(account.cash),
+        positions: parseFloat(account.equity) - parseFloat(account.cash)
+      };
+    } catch (error) {
+      console.error('Error getting account balance:', error);
       throw error;
     }
   }
 
-  private async request(endpoint: string, method: 'GET' | 'POST' | 'DELETE' = 'GET', data?: any) {
-    const url = `${this.baseUrl}${endpoint}`;
-    const headers = {
-      'APCA-API-KEY-ID': this.apiKey,
-      'APCA-API-SECRET-KEY': this.apiSecret,
-      'Content-Type': 'application/json'
-    };
-
-    const options: RequestInit = {
-      method,
-      headers
-    };
-
-    if (data) {
-      options.body = JSON.stringify(data);
-    }
-
-    const response = await fetch(url, options);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Alpaca API error: ${response.status} - ${errorText}`);
-    }
-
-    return response.json();
-  }
-
-  private async requestData(endpoint: string, method: 'GET' | 'POST' | 'DELETE' = 'GET', data?: any) {
-    const url = `${this.dataUrl}${endpoint}`;
-    const headers = {
-      'APCA-API-KEY-ID': this.apiKey,
-      'APCA-API-SECRET-KEY': this.apiSecret,
-      'Content-Type': 'application/json'
-    };
-
-    const options: RequestInit = {
-      method,
-      headers
-    };
-
-    if (data) {
-      options.body = JSON.stringify(data);
-    }
-
-    const response = await fetch(url, options);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Alpaca Data API error: ${response.status} - ${errorText}`);
-    }
-
-    return response.json();
-  }
-
-  async getBalance(): Promise<AccountBalance> {
-    if (!this.authenticated) {
-      await this.connect();
-    }
-
-    const account = await this.request('/v2/account');
-    
-    return {
-      total: parseFloat(account.portfolio_value),
-      cash: parseFloat(account.cash),
-      positions: parseFloat(account.portfolio_value) - parseFloat(account.cash)
-    };
-  }
-
   async getPositions(): Promise<BrokerPosition[]> {
-    if (!this.authenticated) {
-      await this.connect();
-    }
-
-    const positions = await this.request('/v2/positions');
-
-    return positions.map((position: AlpacaPosition) => {
-      const quantity = parseFloat(position.qty);
-      const averagePrice = parseFloat(position.avg_entry_price);
-      const currentPrice = parseFloat(position.current_price);
+    try {
+      const positionsResponse = await axios.get(`${this.baseUrl}/positions`, {
+        headers: this.getHeaders()
+      });
       
-      return {
-        symbol: position.symbol,
-        quantity,
-        averagePrice,
-        currentPrice,
-        pnl: position.unrealized_pl
-      };
-    });
+      return positionsResponse.data.map((pos: any) => ({
+        symbol: pos.symbol,
+        quantity: parseFloat(pos.qty),
+        averagePrice: parseFloat(pos.avg_entry_price),
+        currentPrice: parseFloat(pos.current_price),
+        pnl: parseFloat(pos.unrealized_pl)
+      }));
+    } catch (error) {
+      console.error('Error getting positions:', error);
+      throw error;
+    }
   }
 
   async placeOrder(order: {
@@ -281,47 +92,183 @@ export class HybridHoldingsService implements BrokerService {
     type: 'market' | 'limit';
     limitPrice?: number;
   }): Promise<string> {
-    if (!this.authenticated) {
-      await this.connect();
+    try {
+      const orderRequest: any = {
+        symbol: order.symbol,
+        qty: order.quantity,
+        side: order.side,
+        type: order.type,
+        time_in_force: 'day'
+      };
+      
+      if (order.type === 'limit' && order.limitPrice) {
+        orderRequest.limit_price = order.limitPrice;
+      }
+      
+      const response = await axios.post(`${this.baseUrl}/orders`, orderRequest, {
+        headers: this.getHeaders()
+      });
+      
+      return response.data.id;
+    } catch (error) {
+      console.error('Error placing order:', error);
+      throw error;
     }
-
-    const orderData: any = {
-      symbol: order.symbol,
-      qty: order.quantity.toString(),
-      side: order.side,
-      type: order.type,
-      time_in_force: 'day'
-    };
-
-    if (order.type === 'limit' && order.limitPrice) {
-      orderData.limit_price = order.limitPrice.toString();
-    }
-
-    const response = await this.request('/v2/orders', 'POST', orderData);
-    return response.id;
   }
 
   async getOrderHistory(): Promise<OrderHistory[]> {
-    if (!this.authenticated) {
-      await this.connect();
+    try {
+      const ordersResponse = await axios.get(
+        `${this.baseUrl}/orders?status=all&limit=100`,
+        { headers: this.getHeaders() }
+      );
+      
+      return ordersResponse.data.map((order: any) => ({
+        orderId: order.id,
+        symbol: order.symbol,
+        side: order.side,
+        quantity: parseFloat(order.qty),
+        price: parseFloat(order.filled_avg_price || order.limit_price || 0),
+        status: this.mapOrderStatus(order.status),
+        timestamp: new Date(order.submitted_at).getTime(),
+        broker: 'Alpaca'
+      }));
+    } catch (error) {
+      console.error('Error getting order history:', error);
+      throw error;
     }
-
-    const orders = await this.request('/v2/orders?status=all&limit=100');
-    
-    return orders.map((order: any) => ({
-      orderId: order.id,
-      symbol: order.symbol,
-      side: order.side,
-      quantity: parseFloat(order.qty),
-      price: parseFloat(order.filled_avg_price || order.limit_price || '0'),
-      status: this.mapOrderStatus(order.status),
-      timestamp: new Date(order.created_at).getTime(),
-      broker: 'Alpaca'
-    }));
   }
 
-  private mapOrderStatus(alpacaStatus: string): 'filled' | 'pending' | 'cancelled' {
-    switch (alpacaStatus) {
+  subscribeToMarketData(symbol: string, callback: (data: MarketData) => void): void {
+    // Add callback to subscribers
+    if (!this.marketDataCallbacks.has(symbol)) {
+      this.marketDataCallbacks.set(symbol, []);
+      
+      // Subscribe to the symbol on WebSocket if connected
+      if (this.webSocketConnection && 
+          this.webSocketConnection.readyState === WebSocket.OPEN) {
+        this.webSocketConnection.send(JSON.stringify({
+          action: 'subscribe',
+          trades: [symbol]
+        }));
+      }
+    }
+    
+    this.marketDataCallbacks.get(symbol)?.push(callback);
+  }
+
+  unsubscribeFromMarketData(symbol: string): void {
+    // If we have subscribers for this symbol
+    if (this.marketDataCallbacks.has(symbol)) {
+      // Unsubscribe from the symbol on WebSocket if connected
+      if (this.webSocketConnection && 
+          this.webSocketConnection.readyState === WebSocket.OPEN) {
+        this.webSocketConnection.send(JSON.stringify({
+          action: 'unsubscribe',
+          trades: [symbol]
+        }));
+      }
+      
+      // Remove callbacks
+      this.marketDataCallbacks.delete(symbol);
+    }
+  }
+
+  // Private helper methods
+  private getHeaders() {
+    return {
+      'APCA-API-KEY-ID': this.apiKey,
+      'APCA-API-SECRET-KEY': this.apiSecret,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  private async getAccount(): Promise<any> {
+    const response = await axios.get(`${this.baseUrl}/account`, {
+      headers: this.getHeaders()
+    });
+    return response.data;
+  }
+
+  private setupWebSocket(): void {
+    // Close existing connection if any
+    if (this.webSocketConnection) {
+      this.webSocketConnection.close();
+    }
+    
+    const wsURL = this.baseUrl.includes('paper') 
+      ? 'wss://stream.data.alpaca.markets/v2/iex' 
+      : 'wss://stream.data.alpaca.markets/v2/iex';
+    
+    try {
+      this.webSocketConnection = new WebSocket(wsURL);
+      
+      this.webSocketConnection.onopen = () => {
+        console.log('Alpaca WebSocket connected');
+        
+        // Authentication
+        if (this.webSocketConnection) {
+          this.webSocketConnection.send(JSON.stringify({
+            action: 'auth',
+            key: this.apiKey,
+            secret: this.apiSecret
+          }));
+          
+          // Subscribe to existing symbols
+          const symbols = Array.from(this.marketDataCallbacks.keys());
+          if (symbols.length > 0) {
+            this.webSocketConnection.send(JSON.stringify({
+              action: 'subscribe',
+              trades: symbols
+            }));
+          }
+        }
+      };
+      
+      this.webSocketConnection.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          // Handle trade data
+          if (data && data.T === 'trade') {
+            const marketData: MarketData = {
+              symbol: data.S,
+              price: parseFloat(data.p),
+              timestamp: new Date(data.t).getTime(),
+              volume: parseFloat(data.v)
+            };
+            
+            // Notify subscribers
+            this.marketDataCallbacks.get(data.S)?.forEach(callback => {
+              callback(marketData);
+            });
+          }
+        } catch (error) {
+          console.error('Error processing WebSocket message:', error);
+        }
+      };
+      
+      this.webSocketConnection.onerror = (error) => {
+        console.error('Alpaca WebSocket error:', error);
+      };
+      
+      this.webSocketConnection.onclose = () => {
+        console.log('Alpaca WebSocket disconnected');
+        
+        // Try to reconnect after a delay
+        setTimeout(() => {
+          if (this.isConnected) {
+            this.setupWebSocket();
+          }
+        }, 5000);
+      };
+    } catch (error) {
+      console.error('Failed to create WebSocket connection:', error);
+    }
+  }
+
+  private mapOrderStatus(status: string): 'pending' | 'filled' | 'cancelled' {
+    switch (status) {
       case 'filled':
         return 'filled';
       case 'canceled':
@@ -330,105 +277,6 @@ export class HybridHoldingsService implements BrokerService {
         return 'cancelled';
       default:
         return 'pending';
-    }
-  }
-
-  async getQuote(symbol: string): Promise<AlpacaQuote | null> {
-    if (!this.authenticated) {
-      await this.connect();
-    }
-
-    try {
-      const quotes = await this.requestData(`/v2/stocks/${symbol}/quotes/latest`);
-      if (!quotes || !quotes.quote) {
-        return null;
-      }
-
-      return {
-        symbol,
-        bid: parseFloat(quotes.quote.bp),
-        ask: parseFloat(quotes.quote.ap),
-        bidSize: parseFloat(quotes.quote.bs),
-        askSize: parseFloat(quotes.quote.as),
-        timestamp: new Date(quotes.quote.t).getTime()
-      };
-    } catch (error) {
-      console.error(`Error fetching quote for ${symbol}:`, error);
-      return null;
-    }
-  }
-
-  subscribeToMarketData(symbol: string, callback: (data: MarketData) => void): void {
-    // Close existing connection if any
-    this.unsubscribeFromMarketData(symbol);
-    
-    // Initialize Alpaca WebSocket connection
-    const ws = new WebSocket(this.websocketUrl);
-    
-    ws.onopen = () => {
-      console.log(`Alpaca WebSocket connected for ${symbol}`);
-      
-      // Authentication message
-      ws.send(JSON.stringify({
-        action: 'auth',
-        key: this.apiKey,
-        secret: this.apiSecret
-      }));
-      
-      // Subscribe to trades for the symbol
-      ws.send(JSON.stringify({
-        action: 'subscribe',
-        trades: [symbol]
-      }));
-    };
-    
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      
-      // Handle different message types
-      if (Array.isArray(data)) {
-        data.forEach(msg => {
-          if (msg.T === 'success' && msg.msg === 'authenticated') {
-            console.log('Successfully authenticated with Alpaca WebSocket');
-          } else if (msg.T === 'trade' && msg.S === symbol) {
-            // Trade update
-            callback({
-              symbol: msg.S,
-              price: parseFloat(msg.p),
-              timestamp: new Date(msg.t).getTime(),
-              volume: parseFloat(msg.s)
-            });
-          }
-        });
-      }
-    };
-    
-    ws.onerror = (error) => {
-      console.error(`Alpaca WebSocket error for ${symbol}:`, error);
-    };
-    
-    ws.onclose = () => {
-      console.log(`Alpaca WebSocket connection closed for ${symbol}`);
-    };
-    
-    this.webSocketConnections.set(symbol, ws);
-  }
-
-  unsubscribeFromMarketData(symbol: string): void {
-    const ws = this.webSocketConnections.get(symbol);
-    if (ws) {
-      // Send unsubscribe message if socket is open
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-          action: 'unsubscribe',
-          trades: [symbol]
-        }));
-      }
-      
-      // Close the connection
-      ws.close();
-      this.webSocketConnections.delete(symbol);
-      console.log(`Unsubscribed from ${symbol} market data`);
     }
   }
 }

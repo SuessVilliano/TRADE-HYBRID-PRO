@@ -1,547 +1,431 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState, useEffect } from 'react';
+import { BrokerFactory } from '@/lib/services/broker-factory';
 import { 
-  TrendingUp, TrendingDown, DollarSign, 
-  Wallet, BarChart2, RefreshCw, Check, 
-  BarChart, Settings, ChevronUp, ChevronDown,
-  Shield, Zap, Target, Shuffle, BrainCircuit
-} from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { useTrader } from "@/lib/stores/useTrader";
-import { useMarketData } from "@/lib/stores/useMarketData";
-import { useBrokerAggregator } from "@/lib/stores/useBrokerAggregator";
-import { cn, formatCurrency, formatPercentage } from "@/lib/utils";
-import { BotCreator } from "./bot-creator";
-import { OrderHistoryView } from "./order-history";
-import { AIMarketAnalysis } from "./ai-market-analysis";
-import { toast } from "sonner";
-import { Badge } from "./badge";
-import { BrokerComparison } from "@/lib/services/broker-aggregator-service";
-import { BrokerConfig } from "./broker-config";
+  BrokerService, 
+  BrokerPosition, 
+  AccountBalance, 
+  OrderHistory,
+  MarketData
+} from '@/lib/services/broker-service';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  Table, 
+  TableBody, 
+  TableCaption, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
+// Predefined list of popular stocks
+const popularStocks = [
+  { symbol: 'AAPL', name: 'Apple Inc.' },
+  { symbol: 'MSFT', name: 'Microsoft Corp.' },
+  { symbol: 'AMZN', name: 'Amazon.com Inc.' },
+  { symbol: 'GOOGL', name: 'Alphabet Inc.' },
+  { symbol: 'META', name: 'Meta Platforms Inc.' },
+  { symbol: 'TSLA', name: 'Tesla Inc.' },
+  { symbol: 'NVDA', name: 'NVIDIA Corp.' },
+  { symbol: 'JPM', name: 'JPMorgan Chase & Co.' },
+  { symbol: 'V', name: 'Visa Inc.' },
+  { symbol: 'JNJ', name: 'Johnson & Johnson' },
+];
 
-interface TradingInterfaceProps {
-  className?: string;
-  symbol?: string;
-}
-
-export function TradingInterface({ className, symbol = "BTCUSD" }: TradingInterfaceProps) {
-  const { placeTrade, accountBalance, orderHistory } = useTrader();
-  const { currentPrice, fetchMarketData, subscribeToRealTimeData } = useMarketData();
-  const { 
-    initializeAggregator,
-    executeTrade,
-    compareForSymbol,
-    toggleABATEV,
-    useABATEV,
-    isConnected,
-    currentComparisons,
-    selectBroker,
-    selectedBroker,
-    activeBrokers,
-    isLoading
-  } = useBrokerAggregator();
+export function TradingInterface() {
+  const [brokerService, setBrokerService] = useState<BrokerService | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [positions, setPositions] = useState<BrokerPosition[]>([]);
+  const [accountBalance, setAccountBalance] = useState<AccountBalance | null>(null);
+  const [orderHistory, setOrderHistory] = useState<OrderHistory[]>([]);
+  const [selectedSymbol, setSelectedSymbol] = useState('AAPL');
+  const [quantity, setQuantity] = useState(1);
+  const [orderType, setOrderType] = useState<'market' | 'limit'>('market');
+  const [limitPrice, setLimitPrice] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [marketData, setMarketData] = useState<MarketData[]>([]);
+  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
-  const [quantity, setQuantity] = useState("0.01");
-  const [leverage, setLeverage] = useState(1);
-  const [orderType, setOrderType] = useState("market");
-  const [limitPrice, setLimitPrice] = useState("");
-  const [takeProfitPrice, setTakeProfitPrice] = useState("");
-  const [stopLossPrice, setStopLossPrice] = useState("");
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-  const [comparisonsVisible, setComparisonsVisible] = useState(false);
-  
-  // Initialize broker aggregator
+  // Connect to broker service on component mount
   useEffect(() => {
-    if (!isConnected) {
-      initializeAggregator();
-    }
-  }, [isConnected, initializeAggregator]);
-  
-  // Fetch market data for the current symbol
-  useEffect(() => {
-    fetchMarketData(symbol);
-    subscribeToRealTimeData(symbol);
-    
-    return () => {
-      // Clean up subscription when component unmounts or symbol changes
+    const initBrokerService = async () => {
       try {
-        const { unsubscribeFromRealTimeData } = useMarketData.getState();
-        unsubscribeFromRealTimeData(symbol);
-      } catch (error) {
-        console.error("Error unsubscribing from market data:", error);
+        // Create broker service - will use mock or real based on environment setting
+        const service = BrokerFactory.createBrokerService('alpaca');
+        setBrokerService(service);
+        
+        await service.connect();
+        setIsConnected(true);
+        
+        // Load initial data
+        await fetchAccountData(service);
+      } catch (err) {
+        console.error('Failed to connect to broker service:', err);
+        setError('Failed to connect to broker service. Please check your settings.');
       }
     };
-  }, [symbol, fetchMarketData, subscribeToRealTimeData]);
+    
+    initBrokerService();
+    
+    // Clean up subscriptions when component unmounts
+    return () => {
+      if (brokerService && selectedSymbol) {
+        brokerService.unsubscribeFromMarketData(selectedSymbol);
+      }
+    };
+  }, []);
   
-  // Update comparison data when symbol changes
+  // Subscribe to market data when symbol changes
   useEffect(() => {
-    if (isConnected && comparisonsVisible) {
-      compareForSymbol(symbol);
+    if (!brokerService || !isConnected || !selectedSymbol) return;
+    
+    // Clear existing data
+    setMarketData([]);
+    setCurrentPrice(null);
+    
+    // Unsubscribe from previous symbol
+    brokerService.unsubscribeFromMarketData(selectedSymbol);
+    
+    // Subscribe to new symbol
+    brokerService.subscribeToMarketData(selectedSymbol, (data) => {
+      setCurrentPrice(data.price);
+      setMarketData(prev => {
+        const newData = [...prev, data];
+        // Keep only the last 30 data points
+        if (newData.length > 30) {
+          return newData.slice(newData.length - 30);
+        }
+        return newData;
+      });
+    });
+    
+  }, [brokerService, isConnected, selectedSymbol]);
+  
+  // Fetch account data (balance, positions, orders)
+  const fetchAccountData = async (service: BrokerService) => {
+    try {
+      setIsLoading(true);
+      
+      // Get account balance
+      const balance = await service.getBalance();
+      setAccountBalance(balance);
+      
+      // Get positions
+      const positionsData = await service.getPositions();
+      setPositions(positionsData);
+      
+      // Get order history
+      const orderData = await service.getOrderHistory();
+      setOrderHistory(orderData);
+      
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Error fetching account data:', err);
+      setError('Failed to fetch account data.');
+      setIsLoading(false);
     }
-  }, [isConnected, symbol, comparisonsVisible, compareForSymbol]);
-
-  const handleTrade = async (side: "buy" | "sell") => {
-    if (parseFloat(quantity) <= 0) {
-      toast.error("Please enter a valid quantity");
+  };
+  
+  // Handle placing an order
+  const placeOrder = async (side: 'buy' | 'sell') => {
+    if (!brokerService || !isConnected) {
+      setError('Not connected to broker service.');
+      return;
+    }
+    
+    if (quantity <= 0) {
+      setError('Quantity must be greater than zero.');
+      return;
+    }
+    
+    if (orderType === 'limit' && limitPrice <= 0) {
+      setError('Limit price must be greater than zero.');
       return;
     }
     
     try {
-      const result = await executeTrade({
-        symbol,
-        action: side,
-        quantity: parseFloat(quantity),
-        orderType: orderType as 'market' | 'limit',
-        limitPrice: orderType === "limit" ? parseFloat(limitPrice) : undefined,
-        takeProfit1: showAdvancedOptions && takeProfitPrice ? parseFloat(takeProfitPrice) : undefined,
-        stopLoss: showAdvancedOptions && stopLossPrice ? parseFloat(stopLossPrice) : undefined,
-      });
+      setIsLoading(true);
+      setError(null);
+      setSuccess(null);
       
-      if (result.success) {
-        toast.success(`${side.toUpperCase()} order executed successfully via ${result.broker || 'broker'}`);
-        
-        // If ABATEV was used, show which broker was selected
-        if (useABATEV && result.broker) {
-          toast.info(`ABATEV selected ${result.broker} for best execution`);
-        }
-      } else {
-        toast.error(`Failed to execute order: ${result.error}`);
-      }
-    } catch (error) {
-      console.error("Trade execution error:", error);
-      toast.error("An error occurred while executing the trade");
+      const order = {
+        symbol: selectedSymbol,
+        side,
+        quantity,
+        type: orderType,
+        limitPrice: orderType === 'limit' ? limitPrice : undefined
+      };
+      
+      const orderId = await brokerService.placeOrder(order);
+      
+      setSuccess(`Order placed successfully. Order ID: ${orderId}`);
+      
+      // Refresh account data
+      await fetchAccountData(brokerService);
+      
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Error placing order:', err);
+      setError('Failed to place order. Please try again.');
+      setIsLoading(false);
     }
   };
-
-  const calculateMargin = () => {
-    return (parseFloat(quantity) * currentPrice) / leverage;
-  };
-
-  const calculatePotentialProfit = (side: "buy" | "sell") => {
-    const price = currentPrice;
-    const potentialChange = price * 0.05; 
-    const leveragedChange = potentialChange * leverage;
-    const totalPosition = parseFloat(quantity) * price;
-    return side === "buy" ? leveragedChange : -leveragedChange;
+  
+  // Calculate chart data from market data
+  const getChartData = () => {
+    return marketData.map(data => ({
+      time: new Date(data.timestamp).toLocaleTimeString(),
+      price: data.price,
+    }));
   };
   
-  const refreshComparisons = () => {
-    compareForSymbol(symbol);
-  };
-
   return (
-    <Card className={cn("w-full", className)}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-medium flex justify-between items-center">
-          <span>
-            <Wallet className="inline mr-2 h-5 w-5" />
-            Trading Terminal
-          </span>
-          <span className="text-sm">
-            <span className="text-muted-foreground mr-1">Balance:</span>
-            {formatCurrency(accountBalance)}
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="spot">
-          <TabsList className="grid w-full grid-cols-6 h-8 mb-4">
-            <TabsTrigger value="spot">Spot</TabsTrigger>
-            <TabsTrigger value="futures">Futures</TabsTrigger>
-            <TabsTrigger value="ai">
-              <BrainCircuit className="mr-2 h-3 w-3" />
-              AI Analysis
-            </TabsTrigger>
-            <TabsTrigger value="bots">Bots</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
-            <TabsTrigger value="brokers">
-              <Settings className="mr-2 h-3 w-3" />
-              Brokers
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="spot">
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col">
-                  <span className="text-sm mb-1">Symbol</span>
-                  <span className="text-lg font-medium">{symbol}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm mb-1">Current Price</span>
-                  <span className="text-lg font-medium">{formatCurrency(currentPrice)}</span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm">Quantity</label>
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    min="0.0001"
-                    step="0.001"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                  />
-                  <Button variant="outline" onClick={() => setQuantity("0.1")}>10%</Button>
-                  <Button variant="outline" onClick={() => setQuantity("0.5")}>50%</Button>
-                  <Button variant="outline" onClick={() => setQuantity("1")}>100%</Button>
-                </div>
-              </div>
-
-              <div className="space-y-3 border p-3 rounded-md bg-muted/50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-5 w-5 text-primary" />
-                    <div>
-                      <h4 className="text-sm font-medium">ABATEV Smart Routing</h4>
-                      <p className="text-xs text-muted-foreground">Automatic Best Available Trade Execution Venue</p>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={useABATEV}
-                    onCheckedChange={toggleABATEV}
-                  />
-                </div>
-                
-                <div className="text-xs text-muted-foreground">
-                  {useABATEV ? (
-                    <div className="flex items-center gap-1 text-primary">
-                      <Zap className="h-3 w-3" />
-                      <span>Automatically selecting best broker for execution</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1">
-                      <span>Manual broker selection enabled</span>
-                    </div>
-                  )}
-                </div>
-                
-                {!useABATEV && (
-                  <div className="grid grid-cols-2 gap-2">
-                    {activeBrokers.map(broker => (
-                      <Button
-                        key={broker}
-                        size="sm"
-                        variant={selectedBroker === broker ? "default" : "outline"}
-                        className="text-xs h-8"
-                        onClick={() => selectBroker(broker)}
-                      >
-                        {selectedBroker === broker && <Check className="h-3 w-3 mr-1" />}
-                        {broker.charAt(0).toUpperCase() + broker.slice(1)}
-                      </Button>
-                    ))}
-                  </div>
-                )}
-                
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full text-xs flex items-center gap-1"
-                  onClick={() => {
-                    setComparisonsVisible(!comparisonsVisible);
-                    if (!comparisonsVisible) {
-                      refreshComparisons();
-                    }
-                  }}
-                >
-                  {comparisonsVisible ? (
-                    <>
-                      <ChevronUp className="h-3 w-3" />
-                      <span>Hide Broker Comparisons</span>
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown className="h-3 w-3" />
-                      <span>Show Broker Comparisons</span>
-                    </>
-                  )}
-                </Button>
-              </div>
-              
-              {comparisonsVisible && (
-                <div className="mt-3 border rounded-md p-2 text-xs space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Broker Comparisons</span>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 w-6 p-0"
-                      onClick={refreshComparisons}
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  
-                  {isLoading ? (
-                    <div className="flex justify-center items-center py-4">
-                      <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
-                      <span className="ml-2">Loading comparison data...</span>
-                    </div>
-                  ) : currentComparisons && currentComparisons.length > 0 ? (
-                    <div className="space-y-2">
-                      {currentComparisons.map((comparison: BrokerComparison) => (
-                        <div 
-                          key={comparison.brokerId}
-                          className={cn(
-                            "p-2 rounded border flex justify-between items-center", 
-                            comparison.score > 80 ? "bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800" : "",
-                            comparison.score > 60 && comparison.score <= 80 ? "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800" : "",
-                            comparison.score > 40 && comparison.score <= 60 ? "bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800" : "",
-                            comparison.score <= 40 ? "bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800" : ""
-                          )}
-                        >
-                          <div>
-                            <div className="font-medium">{comparison.brokerName}</div>
-                            <div className="flex space-x-2 text-xs text-muted-foreground">
-                              <span>{formatCurrency(comparison.price)}</span>
-                              <span>Spread: {comparison.spread.toFixed(5)}</span>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-medium">{comparison.score.toFixed(0)}%</div>
-                            <div className="text-xs text-muted-foreground">{Math.round(comparison.latency)}ms</div>
-                          </div>
-                        </div>
-                      ))}
-                      
-                      <div className="text-xs text-muted-foreground italic">
-                        ABATEV score factors: price, spread, latency, fees, and available volume
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="py-4 text-center text-muted-foreground">
-                      No comparison data available
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              <div className="flex gap-2 mt-6">
-                <Button 
-                  className="flex-1 h-14" 
-                  onClick={() => handleTrade("buy")}
-                >
-                  <TrendingUp className="mr-2 h-5 w-5" />
-                  Buy / Long
-                </Button>
-                <Button 
-                  className="flex-1 h-14" 
-                  variant="destructive"
-                  onClick={() => handleTrade("sell")}
-                >
-                  <TrendingDown className="mr-2 h-5 w-5" />
-                  Sell / Short
-                </Button>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="futures">
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col">
-                  <span className="text-sm mb-1">Symbol</span>
-                  <span className="text-lg font-medium">{symbol}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm mb-1">Current Price</span>
-                  <span className="text-lg font-medium">{formatCurrency(currentPrice)}</span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm">Quantity</label>
-                <Input
-                  type="number"
-                  min="0.0001"
-                  step="0.001"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <label className="text-sm">Leverage: {leverage}x</label>
-                  <span className="text-xs text-muted-foreground">
-                    <DollarSign className="inline h-3 w-3" />
-                    {formatCurrency(calculateMargin())} margin required
-                  </span>
-                </div>
-                <Slider
-                  min={1}
-                  max={20}
-                  step={1}
-                  value={[leverage]}
-                  onValueChange={(value) => setLeverage(value[0])}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm">Order Type</label>
-                <div className="flex gap-2">
-                  <Button 
-                    variant={orderType === "market" ? "default" : "outline"}
-                    className="flex-1"
-                    onClick={() => setOrderType("market")}
-                  >
-                    Market
-                  </Button>
-                  <Button 
-                    variant={orderType === "limit" ? "default" : "outline"}
-                    className="flex-1"
-                    onClick={() => setOrderType("limit")}
-                  >
-                    Limit
-                  </Button>
-                </div>
-              </div>
-
-              {orderType === "limit" && (
-                <div className="space-y-2">
-                  <label className="text-sm">Limit Price</label>
-                  <Input
-                    type="number"
-                    value={limitPrice}
-                    onChange={(e) => setLimitPrice(e.target.value)}
-                    placeholder={currentPrice.toString()}
-                  />
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-4 p-3 border rounded-md mb-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">Potential Profit (Long)</p>
-                  <p className="text-sm text-green-500">
-                    {formatCurrency(calculatePotentialProfit("buy"))}
-                    <span className="text-xs ml-1">
-                      (+5%)
-                    </span>
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Potential Profit (Short)</p>
-                  <p className="text-sm text-red-500">
-                    {formatCurrency(calculatePotentialProfit("sell"))}
-                    <span className="text-xs ml-1">
-                      (-5%)
-                    </span>
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-xs flex items-center justify-center gap-1 mb-3"
-                  onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-                >
-                  <Settings className="h-3 w-3" />
-                  {showAdvancedOptions ? "Hide Advanced Options" : "Show Advanced Options"}
-                </Button>
-                
-                {showAdvancedOptions && (
-                  <div className="space-y-3 mb-3 p-3 border rounded-md">
-                    <div className="space-y-2">
-                      <label className="text-sm">Take Profit Price</label>
-                      <Input
-                        type="number"
-                        value={takeProfitPrice}
-                        onChange={(e) => setTakeProfitPrice(e.target.value)}
-                        placeholder={`Suggested: ${(currentPrice * 1.05).toFixed(2)}`}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label className="text-sm">Stop Loss Price</label>
-                      <Input
-                        type="number"
-                        value={stopLossPrice}
-                        onChange={(e) => setStopLossPrice(e.target.value)}
-                        placeholder={`Suggested: ${(currentPrice * 0.95).toFixed(2)}`}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label className="text-sm">ABATEV Smart Routing</label>
-                      <div className="flex items-center justify-between border p-2 rounded-md bg-muted/30">
-                        <div className="flex items-center gap-2">
-                          <Shield className="h-4 w-4 text-primary" />
-                          <div className="text-xs">
-                            {useABATEV ? "Automatic best broker selection" : "Manual broker selection"}
-                          </div>
-                        </div>
-                        <Switch
-                          checked={useABATEV}
-                          onCheckedChange={toggleABATEV}
-                        />
-                      </div>
-                    </div>
-                    
-                    {!useABATEV && (
-                      <div className="grid grid-cols-2 gap-2">
-                        {activeBrokers.map(broker => (
-                          <Button
-                            key={broker}
-                            size="sm"
-                            variant={selectedBroker === broker ? "default" : "outline"}
-                            className="text-xs h-8"
-                            onClick={() => selectBroker(broker)}
-                          >
-                            {selectedBroker === broker && <Check className="h-3 w-3 mr-1" />}
-                            {broker.charAt(0).toUpperCase() + broker.slice(1)}
-                          </Button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              
-                <div className="flex gap-2">
-                  <Button 
-                    className="flex-1 h-14" 
-                    onClick={() => handleTrade("buy")}
-                  >
-                    <TrendingUp className="mr-2 h-5 w-5" />
-                    Long {leverage}x
-                  </Button>
-                  <Button 
-                    className="flex-1 h-14" 
-                    variant="destructive"
-                    onClick={() => handleTrade("sell")}
-                  >
-                    <TrendingDown className="mr-2 h-5 w-5" />
-                    Short {leverage}x
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="ai">
-            <AIMarketAnalysis />
-          </TabsContent>
-
-          <TabsContent value="bots">
-            <BotCreator />
-          </TabsContent>
-
-          <TabsContent value="history"> 
-            <OrderHistoryView orders={orderHistory} /> 
-          </TabsContent>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Trading Interface</CardTitle>
+          <CardDescription>
+            Place trades and monitor your portfolio
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           
-          <TabsContent value="brokers">
-            <BrokerConfig />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+          {success && (
+            <Alert className="mb-4">
+              <AlertTitle>Success</AlertTitle>
+              <AlertDescription>{success}</AlertDescription>
+            </Alert>
+          )}
+          
+          <Tabs defaultValue="trade" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="trade">Trade</TabsTrigger>
+              <TabsTrigger value="positions">Positions</TabsTrigger>
+              <TabsTrigger value="history">Order History</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="trade">
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="symbol">Symbol</Label>
+                  <Select 
+                    defaultValue={selectedSymbol}
+                    onValueChange={setSelectedSymbol}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a stock" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {popularStocks.map(stock => (
+                        <SelectItem key={stock.symbol} value={stock.symbol}>
+                          {stock.symbol} - {stock.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="h-[200px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={getChartData()}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="time" />
+                      <YAxis domain={['auto', 'auto']} />
+                      <Tooltip />
+                      <Line 
+                        type="monotone" 
+                        dataKey="price" 
+                        stroke="#8884d8" 
+                        activeDot={{ r: 8 }} 
+                        isAnimationActive={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="quantity">Quantity</Label>
+                    <Input 
+                      id="quantity"
+                      type="number"
+                      value={quantity}
+                      onChange={(e) => setQuantity(Number(e.target.value))}
+                      min={1}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="orderType">Order Type</Label>
+                    <Select 
+                      defaultValue={orderType}
+                      onValueChange={(value) => setOrderType(value as 'market' | 'limit')}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select order type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="market">Market</SelectItem>
+                        <SelectItem value="limit">Limit</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                {orderType === 'limit' && (
+                  <div>
+                    <Label htmlFor="limitPrice">Limit Price</Label>
+                    <Input 
+                      id="limitPrice"
+                      type="number"
+                      value={limitPrice}
+                      onChange={(e) => setLimitPrice(Number(e.target.value))}
+                      min={0.01}
+                      step={0.01}
+                    />
+                  </div>
+                )}
+                
+                <div className="flex justify-between space-x-4 mt-6">
+                  <Button 
+                    onClick={() => placeOrder('buy')} 
+                    disabled={isLoading || !isConnected}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                  >
+                    Buy
+                  </Button>
+                  <Button 
+                    onClick={() => placeOrder('sell')} 
+                    disabled={isLoading || !isConnected}
+                    className="w-full bg-red-600 hover:bg-red-700"
+                  >
+                    Sell
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="positions">
+              <div>
+                {accountBalance && (
+                  <div className="mb-4 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <div className="text-sm text-muted-foreground">Total</div>
+                        <div className="text-xl font-bold">${accountBalance.total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-muted-foreground">Cash</div>
+                        <div className="text-xl font-bold">${accountBalance.cash.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-muted-foreground">Positions</div>
+                        <div className="text-xl font-bold">${accountBalance.positions.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <Table>
+                  <TableCaption>Your current positions</TableCaption>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Symbol</TableHead>
+                      <TableHead>Quantity</TableHead>
+                      <TableHead>Avg. Price</TableHead>
+                      <TableHead>Current Price</TableHead>
+                      <TableHead>P&L</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {positions.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center">No positions found</TableCell>
+                      </TableRow>
+                    ) : (
+                      positions.map((position) => (
+                        <TableRow key={position.symbol}>
+                          <TableCell className="font-medium">{position.symbol}</TableCell>
+                          <TableCell>{position.quantity}</TableCell>
+                          <TableCell>${position.averagePrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+                          <TableCell>${position.currentPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+                          <TableCell className={position.pnl >= 0 ? 'text-green-600' : 'text-red-600'}>
+                            ${position.pnl.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="history">
+              <Table>
+                <TableCaption>Your order history</TableCaption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Symbol</TableHead>
+                    <TableHead>Side</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orderHistory.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center">No orders found</TableCell>
+                    </TableRow>
+                  ) : (
+                    orderHistory.map((order) => (
+                      <TableRow key={order.orderId}>
+                        <TableCell className="font-medium">{order.symbol}</TableCell>
+                        <TableCell className={order.side === 'buy' ? 'text-green-600' : 'text-red-600'}>
+                          {order.side.toUpperCase()}
+                        </TableCell>
+                        <TableCell>{order.quantity}</TableCell>
+                        <TableCell>${order.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+                        <TableCell>{order.status.toUpperCase()}</TableCell>
+                        <TableCell>{new Date(order.timestamp).toLocaleString()}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <div>
+            {currentPrice && `Current Price (${selectedSymbol}): $${currentPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
+          </div>
+          <div>
+            <Button 
+              variant="outline" 
+              onClick={() => brokerService && fetchAccountData(brokerService)}
+              disabled={isLoading || !isConnected}
+            >
+              Refresh
+            </Button>
+          </div>
+        </CardFooter>
+      </Card>
+    </div>
   );
 }

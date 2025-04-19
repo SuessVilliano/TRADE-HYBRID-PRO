@@ -1,229 +1,265 @@
 import { useState, useEffect } from 'react';
-import { useBrokerAggregator } from '@/lib/stores/useBrokerAggregator';
-import { Card, CardContent, CardHeader, CardTitle } from './card';
-import { Badge } from './badge';
-import { Switch } from './switch';
-import { ChevronDown, ChevronUp, RefreshCw, Shield, Star } from 'lucide-react';
-import { ScrollArea } from './scroll-area';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './accordion';
-import { Button } from './button';
+import { useForm } from 'react-hook-form';
+import { config } from '@/lib/config';
+import { BrokerFactory } from '@/lib/services/broker-factory';
+import { BrokerService } from '@/lib/services/broker-service';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Form } from '@/components/ui/form';
+
+// Form interface
+interface BrokerFormValues {
+  alpacaApiKey: string;
+  alpacaApiSecret: string;
+  usePaperTrading: boolean;
+}
+
+type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 export function BrokerConfig() {
-  const { activeBrokers, aggregator, useABATEV, toggleABATEV, initializeAggregator } = useBrokerAggregator();
-  const [brokerStates, setBrokerStates] = useState<Record<string, boolean>>({});
-  const [expanded, setExpanded] = useState(false);
+  const [useMockService, setUseMockService] = useState<boolean>(config.USE_MOCK_SERVICE === 'true');
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [brokerService, setBrokerService] = useState<BrokerService | null>(null);
+  const [accountBalance, setAccountBalance] = useState<{total: number, cash: number, positions: number} | null>(null);
 
-  // Initialize broker states from active brokers
+  // Initialize form with default values
+  const form = useForm<BrokerFormValues>({
+    defaultValues: {
+      alpacaApiKey: config.ALPACA_API_KEY || '',
+      alpacaApiSecret: config.ALPACA_API_SECRET || '',
+      usePaperTrading: true,
+    },
+  });
+
+  // Handle form submission
+  const onSubmit = async (values: BrokerFormValues) => {
+    try {
+      setConnectionStatus('connecting');
+      setErrorMessage(null);
+      
+      // Create broker service based on form values
+      const service = BrokerFactory.createBrokerService('alpaca');
+      setBrokerService(service);
+      
+      // Connect to the service
+      await service.connect();
+      
+      // Get account balance
+      const balance = await service.getBalance();
+      setAccountBalance(balance);
+      
+      setConnectionStatus('connected');
+    } catch (error) {
+      console.error('Connection error:', error);
+      setConnectionStatus('error');
+      setErrorMessage(error instanceof Error ? error.message : 'Unknown error occurred');
+    }
+  };
+
+  // Toggle between mock and real service
+  const toggleMockService = () => {
+    const newValue = !useMockService;
+    setUseMockService(newValue);
+    
+    // Reset connection status
+    setConnectionStatus('disconnected');
+    setBrokerService(null);
+    setAccountBalance(null);
+    
+    // Save to localStorage for persistence
+    localStorage.setItem('useMockService', newValue.toString());
+  };
+
+  // Connect using mock service
+  const connectMockService = async () => {
+    try {
+      setConnectionStatus('connecting');
+      setErrorMessage(null);
+      
+      // Create mock broker service
+      const service = BrokerFactory.createBrokerService('mock');
+      setBrokerService(service);
+      
+      // Connect to the service
+      await service.connect();
+      
+      // Get account balance
+      const balance = await service.getBalance();
+      setAccountBalance(balance);
+      
+      setConnectionStatus('connected');
+    } catch (error) {
+      console.error('Mock service connection error:', error);
+      setConnectionStatus('error');
+      setErrorMessage(error instanceof Error ? error.message : 'Unknown error occurred');
+    }
+  };
+
+  // Auto-connect on component mount if using mock service
   useEffect(() => {
-    const states: Record<string, boolean> = {};
-    
-    // List all possible brokers
-    const allBrokers = [
-      'tradelocker', // Add TradeLocker as first option - it's our unified trading API
-      'ironbeam', 
-      'alpaca', 
-      'oanda', 
-      'tradestation', 
-      'ibkr', 
-      'bitfinex', 
-      'etrade'
-    ];
-    
-    // Set initial states based on active brokers
-    allBrokers.forEach(broker => {
-      states[broker] = activeBrokers.includes(broker);
-    });
-    
-    setBrokerStates(states);
-  }, [activeBrokers]);
-
-  // Function to toggle a broker's active state
-  const toggleBroker = (brokerId: string) => {
-    setBrokerStates(prev => ({
-      ...prev,
-      [brokerId]: !prev[brokerId]
-    }));
-    
-    // Update would be sent to broker aggregator in a full implementation
-    console.log(`Toggled broker: ${brokerId}`);
-  };
-
-  // Get broker details
-  const getBrokerDetails = (brokerId: string) => {
-    const details = {
-      tradelocker: {
-        name: 'TradeLocker',
-        description: 'Unified trading gateway with multi-broker access',
-        features: ['Multi-Broker API', 'Universal Access', 'Copy Trading', 'Best Execution'],
-        fee: 'Variable',
-        reliability: '99.95%'
-      },
-      ironbeam: {
-        name: 'IronBeam',
-        description: 'Specialized in commodities and futures',
-        features: ['Metals', 'Energy', 'Grains', 'Futures', 'Options'],
-        fee: '0.10%',
-        reliability: '99.9%'
-      },
-      alpaca: {
-        name: 'Alpaca',
-        description: 'Commission-free stock trading',
-        features: ['US Equities', 'Commission-free', 'Fractional shares', 'API-first'],
-        fee: '0.08%',
-        reliability: '99.5%'
-      },
-      oanda: {
-        name: 'OANDA',
-        description: 'Specialized in forex trading',
-        features: ['Forex', 'CFDs', 'Metals', 'Indices'],
-        fee: '0.15%',
-        reliability: '99.8%'
-      },
-      tradestation: {
-        name: 'TradeStation',
-        description: 'Advanced trading platform for active traders',
-        features: ['US Equities', 'Options', 'Futures', 'Crypto'],
-        fee: '0.15%',
-        reliability: '99.7%'
-      },
-      ibkr: {
-        name: 'Interactive Brokers',
-        description: 'Global trading across multiple asset classes',
-        features: ['Global markets', 'Equities', 'Options', 'Futures', 'Forex', 'Bonds'],
-        fee: '0.15%',
-        reliability: '99.9%'
-      },
-      bitfinex: {
-        name: 'Bitfinex',
-        description: 'Advanced cryptocurrency exchange',
-        features: ['Cryptocurrencies', 'Margin trading', 'Lending', 'Staking'],
-        fee: '0.20%',
-        reliability: '99.6%'
-      },
-      etrade: {
-        name: 'E*TRADE',
-        description: 'Popular retail brokerage for stocks and options',
-        features: ['US Equities', 'Options', 'Futures', 'Mutual Funds', 'Bonds'],
-        fee: '0.05%',
-        reliability: '99.8%'
-      }
-    };
-    
-    return details[brokerId as keyof typeof details] || {
-      name: brokerId.charAt(0).toUpperCase() + brokerId.slice(1),
-      description: 'Trading broker',
-      features: ['Trading'],
-      fee: 'Variable',
-      reliability: 'Unknown'
-    };
-  };
+    if (useMockService) {
+      connectMockService();
+    }
+  }, [useMockService]);
 
   return (
-    <Card className="w-full h-full">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Badge variant={useABATEV ? "default" : "outline"} className="inline-flex px-1">ABATEV</Badge>
-            <span>Broker Configuration</span>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-6 w-6" 
-            onClick={() => setExpanded(!expanded)}
-          >
-            {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </Button>
-        </CardTitle>
-      </CardHeader>
-      
-      {expanded && (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Broker Connection</CardTitle>
+          <CardDescription>
+            Configure your broker connection to trade with real or simulated data
+          </CardDescription>
+        </CardHeader>
         <CardContent>
-          <div className="mb-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">ABATEV Smart Routing</span>
-            </div>
-            <Switch 
-              checked={useABATEV} 
-              onCheckedChange={toggleABATEV}
+          <div className="flex items-center space-x-2 mb-6">
+            <Switch
+              id="mock-switch"
+              checked={useMockService}
+              onCheckedChange={toggleMockService}
             />
+            <Label htmlFor="mock-switch">
+              Use Mock Service {useMockService ? 
+                <Badge variant="outline" className="ml-2">Enabled</Badge> : 
+                <Badge variant="outline" className="ml-2">Disabled</Badge>
+              }
+            </Label>
           </div>
           
-          <div className="text-xs text-muted-foreground mb-3">
-            {useABATEV ? 
-              "ABATEV optimizes trade execution by automatically selecting the broker with the best price, latency, and fees." :
-              "Manual broker selection is enabled. Toggle brokers below to adjust which ones will be used for trading."
-            }
-          </div>
+          {connectionStatus === 'error' && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>Connection Error</AlertTitle>
+              <AlertDescription>{errorMessage || 'Could not connect to broker service'}</AlertDescription>
+            </Alert>
+          )}
           
-          <div className="border rounded-md mb-2">
-            <ScrollArea className={useABATEV ? "h-[100px]" : "h-[250px]"}>
-              <Accordion type="multiple" defaultValue={['bitfinex', 'etrade']} className="w-full">
-                {Object.keys(brokerStates).map(brokerId => {
-                  const details = getBrokerDetails(brokerId);
-                  const isNew = brokerId === 'tradelocker' || brokerId === 'bitfinex' || brokerId === 'etrade';
-                  
-                  return (
-                    <AccordionItem key={brokerId} value={brokerId} className="border-b">
-                      <div className="flex items-center justify-between px-4 py-2">
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            checked={brokerStates[brokerId]}
-                            onCheckedChange={() => toggleBroker(brokerId)}
-                            disabled={useABATEV}
-                          />
-                          <span className="font-medium">{details.name}</span>
-                          {isNew && (
-                            <Badge variant="default" className="bg-blue-500 text-[10px] h-4">
-                              NEW
-                            </Badge>
-                          )}
-                          {brokerId === 'tradelocker' && (
-                            <Badge variant="default" className="bg-green-500 text-[10px] h-4 ml-1">
-                              COPY TRADE
-                            </Badge>
-                          )}
-                        </div>
-                        <AccordionTrigger className="p-0 hover:no-underline">
-                          <span className="sr-only">Toggle details</span>
-                        </AccordionTrigger>
+          {connectionStatus === 'connected' && (
+            <Alert className="mb-4">
+              <AlertTitle>Connected {useMockService && '(Mock)'}</AlertTitle>
+              <AlertDescription>
+                Successfully connected to {useMockService ? 'mock' : 'real'} broker service.
+                {accountBalance && (
+                  <div className="mt-2">
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <div className="font-semibold">Total</div>
+                        <div className="text-lg">${accountBalance.total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                       </div>
-                      
-                      <AccordionContent className="pb-2 pl-10 pr-4">
-                        <div className="text-xs text-muted-foreground">{details.description}</div>
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {details.features.map(feature => (
-                            <Badge key={feature} variant="outline" className="text-[10px]">
-                              {feature}
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="mt-2 text-xs grid grid-cols-2 gap-x-2">
-                          <div>Fee: <span className="font-medium">{details.fee}</span></div>
-                          <div>Uptime: <span className="font-medium">{details.reliability}</span></div>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  );
-                })}
-              </Accordion>
-            </ScrollArea>
-          </div>
+                      <div>
+                        <div className="font-semibold">Cash</div>
+                        <div className="text-lg">${accountBalance.cash.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                      </div>
+                      <div>
+                        <div className="font-semibold">Positions</div>
+                        <div className="text-lg">${accountBalance.positions.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
           
-          <div className="flex justify-end">
+          {!useMockService && (
+            <Tabs defaultValue="alpaca" className="w-full">
+              <TabsList className="grid w-full grid-cols-1">
+                <TabsTrigger value="alpaca">Alpaca Trading API</TabsTrigger>
+              </TabsList>
+              <TabsContent value="alpaca">
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="alpacaApiKey"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>API Key</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Your Alpaca API Key" />
+                          </FormControl>
+                          <FormDescription>
+                            Alpaca Trading API Key (starts with PK)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="alpacaApiSecret"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>API Secret</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="password" placeholder="Your Alpaca API Secret" />
+                          </FormControl>
+                          <FormDescription>
+                            Keep your API secret secure
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="usePaperTrading"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                          <div className="space-y-0.5">
+                            <FormLabel>Paper Trading</FormLabel>
+                            <FormDescription>
+                              Use paper trading (simulation) rather than live trading
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <Button 
+                      type="submit" 
+                      disabled={connectionStatus === 'connecting'}
+                      className="w-full"
+                    >
+                      {connectionStatus === 'connecting' ? 'Connecting...' : 'Connect'}
+                    </Button>
+                  </form>
+                </Form>
+              </TabsContent>
+            </Tabs>
+          )}
+          
+          {useMockService && connectionStatus !== 'connected' && (
             <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-xs h-8 gap-1"
-              onClick={() => initializeAggregator()}
+              onClick={connectMockService} 
+              disabled={connectionStatus === 'connecting'}
+              className="w-full"
             >
-              <RefreshCw className="h-3 w-3" />
-              <span>Refresh Connections</span>
+              {connectionStatus === 'connecting' ? 'Connecting...' : 'Connect to Mock Service'}
             </Button>
-          </div>
+          )}
+          
         </CardContent>
-      )}
-    </Card>
+        <CardFooter className="flex justify-between text-sm text-gray-500">
+          <div>Status: {
+            connectionStatus === 'connected' ? 'Connected' : 
+            connectionStatus === 'connecting' ? 'Connecting...' : 
+            connectionStatus === 'error' ? 'Error' : 'Disconnected'
+          }</div>
+          <div>{useMockService ? 'Using simulated data' : 'Using real API connection'}</div>
+        </CardFooter>
+      </Card>
+    </div>
   );
 }

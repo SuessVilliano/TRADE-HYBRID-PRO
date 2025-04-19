@@ -1,148 +1,115 @@
-import { config } from '@/lib/config';
-
-interface AlpacaBrokerAccount {
-  id: string;
-  account_number: string; 
-  status: string;
-  currency: string;
-  buying_power: string;
-  cash: string;
-  portfolio_value: string;
-}
+import axios from 'axios';
+import { BrokerService, AccountBalance, BrokerPosition, OrderHistory, MarketData } from './broker-service';
 
 /**
- * Service for interacting with Alpaca Broker API from the client
+ * Alpaca Broker API Service
+ * This provides the full broker functionality through Alpaca's Broker API
  */
-export class AlpacaBrokerService {
+export class AlpacaBrokerService implements Partial<BrokerService> {
   private apiKey: string;
   private apiSecret: string;
   private baseUrl: string;
-  private authenticated: boolean = false;
-
-  constructor() {
-    this.apiKey = config.ALPACA_BROKER_API_KEY;
-    this.apiSecret = config.ALPACA_BROKER_API_SECRET;
-    this.baseUrl = config.ALPACA_BROKER_API_URL;
+  private isConnected: boolean = false;
+  
+  constructor(apiKey: string, apiSecret: string, isSandbox: boolean = true) {
+    this.apiKey = apiKey;
+    this.apiSecret = apiSecret;
     
-    if (this.apiKey) {
-      console.log(`Client using Alpaca Broker API Key: ${this.apiKey.substring(0, 4)}...`);
-    }
+    // Base URL depends on whether we're using sandbox
+    this.baseUrl = isSandbox 
+      ? 'https://broker-api.sandbox.alpaca.markets/v1' 
+      : 'https://broker-api.alpaca.markets/v1';
+      
+    console.log('AlpacaBrokerService initialized');
   }
-
-  /**
-   * Initialize the connection
-   */
+  
   async connect(): Promise<void> {
-    if (!this.apiKey || !this.apiSecret) {
-      throw new Error('Alpaca Broker API credentials not available');
-    }
-    
     try {
-      // Make a test API call to verify credentials
-      await this.request('/v1/accounts');
-      this.authenticated = true;
+      // Test connection by getting account info
+      await this.getBrokerDetails();
+      
+      this.isConnected = true;
       console.log('Successfully connected to Alpaca Broker API');
+      
+      return Promise.resolve();
     } catch (error) {
       console.error('Failed to connect to Alpaca Broker API:', error);
+      this.isConnected = false;
+      throw new Error('Could not connect to Alpaca Broker API');
+    }
+  }
+  
+  // Additional broker-specific functionality
+  async getBrokerDetails(): Promise<any> {
+    try {
+      const response = await axios.get(`${this.baseUrl}/broker`, {
+        headers: this.getHeaders()
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting broker details:', error);
       throw error;
     }
   }
-
-  /**
-   * Get all trading accounts
-   */
-  async getAccounts(): Promise<AlpacaBrokerAccount[]> {
-    if (!this.authenticated) {
-      await this.connect();
+  
+  async getAccounts(params: { query?: string, sort?: string } = {}): Promise<any[]> {
+    try {
+      const response = await axios.get(`${this.baseUrl}/accounts`, {
+        headers: this.getHeaders(),
+        params
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting accounts:', error);
+      throw error;
     }
-    
-    return this.request('/v1/accounts');
   }
-
-  /**
-   * Get a specific account
-   */
-  async getAccount(accountId: string): Promise<AlpacaBrokerAccount> {
-    if (!this.authenticated) {
-      await this.connect();
+  
+  async createAccount(accountData: any): Promise<any> {
+    try {
+      const response = await axios.post(`${this.baseUrl}/accounts`, accountData, {
+        headers: this.getHeaders()
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error creating account:', error);
+      throw error;
     }
-    
-    return this.request(`/v1/accounts/${accountId}`);
   }
-
-  /**
-   * Get positions for an account
-   */
-  async getPositions(accountId: string): Promise<any[]> {
-    if (!this.authenticated) {
-      await this.connect();
-    }
-    
-    return this.request(`/v1/trading/accounts/${accountId}/positions`);
-  }
-
-  /**
-   * Get order history for an account
-   */
-  async getOrderHistory(accountId: string): Promise<any[]> {
-    if (!this.authenticated) {
-      await this.connect();
-    }
-    
-    return this.request(`/v1/trading/accounts/${accountId}/orders`);
-  }
-
-  /**
-   * Place an order for an account
-   */
-  async placeOrder(accountId: string, orderData: any): Promise<any> {
-    if (!this.authenticated) {
-      await this.connect();
-    }
-    
-    return this.request(`/v1/trading/accounts/${accountId}/orders`, 'POST', orderData);
-  }
-
-  /**
-   * Get account activities
-   */
-  async getActivities(accountId: string, activityType: string = 'FILL'): Promise<any[]> {
-    if (!this.authenticated) {
-      await this.connect();
-    }
-    
-    return this.request(`/v1/accounts/${accountId}/activities?activity_type=${activityType}`);
-  }
-
-  /**
-   * Generic request method
-   */
-  private async request(endpoint: string, method: string = 'GET', data?: any): Promise<any> {
-    const url = `${this.baseUrl}${endpoint}`;
-    const headers = {
+  
+  // Private helpers
+  private getHeaders() {
+    return {
       'APCA-API-KEY-ID': this.apiKey,
       'APCA-API-SECRET-KEY': this.apiSecret,
       'Content-Type': 'application/json'
     };
-    
-    const options: RequestInit = {
-      method,
-      headers,
-      body: data ? JSON.stringify(data) : undefined
-    };
-    
-    try {
-      const response = await fetch(url, options);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Alpaca Broker API error: ${response.status} - ${errorText}`);
-      }
-      
-      return response.json();
-    } catch (error) {
-      console.error(`Error in Alpaca Broker API request to ${endpoint}:`, error);
-      throw error;
-    }
+  }
+  
+  // BrokerService interface stubs - not fully implemented
+  // These methods would need to be completed for full compatibility
+  
+  async getBalance(): Promise<AccountBalance> {
+    throw new Error('Method not implemented. Use a proper trading API for this function.');
+  }
+  
+  async getPositions(): Promise<BrokerPosition[]> {
+    throw new Error('Method not implemented. Use a proper trading API for this function.');
+  }
+  
+  async placeOrder(): Promise<string> {
+    throw new Error('Method not implemented. Use a proper trading API for this function.');
+  }
+  
+  async getOrderHistory(): Promise<OrderHistory[]> {
+    throw new Error('Method not implemented. Use a proper trading API for this function.');
+  }
+  
+  subscribeToMarketData(): void {
+    throw new Error('Method not implemented. Use a proper trading API for this function.');
+  }
+  
+  unsubscribeFromMarketData(): void {
+    throw new Error('Method not implemented. Use a proper trading API for this function.');
   }
 }
