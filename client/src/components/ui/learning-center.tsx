@@ -19,7 +19,7 @@ const courses: CourseItem[] = [
   {
     id: 'futures-course',
     title: 'Futures Trading Fundamentals',
-    description: 'Learn the fundamentals of futures trading, contract specifications, and risk management strategies',
+    description: 'Learn the fundamentals of futures trading, contract specifications, and risk management strategies. Master futures markets with this comprehensive Coursebox course.',
     url: 'https://my.coursebox.ai/courses/106395/activities/1379853/course_view/',
     type: 'course',
     provider: 'Coursebox',
@@ -47,7 +47,9 @@ const courses: CourseItem[] = [
 
 export function LearningCenter() {
   const [activeTab, setActiveTab] = useState('all');
-  const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
+  // Find the futures course by ID and set it as the default selected course
+  const defaultCourse = courses.find(course => course.id === 'futures-course');
+  const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(defaultCourse || null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
