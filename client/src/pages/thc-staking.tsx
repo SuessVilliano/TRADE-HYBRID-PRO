@@ -64,7 +64,7 @@ export default function StakeAndBake() {
   const [validatorIdentity, setValidatorIdentity] = useState("2wbzum5jnZscYNqBwTUPmk7X6RngRnJajY8KMpocJTNQ");
   const [voteAccount, setVoteAccount] = useState("7BTUDc1EaAgWjQvm4BipvrXJsbmxRxRRrShcQzCPcRJ2");
   const [validatorStats, setValidatorStats] = useState({
-    commission: "100%",
+    commission: "0.5%",
     activatedStake: "0.0",
     totalStakers: 0,
     epochVoteCredits: 0,
@@ -253,7 +253,7 @@ export default function StakeAndBake() {
       setTimeout(() => {
         // Simulate getting updated data
         setValidatorStats({
-          commission: "100%",
+          commission: "0.5%",
           activatedStake: "124.5",
           totalStakers: 12,
           epochVoteCredits: 1405,

@@ -60,15 +60,21 @@ export class SheetsService {
 export const SIGNAL_SOURCES: SignalSource[] = [
   {
     name: 'solaris',
-    sheetId: process.env.SOLARIS_SHEET_ID || '',
+    sheetId: '1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8',
     range: 'Signals!A2:H',
     defaultBroker: 'oanda'
   },
   {
     name: 'paradox',
-    sheetId: process.env.PARADOX_SHEET_ID || '',
+    sheetId: '1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8',
     range: 'Signals!A2:H',
     defaultBroker: 'alpaca'
+  },
+  {
+    name: 'hybrid',
+    sheetId: '1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8',
+    range: 'Signals!A2:H',
+    defaultBroker: 'ninjatrader'
   }
 ];
 

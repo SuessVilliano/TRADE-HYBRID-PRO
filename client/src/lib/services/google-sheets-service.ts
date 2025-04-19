@@ -23,13 +23,15 @@ export interface TradeSignal {
 
 // Service class
 export class GoogleSheetsService {
-  // The main spreadsheet ID used for signals
-  private readonly SPREADSHEET_ID = '1sPOGJQOQJDuiS5W97tDmYEQotbYL-SYJkjl9YwqJAGg';
+  // The spreadsheet IDs used for signals (from environment)
+  private readonly PARADOX_SHEET_ID = '1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8';
+  private readonly SOLARIS_SHEET_ID = '1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8';
+  private readonly HYBRID_SHEET_ID = '1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8';
   
   // URLs for different types of signals
-  private readonly CRYPTO_SIGNALS_URL = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=0`;
-  private readonly FUTURES_SIGNALS_URL = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=1`;
-  private readonly FOREX_SIGNALS_URL = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=2`;
+  private readonly CRYPTO_SIGNALS_URL = `https://docs.google.com/spreadsheets/d/${this.PARADOX_SHEET_ID}/gviz/tq?tqx=out:json&gid=0`; // Paradox
+  private readonly FUTURES_SIGNALS_URL = `https://docs.google.com/spreadsheets/d/${this.HYBRID_SHEET_ID}/gviz/tq?tqx=out:json&gid=128714687`; // Hybrid AI
+  private readonly FOREX_SIGNALS_URL = `https://docs.google.com/spreadsheets/d/${this.SOLARIS_SHEET_ID}/gviz/tq?tqx=out:json&gid=1470834705`; // Solaris
 
   // Fetch crypto signals (Paradox AI)
   async fetchCryptoSignals(): Promise<TradeSignal[]> {

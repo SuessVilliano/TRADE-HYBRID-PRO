@@ -8,36 +8,24 @@ import { google } from 'googleapis';
 
 const router = Router();
 
-// Helper function to set up Google Sheets API
-const getGoogleSheetsAuth = async () => {
+// Helper function to set up Google Sheets API using API Key
+async function setupGoogleSheetsWithAPIKey() {
   try {
-    // Check if credentials file exists
-    const credentialsPath = path.join(__dirname, '../uploads/google_api_credentials.json');
+    // Create a new JWT client using the environment variable API key
+    const apiKey = process.env.GOOGLE_API_KEY || 'AIzaSyCDN90ALGhGtRSfw3kGRMrbGGkyLRDhVKI';
     
-    if (!fs.existsSync(credentialsPath)) {
-      throw new Error('Google API credentials file not found');
-    }
+    // Initialize the Google Sheets API with API key
+    const sheets = google.sheets({
+      version: 'v4',
+      auth: apiKey
+    });
     
-    // Read and parse credentials
-    const credentials = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
-    
-    // Create JWT client
-    const auth = new google.auth.JWT(
-      credentials.client_email,
-      undefined,
-      credentials.private_key,
-      ['https://www.googleapis.com/auth/spreadsheets']
-    );
-    
-    // Create sheets client
-    const sheets = google.sheets({ version: 'v4', auth });
-    
-    return { auth, sheets };
+    return { sheets };
   } catch (error) {
-    console.error('Error setting up Google Sheets API:', error);
+    console.error('Error authenticating with Google Sheets API using API key:', error);
     throw error;
   }
-};
+}
 
 // Route to upload Google API credentials (simplified version without multer)
 router.post('/upload-credentials', (req, res) => {
@@ -162,7 +150,7 @@ router.post('/update-sheet', async (req, res) => {
     }
     
     // Get Google Sheets API client
-    const { sheets } = await getGoogleSheetsAuth();
+    const { sheets } = await setupGoogleSheetsWithAPIKey();
     
     // First, get the current sheet data to find the correct rows to update
     const response = await sheets.spreadsheets.values.get({

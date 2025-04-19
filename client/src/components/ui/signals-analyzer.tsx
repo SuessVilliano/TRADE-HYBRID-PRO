@@ -89,21 +89,34 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
   const fetchSignals = async () => {
     setIsLoading(true);
     try {
-      console.log("Fetching signals...");
+      console.log("Fetching signals from Google Sheets...");
       
       // Try to fetch signals from service first
       let allSignals = [];
       try {
+        // Log that we're using real Google credentials now
+        console.log("Using Google Sheet ID: 1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8");
+        
+        // Fetch signals from all three providers
         allSignals = await googleSheetsService.fetchAllSignals();
         console.log("Signals received:", allSignals.length, "signals");
+        
+        // If signals were found, log success
+        if (allSignals.length > 0) {
+          console.log("Successfully loaded real signals from Google Sheets!");
+        }
       } catch (serviceError) {
         console.error('Error fetching signals from service:', serviceError);
         allSignals = [];
       }
       
-      // If no signals were found or there was an error, use sample data
-      if (allSignals.length === 0) {
-        console.log("No signals found, providing pre-configured sample dataset");
+      // Only use demo data if explicitly set in URL parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const useDemo = urlParams.get('demo') === 'true';
+      
+      // If no signals were found or there was an error AND the demo flag is set, use sample data
+      if (allSignals.length === 0 && useDemo) {
+        console.log("No signals found and demo mode enabled, providing sample dataset");
         // Use real historical signal data for better analysis
         allSignals = [
           {

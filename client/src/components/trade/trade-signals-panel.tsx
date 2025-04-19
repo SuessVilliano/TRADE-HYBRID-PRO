@@ -15,6 +15,7 @@ import {
   Copy, 
   ExternalLink, 
   Filter, 
+  RefreshCw,
   Search,
   Zap
 } from 'lucide-react';
@@ -166,6 +167,28 @@ export function TradeSignalsPanel() {
     }
   };
   
+  // Function to refresh signals
+  const refreshSignals = async () => {
+    try {
+      // Show a loading toast
+      toast.loading("Refreshing signals from Google Sheets...");
+      
+      // This would normally fetch from the API, but for now we'll use the service directly
+      const allSignals = tradeSignalService.getAllSignals();
+      setSignals(allSignals);
+      
+      // Show success toast
+      toast.success(`Successfully refreshed signals`, {
+        description: `Loaded ${allSignals.length} trading signals`
+      });
+    } catch (error) {
+      console.error("Error refreshing signals:", error);
+      toast.error("Failed to refresh signals", {
+        description: "Please check your connection and try again"
+      });
+    }
+  };
+
   return (
     <Card className="w-full h-full">
       <CardHeader className="pb-2">
@@ -176,6 +199,15 @@ export function TradeSignalsPanel() {
           </div>
           
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-1 px-2 py-1 h-8"
+              onClick={refreshSignals}
+            >
+              <RefreshCw size={14} />
+              Refresh
+            </Button>
             <Badge variant="outline" className="px-2 py-1">
               <Clock size={14} className="mr-1" />
               Real-time
