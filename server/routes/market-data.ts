@@ -258,12 +258,32 @@ router.get('/quote', async (req: Request, res: Response) => {
         const response = await alpacaClient.getQuote(alpacaSymbol);
         
         if (response) {
+          // Handle different response formats (real API vs mock)
+          let price = null;
+          let bidPrice = null;
+          let askPrice = null;
+          
+          // Check for Alpaca API format
+          if (response.askprice !== undefined && response.bidprice !== undefined) {
+            price = (response.askprice + response.bidprice) / 2;
+            bidPrice = response.bidprice;
+            askPrice = response.askprice;
+          }
+          // Check for mock data format
+          else if (response.ap !== undefined && response.bp !== undefined) {
+            price = (parseFloat(response.ap) + parseFloat(response.bp)) / 2;
+            bidPrice = parseFloat(response.bp);
+            askPrice = parseFloat(response.ap);
+          }
+          
           quote = {
             symbol: alpacaSymbol,
-            price: (response.askprice + response.bidprice) / 2,
-            bid: response.bidprice,
-            ask: response.askprice,
-            timestamp: response.timestamp ? new Date(response.timestamp).toISOString() : new Date().toISOString()
+            price: price,
+            bid: bidPrice,
+            ask: askPrice,
+            timestamp: response.timestamp || response.t ? 
+              new Date(response.timestamp || response.t).toISOString() : 
+              new Date().toISOString()
           };
           provider = 'alpaca';
         }
