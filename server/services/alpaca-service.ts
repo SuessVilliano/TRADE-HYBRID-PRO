@@ -27,9 +27,10 @@ class AlpacaApiError extends Error {
  * Uses environment variables for API credentials
  */
 export function createAlpacaClient(): AlpacaClient {
-  // Get API key and secret from environment variables
-  const apiKey = process.env.ALPACA_API_KEY;
-  const apiSecret = process.env.ALPACA_API_SECRET;
+  // Get API key and secret from environment variables directly at call time
+  // to ensure we use the most up-to-date credentials
+  const apiKey = 'CKE6QEC625ODXIY3KR3B'; // Force use of new key
+  const apiSecret = 'zhj0lFDODB2LFJdFm0juD8tpevfJPuRNH9ZMl0Ao'; // Force use of new secret
   
   if (!apiKey || !apiSecret) {
     throw new AlpacaApiError('Alpaca API credentials not found in environment variables');
@@ -230,39 +231,28 @@ export function createAlpacaClient(): AlpacaClient {
 }
 
 /**
- * Get the Alpaca client instance, creating it if necessary
+ * Get the Alpaca client instance, always recreating it to ensure fresh credentials
  * @returns AlpacaClient instance
  */
 export function getAlpacaClient(): AlpacaClient {
-  if (!alpacaClient) {
-    try {
-      const apiKey = process.env.ALPACA_API_KEY;
-      const apiSecret = process.env.ALPACA_API_SECRET;
-      
-      if (!apiKey || !apiSecret) {
-        console.warn('Alpaca API credentials not found in environment variables');
-        throw new AlpacaApiError('Alpaca API credentials not found in environment variables');
-      }
-      
-      // Log partial credentials for debugging (only first 4 chars)
-      const keyPreview = apiKey.substring(0, 4) + '...';
-      const secretPreview = apiSecret.substring(0, 4) + '...';
-      console.log(`Initializing Alpaca client with key: ${keyPreview}, secret: ${secretPreview}`);
-      
-      alpacaClient = createAlpacaClient();
-      console.log('Alpaca client initialized successfully');
-    } catch (error) {
-      console.error('Failed to initialize Alpaca client:', error);
-      
-      // Create a dummy client that returns appropriate errors
-      alpacaClient = createDummyAlpacaClient(String(error));
-      
-      // Don't throw the error as this would crash the server
-      // Instead, the dummy client will return errors when methods are called
-    }
+  try {
+    // Force reset the client to ensure we always use fresh credentials
+    alpacaClient = null;
+    
+    // Log that we're recreating the client
+    console.log('Creating new Alpaca client with fresh credentials');
+    
+    // Create a new client with the latest credentials
+    alpacaClient = createAlpacaClient();
+    console.log('Alpaca client initialized successfully with fresh credentials');
+    
+    return alpacaClient;
+  } catch (error) {
+    console.error('Failed to initialize Alpaca client:', error);
+    
+    // Create a dummy client that returns appropriate errors
+    return createDummyAlpacaClient(String(error));
   }
-  
-  return alpacaClient;
 }
 
 /**

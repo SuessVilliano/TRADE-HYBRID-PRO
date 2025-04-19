@@ -127,6 +127,7 @@ import marketDataRoutes from './routes/market-data'; // Import for unified marke
 import brokerStatusRoutes from './routes/broker-status'; // Import for broker status routes
 import resetCredentialsRoutes from './routes/reset-credentials'; // Import for credential reset routes
 import alpacaTestRoutes from './routes/alpaca-test'; // Import for Alpaca API test routes
+import fixAlpacaRoutes from './routes/fix-alpaca'; // Import for Alpaca fixed credentials route
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Market data routes
@@ -399,6 +400,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Alpaca API test route
   app.use("/api/alpaca-test", alpacaTestRoutes);
+  
+  // Fixed Alpaca API route with hardcoded credentials
+  app.use("/api/fix-alpaca", fixAlpacaRoutes);
 
   // News route using multiple sources
   app.get("/api/rss-feeds/news", async (req, res) => {
