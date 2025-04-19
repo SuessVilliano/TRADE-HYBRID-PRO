@@ -3,9 +3,9 @@
 
 import axios from 'axios';
 
-// Direct API keys for testing - from what we've observed in the environment
-const ALPACA_API_KEY = 'CK9MIT1E1KNQ0MPTT3EF';
-const ALPACA_API_SECRET = 'A5ge9mB9eugJejr3gfHQvZPQukTbXk7g44qefWJ9';
+// Use environment variables for API keys
+const ALPACA_API_KEY = process.env.ALPACA_API_KEY;
+const ALPACA_API_SECRET = process.env.ALPACA_API_SECRET;
 
 console.log('----- Testing Alpaca API Connection (Direct Keys) -----');
 console.log(`Using API Key: ${ALPACA_API_KEY}`);
