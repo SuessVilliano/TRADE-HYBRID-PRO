@@ -9,6 +9,7 @@ import { Share2, Star, Bookmark, FileQuestion, ArrowUpRightFromCircle, LayoutGri
 import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { PopupContainer } from '../components/ui/popup-container';
 import { useMediaQuery } from '../lib/hooks/useMediaQuery';
+import { TradeJournal } from '../components/ui/trade-journal';
 
 export default function TradingDashboard() {
   const [selectedTab, setSelectedTab] = useState('trading');
@@ -126,17 +127,17 @@ export default function TradingDashboard() {
         )}
         
         {selectedTab === 'journal' && (
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader>
-              <CardTitle>Trade Journal</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Your trade journal will be integrated here.</p>
-              <Button className="mt-4" onClick={() => setSelectedTab('trading')}>
-                Return to Trading Dashboard
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
+            <div className="p-4 pb-0">
+              <h2 className="text-xl font-bold mb-2">Trade Journal</h2>
+              <p className="text-slate-400 text-sm mb-4">
+                Record and analyze your trading activity
+              </p>
+            </div>
+            <div className="h-[calc(100vh-280px)] overflow-auto">
+              <TradeJournal />
+            </div>
+          </div>
         )}
         
         {selectedTab === 'analysis' && (
