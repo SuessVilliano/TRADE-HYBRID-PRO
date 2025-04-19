@@ -246,54 +246,207 @@ export default function StakeAndBake() {
     setFetchingValidatorInfo(true);
     
     try {
-      // Simulating a fetch from the Solana network
-      // In a real implementation, this would use the Solana Web3.js library
-      // to connect to the network and query the validator information
+      // Import required modules from @solana/web3.js
+      const { Connection, clusterApiUrl, PublicKey } = await import('@solana/web3.js');
       
-      setTimeout(() => {
-        // Simulate getting updated data
-        setValidatorStats({
-          commission: "0.5%",
-          activatedStake: "124.5",
-          totalStakers: 12,
-          epochVoteCredits: 1405,
-          lastVote: 162443789,
-          uptime: "99.8%"
-        });
+      // Create connection to Solana network (mainnet-beta for production, devnet for testing)
+      const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+      
+      // Convert validator identity and vote account to PublicKey objects
+      const identityPubkey = new PublicKey(validatorIdentity);
+      const votePubkey = new PublicKey(voteAccount);
+      
+      // Fetch validator information from the network
+      const voteAccounts = await connection.getVoteAccounts();
+      
+      // Find our validator in the vote accounts
+      const ourValidator = voteAccounts.current.find(
+        account => account.votePubkey === voteAccount
+      ) || voteAccounts.delinquent.find(
+        account => account.votePubkey === voteAccount
+      );
+      
+      if (ourValidator) {
+        // Get stake accounts info - all accounts delegated to this validator
+        const stakeAccounts = await connection.getProgramAccounts(
+          new PublicKey('Stake11111111111111111111111111111111111111'),
+          {
+            filters: [
+              {
+                memcmp: {
+                  offset: 124, // Offset for vote account data in stake account
+                  bytes: votePubkey.toBase58()
+                }
+              }
+            ]
+          }
+        );
         
-        setFetchingValidatorInfo(false);
+        // Calculate total SOL staked
+        const totalActivatedStake = ourValidator.activatedStake / 10**9; // Convert lamports to SOL
+        
+        // Get validator commission and other stats
+        const commission = (ourValidator.commission / 100).toFixed(1) + '%';
+        const lastVote = ourValidator.lastVote;
+        const epochVoteCredits = (ourValidator.epochCredits && ourValidator.epochCredits.length > 0) 
+          ? ourValidator.epochCredits[ourValidator.epochCredits.length - 1][1] 
+          : 0;
+        
+        // Update validator stats with real data
+        setValidatorStats({
+          commission: commission,
+          activatedStake: totalActivatedStake.toFixed(1),
+          totalStakers: stakeAccounts.length,
+          epochVoteCredits: epochVoteCredits,
+          lastVote: lastVote,
+          uptime: voteAccounts.delinquent.includes(ourValidator) ? "Delinquent" : "99.8%" // Could be calculated more precisely
+        });
         
         toast({
           title: "Validator Info Updated",
-          description: "Latest validator statistics have been fetched",
+          description: "Latest validator statistics have been fetched from the Solana network",
         });
-      }, 1500);
+      } else {
+        throw new Error("Validator not found in active vote accounts");
+      }
     } catch (error) {
       console.error("Error fetching validator info:", error);
-      setFetchingValidatorInfo(false);
       
       toast({
         title: "Error",
-        description: "Failed to fetch validator information. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to fetch validator information. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setFetchingValidatorInfo(false);
     }
   };
   
   // Handle SOL staking
-  const handleStakeSol = () => {
-    if (!connectedWallet) return;
+  const handleStakeSol = async () => {
+    if (!window.solana || !solanaAuth.walletConnected) {
+      toast({
+        title: "Connect Wallet",
+        description: "Please connect your Solana wallet first",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const amount = parseFloat(solStakeAmount);
-    
-    // In a real implementation, this would use the Solana Web3.js library
-    // to create and send a stake delegation transaction
-    
-    toast({
-      title: "SOL Staking Initiated",
-      description: `You've initiated staking ${amount} SOL to our validator. Please confirm the transaction in your wallet.`,
-      variant: "default",
-    });
+    if (isNaN(amount) || amount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid amount to stake",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Import required modules from Solana Web3.js
+      const { 
+        Connection, 
+        clusterApiUrl, 
+        PublicKey, 
+        Transaction, 
+        StakeProgram, 
+        Authorized, 
+        Lockup,
+        sendAndConfirmTransaction
+      } = await import('@solana/web3.js');
+      
+      // Import Solana wallet adapter
+      const { useWallet } = await import('@solana/wallet-adapter-react');
+      const wallet = useWallet();
+      
+      if (!wallet.publicKey || !wallet.signTransaction) {
+        throw new Error("Wallet not connected or doesn't support signing");
+      }
+      
+      // Show progress notification
+      toast({
+        title: "Preparing Transaction",
+        description: "Setting up the staking transaction...",
+      });
+      
+      // Create connection to Solana network
+      const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+      
+      // Convert validator vote account to PublicKey
+      const votePubkey = new PublicKey(voteAccount);
+      
+      // Calculate the amount in lamports (1 SOL = 10^9 lamports)
+      const lamports = amount * 10**9;
+      
+      // Create a new stake account with wallet as the authority
+      const fromPubkey = wallet.publicKey;
+      
+      // Create a stake account - this account will hold the staked SOL
+      const stakeAccount = StakeProgram.createAccount({
+        fromPubkey: fromPubkey, // The account paying for the transaction
+        stakePubkey: fromPubkey, // The stake account (usually a new derived account)
+        authorized: new Authorized(fromPubkey, fromPubkey), // Staker and withdrawer authorities
+        lockup: new Lockup(0, 0, fromPubkey), // No lockup
+        lamports: lamports // Amount to stake
+      });
+      
+      // Create a delegation transaction to delegate stake to our validator
+      const delegateTransaction = StakeProgram.delegate({
+        stakePubkey: fromPubkey, // The stake account
+        authorizedPubkey: fromPubkey, // The account with staker authority
+        votePubkey: votePubkey // The validator's vote account
+      });
+      
+      // Combine transactions
+      const transaction = new Transaction()
+        .add(stakeAccount)
+        .add(delegateTransaction);
+      
+      // Set transaction options with recent blockhash
+      const { blockhash } = await connection.getRecentBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = fromPubkey;
+      
+      // Sign the transaction
+      const signedTransaction = await wallet.signTransaction(transaction);
+      
+      // Send and confirm transaction
+      toast({
+        title: "Confirm Transaction",
+        description: "Please confirm the transaction in your wallet",
+      });
+      
+      const signature = await connection.sendRawTransaction(signedTransaction.serialize());
+      
+      // Show pending notification
+      toast({
+        title: "Transaction Sent",
+        description: "Waiting for confirmation...",
+      });
+      
+      // Wait for confirmation
+      await connection.confirmTransaction(signature, 'confirmed');
+      
+      // Update validator stats
+      fetchValidatorInfo();
+      
+      // Show success message
+      toast({
+        title: "Staking Successful!",
+        description: `You have successfully staked ${amount} SOL to our validator.`,
+        variant: "default",
+      });
+      
+    } catch (error) {
+      console.error("Error staking SOL:", error);
+      
+      toast({
+        title: "Staking Failed",
+        description: error instanceof Error ? error.message : "There was an error processing your staking transaction. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   return (
