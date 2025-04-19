@@ -10,6 +10,7 @@ import {
   genericWebhookSchema
 } from '../../shared/models/webhook';
 import { generateId } from '../utils';
+import BrokerConnectorFactory from './broker-connector';
 
 // In a production app, this would interact with the database
 // For now, we'll use an in-memory store
@@ -508,25 +509,27 @@ function convertTradingViewToNinjaTrader(payload: any) {
 }
 
 // Trade execution functions
-async function executeAlpacaTrade(payload: any, config: Omit<WebhookConfig, 'broker'> & { broker: string }): Promise<WebhookResponse> {
+async function executeAlpacaTrade(payload: any, config: WebhookConfig): Promise<WebhookResponse> {
   try {
     console.log('Executing Alpaca trade:', JSON.stringify(payload));
     
-    // In a real implementation, this would call the Alpaca API
-    // For now, we'll simulate a successful trade
+    // Use the broker connector factory to execute the trade
+    const startTime = Date.now();
     
-    const orderId = `alpaca-${Date.now()}`;
+    // Execute the trade using the broker connector
+    const result = await BrokerConnectorFactory.executeTrade(
+      config.userId,
+      config,
+      payload
+    );
     
+    const endTime = Date.now();
+    const responseTime = endTime - startTime;
+    
+    // Add response time to the result
     return {
-      success: true,
-      message: 'Trade executed successfully via Alpaca',
-      orderId,
-      details: {
-        symbol: payload.symbol,
-        side: payload.action || payload.side,
-        quantity: payload.qty,
-        orderType: payload.type || 'market'
-      }
+      ...result,
+      responseTime
     };
   } catch (error: any) {
     console.error('Error executing Alpaca trade:', error);
@@ -539,24 +542,27 @@ async function executeAlpacaTrade(payload: any, config: Omit<WebhookConfig, 'bro
   }
 }
 
-async function executeOandaTrade(payload: any, config: Omit<WebhookConfig, 'broker'> & { broker: string }): Promise<WebhookResponse> {
+async function executeOandaTrade(payload: any, config: WebhookConfig): Promise<WebhookResponse> {
   try {
     console.log('Executing Oanda trade:', JSON.stringify(payload));
     
-    // In a real implementation, this would call the Oanda API
-    // For now, we'll simulate a successful trade
+    // Use the broker connector factory to execute the trade
+    const startTime = Date.now();
     
-    const orderId = `oanda-${Date.now()}`;
+    // Execute the trade using the broker connector
+    const result = await BrokerConnectorFactory.executeTrade(
+      config.userId,
+      config,
+      payload
+    );
     
+    const endTime = Date.now();
+    const responseTime = endTime - startTime;
+    
+    // Add response time to the result
     return {
-      success: true,
-      message: 'Trade executed successfully via Oanda',
-      orderId,
-      details: {
-        instrument: payload.instrument,
-        units: payload.units,
-        type: payload.type || 'MARKET'
-      }
+      ...result,
+      responseTime
     };
   } catch (error: any) {
     console.error('Error executing Oanda trade:', error);
@@ -569,26 +575,27 @@ async function executeOandaTrade(payload: any, config: Omit<WebhookConfig, 'brok
   }
 }
 
-async function executeNinjaTraderTrade(payload: any, config: Omit<WebhookConfig, 'broker'> & { broker: string }): Promise<WebhookResponse> {
+async function executeNinjaTraderTrade(payload: any, config: WebhookConfig): Promise<WebhookResponse> {
   try {
     console.log('Executing NinjaTrader trade:', JSON.stringify(payload));
     
-    // In a real implementation, this would interact with NinjaTrader
-    // For NinjaTrader, we might need to use a special approach since it may not have a direct API
-    // This could involve a desktop companion app or browser extension that's listening for commands
+    // Use the broker connector factory to execute the trade
+    const startTime = Date.now();
     
-    const orderId = `ninjatrader-${Date.now()}`;
+    // Execute the trade using the broker connector
+    const result = await BrokerConnectorFactory.executeTrade(
+      config.userId,
+      config,
+      payload
+    );
     
+    const endTime = Date.now();
+    const responseTime = endTime - startTime;
+    
+    // Add response time to the result
     return {
-      success: true,
-      message: 'Trade signal sent to NinjaTrader',
-      orderId,
-      details: {
-        symbol: payload.symbol,
-        action: payload.action,
-        quantity: payload.quantity,
-        orderType: payload.orderType || 'MARKET'
-      }
+      ...result,
+      responseTime
     };
   } catch (error: any) {
     console.error('Error executing NinjaTrader trade:', error);

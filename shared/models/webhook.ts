@@ -188,6 +188,7 @@ export const webhookResponseSchema = z.object({
   orderId: z.string().optional(),
   errors: z.array(z.string()).optional(),
   details: z.record(z.any()).optional(),
+  responseTime: z.number().optional(), // Time taken to process the webhook in ms
 });
 
 export type WebhookResponse = z.infer<typeof webhookResponseSchema>;

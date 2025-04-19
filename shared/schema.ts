@@ -379,6 +379,8 @@ export const userWebhooks = pgTable("user_webhooks", {
   userId: text("user_id").notNull(), // References user ID
   name: text("name").notNull(), // Display name for the webhook
   token: text("token").notNull().unique(), // Unique token for webhook URL
+  broker: text("broker").notNull().default('tradingview'), // The broker type this webhook connects to
+  brokerConfig: jsonb("broker_config"), // Configuration specific to the broker
   createdAt: timestamp("created_at").notNull().defaultNow(),
   lastUsedAt: timestamp("last_used_at"),
   signalCount: integer("signal_count").default(0),
@@ -386,6 +388,22 @@ export const userWebhooks = pgTable("user_webhooks", {
 });
 
 export type UserWebhook = typeof userWebhooks.$inferSelect;
+
+// Broker Credentials table for storing encrypted API keys
+export const brokerCredentials = pgTable("broker_credentials", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(), // References user ID
+  broker: text("broker").notNull(), // 'alpaca', 'oanda', 'ninjaTrader', etc.
+  credentials: jsonb("credentials").notNull(), // Encrypted credentials
+  isConnected: boolean("is_connected").default(false),
+  lastChecked: timestamp("last_checked"),
+  statusMessage: text("status_message"),
+  accountInfo: jsonb("account_info"), // Account information from last connection
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type BrokerCredential = typeof brokerCredentials.$inferSelect;
 
 // Broker types and broker connections for trading platforms
 export const brokerTypes = pgTable("broker_types", {
