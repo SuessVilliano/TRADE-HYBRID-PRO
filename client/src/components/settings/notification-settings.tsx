@@ -5,10 +5,11 @@ import { Label } from '../ui/label';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { toast } from 'sonner';
-import { Bell, BellOff, Share2 } from 'lucide-react';
+import { Bell, BellOff, Share2, AlertTriangle } from 'lucide-react';
 
-// Import from settings service
+// Import from services
 import { userSettingsService, UserSettings } from '../../lib/services/user-settings-service';
+import { tradeSignalService } from '../../lib/services/trade-signal-service';
 
 export function NotificationSettings() {
   const [settings, setSettings] = useState<UserSettings>({
@@ -321,6 +322,79 @@ export function NotificationSettings() {
                 </div>
               </div>
             )}
+          </div>
+          
+          {/* Test Signal Notifications */}
+          <div className="space-y-4 border-t pt-4">
+            <h3 className="text-lg font-medium flex items-center">
+              <AlertTriangle className="h-5 w-5 mr-2" />
+              Test Notifications
+            </h3>
+            <p className="text-sm text-slate-500 mb-4">
+              Send a test trading signal to verify your notification settings
+            </p>
+            
+            <div className="flex flex-wrap gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  if (!settings.notifications.desktopNotifications) {
+                    toast.warning('Desktop notifications are disabled', {
+                      description: 'Enable desktop notifications to receive trading signals'
+                    });
+                    return;
+                  }
+                  
+                  // Request notification permission if needed
+                  if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted') {
+                    userSettingsService.checkNotificationPermission().then(granted => {
+                      if (granted) {
+                        // Add test signal to trigger notification
+                        tradeSignalService.addTestSignal();
+                        toast.success('Test signal created', {
+                          description: 'Check for a notification from your browser'
+                        });
+                      } else {
+                        toast.error('Notification permission denied', {
+                          description: 'Please enable notifications in your browser settings'
+                        });
+                      }
+                    });
+                  } else {
+                    // Permission already granted, just send the test signal
+                    tradeSignalService.addTestSignal();
+                    toast.success('Test signal created', {
+                      description: 'Check for a notification from your browser'
+                    });
+                  }
+                }}
+                className="flex items-center gap-2"
+              >
+                <Bell className="h-4 w-4" />
+                Test Signal Notification
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  if (!settings.notifications.soundAlerts) {
+                    toast.warning('Sound alerts are disabled', {
+                      description: 'Enable sound alerts in the settings above'
+                    });
+                    return;
+                  }
+                  
+                  userSettingsService.playNotificationSound();
+                  toast.success('Test sound played', {
+                    description: 'If you didn\'t hear anything, check your volume settings'
+                  });
+                }}
+                className="flex items-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-volume-2 h-4 w-4"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+                Test Sound Alert
+              </Button>
+            </div>
           </div>
           
           <div className="pt-4 flex justify-end">

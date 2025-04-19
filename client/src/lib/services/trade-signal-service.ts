@@ -30,6 +30,15 @@ class TradeSignalService {
   constructor() {
     // Add some mock data for development
     this.initializeMockData();
+    
+    // Subscribe to user settings changes
+    userSettingsService.subscribe('settings_changed', (settings) => {
+      this.notificationsEnabled = settings.notifications.signalAlerts;
+    });
+    
+    // Initialize notification state from user settings
+    const settings = userSettingsService.getSettings();
+    this.notificationsEnabled = settings.notifications.signalAlerts;
   }
 
   // Subscribe to signal events
@@ -51,6 +60,45 @@ class TradeSignalService {
   addSignal(signal: TradeSignal): void {
     this.signals.unshift(signal); // Add to beginning of array
     this.triggerEvent('signal_added', signal);
+    
+    // Show notification if enabled
+    if (this.notificationsEnabled) {
+      this.showSignalNotification(signal);
+    }
+  }
+  
+  // Show notification for a new signal
+  private showSignalNotification(signal: TradeSignal): void {
+    // Format currency with 2 decimal places or more if needed
+    const formatPrice = (price: number): string => {
+      if (price < 0.01) return price.toString(); // For very small values, use full precision
+      return price.toLocaleString(undefined, { 
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 6
+      });
+    };
+    
+    // Create notification title
+    const title = `${signal.type.toUpperCase()} Signal: ${signal.symbol}`;
+    
+    // Create notification body
+    const body = `Entry: ${formatPrice(signal.entry)} | SL: ${formatPrice(signal.stopLoss)} | TP: ${formatPrice(signal.takeProfit)}${signal.notes ? `\n${signal.notes}` : ''}`;
+    
+    // Determine notification icon based on signal type
+    const icon = signal.type === 'buy' 
+      ? '/images/buy-signal-icon.png' 
+      : '/images/sell-signal-icon.png';
+    
+    // Show the notification
+    userSettingsService.showNotification(title, {
+      body,
+      icon,
+      badge: '/images/notification-badge.png',
+      tag: `signal-${signal.id}`,
+      data: signal,
+      requireInteraction: false,
+      silent: false
+    });
   }
 
   // Get all signals
@@ -153,6 +201,24 @@ class TradeSignalService {
   // Filter signals by source
   filterBySource(source: string): TradeSignal[] {
     return this.signals.filter(signal => signal.source === source);
+  }
+  
+  // Add a test signal (for testing notification system)
+  addTestSignal(): void {
+    const testSignal: TradeSignal = {
+      id: `test-${Date.now()}`,
+      symbol: 'BTCUSDT',
+      type: Math.random() > 0.5 ? 'buy' : 'sell',
+      entry: 69420.50,
+      stopLoss: 68000.00,
+      takeProfit: 72000.00,
+      timestamp: new Date(),
+      source: 'Test Signal',
+      risk: 1,
+      notes: 'This is a test signal to verify notification settings'
+    };
+    
+    this.addSignal(testSignal);
   }
 }
 

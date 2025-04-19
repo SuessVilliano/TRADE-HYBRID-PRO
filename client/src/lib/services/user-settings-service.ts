@@ -206,7 +206,8 @@ class UserSettingsService {
     }
     
     try {
-      const audio = new Audio('/sounds/notification.mp3');
+      // We already have sound files in our /sounds directory
+      const audio = new Audio('/sounds/trading-signal.mp3');
       audio.volume = 0.5;
       audio.play().catch(err => console.error('Failed to play notification sound:', err));
     } catch (error) {
