@@ -29,7 +29,12 @@ export const config = {
   RAPIDAPI_KEY: getEnvVar('RAPIDAPI_KEY'),
   ALPACA_API_KEY: getEnvVar('ALPACA_API_KEY'),
   ALPACA_API_SECRET: getEnvVar('ALPACA_API_SECRET'),
-  ALPACA_API_URL: 'https://paper-api.alpaca.markets',
+  ALPACA_API_URL: getEnvVar('ALPACA_API_URL') || 'https://paper-api.alpaca.markets/v2',
+  
+  // Alpaca Broker API settings
+  ALPACA_BROKER_API_KEY: getEnvVar('ALPACA_BROKER_API_KEY'),
+  ALPACA_BROKER_API_SECRET: getEnvVar('ALPACA_BROKER_API_SECRET'),
+  ALPACA_BROKER_API_URL: getEnvVar('ALPACA_BROKER_API_URL') || 'https://broker-api.sandbox.alpaca.markets',
   OANDA_API_TOKEN: getEnvVar('OANDA_API_TOKEN'),
   OANDA_ACCOUNT_ID: getEnvVar('OANDA_ACCOUNT_ID'),
   BINANCE_API_KEY: getEnvVar('BINANCE_API_KEY'),

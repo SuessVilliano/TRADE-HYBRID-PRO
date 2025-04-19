@@ -1,6 +1,7 @@
 import express from 'express';
 import { BrokerCredentials } from '../lib/services/broker-connection-service';
 import { AlpacaService } from '../lib/services/alpaca-service';
+import { AlpacaBrokerService } from '../lib/services/alpaca-broker-service';
 import { isAuthenticated } from '../middleware/auth';
 
 const router = express.Router();
