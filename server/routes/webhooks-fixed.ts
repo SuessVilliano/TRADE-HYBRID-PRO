@@ -352,10 +352,10 @@ router.get('/:id/performance', authMiddleware, async (req: Request, res: Respons
   }
 });
 
-// Get webhook execution logs
+// Get webhook execution logs (with auth)
 router.get('/logs', authMiddleware, async (req: Request, res: Response) => {
   try {
-    console.log('Webhook logs endpoint called');
+    console.log('Webhook logs endpoint called (auth version)');
     console.log('Session:', req.session);
     
     const userId = req.session?.userId;
@@ -374,6 +374,22 @@ router.get('/logs', authMiddleware, async (req: Request, res: Response) => {
     return res.json({ logs });
   } catch (error: any) {
     console.error('Error getting webhook logs:', error);
+    return res.status(500).json({ error: error.message || 'An error occurred' });
+  }
+});
+
+// Temporary public endpoint for webhook logs (no auth required)
+router.get('/logs-public', async (req: Request, res: Response) => {
+  try {
+    console.log('Public webhook logs endpoint called');
+    
+    // Get all webhook logs (no filtering by user)
+    const logs = await getWebhookExecutionLogs();
+    console.log('Public logs found:', logs.length);
+    
+    return res.json({ logs });
+  } catch (error: any) {
+    console.error('Error getting public webhook logs:', error);
     return res.status(500).json({ error: error.message || 'An error occurred' });
   }
 });

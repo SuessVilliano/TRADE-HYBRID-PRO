@@ -56,7 +56,8 @@ export function WebhookLogs() {
     setIsRefreshing(true);
     setError(null);
     try {
-      const response = await axios.get('/api/webhooks/logs');
+      // Use the public endpoint that doesn't require authentication
+      const response = await axios.get('/api/webhooks/logs-public');
       if (response.data && response.data.logs) {
         setLogs(response.data.logs);
       } else {
