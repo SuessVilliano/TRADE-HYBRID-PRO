@@ -305,6 +305,117 @@ export const getErrorInsightsForWebhook = async (webhookId: string): Promise<Err
 };
 
 /**
+ * Initialize sample logs for demonstration
+ */
+const initSampleLogs = () => {
+  // If we already have logs, don't create samples
+  if (webhookExecutions.size > 0) {
+    return;
+  }
+  
+  // Sample webhooks for the logs
+  const webhookIds = [
+    'webhook-123-abc',
+    'webhook-456-def',
+    'webhook-789-ghi'
+  ];
+  
+  // Sample user IDs
+  const userIds = [
+    'demo-user-123',
+    'user-456',
+    'user-789'
+  ];
+  
+  // Sample brokers
+  const brokers = [
+    'alpaca',
+    'tradingview',
+    'oanda',
+    'ninjatrader',
+    'generic'
+  ];
+  
+  // Create 10 sample logs spanning the last 7 days
+  for (let i = 0; i < 10; i++) {
+    const webhookId = webhookIds[Math.floor(Math.random() * webhookIds.length)];
+    const userId = userIds[Math.floor(Math.random() * userIds.length)];
+    const broker = brokers[Math.floor(Math.random() * brokers.length)];
+    const success = Math.random() > 0.3; // 70% chance of success
+    
+    // Create timestamps spanning the last 7 days
+    const daysAgo = Math.floor(Math.random() * 7);
+    const hoursAgo = Math.floor(Math.random() * 24);
+    const timestamp = new Date();
+    timestamp.setDate(timestamp.getDate() - daysAgo);
+    timestamp.setHours(timestamp.getHours() - hoursAgo);
+    
+    // Sample payloads
+    let payload;
+    if (broker === 'alpaca') {
+      payload = {
+        action: Math.random() > 0.5 ? 'buy' : 'sell',
+        symbol: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'][Math.floor(Math.random() * 5)],
+        qty: Math.floor(Math.random() * 10) + 1,
+        type: 'market',
+        time_in_force: 'day'
+      };
+    } else if (broker === 'tradingview') {
+      payload = {
+        strategy: {
+          order_action: Math.random() > 0.5 ? 'buy' : 'sell',
+          order_contracts: Math.floor(Math.random() * 5) + 1,
+          order_price: Math.floor(Math.random() * 200) + 100,
+          market_position: Math.random() > 0.5 ? 'long' : 'short',
+          position_size: Math.floor(Math.random() * 5) + 1
+        },
+        ticker: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'][Math.floor(Math.random() * 5)],
+        time: timestamp.toISOString(),
+        price: Math.floor(Math.random() * 200) + 100,
+        comment: "Webhook execution"
+      };
+    } else {
+      payload = {
+        action: Math.random() > 0.5 ? 'BUY' : 'SELL',
+        symbol: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'][Math.floor(Math.random() * 5)],
+        quantity: Math.floor(Math.random() * 10) + 1,
+        price: Math.floor(Math.random() * 200) + 100
+      };
+    }
+    
+    // Create result
+    const result = {
+      success,
+      message: success ? 'Order executed successfully' : 'Failed to execute order',
+      orderId: success ? `order-${Math.floor(Math.random() * 1000)}` : undefined,
+      errors: success ? [] : ['Invalid symbol', 'Insufficient funds', 'Market closed'][Math.floor(Math.random() * 3)]
+    };
+    
+    // Create the log entry
+    const execution = {
+      id: generateId(),
+      webhookId,
+      userId,
+      broker,
+      payload,
+      result,
+      timestamp,
+      ipAddress: '127.0.0.1',
+      userAgent: 'Mozilla/5.0',
+      responseTime: Math.floor(Math.random() * 500) + 50
+    };
+    
+    // Add to the map
+    webhookExecutions.set(execution.id, execution);
+  }
+  
+  console.log(`Created ${webhookExecutions.size} sample webhook logs for demonstration`);
+};
+
+// Call the function to initialize sample logs
+initSampleLogs();
+
+/**
  * Get webhook execution logs
  * @param webhookId Optional ID to filter by specific webhook
  * @param userId Optional user ID to filter by user
