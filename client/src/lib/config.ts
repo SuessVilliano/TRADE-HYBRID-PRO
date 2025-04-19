@@ -8,7 +8,7 @@ export const config = {
   ALPACA_API_URL: import.meta.env.VITE_ALPACA_API_URL || 'https://paper-api.alpaca.markets/v2',
   
   // BrokerServices flags
-  USE_MOCK_SERVICE: import.meta.env.VITE_USE_MOCK_SERVICE || 'true',
+  USE_MOCK_SERVICE: import.meta.env.VITE_USE_MOCK_SERVICE || 'false',
   
   // Feature flags
   ENABLE_AI_INSIGHTS: import.meta.env.VITE_ENABLE_AI_INSIGHTS !== 'false',
