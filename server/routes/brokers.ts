@@ -44,40 +44,77 @@ router.get('/broker-types', async (req, res) => {
   }
 });
 
+// Import the broker factory
+import { BrokerFactory } from '../lib/services/broker-factory';
+
 // Test broker connection with given credentials
 router.post('/test-connection', async (req, res) => {
   try {
     const { brokerTypeId, credentials, isLiveTrading = false } = req.body;
     
-    // Test connection based on broker type
-    if (brokerTypeId === 'alpaca') {
-      try {
-        // Use environment variables if credentials not provided
-        const envApiKey = process.env.ALPACA_API_KEY;
-        const envSecretKey = process.env.ALPACA_API_SECRET;
-        
-        // Log the API keys being used (only partial for security)
-        if (envApiKey) console.log(`Using Alpaca API Key from env: ${envApiKey.substring(0, 4)}...`);
-        
-        const creds: BrokerCredentials = {
-          apiKey: credentials?.apiKey || envApiKey || '',
-          secretKey: credentials?.secretKey || envSecretKey || ''
-        };
-        
-        const alpacaService = new AlpacaService(creds, { isPaper: !isLiveTrading });
-        
-        // Test the connection by calling an API
-        await alpacaService.initialize();
-        
-        console.log('Successfully connected to Alpaca broker API');
-        res.json({ success: true, message: 'Successfully connected to Alpaca' });
-      } catch (error: any) {
-        console.error('Error connecting to Alpaca:', error);
-        res.status(400).json({ success: false, message: 'Failed to connect to Alpaca', error: error.message });
+    // Extract any broker-specific options from request
+    const options = { 
+      isPaper: !isLiveTrading 
+    };
+    
+    // Map broker types to factory types
+    let factoryType: 'alpaca' | 'alpaca-broker' | 'mock';
+    
+    switch (brokerTypeId) {
+      case 'alpaca':
+        factoryType = 'alpaca';
+        break;
+      case 'alpaca-broker':
+        factoryType = 'alpaca-broker';
+        break;
+      default:
+        // Check if we should use mock for unimplemented broker types
+        if (process.env.ALLOW_MOCK_BROKERS === 'true') {
+          console.log(`Using mock service for unimplemented broker type: ${brokerTypeId}`);
+          factoryType = 'mock';
+        } else {
+          return res.status(400).json({ 
+            success: false, 
+            message: `Broker type ${brokerTypeId} not supported yet` 
+          });
+        }
+    }
+    
+    // Use credentials provided or environment variables
+    const creds: BrokerCredentials = {
+      apiKey: credentials?.apiKey || process.env[`${brokerTypeId.toUpperCase()}_API_KEY`] || '',
+      secretKey: credentials?.secretKey || process.env[`${brokerTypeId.toUpperCase()}_API_SECRET`] || '',
+      accountId: credentials?.accountId || ''
+    };
+    
+    // Log the API keys being used (only partial for security)
+    if (creds.apiKey) {
+      console.log(`Using ${brokerTypeId} API Key: ${creds.apiKey.substring(0, 4)}...`);
+    }
+    
+    try {
+      // Test the connection using the factory
+      const success = await BrokerFactory.testConnection(factoryType, creds, options);
+      
+      if (success) {
+        console.log(`Successfully connected to ${brokerTypeId} API`);
+        res.json({ success: true, message: `Successfully connected to ${brokerTypeId}` });
+      } else {
+        console.error(`Failed to connect to ${brokerTypeId} API`);
+        res.status(400).json({ 
+          success: false, 
+          message: `Failed to connect to ${brokerTypeId}`,
+          fallbackAvailable: process.env.USE_MOCK_SERVICE === 'true'
+        });
       }
-    } else {
-      // For other broker types that we haven't implemented yet
-      res.status(400).json({ success: false, message: `Broker type ${brokerTypeId} not supported yet` });
+    } catch (error: any) {
+      console.error(`Error connecting to ${brokerTypeId}:`, error);
+      res.status(400).json({ 
+        success: false, 
+        message: `Failed to connect to ${brokerTypeId}`, 
+        error: error.message,
+        fallbackAvailable: process.env.USE_MOCK_SERVICE === 'true'
+      });
     }
   } catch (error: any) {
     console.error('Error testing broker connection:', error);
