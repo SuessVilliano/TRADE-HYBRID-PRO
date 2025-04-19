@@ -251,6 +251,10 @@ function generateAnalysisPrompt(
 Current Market Data:
 ${JSON.stringify(marketData, null, 2)}
 
+Important: You MUST format your response as a valid JSON object with the specified structure below.
+Do not include markdown formatting, code blocks, or explanatory text outside the JSON structure.
+Return ONLY the JSON object.
+
 Please provide:
 1. A concise summary of the current market situation for ${symbol}
 `;
@@ -305,6 +309,8 @@ Format your response as a JSON object with clear sections for each of the above 
  * Generate prompt for trading suggestions
  */
 function generateTradingPrompt(symbol: string, riskProfile: string, marketData: any): string {
+  // We'll need to modify this to use a JSON object wrapper since the OpenAI response_format 
+  // requires a JSON object (not an array directly)
   return `Generate 3 detailed trading suggestions for ${symbol} tailored to a ${riskProfile} risk profile trader.
 
 Current Market Data:
@@ -312,20 +318,24 @@ Hourly Data: ${JSON.stringify(marketData.hourly.slice(0, 10), null, 2)}
 Daily Data: ${JSON.stringify(marketData.daily.slice(0, 10), null, 2)}
 Weekly Data: ${JSON.stringify(marketData.weekly.slice(0, 5), null, 2)}
 
-For each trading suggestion, provide:
-1. Trade direction (buy, sell, or hold)
-2. Entry price (specific price or range)
-3. Stop loss level (specific price)
-4. Take profit targets (up to 3 price levels)
-5. Suggested position size (as % of portfolio)
-6. Risk-to-reward ratio (e.g., 1:3)
-7. Detailed reasoning for the trade (including technical and fundamental factors)
-8. Specific conditions that would invalidate the trade
-9. Appropriate timeframe for the trade (e.g., intraday, swing, position)
+Important: You MUST format your response as a valid JSON object with a 'suggestions' array property. 
+Do not include any markdown formatting, code blocks, or explanatory text outside the JSON structure.
+Return ONLY the JSON object in the following format: { "suggestions": [...] }
+
+For each trading suggestion in the suggestions array, provide:
+1. Trade direction (buy, sell, or hold) - as 'direction' property
+2. Entry price (specific price or range) - as 'entryPrice' property
+3. Stop loss level (specific price) - as 'stopLoss' property
+4. Take profit targets (up to 3 price levels) - as 'takeProfit' array property
+5. Suggested position size (as % of portfolio) - as 'positionSize' property
+6. Risk-to-reward ratio (e.g., 1:3) - as 'riskRewardRatio' property
+7. Detailed reasoning for the trade - as 'reasoning' property
+8. Specific conditions that would invalidate the trade - as 'invalidation' property
+9. Appropriate timeframe for the trade - as 'timeframe' property
 
 Create diverse suggestions that cover different timeframes and strategies appropriate for the ${riskProfile} risk profile.
 
-Format your response as a JSON array with these well-structured trading suggestions.
+Format your response STRICTLY as a JSON object with a 'suggestions' array property containing these well-structured trading suggestions.
 `;
 }
 
@@ -425,11 +435,15 @@ async function generateAIAnalysis(prompt: string): Promise<string> {
       const response = await openai.chat.completions.create({
         model: "gpt-4-turbo-preview",
         messages: [
-          { role: "system", content: "You are an expert financial analyst and trader with deep knowledge of technical analysis, fundamental analysis, and market psychology. Provide data-driven, insightful market analysis and trading recommendations." },
+          { 
+            role: "system", 
+            content: "You are an expert financial analyst and trader with deep knowledge of technical analysis, fundamental analysis, and market psychology. Provide data-driven, insightful market analysis and trading recommendations. Your responses should be well-structured, valid JSON objects without any markdown formatting or additional text. Never include code blocks, explanations, or comments outside the JSON response structure." 
+          },
           { role: "user", content: prompt }
         ],
-        temperature: 0.7,
+        temperature: 0.5, // Lower temperature for more structured output
         max_tokens: 2048,
+        response_format: { type: "json_object" }, // Ensure response is formatted as JSON
       });
 
       return response.choices[0].message.content || '';
@@ -513,11 +527,34 @@ async function useGeminiAPI(prompt: string): Promise<string> {
  */
 function formatAnalysisResponse(rawResponse: string, symbol: string): any {
   try {
-    // Try to parse as JSON first
+    console.log('Formatting OpenAI response for:', symbol);
+    
+    // Try to find JSON content in the response (sometimes OpenAI wraps JSON in markdown)
+    let jsonContent = rawResponse;
+    
+    // Look for JSON code block markers
+    const jsonBlockMatch = rawResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (jsonBlockMatch && jsonBlockMatch[1]) {
+      jsonContent = jsonBlockMatch[1].trim();
+      console.log('Found JSON content in markdown code block');
+    }
+    
+    // Look for opening and closing braces for JSON objects
+    const jsonObjectMatch = rawResponse.match(/\{[\s\S]*\}/);
+    if (!jsonObjectMatch && jsonContent === rawResponse) {
+      console.log('Could not find JSON object in response');
+      // If no JSON format was found, log a portion of the raw response for debugging
+      console.log('Raw response snippet:', rawResponse.substring(0, 200) + '...');
+    }
+    
+    // Try to parse as JSON
     try {
-      return JSON.parse(rawResponse);
+      const parsedJson = JSON.parse(jsonContent);
+      console.log('Successfully parsed OpenAI response as JSON');
+      return parsedJson;
     } catch (e) {
-      console.log('Failed to parse OpenAI response as JSON, using fallback formatting');
+      console.log('Failed to parse OpenAI response as JSON:', e.message);
+      console.log('Using fallback formatting');
     }
     
     // Fallback to a default structured response
@@ -646,11 +683,50 @@ function createDemoTradingSuggestions(symbol: string, riskProfile: string): any 
  */
 function formatTradingSuggestions(rawResponse: string): any {
   try {
-    // Try to parse as JSON first
+    console.log('Formatting trading suggestions from OpenAI response');
+    
+    // Try to find JSON content in the response (sometimes OpenAI wraps JSON in markdown)
+    let jsonContent = rawResponse;
+    
+    // Look for JSON code block markers
+    const jsonBlockMatch = rawResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (jsonBlockMatch && jsonBlockMatch[1]) {
+      jsonContent = jsonBlockMatch[1].trim();
+      console.log('Found JSON content in markdown code block');
+    }
+    
+    // Try to parse as JSON
     try {
-      return JSON.parse(rawResponse);
+      const parsedJson = JSON.parse(jsonContent);
+      console.log('Successfully parsed trading suggestions as JSON');
+      
+      // The new format returns an object with a 'suggestions' property
+      if (parsedJson && Array.isArray(parsedJson.suggestions)) {
+        console.log(`Found ${parsedJson.suggestions.length} suggestions in the response`);
+        return parsedJson.suggestions;
+      }
+      
+      // If it's already an array, return it directly
+      if (Array.isArray(parsedJson)) {
+        console.log(`Found ${parsedJson.length} suggestions in the response`);
+        return parsedJson;
+      }
+      
+      console.log('Response JSON is not in the expected format');
+      console.log('Response structure:', Object.keys(parsedJson));
+      
+      // Try to extract suggestions from other potential formats
+      const possibleArrays = Object.values(parsedJson).filter(val => Array.isArray(val));
+      if (possibleArrays.length > 0) {
+        const suggestions = possibleArrays[0];
+        console.log(`Found possible suggestions array with ${suggestions.length} items`);
+        return suggestions;
+      }
+      
+      return []; // Return empty array if we can't find suggestions
     } catch (e) {
-      console.log('Failed to parse AI response as JSON, using fallback formatting');
+      console.log('Failed to parse trading suggestions as JSON:', e.message);
+      console.log('Using fallback formatting');
     }
     
     // Fallback to a default structured response
