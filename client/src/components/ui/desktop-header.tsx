@@ -80,7 +80,7 @@ const navigationItems = [
   },
   {
     name: 'Learning Center',
-    path: '/learn',
+    path: '/learning-center',
     icon: <BookOpen className="h-4 w-4" />,
   },
   {

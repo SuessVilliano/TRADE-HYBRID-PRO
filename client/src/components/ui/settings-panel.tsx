@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
@@ -520,7 +521,9 @@ export const SettingsPanel = () => {
                     <Label className="text-lg">Webhook Management</Label>
                     <p className="text-sm text-gray-500">Create and manage webhooks for trading signals</p>
                   </div>
-                  <Button variant="outline" onClick={() => window.location.href = '/webhook-settings'}>Manage</Button>
+                  <Button variant="outline" asChild>
+                    <Link to="/webhook-settings">Manage</Link>
+                  </Button>
                 </div>
               </div>
               <Separator />
