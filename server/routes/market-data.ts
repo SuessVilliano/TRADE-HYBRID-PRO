@@ -1,36 +1,73 @@
-import { Router, Request, Response } from 'express';
+import express, { Request, Response } from 'express';
 import axios from 'axios';
-import { authMiddleware } from '../middleware/auth-middleware';
+import { getAlpacaClient } from '../services/alpaca-service';
+import { getOandaClient } from '../services/oanda-service';
 
-const router = Router();
+const router = express.Router();
 
-// API endpoint to get historical market data
+// Helper function to determine if a symbol is forex
+function isForexSymbol(symbol: string): boolean {
+  // Clean the symbol first
+  const cleanSymbol = symbol.includes(':') ? symbol.split(':')[1] : symbol;
+  
+  // Check if it follows common forex patterns (EUR_USD or EURUSD formats)
+  return /^[A-Z]{3}_[A-Z]{3}$/.test(cleanSymbol) || 
+         (/^[A-Z]{6}$/.test(cleanSymbol) && 
+          ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'NZD'].some(
+            currency => cleanSymbol.includes(currency)
+          ));
+}
+
+// Helper function to get a standardized symbol format for Alpaca
+function getAlpacaSymbol(symbol: string): string {
+  // Extract the ticker symbol from formats like BINANCE:BTCUSDT or BTCUSD
+  const cleanSymbol = symbol.includes(':') ? symbol.split(':')[1] : symbol;
+  return cleanSymbol;
+}
+
+// Helper function to get a standardized symbol format for Oanda
+function getOandaSymbol(symbol: string): string {
+  // Extract the ticker symbol from formats like BINANCE:BTCUSDT or BTCUSD
+  let cleanSymbol = symbol.includes(':') ? symbol.split(':')[1] : symbol;
+  
+  // Convert EURUSD to EUR_USD format for Oanda if needed
+  if (!cleanSymbol.includes('_') && cleanSymbol.length === 6) {
+    cleanSymbol = `${cleanSymbol.substring(0, 3)}_${cleanSymbol.substring(3, 6)}`;
+  }
+  
+  return cleanSymbol;
+}
+
+// GET /api/market-data/history
+// Fetch historical market data for a symbol from Alpaca (or Oanda for forex)
 router.get('/history', async (req: Request, res: Response) => {
   try {
-    const { symbol, interval = '1h', limit = 100 } = req.query;
-    
+    const symbol = req.query.symbol as string;
     if (!symbol) {
-      return res.status(400).json({ error: 'Symbol parameter is required' });
+      return res.status(400).json({ error: 'Symbol is required' });
     }
     
-    // Determine if this is a Forex symbol (common forex currencies)
-    const isForex = /^[A-Z]{3}_[A-Z]{3}$/.test(symbol as string) || 
-                   /^[A-Z]{6}$/.test(symbol as string) && 
-                   ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'NZD'].some(
-                     currency => (symbol as string).includes(currency)
-                   );
+    const interval = req.query.interval as string || '1h';
+    const limit = parseInt(req.query.limit as string) || 100;
+    
+    console.log(`Fetching historical data for ${symbol} with interval ${interval}`);
+    
+    // Determine if the symbol is forex
+    const isForex = isForexSymbol(symbol);
+    
+    let bars = [];
+    let provider = '';
     
     if (isForex) {
-      // This is a forex symbol, use Oanda
+      // Use Oanda for forex
       try {
-        // Format symbol for Oanda if needed (e.g., 'EURUSD' -> 'EUR_USD')
-        const formattedSymbol = (symbol as string).includes('_') 
-          ? symbol 
-          : `${(symbol as string).substring(0, 3)}_${(symbol as string).substring(3, 6)}`;
+        console.log('Using Oanda API for forex data');
+        const oandaSymbol = getOandaSymbol(symbol);
         
         // Convert interval to Oanda granularity format
-        let granularity;
-        switch (interval) {
+        let granularity = 'H1'; // Default 1 hour
+        
+        switch (interval.toLowerCase()) {
           case '1m': granularity = 'M1'; break;
           case '5m': granularity = 'M5'; break;
           case '15m': granularity = 'M15'; break;
@@ -39,247 +76,255 @@ router.get('/history', async (req: Request, res: Response) => {
           case '4h': granularity = 'H4'; break;
           case '1d': granularity = 'D'; break;
           case '1w': granularity = 'W'; break;
-          default: granularity = 'H1';
         }
         
-        // Make the request to our internal Oanda endpoint
-        const oandaResponse = await axios.get(`${req.protocol}://${req.get('host')}/api/oanda/candles`, {
-          params: {
-            instrument: formattedSymbol,
-            granularity,
-            count: limit
-          }
+        const oandaClient = getOandaClient();
+        const response = await oandaClient.getCandles(oandaSymbol, {
+          granularity,
+          count: limit
         });
         
-        // Transform to standard format
-        const bars = oandaResponse.data.candles.map((candle: any) => ({
-          t: new Date(candle.time).toISOString(),
-          o: parseFloat(candle.o),
-          h: parseFloat(candle.h),
-          l: parseFloat(candle.l),
-          c: parseFloat(candle.c),
-          v: parseFloat(candle.v)
-        }));
-        
-        return res.json({ symbol: formattedSymbol, interval, bars });
-      } catch (error: any) {
-        console.error('Error fetching Oanda historical data:', error.response?.data || error.message);
-        return res.status(500).json({ 
-          error: 'Failed to fetch forex historical data', 
-          details: error.response?.data || error.message 
-        });
+        if (response && response.candles) {
+          bars = response.candles.map((candle: any) => ({
+            t: new Date(candle.time).toISOString(),
+            o: parseFloat(candle.mid.o),
+            h: parseFloat(candle.mid.h),
+            l: parseFloat(candle.mid.l),
+            c: parseFloat(candle.mid.c),
+            v: 0 // Oanda doesn't provide volume for forex
+          }));
+          provider = 'oanda';
+        }
+      } catch (error) {
+        console.error('Error fetching from Oanda:', error);
+        // Fall through to try Alpaca as a backup
       }
-    } else {
-      // This is a stock or crypto symbol, use Alpaca
+    }
+    
+    // If not forex or if Oanda failed, try Alpaca
+    if (bars.length === 0) {
       try {
-        // Check if Alpaca API keys are available
-        const alpacaApiKey = process.env.ALPACA_API_KEY;
-        const alpacaApiSecret = process.env.ALPACA_API_SECRET;
-        
-        if (!alpacaApiKey || !alpacaApiSecret) {
-          return res.status(500).json({ error: 'Alpaca API credentials not configured' });
-        }
+        console.log('Using Alpaca API for market data');
+        const alpacaSymbol = getAlpacaSymbol(symbol);
         
         // Convert interval to Alpaca timeframe format
-        let timeframe;
-        switch (interval) {
+        let timeframe = '1Hour'; // Default 1 hour
+        
+        switch (interval.toLowerCase()) {
           case '1m': timeframe = '1Min'; break;
           case '5m': timeframe = '5Min'; break;
           case '15m': timeframe = '15Min'; break;
           case '30m': timeframe = '30Min'; break;
           case '1h': timeframe = '1Hour'; break;
           case '1d': timeframe = '1Day'; break;
-          default: timeframe = '1Hour';
+          case '1w': timeframe = '1Week'; break;
         }
         
-        // The Alpaca API requires the stock ticker without exchange prefix
-        const ticker = (symbol as string).includes(':') 
-          ? (symbol as string).split(':')[1] 
-          : symbol;
-        
-        // Make request to Alpaca API
-        const alpacaResponse = await axios.get('https://data.alpaca.markets/v2/stocks/' + ticker + '/bars', {
-          params: {
-            timeframe,
-            limit
-          },
-          headers: {
-            'APCA-API-KEY-ID': alpacaApiKey,
-            'APCA-API-SECRET-KEY': alpacaApiSecret
-          }
+        const alpacaClient = getAlpacaClient();
+        const barset = await alpacaClient.getBars({
+          symbol: alpacaSymbol,
+          timeframe,
+          limit
         });
         
-        return res.json({ 
-          symbol: ticker, 
-          interval, 
-          bars: alpacaResponse.data.bars 
-        });
-      } catch (error: any) {
-        console.error('Error fetching Alpaca historical data:', error.response?.data || error.message);
-        return res.status(500).json({ 
-          error: 'Failed to fetch stock historical data',
-          details: error.response?.data || error.message 
-        });
+        if (barset) {
+          bars = barset.map((bar: any) => ({
+            t: new Date(bar.t).toISOString(),
+            o: bar.o,
+            h: bar.h,
+            l: bar.l,
+            c: bar.c,
+            v: bar.v
+          }));
+          provider = 'alpaca';
+        }
+      } catch (error) {
+        console.error('Error fetching from Alpaca:', error);
+        // If this fails as well, we'll return the empty bars array
       }
     }
-  } catch (error: any) {
+    
+    // Return the bars data with metadata
+    return res.json({
+      symbol,
+      interval,
+      bars,
+      count: bars.length,
+      provider
+    });
+    
+  } catch (error) {
     console.error('Error in market data history endpoint:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      error: 'Failed to fetch market data',
+      details: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 
-// API endpoint to get real-time market data quotes
+// GET /api/market-data/quote
+// Get the current price for a symbol
 router.get('/quote', async (req: Request, res: Response) => {
   try {
-    const { symbol } = req.query;
-    
+    const symbol = req.query.symbol as string;
     if (!symbol) {
-      return res.status(400).json({ error: 'Symbol parameter is required' });
+      return res.status(400).json({ error: 'Symbol is required' });
     }
     
-    // Determine if this is a Forex symbol
-    const isForex = /^[A-Z]{3}_[A-Z]{3}$/.test(symbol as string) || 
-                   /^[A-Z]{6}$/.test(symbol as string) && 
-                   ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'NZD'].some(
-                     currency => (symbol as string).includes(currency)
-                   );
+    console.log(`Fetching current price for ${symbol}`);
+    
+    // Determine if the symbol is forex
+    const isForex = isForexSymbol(symbol);
+    
+    let quote = null;
+    let provider = '';
     
     if (isForex) {
-      // Use Oanda for forex quotes
+      // Use Oanda for forex
       try {
-        // Format symbol for Oanda if needed
-        const formattedSymbol = (symbol as string).includes('_') 
-          ? symbol 
-          : `${(symbol as string).substring(0, 3)}_${(symbol as string).substring(3, 6)}`;
+        console.log('Using Oanda API for forex quote');
+        const oandaSymbol = getOandaSymbol(symbol);
         
-        // Make the request to our internal Oanda endpoint
-        const oandaResponse = await axios.get(`${req.protocol}://${req.get('host')}/api/oanda/pricing`, {
-          params: {
-            instrument: formattedSymbol
-          }
-        });
+        const oandaClient = getOandaClient();
+        const response = await oandaClient.getPricing(oandaSymbol);
         
-        // Extract bid and ask prices
-        const bidPrice = parseFloat(oandaResponse.data.bids[0].price);
-        const askPrice = parseFloat(oandaResponse.data.asks[0].price);
-        
-        // Calculate mid price
-        const price = (bidPrice + askPrice) / 2;
-        
-        return res.json({
-          symbol: formattedSymbol,
-          price,
-          bid: bidPrice,
-          ask: askPrice,
-          time: oandaResponse.data.time
-        });
-      } catch (error: any) {
-        console.error('Error fetching Oanda quote:', error.response?.data || error.message);
-        return res.status(500).json({ 
-          error: 'Failed to fetch forex quote', 
-          details: error.response?.data || error.message 
-        });
-      }
-    } else {
-      // Use Alpaca for stock/crypto quotes
-      try {
-        // Check if Alpaca API keys are available
-        const alpacaApiKey = process.env.ALPACA_API_KEY;
-        const alpacaApiSecret = process.env.ALPACA_API_SECRET;
-        
-        if (!alpacaApiKey || !alpacaApiSecret) {
-          return res.status(500).json({ error: 'Alpaca API credentials not configured' });
+        if (response && response.prices && response.prices.length > 0) {
+          const price = response.prices[0];
+          quote = {
+            symbol: oandaSymbol,
+            price: (parseFloat(price.ask) + parseFloat(price.bid)) / 2,
+            bid: parseFloat(price.bid),
+            ask: parseFloat(price.ask),
+            timestamp: new Date(price.time).toISOString()
+          };
+          provider = 'oanda';
         }
-        
-        // The Alpaca API requires the stock ticker without exchange prefix
-        const ticker = (symbol as string).includes(':') 
-          ? (symbol as string).split(':')[1] 
-          : symbol;
-        
-        // Make request to Alpaca API
-        const alpacaResponse = await axios.get('https://data.alpaca.markets/v2/stocks/' + ticker + '/quotes/latest', {
-          headers: {
-            'APCA-API-KEY-ID': alpacaApiKey,
-            'APCA-API-SECRET-KEY': alpacaApiSecret
-          }
-        });
-        
-        // Extract bid and ask prices
-        const bidPrice = parseFloat(alpacaResponse.data.quote.bp);
-        const askPrice = parseFloat(alpacaResponse.data.quote.ap);
-        
-        // Calculate mid price
-        const price = (bidPrice + askPrice) / 2;
-        
-        return res.json({
-          symbol: ticker,
-          price,
-          bid: bidPrice,
-          ask: askPrice,
-          time: alpacaResponse.data.quote.t
-        });
-      } catch (error: any) {
-        console.error('Error fetching Alpaca quote:', error.response?.data || error.message);
-        return res.status(500).json({ 
-          error: 'Failed to fetch stock quote',
-          details: error.response?.data || error.message 
-        });
+      } catch (error) {
+        console.error('Error fetching quote from Oanda:', error);
+        // Fall through to try Alpaca as a backup
       }
     }
-  } catch (error: any) {
+    
+    // If not forex or if Oanda failed, try Alpaca
+    if (!quote) {
+      try {
+        console.log('Using Alpaca API for quote');
+        const alpacaSymbol = getAlpacaSymbol(symbol);
+        
+        const alpacaClient = getAlpacaClient();
+        const response = await alpacaClient.getQuote(alpacaSymbol);
+        
+        if (response) {
+          quote = {
+            symbol: alpacaSymbol,
+            price: (response.askprice + response.bidprice) / 2,
+            bid: response.bidprice,
+            ask: response.askprice,
+            timestamp: new Date(response.timestamp).toISOString()
+          };
+          provider = 'alpaca';
+        }
+      } catch (error) {
+        console.error('Error fetching quote from Alpaca:', error);
+      }
+    }
+    
+    if (quote) {
+      return res.json({
+        ...quote,
+        provider
+      });
+    } else {
+      return res.status(404).json({ 
+        error: 'Unable to fetch quote from any provider',
+        symbol
+      });
+    }
+    
+  } catch (error) {
     console.error('Error in market data quote endpoint:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      error: 'Failed to fetch quote',
+      details: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 
-// Get available symbols
+// GET /api/market-data/symbols
+// Get available symbols from Alpaca and/or Oanda
 router.get('/symbols', async (req: Request, res: Response) => {
   try {
-    // Get common forex symbols from Oanda
-    const forexSymbols = [
-      { id: 'EUR_USD', name: 'Euro / US Dollar', type: 'forex' },
-      { id: 'USD_JPY', name: 'US Dollar / Japanese Yen', type: 'forex' },
-      { id: 'GBP_USD', name: 'British Pound / US Dollar', type: 'forex' },
-      { id: 'USD_CHF', name: 'US Dollar / Swiss Franc', type: 'forex' },
-      { id: 'AUD_USD', name: 'Australian Dollar / US Dollar', type: 'forex' },
-      { id: 'USD_CAD', name: 'US Dollar / Canadian Dollar', type: 'forex' },
-      { id: 'NZD_USD', name: 'New Zealand Dollar / US Dollar', type: 'forex' }
-    ];
+    // Get the requested market type (stocks, crypto, forex)
+    const market = (req.query.market as string || 'all').toLowerCase();
     
-    // Get common stock symbols from Alpaca
-    const stockSymbols = [
-      { id: 'AAPL', name: 'Apple Inc.', type: 'stock' },
-      { id: 'MSFT', name: 'Microsoft Corporation', type: 'stock' },
-      { id: 'AMZN', name: 'Amazon.com Inc.', type: 'stock' },
-      { id: 'GOOGL', name: 'Alphabet Inc.', type: 'stock' },
-      { id: 'META', name: 'Meta Platforms Inc.', type: 'stock' },
-      { id: 'TSLA', name: 'Tesla Inc.', type: 'stock' },
-      { id: 'NVDA', name: 'NVIDIA Corporation', type: 'stock' }
-    ];
+    let symbols: any[] = [];
+    const providers: Record<string, boolean> = {};
     
-    // Get common crypto symbols
-    const cryptoSymbols = [
-      { id: 'BTCUSD', name: 'Bitcoin / US Dollar', type: 'crypto' },
-      { id: 'ETHUSD', name: 'Ethereum / US Dollar', type: 'crypto' },
-      { id: 'SOLUSD', name: 'Solana / US Dollar', type: 'crypto' },
-      { id: 'LTCUSD', name: 'Litecoin / US Dollar', type: 'crypto' },
-      { id: 'ADAUSD', name: 'Cardano / US Dollar', type: 'crypto' },
-      { id: 'DOGEUSD', name: 'Dogecoin / US Dollar', type: 'crypto' },
-      { id: 'DOTUSD', name: 'Polkadot / US Dollar', type: 'crypto' }
-    ];
+    // Get forex symbols from Oanda if requested
+    if (market === 'all' || market === 'forex') {
+      try {
+        console.log('Fetching forex symbols from Oanda');
+        const oandaClient = getOandaClient();
+        const response = await oandaClient.getInstruments();
+        
+        if (response && response.instruments) {
+          const forexSymbols = response.instruments.map((instrument: any) => ({
+            symbol: instrument.name,
+            name: `${instrument.name.replace('_', '/')}`, // EUR_USD becomes EUR/USD
+            type: 'forex',
+            provider: 'oanda'
+          }));
+          
+          symbols = [...symbols, ...forexSymbols];
+          providers.oanda = true;
+        }
+      } catch (error) {
+        console.error('Error fetching forex symbols from Oanda:', error);
+      }
+    }
     
-    // Combine all symbols
-    const allSymbols = [...forexSymbols, ...stockSymbols, ...cryptoSymbols];
+    // Get stocks and crypto symbols from Alpaca if requested
+    if (market === 'all' || market === 'stocks' || market === 'crypto') {
+      try {
+        console.log('Fetching symbols from Alpaca');
+        const alpacaClient = getAlpacaClient();
+        
+        // Get assets from Alpaca
+        const assets = await alpacaClient.getAssets({ 
+          status: 'active',
+          asset_class: market === 'crypto' ? 'crypto' : undefined
+        });
+        
+        if (assets) {
+          const alpacaSymbols = assets.map((asset: any) => ({
+            symbol: asset.symbol,
+            name: asset.name,
+            type: asset.class.toLowerCase(),
+            provider: 'alpaca'
+          }));
+          
+          symbols = [...symbols, ...alpacaSymbols];
+          providers.alpaca = true;
+        }
+      } catch (error) {
+        console.error('Error fetching symbols from Alpaca:', error);
+      }
+    }
     
+    // Return the symbols data with metadata
     return res.json({
-      forex: forexSymbols,
-      stocks: stockSymbols,
-      crypto: cryptoSymbols,
-      all: allSymbols
+      market,
+      count: symbols.length,
+      providers: Object.keys(providers),
+      symbols
     });
-  } catch (error: any) {
-    console.error('Error fetching available symbols:', error);
-    return res.status(500).json({ error: 'Failed to fetch available symbols' });
+    
+  } catch (error) {
+    console.error('Error in market data symbols endpoint:', error);
+    return res.status(500).json({ 
+      error: 'Failed to fetch symbols',
+      details: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 

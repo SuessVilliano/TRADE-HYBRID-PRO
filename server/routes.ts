@@ -381,6 +381,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Push Notifications routes
   app.use("/api/notifications", notificationsRouter);
+  
+  // Oanda Market Data routes
+  app.use("/api/oanda", oandaMarketRoutes);
+  
+  // Unified Market Data routes
+  app.use("/api/market-data", marketDataRoutes);
 
   // News route using multiple sources
   app.get("/api/rss-feeds/news", async (req, res) => {

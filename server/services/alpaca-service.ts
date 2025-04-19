@@ -1,285 +1,266 @@
 import axios from 'axios';
-import { generateId } from '../utils';
 
-// Environment variables for Alpaca API credentials
-const ALPACA_API_KEY = process.env.ALPACA_API_KEY;
-const ALPACA_API_SECRET = process.env.ALPACA_API_SECRET;
-const ALPACA_BASE_URL = 'https://paper-api.alpaca.markets'; // Use paper trading by default
-
-// Store user API keys for multi-user support
-interface AlpacaCredentials {
-  userId: string;
-  apiKey: string;
-  apiSecret: string;
-  label: string;
-  isDefault: boolean;
-  createdAt: Date;
+// Define the Alpaca API client interface
+interface AlpacaClient {
+  getAccount: () => Promise<any>;
+  getBars: (params: any) => Promise<any[]>;
+  getQuote: (symbol: string) => Promise<any>;
+  getAssets: (params?: any) => Promise<any[]>;
+  createOrder: (params: any) => Promise<any>;
+  getOrders: (params?: any) => Promise<any[]>;
+  getPositions: () => Promise<any[]>;
 }
 
-// In-memory store for user credentials (would be in DB in production)
-const userCredentials = new Map<string, AlpacaCredentials[]>();
+// Global client instance
+let alpacaClient: AlpacaClient | null = null;
+
+// Error class for Alpaca API issues
+class AlpacaApiError extends Error {
+  constructor(message: string, public data?: any) {
+    super(message);
+    this.name = 'AlpacaApiError';
+  }
+}
 
 /**
- * Save a user's Alpaca API credentials
+ * Create an Alpaca API client
+ * Uses environment variables for API credentials
  */
-export const saveAlpacaCredentials = (
-  userId: string, 
-  apiKey: string, 
-  apiSecret: string,
-  label: string = 'Default',
-  isDefault: boolean = true
-): AlpacaCredentials => {
-  if (!userCredentials.has(userId)) {
-    userCredentials.set(userId, []);
+export function createAlpacaClient(): AlpacaClient {
+  // Get API key and secret from environment variables
+  const apiKey = process.env.ALPACA_API_KEY;
+  const apiSecret = process.env.ALPACA_API_SECRET;
+  
+  if (!apiKey || !apiSecret) {
+    throw new AlpacaApiError('Alpaca API credentials not found in environment variables');
   }
   
-  // If setting as default, unset any other defaults
-  if (isDefault) {
-    const userCreds = userCredentials.get(userId) || [];
-    userCreds.forEach(cred => {
-      cred.isDefault = false;
-    });
-  }
+  // Define the API base URL - Alpaca has both paper and live environments
+  // By default, use the paper (sandbox) environment
+  const baseUrl = process.env.ALPACA_API_URL || 'https://paper-api.alpaca.markets';
+  const dataBaseUrl = process.env.ALPACA_DATA_URL || 'https://data.alpaca.markets';
   
-  const credentials: AlpacaCredentials = {
-    userId,
-    apiKey,
-    apiSecret,
-    label,
-    isDefault,
-    createdAt: new Date()
-  };
-  
-  userCredentials.get(userId)?.push(credentials);
-  
-  return credentials;
-};
-
-/**
- * Get a user's default Alpaca credentials
- */
-export const getDefaultAlpacaCredentials = (userId: string): AlpacaCredentials | null => {
-  const userCreds = userCredentials.get(userId);
-  if (!userCreds || userCreds.length === 0) {
-    return null;
-  }
-  
-  // Find default credentials or use first set
-  return userCreds.find(cred => cred.isDefault) || userCreds[0];
-};
-
-/**
- * Create Alpaca API instance with proper headers
- */
-const createAlpacaClient = (apiKey?: string, apiSecret?: string) => {
-  const key = apiKey || ALPACA_API_KEY;
-  const secret = apiSecret || ALPACA_API_SECRET;
-  
-  if (!key || !secret) {
-    throw new Error('Alpaca API credentials not configured');
-  }
-  
-  return axios.create({
-    baseURL: ALPACA_BASE_URL,
+  // Create axios instances with default headers
+  const tradeApi = axios.create({
+    baseURL: `${baseUrl}/v2`,
     headers: {
-      'APCA-API-KEY-ID': key,
-      'APCA-API-SECRET-KEY': secret,
+      'APCA-API-KEY-ID': apiKey,
+      'APCA-API-SECRET-KEY': apiSecret,
       'Content-Type': 'application/json'
     }
   });
-};
+  
+  const dataApi = axios.create({
+    baseURL: `${dataBaseUrl}/v2`,
+    headers: {
+      'APCA-API-KEY-ID': apiKey,
+      'APCA-API-SECRET-KEY': apiSecret,
+      'Content-Type': 'application/json'
+    }
+  });
+  
+  // Implement the client interface with API methods
+  const client: AlpacaClient = {
+    /**
+     * Get account information
+     * @returns Promise with account data
+     */
+    getAccount: async () => {
+      try {
+        const response = await tradeApi.get('/account');
+        return response.data;
+      } catch (error) {
+        console.error('Alpaca API error in getAccount:', error);
+        throw new AlpacaApiError(
+          'Failed to fetch account information',
+          axios.isAxiosError(error) ? error.response?.data : error
+        );
+      }
+    },
+    
+    /**
+     * Get historical bars (candlestick data)
+     * @param params Parameters like symbol, timeframe, limit, etc.
+     * @returns Promise with bar data
+     */
+    getBars: async (params: any = {}) => {
+      try {
+        // Required parameters
+        if (!params.symbol) {
+          throw new AlpacaApiError('Symbol is required for getBars');
+        }
+        
+        // Default parameters
+        const queryParams = {
+          timeframe: params.timeframe || '1Day',
+          limit: params.limit || 100,
+          adjustment: params.adjustment || 'raw',
+          ...params
+        };
+        
+        // API response format changed between v1 and v2
+        const response = await dataApi.get('/stocks/bars', {
+          params: queryParams
+        });
+        
+        // Extract bars from the nested structure
+        if (response.data && response.data.bars) {
+          return response.data.bars;
+        } else if (Array.isArray(response.data)) {
+          return response.data;
+        } else {
+          return [];
+        }
+      } catch (error) {
+        console.error('Alpaca API error in getBars:', error);
+        throw new AlpacaApiError(
+          `Failed to fetch bars for ${params.symbol}`,
+          axios.isAxiosError(error) ? error.response?.data : error
+        );
+      }
+    },
+    
+    /**
+     * Get current quote for a symbol
+     * @param symbol Stock or crypto symbol
+     * @returns Promise with quote data
+     */
+    getQuote: async (symbol: string) => {
+      try {
+        const response = await dataApi.get(`/stocks/${symbol}/quotes/latest`);
+        return response.data;
+      } catch (error) {
+        console.error(`Alpaca API error in getQuote for ${symbol}:`, error);
+        throw new AlpacaApiError(
+          `Failed to fetch quote for ${symbol}`,
+          axios.isAxiosError(error) ? error.response?.data : error
+        );
+      }
+    },
+    
+    /**
+     * Get list of available tradable assets
+     * @param params Filter parameters like status, asset_class, etc.
+     * @returns Promise with assets data
+     */
+    getAssets: async (params: any = {}) => {
+      try {
+        const response = await tradeApi.get('/assets', {
+          params
+        });
+        
+        return response.data;
+      } catch (error) {
+        console.error('Alpaca API error in getAssets:', error);
+        throw new AlpacaApiError(
+          'Failed to fetch assets',
+          axios.isAxiosError(error) ? error.response?.data : error
+        );
+      }
+    },
+    
+    /**
+     * Create a new order
+     * @param params Order parameters like symbol, qty, side, type, etc.
+     * @returns Promise with order confirmation
+     */
+    createOrder: async (params: any) => {
+      try {
+        // Required parameters check
+        if (!params.symbol || !params.qty || !params.side || !params.type) {
+          throw new AlpacaApiError('Missing required parameters for createOrder');
+        }
+        
+        const response = await tradeApi.post('/orders', params);
+        return response.data;
+      } catch (error) {
+        console.error('Alpaca API error in createOrder:', error);
+        throw new AlpacaApiError(
+          'Failed to create order',
+          axios.isAxiosError(error) ? error.response?.data : error
+        );
+      }
+    },
+    
+    /**
+     * Get list of orders
+     * @param params Filter parameters like status, limit, etc.
+     * @returns Promise with orders data
+     */
+    getOrders: async (params: any = {}) => {
+      try {
+        const response = await tradeApi.get('/orders', {
+          params
+        });
+        
+        return response.data;
+      } catch (error) {
+        console.error('Alpaca API error in getOrders:', error);
+        throw new AlpacaApiError(
+          'Failed to fetch orders',
+          axios.isAxiosError(error) ? error.response?.data : error
+        );
+      }
+    },
+    
+    /**
+     * Get list of positions
+     * @returns Promise with positions data
+     */
+    getPositions: async () => {
+      try {
+        const response = await tradeApi.get('/positions');
+        return response.data;
+      } catch (error) {
+        console.error('Alpaca API error in getPositions:', error);
+        throw new AlpacaApiError(
+          'Failed to fetch positions',
+          axios.isAxiosError(error) ? error.response?.data : error
+        );
+      }
+    }
+  };
+  
+  return client;
+}
 
 /**
- * Test connection to Alpaca API with provided credentials
+ * Get the Alpaca client instance, creating it if necessary
+ * @returns AlpacaClient instance
  */
-export const testAlpacaConnection = async (apiKey?: string, apiSecret?: string): Promise<boolean> => {
+export function getAlpacaClient(): AlpacaClient {
+  if (!alpacaClient) {
+    try {
+      alpacaClient = createAlpacaClient();
+      console.log('Alpaca client initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize Alpaca client:', error);
+      throw error;
+    }
+  }
+  
+  return alpacaClient;
+}
+
+/**
+ * Reset the Alpaca client instance (useful for testing or after environment changes)
+ */
+export function resetAlpacaClient(): void {
+  alpacaClient = null;
+}
+
+/**
+ * Check if the Alpaca API connection is working
+ * @returns Promise<boolean> true if connected successfully
+ */
+export async function checkAlpacaConnection(): Promise<boolean> {
   try {
-    const client = createAlpacaClient(apiKey, apiSecret);
-    const response = await client.get('/v2/account');
-    return response.status === 200;
+    const client = getAlpacaClient();
+    const account = await client.getAccount();
+    
+    return !!account;
   } catch (error) {
-    console.error('Error testing Alpaca connection:', error);
+    console.error('Alpaca connection check failed:', error);
     return false;
   }
-};
-
-/**
- * Execute a trade through Alpaca
- */
-export const executeTrade = async (
-  symbol: string, 
-  side: 'buy' | 'sell', 
-  quantity: number, 
-  orderType: string = 'market',
-  limitPrice?: number,
-  stopPrice?: number,
-  timeInForce: string = 'day',
-  clientOrderId?: string,
-  takeProfitPrice?: number,
-  stopLossPrice?: number,
-  extendedHours: boolean = false,
-  userId?: string
-) => {
-  try {
-    let apiKey = ALPACA_API_KEY;
-    let apiSecret = ALPACA_API_SECRET;
-    
-    // If userId is provided, try to use their credentials
-    if (userId) {
-      const userCreds = getDefaultAlpacaCredentials(userId);
-      if (userCreds) {
-        apiKey = userCreds.apiKey;
-        apiSecret = userCreds.apiSecret;
-      }
-    }
-    
-    const client = createAlpacaClient(apiKey, apiSecret);
-    
-    // Prepare the order payload
-    const orderPayload: any = {
-      symbol,
-      qty: quantity,
-      side,
-      type: orderType,
-      time_in_force: timeInForce,
-      extended_hours: extendedHours,
-      client_order_id: clientOrderId || generateId()
-    };
-    
-    // Add limit price if provided and order type is appropriate
-    if (limitPrice && (orderType === 'limit' || orderType === 'stop_limit')) {
-      orderPayload.limit_price = limitPrice;
-    }
-    
-    // Add stop price if provided and order type is appropriate
-    if (stopPrice && (orderType === 'stop' || orderType === 'stop_limit')) {
-      orderPayload.stop_price = stopPrice;
-    }
-    
-    // Submit the order
-    const response = await client.post('/v2/orders', orderPayload);
-    
-    // If we have take profit or stop loss, create bracket orders
-    if (response.status === 200 && (takeProfitPrice || stopLossPrice)) {
-      const orderId = response.data.id;
-      
-      // Create take profit order if specified
-      if (takeProfitPrice) {
-        await client.post('/v2/orders', {
-          symbol,
-          qty: quantity,
-          side: side === 'buy' ? 'sell' : 'buy', // Opposite of entry
-          type: 'limit',
-          time_in_force: 'gtc',
-          limit_price: takeProfitPrice,
-          order_class: 'oto',
-          order_attributes: {
-            original_order_id: orderId
-          }
-        });
-      }
-      
-      // Create stop loss order if specified
-      if (stopLossPrice) {
-        await client.post('/v2/orders', {
-          symbol,
-          qty: quantity,
-          side: side === 'buy' ? 'sell' : 'buy', // Opposite of entry
-          type: 'stop',
-          time_in_force: 'gtc',
-          stop_price: stopLossPrice,
-          order_class: 'oto',
-          order_attributes: {
-            original_order_id: orderId
-          }
-        });
-      }
-    }
-    
-    return response.data;
-  } catch (error: any) {
-    console.error('Error executing Alpaca trade:', error.response?.data || error.message);
-    throw error;
-  }
-};
-
-/**
- * Get account info from Alpaca
- */
-export const getAccountInfo = async (userId?: string) => {
-  try {
-    let apiKey = ALPACA_API_KEY;
-    let apiSecret = ALPACA_API_SECRET;
-    
-    // If userId is provided, try to use their credentials
-    if (userId) {
-      const userCreds = getDefaultAlpacaCredentials(userId);
-      if (userCreds) {
-        apiKey = userCreds.apiKey;
-        apiSecret = userCreds.apiSecret;
-      }
-    }
-    
-    const client = createAlpacaClient(apiKey, apiSecret);
-    const response = await client.get('/v2/account');
-    
-    return response.data;
-  } catch (error: any) {
-    console.error('Error getting Alpaca account info:', error.response?.data || error.message);
-    throw error;
-  }
-};
-
-/**
- * Get open positions from Alpaca
- */
-export const getPositions = async (userId?: string) => {
-  try {
-    let apiKey = ALPACA_API_KEY;
-    let apiSecret = ALPACA_API_SECRET;
-    
-    // If userId is provided, try to use their credentials
-    if (userId) {
-      const userCreds = getDefaultAlpacaCredentials(userId);
-      if (userCreds) {
-        apiKey = userCreds.apiKey;
-        apiSecret = userCreds.apiSecret;
-      }
-    }
-    
-    const client = createAlpacaClient(apiKey, apiSecret);
-    const response = await client.get('/v2/positions');
-    
-    return response.data;
-  } catch (error: any) {
-    console.error('Error getting Alpaca positions:', error.response?.data || error.message);
-    throw error;
-  }
-};
-
-/**
- * Close all positions with Alpaca
- */
-export const closeAllPositions = async (userId?: string) => {
-  try {
-    let apiKey = ALPACA_API_KEY;
-    let apiSecret = ALPACA_API_SECRET;
-    
-    // If userId is provided, try to use their credentials
-    if (userId) {
-      const userCreds = getDefaultAlpacaCredentials(userId);
-      if (userCreds) {
-        apiKey = userCreds.apiKey;
-        apiSecret = userCreds.apiSecret;
-      }
-    }
-    
-    const client = createAlpacaClient(apiKey, apiSecret);
-    const response = await client.delete('/v2/positions');
-    
-    return response.data;
-  } catch (error: any) {
-    console.error('Error closing Alpaca positions:', error.response?.data || error.message);
-    throw error;
-  }
-};
+}

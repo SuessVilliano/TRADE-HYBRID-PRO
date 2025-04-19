@@ -1,216 +1,172 @@
-import { Router, Request, Response } from 'express';
-import axios from 'axios';
-import { authMiddleware } from '../middleware/auth-middleware';
+import express, { Request, Response } from 'express';
+import { getOandaClient } from '../services/oanda-service';
 
-const router = Router();
+const router = express.Router();
 
-// Oanda API URLs
-const OANDA_PRACTICE_URL = 'https://api-fxpractice.oanda.com';
-const OANDA_LIVE_URL = 'https://api-fxtrade.oanda.com';
-const OANDA_STREAM_PRACTICE_URL = 'https://stream-fxpractice.oanda.com';
-const OANDA_STREAM_LIVE_URL = 'https://stream-fxtrade.oanda.com';
-
-// Create an Oanda API client
-const createOandaClient = (apiToken: string, isPractice: boolean = true) => {
-  const baseURL = isPractice ? OANDA_PRACTICE_URL : OANDA_LIVE_URL;
+// Helper function to standardize Oanda forex symbols
+function standardizeOandaSymbol(symbol: string): string {
+  // Extract the ticker symbol from formats like EURUSD or EUR_USD
+  let cleanSymbol = symbol;
   
-  return axios.create({
-    baseURL,
-    headers: {
-      'Authorization': `Bearer ${apiToken}`,
-      'Content-Type': 'application/json',
-      'Accept-Datetime-Format': 'RFC3339'
-    }
-  });
-};
+  // Convert EURUSD to EUR_USD format if needed
+  if (!cleanSymbol.includes('_') && cleanSymbol.length === 6) {
+    cleanSymbol = `${cleanSymbol.substring(0, 3)}_${cleanSymbol.substring(3, 6)}`;
+  }
+  
+  return cleanSymbol;
+}
 
-// Get candle data for a specific instrument
+// GET /api/oanda/candles
+// Get candlestick data for a forex pair
 router.get('/candles', async (req: Request, res: Response) => {
   try {
-    const { instrument, granularity = 'H1', count = 100 } = req.query;
-    
-    if (!instrument) {
-      return res.status(400).json({ error: 'Instrument parameter is required' });
+    const symbol = req.query.symbol as string;
+    if (!symbol) {
+      return res.status(400).json({ error: 'Symbol is required' });
     }
     
-    // Format instrument for Oanda if needed (e.g., 'EURUSD' -> 'EUR_USD')
-    const formattedInstrument = (instrument as string).includes('_') 
-      ? instrument 
-      : `${(instrument as string).substring(0, 3)}_${(instrument as string).substring(3, 6)}`;
+    // Convert timeframe to Oanda format granularity
+    const timeframe = req.query.timeframe as string || 'H1';
+    const count = parseInt(req.query.count as string) || 100;
     
-    // Get API token from environment variables
-    const apiToken = process.env.OANDA_API_TOKEN;
-    if (!apiToken) {
-      return res.status(500).json({ error: 'OANDA API token not configured' });
-    }
+    console.log(`Fetching Oanda candles for ${symbol} with timeframe ${timeframe}`);
     
-    // Get account ID (this would typically be stored with the user's profile)
-    const accountId = process.env.OANDA_ACCOUNT_ID || '';
-    if (!accountId) {
-      // Try to get the account ID from the API
-      const client = createOandaClient(apiToken);
-      const accountsResponse = await client.get('/v3/accounts');
-      
-      if (!accountsResponse.data.accounts || accountsResponse.data.accounts.length === 0) {
-        return res.status(500).json({ error: 'No OANDA accounts found' });
-      }
-      
-      // Use the first account
-      const firstAccountId = accountsResponse.data.accounts[0].id;
-      console.log(`Using Oanda account ID: ${firstAccountId}`);
-      
-      // Make the actual candles request
-      const candlesResponse = await client.get(`/v3/instruments/${formattedInstrument}/candles`, {
-        params: {
-          granularity,
-          count
-        }
-      });
-      
-      // Transform the Oanda candle format to our standard format
-      const candles = candlesResponse.data.candles.map((candle: any) => ({
+    const oandaSymbol = standardizeOandaSymbol(symbol);
+    const oandaClient = getOandaClient();
+    
+    // Map common timeframes to Oanda granularity
+    let granularity = timeframe;
+    
+    // If using common formats like 1h, 4h, convert to Oanda format
+    if (timeframe === '1m') granularity = 'M1';
+    else if (timeframe === '5m') granularity = 'M5';
+    else if (timeframe === '15m') granularity = 'M15';
+    else if (timeframe === '30m') granularity = 'M30';
+    else if (timeframe === '1h') granularity = 'H1';
+    else if (timeframe === '4h') granularity = 'H4';
+    else if (timeframe === '1d') granularity = 'D';
+    else if (timeframe === '1w') granularity = 'W';
+    
+    const response = await oandaClient.getCandles(oandaSymbol, {
+      granularity,
+      count
+    });
+    
+    if (response && response.candles) {
+      // Transform the data to a standardized format
+      const candles = response.candles.map((candle: any) => ({
         time: candle.time,
-        o: candle.mid.o,
-        h: candle.mid.h,
-        l: candle.mid.l,
-        c: candle.mid.c,
-        v: candle.volume,
+        open: parseFloat(candle.mid.o),
+        high: parseFloat(candle.mid.h),
+        low: parseFloat(candle.mid.l),
+        close: parseFloat(candle.mid.c),
+        volume: 0, // Oanda doesn't provide volume for forex
         complete: candle.complete
       }));
       
-      return res.json({ 
-        instrument: formattedInstrument,
-        granularity,
-        candles 
+      return res.json({
+        symbol: oandaSymbol,
+        timeframe: granularity,
+        count: candles.length,
+        candles
       });
     } else {
-      // Use provided account ID
-      const client = createOandaClient(apiToken);
-      const candlesResponse = await client.get(`/v3/instruments/${formattedInstrument}/candles`, {
-        params: {
-          granularity,
-          count
-        }
-      });
-      
-      // Transform the Oanda candle format to our standard format
-      const candles = candlesResponse.data.candles.map((candle: any) => ({
-        time: candle.time,
-        o: candle.mid.o,
-        h: candle.mid.h,
-        l: candle.mid.l,
-        c: candle.mid.c,
-        v: candle.volume,
-        complete: candle.complete
-      }));
-      
-      return res.json({ 
-        instrument: formattedInstrument,
-        granularity,
-        candles 
+      return res.status(404).json({ 
+        error: 'No candle data found',
+        symbol: oandaSymbol,
+        timeframe: granularity
       });
     }
-  } catch (error: any) {
-    console.error('Error fetching Oanda candles:', error.response?.data || error.message);
-    return res.status(error.response?.status || 500).json({ 
-      error: error.response?.data?.errorMessage || error.message || 'Failed to fetch candles' 
+  } catch (error) {
+    console.error('Error fetching Oanda candles:', error);
+    return res.status(500).json({ 
+      error: 'Failed to fetch candle data',
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 });
 
-// Get current pricing for a specific instrument
+// GET /api/oanda/pricing
+// Get current pricing for a forex pair
 router.get('/pricing', async (req: Request, res: Response) => {
   try {
-    const { instrument } = req.query;
-    
-    if (!instrument) {
-      return res.status(400).json({ error: 'Instrument parameter is required' });
+    const symbol = req.query.symbol as string;
+    if (!symbol) {
+      return res.status(400).json({ error: 'Symbol is required' });
     }
     
-    // Format instrument for Oanda if needed (e.g., 'EURUSD' -> 'EUR_USD')
-    const formattedInstrument = (instrument as string).includes('_') 
-      ? instrument 
-      : `${(instrument as string).substring(0, 3)}_${(instrument as string).substring(3, 6)}`;
+    console.log(`Fetching Oanda pricing for ${symbol}`);
     
-    // Get API token from environment variables
-    const apiToken = process.env.OANDA_API_TOKEN;
-    if (!apiToken) {
-      return res.status(500).json({ error: 'OANDA API token not configured' });
-    }
+    const oandaSymbol = standardizeOandaSymbol(symbol);
+    const oandaClient = getOandaClient();
     
-    // Get account ID
-    const accountId = process.env.OANDA_ACCOUNT_ID || '';
-    if (!accountId) {
-      // Try to get the account ID from the API
-      const client = createOandaClient(apiToken);
-      const accountsResponse = await client.get('/v3/accounts');
+    const response = await oandaClient.getPricing(oandaSymbol);
+    
+    if (response && response.prices && response.prices.length > 0) {
+      // Get the first price object
+      const price = response.prices[0];
       
-      if (!accountsResponse.data.accounts || accountsResponse.data.accounts.length === 0) {
-        return res.status(500).json({ error: 'No OANDA accounts found' });
-      }
+      // Calculate the mid price from bid and ask
+      const midPrice = (parseFloat(price.ask) + parseFloat(price.bid)) / 2;
       
-      // Use the first account
-      const firstAccountId = accountsResponse.data.accounts[0].id;
-      console.log(`Using Oanda account ID: ${firstAccountId}`);
-      
-      // Make the pricing request
-      const pricingResponse = await client.get(`/v3/accounts/${firstAccountId}/pricing`, {
-        params: {
-          instruments: formattedInstrument
-        }
+      return res.json({
+        symbol: oandaSymbol,
+        time: price.time,
+        bid: parseFloat(price.bid),
+        ask: parseFloat(price.ask),
+        price: midPrice, // Average of bid and ask
+        spread: parseFloat(price.ask) - parseFloat(price.bid),
+        provider: 'oanda'
       });
-      
-      if (!pricingResponse.data.prices || pricingResponse.data.prices.length === 0) {
-        return res.status(404).json({ error: 'No pricing data found for this instrument' });
-      }
-      
-      return res.json(pricingResponse.data.prices[0]);
     } else {
-      // Use provided account ID
-      const client = createOandaClient(apiToken);
-      const pricingResponse = await client.get(`/v3/accounts/${accountId}/pricing`, {
-        params: {
-          instruments: formattedInstrument
-        }
+      return res.status(404).json({ 
+        error: 'No pricing data found',
+        symbol: oandaSymbol
       });
-      
-      if (!pricingResponse.data.prices || pricingResponse.data.prices.length === 0) {
-        return res.status(404).json({ error: 'No pricing data found for this instrument' });
-      }
-      
-      return res.json(pricingResponse.data.prices[0]);
     }
-  } catch (error: any) {
-    console.error('Error fetching Oanda pricing:', error.response?.data || error.message);
-    return res.status(error.response?.status || 500).json({ 
-      error: error.response?.data?.errorMessage || error.message || 'Failed to fetch pricing data' 
+  } catch (error) {
+    console.error('Error fetching Oanda pricing:', error);
+    return res.status(500).json({ 
+      error: 'Failed to fetch pricing data',
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 });
 
-// Get available instruments
+// GET /api/oanda/instruments
+// Get available instruments (forex pairs) from Oanda
 router.get('/instruments', async (req: Request, res: Response) => {
   try {
-    // Get API token from environment variables
-    const apiToken = process.env.OANDA_API_TOKEN;
-    if (!apiToken) {
-      return res.status(500).json({ error: 'OANDA API token not configured' });
+    console.log('Fetching Oanda instruments');
+    
+    const oandaClient = getOandaClient();
+    const response = await oandaClient.getInstruments();
+    
+    if (response && response.instruments) {
+      // Transform to a more usable format
+      const instruments = response.instruments.map((instrument: any) => ({
+        name: instrument.name,
+        displayName: instrument.name.replace('_', '/'), // EUR_USD -> EUR/USD
+        type: 'forex',
+        pipLocation: instrument.pipLocation,
+        marginRate: instrument.marginRate,
+        minimumTradeSize: instrument.minimumTradeSize
+      }));
+      
+      return res.json({
+        count: instruments.length,
+        instruments
+      });
+    } else {
+      return res.status(404).json({ 
+        error: 'No instruments found'
+      });
     }
-    
-    const client = createOandaClient(apiToken);
-    
-    // Unfortunately, OANDA doesn't provide a simple endpoint to list all instruments
-    // So we'll return a curated list of common forex pairs
-    const forexPairs = [
-      'EUR_USD', 'USD_JPY', 'GBP_USD', 'USD_CHF', 'AUD_USD', 'USD_CAD',
-      'NZD_USD', 'EUR_GBP', 'EUR_JPY', 'GBP_JPY', 'AUD_JPY', 'EUR_AUD'
-    ];
-    
-    return res.json({ instruments: forexPairs });
-  } catch (error: any) {
-    console.error('Error fetching Oanda instruments:', error.response?.data || error.message);
-    return res.status(error.response?.status || 500).json({ 
-      error: error.response?.data?.errorMessage || error.message || 'Failed to fetch instruments' 
+  } catch (error) {
+    console.error('Error fetching Oanda instruments:', error);
+    return res.status(500).json({ 
+      error: 'Failed to fetch instruments',
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 });
