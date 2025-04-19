@@ -1,13 +1,15 @@
-import { sql } from 'drizzle-orm';
-import { db } from '../storage';
+import { eq } from 'drizzle-orm';
+import { storage } from '../storage';
 import { tradeSignals } from '../../shared/schema';
-import { eq, and } from 'drizzle-orm';
 import { log } from '../utils/logger';
 import axios from 'axios';
 import { tradingViewService } from './tradingview-service';
 
 // Type for the multiplayer server websocket interface
 import { MultiplayerServer } from '../multiplayer';
+
+// Use the storage.db instance that's correctly configured
+const db = storage.db;
 
 /**
  * SignalUpdaterService
@@ -92,9 +94,14 @@ class SignalUpdaterService {
    * Process a single signal
    */
   private async processSignal(signal: any): Promise<void> {
-    const { id, symbol, side, entryPrice, stopLoss, takeProfit } = signal;
+    const { id, symbol, side, entryPrice, stopLoss, metadata } = signal;
     
     try {
+      // Skip processing if signal is already closed or cancelled
+      if (signal.status !== 'active') {
+        return;
+      }
+      
       // Get current price from TradingView or another source
       const currentPrice = await this.getCurrentPrice(symbol);
       
@@ -105,17 +112,72 @@ class SignalUpdaterService {
       
       log(`Signal ${id} - ${symbol} current price: ${currentPrice}`, 'signal-updater');
       
-      // Check if signal should be updated
+      // Extract take profit targets from signal
+      // First check standard takeProfit field
+      let takeProfit1 = signal.takeProfit;
+      
+      // Then check for additional TPs in metadata
+      let takeProfit2 = null;
+      let takeProfit3 = null;
+      let tpCurrentTarget = 1; // Default to TP1
+      
+      // Check if metadata exists and has TP information
+      if (metadata) {
+        try {
+          const metaObj = typeof metadata === 'string' 
+            ? JSON.parse(metadata) 
+            : metadata;
+            
+          // Get TP values from metadata
+          takeProfit2 = metaObj.takeProfit2 || metaObj.TP2 || null;
+          takeProfit3 = metaObj.takeProfit3 || metaObj.TP3 || null;
+          
+          // Check if any TPs have already been hit (to track current target)
+          if (metaObj.tpHit) {
+            tpCurrentTarget = metaObj.tpCurrentTarget || 1;
+          }
+        } catch (e) {
+          log(`Error parsing signal metadata: ${e}`, 'signal-updater');
+        }
+      }
+      
+      // Determine if any price targets have been hit
       if (side === 'buy') {
         // For buy signals
         if (stopLoss && currentPrice <= stopLoss) {
           // Stop loss hit
           await this.updateSignalStatus(id, 'closed', currentPrice, 'stop_loss');
           log(`Buy signal ${id} (${symbol}) hit stop loss at ${currentPrice}`, 'signal-updater');
-        } else if (takeProfit && currentPrice >= takeProfit) {
-          // Take profit hit
-          await this.updateSignalStatus(id, 'closed', currentPrice, 'take_profit');
-          log(`Buy signal ${id} (${symbol}) hit take profit at ${currentPrice}`, 'signal-updater');
+        } 
+        // Check take profit targets (in order of priority)
+        else if (tpCurrentTarget === 3 && takeProfit3 && currentPrice >= parseFloat(takeProfit3)) {
+          // TP3 hit (final target)
+          await this.updateSignalStatus(id, 'closed', currentPrice, 'take_profit_3');
+          log(`Buy signal ${id} (${symbol}) hit TP3 at ${currentPrice}`, 'signal-updater');
+        }
+        else if (tpCurrentTarget === 2 && takeProfit2 && currentPrice >= parseFloat(takeProfit2)) {
+          // TP2 hit
+          if (takeProfit3) {
+            // If TP3 exists, update status to indicate TP2 hit, but keep signal active
+            await this.updateTpStatus(id, currentPrice, 2, 3);
+            log(`Buy signal ${id} (${symbol}) hit TP2 at ${currentPrice}, moving to TP3`, 'signal-updater');
+          } else {
+            // If no TP3, close the signal
+            await this.updateSignalStatus(id, 'closed', currentPrice, 'take_profit_2');
+            log(`Buy signal ${id} (${symbol}) hit final TP2 at ${currentPrice}`, 'signal-updater');
+          }
+        }
+        else if (tpCurrentTarget === 1 && takeProfit1 && currentPrice >= parseFloat(takeProfit1)) {
+          // TP1 hit
+          if (takeProfit2) {
+            // If TP2 exists, update status to indicate TP1 hit, but keep signal active
+            await this.updateTpStatus(id, currentPrice, 1, 2);
+            log(`Buy signal ${id} (${symbol}) hit TP1 at ${currentPrice}, moving to TP2`, 'signal-updater');
+          } else {
+            // If no TP2, close the signal
+            await this.updateSignalStatus(id, 'closed', currentPrice, 'take_profit_1');
+            log(`Buy signal ${id} (${symbol}) hit final TP1 at ${currentPrice}`, 'signal-updater');
+          }
         }
       } else if (side === 'sell') {
         // For sell signals
@@ -123,14 +185,92 @@ class SignalUpdaterService {
           // Stop loss hit
           await this.updateSignalStatus(id, 'closed', currentPrice, 'stop_loss');
           log(`Sell signal ${id} (${symbol}) hit stop loss at ${currentPrice}`, 'signal-updater');
-        } else if (takeProfit && currentPrice <= takeProfit) {
-          // Take profit hit
-          await this.updateSignalStatus(id, 'closed', currentPrice, 'take_profit');
-          log(`Sell signal ${id} (${symbol}) hit take profit at ${currentPrice}`, 'signal-updater');
+        } 
+        // Check take profit targets (in order of priority)
+        else if (tpCurrentTarget === 3 && takeProfit3 && currentPrice <= parseFloat(takeProfit3)) {
+          // TP3 hit (final target)
+          await this.updateSignalStatus(id, 'closed', currentPrice, 'take_profit_3');
+          log(`Sell signal ${id} (${symbol}) hit TP3 at ${currentPrice}`, 'signal-updater');
+        }
+        else if (tpCurrentTarget === 2 && takeProfit2 && currentPrice <= parseFloat(takeProfit2)) {
+          // TP2 hit
+          if (takeProfit3) {
+            // If TP3 exists, update status to indicate TP2 hit, but keep signal active
+            await this.updateTpStatus(id, currentPrice, 2, 3);
+            log(`Sell signal ${id} (${symbol}) hit TP2 at ${currentPrice}, moving to TP3`, 'signal-updater');
+          } else {
+            // If no TP3, close the signal
+            await this.updateSignalStatus(id, 'closed', currentPrice, 'take_profit_2');
+            log(`Sell signal ${id} (${symbol}) hit final TP2 at ${currentPrice}`, 'signal-updater');
+          }
+        }
+        else if (tpCurrentTarget === 1 && takeProfit1 && currentPrice <= parseFloat(takeProfit1)) {
+          // TP1 hit
+          if (takeProfit2) {
+            // If TP2 exists, update status to indicate TP1 hit, but keep signal active
+            await this.updateTpStatus(id, currentPrice, 1, 2);
+            log(`Sell signal ${id} (${symbol}) hit TP1 at ${currentPrice}, moving to TP2`, 'signal-updater');
+          } else {
+            // If no TP2, close the signal
+            await this.updateSignalStatus(id, 'closed', currentPrice, 'take_profit_1');
+            log(`Sell signal ${id} (${symbol}) hit final TP1 at ${currentPrice}`, 'signal-updater');
+          }
         }
       }
     } catch (error) {
       log(`Error processing signal ${id}: ${error}`, 'signal-updater');
+    }
+  }
+  
+  /**
+   * Update a signal's take profit status (for multi-target signals)
+   * This keeps the signal active but updates metadata to reflect TP status
+   */
+  private async updateTpStatus(
+    id: string,
+    hitPrice: number,
+    currentTpHit: number,
+    nextTpTarget: number
+  ): Promise<void> {
+    try {
+      // Get current signal
+      const signalResult = await db.select().from(tradeSignals).where(eq(tradeSignals.id, id)).limit(1);
+      
+      if (!signalResult || signalResult.length === 0) {
+        log(`Signal ${id} not found`, 'signal-updater');
+        return;
+      }
+      
+      const signal = signalResult[0];
+      
+      // Parse existing metadata
+      let metadataObj = signal.metadata 
+        ? (typeof signal.metadata === 'string' ? JSON.parse(signal.metadata) : signal.metadata)
+        : {};
+        
+      // Update metadata with TP information
+      metadataObj = {
+        ...metadataObj,
+        tpHit: true,
+        tpCurrentTarget: nextTpTarget,
+        [`tp${currentTpHit}HitPrice`]: hitPrice,
+        [`tp${currentTpHit}HitTime`]: new Date().toISOString(),
+        lastUpdated: new Date().toISOString()
+      };
+      
+      // Update the signal in the database
+      await db.update(tradeSignals)
+        .set({
+          metadata: metadataObj,
+          updatedAt: new Date()
+        })
+        .where(eq(tradeSignals.id, id));
+      
+      log(`Updated signal ${id} TP status: TP${currentTpHit} hit at ${hitPrice}, now targeting TP${nextTpTarget}`, 'signal-updater');
+      
+      // TODO: Broadcast the partial TP hit via WebSocket if needed
+    } catch (error) {
+      log(`Error updating TP status for signal ${id}: ${error}`, 'signal-updater');
     }
   }
   
@@ -172,11 +312,16 @@ class SignalUpdaterService {
           closePrice,
           pnl,
           closedAt: new Date(),
-          metadata: {
-            ...signalData.metadata,
-            closeReason,
-            closedBy: 'signal_updater'
-          },
+          metadata: signalData.metadata 
+            ? { 
+                ...JSON.parse(JSON.stringify(signalData.metadata)),
+                closeReason,
+                closedBy: 'signal_updater'
+              }
+            : { 
+                closeReason,
+                closedBy: 'signal_updater'
+              },
           updatedAt: new Date()
         })
         .where(eq(tradeSignals.id, id));
