@@ -22,6 +22,24 @@ export const webhookConfigSchema = z.object({
   endpoint: z.string().optional(),
   isActive: z.boolean().default(true),
   settings: z.record(z.any()).optional(),
+  // Enhanced settings for broker-specific configurations
+  brokerConfig: z.object({
+    // Which broker account to use for trade execution
+    brokerAccountId: z.string().optional(),
+    // Trade parameters
+    defaultQuantity: z.number().positive().optional(),
+    risk: z.number().min(0).max(100).optional(), // Risk percentage per trade
+    stopLossStrategy: z.enum(['fixed', 'percentage', 'atr', 'none']).optional(),
+    stopLossValue: z.number().optional(),
+    takeProfitStrategy: z.enum(['fixed', 'percentage', 'riskReward', 'none']).optional(),
+    takeProfitValue: z.number().optional(),
+    trailingStop: z.boolean().optional(),
+    trailingStopValue: z.number().optional(),
+    // Processing options
+    allowReversals: z.boolean().optional(),
+    closePositionsOnOpposite: z.boolean().optional(),
+    autoAdjustQuantity: z.boolean().optional()
+  }).optional(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 });
@@ -180,14 +198,26 @@ export const webhookExecutionSchema = z.object({
   webhookId: z.string(),
   userId: z.string(),
   broker: z.string().min(1, 'Broker is required'),
+  brokerAccountId: z.string().optional(), // The specific broker account ID used
   payload: z.record(z.any()),
   result: z.object({
     success: z.boolean(),
     message: z.string().optional(),
     orderId: z.string().optional(),
     errors: z.array(z.string()).optional(),
+    details: z.record(z.any()).optional(),
+    executionStage: z.enum(['received', 'validated', 'processed', 'sent_to_broker', 'broker_confirmed', 'completed', 'failed']).optional(),
+    positionInfo: z.object({
+      symbol: z.string().optional(),
+      entryPrice: z.number().optional(),
+      quantity: z.number().optional(),
+      side: z.string().optional(),
+      stopLoss: z.number().optional(),
+      takeProfit: z.number().optional(),
+    }).optional(),
   }),
   timestamp: z.date(),
+  responseTime: z.number().optional(), // milliseconds to process
   ipAddress: z.string().optional(),
   userAgent: z.string().optional(),
 });
