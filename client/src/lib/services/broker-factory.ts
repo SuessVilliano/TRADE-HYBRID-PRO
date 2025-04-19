@@ -15,20 +15,24 @@ export class BrokerFactory {
    * Create a broker service instance based on type
    */
   static createBrokerService(brokerType: 'alpaca' | 'alpaca-broker' | 'mock'): BrokerService {
-    // If mock flag is enabled, always use mock service
-    if (USE_MOCK_SERVICE) {
-      console.log('Using mock broker service (forced by configuration flag)');
+    // If mock flag is enabled or API keys are missing, use mock service
+    if (USE_MOCK_SERVICE || !config.ALPACA_API_KEY || !config.ALPACA_API_SECRET) {
+      console.log('Using mock broker service (forced by configuration flag or missing API keys)');
       return new MockBrokerService();
     }
 
     try {
       switch (brokerType) {
         case 'alpaca':
-          return new AlpacaService(
-            config.ALPACA_API_KEY,
-            config.ALPACA_API_SECRET,
-            true
-          );
+          // If we have API keys, try to use them
+          if (config.ALPACA_API_KEY && config.ALPACA_API_SECRET) {
+            return new AlpacaService(
+              config.ALPACA_API_KEY,
+              config.ALPACA_API_SECRET,
+              true
+            );
+          }
+          return new MockBrokerService();
           
         case 'alpaca-broker':
           // Note: AlpacaBrokerService doesn't fully implement BrokerService interface

@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { Layout } from '@/components/ui/layout';
 
 interface AppShellProps {
   className?: string;
@@ -8,9 +9,11 @@ interface AppShellProps {
 
 export function AppShell({ className, children }: AppShellProps) {
   return (
-    <div className={cn("min-h-screen flex flex-col", className)}>
-      {children}
-    </div>
+    <Layout>
+      <div className={cn("min-h-screen flex flex-col", className)}>
+        {children}
+      </div>
+    </Layout>
   );
 }
 

@@ -29,8 +29,8 @@ export default function ApiDemoPage() {
       setIsLoading(true);
       setError(null);
       
-      // Create broker service
-      const service = BrokerFactory.createBrokerService('alpaca');
+      // Create broker service - use mock service until we have valid API keys
+      const service = BrokerFactory.createBrokerService('mock');
       
       // Connect to the service
       await service.connect();
