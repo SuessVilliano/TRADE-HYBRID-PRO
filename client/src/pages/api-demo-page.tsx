@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrokerFactory } from '@/lib/services/broker-factory';
-import { BrokerService } from '@/lib/services/broker-service';
+import { BrokerService, OrderTimeInForce } from '@/lib/services/broker-service';
 import { AppShell } from '@/components/layout/app-shell';
 import { ApiKeyManager } from '@/components/ui/api-key-manager';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,8 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// import { formatCurrency } from '@/lib/utils/format-utils';
-// Temporarily removed to fix build errors
+import { formatCurrency } from '@/lib/utils/formatters';
 import { AlertCircle, Check, Loader2, RefreshCw } from 'lucide-react';
 
 export default function ApiDemoPage() {
@@ -152,7 +151,7 @@ export default function ApiDemoPage() {
         side: 'buy' as const,
         quantity: 1,
         type: 'market' as const,
-        timeInForce: 'day' as const
+        timeInForce: 'day' as OrderTimeInForce
       };
       
       const orderResult = await brokerService.placeOrder(order);

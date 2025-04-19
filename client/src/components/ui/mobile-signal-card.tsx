@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowUpRight, ArrowDownRight, ExternalLink, Timer, Check, AlertTriangle, Copy } from 'lucide-react';
-import { formatCurrency, formatPercentage } from '@/lib/utils/format-utils';
+import { formatCurrency, formatPercent } from '@/lib/utils/formatters';
 import { useToast } from '@/components/ui/use-toast';
 
 export interface SignalCardProps {
@@ -180,7 +180,7 @@ export function MobileSignalCard({
             <div className="flex flex-col items-end">
               <span className="text-xs text-muted-foreground">P/L</span>
               <span className={`text-sm font-medium ${pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatCurrency(Math.abs(pnl))} ({formatPercentage(pnlPercent)})
+                {formatCurrency(Math.abs(pnl))} ({formatPercent(pnlPercent)})
               </span>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { BrokerService } from '@/lib/services/broker-service';
+import { BrokerService, OrderTimeInForce } from '@/lib/services/broker-service';
 import { BrokerFactory } from '@/lib/services/broker-factory';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, AlertCircle, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
-import { formatCurrency, formatNumber } from '@/lib/utils/format-utils';
+import { formatCurrency, formatNumber } from '@/lib/utils/formatters';
 
 // Form values interface
 interface TradeFormValues {
@@ -96,7 +96,7 @@ export function TradingInterface() {
         side: values.side,
         quantity: values.quantity,
         type: values.type,
-        timeInForce: 'day',
+        timeInForce: 'day' as OrderTimeInForce,
         limit_price: values.type === 'limit' ? values.limitPrice : undefined
       };
       

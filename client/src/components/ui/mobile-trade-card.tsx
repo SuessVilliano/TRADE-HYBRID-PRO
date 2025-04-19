@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChevronUp, ChevronDown, ExternalLink, BarChart2, AlertTriangle } from 'lucide-react';
-import { formatCurrency, formatPercentage } from '@/lib/utils/format-utils';
+import { formatCurrency, formatPercent } from '@/lib/utils/formatters';
 
 export interface TradeCardProps {
   symbol: string;
@@ -102,7 +102,7 @@ export function MobileTradeCard({
           <div className="text-xl font-bold">{formatCurrency(price)}</div>
           <div className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium ${changeColor}`}>
             {changeIcon}
-            {formatCurrency(Math.abs(change))} ({formatPercentage(changePercent)})
+            {formatCurrency(Math.abs(change))} ({formatPercent(changePercent)})
           </div>
         </div>
         <div className="flex justify-between mt-3">
