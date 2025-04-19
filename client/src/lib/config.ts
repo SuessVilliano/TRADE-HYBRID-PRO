@@ -1,6 +1,23 @@
 // Client-side configuration
 // This replaces direct use of process.env which is not available in the browser
 
+// Access environment variables in browser context
+const getEnvVar = (key: string): string => {
+  // First try from import.meta.env which is available in Vite
+  if (import.meta.env && import.meta.env[`VITE_${key}`]) {
+    return import.meta.env[`VITE_${key}`];
+  }
+  
+  // Then try from window.__ENV__ which could be injected by server
+  if (typeof window !== 'undefined' && 
+      window.__ENV__ && 
+      window.__ENV__[key]) {
+    return window.__ENV__[key];
+  }
+  
+  return '';
+};
+
 // Default configuration
 export const config = {
   // Use API proxies instead of direct API keys in client code
@@ -9,20 +26,20 @@ export const config = {
   
   // API Keys - IMPORTANT: In a production environment, these should be empty
   // and all API calls should go through your backend server for security
-  RAPIDAPI_KEY: '',
-  ALPACA_API_KEY: 'CKNOL84VJ0N28QW3LZAX',
-  ALPACA_API_SECRET: 'dp1bnTfVQZ9iwbrOW4wZnSw77ic3cbEOdZYDYzvY',
-  ALPACA_API_URL: 'https://broker-api.sandbox.alpaca.markets',
-  OANDA_API_TOKEN: '',
-  OANDA_ACCOUNT_ID: '',
-  BINANCE_API_KEY: import.meta.env.VITE_BINANCE_US_API_KEY || '',
-  BINANCE_API_SECRET: import.meta.env.VITE_BINANCE_US_SECRET_KEY || '',
-  OPENAI_API_KEY: '',
-  GEMINI_API_KEY: '',
-  MORALIS_API_KEY: '',
-  KRAKEN_API_KEY: '',
-  KRAKEN_PRIVATE_KEY: '',
-  WHOP_API_KEY: import.meta.env.VITE_WHOP_API_KEY || '',
+  RAPIDAPI_KEY: getEnvVar('RAPIDAPI_KEY'),
+  ALPACA_API_KEY: getEnvVar('ALPACA_API_KEY'),
+  ALPACA_API_SECRET: getEnvVar('ALPACA_API_SECRET'),
+  ALPACA_API_URL: 'https://paper-api.alpaca.markets',
+  OANDA_API_TOKEN: getEnvVar('OANDA_API_TOKEN'),
+  OANDA_ACCOUNT_ID: getEnvVar('OANDA_ACCOUNT_ID'),
+  BINANCE_API_KEY: getEnvVar('BINANCE_API_KEY'),
+  BINANCE_API_SECRET: getEnvVar('BINANCE_API_SECRET'),
+  OPENAI_API_KEY: getEnvVar('OPENAI_API_KEY'),
+  GEMINI_API_KEY: getEnvVar('GEMINI_API_KEY'),
+  MORALIS_API_KEY: getEnvVar('MORALIS_API_KEY'),
+  KRAKEN_API_KEY: getEnvVar('KRAKEN_API_KEY'),
+  KRAKEN_PRIVATE_KEY: getEnvVar('KRAKEN_PRIVATE_KEY'),
+  WHOP_API_KEY: getEnvVar('WHOP_API_KEY'),
 };
 
 // Add any frontend environment variables from Vite
