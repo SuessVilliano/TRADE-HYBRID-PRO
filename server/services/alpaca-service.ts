@@ -33,8 +33,8 @@ let isRealApiAvailable: boolean = false;
 export function createAlpacaClient(): AlpacaClient {
   // Get API key and secret from environment variables directly at call time
   // to ensure we use the most up-to-date credentials
-  const apiKey = 'CKE6QEC625ODXIY3KR3B'; // Force use of new key
-  const apiSecret = 'zhj0lFDODB2LFJdFm0juD8tpevfJPuRNH9ZMl0Ao'; // Force use of new secret
+  const apiKey = process.env.ALPACA_API_KEY;
+  const apiSecret = process.env.ALPACA_API_SECRET;
   
   if (!apiKey || !apiSecret) {
     throw new AlpacaApiError('Alpaca API credentials not found in environment variables');

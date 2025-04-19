@@ -263,7 +263,7 @@ router.get('/quote', async (req: Request, res: Response) => {
             price: (response.askprice + response.bidprice) / 2,
             bid: response.bidprice,
             ask: response.askprice,
-            timestamp: new Date(response.timestamp).toISOString()
+            timestamp: response.timestamp ? new Date(response.timestamp).toISOString() : new Date().toISOString()
           };
           provider = 'alpaca';
         }
