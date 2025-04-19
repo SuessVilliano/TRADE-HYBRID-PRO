@@ -5,6 +5,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { encryptionService } from "./lib/services/encryption-service";
 import { brokerConnectionService } from "./lib/services/broker-connection-service";
 import { userIdentityService } from "./lib/services/user-identity-service";
+import { updateApiCredentials } from "./update-env";
 // Using mock prop firm service instead of the actual one for development
 // import { propFirmService } from "./lib/services/prop-firm-service";
 
@@ -56,6 +57,12 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Update API credentials before initializing services
+  console.log('Updating API credentials...');
+  updateApiCredentials();
+  console.log('API credentials updated successfully');
+  console.log(`Using ALPACA_API_KEY: ${process.env.ALPACA_API_KEY}`);
+  
   // Initialize services that need initialization
   // encryptionService is self-initializing in its constructor
   await brokerConnectionService.initialize();
