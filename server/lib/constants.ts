@@ -55,6 +55,51 @@ export const TRADING_SYMBOLS = [
     minPrice: 0.05,
     maxPrice: 0.3,
     volatility: 0.1
+  },
+  {
+    id: 'AVAXUSD',
+    name: 'Avalanche',
+    baseCurrency: 'AVAX',
+    quoteCurrency: 'USD',
+    minPrice: 20,
+    maxPrice: 100,
+    volatility: 0.075
+  },
+  {
+    id: 'DOTUSD',
+    name: 'Polkadot',
+    baseCurrency: 'DOT',
+    quoteCurrency: 'USD',
+    minPrice: 4,
+    maxPrice: 15,
+    volatility: 0.07
+  },
+  {
+    id: 'MATICUSD',
+    name: 'Polygon',
+    baseCurrency: 'MATIC',
+    quoteCurrency: 'USD',
+    minPrice: 0.3,
+    maxPrice: 1.5,
+    volatility: 0.08
+  },
+  {
+    id: 'LINKUSD',
+    name: 'Chainlink',
+    baseCurrency: 'LINK',
+    quoteCurrency: 'USD',
+    minPrice: 5,
+    maxPrice: 30,
+    volatility: 0.065
+  },
+  {
+    id: 'SHIBUSD',
+    name: 'Shiba Inu',
+    baseCurrency: 'SHIB',
+    quoteCurrency: 'USD',
+    minPrice: 0.000008,
+    maxPrice: 0.00005,
+    volatility: 0.12
   }
 ];
 

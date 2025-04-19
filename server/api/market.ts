@@ -156,7 +156,10 @@ export const getCurrentPrice = (req: Request, res: Response) => {
 export const getSymbols = (_req: Request, res: Response) => {
   try {
     // Group symbols by type (using the base currency as a simple way to group)
-    const cryptoSymbols = TRADING_SYMBOLS.filter(s => ['BTC', 'ETH', 'SOL', 'BNB', 'ADA', 'DOGE'].includes(s.baseCurrency));
+    const cryptoSymbols = TRADING_SYMBOLS.filter(s => [
+      'BTC', 'ETH', 'SOL', 'BNB', 'ADA', 'DOGE',
+      'AVAX', 'DOT', 'MATIC', 'LINK', 'SHIB'
+    ].includes(s.baseCurrency));
     const forexSymbols = TRADING_SYMBOLS.filter(s => ['USD', 'EUR', 'GBP', 'JPY', 'AUD'].includes(s.baseCurrency));
     
     res.json({
