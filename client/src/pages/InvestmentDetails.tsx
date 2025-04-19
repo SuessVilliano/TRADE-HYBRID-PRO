@@ -20,7 +20,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/use-auth';
-import { formatCurrency, formatPercent, formatDate } from '@/lib/utils';
+import { formatCurrency, formatPercent, formatDate } from '@/lib/utils/formatters';
 
 // For data visualization
 import { 

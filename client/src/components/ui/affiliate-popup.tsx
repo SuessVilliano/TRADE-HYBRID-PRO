@@ -4,7 +4,8 @@ import { Button } from './button';
 import { X, Copy, Link, ExternalLink, Users, DollarSign, Award } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 import { Input } from './input';
-import { formatCurrency, formatDate, cn } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils/formatters';
+import { cn } from '@/lib/utils';
 import { PopupContainer } from './popup-container';
 import { AffiliateService } from '@/lib/services/affiliate-service';
 

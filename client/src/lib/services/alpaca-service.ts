@@ -4,7 +4,10 @@ import {
   BrokerPosition,
   BrokerService,
   MarketData,
-  OrderHistory
+  OrderHistory,
+  OrderSide,
+  OrderType,
+  OrderTimeInForce
 } from './broker-service';
 
 /**
@@ -51,6 +54,15 @@ export class AlpacaService implements BrokerService {
     }
   }
 
+  async getAccountInfo(): Promise<any> {
+    try {
+      return await this.getAccount();
+    } catch (error) {
+      console.error('Error getting account info:', error);
+      throw error;
+    }
+  }
+  
   async getBalance(): Promise<AccountBalance> {
     try {
       const account = await this.getAccount();
@@ -87,10 +99,12 @@ export class AlpacaService implements BrokerService {
 
   async placeOrder(order: {
     symbol: string;
-    side: 'buy' | 'sell';
+    side: OrderSide;
     quantity: number;
-    type: 'market' | 'limit';
-    limitPrice?: number;
+    type: OrderType;
+    timeInForce: OrderTimeInForce;
+    limit_price?: number;
+    stop_price?: number;
   }): Promise<string> {
     try {
       const orderRequest: any = {
@@ -98,11 +112,17 @@ export class AlpacaService implements BrokerService {
         qty: order.quantity,
         side: order.side,
         type: order.type,
-        time_in_force: 'day'
+        time_in_force: order.timeInForce
       };
       
-      if (order.type === 'limit' && order.limitPrice) {
-        orderRequest.limit_price = order.limitPrice;
+      // Add limit price if provided
+      if (order.limit_price) {
+        orderRequest.limit_price = order.limit_price;
+      }
+      
+      // Add stop price if provided
+      if (order.stop_price) {
+        orderRequest.stop_price = order.stop_price;
       }
       
       const response = await axios.post(`${this.baseUrl}/orders`, orderRequest, {

@@ -4,7 +4,7 @@ import { X, Download, Upload, Mic, MicOff } from 'lucide-react';
 import { Button } from './button';
 import { useTrader, Trade } from '@/lib/stores/useTrader';
 import { Textarea } from './textarea';
-import { formatDate, formatCurrency } from '@/lib/utils';
+import { formatDate, formatCurrency } from '@/lib/utils/formatters';
 import { Switch } from './switch';
 import { cn } from '@/lib/utils';
 import { Input } from './input';

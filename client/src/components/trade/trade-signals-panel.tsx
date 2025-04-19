@@ -86,28 +86,39 @@ export function TradeSignalsPanel() {
       }
     };
     
-    // Connect to WebSocket
+    // Connect to WebSocket (optional)
     if (typeof window !== 'undefined') {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
-      
-      const ws = new WebSocket(wsUrl);
-      
-      ws.addEventListener('message', handleWebSocketSignal);
-      
-      // Handle connection events
-      ws.addEventListener('open', () => {
-        console.log('WebSocket connected for trading signals');
-      });
-      
-      ws.addEventListener('error', (error) => {
-        console.error('WebSocket error:', error);
-      });
-      
-      return () => {
-        ws.removeEventListener('message', handleWebSocketSignal);
-        ws.close();
-      };
+      // Try to connect to WebSocket, but wrap in try/catch to prevent app failure
+      try {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        
+        const ws = new WebSocket(wsUrl);
+        
+        ws.addEventListener('message', handleWebSocketSignal);
+        
+        // Handle connection events
+        ws.addEventListener('open', () => {
+          console.log('WebSocket connected for trading signals');
+        });
+        
+        ws.addEventListener('error', (error) => {
+          console.log('WebSocket connection not available - using polling fallback');
+        });
+        
+        return () => {
+          try {
+            ws.removeEventListener('message', handleWebSocketSignal);
+            ws.close();
+          } catch (e) {
+            // Ignore errors during cleanup
+          }
+        };
+      } catch (e) {
+        console.log('WebSocket not available - using polling fallback');
+        // Return empty cleanup function
+        return () => {};
+      }
     }
     
     tradeSignalService.subscribe('signal_added', handleNewSignal);

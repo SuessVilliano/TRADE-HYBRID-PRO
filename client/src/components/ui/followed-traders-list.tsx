@@ -12,7 +12,7 @@ import {
   Copy, MessageCircle, PlusCircle, RefreshCw, Signal, User, X
 } from "lucide-react";
 import { useFollowedTraders, FollowedTrader } from '@/lib/stores/useFollowedTraders';
-import { formatCurrency, formatNumber } from '@/lib/utils';
+import { formatCurrency, formatNumber } from '@/lib/utils/formatters';
 
 export function FollowedTradersList() {
   const { 

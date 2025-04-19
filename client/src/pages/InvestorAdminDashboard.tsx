@@ -27,7 +27,7 @@ import {
   LineChart
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { formatCurrency, formatPercent, formatDate } from '@/lib/utils';
+import { formatCurrency, formatPercent, formatDate } from '@/lib/utils/formatters';
 
 // For data visualization, we're using recharts
 import { 

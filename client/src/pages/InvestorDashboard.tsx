@@ -19,7 +19,7 @@ import {
   Clock
 } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/use-auth';
-import { formatCurrency, formatPercent, formatDate } from '@/lib/utils';
+import { formatCurrency, formatPercent, formatDate } from '@/lib/utils/formatters';
 import { TradingDashboardLayout } from '@/components/ui/trading-dashboard-layout';
 
 // For data visualization, we're using recharts

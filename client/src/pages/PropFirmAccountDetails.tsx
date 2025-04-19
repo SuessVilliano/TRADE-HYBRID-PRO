@@ -33,7 +33,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { formatCurrency, formatPercent, formatDate } from '@/lib/utils';
+import { formatCurrency, formatPercent, formatDate } from '@/lib/utils/formatters';
 import { LineChart } from '@/components/ui/line-chart';
 
 interface Trade {

@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, CheckCircle2, Filter, Loader2, Search, SortAsc, Star, Trophy, User, Users } from 'lucide-react';
 import { useFollowedTraders } from '@/lib/stores/useFollowedTraders';
-import { formatCurrency, formatNumber } from '@/lib/utils';
+import { formatCurrency, formatNumber } from '@/lib/utils/formatters';
 
 interface PopularTrader {
   id: string;
