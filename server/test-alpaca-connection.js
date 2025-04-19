@@ -2,6 +2,10 @@
 // Run with: node server/test-alpaca-connection.js
 
 import axios from 'axios';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
 
 // Directly use environment variables
 const ALPACA_API_KEY = process.env.ALPACA_API_KEY;
