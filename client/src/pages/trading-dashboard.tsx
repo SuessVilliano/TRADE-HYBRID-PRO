@@ -24,6 +24,8 @@ import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { PopupContainer } from '../components/ui/popup-container';
 import { useMediaQuery } from '../lib/hooks/useMediaQuery';
 import { TradeJournal } from '../components/ui/trade-journal';
+import { HamburgerMenu } from '../components/mobile/hamburger-menu';
+import { MobileQuickActions } from '../components/mobile/mobile-quick-actions';
 
 export default function TradingDashboard() {
   const [selectedTab, setSelectedTab] = useState('trading');
@@ -56,6 +58,24 @@ export default function TradingDashboard() {
     toast.success(`Switched to ${selectedLayout === 'classic' ? 'Smart' : 'Classic'} trading layout`);
   };
   
+  // Handle mobile add trade action
+  const handleAddTrade = () => {
+    setSelectedTab('journal');
+    toast({
+      title: "Journal opened",
+      description: "You can now add a new trade entry"
+    });
+  };
+  
+  // Handle mobile settings toggle
+  const handleShowSettings = () => {
+    // We could navigate to settings page or toggle settings panel
+    toast({
+      title: "Settings",
+      description: "Settings panel will open here"
+    });
+  };
+  
   return (
     <PopupContainer className="min-h-[calc(100vh-130px)] bg-slate-900 text-white p-4 md:p-6" padding>
       <Helmet>
@@ -64,11 +84,18 @@ export default function TradingDashboard() {
       
       <div className="container mx-auto">
         <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Trading Dashboard</h1>
-            <p className="text-slate-400 text-sm">
-              Customizable trading workspace with drag-and-drop widgets
-            </p>
+          <div className="flex items-center gap-2">
+            {/* Mobile Hamburger Menu (only visible on mobile) */}
+            <div className="md:hidden">
+              <HamburgerMenu />
+            </div>
+            
+            <div>
+              <h1 className="text-2xl font-bold text-white">Trading Dashboard</h1>
+              <p className="text-slate-400 text-sm">
+                Customizable trading workspace with drag-and-drop widgets
+              </p>
+            </div>
           </div>
           
           <div className="flex flex-wrap gap-2">
@@ -183,29 +210,32 @@ export default function TradingDashboard() {
           </div>
         </div>
         
-        {/* Quick Action Bar */}
-        <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-slate-700 z-50">
+        {/* Desktop Quick Action Bar */}
+        <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-slate-700 z-50 hidden md:block">
           <div className="container mx-auto px-4 py-2">
             <div className="flex justify-between items-center">
               <div className="flex space-x-2">
                 <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setSelectedTab('trading')}>
                   <LayoutGrid className="h-4 w-4" />
-                  <span className="hidden sm:inline">Dashboard</span>
+                  <span>Dashboard</span>
                 </Button>
                 <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setSelectedTab('journal')}>
                   <FileText className="h-4 w-4" />
-                  <span className="hidden sm:inline">Journal</span>
+                  <span>Journal</span>
                 </Button>
                 <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setSelectedTab('analysis')}>
                   <BarChart4 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Analysis</span>
+                  <span>Analysis</span>
                 </Button>
               </div>
               
               <div className="flex items-center space-x-2">
-                <span className="text-xs text-slate-400 mr-2 hidden md:inline">Quick Actions:</span>
+                <span className="text-xs text-slate-400 mr-2">Quick Actions:</span>
                 
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full" title="Add Trade"
+                <Button
+                  variant="ghost"
+                  size="sm" 
+                  className="h-8 w-8 p-0 rounded-full"
                   onClick={() => {
                     if (selectedTab !== 'journal') {
                       setSelectedTab('journal');
@@ -220,17 +250,17 @@ export default function TradingDashboard() {
                   <span className="sr-only">Add Trade</span>
                 </Button>
                 
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full" title="View Signals">
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full">
                   <Bell className="h-4 w-4" />
                   <span className="sr-only">Signals</span>
                 </Button>
                 
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full" title="Connect Broker">
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full">
                   <Link className="h-4 w-4" />
                   <span className="sr-only">Connect</span>
                 </Button>
                 
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full" title="Settings">
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full">
                   <Settings className="h-4 w-4" />
                   <span className="sr-only">Settings</span>
                 </Button>
@@ -238,6 +268,12 @@ export default function TradingDashboard() {
             </div>
           </div>
         </div>
+        
+        {/* Mobile Quick Actions */}
+        <MobileQuickActions 
+          onAddTrade={handleAddTrade}
+          onShowSettings={handleShowSettings}
+        />
       </div>
     </PopupContainer>
   );
