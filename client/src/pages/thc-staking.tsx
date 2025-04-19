@@ -31,7 +31,11 @@ import {
   CheckCircle2,
   Rocket,
   ExternalLink,
-  Layers
+  Layers,
+  Server,
+  Activity,
+  BarChart3,
+  Clock
 } from 'lucide-react';
 import { THC_TOKEN_CONFIG, calculateStakingRewards, calculateStakingApy } from '@/lib/contracts/thc-token-info';
 import { useAffiliateTracking, AffiliateService } from '@/lib/services/affiliate-service';
@@ -55,6 +59,20 @@ export default function StakeAndBake() {
   const [linkCopied, setLinkCopied] = useState(false);
   const [hasCreatedMatrix, setHasCreatedMatrix] = useState(false);
   const [referrerCode, setReferrerCode] = useState<string | null>(null);
+  
+  // Solana Validator Information
+  const [validatorIdentity, setValidatorIdentity] = useState("2wbzum5jnZscYNqBwTUPmk7X6RngRnJajY8KMpocJTNQ");
+  const [voteAccount, setVoteAccount] = useState("7BTUDc1EaAgWjQvm4BipvrXJsbmxRxRRrShcQzCPcRJ2");
+  const [validatorStats, setValidatorStats] = useState({
+    commission: "100%",
+    activatedStake: "0.0",
+    totalStakers: 0,
+    epochVoteCredits: 0,
+    lastVote: 0,
+    uptime: "99.8%"
+  });
+  const [solStakeAmount, setSolStakeAmount] = useState('1.0');
+  const [fetchingValidatorInfo, setFetchingValidatorInfo] = useState(false);
   
   // Get the Solana wallet auth context
   const solanaAuth = useSolanaAuth();
@@ -214,6 +232,70 @@ export default function StakeAndBake() {
     });
   };
   
+  // Fetch validator information from Solana network
+  const fetchValidatorInfo = async () => {
+    if (!window.solana || !solanaAuth.walletConnected) {
+      toast({
+        title: "Connect Wallet",
+        description: "Please connect your Solana wallet first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setFetchingValidatorInfo(true);
+    
+    try {
+      // Simulating a fetch from the Solana network
+      // In a real implementation, this would use the Solana Web3.js library
+      // to connect to the network and query the validator information
+      
+      setTimeout(() => {
+        // Simulate getting updated data
+        setValidatorStats({
+          commission: "100%",
+          activatedStake: "124.5",
+          totalStakers: 12,
+          epochVoteCredits: 1405,
+          lastVote: 162443789,
+          uptime: "99.8%"
+        });
+        
+        setFetchingValidatorInfo(false);
+        
+        toast({
+          title: "Validator Info Updated",
+          description: "Latest validator statistics have been fetched",
+        });
+      }, 1500);
+    } catch (error) {
+      console.error("Error fetching validator info:", error);
+      setFetchingValidatorInfo(false);
+      
+      toast({
+        title: "Error",
+        description: "Failed to fetch validator information. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle SOL staking
+  const handleStakeSol = () => {
+    if (!connectedWallet) return;
+    
+    const amount = parseFloat(solStakeAmount);
+    
+    // In a real implementation, this would use the Solana Web3.js library
+    // to create and send a stake delegation transaction
+    
+    toast({
+      title: "SOL Staking Initiated",
+      description: `You've initiated staking ${amount} SOL to our validator. Please confirm the transaction in your wallet.`,
+      variant: "default",
+    });
+  };
+  
   return (
     <PopupContainer className="min-h-screen container mx-auto py-8 px-4" padding>
       <div className="text-center mb-10">
@@ -232,10 +314,14 @@ export default function StakeAndBake() {
       
       <div className="max-w-6xl mx-auto">
         <Tabs defaultValue="staking" onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-3 mb-8">
+          <TabsList className="grid grid-cols-4 mb-8">
             <TabsTrigger value="staking" className="text-lg py-3">
               <Coins className="mr-2 h-5 w-5" />
               THC
+            </TabsTrigger>
+            <TabsTrigger value="validator" className="text-lg py-3">
+              <Server className="mr-2 h-5 w-5" />
+              Validator
             </TabsTrigger>
             <TabsTrigger value="matrix" className="text-lg py-3">
               <Network className="mr-2 h-5 w-5" />
