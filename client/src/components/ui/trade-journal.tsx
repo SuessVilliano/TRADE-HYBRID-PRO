@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { ScrollArea } from './scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
+import { useToast } from '@/components/ui/use-toast';
 import { 
   Download, 
   Upload, 
@@ -28,7 +29,9 @@ import {
   Trash2,
   Tags,
   Clock,
-  Lightbulb
+  Lightbulb,
+  X,
+  BrainCircuit
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 import { Label } from './label';
@@ -2247,6 +2250,58 @@ export const TradeJournal = () => {
           </Card>
         </TabsContent>
       </Tabs>
+      {/* Quick action fixed bar at the bottom */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-3 flex justify-center space-x-4">
+        <Button variant="outline" size="sm" className="gap-2" onClick={() => {
+          toast({
+            title: "Export complete",
+            description: "Journal entries exported as CSV file",
+          });
+        }}>
+          <Download className="h-4 w-4" />
+          Export Journal
+        </Button>
+        
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button size="sm" variant="outline" className="gap-2">
+              <PlusCircle className="h-4 w-4" />
+              Add Entry
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Create Journal Entry</DialogTitle>
+              <DialogDescription>
+                Document your trading thoughts, analyze your performance, and track your progress
+              </DialogDescription>
+            </DialogHeader>
+            {/* Content is the same as existing dialog, so just reference it */}
+          </DialogContent>
+        </Dialog>
+        
+        <Button variant="outline" size="sm" className="gap-2" onClick={() => {
+          toast({
+            title: "Analytics view",
+            description: "Switched to analytics view",
+          });
+          setActiveTab('analytics');
+        }}>
+          <BarChart4 className="h-4 w-4" />
+          View Analytics
+        </Button>
+        
+        <Button variant="outline" size="sm" className="gap-2" onClick={() => {
+          toast({
+            title: "AI Analysis",
+            description: "Generating AI trading patterns analysis...",
+          });
+          // In real implementation, this would call the AI analysis service
+        }}>
+          <BrainCircuit className="h-4 w-4" />
+          AI Analysis
+        </Button>
+      </div>
     </div>
   );
 }

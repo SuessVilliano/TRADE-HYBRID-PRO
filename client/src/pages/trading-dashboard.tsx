@@ -5,7 +5,21 @@ import { DraggableTradingDashboard } from '../components/ui/draggable-trading-da
 import { SmartTradeLayout } from '../components/ui/smart-trade-layout';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
-import { Share2, Star, Bookmark, FileQuestion, ArrowUpRightFromCircle, LayoutGrid, MonitorPlay } from 'lucide-react';
+import { 
+  Share2, 
+  Star, 
+  Bookmark, 
+  FileQuestion, 
+  ArrowUpRightFromCircle, 
+  LayoutGrid, 
+  MonitorPlay,
+  FileText,
+  BarChart4,
+  PlusCircle,
+  Bell,
+  Link,
+  Settings
+} from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { PopupContainer } from '../components/ui/popup-container';
 import { useMediaQuery } from '../lib/hooks/useMediaQuery';
@@ -165,6 +179,62 @@ export default function TradingDashboard() {
                 Click "Edit Layout" to rearrange widgets by dragging them. Add new widgets with the "Add Widget" button. 
                 Your layout will be automatically saved for your next session.
               </p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Quick Action Bar */}
+        <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-slate-700 z-50">
+          <div className="container mx-auto px-4 py-2">
+            <div className="flex justify-between items-center">
+              <div className="flex space-x-2">
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setSelectedTab('trading')}>
+                  <LayoutGrid className="h-4 w-4" />
+                  <span className="hidden sm:inline">Dashboard</span>
+                </Button>
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setSelectedTab('journal')}>
+                  <FileText className="h-4 w-4" />
+                  <span className="hidden sm:inline">Journal</span>
+                </Button>
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setSelectedTab('analysis')}>
+                  <BarChart4 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Analysis</span>
+                </Button>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <span className="text-xs text-slate-400 mr-2 hidden md:inline">Quick Actions:</span>
+                
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full" title="Add Trade"
+                  onClick={() => {
+                    if (selectedTab !== 'journal') {
+                      setSelectedTab('journal');
+                    }
+                    toast({
+                      title: "Journal opened",
+                      description: "You can now add a new trade entry"
+                    });
+                  }}
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  <span className="sr-only">Add Trade</span>
+                </Button>
+                
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full" title="View Signals">
+                  <Bell className="h-4 w-4" />
+                  <span className="sr-only">Signals</span>
+                </Button>
+                
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full" title="Connect Broker">
+                  <Link className="h-4 w-4" />
+                  <span className="sr-only">Connect</span>
+                </Button>
+                
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full" title="Settings">
+                  <Settings className="h-4 w-4" />
+                  <span className="sr-only">Settings</span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
