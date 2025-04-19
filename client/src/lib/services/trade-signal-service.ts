@@ -1,3 +1,5 @@
+import { userSettingsService } from './user-settings-service';
+
 // Trade Signal Types
 export type TradeSignal = {
   id: string;
@@ -23,6 +25,7 @@ class TradeSignalService {
     signal_updated: [],
     signal_removed: []
   };
+  private notificationsEnabled: boolean = true; // Default to enabled
 
   constructor() {
     // Add some mock data for development
