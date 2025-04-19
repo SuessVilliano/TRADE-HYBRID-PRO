@@ -246,7 +246,14 @@ export const logWebhookExecution = async (
   webhookExecutions.set(execution.id, execution);
   
   // Also log to console for debugging
-  console.log(`Webhook execution logged: ${execution.id}`);
+  console.log(`Webhook execution logged: ${execution.id}`, {
+    timestamp: timestamp.toISOString(),
+    broker,
+    userId,
+    webhookId,
+    success: result.success,
+    payload: JSON.stringify(payload).substring(0, 200) + (JSON.stringify(payload).length > 200 ? '...' : '')
+  });
   
   // Record performance metrics
   if (responseTime) {
@@ -294,6 +301,39 @@ export const getWebhooksForUser = async (userId: string): Promise<WebhookConfig[
  */
 export const getErrorInsightsForWebhook = async (webhookId: string): Promise<ErrorInsight[]> => {
   return Array.from(errorInsights.values()).filter(insight => insight.webhookId === webhookId);
+};
+
+/**
+ * Get webhook execution logs
+ * @param webhookId Optional ID to filter by specific webhook
+ * @param userId Optional user ID to filter by user
+ * @param limit Maximum number of logs to return (default: 100)
+ */
+export const getWebhookExecutionLogs = async (
+  options: {
+    webhookId?: string;
+    userId?: string;
+    limit?: number;
+  } = {}
+): Promise<any[]> => {
+  const { webhookId, userId, limit = 100 } = options;
+  
+  // Get all logs, sorted by timestamp (newest first)
+  let logs = Array.from(webhookExecutions.values()).sort((a, b) => 
+    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
+  
+  // Apply filters if provided
+  if (webhookId) {
+    logs = logs.filter(log => log.webhookId === webhookId);
+  }
+  
+  if (userId) {
+    logs = logs.filter(log => log.userId === userId);
+  }
+  
+  // Apply limit
+  return logs.slice(0, limit);
 };
 
 /**

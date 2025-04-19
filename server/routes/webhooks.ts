@@ -8,7 +8,8 @@ import {
   logWebhookExecution,
   getWebhooksForUser,
   getWebhookPerformanceMetrics,
-  getErrorInsightsForWebhook
+  getErrorInsightsForWebhook,
+  getWebhookExecutionLogs
 } from '../services/webhook-service';
 import { WebhookConfig } from '../../shared/models/webhook';
 import authMiddleware from '../middleware/auth';
@@ -311,6 +312,31 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
+// Get webhook execution logs
+router.get('/logs', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const userId = req.session.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    const { webhookId, limit } = req.query;
+    
+    // Get logs, filtering by userId and optional webhookId
+    const logs = await getWebhookExecutionLogs({
+      userId: userId.toString(),
+      webhookId: webhookId as string | undefined,
+      limit: limit ? parseInt(limit as string, 10) : 100
+    });
+    
+    return res.json({ logs });
+  } catch (error: any) {
+    console.error('Error getting webhook logs:', error);
+    return res.status(500).json({ error: error.message || 'An error occurred' });
+  }
+});
+
 // Get performance metrics for a webhook
 router.get('/:id/performance', authMiddleware, async (req: Request, res: Response) => {
   try {
@@ -322,7 +348,7 @@ router.get('/:id/performance', authMiddleware, async (req: Request, res: Respons
     }
     
     // Get the webhook to verify ownership
-    const webhooks = await getWebhooksForUser(userId);
+    const webhooks = await getWebhooksForUser(userId.toString());
     const webhook = webhooks.find(w => w.id === id);
     
     if (!webhook) {
@@ -362,7 +388,7 @@ router.get('/:id/error-insights', authMiddleware, async (req: Request, res: Resp
     }
     
     // Get the webhook to verify ownership
-    const webhooks = await getWebhooksForUser(userId);
+    const webhooks = await getWebhooksForUser(userId.toString());
     const webhook = webhooks.find(w => w.id === id);
     
     if (!webhook) {
