@@ -58,63 +58,156 @@ export function createMockAlpacaClient(): AlpacaClient {
     getBars: async (params: any = {}) => {
       const symbol = params.symbol || 'AAPL';
       const limit = params.limit || 20;
+      const timeframe = params.timeframe || '1Hour';
       const bars = [];
       
       // Current price range for the symbol
       let basePrice = 0;
+      let volatility = 0.01; // Default volatility factor
+      
       switch (symbol.toUpperCase()) {
         case 'AAPL':
           basePrice = 170.00;
+          volatility = 0.008; // Lower volatility for AAPL
           break;
         case 'MSFT':
           basePrice = 410.00;
+          volatility = 0.007;
           break;
         case 'AMZN':
           basePrice = 180.00;
+          volatility = 0.012;
           break;
         case 'GOOGL':
           basePrice = 150.00;
+          volatility = 0.009;
           break;
         case 'TSLA':
           basePrice = 145.00;
+          volatility = 0.025; // Higher volatility for TSLA
           break;
         case 'BTC/USD':
         case 'BTCUSD':
           basePrice = 62000.00;
+          volatility = 0.03; // High volatility for crypto
           break;
         case 'ETH/USD':
         case 'ETHUSD':
           basePrice = 3000.00;
+          volatility = 0.04;
+          break;
+        case 'SOL/USD':
+        case 'SOLUSD':
+          basePrice = 150.00;
+          volatility = 0.05;
           break;
         default:
           basePrice = 100.00 + Math.random() * 100;
+      }
+      
+      // Determine time interval based on the timeframe parameter
+      const timeIntervals: Record<string, { unit: string, amount: number }> = {
+        '1Min': { unit: 'minutes', amount: 1 },
+        '5Min': { unit: 'minutes', amount: 5 },
+        '15Min': { unit: 'minutes', amount: 15 },
+        '30Min': { unit: 'minutes', amount: 30 },
+        '1Hour': { unit: 'hours', amount: 1 },
+        '2Hour': { unit: 'hours', amount: 2 },
+        '4Hour': { unit: 'hours', amount: 4 },
+        '1Day': { unit: 'days', amount: 1 },
+        '1Week': { unit: 'weeks', amount: 1 },
+      };
+      
+      const interval = timeIntervals[timeframe] || timeIntervals['1Hour'];
+      
+      // Generate realistic price trend with some patterns
+      // We'll generate several different pattern types: uptrend, downtrend, sideways, volatile
+      const trendType = Math.floor(Math.random() * 4); // 0: uptrend, 1: downtrend, 2: sideways, 3: volatile
+      let trendBias = 0;
+      
+      switch (trendType) {
+        case 0: // Uptrend
+          trendBias = 0.2; // Positive bias
+          console.log(`Generating uptrend pattern for ${symbol}`);
+          break;
+        case 1: // Downtrend
+          trendBias = -0.2; // Negative bias
+          console.log(`Generating downtrend pattern for ${symbol}`);
+          break;
+        case 2: // Sideways
+          trendBias = 0; // Neutral
+          volatility *= 0.5; // Lower volatility for sideways pattern
+          console.log(`Generating sideways pattern for ${symbol}`);
+          break;
+        case 3: // Volatile
+          trendBias = 0; // Neutral but with higher volatility
+          volatility *= 2; // Double volatility
+          console.log(`Generating volatile pattern for ${symbol}`);
+          break;
       }
       
       // Create mock bars
       const now = new Date();
       let currentPrice = basePrice;
       
+      // Generate sine wave component for more realistic price movements
+      const sineAmplitude = basePrice * volatility * 0.5;
+      const sinePeriod = limit / (2 + Math.random() * 4); // 2-6 cycles over the entire dataset
+      
       for (let i = 0; i < limit; i++) {
-        // Create realistic price movement
-        const priceChange = (Math.random() - 0.48) * (basePrice * 0.01); // Slightly biased upward
-        currentPrice += priceChange;
-        
-        const open = currentPrice;
-        const high = open + (Math.random() * basePrice * 0.005);
-        const low = open - (Math.random() * basePrice * 0.005);
-        const close = open + (Math.random() - 0.5) * (basePrice * 0.008);
-        
         // Calculate timestamp for this bar
         const timestamp = new Date(now);
-        timestamp.setMinutes(now.getMinutes() - ((limit - i) * 15)); // 15 minute bars
+        
+        // Subtract the appropriate time units based on the timeframe
+        if (interval.unit === 'minutes') {
+          timestamp.setMinutes(now.getMinutes() - ((limit - i) * interval.amount));
+        } else if (interval.unit === 'hours') {
+          timestamp.setHours(now.getHours() - ((limit - i) * interval.amount));
+        } else if (interval.unit === 'days') {
+          timestamp.setDate(now.getDate() - ((limit - i) * interval.amount));
+        } else if (interval.unit === 'weeks') {
+          timestamp.setDate(now.getDate() - ((limit - i) * 7 * interval.amount));
+        }
+        
+        // Add trend component
+        const trendComponent = (Math.random() + trendBias) * (basePrice * volatility);
+        
+        // Add sine wave component for cyclicality
+        const sineComponent = sineAmplitude * Math.sin((i / sinePeriod) * Math.PI * 2);
+        
+        // Add random noise component
+        const randomComponent = (Math.random() - 0.5) * (basePrice * volatility * 0.5);
+        
+        // Combine components for price change
+        const priceChange = trendComponent + sineComponent + randomComponent;
+        currentPrice += priceChange;
+        
+        // Ensure price doesn't go negative or too low
+        if (currentPrice < basePrice * 0.5) {
+          currentPrice = basePrice * 0.5 + Math.random() * (basePrice * 0.1);
+        }
+        
+        // Generate OHLC values
+        const open = currentPrice;
+        const volatilityFactor = basePrice * volatility * 0.5;
+        const high = open + (Math.random() * volatilityFactor);
+        const low = Math.max(0.01, open - (Math.random() * volatilityFactor));
+        const close = open + ((Math.random() - 0.5) * volatilityFactor * 1.5);
+        
+        // Generate volume with occasional volume spikes
+        let volume = Math.floor(Math.random() * 1000000);
+        // Add occasional volume spikes (about 10% of the time)
+        if (Math.random() < 0.1) {
+          volume *= (2 + Math.random() * 3); // 2-5x normal volume
+        }
         
         bars.push({
           t: timestamp.toISOString(),
-          o: open.toFixed(2),
-          h: high.toFixed(2),
-          l: low.toFixed(2),
-          c: close.toFixed(2),
-          v: Math.floor(Math.random() * 1000000),
+          o: parseFloat(open.toFixed(2)),
+          h: parseFloat(high.toFixed(2)),
+          l: parseFloat(low.toFixed(2)),
+          c: parseFloat(close.toFixed(2)),
+          v: volume,
           symbol: symbol
         });
       }
