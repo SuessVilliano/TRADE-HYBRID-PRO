@@ -198,7 +198,10 @@ router.get('/quote', async (req: Request, res: Response) => {
   try {
     const symbol = req.query.symbol as string;
     if (!symbol) {
-      return res.status(400).json({ error: 'Symbol is required' });
+      return res.status(400).json({ 
+        error: 'Symbol is required',
+        status: 'error'
+      });
     }
     
     console.log(`Fetching current price for ${symbol}`);
@@ -208,6 +211,7 @@ router.get('/quote', async (req: Request, res: Response) => {
     
     let quote = null;
     let provider = '';
+    let errors = [];
     
     if (isForex) {
       // Use Oanda for forex
@@ -231,6 +235,15 @@ router.get('/quote', async (req: Request, res: Response) => {
         }
       } catch (error) {
         console.error('Error fetching quote from Oanda:', error);
+        
+        // Store error details for response
+        errors.push({
+          provider: 'oanda',
+          message: error instanceof Error ? error.message : String(error),
+          timestamp: new Date().toISOString(),
+          status: 'error'
+        });
+        
         // Fall through to try Alpaca as a backup
       }
     }
@@ -256,18 +269,30 @@ router.get('/quote', async (req: Request, res: Response) => {
         }
       } catch (error) {
         console.error('Error fetching quote from Alpaca:', error);
+        
+        // Store error details for response
+        errors.push({
+          provider: 'alpaca',
+          message: error instanceof Error ? error.message : String(error),
+          timestamp: new Date().toISOString(),
+          status: 'error'
+        });
       }
     }
     
     if (quote) {
       return res.json({
         ...quote,
-        provider
+        provider,
+        status: 'success'
       });
     } else {
-      return res.status(404).json({ 
+      return res.status(503).json({ 
         error: 'Unable to fetch quote from any provider',
-        symbol
+        symbol,
+        errors,
+        status: 'error',
+        timestamp: new Date().toISOString()
       });
     }
     
@@ -275,7 +300,9 @@ router.get('/quote', async (req: Request, res: Response) => {
     console.error('Error in market data quote endpoint:', error);
     return res.status(500).json({ 
       error: 'Failed to fetch quote',
-      details: error instanceof Error ? error.message : String(error)
+      details: error instanceof Error ? error.message : String(error),
+      status: 'error',
+      timestamp: new Date().toISOString()
     });
   }
 });
@@ -289,6 +316,7 @@ router.get('/symbols', async (req: Request, res: Response) => {
     
     let symbols: any[] = [];
     const providers: Record<string, boolean> = {};
+    let errors: any[] = [];
     
     // Get forex symbols from Oanda if requested
     if (market === 'all' || market === 'forex') {
@@ -310,6 +338,15 @@ router.get('/symbols', async (req: Request, res: Response) => {
         }
       } catch (error) {
         console.error('Error fetching forex symbols from Oanda:', error);
+        
+        // Store error details for response
+        errors.push({
+          provider: 'oanda',
+          market: 'forex',
+          message: error instanceof Error ? error.message : String(error),
+          timestamp: new Date().toISOString(),
+          status: 'error'
+        });
       }
     }
     
@@ -338,7 +375,28 @@ router.get('/symbols', async (req: Request, res: Response) => {
         }
       } catch (error) {
         console.error('Error fetching symbols from Alpaca:', error);
+        
+        // Store error details for response
+        errors.push({
+          provider: 'alpaca',
+          market: market === 'crypto' ? 'crypto' : 'stocks',
+          message: error instanceof Error ? error.message : String(error),
+          timestamp: new Date().toISOString(),
+          status: 'error'
+        });
       }
+    }
+    
+    // Check if we have any symbols or if all providers failed
+    if (symbols.length === 0 && errors.length > 0) {
+      return res.status(503).json({
+        error: 'Could not fetch symbols from any provider',
+        market,
+        errors,
+        count: 0,
+        status: 'error',
+        timestamp: new Date().toISOString()
+      });
     }
     
     // Return the symbols data with metadata
@@ -346,14 +404,19 @@ router.get('/symbols', async (req: Request, res: Response) => {
       market,
       count: symbols.length,
       providers: Object.keys(providers),
-      symbols
+      symbols,
+      errors: errors.length > 0 ? errors : undefined,
+      status: 'success',
+      timestamp: new Date().toISOString()
     });
     
   } catch (error) {
     console.error('Error in market data symbols endpoint:', error);
     return res.status(500).json({ 
       error: 'Failed to fetch symbols',
-      details: error instanceof Error ? error.message : String(error)
+      details: error instanceof Error ? error.message : String(error),
+      status: 'error',
+      timestamp: new Date().toISOString()
     });
   }
 });

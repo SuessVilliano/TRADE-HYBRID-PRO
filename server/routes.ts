@@ -124,6 +124,7 @@ import companyRevenueRoutes from './api/company-revenue'; // Import for company 
 import signalSubscriptionsRoutes from './api/signal-subscriptions'; // Import for signal subscriptions routes
 import oandaMarketRoutes from './routes/oanda-market'; // Import for Oanda market data routes
 import marketDataRoutes from './routes/market-data'; // Import for unified market data routes
+import brokerStatusRoutes from './routes/broker-status'; // Import for broker status routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Market data routes
@@ -387,6 +388,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Unified Market Data routes
   app.use("/api/market-data", marketDataRoutes);
+  
+  // Broker status routes
+  app.use("/api/broker-status", brokerStatusRoutes);
 
   // News route using multiple sources
   app.get("/api/rss-feeds/news", async (req, res) => {

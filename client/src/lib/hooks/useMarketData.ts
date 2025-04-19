@@ -192,10 +192,11 @@ export const useMarketData = (): MarketDataHook => {
   }, [symbol, isForexSymbol, loading, marketData]);
 
   // Function to place a trade order
-  const placeOrder = async (tradeSuggestion: TradeSuggestion): Promise<boolean> => {
+  const placeOrder = async (tradeSuggestion: TradeSuggestion): Promise<{success: boolean, message: string, orderId?: string}> => {
     try {
       // Determine the broker to use based on the symbol
       const isForex = isForexSymbol(tradeSuggestion.symbol);
+      const broker = isForex ? 'Oanda' : 'Alpaca';
       const endpoint = isForex ? '/api/brokers/oanda/order' : '/api/brokers/alpaca/order';
       
       // Convert the symbol format if needed
@@ -204,6 +205,8 @@ export const useMarketData = (): MarketDataHook => {
         // Convert EURUSD to EUR_USD format for Oanda
         orderSymbol = `${orderSymbol.substring(0, 3)}_${orderSymbol.substring(3, 6)}`;
       }
+      
+      console.log(`Placing ${tradeSuggestion.action} order for ${orderSymbol} via ${broker}...`);
       
       // Send order to the appropriate broker API
       const response = await axios.post(endpoint, {
@@ -217,15 +220,53 @@ export const useMarketData = (): MarketDataHook => {
       });
       
       if (response.data && response.data.success) {
-        console.log(`Order placed successfully with ${isForex ? 'Oanda' : 'Alpaca'}:`, response.data);
-        return true;
+        console.log(`Order placed successfully with ${broker}:`, response.data);
+        return {
+          success: true,
+          message: `Order successfully placed with ${broker}. ${tradeSuggestion.action.toUpperCase()} ${orderSymbol} at market price.`,
+          orderId: response.data.orderId || response.data.id
+        };
       } else {
-        console.error(`Order placement failed with ${isForex ? 'Oanda' : 'Alpaca'}:`, response.data);
-        return false;
+        console.error(`Order placement failed with ${broker}:`, response.data);
+        return {
+          success: false,
+          message: `Failed to place order with ${broker}. ${response.data.error || 'Unknown error'}`
+        };
       }
     } catch (error) {
       console.error('Error placing order:', error);
-      return false;
+      
+      // Provide a more informative error message
+      let errorMessage = 'Failed to place order. ';
+      
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          // The request was made and the server responded with an error status
+          if (error.response.status === 401 || error.response.status === 403) {
+            errorMessage += 'Authentication failed. Please check your broker API credentials.';
+          } else if (error.response.status === 400) {
+            errorMessage += `Invalid order parameters: ${error.response.data?.message || 'Please check your order details.'}`;
+          } else if (error.response.status >= 500) {
+            errorMessage += 'The broker API server encountered an error. Please try again later.';
+          } else {
+            errorMessage += `Error code: ${error.response.status}. ${error.response.data?.message || ''}`;
+          }
+        } else if (error.request) {
+          // The request was made but no response was received
+          errorMessage += 'No response received from the broker API. Please check your internet connection.';
+        } else {
+          // Something happened in setting up the request
+          errorMessage += error.message;
+        }
+      } else {
+        // Not an Axios error
+        errorMessage += String(error);
+      }
+      
+      return {
+        success: false,
+        message: errorMessage
+      };
     }
   };
 
