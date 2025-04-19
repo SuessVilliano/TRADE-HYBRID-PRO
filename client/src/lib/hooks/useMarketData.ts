@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 export interface MarketData {
@@ -39,6 +39,19 @@ export const useMarketData = (): MarketDataHook => {
   const [symbol, setSymbol] = useState<string>('BINANCE:SOLUSDT');
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
 
+  // Function to determine if a symbol is forex
+  const isForexSymbol = useCallback((symbolStr: string): boolean => {
+    // Clean the symbol first
+    const cleanSymbol = symbolStr.includes(':') ? symbolStr.split(':')[1] : symbolStr;
+    
+    // Check if it follows common forex patterns
+    return /^[A-Z]{3}_[A-Z]{3}$/.test(cleanSymbol) || 
+           (/^[A-Z]{6}$/.test(cleanSymbol) && 
+            ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'NZD'].some(
+              currency => cleanSymbol.includes(currency)
+            ));
+  }, []);
+
   // Fetch market data when symbol changes
   useEffect(() => {
     const fetchData = async () => {
@@ -46,13 +59,16 @@ export const useMarketData = (): MarketDataHook => {
       setError(null);
       
       try {
-        // Use Alpaca API for real market data
         console.log(`Fetching real market data for ${symbol}`);
         
         // Extract the ticker symbol from formats like BINANCE:BTCUSDT or BTCUSD
         const cleanSymbol = symbol.includes(':') ? symbol.split(':')[1] : symbol;
         
-        // Use Axios to fetch real data from our API endpoint
+        // Determine if this is a forex pair
+        const isForex = isForexSymbol(cleanSymbol);
+        console.log(`Symbol ${cleanSymbol} identified as ${isForex ? 'forex' : 'stock/crypto'}`);
+        
+        // Use the appropriate API endpoint based on the symbol type
         const response = await axios.get(`/api/market-data/history`, {
           params: {
             symbol: cleanSymbol,
@@ -68,7 +84,7 @@ export const useMarketData = (): MarketDataHook => {
             high: parseFloat(bar.h),
             low: parseFloat(bar.l),
             close: parseFloat(bar.c),
-            volume: parseFloat(bar.v),
+            volume: parseFloat(bar.v || '0'), // Some forex data might not have volume
             timestamp: new Date(bar.t).getTime()
           }));
           
@@ -78,38 +94,22 @@ export const useMarketData = (): MarketDataHook => {
           if (realData.length > 0) {
             setCurrentPrice(realData[realData.length - 1].close);
           }
-        } else {
-          // If the expected data format is not found, try an alternate approach
-          const alpacaResponse = await axios.get(`/api/alpaca/bars`, {
-            params: {
-              symbol: cleanSymbol,
-              timeframe: '1H',
-              limit: 100
-            }
-          });
           
-          if (alpacaResponse.data && Array.isArray(alpacaResponse.data)) {
-            const alpacaData: MarketData[] = alpacaResponse.data.map((bar: any) => ({
-              open: parseFloat(bar.o),
-              high: parseFloat(bar.h),
-              low: parseFloat(bar.l),
-              close: parseFloat(bar.c),
-              volume: parseFloat(bar.v),
-              timestamp: new Date(bar.t).getTime()
-            }));
-            
-            setMarketData(alpacaData);
-            
-            if (alpacaData.length > 0) {
-              setCurrentPrice(alpacaData[alpacaData.length - 1].close);
-            }
-          } else {
-            throw new Error('Invalid data format received from all API endpoints');
-          }
+        } else {
+          throw new Error('Invalid data format received from API');
         }
       } catch (err) {
         console.error('Error fetching market data:', err);
         setError('Failed to fetch market data. Please check API connectivity.');
+        
+        // Add more diagnostic information to help troubleshoot
+        if (axios.isAxiosError(err) && err.response) {
+          console.error('API Error Details:', {
+            status: err.response.status,
+            statusText: err.response.statusText,
+            data: err.response.data
+          });
+        }
       } finally {
         setLoading(false);
       }
@@ -119,16 +119,41 @@ export const useMarketData = (): MarketDataHook => {
     
     // Set up a real-time data refresh interval (5 seconds)
     const interval = setInterval(async () => {
+      if (loading) return; // Skip updates if we're already loading data
+      
       try {
-        if (!loading) {
-          // Fetch just the latest price for real-time updates
-          const cleanSymbol = symbol.includes(':') ? symbol.split(':')[1] : symbol;
-          const quoteResponse = await axios.get(`/api/market-data/quote`, {
-            params: { symbol: cleanSymbol }
-          });
+        // Fetch just the latest price for real-time updates
+        const cleanSymbol = symbol.includes(':') ? symbol.split(':')[1] : symbol;
+        const quoteResponse = await axios.get(`/api/market-data/quote`, {
+          params: { symbol: cleanSymbol }
+        });
+        
+        if (quoteResponse.data && quoteResponse.data.price) {
+          // Update the current price
+          setCurrentPrice(parseFloat(quoteResponse.data.price));
           
-          if (quoteResponse.data && quoteResponse.data.price) {
-            setCurrentPrice(parseFloat(quoteResponse.data.price));
+          // If we have market data, also update the last candle's close price
+          // This keeps the chart up-to-date with the latest price
+          if (marketData.length > 0) {
+            const updatedMarketData = [...marketData];
+            const lastIndex = updatedMarketData.length - 1;
+            
+            // Only update if the last candle is the current period
+            const lastCandle = updatedMarketData[lastIndex];
+            const now = Date.now();
+            const timeDiff = now - lastCandle.timestamp;
+            const isCurrentPeriod = timeDiff < 60 * 60 * 1000; // 1 hour in milliseconds
+            
+            if (isCurrentPeriod) {
+              // Update the last candle
+              updatedMarketData[lastIndex] = {
+                ...lastCandle,
+                close: parseFloat(quoteResponse.data.price),
+                high: Math.max(lastCandle.high, parseFloat(quoteResponse.data.price)),
+                low: Math.min(lastCandle.low, parseFloat(quoteResponse.data.price))
+              };
+              setMarketData(updatedMarketData);
+            }
           }
         }
       } catch (err) {
@@ -138,14 +163,25 @@ export const useMarketData = (): MarketDataHook => {
     }, 5000);
     
     return () => clearInterval(interval);
-  }, [symbol]);
+  }, [symbol, isForexSymbol, loading, marketData]);
 
   // Function to place a trade order
   const placeOrder = async (tradeSuggestion: TradeSuggestion): Promise<boolean> => {
     try {
-      // Send order to broker API
-      const response = await axios.post('/api/broker/order', {
-        symbol: tradeSuggestion.symbol,
+      // Determine the broker to use based on the symbol
+      const isForex = isForexSymbol(tradeSuggestion.symbol);
+      const endpoint = isForex ? '/api/brokers/oanda/order' : '/api/brokers/alpaca/order';
+      
+      // Convert the symbol format if needed
+      let orderSymbol = tradeSuggestion.symbol;
+      if (isForex && !orderSymbol.includes('_') && orderSymbol.length === 6) {
+        // Convert EURUSD to EUR_USD format for Oanda
+        orderSymbol = `${orderSymbol.substring(0, 3)}_${orderSymbol.substring(3, 6)}`;
+      }
+      
+      // Send order to the appropriate broker API
+      const response = await axios.post(endpoint, {
+        symbol: orderSymbol,
         side: tradeSuggestion.action,
         quantity: 1, // Default quantity, should be configurable
         type: 'market',
@@ -155,10 +191,10 @@ export const useMarketData = (): MarketDataHook => {
       });
       
       if (response.data && response.data.success) {
-        console.log('Order placed successfully:', response.data);
+        console.log(`Order placed successfully with ${isForex ? 'Oanda' : 'Alpaca'}:`, response.data);
         return true;
       } else {
-        console.error('Order placement failed:', response.data);
+        console.error(`Order placement failed with ${isForex ? 'Oanda' : 'Alpaca'}:`, response.data);
         return false;
       }
     } catch (error) {

@@ -122,6 +122,8 @@ import investmentPerformanceRoutes from './api/investment-performance'; // Impor
 import feeSettingsRoutes from './api/fee-settings'; // Import for fee settings routes
 import companyRevenueRoutes from './api/company-revenue'; // Import for company revenue routes
 import signalSubscriptionsRoutes from './api/signal-subscriptions'; // Import for signal subscriptions routes
+import oandaMarketRoutes from './routes/oanda-market'; // Import for Oanda market data routes
+import marketDataRoutes from './routes/market-data'; // Import for unified market data routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Market data routes

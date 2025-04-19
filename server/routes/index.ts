@@ -4,6 +4,8 @@ import webhooksRoutes from './webhooks';
 import signalsRoutes from './signals';
 import tradingViewRoutes from './tradingview';
 import brokerRoutes from './brokers';
+import oandaMarketRoutes from './oanda-market';
+import marketDataRoutes from './market-data';
 import aiInsightsHandler from '../api/ai-insights';
 import marketDataHandler from '../api/market-data';
 
@@ -27,7 +29,13 @@ router.use('/brokers', brokerRoutes);
 // AI Insights routes
 router.use('/ai-insights', (req, res) => aiInsightsHandler(req, res));
 
-// Market Data routes
+// New real-time Market Data routes
+router.use('/market-data', marketDataRoutes);
+
+// Oanda specific market data routes
+router.use('/oanda', oandaMarketRoutes);
+
+// Legacy Market Data provider routes
 router.use('/market-data/:provider', (req, res) => marketDataHandler(req, res));
 
 export default router;
