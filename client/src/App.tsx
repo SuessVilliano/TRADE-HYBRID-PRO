@@ -36,6 +36,7 @@ import CopyTradingPage from './pages/copy-trading';
 import WalletConnectOnboarding from './pages/wallet-connect-onboarding';
 import WebhookSettingsPage from './pages/webhook-settings';
 import { WebhookLogsPage } from './pages/WebhookLogsPage';
+import { BrokerApiSettingsPage } from './pages/BrokerApiSettingsPage';
 
 // Trading & Markets
 import AdvancedTradingDashboard from './pages/advanced-trading-dashboard';
@@ -135,6 +136,7 @@ const App: React.FC = () => {
                   <Route path="/notification-settings" element={<ProtectedRoute><NotificationSettingsPage /></ProtectedRoute>} />
                   <Route path="/webhook-settings" element={<ProtectedRoute><WebhookSettingsPage /></ProtectedRoute>} />
                   <Route path="/webhook-logs" element={<ProtectedRoute><WebhookLogsPage /></ProtectedRoute>} />
+                  <Route path="/broker-api-settings" element={<ProtectedRoute><BrokerApiSettingsPage /></ProtectedRoute>} />
                   <Route path="/trading-bots" element={<ProtectedRoute><BotsView /></ProtectedRoute>} />
                   {/* Redirect for backward compatibility */}
                   <Route path="/bots" element={<Navigate to="/trading-bots" replace />} />

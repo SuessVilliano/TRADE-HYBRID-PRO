@@ -1,575 +1,572 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '../ui/card';
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "../ui/form";
-import { Input } from '../ui/input';
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from '../ui/card';
 import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 import { useToast } from '../ui/use-toast';
+import { AlertCircle, CheckCircle2, Key, Lock, Plus, RefreshCw, Trash } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '../ui/select';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { AlertCircle, Check, Key, Lock, RefreshCw } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Switch } from '../ui/switch';
 
-// Validation schemas for different brokers
-const alpacaSchema = z.object({
-  apiKey: z.string().min(1, "API Key is required"),
-  apiSecret: z.string().min(1, "API Secret is required"),
-  isPaper: z.boolean().default(true),
-});
-
-const oandaSchema = z.object({
-  apiToken: z.string().min(1, "API Token is required"),
-  accountId: z.string().min(1, "Account ID is required"),
-  isPractice: z.boolean().default(true),
-});
-
-const ninjaTraderSchema = z.object({
-  machineID: z.string().min(1, "Machine ID is required"),
-  connectionPort: z.string().min(1, "Connection Port is required"),
-});
-
-type BrokerConnectionStatus = {
+// Define types for broker credentials
+interface BrokerCredentials {
+  id: number;
+  userId: string;
   broker: string;
-  connected: boolean;
-  lastChecked: string;
-  message?: string;
-  accountInfo?: any;
-};
+  name: string;
+  isActive: boolean;
+  isPaper: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastTestedAt?: string | null;
+  lastTestResult?: {
+    success: boolean;
+    message?: string;
+    details?: any;
+  } | null;
+}
+
+// Interface for the form values
+interface BrokerFormValues {
+  name: string;
+  broker: string;
+  apiKey?: string;
+  apiSecret?: string;
+  accountId?: string;
+  token?: string;
+  accountNumber?: string;
+  username?: string;
+  password?: string;
+  server?: string;
+  isPaper: boolean;
+}
 
 export function BrokerApiSettings() {
+  const [brokerCredentials, setBrokerCredentials] = useState<BrokerCredentials[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('alpaca');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isTesting, setIsTesting] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<{[key: string]: BrokerConnectionStatus}>({});
+  const [isTesting, setIsTesting] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState<number | null>(null);
+  
   const { toast } = useToast();
-
-  // Alpaca form
-  const alpacaForm = useForm<z.infer<typeof alpacaSchema>>({
-    resolver: zodResolver(alpacaSchema),
+  
+  // Initialize react-hook-form
+  const { register, handleSubmit, reset, formState: { errors }, setValue, watch } = useForm<BrokerFormValues>({
     defaultValues: {
-      apiKey: '',
-      apiSecret: '',
-      isPaper: true,
-    },
+      name: '',
+      broker: 'alpaca',
+      isPaper: true
+    }
   });
-
-  // Oanda form
-  const oandaForm = useForm<z.infer<typeof oandaSchema>>({
-    resolver: zodResolver(oandaSchema),
-    defaultValues: {
-      apiToken: '',
-      accountId: '',
-      isPractice: true,
-    },
-  });
-
-  // NinjaTrader form
-  const ninjaTraderForm = useForm<z.infer<typeof ninjaTraderSchema>>({
-    resolver: zodResolver(ninjaTraderSchema),
-    defaultValues: {
-      machineID: '',
-      connectionPort: '8000',
-    },
-  });
-
-  // Load saved broker credentials
+  
+  // Watch the broker type to dynamically display the appropriate form fields
+  const watchBroker = watch('broker');
+  
+  // Fetch broker credentials on component mount
   useEffect(() => {
-    const loadBrokerCredentials = async () => {
-      try {
-        const response = await axios.get('/api/user/broker-credentials');
-        const data = response.data;
-        
-        // Set form values based on saved credentials
-        if (data.alpaca) {
-          alpacaForm.reset({
-            apiKey: data.alpaca.apiKey || '',
-            apiSecret: data.alpaca.apiSecret || '',
-            isPaper: data.alpaca.isPaper !== false,
-          });
-        }
-        
-        if (data.oanda) {
-          oandaForm.reset({
-            apiToken: data.oanda.apiToken || '',
-            accountId: data.oanda.accountId || '',
-            isPractice: data.oanda.isPractice !== false,
-          });
-        }
-        
-        if (data.ninjaTrader) {
-          ninjaTraderForm.reset({
-            machineID: data.ninjaTrader.machineID || '',
-            connectionPort: data.ninjaTrader.connectionPort || '8000',
-          });
-        }
-
-        // Load connection status if available
-        if (data.connectionStatus) {
-          setConnectionStatus(data.connectionStatus);
-        }
-      } catch (error) {
-        console.error('Error loading broker credentials:', error);
-      }
-    };
-
-    loadBrokerCredentials();
+    fetchBrokerCredentials();
   }, []);
-
-  // Save broker credentials
-  const saveCredentials = async (broker: string, data: any) => {
+  
+  // Fetch broker credentials from server
+  const fetchBrokerCredentials = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get('/api/broker-credentials');
+      setBrokerCredentials(response.data.credentials || []);
+    } catch (error) {
+      console.error('Error fetching broker credentials:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch broker credentials',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Format date for display
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'Never';
+    return new Date(dateString).toLocaleString();
+  };
+  
+  // Handle tab change - reset form when tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    reset({
+      name: '',
+      broker: value,
+      isPaper: true
+    });
+  };
+  
+  // Create new broker credentials
+  const onSubmit = async (data: BrokerFormValues) => {
     setIsSubmitting(true);
     try {
-      await axios.post('/api/user/broker-credentials', {
-        broker,
-        credentials: data
-      });
+      const response = await axios.post('/api/broker-credentials', data);
       
+      // Update credentials list
+      setBrokerCredentials([response.data.credential, ...brokerCredentials]);
+      
+      // Show success toast
       toast({
-        title: 'Credentials saved',
-        description: `Your ${broker} credentials have been saved successfully.`,
+        title: 'Success',
+        description: 'Broker credentials added successfully',
+        variant: 'default'
       });
       
-      // Test connection automatically after saving
-      testConnection(broker);
+      // Reset form
+      reset({
+        name: '',
+        broker: activeTab,
+        isPaper: true
+      });
+      
     } catch (error) {
-      console.error(`Error saving ${broker} credentials:`, error);
+      console.error('Error adding broker credentials:', error);
       toast({
-        title: 'Error saving credentials',
-        description: 'There was an error saving your broker credentials.',
+        title: 'Error',
+        description: 'Failed to add broker credentials',
         variant: 'destructive'
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-
+  
   // Test broker connection
-  const testConnection = async (broker: string) => {
-    setIsTesting(true);
+  const testConnection = async (credentialId: number) => {
+    setIsTesting(credentialId);
     try {
-      const response = await axios.post('/api/user/broker-test-connection', {
-        broker
-      });
+      const response = await axios.post(`/api/broker-credentials/${credentialId}/test`);
       
-      const { success, message, accountInfo } = response.data;
+      // Update credentials list with test result
+      setBrokerCredentials(brokerCredentials.map(cred => 
+        cred.id === credentialId 
+          ? { 
+              ...cred, 
+              lastTestedAt: new Date().toISOString(),
+              lastTestResult: response.data.result
+            } 
+          : cred
+      ));
       
-      setConnectionStatus(prev => ({
-        ...prev,
-        [broker]: {
-          broker,
-          connected: success,
-          lastChecked: new Date().toISOString(),
-          message,
-          accountInfo
-        }
-      }));
-      
-      if (success) {
+      // Show result toast
+      if (response.data.result.success) {
         toast({
-          title: 'Connection successful',
-          description: `Successfully connected to ${broker}.`,
+          title: 'Connection Successful',
+          description: response.data.result.message || 'Successfully connected to broker API',
+          variant: 'default'
         });
       } else {
         toast({
-          title: 'Connection failed',
-          description: message || `Could not connect to ${broker}.`,
+          title: 'Connection Failed',
+          description: response.data.result.message || 'Failed to connect to broker API',
           variant: 'destructive'
         });
       }
-    } catch (error: any) {
-      console.error(`Error testing ${broker} connection:`, error);
       
-      setConnectionStatus(prev => ({
-        ...prev,
-        [broker]: {
-          broker,
-          connected: false,
-          lastChecked: new Date().toISOString(),
-          message: error.response?.data?.message || error.message || 'Connection failed'
-        }
-      }));
-      
+    } catch (error) {
+      console.error('Error testing broker connection:', error);
       toast({
-        title: 'Connection failed',
-        description: error.response?.data?.message || error.message || `Could not connect to ${broker}.`,
+        title: 'Error',
+        description: 'Failed to test broker connection',
         variant: 'destructive'
       });
     } finally {
-      setIsTesting(false);
+      setIsTesting(null);
     }
   };
-
-  // Submit handlers for each form
-  const onSubmitAlpaca = (data: z.infer<typeof alpacaSchema>) => {
-    saveCredentials('alpaca', data);
+  
+  // Delete broker credentials
+  const deleteCredentials = async (credentialId: number) => {
+    setIsDeleting(credentialId);
+    try {
+      await axios.delete(`/api/broker-credentials/${credentialId}`);
+      
+      // Update credentials list
+      setBrokerCredentials(brokerCredentials.filter(cred => cred.id !== credentialId));
+      
+      // Show success toast
+      toast({
+        title: 'Success',
+        description: 'Broker credentials deleted successfully',
+        variant: 'default'
+      });
+      
+    } catch (error) {
+      console.error('Error deleting broker credentials:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete broker credentials',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsDeleting(null);
+    }
   };
-
-  const onSubmitOanda = (data: z.infer<typeof oandaSchema>) => {
-    saveCredentials('oanda', data);
+  
+  // Toggle credential active status
+  const toggleActive = async (credentialId: number, isActive: boolean) => {
+    try {
+      await axios.patch(`/api/broker-credentials/${credentialId}`, {
+        isActive: !isActive
+      });
+      
+      // Update credentials list
+      setBrokerCredentials(brokerCredentials.map(cred => 
+        cred.id === credentialId 
+          ? { ...cred, isActive: !isActive } 
+          : cred
+      ));
+      
+      // Show success toast
+      toast({
+        title: 'Success',
+        description: `Broker credentials ${!isActive ? 'activated' : 'deactivated'} successfully`,
+        variant: 'default'
+      });
+      
+    } catch (error) {
+      console.error('Error toggling broker credentials:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update broker credentials',
+        variant: 'destructive'
+      });
+    }
   };
-
-  const onSubmitNinjaTrader = (data: z.infer<typeof ninjaTraderSchema>) => {
-    saveCredentials('ninjaTrader', data);
-  };
-
-  // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
-  };
-
+  
   return (
-    <Card className="w-full mt-4">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-xl font-bold">Broker API Settings</CardTitle>
-        <CardDescription>
-          Configure your broker API credentials to enable webhook-based trading.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-3 mb-6">
-            <TabsTrigger value="alpaca">Alpaca</TabsTrigger>
-            <TabsTrigger value="oanda">Oanda</TabsTrigger>
-            <TabsTrigger value="ninjaTrader">NinjaTrader</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="alpaca">
-            <Form {...alpacaForm}>
-              <form onSubmit={alpacaForm.handleSubmit(onSubmitAlpaca)} className="space-y-4">
-                <FormField
-                  control={alpacaForm.control}
-                  name="apiKey"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>API Key</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input 
-                            type="text" 
-                            placeholder="PK1234567890ABCDEFG" 
-                            {...field} 
-                            className="pl-10"
-                          />
-                          <Key className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+    <div className="space-y-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>Add Broker API Credentials</CardTitle>
+          <CardDescription>
+            Connect your trading accounts to enable automated trade execution via webhooks
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="alpaca">Alpaca</TabsTrigger>
+              <TabsTrigger value="oanda">Oanda</TabsTrigger>
+              <TabsTrigger value="ninjatrader">NinjaTrader</TabsTrigger>
+            </TabsList>
+            
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Connection Name</Label>
+                  <Input 
+                    id="name" 
+                    placeholder="My Alpaca Account" 
+                    {...register('name', { required: true })}
+                  />
+                  {errors.name && (
+                    <p className="text-sm text-red-500 mt-1">Connection name is required</p>
                   )}
-                />
+                </div>
                 
-                <FormField
-                  control={alpacaForm.control}
-                  name="apiSecret"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>API Secret</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input 
-                            type="password" 
-                            placeholder="Your API Secret" 
-                            {...field} 
-                            className="pl-10"
-                          />
-                          <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    id="isPaper"
+                    checked={watch('isPaper')}
+                    onCheckedChange={(checked) => setValue('isPaper', checked)}
+                  />
+                  <Label htmlFor="isPaper">
+                    {watchBroker === 'alpaca' ? 'Paper Trading' : 
+                     watchBroker === 'oanda' ? 'Practice Account' : 'Demo Account'}
+                  </Label>
+                </div>
                 
-                <FormField
-                  control={alpacaForm.control}
-                  name="isPaper"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <input
-                          type="checkbox"
-                          checked={field.value}
-                          onChange={field.onChange}
-                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                        />
-                      </FormControl>
-                      <FormLabel className="font-normal">Use Paper Trading</FormLabel>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <TabsContent value="alpaca" className="space-y-4 mt-4">
+                  <div>
+                    <Label htmlFor="alpaca-api-key">API Key</Label>
+                    <Input 
+                      id="alpaca-api-key" 
+                      placeholder="PKMFCA9UAO6C7DKDNP4Y" 
+                      {...register('apiKey', { required: true })}
+                    />
+                    {errors.apiKey && (
+                      <p className="text-sm text-red-500 mt-1">API Key is required</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="alpaca-api-secret">API Secret</Label>
+                    <Input 
+                      id="alpaca-api-secret" 
+                      type="password" 
+                      placeholder="Your API Secret" 
+                      {...register('apiSecret', { required: true })}
+                    />
+                    {errors.apiSecret && (
+                      <p className="text-sm text-red-500 mt-1">API Secret is required</p>
+                    )}
+                  </div>
+                  <div className="bg-blue-50 text-blue-800 p-3 rounded-md mt-3 border border-blue-100 text-sm">
+                    <p>
+                      <strong>How to get your Alpaca API credentials:</strong>
+                    </p>
+                    <ol className="list-decimal pl-5 mt-1 space-y-1">
+                      <li>Log in to your Alpaca account at <a href="https://app.alpaca.markets/" target="_blank" rel="noopener noreferrer" className="underline">app.alpaca.markets</a></li>
+                      <li>Click on your name in the upper right corner, then select "Paper Account" or "Live Account"</li>
+                      <li>Navigate to "API Keys" in the left sidebar</li>
+                      <li>Create a new API key if you don't have one already</li>
+                      <li>Copy the Key ID and Secret Key and paste them here</li>
+                    </ol>
+                  </div>
+                </TabsContent>
                 
-                {connectionStatus.alpaca && (
-                  <Alert variant={connectionStatus.alpaca.connected ? "success" : "destructive"} className="mt-4">
-                    <div className="flex items-start">
-                      {connectionStatus.alpaca.connected ? 
-                        <Check className="h-5 w-5 mr-2" /> : 
-                        <AlertCircle className="h-5 w-5 mr-2" />
-                      }
+                <TabsContent value="oanda" className="space-y-4 mt-4">
+                  <div>
+                    <Label htmlFor="oanda-api-token">API Token</Label>
+                    <Input 
+                      id="oanda-api-token" 
+                      placeholder="Your Oanda API Token" 
+                      {...register('token', { required: true })}
+                    />
+                    {errors.token && (
+                      <p className="text-sm text-red-500 mt-1">API Token is required</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="oanda-account-id">Account ID</Label>
+                    <Input 
+                      id="oanda-account-id" 
+                      placeholder="001-001-1234567-001" 
+                      {...register('accountId', { required: true })}
+                    />
+                    {errors.accountId && (
+                      <p className="text-sm text-red-500 mt-1">Account ID is required</p>
+                    )}
+                  </div>
+                  <div className="bg-blue-50 text-blue-800 p-3 rounded-md mt-3 border border-blue-100 text-sm">
+                    <p>
+                      <strong>How to get your Oanda API credentials:</strong>
+                    </p>
+                    <ol className="list-decimal pl-5 mt-1 space-y-1">
+                      <li>Log in to your Oanda account at <a href="https://www.oanda.com/" target="_blank" rel="noopener noreferrer" className="underline">oanda.com</a></li>
+                      <li>Go to "My Account" and navigate to "Manage API Access"</li>
+                      <li>Generate a new API token if you don't have one</li>
+                      <li>Your Account ID can be found on the top right of your trading dashboard</li>
+                      <li>Copy the API token and Account ID and paste them here</li>
+                    </ol>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="ninjatrader" className="space-y-4 mt-4">
+                  <div>
+                    <Label htmlFor="nt-account-number">Account Number</Label>
+                    <Input 
+                      id="nt-account-number" 
+                      placeholder="Your NinjaTrader Account Number" 
+                      {...register('accountNumber', { required: true })}
+                    />
+                    {errors.accountNumber && (
+                      <p className="text-sm text-red-500 mt-1">Account Number is required</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="nt-username">Username</Label>
+                    <Input 
+                      id="nt-username" 
+                      placeholder="Your NinjaTrader Username" 
+                      {...register('username', { required: true })}
+                    />
+                    {errors.username && (
+                      <p className="text-sm text-red-500 mt-1">Username is required</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="nt-password">Password</Label>
+                    <Input 
+                      id="nt-password" 
+                      type="password" 
+                      placeholder="Your NinjaTrader Password" 
+                      {...register('password', { required: true })}
+                    />
+                    {errors.password && (
+                      <p className="text-sm text-red-500 mt-1">Password is required</p>
+                    )}
+                  </div>
+                  <div className="bg-yellow-50 text-yellow-800 p-3 rounded-md mt-3 border border-yellow-100 text-sm">
+                    <p>
+                      <strong>Note about NinjaTrader integration:</strong>
+                    </p>
+                    <p className="mt-1">
+                      NinjaTrader doesn't provide a direct web API. You'll need to install our desktop connector app for NinjaTrader to enable automated trading. 
+                      <a href="/ninjatrader-connector-setup" className="underline ml-1">Download and setup instructions.</a>
+                    </p>
+                  </div>
+                </TabsContent>
+              </div>
+              
+              <Button type="submit" className="mt-6 w-full" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Broker Connection
+                  </>
+                )}
+              </Button>
+            </form>
+          </Tabs>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Broker Connections</CardTitle>
+          <CardDescription>
+            Manage your connected broker accounts
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-8">
+              <RefreshCw className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+              <p className="mt-2 text-muted-foreground">Loading broker connections...</p>
+            </div>
+          ) : brokerCredentials.length === 0 ? (
+            <div className="text-center py-8 border rounded-md">
+              <Key className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+              <h3 className="text-lg font-medium">No broker connections yet</h3>
+              <p className="text-muted-foreground mt-1">
+                Add your first broker connection above to enable automated trading
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {brokerCredentials.map((credential) => (
+                <Card key={credential.id} className={credential.isActive ? 'border-green-200' : 'border-gray-200'}>
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
                       <div>
-                        <AlertTitle>{connectionStatus.alpaca.connected ? 'Connected' : 'Not Connected'}</AlertTitle>
-                        <AlertDescription>
-                          {connectionStatus.alpaca.message}
-                          {connectionStatus.alpaca.lastChecked && (
-                            <div className="text-xs mt-1">Last checked: {formatDate(connectionStatus.alpaca.lastChecked)}</div>
+                        <CardTitle className="text-base flex items-center">
+                          {credential.name}
+                          <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+                            credential.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {credential.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                          <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+                            credential.isPaper ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
+                          }`}>
+                            {credential.broker === 'alpaca' && (credential.isPaper ? 'Paper' : 'Live')}
+                            {credential.broker === 'oanda' && (credential.isPaper ? 'Practice' : 'Live')}
+                            {credential.broker === 'ninjatrader' && (credential.isPaper ? 'Demo' : 'Live')}
+                          </span>
+                        </CardTitle>
+                        <CardDescription className="text-sm">
+                          {credential.broker.charAt(0).toUpperCase() + credential.broker.slice(1)} • Added on {formatDate(credential.createdAt)}
+                        </CardDescription>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => toggleActive(credential.id, credential.isActive)}
+                          className={credential.isActive ? 'text-orange-500' : 'text-green-500'}
+                        >
+                          {credential.isActive ? 'Deactivate' : 'Activate'}
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => testConnection(credential.id)}
+                          disabled={isTesting === credential.id}
+                        >
+                          {isTesting === credential.id ? (
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                          ) : (
+                            'Test'
                           )}
-                        </AlertDescription>
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-red-500"
+                          onClick={() => deleteCredentials(credential.id)}
+                          disabled={isDeleting === credential.id}
+                        >
+                          {isDeleting === credential.id ? (
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash className="h-4 w-4" />
+                          )}
+                        </Button>
                       </div>
                     </div>
-                  </Alert>
-                )}
-                
-                <div className="flex justify-between pt-2">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => testConnection('alpaca')}
-                    disabled={isTesting || isSubmitting}
-                  >
-                    {isTesting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Test Connection
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Save Credentials
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </TabsContent>
-          
-          <TabsContent value="oanda">
-            <Form {...oandaForm}>
-              <form onSubmit={oandaForm.handleSubmit(onSubmitOanda)} className="space-y-4">
-                <FormField
-                  control={oandaForm.control}
-                  name="apiToken"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>API Token</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input 
-                            type="password" 
-                            placeholder="Your Oanda API Token" 
-                            {...field} 
-                            className="pl-10"
-                          />
-                          <Key className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={oandaForm.control}
-                  name="accountId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Account ID</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input 
-                            type="text" 
-                            placeholder="Your Oanda Account ID" 
-                            {...field} 
-                            className="pl-10"
-                          />
-                          <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={oandaForm.control}
-                  name="isPractice"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <input
-                          type="checkbox"
-                          checked={field.value}
-                          onChange={field.onChange}
-                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                        />
-                      </FormControl>
-                      <FormLabel className="font-normal">Use Practice Account</FormLabel>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                {connectionStatus.oanda && (
-                  <Alert variant={connectionStatus.oanda.connected ? "success" : "destructive"} className="mt-4">
-                    <div className="flex items-start">
-                      {connectionStatus.oanda.connected ? 
-                        <Check className="h-5 w-5 mr-2" /> : 
-                        <AlertCircle className="h-5 w-5 mr-2" />
-                      }
-                      <div>
-                        <AlertTitle>{connectionStatus.oanda.connected ? 'Connected' : 'Not Connected'}</AlertTitle>
-                        <AlertDescription>
-                          {connectionStatus.oanda.message}
-                          {connectionStatus.oanda.lastChecked && (
-                            <div className="text-xs mt-1">Last checked: {formatDate(connectionStatus.oanda.lastChecked)}</div>
-                          )}
-                        </AlertDescription>
+                  </CardHeader>
+                  <CardContent className="pb-4 pt-0">
+                    {credential.lastTestedAt && (
+                      <div className="flex items-center mt-2 text-sm">
+                        <span className="text-muted-foreground mr-2">
+                          Last tested: {formatDate(credential.lastTestedAt)}
+                        </span>
+                        {credential.lastTestResult && (
+                          <span className={`flex items-center ${
+                            credential.lastTestResult.success ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {credential.lastTestResult.success ? (
+                              <>
+                                <CheckCircle2 className="h-4 w-4 mr-1" />
+                                Success
+                              </>
+                            ) : (
+                              <>
+                                <AlertCircle className="h-4 w-4 mr-1" />
+                                Failed: {credential.lastTestResult.message}
+                              </>
+                            )}
+                          </span>
+                        )}
                       </div>
+                    )}
+                    <div className="text-xs bg-gray-50 p-2 rounded-md mt-3 flex items-center">
+                      <Lock className="h-3 w-3 mr-2 text-gray-400" />
+                      <span className="text-muted-foreground">Credentials securely encrypted</span>
                     </div>
-                  </Alert>
-                )}
-                
-                <div className="flex justify-between pt-2">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => testConnection('oanda')}
-                    disabled={isTesting || isSubmitting}
-                  >
-                    {isTesting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Test Connection
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Save Credentials
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </TabsContent>
-          
-          <TabsContent value="ninjaTrader">
-            <Form {...ninjaTraderForm}>
-              <form onSubmit={ninjaTraderForm.handleSubmit(onSubmitNinjaTrader)} className="space-y-4">
-                <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-md mb-4">
-                  <p className="text-sm">
-                    <strong>Note:</strong> NinjaTrader integration requires the Trade Hybrid Desktop Companion app 
-                    running on the same machine as NinjaTrader. The companion app acts as a bridge between 
-                    our webhooks and NinjaTrader's local API.
-                  </p>
-                  <p className="text-sm mt-2">
-                    <a 
-                      href="/downloads/trade-hybrid-desktop-connector.exe" 
-                      className="text-blue-700 hover:underline"
-                      target="_blank"
-                      rel="noopener"
-                    >
-                      Download Trade Hybrid Desktop Connector
-                    </a>
-                  </p>
-                </div>
-                
-                <FormField
-                  control={ninjaTraderForm.control}
-                  name="machineID"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Machine ID</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input 
-                            type="text" 
-                            placeholder="Your Desktop Connector Machine ID" 
-                            {...field} 
-                            className="pl-10"
-                          />
-                          <Key className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={ninjaTraderForm.control}
-                  name="connectionPort"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Connection Port</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input 
-                            type="text" 
-                            placeholder="Port (default: 8000)" 
-                            {...field} 
-                            className="pl-10"
-                          />
-                          <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                {connectionStatus.ninjaTrader && (
-                  <Alert variant={connectionStatus.ninjaTrader.connected ? "success" : "destructive"} className="mt-4">
-                    <div className="flex items-start">
-                      {connectionStatus.ninjaTrader.connected ? 
-                        <Check className="h-5 w-5 mr-2" /> : 
-                        <AlertCircle className="h-5 w-5 mr-2" />
-                      }
-                      <div>
-                        <AlertTitle>{connectionStatus.ninjaTrader.connected ? 'Connected' : 'Not Connected'}</AlertTitle>
-                        <AlertDescription>
-                          {connectionStatus.ninjaTrader.message}
-                          {connectionStatus.ninjaTrader.lastChecked && (
-                            <div className="text-xs mt-1">Last checked: {formatDate(connectionStatus.ninjaTrader.lastChecked)}</div>
-                          )}
-                        </AlertDescription>
-                      </div>
-                    </div>
-                  </Alert>
-                )}
-                
-                <div className="flex justify-between pt-2">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => testConnection('ninjaTrader')}
-                    disabled={isTesting || isSubmitting}
-                  >
-                    {isTesting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Test Connection
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Save Credentials
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-      <CardFooter className="bg-slate-50 border-t">
-        <div className="text-sm text-muted-foreground">
-          <p>Your API credentials are securely stored and encrypted on our servers.</p>
-          <p className="mt-1">Each webhook can be associated with a specific broker account in the webhook settings page.</p>
-        </div>
-      </CardFooter>
-    </Card>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+        <CardFooter className="bg-gray-50 border-t">
+          <div className="text-sm text-muted-foreground">
+            <p>Your API credentials are encrypted and stored securely. We never share your credentials with third parties.</p>
+          </div>
+        </CardFooter>
+      </Card>
+    </div>
   );
 }
+
+export default BrokerApiSettings;
