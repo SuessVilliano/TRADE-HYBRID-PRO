@@ -3,6 +3,7 @@ import authRoutes from './auth';
 import webhooksRoutes from './webhooks';
 import signalsRoutes from './signals';
 import tradingViewRoutes from './tradingview';
+import brokerRoutes from './brokers';
 import aiInsightsHandler from '../api/ai-insights';
 import marketDataHandler from '../api/market-data';
 
@@ -19,6 +20,9 @@ router.use('/signals', signalsRoutes);
 
 // TradingView routes
 router.use('/tradingview', tradingViewRoutes);
+
+// Broker routes
+router.use('/brokers', brokerRoutes);
 
 // AI Insights routes
 router.use('/ai-insights', (req, res) => aiInsightsHandler(req, res));
