@@ -333,6 +333,269 @@ export default function StakeAndBake() {
             </TabsTrigger>
           </TabsList>
           
+          {/* Validator Tab */}
+          <TabsContent value="validator">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Server className="mr-2 h-5 w-5 text-green-500" />
+                      Solana Validator
+                    </CardTitle>
+                    <CardDescription>
+                      Stake your SOL tokens to our validator and earn rewards while supporting the Solana network.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-4">
+                      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4 rounded-md">
+                        <h3 className="text-sm font-medium flex items-center">
+                          <Activity className="h-4 w-4 mr-2 text-green-600" />
+                          Validator Status: <span className="ml-1 font-bold text-green-600">Active</span>
+                        </h3>
+                        <p className="text-xs mt-1 text-slate-600 dark:text-slate-400">
+                          Our validator is currently active and processing transactions on the Solana network.
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="solStakeAmount">Amount to Stake (SOL)</Label>
+                        <div className="flex mt-2">
+                          <Input 
+                            id="solStakeAmount" 
+                            type="number" 
+                            value={solStakeAmount} 
+                            onChange={(e) => setSolStakeAmount(e.target.value)} 
+                            placeholder="Enter SOL amount" 
+                            className="flex-1" 
+                          />
+                          <Button 
+                            variant="outline" 
+                            className="ml-2"
+                            onClick={() => setSolStakeAmount('1.0')}
+                          >
+                            Max
+                          </Button>
+                        </div>
+                        <p className="text-sm text-slate-400 mt-1">
+                          Minimum stake: 0.1 SOL
+                        </p>
+                      </div>
+                      
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-md">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <RefreshCcw size={16} className="text-blue-600 dark:text-blue-400" />
+                            <span className="text-sm font-medium">Estimated Rewards</span>
+                          </div>
+                          <Badge className="bg-blue-600">~5.5% APY</Badge>
+                        </div>
+                        <div className="mt-2">
+                          <div className="text-xl font-bold">
+                            +{(parseFloat(solStakeAmount || '0') * 0.055).toFixed(3)} SOL
+                          </div>
+                          <div className="text-sm text-slate-500 dark:text-slate-400">
+                            Annual yield (paid out continuously)
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      className="w-full" 
+                      disabled={!connectedWallet || parseFloat(solStakeAmount) <= 0}
+                      onClick={handleStakeSol}
+                    >
+                      {!connectedWallet ? 'Connect Wallet to Stake' : 'Stake SOL to Validator'}
+                    </Button>
+                  </CardFooter>
+                </Card>
+                
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <InfoIcon className="mr-2 h-5 w-5 text-blue-500" />
+                      Validator Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-slate-500">Validator Identity:</span>
+                        <div className="flex items-center">
+                          <span className="text-sm font-mono truncate max-w-[200px]">{validatorIdentity.slice(0, 8)}...{validatorIdentity.slice(-8)}</span>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 ml-1" onClick={() => {
+                            navigator.clipboard.writeText(validatorIdentity);
+                            toast({
+                              title: "Copied!",
+                              description: "Validator identity copied to clipboard",
+                            });
+                          }}>
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between">
+                        <span className="text-sm text-slate-500">Vote Account:</span>
+                        <div className="flex items-center">
+                          <span className="text-sm font-mono truncate max-w-[200px]">{voteAccount.slice(0, 8)}...{voteAccount.slice(-8)}</span>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 ml-1" onClick={() => {
+                            navigator.clipboard.writeText(voteAccount);
+                            toast({
+                              title: "Copied!",
+                              description: "Vote account copied to clipboard",
+                            });
+                          }}>
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between">
+                        <span className="text-sm text-slate-500">Commission:</span>
+                        <span className="text-sm font-semibold">{validatorStats.commission}</span>
+                      </div>
+                      
+                      <div className="flex justify-between">
+                        <span className="text-sm text-slate-500">Activated Stake:</span>
+                        <span className="text-sm font-semibold">{validatorStats.activatedStake} SOL</span>
+                      </div>
+                      
+                      <div className="flex justify-between">
+                        <span className="text-sm text-slate-500">Total Stakers:</span>
+                        <span className="text-sm font-semibold">{validatorStats.totalStakers}</span>
+                      </div>
+                      
+                      <div className="flex justify-between">
+                        <span className="text-sm text-slate-500">Uptime:</span>
+                        <span className="text-sm font-semibold">{validatorStats.uptime}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between mt-4">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex items-center" 
+                        onClick={fetchValidatorInfo}
+                        disabled={fetchingValidatorInfo}
+                      >
+                        {fetchingValidatorInfo ? 
+                          <div className="flex items-center">
+                            <RefreshCcw className="h-4 w-4 mr-2 animate-spin" />
+                            Updating...
+                          </div> : 
+                          <div className="flex items-center">
+                            <RefreshCcw className="h-4 w-4 mr-2" />
+                            Refresh Stats
+                          </div>
+                        }
+                      </Button>
+                      
+                      <a 
+                        href={`https://explorer.solana.com/address/${validatorIdentity}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                      >
+                        <Button variant="outline" size="sm" className="flex items-center">
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          View on Explorer
+                        </Button>
+                      </a>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <BarChart3 className="mr-2 h-5 w-5 text-purple-500" />
+                      Validator Performance
+                    </CardTitle>
+                    <CardDescription>
+                      Track our validator's performance metrics over time.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-sm font-medium mb-2">Current Epoch Activity</h3>
+                        <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <div className="text-xs text-slate-500">Credits Earned</div>
+                              <div className="text-lg font-bold">{validatorStats.epochVoteCredits}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-slate-500">Last Vote</div>
+                              <div className="text-lg font-bold">Slot {validatorStats.lastVote}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-sm font-medium mb-2">Projected Epoch Timeline</h3>
+                        <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-md">
+                          <div className="mt-2">
+                            <div className="flex justify-between text-xs mb-1">
+                              <span>Current Progress</span>
+                              <span>68%</span>
+                            </div>
+                            <Progress value={68} className="h-2" />
+                            <div className="flex justify-between text-xs mt-1">
+                              <span>
+                                <Clock className="h-3 w-3 inline mr-1" />
+                                ~12 hours remaining
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-sm font-medium mb-2">Stake Distribution</h3>
+                        <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg h-[200px] flex items-center justify-center">
+                          {/* This would be a chart in a real implementation */}
+                          <div className="text-center text-slate-500">
+                            <Layers className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                            <span className="text-xs">Stake distribution chart would appear here</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 p-4 rounded-md">
+                      <h3 className="font-bold text-indigo-600 dark:text-indigo-400 flex items-center mb-2">
+                        <ShieldCheck className="h-4 w-4 mr-2" />
+                        Validator Security
+                      </h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-start">
+                          <ArrowRight className="h-3 w-3 text-indigo-500 mr-1 mt-1 flex-shrink-0" />
+                          <span>Our validator runs on enterprise-grade hardware with redundant systems</span>
+                        </div>
+                        <div className="flex items-start">
+                          <ArrowRight className="h-3 w-3 text-indigo-500 mr-1 mt-1 flex-shrink-0" />
+                          <span>24/7 monitoring ensures maximum uptime and performance</span>
+                        </div>
+                        <div className="flex items-start">
+                          <ArrowRight className="h-3 w-3 text-indigo-500 mr-1 mt-1 flex-shrink-0" />
+                          <span>Secure key management with hardware security modules</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+        
           {/* Staking Tab */}
           <TabsContent value="staking">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
