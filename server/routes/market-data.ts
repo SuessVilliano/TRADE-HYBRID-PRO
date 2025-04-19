@@ -57,6 +57,7 @@ router.get('/history', async (req: Request, res: Response) => {
     
     let bars = [];
     let provider = '';
+    let errors = [];
     
     if (isForex) {
       // Use Oanda for forex
@@ -97,6 +98,15 @@ router.get('/history', async (req: Request, res: Response) => {
         }
       } catch (error) {
         console.error('Error fetching from Oanda:', error);
+        
+        // Store error details for response
+        errors.push({
+          provider: 'oanda',
+          message: error instanceof Error ? error.message : String(error),
+          timestamp: new Date().toISOString(),
+          status: 'error'
+        });
+        
         // Fall through to try Alpaca as a backup
       }
     }
@@ -140,8 +150,26 @@ router.get('/history', async (req: Request, res: Response) => {
         }
       } catch (error) {
         console.error('Error fetching from Alpaca:', error);
-        // If this fails as well, we'll return the empty bars array
+        
+        // Store error details for response
+        errors.push({
+          provider: 'alpaca',
+          message: error instanceof Error ? error.message : String(error),
+          timestamp: new Date().toISOString(),
+          status: 'error'
+        });
       }
+    }
+    
+    // Check if we have any bars, if not return an error
+    if (bars.length === 0) {
+      return res.status(503).json({
+        error: 'Could not fetch market data from any provider',
+        symbol,
+        interval,
+        errors,
+        status: 'error'
+      });
     }
     
     // Return the bars data with metadata
@@ -150,14 +178,16 @@ router.get('/history', async (req: Request, res: Response) => {
       interval,
       bars,
       count: bars.length,
-      provider
+      provider,
+      status: 'success'
     });
     
   } catch (error) {
     console.error('Error in market data history endpoint:', error);
     return res.status(500).json({ 
       error: 'Failed to fetch market data',
-      details: error instanceof Error ? error.message : String(error)
+      details: error instanceof Error ? error.message : String(error),
+      status: 'error'
     });
   }
 });

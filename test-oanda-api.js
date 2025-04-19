@@ -1,5 +1,5 @@
 // Test script for Oanda API connection
-const axios = require('axios');
+import axios from 'axios';
 
 async function testOandaConnection() {
   try {

@@ -100,16 +100,42 @@ export const useMarketData = (): MarketDataHook => {
         }
       } catch (err) {
         console.error('Error fetching market data:', err);
-        setError('Failed to fetch market data. Please check API connectivity.');
         
-        // Add more diagnostic information to help troubleshoot
-        if (axios.isAxiosError(err) && err.response) {
-          console.error('API Error Details:', {
-            status: err.response.status,
-            statusText: err.response.statusText,
-            data: err.response.data
-          });
+        // Provide a more specific error message based on the type of error
+        let errorMessage = 'Failed to fetch market data. ';
+        
+        if (axios.isAxiosError(err)) {
+          if (err.response) {
+            // The request was made and the server responded with an error status
+            console.error('API Error Details:', {
+              status: err.response.status,
+              statusText: err.response.statusText,
+              data: err.response.data
+            });
+            
+            if (err.response.status === 401 || err.response.status === 403) {
+              errorMessage += 'Authentication failed. Please check your API credentials.';
+            } else if (err.response.status === 404) {
+              errorMessage += 'The requested data was not found. The symbol may be invalid.';
+            } else if (err.response.status >= 500) {
+              errorMessage += 'The server encountered an error. Please try again later.';
+            } else {
+              errorMessage += `Error code: ${err.response.status}. ${err.response.statusText || ''}`;
+            }
+          } else if (err.request) {
+            // The request was made but no response was received
+            console.error('No response received from API');
+            errorMessage += 'No response received from API. Please check your internet connection.';
+          } else {
+            // Something happened in setting up the request
+            errorMessage += err.message;
+          }
+        } else {
+          // Not an Axios error
+          errorMessage += String(err);
         }
+        
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }

@@ -1,5 +1,5 @@
 // Test script for Alpaca API connection
-const axios = require('axios');
+import axios from 'axios';
 
 async function testAlpacaConnection() {
   try {

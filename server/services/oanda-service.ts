@@ -213,15 +213,58 @@ export function createOandaClient(): OandaClient {
 export function getOandaClient(): OandaClient {
   if (!oandaClient) {
     try {
+      const apiToken = process.env.OANDA_API_TOKEN;
+      
+      if (!apiToken) {
+        console.warn('Oanda API token not found in environment variables');
+        throw new OandaApiError('Oanda API token not found in environment variables');
+      }
+      
+      // Log partial token for debugging (first 4 chars only)
+      const tokenPreview = apiToken.substring(0, 4) + '...';
+      console.log(`Initializing Oanda client with token: ${tokenPreview}`);
+      
       oandaClient = createOandaClient();
       console.log('Oanda client initialized successfully');
     } catch (error) {
       console.error('Failed to initialize Oanda client:', error);
-      throw error;
+      
+      // Create a dummy client that returns appropriate errors
+      oandaClient = createDummyOandaClient(String(error));
+      
+      // Don't throw the error as this would crash the server
+      // Instead, the dummy client will return errors when methods are called
     }
   }
   
   return oandaClient;
+}
+
+/**
+ * Create a dummy Oanda client that returns errors for all methods
+ * This is used when the real client can't be initialized
+ */
+function createDummyOandaClient(errorMessage: string): OandaClient {
+  const errorResponse = {
+    error: {
+      code: 'INITIALIZATION_FAILED',
+      message: errorMessage,
+      details: 'The Oanda API client could not be properly initialized. Check your API credentials.'
+    }
+  };
+  
+  const dummyMethod = async () => {
+    throw new OandaApiError(errorMessage, errorResponse);
+  };
+  
+  return {
+    getCandles: dummyMethod,
+    getPricing: dummyMethod,
+    getInstruments: dummyMethod,
+    getAccounts: dummyMethod,
+    getAccountSummary: dummyMethod,
+    placeOrder: dummyMethod
+  };
 }
 
 /**

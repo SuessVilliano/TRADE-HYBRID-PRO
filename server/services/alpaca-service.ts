@@ -231,15 +231,61 @@ export function createAlpacaClient(): AlpacaClient {
 export function getAlpacaClient(): AlpacaClient {
   if (!alpacaClient) {
     try {
+      const apiKey = process.env.ALPACA_API_KEY;
+      const apiSecret = process.env.ALPACA_API_SECRET;
+      
+      if (!apiKey || !apiSecret) {
+        console.warn('Alpaca API credentials not found in environment variables');
+        throw new AlpacaApiError('Alpaca API credentials not found in environment variables');
+      }
+      
+      // Log partial credentials for debugging (only first 4 chars)
+      const keyPreview = apiKey.substring(0, 4) + '...';
+      const secretPreview = apiSecret.substring(0, 4) + '...';
+      console.log(`Initializing Alpaca client with key: ${keyPreview}, secret: ${secretPreview}`);
+      
       alpacaClient = createAlpacaClient();
       console.log('Alpaca client initialized successfully');
     } catch (error) {
       console.error('Failed to initialize Alpaca client:', error);
-      throw error;
+      
+      // Create a dummy client that returns appropriate errors
+      alpacaClient = createDummyAlpacaClient(String(error));
+      
+      // Don't throw the error as this would crash the server
+      // Instead, the dummy client will return errors when methods are called
     }
   }
   
   return alpacaClient;
+}
+
+/**
+ * Create a dummy Alpaca client that returns errors for all methods
+ * This is used when the real client can't be initialized
+ */
+function createDummyAlpacaClient(errorMessage: string): AlpacaClient {
+  const errorResponse = {
+    error: {
+      code: 'INITIALIZATION_FAILED',
+      message: errorMessage,
+      details: 'The Alpaca API client could not be properly initialized. Check your API credentials.'
+    }
+  };
+  
+  const dummyMethod = async () => {
+    throw new AlpacaApiError(errorMessage, errorResponse);
+  };
+  
+  return {
+    getAccount: dummyMethod,
+    getBars: dummyMethod,
+    getQuote: dummyMethod,
+    getAssets: dummyMethod,
+    createOrder: dummyMethod,
+    getOrders: dummyMethod,
+    getPositions: dummyMethod
+  };
 }
 
 /**
