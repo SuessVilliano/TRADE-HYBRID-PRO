@@ -124,6 +124,7 @@ import companyRevenueRoutes from './api/company-revenue'; // Import for company 
 import signalSubscriptionsRoutes from './api/signal-subscriptions'; // Import for signal subscriptions routes
 import oandaMarketRoutes from './routes/oanda-market'; // Import for Oanda market data routes
 import marketDataRoutes from './routes/market-data'; // Import for unified market data routes
+import marketDataStatusRoutes from './routes/market-data-status'; // Import for market data status route
 import brokerStatusRoutes from './routes/broker-status'; // Import for broker status routes
 import resetCredentialsRoutes from './routes/reset-credentials'; // Import for credential reset routes
 import alpacaTestRoutes from './routes/alpaca-test'; // Import for Alpaca API test routes
@@ -391,6 +392,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Unified Market Data routes
   app.use("/api/market-data", marketDataRoutes);
+  
+  // Market Data Status routes
+  app.use("/api/market-data-status", marketDataStatusRoutes);
   
   // Broker status routes
   app.use("/api/broker-status", brokerStatusRoutes);
