@@ -1,9 +1,32 @@
 // Test script for broker connection API
 // Run with: node test-broker-api.js
 
-const axios = require('axios');
+import axios from 'axios';
 
-const API_BASE = 'http://localhost:5000/api/brokers';
+// Get environment variables from .env in browser context
+const getEnvVar = (key) => {
+  // First try from window.__ENV__ which is injected by the server
+  if (typeof window !== 'undefined' && window.__ENV__ && window.__ENV__[key]) {
+    return window.__ENV__[key];
+  }
+  
+  // Then try from process.env which is available in Node.js
+  if (typeof process !== 'undefined' && process.env && process.env[key]) {
+    return process.env[key];
+  }
+  
+  // Finally check for other browser environment variable patterns
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
+    return import.meta.env[key];
+  }
+  
+  return null;
+};
+
+const ALPACA_API_KEY = getEnvVar('ALPACA_API_KEY');
+const ALPACA_API_SECRET = getEnvVar('ALPACA_API_SECRET');
+
+const API_BASE = '/api/brokers';
 
 async function testBrokerAPI() {
   try {
@@ -14,24 +37,22 @@ async function testBrokerAPI() {
     const typesResponse = await axios.get(`${API_BASE}/broker-types`);
     console.log(`Got ${typesResponse.data.length} broker types:`, typesResponse.data);
     
-    // Since this is just a test, you can uncomment these if you need to test with real broker credentials
+    // Using real Alpaca credentials from environment variables
+    console.log('\nTesting Alpaca API connection...');
+    const alpacaTest = await axios.post(`${API_BASE}/test-connection`, {
+      brokerTypeId: 'alpaca',
+      credentials: {
+        apiKey: process.env.ALPACA_API_KEY,
+        secretKey: process.env.ALPACA_API_SECRET
+      },
+      isLiveTrading: false
+    });
+    console.log('Alpaca connection test result:', alpacaTest.data);
     
-    // // Create a broker connection
-    // console.log('\nCreating broker connection...');
-    // const createResponse = await axios.post(`${API_BASE}/connections`, {
-    //   brokerTypeId: 1, // Use ID from broker types response
-    //   name: 'My Test Binance',
-    //   isDemo: true,
-    //   apiKey: 'your-api-key',
-    //   apiSecret: 'your-api-secret'
-    // });
-    // console.log('Connection created:', createResponse.data);
-    // const connectionId = createResponse.data.id;
-    
-    // // Get broker connections
-    // console.log('\nFetching broker connections...');
-    // const connectionsResponse = await axios.get(`${API_BASE}/connections`);
-    // console.log(`Got ${connectionsResponse.data.length} connections:`, connectionsResponse.data);
+    // Get broker connections
+    console.log('\nFetching broker connections...');
+    const connectionsResponse = await axios.get(`${API_BASE}/connections`);
+    console.log(`Got ${connectionsResponse.data.length} connections:`, connectionsResponse.data);
     
     // // Test broker connection
     // console.log('\nTesting broker connection...');
