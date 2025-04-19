@@ -93,29 +93,42 @@ export function TradeSignalsPanel() {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${protocol}//${window.location.host}/ws`;
         
-        const ws = new WebSocket(wsUrl);
+        // Wrap WebSocket connection in try-catch to handle potential errors
+        let ws: WebSocket | null = null;
+        try {
+          ws = new WebSocket(wsUrl);
+          
+          // Add event listeners only if ws was successfully created
+          ws.addEventListener('message', handleWebSocketSignal);
+          
+          // Handle connection events
+          ws.addEventListener('open', () => {
+            console.log('WebSocket connected for trading signals');
+          });
+          
+          ws.addEventListener('error', (error) => {
+            console.log('WebSocket connection not available - using polling fallback');
+          });
+        } catch (wsError) {
+          console.log('WebSocket instantiation failed - using polling fallback');
+          console.error(wsError);
+        }
         
-        ws.addEventListener('message', handleWebSocketSignal);
-        
-        // Handle connection events
-        ws.addEventListener('open', () => {
-          console.log('WebSocket connected for trading signals');
-        });
-        
-        ws.addEventListener('error', (error) => {
-          console.log('WebSocket connection not available - using polling fallback');
-        });
-        
+        // Return cleanup function that handles null ws case
         return () => {
-          try {
-            ws.removeEventListener('message', handleWebSocketSignal);
-            ws.close();
-          } catch (e) {
-            // Ignore errors during cleanup
+          if (ws) {
+            try {
+              ws.removeEventListener('message', handleWebSocketSignal);
+              ws.close();
+            } catch (e) {
+              // Ignore errors during cleanup
+              console.log('Error during WebSocket cleanup:', e);
+            }
           }
         };
       } catch (e) {
-        console.log('WebSocket not available - using polling fallback');
+        console.log('WebSocket setup failed - using polling fallback');
+        console.error(e);
         // Return empty cleanup function
         return () => {};
       }

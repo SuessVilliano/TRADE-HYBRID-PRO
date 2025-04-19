@@ -1,4 +1,4 @@
-import { formatNumber } from '@/lib/utils';
+import { formatNumber } from '@/lib/utils/formatters';
 
 interface TradingSignal {
   symbol: string;

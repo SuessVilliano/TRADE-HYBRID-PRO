@@ -6,7 +6,8 @@ import { useMultiplayer, Friend } from '@/lib/stores/useMultiplayer';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 import { Input } from './input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
-import { formatDate, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { formatDate } from '@/lib/utils/formatters';
 
 /**
  * Community Chat Popup Component

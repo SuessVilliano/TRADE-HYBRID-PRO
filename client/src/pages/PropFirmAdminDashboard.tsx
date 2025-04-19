@@ -23,7 +23,7 @@ import {
   Clock
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { formatCurrency, formatPercent, formatDate } from '@/lib/utils';
+import { formatCurrency, formatPercent, formatDate } from '@/lib/utils/formatters';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 // Temporarily commenting out until we resolve path issues

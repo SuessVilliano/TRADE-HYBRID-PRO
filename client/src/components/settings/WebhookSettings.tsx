@@ -82,62 +82,78 @@ export function WebhookSettings() {
   // Set up WebSocket connection for real-time updates
   const setupWebSocket = () => {
     // Use secure connection in production
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-    
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-    
-    ws.onopen = () => {
-      console.log('WebSocket connected');
-      setWsConnected(true);
-    };
-    
-    ws.onclose = () => {
-      console.log('WebSocket disconnected');
-      setWsConnected(false);
+    try {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
       
-      // Attempt to reconnect after a delay
-      setTimeout(() => {
-        if (document.visibilityState !== 'hidden') {
-          setupWebSocket();
-        }
-      }, 3000);
-    };
-    
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      setWsConnected(false);
-    };
-    
-    ws.onmessage = (event) => {
+      // Attempt to create the WebSocket connection, but handle failures gracefully
+      let ws: WebSocket | null = null;
       try {
-        const message = JSON.parse(event.data);
+        ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
         
-        // Handle webhook status updates
-        if (message.type === 'webhook_status_update') {
-          const { webhookId, status } = message.data;
+        ws.onopen = () => {
+          console.log('WebSocket connected');
+          setWsConnected(true);
+        };
+        
+        ws.onclose = () => {
+          console.log('WebSocket disconnected');
+          setWsConnected(false);
+          wsRef.current = null;
           
-          // Update the status of the affected webhook
-          setWebhooks(prevWebhooks => 
-            prevWebhooks.map(webhook => 
-              webhook.id === webhookId 
-                ? { 
-                    ...webhook, 
-                    status: status.status,
-                    lastCheckTime: status.lastCheckTime,
-                    lastSuccessTime: status.lastSuccessTime,
-                    errorMessage: status.errorMessage,
-                    responseTime: status.responseTime
-                  } 
-                : webhook
-            )
-          );
-        }
-      } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
+          // Attempt to reconnect after a delay
+          setTimeout(() => {
+            if (document.visibilityState !== 'hidden') {
+              setupWebSocket();
+            }
+          }, 3000);
+        };
+        
+        ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+          setWsConnected(false);
+          // Don't set wsRef.current to null here, let onclose handle it
+        };
+        
+        ws.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            
+            // Handle webhook status updates
+            if (message.type === 'webhook_status_update') {
+              const { webhookId, status } = message.data;
+              
+              // Update the status of the affected webhook
+              setWebhooks(prevWebhooks => 
+                prevWebhooks.map(webhook => 
+                  webhook.id === webhookId 
+                    ? { 
+                        ...webhook, 
+                        status: status.status,
+                        lastCheckTime: status.lastCheckTime,
+                        lastSuccessTime: status.lastSuccessTime,
+                        errorMessage: status.errorMessage,
+                        responseTime: status.responseTime
+                      } 
+                    : webhook
+                )
+              );
+            }
+          } catch (parseError) {
+            console.error('Error parsing WebSocket message:', parseError);
+          }
+        };
+      } catch (wsCreationError) {
+        console.error('Error creating WebSocket connection:', wsCreationError);
+        // If WebSocket creation fails, we'll just rely on regular polling via fetchWebhooks
+        setWsConnected(false);
+        wsRef.current = null;
       }
-    };
+    } catch (error) {
+      console.error('Error in setupWebSocket:', error);
+      setWsConnected(false);
+    }
   };
   
   // Fetch webhooks from server

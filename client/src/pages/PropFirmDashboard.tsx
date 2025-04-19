@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2, AlertCircle, CheckCircle, Clock, DollarSign, ChevronRight, TrendingUp, BarChart2 } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/use-auth';
-import { formatCurrency, formatPercent } from '@/lib/utils';
+import { formatCurrency, formatPercent } from '@/lib/utils/formatters';
 import { TradingDashboardLayout } from '@/components/ui/trading-dashboard-layout';
 
 const PropFirmDashboardPage: React.FC = () => {
