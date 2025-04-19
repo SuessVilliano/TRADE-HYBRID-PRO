@@ -335,6 +335,18 @@ export function BrokerApiSettings() {
                       <li>Copy the Key ID and Secret Key and paste them here</li>
                     </ol>
                   </div>
+                  
+                  <div className="bg-amber-50 border border-amber-200 p-3 rounded-md mt-3 text-amber-800 text-sm">
+                    <div className="flex items-center">
+                      <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+                      <strong>Important:</strong>
+                    </div>
+                    <p className="mt-1">
+                      We're currently experiencing connectivity issues with some Alpaca accounts. 
+                      If you encounter a 403 Forbidden error when testing, please ensure your API keys are correct and active.
+                      You may need to visit the Alpaca dashboard to regenerate new API keys.
+                    </p>
+                  </div>
                 </TabsContent>
                 
                 <TabsContent value="oanda" className="space-y-4 mt-4">

@@ -217,8 +217,18 @@ class AlpacaConnector implements BrokerConnector {
     credentials: any
   ): Promise<{ success: boolean; message?: string; accountInfo?: any }> {
     try {
+      // Validate credentials before making the API call
+      if (!credentials.apiKey || !credentials.apiSecret) {
+        return {
+          success: false,
+          message: 'API key and/or secret are missing or empty'
+        };
+      }
+      
       const isPaper = credentials.isPaper !== false;
       const apiEndpoint = this.getApiEndpoint(isPaper);
+      
+      console.log(`Testing Alpaca connection to ${apiEndpoint} with API key: ${credentials.apiKey.substring(0, 5)}...`);
       
       // Test the API connection by fetching account info
       const response = await axios.get(
@@ -231,6 +241,8 @@ class AlpacaConnector implements BrokerConnector {
           }
         }
       );
+      
+      console.log('Successfully connected to Alpaca broker API');
       
       return {
         success: true,
@@ -246,11 +258,39 @@ class AlpacaConnector implements BrokerConnector {
         }
       };
     } catch (error: any) {
-      console.error('Error testing Alpaca connection:', error.response?.data || error.message);
+      console.error('Error testing Alpaca connection:', error);
+      
+      // Handle specific error codes for more informative messages
+      if (error.response) {
+        const status = error.response.status;
+        const errorData = error.response.data;
+        
+        if (status === 403) {
+          return {
+            success: false,
+            message: 'Authentication failed: API key or secret is invalid. Please check your credentials and ensure they have been set up correctly in your Alpaca dashboard. You may need to regenerate your API keys.'
+          };
+        } else if (status === 401) {
+          return {
+            success: false,
+            message: 'Unauthorized: Your API credentials have expired or been revoked. Please regenerate your API keys in your Alpaca dashboard.'
+          };
+        } else if (status === 429) {
+          return {
+            success: false,
+            message: 'Rate limit exceeded: Too many requests to Alpaca API. Please try again later.'
+          };
+        } else {
+          return {
+            success: false,
+            message: `Alpaca API error (${status}): ${errorData?.message || 'Unknown error'}`
+          };
+        }
+      }
       
       return {
         success: false,
-        message: error.response?.data?.message || error.message || 'Failed to connect to Alpaca'
+        message: error.message || 'Failed to connect to Alpaca. Please check your network connection and API credentials.'
       };
     }
   }
