@@ -188,27 +188,9 @@ export function DesktopHeader({ className }: DesktopHeaderProps) {
             </button>
           )}
           
-          <Link to="/dashboard" className="flex items-center space-x-2 bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-md">
-            {/* Primary logo with fallback */}
-            <img 
-              src="/assets/logo.svg" 
-              alt="Trade Hybrid Logo" 
-              className="h-8 w-auto min-w-[32px] object-contain"
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = "/assets/logo.png";
-                // If that fails too, try another source
-                e.currentTarget.onerror = () => {
-                  e.currentTarget.src = "https://assets.vbt.io/public/files/19952/trade_hybrid_logo.png";
-                  // If all fails, show text only
-                  e.currentTarget.onerror = () => {
-                    e.currentTarget.style.display = 'none';
-                  };
-                };
-              }}
-            />
-            {/* Text fallback for logo */}
-            <span className="text-white font-bold text-lg ml-1">Trade Hybrid</span>
+          <Link to="/dashboard" className="flex items-center space-x-2 bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-md">
+            {/* Logo removed as requested - just showing text */}
+            <span className="text-white font-bold text-lg">TradeHybrid</span>
           </Link>
           
           {/* Navigation Tabs */}

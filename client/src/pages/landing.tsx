@@ -15,7 +15,6 @@ const LandingPage: React.FC = () => {
       <header className="border-b border-gray-800 backdrop-blur-sm bg-black/30 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center">
-            <img src="/assets/logo.png" alt="TradeHybrid Logo" className="h-10 mr-3" />
             <h1 className="text-2xl font-bold">TradeHybrid</h1>
           </div>
           
