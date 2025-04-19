@@ -40,6 +40,11 @@ export function createAlpacaClient(): AlpacaClient {
   const baseUrl = process.env.ALPACA_API_URL || 'https://paper-api.alpaca.markets';
   const dataBaseUrl = process.env.ALPACA_DATA_URL || 'https://data.alpaca.markets';
   
+  console.log('Creating Alpaca client with credentials:');
+  console.log(`Key: ${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}`);
+  console.log(`Secret: ${apiSecret.substring(0, 4)}...${apiSecret.substring(apiSecret.length - 4)}`);
+  console.log(`Base URL: ${baseUrl}`);
+  
   // Create axios instances with default headers
   const tradeApi = axios.create({
     baseURL: `${baseUrl}/v2`,

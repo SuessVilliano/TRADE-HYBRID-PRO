@@ -126,6 +126,7 @@ import oandaMarketRoutes from './routes/oanda-market'; // Import for Oanda marke
 import marketDataRoutes from './routes/market-data'; // Import for unified market data routes
 import brokerStatusRoutes from './routes/broker-status'; // Import for broker status routes
 import resetCredentialsRoutes from './routes/reset-credentials'; // Import for credential reset routes
+import alpacaTestRoutes from './routes/alpaca-test'; // Import for Alpaca API test routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Market data routes
@@ -395,6 +396,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // API Credentials reset routes
   app.use("/api/reset-credentials", resetCredentialsRoutes);
+  
+  // Alpaca API test route
+  app.use("/api/alpaca-test", alpacaTestRoutes);
 
   // News route using multiple sources
   app.get("/api/rss-feeds/news", async (req, res) => {
