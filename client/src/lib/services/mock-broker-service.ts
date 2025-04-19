@@ -3,7 +3,11 @@ import {
   BrokerPosition, 
   MarketData, 
   OrderHistory,
-  BrokerService
+  BrokerService,
+  OrderSide,
+  OrderType,
+  OrderTimeInForce,
+  AssetInfo
 } from './broker-service';
 
 /**
@@ -110,39 +114,148 @@ export class MockBrokerService implements BrokerService {
     return this.positions;
   }
 
+  async getAccountInfo(): Promise<any> {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Calculate current portfolio value
+    const positionsValue = this.positions.reduce(
+      (sum, position) => sum + position.currentPrice * position.quantity, 
+      0
+    );
+    
+    return {
+      id: 'mock-account-12345',
+      status: 'ACTIVE',
+      currency: 'USD',
+      buying_power: this.balance.cash * 4, // 4x margin
+      cash: this.balance.cash,
+      portfolio_value: this.balance.cash + positionsValue,
+      pattern_day_trader: false,
+      trading_blocked: false,
+      transfers_blocked: false,
+      account_blocked: false,
+      created_at: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(), // 90 days ago
+      last_equity: this.balance.cash + positionsValue,
+      initial_margin: positionsValue * 0.5,
+      maintenance_margin: positionsValue * 0.25,
+      equity: this.balance.cash + positionsValue
+    };
+  }
+  
+  async getAssetDetails(symbol: string): Promise<AssetInfo> {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 700));
+    
+    // Company names for common stocks
+    const companyNames: Record<string, string> = {
+      'AAPL': 'Apple Inc.',
+      'MSFT': 'Microsoft Corporation',
+      'AMZN': 'Amazon.com Inc.',
+      'GOOGL': 'Alphabet Inc.',
+      'META': 'Meta Platforms Inc.',
+      'TSLA': 'Tesla Inc.',
+      'NVDA': 'NVIDIA Corporation',
+      'JPM': 'JPMorgan Chase & Co.',
+      'V': 'Visa Inc.',
+      'JNJ': 'Johnson & Johnson',
+      'WMT': 'Walmart Inc.',
+      'PG': 'Procter & Gamble Co.',
+      'MA': 'Mastercard Inc.',
+      'UNH': 'UnitedHealth Group Inc.',
+      'HD': 'Home Depot Inc.',
+      'BAC': 'Bank of America Corp.',
+      'DIS': 'Walt Disney Co.',
+      'NFLX': 'Netflix Inc.',
+      'ADBE': 'Adobe Inc.',
+      'CMCSA': 'Comcast Corporation'
+    };
+    
+    // Generate a deterministic but seemingly random price
+    const currentPrice = this.getRandomPrice(symbol);
+    
+    return {
+      symbol: symbol.toUpperCase(),
+      name: companyNames[symbol.toUpperCase()] || `${symbol.toUpperCase()} Inc.`,
+      exchange: 'NASDAQ',
+      isTradeble: true,
+      isFractionable: ['AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META', 'TSLA'].includes(symbol.toUpperCase()),
+      lastPrice: currentPrice,
+      lastUpdated: Date.now()
+    };
+  }
+
   async placeOrder(order: {
     symbol: string;
-    side: 'buy' | 'sell';
+    side: OrderSide;
     quantity: number;
-    type: 'market' | 'limit';
-    limitPrice?: number;
-  }): Promise<string> {
-    const orderId = (++this.lastOrderId).toString();
-    const price = order.limitPrice || this.getRandomPrice(order.symbol);
+    type: OrderType;
+    timeInForce: OrderTimeInForce;
+    limit_price?: number;
+    stop_price?: number;
+  }): Promise<any> {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 800));
     
-    // Add to order history
+    const orderId = (++this.lastOrderId).toString();
+    const price = order.limit_price || this.getRandomPrice(order.symbol);
+    const now = new Date().toISOString();
+    
+    // Create order object
+    const createdOrder = {
+      id: orderId,
+      client_order_id: `mock-${Date.now()}`,
+      created_at: now,
+      updated_at: now,
+      submitted_at: now,
+      filled_at: null,
+      expired_at: null,
+      canceled_at: null,
+      failed_at: null,
+      asset_id: `mock-asset-${order.symbol}`,
+      symbol: order.symbol,
+      quantity: order.quantity,
+      filled_quantity: 0,
+      type: order.type,
+      side: order.side,
+      time_in_force: order.timeInForce,
+      limit_price: order.limit_price || null,
+      stop_price: order.stop_price || null,
+      status: 'new'
+    };
+    
+    // Add to order history for our existing getOrderHistory method
     this.orderHistory.unshift({
       orderId,
       symbol: order.symbol,
       side: order.side,
       quantity: order.quantity,
       price,
-      status: 'filled',
+      status: 'new',
       timestamp: Date.now(),
       broker: 'Mock'
     });
     
-    // Update positions
-    if (order.side === 'buy') {
-      this.buyPosition(order.symbol, order.quantity, price);
-    } else {
-      this.sellPosition(order.symbol, order.quantity, price);
-    }
+    // Simulate order getting filled after a delay
+    setTimeout(() => {
+      // Update positions
+      if (order.side === 'buy') {
+        this.buyPosition(order.symbol, order.quantity, price);
+      } else {
+        this.sellPosition(order.symbol, order.quantity, price);
+      }
+      
+      // Update account balance
+      this.recalculateBalance();
+      
+      // Update order status in history
+      const historyOrder = this.orderHistory.find(o => o.orderId === orderId);
+      if (historyOrder) {
+        historyOrder.status = 'filled';
+      }
+    }, 2000); // 2 second delay for fill
     
-    // Update account balance
-    this.recalculateBalance();
-    
-    return Promise.resolve(orderId);
+    return createdOrder;
   }
 
   async getOrderHistory(): Promise<OrderHistory[]> {
