@@ -32,7 +32,8 @@ import {
   AlertDialogTrigger
 } from '../ui/alert-dialog';
 import { useToast } from '../ui/use-toast';
-import { Clipboard, Copy, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { Clipboard, Copy, Plus, RefreshCw, Trash2, Settings } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 // Define types for our webhooks
 interface UserWebhook {
@@ -687,6 +688,23 @@ export function WebhookSettings() {
               </div>
             </div>
           </div>
+        </div>
+      </CardFooter>
+
+      <CardFooter className="bg-gray-50 border-t p-4">
+        <div className="flex items-center justify-between w-full">
+          <div>
+            <h3 className="text-sm font-medium">Broker API Settings</h3>
+            <p className="text-sm text-muted-foreground">
+              Connect your broker accounts to enable automated trading via webhooks.
+            </p>
+          </div>
+          <Button variant="outline" className="flex items-center gap-2" asChild>
+            <Link to="/broker-api-settings">
+              <Settings className="h-4 w-4" />
+              Configure Broker APIs
+            </Link>
+          </Button>
         </div>
       </CardFooter>
     </Card>
