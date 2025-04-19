@@ -1,4 +1,19 @@
 /**
+ * Order side - buy or sell
+ */
+export type OrderSide = 'buy' | 'sell';
+
+/**
+ * Order type - market, limit, stop, etc.
+ */
+export type OrderType = 'market' | 'limit' | 'stop' | 'stop_limit';
+
+/**
+ * Order time-in-force - day, gtc, ioc, etc.
+ */
+export type OrderTimeInForce = 'day' | 'gtc' | 'ioc' | 'fok';
+
+/**
  * Account balance information
  */
 export interface AccountBalance {
@@ -24,10 +39,10 @@ export interface BrokerPosition {
 export interface OrderHistory {
   orderId: string;
   symbol: string;
-  side: 'buy' | 'sell';
+  side: OrderSide;
   quantity: number;
   price: number;
-  status: 'pending' | 'filled' | 'cancelled';
+  status: string;
   timestamp: number;
   broker: string;
 }
@@ -43,6 +58,19 @@ export interface MarketData {
 }
 
 /**
+ * Asset information
+ */
+export interface AssetInfo {
+  symbol: string;
+  name: string;
+  exchange: string;
+  isTradeble: boolean;
+  isFractionable?: boolean;
+  lastPrice?: number;
+  lastUpdated?: number;
+}
+
+/**
  * Interface for broker services
  */
 export interface BrokerService {
@@ -50,6 +78,11 @@ export interface BrokerService {
    * Connect to the broker API
    */
   connect(): Promise<void>;
+  
+  /**
+   * Get detailed account information
+   */
+  getAccountInfo(): Promise<any>;
   
   /**
    * Get account balance
@@ -66,16 +99,23 @@ export interface BrokerService {
    */
   placeOrder(order: {
     symbol: string;
-    side: 'buy' | 'sell';
+    side: OrderSide;
     quantity: number;
-    type: 'market' | 'limit';
-    limitPrice?: number;
-  }): Promise<string>;
+    type: OrderType;
+    timeInForce: OrderTimeInForce;
+    limit_price?: number;
+    stop_price?: number;
+  }): Promise<any>;
   
   /**
    * Get order history
    */
-  getOrderHistory(): Promise<OrderHistory[]>;
+  getOrderHistory(): Promise<any[]>;
+  
+  /**
+   * Get asset details
+   */
+  getAssetDetails?(symbol: string): Promise<AssetInfo>;
   
   /**
    * Subscribe to real-time market data for a symbol

@@ -1,431 +1,458 @@
 import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { BrokerService } from '@/lib/services/broker-service';
 import { BrokerFactory } from '@/lib/services/broker-factory';
-import { 
-  BrokerService, 
-  BrokerPosition, 
-  AccountBalance, 
-  OrderHistory,
-  MarketData
-} from '@/lib/services/broker-service';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Table, 
-  TableBody, 
-  TableCaption, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2, AlertCircle, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { formatCurrency, formatNumber } from '@/lib/utils/format-utils';
 
-// Predefined list of popular stocks
-const popularStocks = [
-  { symbol: 'AAPL', name: 'Apple Inc.' },
-  { symbol: 'MSFT', name: 'Microsoft Corp.' },
-  { symbol: 'AMZN', name: 'Amazon.com Inc.' },
-  { symbol: 'GOOGL', name: 'Alphabet Inc.' },
-  { symbol: 'META', name: 'Meta Platforms Inc.' },
-  { symbol: 'TSLA', name: 'Tesla Inc.' },
-  { symbol: 'NVDA', name: 'NVIDIA Corp.' },
-  { symbol: 'JPM', name: 'JPMorgan Chase & Co.' },
-  { symbol: 'V', name: 'Visa Inc.' },
-  { symbol: 'JNJ', name: 'Johnson & Johnson' },
-];
+// Form values interface
+interface TradeFormValues {
+  symbol: string;
+  side: 'buy' | 'sell';
+  quantity: number;
+  type: 'market' | 'limit';
+  limitPrice?: number;
+}
 
 export function TradingInterface() {
   const [brokerService, setBrokerService] = useState<BrokerService | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [positions, setPositions] = useState<BrokerPosition[]>([]);
-  const [accountBalance, setAccountBalance] = useState<AccountBalance | null>(null);
-  const [orderHistory, setOrderHistory] = useState<OrderHistory[]>([]);
-  const [selectedSymbol, setSelectedSymbol] = useState('AAPL');
-  const [quantity, setQuantity] = useState(1);
-  const [orderType, setOrderType] = useState<'market' | 'limit'>('market');
-  const [limitPrice, setLimitPrice] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [marketData, setMarketData] = useState<MarketData[]>([]);
-  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [accountInfo, setAccountInfo] = useState<any | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [tradeStatus, setTradeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [tradeResult, setTradeResult] = useState<any | null>(null);
+  const [activeTab, setActiveTab] = useState('trade');
   
-  // Connect to broker service on component mount
+  // Initialize form
+  const form = useForm<TradeFormValues>({
+    defaultValues: {
+      symbol: '',
+      side: 'buy',
+      quantity: 1,
+      type: 'market',
+      limitPrice: undefined
+    }
+  });
+  
+  const watchType = form.watch('type');
+  
+  // Initialize broker service on mount
   useEffect(() => {
-    const initBrokerService = async () => {
+    const initBroker = async () => {
       try {
-        // Create broker service - will use mock or real based on environment setting
-        const service = BrokerFactory.createBrokerService('alpaca');
+        setIsLoading(true);
+        
+        // Create broker service (default to mock if not specified)
+        const service = BrokerFactory.createBrokerService('mock');
+        
+        // Connect to the service
+        await service.connect();
+        
+        // Set broker service state
         setBrokerService(service);
         
-        await service.connect();
-        setIsConnected(true);
+        // Load account info
+        const info = await service.getAccountInfo();
+        setAccountInfo(info);
         
-        // Load initial data
-        await fetchAccountData(service);
+        setIsLoading(false);
       } catch (err) {
-        console.error('Failed to connect to broker service:', err);
-        setError('Failed to connect to broker service. Please check your settings.');
+        console.error('Failed to initialize broker service:', err);
+        setError(err instanceof Error ? err.message : 'Failed to initialize broker service');
+        setIsLoading(false);
       }
     };
     
-    initBrokerService();
+    initBroker();
     
-    // Clean up subscriptions when component unmounts
+    // Cleanup on unmount
     return () => {
-      if (brokerService && selectedSymbol) {
-        brokerService.unsubscribeFromMarketData(selectedSymbol);
-      }
+      // Cleanup code if needed
     };
   }, []);
   
-  // Subscribe to market data when symbol changes
-  useEffect(() => {
-    if (!brokerService || !isConnected || !selectedSymbol) return;
-    
-    // Clear existing data
-    setMarketData([]);
-    setCurrentPrice(null);
-    
-    // Unsubscribe from previous symbol
-    brokerService.unsubscribeFromMarketData(selectedSymbol);
-    
-    // Subscribe to new symbol
-    brokerService.subscribeToMarketData(selectedSymbol, (data) => {
-      setCurrentPrice(data.price);
-      setMarketData(prev => {
-        const newData = [...prev, data];
-        // Keep only the last 30 data points
-        if (newData.length > 30) {
-          return newData.slice(newData.length - 30);
-        }
-        return newData;
-      });
-    });
-    
-  }, [brokerService, isConnected, selectedSymbol]);
-  
-  // Fetch account data (balance, positions, orders)
-  const fetchAccountData = async (service: BrokerService) => {
-    try {
-      setIsLoading(true);
-      
-      // Get account balance
-      const balance = await service.getBalance();
-      setAccountBalance(balance);
-      
-      // Get positions
-      const positionsData = await service.getPositions();
-      setPositions(positionsData);
-      
-      // Get order history
-      const orderData = await service.getOrderHistory();
-      setOrderHistory(orderData);
-      
-      setIsLoading(false);
-    } catch (err) {
-      console.error('Error fetching account data:', err);
-      setError('Failed to fetch account data.');
-      setIsLoading(false);
-    }
-  };
-  
-  // Handle placing an order
-  const placeOrder = async (side: 'buy' | 'sell') => {
-    if (!brokerService || !isConnected) {
-      setError('Not connected to broker service.');
-      return;
-    }
-    
-    if (quantity <= 0) {
-      setError('Quantity must be greater than zero.');
-      return;
-    }
-    
-    if (orderType === 'limit' && limitPrice <= 0) {
-      setError('Limit price must be greater than zero.');
+  // Handle form submission (place trade)
+  const onSubmit = async (values: TradeFormValues) => {
+    if (!brokerService) {
+      setError('Broker service not initialized');
       return;
     }
     
     try {
-      setIsLoading(true);
+      setTradeStatus('loading');
       setError(null);
-      setSuccess(null);
       
+      // Format the order
       const order = {
-        symbol: selectedSymbol,
-        side,
-        quantity,
-        type: orderType,
-        limitPrice: orderType === 'limit' ? limitPrice : undefined
+        symbol: values.symbol.toUpperCase(),
+        side: values.side,
+        quantity: values.quantity,
+        type: values.type,
+        timeInForce: 'day',
+        limit_price: values.type === 'limit' ? values.limitPrice : undefined
       };
       
-      const orderId = await brokerService.placeOrder(order);
+      // Place the order
+      const result = await brokerService.placeOrder(order);
       
-      setSuccess(`Order placed successfully. Order ID: ${orderId}`);
+      // Update state with result
+      setTradeResult(result);
+      setTradeStatus('success');
       
-      // Refresh account data
-      await fetchAccountData(brokerService);
+      // Refresh account info
+      const info = await brokerService.getAccountInfo();
+      setAccountInfo(info);
       
-      setIsLoading(false);
+      // Reset form
+      form.reset();
     } catch (err) {
-      console.error('Error placing order:', err);
-      setError('Failed to place order. Please try again.');
-      setIsLoading(false);
+      console.error('Trade execution failed:', err);
+      setTradeStatus('error');
+      setError(err instanceof Error ? err.message : 'Trade execution failed');
     }
   };
   
-  // Calculate chart data from market data
-  const getChartData = () => {
-    return marketData.map(data => ({
-      time: new Date(data.timestamp).toLocaleTimeString(),
-      price: data.price,
-    }));
+  // Handle symbol validation
+  const validateSymbol = (value: string) => {
+    return /^[A-Za-z]{1,5}$/.test(value) || 'Symbol must be 1-5 letters';
   };
   
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Trading Interface</CardTitle>
-          <CardDescription>
-            Place trades and monitor your portfolio
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Trading Interface</CardTitle>
+        <CardDescription>
+          Place trades and manage your positions
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="trade">Trade</TabsTrigger>
+            <TabsTrigger value="account">Account</TabsTrigger>
+          </TabsList>
           
-          {success && (
-            <Alert className="mb-4">
-              <AlertTitle>Success</AlertTitle>
-              <AlertDescription>{success}</AlertDescription>
-            </Alert>
-          )}
-          
-          <Tabs defaultValue="trade" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="trade">Trade</TabsTrigger>
-              <TabsTrigger value="positions">Positions</TabsTrigger>
-              <TabsTrigger value="history">Order History</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="trade">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="symbol">Symbol</Label>
-                  <Select 
-                    defaultValue={selectedSymbol}
-                    onValueChange={setSelectedSymbol}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a stock" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {popularStocks.map(stock => (
-                        <SelectItem key={stock.symbol} value={stock.symbol}>
-                          {stock.symbol} - {stock.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+          <TabsContent value="trade">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                {/* Symbol */}
+                <FormField
+                  control={form.control}
+                  name="symbol"
+                  rules={{ 
+                    required: 'Symbol is required',
+                    validate: validateSymbol
+                  }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Symbol</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="AAPL" 
+                          className="uppercase"
+                          disabled={isLoading || tradeStatus === 'loading'}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Enter the ticker symbol for the stock (e.g., AAPL, MSFT)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
-                <div className="h-[200px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={getChartData()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="time" />
-                      <YAxis domain={['auto', 'auto']} />
-                      <Tooltip />
-                      <Line 
-                        type="monotone" 
-                        dataKey="price" 
-                        stroke="#8884d8" 
-                        activeDot={{ r: 8 }} 
-                        isAnimationActive={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
+                {/* Side */}
+                <FormField
+                  control={form.control}
+                  name="side"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Side</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        disabled={isLoading || tradeStatus === 'loading'}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select buy or sell" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="buy">Buy</SelectItem>
+                          <SelectItem value="sell">Sell</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Choose whether to buy or sell
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="quantity">Quantity</Label>
-                    <Input 
-                      id="quantity"
-                      type="number"
-                      value={quantity}
-                      onChange={(e) => setQuantity(Number(e.target.value))}
-                      min={1}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="orderType">Order Type</Label>
-                    <Select 
-                      defaultValue={orderType}
-                      onValueChange={(value) => setOrderType(value as 'market' | 'limit')}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select order type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="market">Market</SelectItem>
-                        <SelectItem value="limit">Limit</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                {/* Quantity */}
+                <FormField
+                  control={form.control}
+                  name="quantity"
+                  rules={{ 
+                    required: 'Quantity is required',
+                    min: { value: 1, message: 'Quantity must be at least 1' },
+                    pattern: { value: /^[0-9]+$/, message: 'Quantity must be a whole number' }
+                  }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Quantity</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field}
+                          type="number"
+                          min={1}
+                          step={1}
+                          disabled={isLoading || tradeStatus === 'loading'}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value);
+                            field.onChange(isNaN(value) ? '' : value);
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Number of shares to trade
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
-                {orderType === 'limit' && (
-                  <div>
-                    <Label htmlFor="limitPrice">Limit Price</Label>
-                    <Input 
-                      id="limitPrice"
-                      type="number"
-                      value={limitPrice}
-                      onChange={(e) => setLimitPrice(Number(e.target.value))}
-                      min={0.01}
-                      step={0.01}
-                    />
-                  </div>
+                {/* Order Type */}
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Order Type</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        disabled={isLoading || tradeStatus === 'loading'}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select order type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="market">Market</SelectItem>
+                          <SelectItem value="limit">Limit</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Market orders execute immediately at the current price, limit orders execute at your specified price or better
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* Limit Price (conditional) */}
+                {watchType === 'limit' && (
+                  <FormField
+                    control={form.control}
+                    name="limitPrice"
+                    rules={{ 
+                      required: 'Limit price is required for limit orders',
+                      min: { value: 0.01, message: 'Price must be at least 0.01' }
+                    }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Limit Price</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field}
+                            type="number"
+                            min={0.01}
+                            step={0.01}
+                            disabled={isLoading || tradeStatus === 'loading'}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value);
+                              field.onChange(isNaN(value) ? '' : value);
+                            }}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          The maximum price for buy orders or minimum price for sell orders
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
                 
-                <div className="flex justify-between space-x-4 mt-6">
-                  <Button 
-                    onClick={() => placeOrder('buy')} 
-                    disabled={isLoading || !isConnected}
-                    className="w-full bg-green-600 hover:bg-green-700"
-                  >
-                    Buy
-                  </Button>
-                  <Button 
-                    onClick={() => placeOrder('sell')} 
-                    disabled={isLoading || !isConnected}
-                    className="w-full bg-red-600 hover:bg-red-700"
-                  >
-                    Sell
-                  </Button>
-                </div>
-              </div>
-            </TabsContent>
+                {/* Submit Button */}
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={isLoading || tradeStatus === 'loading'} 
+                >
+                  {tradeStatus === 'loading' ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Executing Trade...
+                    </>
+                  ) : (
+                    'Place Trade'
+                  )}
+                </Button>
+              </form>
+            </Form>
             
-            <TabsContent value="positions">
-              <div>
-                {accountBalance && (
-                  <div className="mb-4 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                    <div className="grid grid-cols-3 gap-4">
+            {/* Trade Result */}
+            {tradeStatus === 'success' && tradeResult && (
+              <Alert className="mt-4">
+                <TrendingUp className="h-4 w-4" />
+                <AlertTitle>Trade Executed</AlertTitle>
+                <AlertDescription>
+                  <div className="mt-2 space-y-1">
+                    <div>
+                      <span className="font-semibold">Order ID:</span> {tradeResult.id}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Symbol:</span> {tradeResult.symbol}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Side:</span> {' '}
+                      <Badge variant={tradeResult.side === 'buy' ? 'default' : 'destructive'}>
+                        {tradeResult.side.toUpperCase()}
+                      </Badge>
+                    </div>
+                    <div>
+                      <span className="font-semibold">Quantity:</span> {tradeResult.quantity}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Status:</span> {' '}
+                      <Badge variant="outline">{tradeResult.status}</Badge>
+                    </div>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="account">
+            {isLoading ? (
+              <div className="flex justify-center items-center py-10">
+                <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+              </div>
+            ) : accountInfo ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div className="bg-card rounded-lg border p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <DollarSign className="h-5 w-5 text-muted-foreground" />
+                      <h3 className="text-sm font-medium">Account Value</h3>
+                    </div>
+                    <p className="text-2xl font-bold">
+                      {formatCurrency(accountInfo.portfolio_value)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Total account value
+                    </p>
+                  </div>
+                  
+                  <div className="bg-card rounded-lg border p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <DollarSign className="h-5 w-5 text-muted-foreground" />
+                      <h3 className="text-sm font-medium">Cash Balance</h3>
+                    </div>
+                    <p className="text-2xl font-bold">
+                      {formatCurrency(accountInfo.cash)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Available for trading
+                    </p>
+                  </div>
+                  
+                  <div className="bg-card rounded-lg border p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <DollarSign className="h-5 w-5 text-muted-foreground" />
+                      <h3 className="text-sm font-medium">Buying Power</h3>
+                    </div>
+                    <p className="text-2xl font-bold">
+                      {formatCurrency(accountInfo.buying_power)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Maximum you can spend
+                    </p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Account Details</h3>
+                  <div className="bg-card rounded-lg border overflow-hidden">
+                    <div className="grid grid-cols-2 gap-2 p-4">
                       <div>
-                        <div className="text-sm text-muted-foreground">Total</div>
-                        <div className="text-xl font-bold">${accountBalance.total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                        <p className="text-sm text-muted-foreground">Account ID</p>
+                        <p className="font-medium">{accountInfo.id}</p>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground">Cash</div>
-                        <div className="text-xl font-bold">${accountBalance.cash.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                        <p className="text-sm text-muted-foreground">Status</p>
+                        <Badge variant={accountInfo.status === 'ACTIVE' ? 'default' : 'outline'}>
+                          {accountInfo.status}
+                        </Badge>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground">Positions</div>
-                        <div className="text-xl font-bold">${accountBalance.positions.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                        <p className="text-sm text-muted-foreground">Currency</p>
+                        <p className="font-medium">{accountInfo.currency}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Pattern Day Trader</p>
+                        <p className="font-medium">{accountInfo.pattern_day_trader ? 'Yes' : 'No'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Trading Blocked</p>
+                        <p className="font-medium">{accountInfo.trading_blocked ? 'Yes' : 'No'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Account Blocked</p>
+                        <p className="font-medium">{accountInfo.account_blocked ? 'Yes' : 'No'}</p>
                       </div>
                     </div>
                   </div>
-                )}
-                
-                <Table>
-                  <TableCaption>Your current positions</TableCaption>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Symbol</TableHead>
-                      <TableHead>Quantity</TableHead>
-                      <TableHead>Avg. Price</TableHead>
-                      <TableHead>Current Price</TableHead>
-                      <TableHead>P&L</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {positions.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center">No positions found</TableCell>
-                      </TableRow>
-                    ) : (
-                      positions.map((position) => (
-                        <TableRow key={position.symbol}>
-                          <TableCell className="font-medium">{position.symbol}</TableCell>
-                          <TableCell>{position.quantity}</TableCell>
-                          <TableCell>${position.averagePrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
-                          <TableCell>${position.currentPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
-                          <TableCell className={position.pnl >= 0 ? 'text-green-600' : 'text-red-600'}>
-                            ${position.pnl.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+                </div>
               </div>
-            </TabsContent>
-            
-            <TabsContent value="history">
-              <Table>
-                <TableCaption>Your order history</TableCaption>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Symbol</TableHead>
-                    <TableHead>Side</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orderHistory.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center">No orders found</TableCell>
-                    </TableRow>
-                  ) : (
-                    orderHistory.map((order) => (
-                      <TableRow key={order.orderId}>
-                        <TableCell className="font-medium">{order.symbol}</TableCell>
-                        <TableCell className={order.side === 'buy' ? 'text-green-600' : 'text-red-600'}>
-                          {order.side.toUpperCase()}
-                        </TableCell>
-                        <TableCell>{order.quantity}</TableCell>
-                        <TableCell>${order.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
-                        <TableCell>{order.status.toUpperCase()}</TableCell>
-                        <TableCell>{new Date(order.timestamp).toLocaleString()}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <div>
-            {currentPrice && `Current Price (${selectedSymbol}): $${currentPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
-          </div>
-          <div>
-            <Button 
-              variant="outline" 
-              onClick={() => brokerService && fetchAccountData(brokerService)}
-              disabled={isLoading || !isConnected}
-            >
-              Refresh
-            </Button>
-          </div>
-        </CardFooter>
-      </Card>
-    </div>
+            ) : (
+              <div className="bg-card rounded-lg border p-6 text-center">
+                <p className="text-muted-foreground">No account information available</p>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+      <CardFooter className="text-sm text-muted-foreground flex justify-between items-center border-t pt-4">
+        <div>
+          Using {brokerService ? 'mock' : 'loading...'} broker service
+        </div>
+        <div>
+          Last updated: {new Date().toLocaleTimeString()}
+        </div>
+      </CardFooter>
+    </Card>
   );
 }

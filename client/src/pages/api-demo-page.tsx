@@ -1,257 +1,370 @@
 import { useState, useEffect } from 'react';
 import { BrokerFactory } from '@/lib/services/broker-factory';
 import { BrokerService } from '@/lib/services/broker-service';
+import { AppShell } from '@/components/layout/app-shell';
 import { ApiKeyManager } from '@/components/ui/api-key-manager';
-import { BrokerConfig } from '@/components/ui/broker-config';
-import { AdvancedAIAnalysis } from '@/components/ui/advanced-ai-analysis';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { formatCurrency } from '@/lib/utils/format-utils';
+import { AlertCircle, Check, Loader2, RefreshCw } from 'lucide-react';
 
 export default function ApiDemoPage() {
-  const [broker, setBroker] = useState<BrokerService | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
-  const [accountInfo, setAccountInfo] = useState<any>(null);
-  const [positions, setPositions] = useState<any[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [brokerService, setBrokerService] = useState<BrokerService | null>(null);
+  const [activeTab, setActiveTab] = useState('account');
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Connect to broker service
-  const connectBroker = async () => {
+  const [result, setResult] = useState<any | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [symbol, setSymbol] = useState('AAPL');
+  
+  // Initialize broker service
+  useEffect(() => {
+    initBroker();
+  }, []);
+  
+  const initBroker = async () => {
     try {
       setIsLoading(true);
-      setErrorMessage(null);
+      setError(null);
       
       // Create broker service
-      const service = BrokerFactory.createBrokerService('mock'); // Use 'alpaca' for real API
+      const service = BrokerFactory.createBrokerService('alpaca');
       
       // Connect to the service
       await service.connect();
       
-      // Set the broker service
-      setBroker(service);
-      setConnectionStatus('connected');
-      
-      // Load initial data
-      const balance = await service.getBalance();
-      setAccountInfo(balance);
-      
-      const positions = await service.getPositions();
-      setPositions(positions);
-      
-      const orders = await service.getOrderHistory();
-      setOrders(orders);
-      
+      // Set broker service state
+      setBrokerService(service);
       setIsLoading(false);
-    } catch (error) {
-      console.error('Failed to connect to broker:', error);
-      setConnectionStatus('error');
-      setErrorMessage(error instanceof Error ? error.message : 'Unknown error occurred');
+    } catch (err) {
+      console.error('Failed to initialize broker service:', err);
+      setError(err instanceof Error ? err.message : 'Failed to initialize broker service');
       setIsLoading(false);
     }
   };
-
-  // Place a demo order
-  const placeDemoOrder = async () => {
-    if (!broker) return;
+  
+  // Fetch account info
+  const fetchAccountInfo = async () => {
+    if (!brokerService) {
+      setError('Broker service not initialized');
+      return;
+    }
     
     try {
       setIsLoading(true);
+      setError(null);
       
-      const result = await broker.placeOrder({
-        symbol: 'AAPL',
-        quantity: 1,
-        price: 0, // Market order
-        side: 'buy',
-        type: 'market',
-        timeInForce: 'day'
-      });
-      
-      // Refresh orders list
-      const orders = await broker.getOrderHistory();
-      setOrders(orders);
+      const accountInfo = await brokerService.getAccountInfo();
+      setResult(accountInfo);
       
       setIsLoading(false);
-    } catch (error) {
-      console.error('Failed to place order:', error);
-      setErrorMessage(error instanceof Error ? error.message : 'Unknown error occurred');
+    } catch (err) {
+      console.error('Failed to fetch account info:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch account info');
       setIsLoading(false);
     }
   };
-
-  // Connect on component mount
-  useEffect(() => {
-    connectBroker();
-  }, []);
-
-  return (
-    <div className="container mx-auto py-8 space-y-8">
-      <h1 className="text-3xl font-bold mb-6">Broker API Integration Demo</h1>
+  
+  // Fetch positions
+  const fetchPositions = async () => {
+    if (!brokerService) {
+      setError('Broker service not initialized');
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      setError(null);
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="space-y-6">
-          <BrokerConfig />
-          <ApiKeyManager />
-        </div>
-        
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Broker Integration Demo</CardTitle>
-              <CardDescription>
-                Test broker API integration with real-time data
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {connectionStatus === 'error' && (
-                <Alert variant="destructive" className="mb-4">
-                  <AlertTitle>Connection Error</AlertTitle>
-                  <AlertDescription>{errorMessage || 'Could not connect to broker service'}</AlertDescription>
-                </Alert>
-              )}
-              
-              {connectionStatus === 'connected' && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="p-4 bg-muted rounded-lg">
-                      <div className="text-sm text-muted-foreground">Portfolio Value</div>
-                      <div className="text-2xl font-bold">
-                        ${accountInfo?.total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                      </div>
-                    </div>
-                    <div className="p-4 bg-muted rounded-lg">
-                      <div className="text-sm text-muted-foreground">Cash Balance</div>
-                      <div className="text-2xl font-bold">
-                        ${accountInfo?.cash.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                      </div>
-                    </div>
-                    <div className="p-4 bg-muted rounded-lg">
-                      <div className="text-sm text-muted-foreground">Open Positions</div>
-                      <div className="text-2xl font-bold">{positions.length}</div>
-                    </div>
-                  </div>
+      const positions = await brokerService.getPositions();
+      setResult(positions);
+      
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Failed to fetch positions:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch positions');
+      setIsLoading(false);
+    }
+  };
+  
+  // Fetch order history
+  const fetchOrderHistory = async () => {
+    if (!brokerService) {
+      setError('Broker service not initialized');
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const orderHistory = await brokerService.getOrderHistory();
+      setResult(orderHistory);
+      
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Failed to fetch order history:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch order history');
+      setIsLoading(false);
+    }
+  };
+  
+  // Fetch asset details
+  const fetchAssetDetails = async () => {
+    if (!brokerService) {
+      setError('Broker service not initialized');
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Assume broker service has a method for this
+      // This might need to be implemented depending on broker API
+      const assetDetails = await brokerService.getAssetDetails?.(symbol);
+      setResult(assetDetails || { message: 'Asset details not available in this broker implementation' });
+      
+      setIsLoading(false);
+    } catch (err) {
+      console.error(`Failed to fetch details for ${symbol}:`, err);
+      setError(err instanceof Error ? err.message : `Failed to fetch details for ${symbol}`);
+      setIsLoading(false);
+    }
+  };
+  
+  // Simulate a market buy
+  const executeMarketBuy = async () => {
+    if (!brokerService) {
+      setError('Broker service not initialized');
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const order = {
+        symbol: symbol,
+        side: 'buy' as const,
+        quantity: 1,
+        type: 'market' as const,
+        timeInForce: 'day' as const
+      };
+      
+      const orderResult = await brokerService.placeOrder(order);
+      setResult(orderResult);
+      
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Failed to execute market buy:', err);
+      setError(err instanceof Error ? err.message : 'Failed to execute market buy');
+      setIsLoading(false);
+    }
+  };
+  
+  // Render JSON data in a readable format
+  const renderJsonData = (data: any) => {
+    return (
+      <pre className="bg-muted p-4 rounded-md overflow-auto max-h-96 text-sm">
+        {JSON.stringify(data, null, 2)}
+      </pre>
+    );
+  };
+  
+  return (
+    <AppShell>
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex flex-col gap-6">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold">Broker API Demo</h1>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={initBroker}
+              disabled={isLoading}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Reinitialize
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2">
+              <Card className="h-full">
+                <CardHeader>
+                  <CardTitle>API Testing</CardTitle>
+                  <CardDescription>
+                    Test various broker API endpoints and see real-time responses
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {error && (
+                    <Alert variant="destructive" className="mb-4">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Error</AlertTitle>
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
                   
-                  <Tabs defaultValue="positions">
-                    <TabsList>
+                  <Tabs value={activeTab} onValueChange={setActiveTab}>
+                    <TabsList className="mb-4">
+                      <TabsTrigger value="account">Account</TabsTrigger>
                       <TabsTrigger value="positions">Positions</TabsTrigger>
                       <TabsTrigger value="orders">Orders</TabsTrigger>
+                      <TabsTrigger value="assets">Assets</TabsTrigger>
+                      <TabsTrigger value="trading">Trading</TabsTrigger>
                     </TabsList>
                     
+                    <TabsContent value="account" className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-medium">Account Information</h3>
+                        
+                        <Button 
+                          onClick={fetchAccountInfo}
+                          disabled={isLoading}
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Loading...
+                            </>
+                          ) : (
+                            'Fetch Account Info'
+                          )}
+                        </Button>
+                      </div>
+                      
+                      {result && activeTab === 'account' && renderJsonData(result)}
+                    </TabsContent>
+                    
                     <TabsContent value="positions" className="space-y-4">
-                      {positions.length === 0 ? (
-                        <div className="text-center p-4 bg-muted rounded-lg">
-                          <p>No open positions</p>
-                        </div>
-                      ) : (
-                        <div className="border rounded-lg">
-                          <table className="w-full">
-                            <thead>
-                              <tr className="border-b bg-muted">
-                                <th className="text-left p-2">Symbol</th>
-                                <th className="text-right p-2">Quantity</th>
-                                <th className="text-right p-2">Value</th>
-                                <th className="text-right p-2">P/L</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {positions.map((position, index) => (
-                                <tr key={index} className={index < positions.length - 1 ? "border-b" : ""}>
-                                  <td className="p-2 font-medium">{position.symbol}</td>
-                                  <td className="p-2 text-right">{position.quantity}</td>
-                                  <td className="p-2 text-right">
-                                    ${position.marketValue.toLocaleString(undefined, {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2
-                                    })}
-                                  </td>
-                                  <td className={`p-2 text-right ${position.unrealizedPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                    ${position.unrealizedPL.toLocaleString(undefined, {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2
-                                    })}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-medium">Current Positions</h3>
+                        
+                        <Button 
+                          onClick={fetchPositions}
+                          disabled={isLoading}
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Loading...
+                            </>
+                          ) : (
+                            'Fetch Positions'
+                          )}
+                        </Button>
+                      </div>
+                      
+                      {result && activeTab === 'positions' && renderJsonData(result)}
                     </TabsContent>
                     
                     <TabsContent value="orders" className="space-y-4">
-                      {orders.length === 0 ? (
-                        <div className="text-center p-4 bg-muted rounded-lg">
-                          <p>No recent orders</p>
-                        </div>
-                      ) : (
-                        <div className="border rounded-lg">
-                          <table className="w-full">
-                            <thead>
-                              <tr className="border-b bg-muted">
-                                <th className="text-left p-2">Symbol</th>
-                                <th className="text-right p-2">Side</th>
-                                <th className="text-right p-2">Quantity</th>
-                                <th className="text-right p-2">Status</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {orders.map((order, index) => (
-                                <tr key={index} className={index < orders.length - 1 ? "border-b" : ""}>
-                                  <td className="p-2 font-medium">{order.symbol}</td>
-                                  <td className={`p-2 text-right ${order.side === 'buy' ? 'text-green-600' : 'text-red-600'}`}>
-                                    {order.side.toUpperCase()}
-                                  </td>
-                                  <td className="p-2 text-right">{order.quantity}</td>
-                                  <td className="p-2 text-right">
-                                    <span className="px-2 py-1 text-xs rounded-full bg-muted">
-                                      {order.status}
-                                    </span>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                      
-                      <div className="flex justify-end">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-medium">Order History</h3>
+                        
                         <Button 
-                          onClick={placeDemoOrder}
-                          disabled={isLoading || connectionStatus !== 'connected'}
+                          onClick={fetchOrderHistory}
+                          disabled={isLoading}
                         >
-                          Place Demo Order (AAPL)
+                          {isLoading ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Loading...
+                            </>
+                          ) : (
+                            'Fetch Order History'
+                          )}
                         </Button>
+                      </div>
+                      
+                      {result && activeTab === 'orders' && renderJsonData(result)}
+                    </TabsContent>
+                    
+                    <TabsContent value="assets" className="space-y-4">
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <Input 
+                            placeholder="Symbol (e.g., AAPL)"
+                            value={symbol}
+                            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                            className="max-w-xs"
+                          />
+                          
+                          <Button 
+                            onClick={fetchAssetDetails}
+                            disabled={isLoading}
+                          >
+                            {isLoading ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Loading...
+                              </>
+                            ) : (
+                              'Fetch Asset Details'
+                            )}
+                          </Button>
+                        </div>
+                        
+                        {result && activeTab === 'assets' && renderJsonData(result)}
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="trading" className="space-y-4">
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="text-lg font-medium mb-2">Execute Sample Trade</h3>
+                          <p className="text-muted-foreground mb-4">
+                            This will place a market order to buy 1 share of the selected symbol.
+                          </p>
+                          
+                          <div className="flex items-center gap-2">
+                            <Input 
+                              placeholder="Symbol (e.g., AAPL)"
+                              value={symbol}
+                              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                              className="max-w-xs"
+                            />
+                            
+                            <Button 
+                              onClick={executeMarketBuy}
+                              disabled={isLoading}
+                            >
+                              {isLoading ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Executing...
+                                </>
+                              ) : (
+                                'Buy 1 Share'
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        {result && activeTab === 'trading' && renderJsonData(result)}
                       </div>
                     </TabsContent>
                   </Tabs>
-                </div>
-              )}
-              
-              {connectionStatus === 'disconnected' && !isLoading && (
-                <div className="text-center p-8">
-                  <p className="mb-4">Not connected to broker service</p>
-                  <Button onClick={connectBroker}>Connect Now</Button>
-                </div>
-              )}
-              
-              {isLoading && (
-                <div className="text-center p-8">
-                  <p>Loading broker data...</p>
-                </div>
-              )}
-            </CardContent>
-            <CardFooter className="text-sm text-muted-foreground border-t pt-4">
-              <div>Status: {connectionStatus.charAt(0).toUpperCase() + connectionStatus.slice(1)}</div>
-            </CardFooter>
-          </Card>
+                </CardContent>
+                <CardFooter className="border-t pt-4">
+                  <div className="text-sm text-muted-foreground">
+                    {brokerService ? 'Connected to broker API' : 'Not connected to broker API'}
+                  </div>
+                </CardFooter>
+              </Card>
+            </div>
+            
+            <div>
+              <ApiKeyManager />
+            </div>
+          </div>
         </div>
       </div>
-      
-      <div className="mt-8">
-        <AdvancedAIAnalysis />
-      </div>
-    </div>
+    </AppShell>
   );
 }
