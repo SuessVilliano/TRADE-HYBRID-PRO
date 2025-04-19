@@ -355,14 +355,21 @@ router.get('/:id/performance', authMiddleware, async (req: Request, res: Respons
 // Get webhook execution logs
 router.get('/logs', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = req.session.userId;
+    console.log('Webhook logs endpoint called');
+    console.log('Session:', req.session);
+    
+    const userId = req.session?.userId;
+    console.log('UserId from session:', userId);
     
     if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      console.log('Unauthorized: No userId in session');
+      return res.status(401).json({ error: 'Unauthorized', message: 'No user ID found in session' });
     }
     
     // Get webhook logs for this user
+    console.log('Fetching logs for userId:', userId.toString());
     const logs = await getWebhookExecutionLogs({ userId: userId.toString() });
+    console.log('Logs found:', logs.length);
     
     return res.json({ logs });
   } catch (error: any) {
