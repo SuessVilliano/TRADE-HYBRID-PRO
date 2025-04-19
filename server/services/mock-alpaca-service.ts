@@ -101,6 +101,41 @@ export function createMockAlpacaClient(): AlpacaClient {
           basePrice = 150.00;
           volatility = 0.05;
           break;
+        case 'AVAX/USD':
+        case 'AVAXUSD':
+          basePrice = 33.00;
+          volatility = 0.045;
+          break;
+        case 'ADA/USD':
+        case 'ADAUSD':
+          basePrice = 0.45;
+          volatility = 0.038;
+          break;
+        case 'DOT/USD':
+        case 'DOTUSD':
+          basePrice = 6.80;
+          volatility = 0.042;
+          break;
+        case 'DOGE/USD':
+        case 'DOGEUSD':
+          basePrice = 0.15;
+          volatility = 0.06; // Higher volatility for meme coins
+          break;
+        case 'MATIC/USD':
+        case 'MATICUSD':
+          basePrice = 0.62;
+          volatility = 0.04;
+          break;
+        case 'LINK/USD':
+        case 'LINKUSD':
+          basePrice = 14.50;
+          volatility = 0.035;
+          break;
+        case 'SHIB/USD':
+        case 'SHIBUSD':
+          basePrice = 0.000018;
+          volatility = 0.07; // Higher volatility for meme coins
+          break;
         default:
           basePrice = 100.00 + Math.random() * 100;
       }
@@ -247,6 +282,38 @@ export function createMockAlpacaClient(): AlpacaClient {
         case 'ETHUSD':
           basePrice = 3000.00;
           break;
+        case 'SOL/USD':
+        case 'SOLUSD':
+          basePrice = 150.00;
+          break;
+        case 'AVAX/USD':
+        case 'AVAXUSD':
+          basePrice = 33.00;
+          break;
+        case 'ADA/USD':
+        case 'ADAUSD':
+          basePrice = 0.45;
+          break;
+        case 'DOT/USD':
+        case 'DOTUSD':
+          basePrice = 6.80;
+          break;
+        case 'DOGE/USD':
+        case 'DOGEUSD':
+          basePrice = 0.15;
+          break;
+        case 'MATIC/USD':
+        case 'MATICUSD':
+          basePrice = 0.62;
+          break;
+        case 'LINK/USD':
+        case 'LINKUSD':
+          basePrice = 14.50;
+          break;
+        case 'SHIB/USD':
+        case 'SHIBUSD':
+          basePrice = 0.000018;
+          break;
         default:
           basePrice = 100.00 + Math.random() * 100;
       }
@@ -370,6 +437,90 @@ export function createMockAlpacaClient(): AlpacaClient {
           exchange: 'FTXU',
           symbol: 'SOL/USD',
           name: 'Solana',
+          status: 'active',
+          tradable: true,
+          marginable: false,
+          shortable: false,
+          easy_to_borrow: false
+        },
+        {
+          id: 'mock-asset-avax',
+          class: 'crypto',
+          exchange: 'FTXU',
+          symbol: 'AVAX/USD',
+          name: 'Avalanche',
+          status: 'active',
+          tradable: true,
+          marginable: false,
+          shortable: false,
+          easy_to_borrow: false
+        },
+        {
+          id: 'mock-asset-ada',
+          class: 'crypto',
+          exchange: 'FTXU',
+          symbol: 'ADA/USD',
+          name: 'Cardano',
+          status: 'active',
+          tradable: true,
+          marginable: false,
+          shortable: false,
+          easy_to_borrow: false
+        },
+        {
+          id: 'mock-asset-dot',
+          class: 'crypto',
+          exchange: 'FTXU',
+          symbol: 'DOT/USD',
+          name: 'Polkadot',
+          status: 'active',
+          tradable: true,
+          marginable: false,
+          shortable: false,
+          easy_to_borrow: false
+        },
+        {
+          id: 'mock-asset-doge',
+          class: 'crypto',
+          exchange: 'FTXU',
+          symbol: 'DOGE/USD',
+          name: 'Dogecoin',
+          status: 'active',
+          tradable: true,
+          marginable: false,
+          shortable: false,
+          easy_to_borrow: false
+        },
+        {
+          id: 'mock-asset-matic',
+          class: 'crypto',
+          exchange: 'FTXU',
+          symbol: 'MATIC/USD',
+          name: 'Polygon',
+          status: 'active',
+          tradable: true,
+          marginable: false,
+          shortable: false,
+          easy_to_borrow: false
+        },
+        {
+          id: 'mock-asset-link',
+          class: 'crypto',
+          exchange: 'FTXU',
+          symbol: 'LINK/USD',
+          name: 'Chainlink',
+          status: 'active',
+          tradable: true,
+          marginable: false,
+          shortable: false,
+          easy_to_borrow: false
+        },
+        {
+          id: 'mock-asset-shib',
+          class: 'crypto',
+          exchange: 'FTXU',
+          symbol: 'SHIB/USD',
+          name: 'Shiba Inu',
           status: 'active',
           tradable: true,
           marginable: false,
