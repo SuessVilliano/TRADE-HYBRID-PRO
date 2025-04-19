@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 // Using the hook directly 
 import { useAuth } from '../lib/hooks/use-auth';
-import { formatCurrency, formatPercent } from '../lib/utils';
+import { formatCurrency, formatPercent } from '../lib/utils/formatters';
 // We'll use a custom resolver implementation
 // No need for the zodResolver import
 import { useForm } from "react-hook-form";

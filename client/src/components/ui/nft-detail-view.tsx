@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from './button';
 import { PopupContainer } from './popup-container';
-import { formatCurrency, formatDate } from '../../lib/utils';
+import { formatCurrency, formatDate } from '../../lib/utils/formatters';
 import { NFTAsset, useNFTMarketplace } from '../../lib/stores/useNFTMarketplace';
 import { useUserStore } from '../../lib/stores/useUserStore';
 import SellNFTModal from './sell-nft-modal';

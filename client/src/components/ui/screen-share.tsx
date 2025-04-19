@@ -10,7 +10,8 @@ import { Share2, Eye, X, ChevronUp, ChevronDown, Copy, Users, CheckCircle2, Exte
 import { createChart, ColorType, IChartApi } from "lightweight-charts";
 import { MarketChart } from "./market-chart";
 import TradingViewWidget from "./TradingViewWidget";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils/formatters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
 import { Badge } from "./badge";
 import { toast } from "sonner";
