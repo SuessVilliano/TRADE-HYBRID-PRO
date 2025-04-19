@@ -4,7 +4,8 @@ import { Button } from './button';
 import { X, Copy, ExternalLink, Wallet, ArrowUpRight, ArrowDownLeft, BarChart3, History, CreditCard, Eye, EyeOff } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 import { Input } from './input';
-import { formatCurrency, formatDate, cn } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils/formatters';
+import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 
 /**

@@ -5,7 +5,8 @@ import { X, Medal, Trophy, Share2, UserPlus, ArrowUp, ArrowDown, Info } from 'lu
 import { useLeaderboard } from '@/lib/stores/useLeaderboard';
 import { Trader } from '@/lib/types';
 import { useMultiplayer, Friend } from '@/lib/stores/useMultiplayer';
-import { formatCurrency, formatPercentage, cn } from '@/lib/utils';
+import { formatCurrency, formatPercent as formatPercentage } from '@/lib/utils/formatters';
+import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 import { Input } from './input';
