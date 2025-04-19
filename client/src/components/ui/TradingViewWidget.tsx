@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, memo, useState } from 'react';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { Maximize2, Minimize2, AlertTriangle } from 'lucide-react';
 import { Button } from './button';
 
 interface TradingViewWidgetProps {
@@ -14,6 +14,9 @@ interface TradingViewWidgetProps {
   onFullscreenChange?: (isFullscreen: boolean) => void;
 }
 
+/**
+ * Improved TradingView widget with better error handling and loading states
+ */
 function TradingViewWidget({ 
   symbol = 'BITSTAMP:BTCUSD', 
   theme = 'dark', 
@@ -27,6 +30,9 @@ function TradingViewWidget({
   const container = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string>(`tradingview_widget_${Math.floor(Math.random() * 1000000)}`);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const scriptLoadedRef = useRef(false);
   
   // Add keyboard handler for ESC key to exit fullscreen mode
   useEffect(() => {
@@ -61,13 +67,52 @@ function TradingViewWidget({
     };
   }, []);
 
+  // Load TradingView library if not already loaded
+  useEffect(() => {
+    // Create a global loading function
+    const win = window as any;
+    
+    if (!win.__tradingViewScriptLoaded) {
+      win.__tradingViewScriptLoaded = true;
+      
+      // Check if TradingView is already available
+      if (win.TradingView) {
+        scriptLoadedRef.current = true;
+        return;
+      }
+      
+      // Create global error and load tracking
+      win.__tradingViewOnLoad = () => {
+        scriptLoadedRef.current = true;
+        console.log('TradingView library loaded successfully');
+      };
+      
+      win.__tradingViewOnError = () => {
+        setError('Failed to load TradingView library. Please check your internet connection.');
+        setLoading(false);
+        console.error('Failed to load TradingView library');
+      };
+      
+      // Add the script to the document
+      const script = document.createElement('script');
+      script.src = 'https://s3.tradingview.com/tv.js';
+      script.async = true;
+      script.onload = win.__tradingViewOnLoad;
+      script.onerror = win.__tradingViewOnError;
+      document.head.appendChild(script);
+    }
+  }, []);
+
+  // Initialize the widget when the library is loaded and component is mounted
   useEffect(() => {
     if (!container.current) return;
     
     // Clear any existing widgets if the component is re-rendering
     container.current.innerHTML = '';
+    setLoading(true);
+    setError(null);
 
-    // Format symbol correctly if needed
+    // Format symbol correctly
     let formattedSymbol = symbol;
     
     // Handle different exchange prefixes
@@ -85,15 +130,18 @@ function TradingViewWidget({
     
     console.log(`Loading TradingView chart with symbol: ${formattedSymbol}`);
 
-    // Create and load the TradingView widget script
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/tv.js";
-    script.async = true;
-    script.onload = () => {
-      // Use type assertion to access TradingView
+    // Function to initialize the widget
+    const initializeWidget = () => {
       const win = window as any;
-      if (win.TradingView && container.current) {
-        try {
+      
+      if (!win.TradingView) {
+        // If library isn't loaded yet, try again after delay
+        setTimeout(initializeWidget, 500);
+        return;
+      }
+      
+      try {
+        if (container.current) {
           // Create new widget instance with advanced settings
           new win.TradingView.widget({
             autosize: true,
@@ -155,16 +203,29 @@ function TradingViewWidget({
               "mainSeriesProperties.candleStyle.borderDownColor": "#ef5350",
               "mainSeriesProperties.candleStyle.wickUpColor": "#26a69a",
               "mainSeriesProperties.candleStyle.wickDownColor": "#ef5350",
+            },
+            loading_screen: { 
+              backgroundColor: theme === "dark" ? "#171b26" : "#ffffff",
+              foregroundColor: theme === "dark" ? "#2a2e39" : "#e6e9ec" 
+            },
+            // Add event handlers
+            onChartReady: () => {
+              console.log('TradingView chart ready');
+              setLoading(false);
+              setError(null);
             }
           });
-          console.log("TradingView widget loaded successfully");
-        } catch (error) {
-          console.error("Error initializing TradingView widget:", error);
+          console.log("TradingView widget initialized successfully");
         }
+      } catch (error) {
+        console.error("Error initializing TradingView widget:", error);
+        setError('Failed to initialize the chart. Please try refreshing the page.');
+        setLoading(false);
       }
     };
-    
-    container.current.appendChild(script);
+
+    // Start initialization process
+    initializeWidget();
 
     // Clean up
     return () => {
@@ -172,7 +233,7 @@ function TradingViewWidget({
         container.current.innerHTML = '';
       }
     };
-  }, [symbol, theme, interval, allow_symbol_change, isFullscreen]); // Rebuild widget when parameters change or fullscreen state changes
+  }, [symbol, theme, interval, allow_symbol_change, isFullscreen]); // Rebuild widget when parameters change
 
   // Dynamic height calculation based on device
   const getResponsiveHeight = () => {
@@ -197,6 +258,33 @@ function TradingViewWidget({
     }
   };
 
+  // Handle chart reload
+  const handleReload = () => {
+    setError(null);
+    setLoading(true);
+    
+    // Force reload widget
+    if (container.current) {
+      container.current.innerHTML = '';
+      
+      // Recreate widget container
+      const widgetContainer = document.createElement('div');
+      widgetContainer.id = widgetIdRef.current;
+      container.current.appendChild(widgetContainer);
+      
+      const win = window as any;
+      
+      // Force reload external TradingView script
+      if (!win.TradingView) {
+        win.__tradingViewScriptLoaded = false;
+        const script = document.createElement('script');
+        script.src = 'https://s3.tradingview.com/tv.js';
+        script.async = true;
+        container.current.appendChild(script);
+      }
+    }
+  };
+
   return (
     <div 
       className={`tradingview-widget-container relative ${isFullscreen ? 'fixed inset-0 z-[9999] bg-background' : ''}`} 
@@ -218,6 +306,30 @@ function TradingViewWidget({
           </Button>
         </div>
       )}
+      
+      {/* Loading and error states */}
+      {loading && !error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background bg-opacity-75 z-10">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-sm text-muted-foreground">Loading TradingView Chart...</p>
+          </div>
+        </div>
+      )}
+      
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background bg-opacity-90 z-10">
+          <div className="text-center p-6 max-w-md">
+            <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-destructive" />
+            <p className="text-sm text-destructive mb-4">{error}</p>
+            <Button onClick={handleReload} variant="outline" size="sm">
+              Reload Chart
+            </Button>
+          </div>
+        </div>
+      )}
+      
+      {/* Main container for the widget */}
       <div 
         id={widgetIdRef.current} 
         ref={container} 
