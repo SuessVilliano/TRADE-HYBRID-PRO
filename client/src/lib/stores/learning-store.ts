@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-interface Course {
+export interface Course {
   id: number;
   title: string;
   description: string;
@@ -17,7 +17,7 @@ interface Course {
   certificateImageUrl?: string;
 }
 
-interface Module {
+export interface Module {
   id: number;
   courseId: number;
   title: string;
@@ -26,13 +26,13 @@ interface Module {
   lessons: Lesson[];
 }
 
-interface Resource {
+export interface Resource {
   title: string;
   url: string;
   type: string;
 }
 
-interface Lesson {
+export interface Lesson {
   id: number;
   moduleId: number;
   title: string;
@@ -44,7 +44,7 @@ interface Lesson {
   resources?: Resource[];
 }
 
-interface Quiz {
+export interface Quiz {
   id: number;
   lessonId: number;
   title: string;
@@ -54,7 +54,7 @@ interface Quiz {
   timeLimit: number;
 }
 
-interface QuizQuestion {
+export interface QuizQuestion {
   id: number;
   question: string;
   options: string[];
@@ -62,12 +62,12 @@ interface QuizQuestion {
   explanation: string;
 }
 
-interface UserProgress {
+export interface UserProgress {
   completedLessons: number[];
   quizResults: { [quizId: number]: QuizResult };
 }
 
-interface QuizResult {
+export interface QuizResult {
   score: number;
   completed: boolean;
   passed: boolean;
@@ -114,41 +114,44 @@ export const useLearningStore = create<LearningStore>((set, get) => ({
       set({ courses: response.data, isLoading: false });
       return response.data;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch courses';
-      set({ error: errorMessage, isLoading: false });
-      console.error("Error fetching courses:", error);
+      console.error('Error fetching courses:', error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to fetch courses', 
+        isLoading: false 
+      });
       return [];
     }
   },
   
-  // Fetch single course details
+  // Fetch a specific course with details
   fetchCourseDetails: async (courseId: number) => {
     set({ isLoading: true, error: null });
     
     try {
       const response = await axios.get(`/api/learning/courses/${courseId}`);
-      
-      // Update the course in the courses array
       set(state => {
-        const courseIndex = state.courses.findIndex(c => c.id === courseId);
+        const updatedCourses = [...state.courses];
+        const existingIndex = updatedCourses.findIndex(c => c.id === courseId);
         
-        if (courseIndex >= 0) {
-          const updatedCourses = [...state.courses];
-          updatedCourses[courseIndex] = response.data;
-          return { courses: updatedCourses, isLoading: false };
+        if (existingIndex !== -1) {
+          updatedCourses[existingIndex] = response.data;
         } else {
-          return { 
-            courses: [...state.courses, response.data],
-            isLoading: false 
-          };
+          updatedCourses.push(response.data);
         }
+        
+        return { 
+          courses: updatedCourses, 
+          isLoading: false 
+        };
       });
       
       return response.data;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : `Failed to fetch course ${courseId}`;
-      set({ error: errorMessage, isLoading: false });
       console.error(`Error fetching course ${courseId}:`, error);
+      set({ 
+        error: error instanceof Error ? error.message : `Failed to fetch course ${courseId}`, 
+        isLoading: false 
+      });
       throw error;
     }
   },
@@ -160,7 +163,6 @@ export const useLearningStore = create<LearningStore>((set, get) => ({
     try {
       const response = await axios.get(`/api/learning/courses/${courseId}/modules`);
       
-      // Initialize empty lessons arrays for each module
       const modulesWithEmptyLessons = response.data.map((module: Module) => ({
         ...module,
         lessons: []
@@ -176,10 +178,12 @@ export const useLearningStore = create<LearningStore>((set, get) => ({
       
       return modulesWithEmptyLessons;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : `Failed to fetch modules for course ${courseId}`;
-      set({ error: errorMessage, isLoading: false });
       console.error(`Error fetching modules for course ${courseId}:`, error);
-      return [];
+      set({ 
+        error: error instanceof Error ? error.message : `Failed to fetch modules for course ${courseId}`, 
+        isLoading: false 
+      });
+      throw error;
     }
   },
   
@@ -190,7 +194,6 @@ export const useLearningStore = create<LearningStore>((set, get) => ({
     try {
       const response = await axios.get(`/api/learning/modules/${moduleId}/lessons`);
       
-      // Update lessons for this module
       set(state => ({
         lessons: {
           ...state.lessons,
@@ -199,33 +202,14 @@ export const useLearningStore = create<LearningStore>((set, get) => ({
         isLoading: false
       }));
       
-      // Also update the lessons in the module object within the modules object
-      set(state => {
-        const updatedModules = { ...state.modules };
-        
-        // Find which course this module belongs to
-        for (const courseId in updatedModules) {
-          const moduleIndex = updatedModules[courseId].findIndex(m => m.id === moduleId);
-          
-          if (moduleIndex >= 0) {
-            updatedModules[courseId] = [...updatedModules[courseId]];
-            updatedModules[courseId][moduleIndex] = {
-              ...updatedModules[courseId][moduleIndex],
-              lessons: response.data
-            };
-            break;
-          }
-        }
-        
-        return { modules: updatedModules };
-      });
-      
       return response.data;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : `Failed to fetch lessons for module ${moduleId}`;
-      set({ error: errorMessage, isLoading: false });
       console.error(`Error fetching lessons for module ${moduleId}:`, error);
-      return [];
+      set({ 
+        error: error instanceof Error ? error.message : `Failed to fetch lessons for module ${moduleId}`, 
+        isLoading: false 
+      });
+      throw error;
     }
   },
   
@@ -246,9 +230,11 @@ export const useLearningStore = create<LearningStore>((set, get) => ({
       
       return response.data;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : `Failed to fetch quiz for lesson ${lessonId}`;
-      set({ error: errorMessage, isLoading: false });
       console.error(`Error fetching quiz for lesson ${lessonId}:`, error);
+      set({ 
+        error: error instanceof Error ? error.message : `Failed to fetch quiz for lesson ${lessonId}`, 
+        isLoading: false 
+      });
       throw error;
     }
   },
@@ -256,15 +242,43 @@ export const useLearningStore = create<LearningStore>((set, get) => ({
   // Mark a lesson as completed
   markLessonCompleted: async (lessonId: number) => {
     try {
-      await axios.post(`/api/learning/lessons/${lessonId}/complete`);
+      // First find the module and course IDs
+      let moduleId = null;
+      let courseId = null;
       
-      // Update local user progress
+      // Look for the lesson in our state
+      const { modules, lessons } = get();
+      
+      // Try to find the module from our lessons object
+      for (const [modId, lessonList] of Object.entries(lessons)) {
+        if (lessonList.find(lesson => lesson.id === lessonId)) {
+          moduleId = parseInt(modId);
+          break;
+        }
+      }
+      
+      // If we found the module, find the course
+      if (moduleId) {
+        for (const [cId, moduleList] of Object.entries(modules)) {
+          if (moduleList.find(module => module.id === moduleId)) {
+            courseId = parseInt(cId);
+            break;
+          }
+        }
+      }
+      
+      // Now mark the lesson as completed
+      await axios.post('/api/learning/progress/lesson-complete', {
+        lessonId,
+        courseId,
+        moduleId
+      });
+      
+      // Update local state
       set(state => ({
         userProgress: {
           ...state.userProgress,
-          completedLessons: state.userProgress.completedLessons.includes(lessonId)
-            ? state.userProgress.completedLessons
-            : [...state.userProgress.completedLessons, lessonId]
+          completedLessons: [...state.userProgress.completedLessons, lessonId]
         }
       }));
     } catch (error) {
@@ -273,25 +287,30 @@ export const useLearningStore = create<LearningStore>((set, get) => ({
     }
   },
   
-  // Submit a quiz attempt
+  // Submit quiz attempt
   submitQuizAttempt: async (quizId: number, answers: number[]) => {
     try {
-      const response = await axios.post(`/api/learning/quizzes/${quizId}/attempt`, { answers });
+      const response = await axios.post('/api/learning/quiz/submit', {
+        quizId,
+        answers
+      });
       
-      // Update local quiz results
+      const result = response.data;
+      
+      // Update local state
       set(state => ({
         userProgress: {
           ...state.userProgress,
           quizResults: {
             ...state.userProgress.quizResults,
-            [quizId]: response.data
+            [quizId]: result
           }
         }
       }));
       
-      return response.data;
+      return result;
     } catch (error) {
-      console.error(`Error submitting attempt for quiz ${quizId}:`, error);
+      console.error(`Error submitting quiz ${quizId} attempt:`, error);
       throw error;
     }
   }

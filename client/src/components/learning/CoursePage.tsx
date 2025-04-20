@@ -1,30 +1,68 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useLearningStore } from '@/lib/stores/learning-store';
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, BookOpen, CheckCircle, Clock, Trophy, Video, FileText, ExternalLink, Lock } from 'lucide-react';
+import { 
+  ChevronLeft,
+  BookOpen, 
+  FileText, 
+  Play,
+  Clock, 
+  CheckCircle,
+  XCircle,
+  BarChart,
+  Star,
+  Award,
+  Video
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { useAuth } from '@/lib/context/AuthContext';
 
-const levelColorMap = {
-  beginner: 'bg-green-500/10 text-green-500 hover:bg-green-500/20',
-  intermediate: 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20',
-  advanced: 'bg-purple-500/10 text-purple-500 hover:bg-purple-500/20'
-};
-
-// Format duration from minutes to hours and minutes
-const formatDuration = (minutes: number) => {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  
-  if (hours === 0) {
-    return `${mins}m`;
-  } else if (mins === 0) {
-    return `${hours}h`;
-  } else {
-    return `${hours}h ${mins}m`;
+// Resource type badge component
+const ResourceTypeBadge: React.FC<{ type: string }> = ({ type }) => {
+  switch (type.toLowerCase()) {
+    case 'pdf':
+      return (
+        <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
+          <FileText className="h-3 w-3 mr-1" />
+          PDF
+        </Badge>
+      );
+    case 'video':
+      return (
+        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+          <Play className="h-3 w-3 mr-1" />
+          Video
+        </Badge>
+      );
+    case 'article':
+      return (
+        <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+          <BookOpen className="h-3 w-3 mr-1" />
+          Article
+        </Badge>
+      );
+    default:
+      return (
+        <Badge variant="outline" className="bg-slate-100 text-slate-800 border-slate-200">
+          <FileText className="h-3 w-3 mr-1" />
+          {type}
+        </Badge>
+      );
   }
 };
 
@@ -57,294 +95,544 @@ interface Module {
 }
 
 export default function CoursePage() {
-  const { courseId } = useParams<{ courseId: string }>();
-  const { courses, fetchCourseDetails, fetchModulesForCourse, fetchLessonsForModule, isLoading } = useLearningStore();
-  const [activeModule, setActiveModule] = useState<number | null>(null);
-  const [courseModules, setCourseModules] = useState<Module[]>([]);
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const courseId = parseInt(id || '0');
+  const { isAuthenticated } = useAuth();
+
+  const { 
+    fetchCourseDetails, 
+    fetchModulesForCourse,
+    fetchLessonsForModule,
+    markLessonCompleted,
+    userProgress,
+    isLoading, 
+    error 
+  } = useLearningStore();
+
+  const [course, setCourse] = useState<any>(null);
+  const [modules, setModules] = useState<Module[]>([]);
+  const [activeTab, setActiveTab] = useState<string>('content');
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [completedLessons, setCompletedLessons] = useState<number[]>([]);
-  
-  // Get course from store
-  const course = courses.find(c => c.id === Number(courseId));
-  
-  // Calculate progress percentage
-  const calculateProgress = () => {
-    if (!courseModules.length) return 0;
-    
-    const totalLessons = courseModules.reduce((acc, module) => acc + module.lessons.length, 0);
-    if (totalLessons === 0) return 0;
-    
-    return Math.round((completedLessons.length / totalLessons) * 100);
+  const [courseProgress, setCourseProgress] = useState<number>(0);
+
+  // Course instructor information (mock data - would come from API)
+  const instructor = {
+    name: "Alex Thompson",
+    title: "Senior Market Analyst & Pro Trader",
+    bio: "Alex has over 15 years of experience in financial markets, specializing in forex and cryptocurrency trading. He has trained thousands of traders worldwide.",
+    avatarUrl: "/images/instructor-placeholder.jpg"
   };
-  
-  // Load course modules and lessons
+
   useEffect(() => {
-    if (courseId) {
-      const id = Number(courseId);
-      // Fetch course details if not available
-      if (!course) {
-        fetchCourseDetails(id);
-      }
-      
-      // Fetch modules for course
-      fetchModulesForCourse(id).then(modules => {
-        setCourseModules(modules);
-        
-        // Set the first module active by default
-        if (modules.length > 0 && !activeModule) {
-          setActiveModule(modules[0].id);
+    if (courseId > 0) {
+      // Load course details
+      fetchCourseDetails(courseId)
+        .then(courseData => {
+          setCourse(courseData);
+        })
+        .catch(err => console.error("Failed to fetch course details:", err));
+
+      // Load modules for the course
+      fetchModulesForCourse(courseId)
+        .then(modulesData => {
+          setModules(modulesData);
           
-          // Fetch lessons for each module
-          modules.forEach(module => {
-            fetchLessonsForModule(module.id);
-          });
-        }
-      });
-      
-      // TODO: Fetch completed lessons from API
-      // This would be replaced with an actual API call
-      setCompletedLessons([]);
+          // If modules exist, load lessons for the first module
+          if (modulesData && modulesData.length > 0) {
+            fetchLessonsForModule(modulesData[0].id)
+              .then(lessonsData => {
+                // Update modules with lessons
+                const updatedModules = [...modulesData];
+                updatedModules[0].lessons = lessonsData;
+                setModules(updatedModules);
+                
+                // Set the first lesson as selected if available
+                if (lessonsData && lessonsData.length > 0) {
+                  setSelectedLesson(lessonsData[0]);
+                }
+              })
+              .catch(err => console.error("Failed to fetch lessons:", err));
+          }
+        })
+        .catch(err => console.error("Failed to fetch modules:", err));
     }
-  }, [courseId, course, fetchCourseDetails, fetchModulesForCourse, fetchLessonsForModule, activeModule]);
-  
-  if (isLoading || !course) {
+  }, [courseId, fetchCourseDetails, fetchModulesForCourse, fetchLessonsForModule]);
+
+  // Load completed lessons from user progress
+  useEffect(() => {
+    if (userProgress && userProgress.completedLessons) {
+      setCompletedLessons(userProgress.completedLessons);
+      
+      // Calculate course progress percentage
+      const totalLessons = modules.reduce((count, module) => count + module.lessons.length, 0);
+      if (totalLessons > 0) {
+        const percentage = Math.round((userProgress.completedLessons.length / totalLessons) * 100);
+        setCourseProgress(percentage);
+      }
+    }
+  }, [userProgress, modules]);
+
+  // Select a lesson
+  const handleSelectLesson = (lesson: Lesson) => {
+    setSelectedLesson(lesson);
+    setActiveTab('lesson');
+  };
+
+  // Load lessons for a module if not already loaded
+  const handleModuleExpand = async (moduleId: number) => {
+    const moduleIndex = modules.findIndex(m => m.id === moduleId);
+    
+    if (moduleIndex !== -1 && (!modules[moduleIndex].lessons || modules[moduleIndex].lessons.length === 0)) {
+      try {
+        const lessonsData = await fetchLessonsForModule(moduleId);
+        const updatedModules = [...modules];
+        updatedModules[moduleIndex].lessons = lessonsData;
+        setModules(updatedModules);
+      } catch (err) {
+        console.error(`Failed to fetch lessons for module ${moduleId}:`, err);
+      }
+    }
+  };
+
+  // Mark a lesson as completed
+  const handleMarkLessonComplete = async () => {
+    if (selectedLesson) {
+      try {
+        await markLessonCompleted(selectedLesson.id);
+        // Update local state
+        setCompletedLessons(prev => [...prev, selectedLesson.id]);
+        
+        // If there's a next lesson, navigate to it
+        const currentModuleIndex = modules.findIndex(m => m.id === selectedLesson.moduleId);
+        if (currentModuleIndex !== -1) {
+          const currentLessonIndex = modules[currentModuleIndex].lessons.findIndex(l => l.id === selectedLesson.id);
+          
+          if (currentLessonIndex < modules[currentModuleIndex].lessons.length - 1) {
+            // Next lesson in same module
+            handleSelectLesson(modules[currentModuleIndex].lessons[currentLessonIndex + 1]);
+          } else if (currentModuleIndex < modules.length - 1) {
+            // First lesson in next module
+            if (!modules[currentModuleIndex + 1].lessons || modules[currentModuleIndex + 1].lessons.length === 0) {
+              await handleModuleExpand(modules[currentModuleIndex + 1].id);
+            }
+            
+            if (modules[currentModuleIndex + 1].lessons && modules[currentModuleIndex + 1].lessons.length > 0) {
+              handleSelectLesson(modules[currentModuleIndex + 1].lessons[0]);
+            }
+          }
+        }
+      } catch (err) {
+        console.error(`Failed to mark lesson ${selectedLesson.id} as completed:`, err);
+      }
+    }
+  };
+
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-500"></div>
-        <span className="ml-2">Loading course...</span>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <span className="ml-3">Loading course...</span>
       </div>
     );
   }
-  
-  // Toggle lesson completion (for demonstration)
-  const toggleLessonCompletion = (lessonId: number) => {
-    if (completedLessons.includes(lessonId)) {
-      setCompletedLessons(completedLessons.filter(id => id !== lessonId));
-    } else {
-      setCompletedLessons([...completedLessons, lessonId]);
-    }
-  };
-  
-  return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <Link to="/learning-center">
-        <Button variant="ghost" className="mb-6">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Learning Center
+
+  if (error) {
+    return (
+      <div className="bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 p-4 rounded-lg">
+        <p>Failed to load course: {error}</p>
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/learning-center')} 
+          className="mt-2"
+        >
+          Return to Academy
         </Button>
-      </Link>
-      
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Course Sidebar */}
-        <div className="lg:w-1/3 space-y-6">
-          <Card className="bg-slate-800 border-slate-700">
-            {course.imageUrl && (
-              <div className="w-full h-48 overflow-hidden">
-                <img 
-                  src={course.imageUrl} 
-                  alt={course.title} 
-                  className="w-full h-full object-cover" 
-                />
+      </div>
+    );
+  }
+
+  if (!course) {
+    return (
+      <div className="bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 p-4 rounded-lg">
+        <p>Course not found or still loading.</p>
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/learning-center')} 
+          className="mt-2"
+        >
+          Return to Academy
+        </Button>
+      </div>
+    );
+  }
+
+  // Get total course duration
+  const totalDuration = modules.reduce((total, module) => {
+    return total + module.lessons.reduce((moduleTotal, lesson) => moduleTotal + lesson.duration, 0);
+  }, 0);
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {/* Course header with back navigation */}
+      <div className="mb-6">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/learning-center')}
+          className="mb-4"
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Back to Academy
+        </Button>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <h1 className="text-3xl font-bold mb-2">{course.title}</h1>
+            <p className="text-slate-500 dark:text-slate-400 mb-4">
+              {course.description}
+            </p>
+            
+            <div className="flex flex-wrap gap-2 mb-4">
+              <Badge variant="secondary">{course.category}</Badge>
+              <Badge variant="outline">{course.level} Level</Badge>
+              <div className="flex items-center text-sm text-slate-500 dark:text-slate-400">
+                <Clock className="h-4 w-4 mr-1" />
+                {totalDuration} hours
               </div>
-            )}
-            <CardHeader>
-              <div className="flex items-center justify-between mb-2">
-                <Badge className={levelColorMap[course.level as keyof typeof levelColorMap]}>
-                  {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
-                </Badge>
-                {course.certification && (
-                  <Badge className="bg-amber-600/20 text-amber-500 hover:bg-amber-600/30">
-                    <Trophy className="w-3 h-3 mr-1" /> Certification
-                  </Badge>
-                )}
-              </div>
-              <CardTitle>{course.title}</CardTitle>
-              <CardDescription className="text-slate-300">
-                {course.description}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <div className="text-sm text-slate-400 mb-1">Course Progress</div>
-                <div className="flex items-center space-x-4">
-                  <Progress value={calculateProgress()} className="flex-grow" />
-                  <span className="text-sm font-medium">{calculateProgress()}%</span>
-                </div>
-              </div>
-              
-              <div className="flex items-center text-slate-300">
-                <Clock className="h-4 w-4 mr-2" />
-                <span>{formatDuration(course.duration)}</span>
-              </div>
-              
-              {course.learningOutcomes && (
-                <div>
-                  <div className="text-sm text-slate-400 mb-2">What you'll learn</div>
-                  <div className="space-y-2">
-                    {course.learningOutcomes.map((outcome, i) => (
-                      <div key={i} className="flex items-start">
-                        <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
-                        <span className="text-sm text-slate-300">{outcome}</span>
-                      </div>
-                    ))}
-                  </div>
+              {course.certification && (
+                <div className="flex items-center text-sm text-amber-600 dark:text-amber-400">
+                  <Award className="h-4 w-4 mr-1" />
+                  Includes Certificate
                 </div>
               )}
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full">
-                {completedLessons.length > 0 ? "Continue Learning" : "Start Course"}
-              </Button>
-            </CardFooter>
-          </Card>
+            </div>
+            
+            {courseProgress > 0 && (
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium">Course Progress</span>
+                  <span className="text-sm font-medium">{courseProgress}%</span>
+                </div>
+                <Progress value={courseProgress} className="h-2" />
+              </div>
+            )}
+          </div>
           
-          {course.certification && (
-            <Card className="bg-gradient-to-r from-amber-950/50 to-amber-900/30 border-amber-900/50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <Trophy className="h-5 w-5 text-amber-400 mr-2" />
-                  Certification Available
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-slate-300">
-                  Complete this course to earn your Trade Hybrid Pro Trader certification. Demonstrate your expertise and enhance your trading credibility.
-                </p>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full border-amber-700/50 hover:border-amber-600/50">
-                  View Certification Details
+          <div className="lg:col-span-1 bg-slate-100 dark:bg-slate-800 p-4 rounded-lg">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 rounded-full bg-slate-300 dark:bg-slate-700 overflow-hidden mr-3">
+                <img 
+                  src={instructor.avatarUrl || '/images/avatar-placeholder.jpg'} 
+                  alt={instructor.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = '/images/avatar-placeholder.jpg';
+                  }}
+                />
+              </div>
+              <div>
+                <h3 className="font-medium">{instructor.name}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{instructor.title}</p>
+              </div>
+            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+              {instructor.bio}
+            </p>
+            
+            <div className="flex flex-col space-y-2">
+              {/* Course actions */}
+              {isAuthenticated ? (
+                <>
+                  {courseProgress === 0 ? (
+                    <Button 
+                      onClick={() => {
+                        if (modules[0]?.lessons?.[0]) {
+                          handleSelectLesson(modules[0].lessons[0]);
+                        }
+                      }}
+                    >
+                      Start Course
+                    </Button>
+                  ) : courseProgress < 100 ? (
+                    <Button 
+                      onClick={() => {
+                        // Find the first incomplete lesson
+                        for (const module of modules) {
+                          if (module.lessons) {
+                            const incompleteLesson = module.lessons.find(lesson => !completedLessons.includes(lesson.id));
+                            if (incompleteLesson) {
+                              handleSelectLesson(incompleteLesson);
+                              break;
+                            }
+                          }
+                        }
+                      }}
+                    >
+                      Continue Course
+                    </Button>
+                  ) : (
+                    <Button disabled>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Course Completed
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <Button 
+                  onClick={() => navigate('/login')}
+                >
+                  Login to Start
                 </Button>
-              </CardFooter>
-            </Card>
-          )}
-        </div>
-        
-        {/* Course Content */}
-        <div className="lg:w-2/3">
-          <h2 className="text-2xl font-bold mb-6">Course Content</h2>
-          
-          {courseModules.length > 0 ? (
-            <Accordion type="single" collapsible className="w-full space-y-4">
-              {courseModules.sort((a, b) => a.orderNum - b.orderNum).map(module => {
-                // Count completed lessons in this module
-                const moduleLessons = module.lessons || [];
-                const completedModuleLessons = moduleLessons.filter(lesson => 
-                  completedLessons.includes(lesson.id)
-                ).length;
-                
-                return (
-                  <AccordionItem 
-                    key={module.id} 
-                    value={`module-${module.id}`}
-                    className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden"
-                  >
-                    <AccordionTrigger className="px-4 py-4 hover:bg-slate-750/50">
-                      <div className="flex flex-col items-start text-left">
-                        <div className="flex items-center">
-                          <span className="text-xs px-2 py-0.5 rounded bg-slate-700 text-slate-300 mr-2">
-                            Module {module.orderNum}
-                          </span>
-                          {completedModuleLessons === moduleLessons.length && moduleLessons.length > 0 ? (
-                            <Badge variant="outline" className="bg-green-900/20 text-green-400 border-green-700">
-                              <CheckCircle className="w-3 h-3 mr-1" /> Completed
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-blue-900/20 text-blue-400 border-blue-700">
-                              {completedModuleLessons > 0 
-                                ? `${completedModuleLessons}/${moduleLessons.length} completed`
-                                : 'Not started'}
-                            </Badge>
-                          )}
-                        </div>
-                        <h3 className="text-lg font-medium mt-1">{module.title}</h3>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="px-0">
-                      <div className="space-y-1 pt-2 pb-4">
-                        {moduleLessons.sort((a, b) => a.orderNum - b.orderNum).map(lesson => (
-                          <div 
-                            key={lesson.id}
-                            className="px-4 py-3 hover:bg-slate-700/30 transition-colors flex items-center justify-between cursor-pointer"
-                            onClick={() => toggleLessonCompletion(lesson.id)}
-                          >
-                            <div className="flex items-center space-x-3">
-                              <div className="w-6 h-6 flex items-center justify-center">
-                                {lesson.videoUrl ? (
-                                  <Video className="w-5 h-5 text-slate-400" />
-                                ) : (
-                                  <BookOpen className="w-5 h-5 text-slate-400" />
-                                )}
-                              </div>
-                              <div>
-                                <h4 className="text-md">{lesson.title}</h4>
-                                <div className="flex items-center space-x-2 text-xs text-slate-400 mt-1">
-                                  <span className="flex items-center">
-                                    <Clock className="w-3 h-3 mr-1" />
-                                    {formatDuration(lesson.duration)}
-                                  </span>
-                                  {lesson.resources && lesson.resources.length > 0 && (
-                                    <span className="flex items-center">
-                                      <FileText className="w-3 h-3 mr-1" />
-                                      {lesson.resources.length} {lesson.resources.length === 1 ? 'resource' : 'resources'}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div>
-                              {completedLessons.includes(lesson.id) ? (
-                                <div className="w-6 h-6 rounded-full bg-green-500/20 text-green-500 flex items-center justify-center">
-                                  <CheckCircle className="w-4 h-4" />
-                                </div>
-                              ) : (
-                                <div className="w-6 h-6 rounded-full bg-slate-700 border border-slate-600"></div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                );
-              })}
-            </Accordion>
-          ) : (
-            <div className="flex flex-col items-center justify-center p-12 text-center bg-slate-800 rounded-lg border border-slate-700">
-              <BookOpen className="h-12 w-12 text-slate-500 mb-4" />
-              <h3 className="text-xl font-medium mb-2">Content Coming Soon</h3>
-              <p className="text-slate-400 max-w-md">
-                We're currently building out the content for this course. Check back soon for updates!
-              </p>
+              )}
             </div>
-          )}
-          
-          {courseModules.length > 0 && (
-            <div className="mt-8 flex justify-between">
-              <Button variant="outline">
-                <Link to="/learning-center" className="flex items-center">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Courses
-                </Link>
-              </Button>
-              
-              <Button>
-                {completedLessons.length > 0 ? (
-                  <span className="flex items-center">
-                    Continue Learning
-                    <ExternalLink className="h-4 w-4 ml-2" />
-                  </span>
-                ) : (
-                  <span className="flex items-center">
-                    Start First Lesson
-                    <ExternalLink className="h-4 w-4 ml-2" />
-                  </span>
-                )}
-              </Button>
-            </div>
-          )}
+          </div>
         </div>
       </div>
+      
+      {/* Course content tabs */}
+      <Tabs defaultValue="content" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="content">Course Content</TabsTrigger>
+          <TabsTrigger value="lesson" disabled={!selectedLesson}>Lesson</TabsTrigger>
+          <TabsTrigger value="about">About</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="content" className="space-y-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <Accordion 
+              type="multiple" 
+              className="w-full"
+              onValueChange={(expandedValues) => {
+                // Load lessons for newly expanded modules
+                expandedValues.forEach(value => {
+                  const moduleId = parseInt(value);
+                  if (!isNaN(moduleId)) {
+                    handleModuleExpand(moduleId);
+                  }
+                });
+              }}
+            >
+              {modules.map(module => (
+                <AccordionItem value={module.id.toString()} key={module.id}>
+                  <AccordionTrigger className="px-4">
+                    <div className="flex flex-col items-start">
+                      <h3 className="font-medium text-left">{module.title}</h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 text-left">{module.description}</p>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-1 px-4 pb-4">
+                    {module.lessons && module.lessons.length > 0 ? (
+                      module.lessons.map(lesson => (
+                        <button
+                          key={lesson.id}
+                          onClick={() => handleSelectLesson(lesson)}
+                          className={`w-full flex items-center p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 text-left ${
+                            selectedLesson?.id === lesson.id 
+                              ? 'bg-primary/10 text-primary' 
+                              : ''
+                          }`}
+                        >
+                          <div className="flex-1 flex items-center">
+                            {completedLessons.includes(lesson.id) ? (
+                              <CheckCircle className="h-4 w-4 mr-3 text-green-500" />
+                            ) : (
+                              <div className="h-4 w-4 rounded-full border-2 border-slate-300 dark:border-slate-600 mr-3" />
+                            )}
+                            <span>{lesson.title}</span>
+                          </div>
+                          <div className="flex items-center">
+                            {lesson.videoUrl && (
+                              <Video className="h-4 w-4 mr-1 text-slate-400" />
+                            )}
+                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                              {lesson.duration} min
+                            </span>
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="py-2 px-3 text-slate-500 dark:text-slate-400 text-sm">
+                        Loading lessons...
+                      </div>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="lesson">
+          {selectedLesson ? (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+                <h2 className="text-2xl font-semibold mb-2">{selectedLesson.title}</h2>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="flex items-center text-sm text-slate-500 dark:text-slate-400">
+                    <Clock className="h-4 w-4 mr-1" />
+                    {selectedLesson.duration} min
+                  </div>
+                  {completedLessons.includes(selectedLesson.id) ? (
+                    <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Completed
+                    </Badge>
+                  ) : null}
+                </div>
+                
+                {selectedLesson.videoUrl && (
+                  <div className="aspect-video bg-slate-900 rounded-lg mb-6 overflow-hidden">
+                    <iframe 
+                      src={selectedLesson.videoUrl} 
+                      title={selectedLesson.title}
+                      className="w-full h-full" 
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen 
+                    />
+                  </div>
+                )}
+                
+                <div className="prose dark:prose-invert max-w-none">
+                  <div dangerouslySetInnerHTML={{ __html: selectedLesson.content }} />
+                </div>
+                
+                {selectedLesson.resources && selectedLesson.resources.length > 0 && (
+                  <div className="mt-8">
+                    <h3 className="text-lg font-semibold mb-3">Additional Resources</h3>
+                    <div className="space-y-2">
+                      {selectedLesson.resources.map((resource, index) => (
+                        <a 
+                          key={index}
+                          href={resource.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center p-3 rounded-md bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                        >
+                          <div className="mr-3">
+                            <ResourceTypeBadge type={resource.type} />
+                          </div>
+                          <span>{resource.title}</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setActiveTab('content')}
+                  >
+                    Back to Content
+                  </Button>
+                  
+                  {!completedLessons.includes(selectedLesson.id) && (
+                    <Button onClick={handleMarkLessonComplete}>
+                      Mark as Completed
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-6 text-center">
+              <p className="text-slate-500 dark:text-slate-400">
+                Select a lesson from the course content.
+              </p>
+              <Button 
+                variant="outline" 
+                onClick={() => setActiveTab('content')} 
+                className="mt-4"
+              >
+                View Course Content
+              </Button>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="about">
+          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+            <h2 className="text-xl font-semibold mb-4">About This Course</h2>
+            
+            {course.learningOutcomes && course.learningOutcomes.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-medium mb-3">What You'll Learn</h3>
+                <ul className="space-y-2">
+                  {course.learningOutcomes.map((outcome: string, index: number) => (
+                    <li key={index} className="flex items-start">
+                      <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                      <span>{outcome}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            <Separator className="my-6" />
+            
+            {course.prerequisites && course.prerequisites.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-medium mb-3">Prerequisites</h3>
+                <div className="bg-slate-100 dark:bg-slate-700 rounded-lg p-4">
+                  <p className="text-slate-600 dark:text-slate-300">
+                    Before taking this course, it's recommended that you complete:
+                  </p>
+                  <ul className="list-disc list-inside mt-2 space-y-1 text-slate-600 dark:text-slate-300">
+                    {course.prerequisites.map((prereqId: number) => {
+                      // This would ideally fetch the prerequisite course title
+                      return <li key={prereqId}>Course #{prereqId}</li>;
+                    })}
+                  </ul>
+                </div>
+              </div>
+            )}
+            
+            {course.certification && (
+              <div className="mb-6">
+                <h3 className="text-lg font-medium mb-3">Certification</h3>
+                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4 flex items-start">
+                  <Award className="h-6 w-6 text-amber-500 mr-3 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-slate-700 dark:text-slate-300">
+                      This course includes a certification upon completion. You'll need to:
+                    </p>
+                    <ul className="list-disc list-inside mt-2 space-y-1 text-slate-600 dark:text-slate-400">
+                      <li>Complete all lessons in the course</li>
+                      <li>Pass the final assessment with a score of 80% or higher</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <Separator className="my-6" />
+            
+            <div>
+              <h3 className="text-lg font-medium mb-3">About the Instructor</h3>
+              <div className="flex items-start">
+                <div className="w-16 h-16 rounded-full bg-slate-300 dark:bg-slate-700 overflow-hidden mr-4 flex-shrink-0">
+                  <img 
+                    src={instructor.avatarUrl || '/images/avatar-placeholder.jpg'} 
+                    alt={instructor.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = '/images/avatar-placeholder.jpg';
+                    }}
+                  />
+                </div>
+                <div>
+                  <h4 className="font-medium">{instructor.name}</h4>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">{instructor.title}</p>
+                  <p className="text-slate-600 dark:text-slate-300">
+                    {instructor.bio}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
