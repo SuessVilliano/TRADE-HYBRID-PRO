@@ -24,24 +24,166 @@ async function main() {
     // Continue anyway since this might be the first run
   }
   
-  // Create courses
-  console.log('Creating cryptocurrency trading course...');
-  const [cryptoCourse] = await db.insert(courses).values({
-    title: "Cryptocurrency Trading Fundamentals",
-    description: "Master the essentials of cryptocurrency trading from market analysis to advanced strategies.",
-    category: "crypto",
+  // ===========================================================================
+  // PRO TRADER CERTIFICATION TRACK COURSES
+  // ===========================================================================
+
+  // MODULE 1: FOUNDATIONS OF FINANCIAL MARKETS & TRADER SETUP
+  console.log('Creating HCT-1 Foundation course...');
+  const [foundationCourse] = await db.insert(courses).values({
+    title: "Foundations of Financial Markets & Trader Setup",
+    description: "Master essential market concepts, trading infrastructure, and execution mechanics to build a solid trading foundation",
+    category: "foundations",
     level: "beginner",
-    duration: 420, // 7 hours
+    duration: 840, // 14 hours (2 weeks)
     points: 1000,
-    imageUrl: "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1535320903710-d993d3d77d29?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
     featured: true,
     prerequisites: [],
     learningOutcomes: [
-      "Understand blockchain technology fundamentals",
-      "Analyze cryptocurrency markets effectively",
-      "Implement basic trading strategies",
-      "Manage risk in volatile markets",
-      "Use technical analysis for cryptocurrencies"
+      "Understand different asset classes and market participants",
+      "Set up professional trading infrastructure and platforms",
+      "Master order types, execution mechanics, and fee structures",
+      "Navigate regulatory frameworks and comply with best practices",
+      "Create your first comprehensive trade plan"
+    ],
+    certification: true,
+    certificateImageUrl: "/images/certificates/hct-1.png"
+  }).returning();
+
+  // MODULE 2: MARKET STRUCTURE & PRICE ACTION
+  console.log('Creating Market Structure course...');
+  const [marketStructureCourse] = await db.insert(courses).values({
+    title: "Market Structure & Price Action",
+    description: "Learn to analyze market structure, identify support/resistance zones, and interpret price action patterns",
+    category: "technical",
+    level: "beginner",
+    duration: 420, // 7 hours (1 week)
+    points: 1000,
+    imageUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    featured: true,
+    prerequisites: [foundationCourse.id],
+    learningOutcomes: [
+      "Identify and analyze key market structure components",
+      "Locate significant support/resistance and liquidity zones",
+      "Recognize break of structure and change of character signals",
+      "Perform effective multi-timeframe analysis",
+      "Develop a structured trade setup workflow"
+    ],
+    certification: true,
+    certificateImageUrl: "/images/certificates/hct-1-advanced.png"
+  }).returning();
+
+  // MODULE 3: INDICATORS & TECHNICAL ANALYSIS
+  console.log('Creating Indicators & Technical Analysis course...');
+  const [technicalAnalysisCourse] = await db.insert(courses).values({
+    title: "Indicators & Technical Analysis",
+    description: "Master technical indicators, understand their applications, and learn how to combine them effectively",
+    category: "technical",
+    level: "intermediate",
+    duration: 420, // 7 hours (1 week)
+    points: 1200,
+    imageUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    featured: true,
+    prerequisites: [foundationCourse.id, marketStructureCourse.id],
+    learningOutcomes: [
+      "Apply and interpret momentum oscillators",
+      "Utilize trend indicators for directional bias",
+      "Incorporate volatility and volume analysis",
+      "Build custom indicator combinations",
+      "Introduce Pine Script for indicator customization"
+    ],
+    certification: true,
+    certificateImageUrl: "/images/certificates/hct-2.png"
+  }).returning();
+
+  // MODULE 4: RISK MANAGEMENT & TRADER PSYCHOLOGY
+  console.log('Creating Risk Management & Psychology course...');
+  const [riskPsychologyCourse] = await db.insert(courses).values({
+    title: "Risk Management & Trader Psychology",
+    description: "Develop robust risk management practices and cultivate the psychological mindset for consistent trading",
+    category: "psychology",
+    level: "intermediate",
+    duration: 420, // 7 hours (1 week)
+    points: 1200,
+    imageUrl: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    featured: true,
+    prerequisites: [foundationCourse.id],
+    learningOutcomes: [
+      "Implement position sizing and risk allocation techniques",
+      "Develop effective drawdown control methods",
+      "Identify and overcome common behavioral biases",
+      "Create a personalized mental conditioning routine",
+      "Build a complete risk management system"
+    ],
+    certification: true,
+    certificateImageUrl: "/images/certificates/hct-2-advanced.png"
+  }).returning();
+
+  // MODULE 5: STRATEGY ENGINEERING & TESTING
+  console.log('Creating Strategy Engineering course...');
+  const [strategyEngineeringCourse] = await db.insert(courses).values({
+    title: "Strategy Engineering & Testing",
+    description: "Learn to design, test, and optimize systematic trading strategies for consistent performance",
+    category: "strategy",
+    level: "intermediate",
+    duration: 420, // 7 hours (1 week)
+    points: 1200,
+    imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    featured: true,
+    prerequisites: [foundationCourse.id, technicalAnalysisCourse.id],
+    learningOutcomes: [
+      "Design structured strategy frameworks",
+      "Perform thorough backtesting and forward testing",
+      "Optimize strategies without overfitting",
+      "Evaluate performance metrics properly",
+      "Create a comprehensive trading playbook"
+    ],
+    certification: true,
+    certificateImageUrl: "/images/certificates/hct-2-pro.png"
+  }).returning();
+
+  // MODULE 6A: FOREX MASTERY
+  console.log('Creating Forex Mastery course...');
+  const [forexMasteryCourse] = await db.insert(courses).values({
+    title: "Forex Mastery",
+    description: "Master currency pair trading, macro fundamentals, and specialized forex strategies",
+    category: "forex",
+    level: "advanced",
+    duration: 420, // 7 hours
+    points: 1500,
+    imageUrl: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    featured: true,
+    prerequisites: [foundationCourse.id, marketStructureCourse.id, technicalAnalysisCourse.id, riskPsychologyCourse.id],
+    learningOutcomes: [
+      "Analyze global currency markets and intermarket relationships",
+      "Apply specialized forex price action methods",
+      "Interpret economic data and central bank policies",
+      "Execute professional forex risk management",
+      "Develop swing and intraday forex strategies"
+    ],
+    certification: true,
+    certificateImageUrl: "/images/certificates/hct-3-forex.png"
+  }).returning();
+
+  // MODULE 6B: CRYPTO PROFICIENCY
+  console.log('Creating Cryptocurrency Trading course...');
+  const [cryptoCourse] = await db.insert(courses).values({
+    title: "Crypto Proficiency",
+    description: "Master cryptocurrency trading from fundamentals to advanced on-chain analysis and DeFi strategies",
+    category: "crypto",
+    level: "advanced",
+    duration: 420, // 7 hours
+    points: 1500,
+    imageUrl: "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    featured: true,
+    prerequisites: [foundationCourse.id, marketStructureCourse.id, technicalAnalysisCourse.id, riskPsychologyCourse.id],
+    learningOutcomes: [
+      "Understand blockchain technology and tokenomics",
+      "Master CEX and DEX trading mechanics",
+      "Perform on-chain analysis and interpret metrics",
+      "Develop specialized crypto trading strategies",
+      "Navigate DeFi protocols efficiently"
     ],
     certification: true,
     certificateImageUrl: "https://images.unsplash.com/photo-1569098644584-210bcd375b59?ixlib=rb-4.0.3&auto=format&fit=crop&w=900&q=80",
@@ -91,46 +233,231 @@ async function main() {
     certificateImageUrl: "https://images.unsplash.com/photo-1569098644584-210bcd375b59?ixlib=rb-4.0.3&auto=format&fit=crop&w=900&q=80",
   }).returning();
   
-  // Add modules to Cryptocurrency course
-  console.log('Creating modules for cryptocurrency course...');
+  // ===========================================================================
+  // MODULES FOR FOUNDATION COURSE (MODULE 1)
+  // ===========================================================================
+  console.log('Creating modules for Foundation course...');
+  const [foundationModule1] = await db.insert(modules).values({
+    courseId: foundationCourse.id,
+    title: "Introduction to Financial Markets",
+    description: "Understand the core principles of financial markets and different asset classes",
+    orderNum: 1
+  }).returning();
+  
+  const [foundationModule2] = await db.insert(modules).values({
+    courseId: foundationCourse.id,
+    title: "Trading Infrastructure & Setup",
+    description: "Learn to set up a professional trading environment with the right tools and platforms",
+    orderNum: 2
+  }).returning();
+  
+  const [foundationModule3] = await db.insert(modules).values({
+    courseId: foundationCourse.id,
+    title: "Order Types & Execution",
+    description: "Master various order types and execution mechanics across different market structures",
+    orderNum: 3
+  }).returning();
+  
+  const [foundationModule4] = await db.insert(modules).values({
+    courseId: foundationCourse.id,
+    title: "Regulatory Frameworks & Compliance",
+    description: "Navigate legal requirements and best practices for trading activities",
+    orderNum: 4
+  }).returning();
+  
+  // ===========================================================================
+  // MODULES FOR MARKET STRUCTURE COURSE (MODULE 2)
+  // ===========================================================================
+  console.log('Creating modules for Market Structure course...');
+  const [marketStructureModule1] = await db.insert(modules).values({
+    courseId: marketStructureCourse.id,
+    title: "Market Structure Concepts",
+    description: "Understand the foundational concepts of market structure analysis",
+    orderNum: 1
+  }).returning();
+  
+  const [marketStructureModule2] = await db.insert(modules).values({
+    courseId: marketStructureCourse.id,
+    title: "Support & Resistance Zones",
+    description: "Identify and utilize key price levels for trading decisions",
+    orderNum: 2
+  }).returning();
+  
+  const [marketStructureModule3] = await db.insert(modules).values({
+    courseId: marketStructureCourse.id,
+    title: "Break of Structure Analysis",
+    description: "Recognize and capitalize on structural shifts in market behavior",
+    orderNum: 3
+  }).returning();
+  
+  const [marketStructureModule4] = await db.insert(modules).values({
+    courseId: marketStructureCourse.id,
+    title: "Multi-Timeframe Analysis",
+    description: "Integrate multiple timeframes for comprehensive market understanding",
+    orderNum: 4
+  }).returning();
+  
+  // ===========================================================================
+  // MODULES FOR TECHNICAL ANALYSIS COURSE (MODULE 3)
+  // ===========================================================================
+  console.log('Creating modules for Technical Analysis course...');
+  const [technicalModule1] = await db.insert(modules).values({
+    courseId: technicalAnalysisCourse.id,
+    title: "Momentum Indicators",
+    description: "Utilize oscillators and momentum tools to identify market conditions",
+    orderNum: 1
+  }).returning();
+  
+  const [technicalModule2] = await db.insert(modules).values({
+    courseId: technicalAnalysisCourse.id,
+    title: "Trend Indicators",
+    description: "Apply trend-following indicators for directional bias",
+    orderNum: 2
+  }).returning();
+  
+  const [technicalModule3] = await db.insert(modules).values({
+    courseId: technicalAnalysisCourse.id,
+    title: "Volatility & Volume Analysis",
+    description: "Incorporate volatility and volume metrics into trading decisions",
+    orderNum: 3
+  }).returning();
+  
+  const [technicalModule4] = await db.insert(modules).values({
+    courseId: technicalAnalysisCourse.id,
+    title: "Custom Indicator Combinations",
+    description: "Build personalized indicator systems for trading edge",
+    orderNum: 4
+  }).returning();
+  
+  // ===========================================================================
+  // MODULES FOR RISK & PSYCHOLOGY COURSE (MODULE 4)
+  // ===========================================================================
+  console.log('Creating modules for Risk & Psychology course...');
+  const [riskModule1] = await db.insert(modules).values({
+    courseId: riskPsychologyCourse.id,
+    title: "Position Sizing & Risk Allocation",
+    description: "Master mathematical approaches to position sizing and capital allocation",
+    orderNum: 1
+  }).returning();
+  
+  const [riskModule2] = await db.insert(modules).values({
+    courseId: riskPsychologyCourse.id,
+    title: "Drawdown Control Methods",
+    description: "Implement robust drawdown management techniques for account preservation",
+    orderNum: 2
+  }).returning();
+  
+  const [riskModule3] = await db.insert(modules).values({
+    courseId: riskPsychologyCourse.id,
+    title: "Trading Psychology Fundamentals",
+    description: "Understand cognitive biases and emotional patterns in trading",
+    orderNum: 3
+  }).returning();
+  
+  const [riskModule4] = await db.insert(modules).values({
+    courseId: riskPsychologyCourse.id,
+    title: "Mental Conditioning System",
+    description: "Develop a personalized routine for peak trading performance",
+    orderNum: 4
+  }).returning();
+  
+  // ===========================================================================
+  // MODULES FOR STRATEGY ENGINEERING COURSE (MODULE 5)
+  // ===========================================================================
+  console.log('Creating modules for Strategy Engineering course...');
+  const [strategyModule1] = await db.insert(modules).values({
+    courseId: strategyEngineeringCourse.id,
+    title: "Strategy Framework Design",
+    description: "Create structured frameworks for systematic trading approaches",
+    orderNum: 1
+  }).returning();
+  
+  const [strategyModule2] = await db.insert(modules).values({
+    courseId: strategyEngineeringCourse.id,
+    title: "Backtesting & Forward Testing",
+    description: "Master the principles of robust strategy testing methodologies",
+    orderNum: 2
+  }).returning();
+  
+  const [strategyModule3] = await db.insert(modules).values({
+    courseId: strategyEngineeringCourse.id,
+    title: "Strategy Optimization",
+    description: "Refine strategy parameters without overfitting to historical data",
+    orderNum: 3
+  }).returning();
+  
+  const [strategyModule4] = await db.insert(modules).values({
+    courseId: strategyEngineeringCourse.id,
+    title: "Trading Playbook Development",
+    description: "Compile a comprehensive trading system documentation",
+    orderNum: 4
+  }).returning();
+  
+  // ===========================================================================
+  // MODULES FOR CRYPTO PROFICIENCY COURSE (MODULE 6B)
+  // ===========================================================================
+  console.log('Creating modules for Crypto Proficiency course...');
   const [cryptoModule1] = await db.insert(modules).values({
     courseId: cryptoCourse.id,
-    title: "Blockchain Fundamentals",
-    description: "Understanding the technology behind cryptocurrencies.",
+    title: "Blockchain Technology & Tokenomics",
+    description: "Understanding the foundational technology behind cryptocurrencies and token economics",
     orderNum: 1
   }).returning();
   
   const [cryptoModule2] = await db.insert(modules).values({
     courseId: cryptoCourse.id,
-    title: "Cryptocurrency Market Analysis",
-    description: "Tools and techniques for analyzing cryptocurrency markets.",
+    title: "CEX & DEX Trading Mechanics",
+    description: "Master trading techniques for both centralized and decentralized exchanges",
     orderNum: 2
   }).returning();
   
   const [cryptoModule3] = await db.insert(modules).values({
     courseId: cryptoCourse.id,
-    title: "Trading Strategies",
-    description: "Practical strategies for cryptocurrency trading.",
+    title: "On-Chain Analysis & Metrics",
+    description: "Utilize blockchain data for informed trading decisions",
     orderNum: 3
   }).returning();
   
-  // Add modules to Forex course
-  console.log('Creating modules for forex course...');
+  const [cryptoModule4] = await db.insert(modules).values({
+    courseId: cryptoCourse.id,
+    title: "Specialized Crypto Trading Strategies",
+    description: "Implement advanced strategies specifically designed for cryptocurrency markets",
+    orderNum: 4
+  }).returning();
+  
+  // ===========================================================================
+  // MODULES FOR FOREX MASTERY COURSE (MODULE 6A)
+  // ===========================================================================
+  console.log('Creating modules for Forex Mastery course...');
   const [forexModule1] = await db.insert(modules).values({
-    courseId: forexCourse.id,
-    title: "Advanced Technical Analysis",
-    description: "Professional-level technical analysis techniques for forex.",
+    courseId: forexMasteryCourse.id,
+    title: "Global Currency Markets & Intermarket Analysis",
+    description: "Understand currency pair relationships and macro market correlations",
     orderNum: 1
   }).returning();
   
   const [forexModule2] = await db.insert(modules).values({
-    courseId: forexCourse.id,
-    title: "Fundamental Analysis",
-    description: "Understanding economic factors affecting currency markets.",
+    courseId: forexMasteryCourse.id,
+    title: "Forex-Specific Price Action Methods",
+    description: "Apply specialized price action techniques for currency pairs",
     orderNum: 2
   }).returning();
   
   const [forexModule3] = await db.insert(modules).values({
+    courseId: forexMasteryCourse.id,
+    title: "Economic Data & Central Bank Policy",
+    description: "Interpret economic releases and monetary policy for forex trading",
+    orderNum: 3
+  }).returning();
+  
+  const [forexModule4] = await db.insert(modules).values({
+    courseId: forexMasteryCourse.id,
+    title: "Professional Forex Strategies",
+    description: "Implement comprehensive forex trading systems for various timeframes",
+    orderNum: 4
+  }).returning();
+  
+  const [legacyForexModule3] = await db.insert(modules).values({
     courseId: forexCourse.id,
     title: "Multi-Timeframe Trading",
     description: "Strategies combining different timeframes for optimal trading.",
