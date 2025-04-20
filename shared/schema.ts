@@ -61,7 +61,7 @@ export const quizzes = pgTable("quizzes", {
 
 export const userProgress = pgTable("user_progress", {
   id: serial("id").primaryKey(),
-  userId: text("user_id").notNull(), // references the user
+  userId: integer("user_id").notNull().references(() => users.id), // Now properly references users
   courseId: integer("course_id").notNull().references(() => courses.id),
   moduleId: integer("module_id").references(() => modules.id),
   lessonId: integer("lesson_id").references(() => lessons.id),
@@ -75,7 +75,7 @@ export const userProgress = pgTable("user_progress", {
 
 export const quizAttempts = pgTable("quiz_attempts", {
   id: serial("id").primaryKey(),
-  userId: text("user_id").notNull(), // references the user
+  userId: integer("user_id").notNull().references(() => users.id), // Now properly references users
   quizId: integer("quiz_id").notNull().references(() => quizzes.id),
   score: integer("score").notNull(),
   passed: boolean("passed").notNull(),
@@ -87,7 +87,7 @@ export const quizAttempts = pgTable("quiz_attempts", {
 
 export const certificates = pgTable("certificates", {
   id: serial("id").primaryKey(),
-  userId: text("user_id").notNull(), // references the user
+  userId: integer("user_id").notNull().references(() => users.id), // Now properly references users
   courseId: integer("course_id").notNull().references(() => courses.id),
   certificateId: text("certificate_id").notNull(), // unique identifier for certificate
   issueDate: timestamp("issue_date").notNull().defaultNow(),
