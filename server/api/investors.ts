@@ -2,6 +2,7 @@ import express from 'express';
 import { db } from '../db';
 import { investors, investments, insertInvestorSchema } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
+import { authMiddleware } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -102,12 +103,13 @@ export const deleteInvestor = async (req: express.Request, res: express.Response
 };
 
 // Get investor profile for current user
-router.get('/me', async (req, res) => {
+router.get('/me', authMiddleware, async (req, res) => {
   try {
     console.log('Fetching investor profile for current user');
     
-    // Get user ID from the session if authenticated
-    const userId = (req.session as any)?.user?.id;
+    // Get user ID from the authenticated request
+    // This could come from req.session.userId or req.userId (set by our auth middleware)
+    const userId = req.userId || (req.session as any)?.userId || (req.session as any)?.user?.id;
     
     // Check if user is authenticated
     if (!userId) {
