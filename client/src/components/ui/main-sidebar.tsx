@@ -20,7 +20,8 @@ import {
   Menu,
   X,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Coins
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './button';
@@ -303,6 +304,31 @@ export const MainSidebar: React.FC<{ onClose?: () => void, mobile?: boolean }> =
           onClick={mobile ? onClose : undefined}
         />
 
+        {/* Crypto Section */}
+        <NavItem 
+          href="#" 
+          icon={<Coins className="h-5 w-5" />} 
+          label="Crypto" 
+          active={isActive("/thc-staking") || isActive("/nft-marketplace")}
+          expanded={expandedSections.crypto}
+          onExpand={() => toggleSection('crypto')}
+        >
+          <NavItem 
+            href="/thc-staking" 
+            icon={<Coins className="h-4 w-4" />} 
+            label="THC Staking" 
+            active={isActive("/thc-staking")} 
+            onClick={mobile ? onClose : undefined}
+          />
+          <NavItem 
+            href="/nft-marketplace" 
+            icon={<Wallet className="h-4 w-4" />} 
+            label="NFT Marketplace" 
+            active={isActive("/nft-marketplace")} 
+            onClick={mobile ? onClose : undefined}
+          />
+        </NavItem>
+        
         {/* Shop */}
         <NavItem 
           href="/shop" 
