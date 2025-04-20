@@ -4,15 +4,25 @@ import bs58 from 'bs58';
 import useLocalStorage from '../hooks/useLocalStorage';
 
 // Add interface to detect Solana in window
+interface SolanaWallet {
+  isPhantom?: boolean;
+  isConnected?: boolean;
+  publicKey?: { toString(): string };
+  connect: () => Promise<{ publicKey: string }>;
+  disconnect: () => Promise<void>;
+  signMessage?: (message: Uint8Array) => Promise<{ signature: Uint8Array }>;
+  signTransaction?: (transaction: any) => Promise<any>;
+}
+
+interface PhantomProvider {
+  solana?: SolanaWallet;
+}
+
+// Extend Window interface
 declare global {
   interface Window {
-    solana?: {
-      isPhantom?: boolean;
-      connect: () => Promise<{ publicKey: string }>;
-      disconnect: () => Promise<void>;
-      signMessage?: (message: Uint8Array) => Promise<{ signature: Uint8Array }>;
-      signTransaction?: (transaction: any) => Promise<any>;
-    };
+    solana?: SolanaWallet;
+    phantom?: PhantomProvider;
   }
 }
 
@@ -40,6 +50,7 @@ export interface SolanaAuthContextType {
   isAuthenticating: boolean;
   username: string | null;
   walletAddress: string | null; // Added for NFT marketplace
+  publicKey?: string | null; // For compatibility with wallet.publicKey
   tokenMembership: TokenMembership | null;
   login: () => Promise<boolean>;
   logout: () => Promise<void>;
@@ -58,6 +69,7 @@ const SolanaAuthContext = createContext<SolanaAuthContextType>({
   isAuthenticating: false,
   username: null,
   walletAddress: null,
+  publicKey: null,
   tokenMembership: null,
   login: async () => false,
   logout: async () => {},
@@ -373,6 +385,7 @@ export const SolanaAuthProvider: React.FC<SolanaAuthProviderProps> = ({ children
         isAuthenticating,
         username,
         walletAddress,
+        publicKey: walletAddress, // Expose as publicKey too for compatibility
         tokenMembership,
         login,
         logout,
