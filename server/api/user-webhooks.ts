@@ -279,7 +279,7 @@ export const getUserWebhookByToken = async (token: string): Promise<UserWebhook 
       console.log('Found hardcoded test webhook');
       return {
         id: 2,
-        userId: 1, // Use number instead of string
+        userId: 2, // Using consistent user ID 2 for demo user
         name: 'Testing Webhook',
         token: 'test1234',
         broker: 'webhook', // Add missing broker

@@ -61,6 +61,7 @@ export function WebhookSettings() {
   const [webhookToRegenerate, setWebhookToRegenerate] = useState<number | null>(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isCopied, setIsCopied] = useState<{[key: string]: boolean}>({});
+  const [dialogOpen, setDialogOpen] = useState(false);
   // WebSocket reference
   const wsRef = useRef<WebSocket | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
@@ -207,8 +208,9 @@ export function WebhookSettings() {
       // Copy webhook URL to clipboard
       copyToClipboard(response.data.webhookUrl, 'url-' + response.data.webhook.id);
       
-      // Close dialog
+      // Close dialog and reset state
       setIsCreating(false);
+      setDialogOpen(false);
       
     } catch (error) {
       console.error('Error creating webhook:', error);
@@ -370,7 +372,7 @@ export function WebhookSettings() {
               Send signals from any system to Trade Hybrid using these webhook URLs.
             </p>
           </div>
-          <Dialog>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2">
                 <Plus className="h-4 w-4" />
