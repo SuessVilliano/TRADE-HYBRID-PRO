@@ -101,6 +101,63 @@ export const POPULAR_SYMBOLS = {
   options: ['SPY', 'QQQ', 'IWM', 'GLD', 'SLV', 'USO', 'XLF', 'XLE', 'EEM', 'FXI']
 };
 
+// All trading symbols - flattened list of popular symbols
+export const ALL_TRADING_SYMBOLS = [
+  ...POPULAR_SYMBOLS.stocks,
+  ...POPULAR_SYMBOLS.forex,
+  ...POPULAR_SYMBOLS.crypto,
+  ...POPULAR_SYMBOLS.futures,
+  ...POPULAR_SYMBOLS.options
+];
+
+// Trading symbols with additional metadata
+export const TRADING_SYMBOLS = [
+  // Stocks
+  ...POPULAR_SYMBOLS.stocks.map(symbol => ({ 
+    symbol, 
+    name: symbol, 
+    market: 'stocks',
+    description: `${symbol} Stock`,
+    exchange: 'NASDAQ'
+  })),
+  
+  // Forex
+  ...POPULAR_SYMBOLS.forex.map(symbol => ({ 
+    symbol, 
+    name: symbol, 
+    market: 'forex',
+    description: `${symbol} Currency Pair`,
+    exchange: 'FOREX'
+  })),
+  
+  // Crypto
+  ...POPULAR_SYMBOLS.crypto.map(symbol => ({ 
+    symbol, 
+    name: symbol, 
+    market: 'crypto',
+    description: `${symbol} Cryptocurrency`,
+    exchange: 'Binance'
+  })),
+  
+  // Futures
+  ...POPULAR_SYMBOLS.futures.map(symbol => ({ 
+    symbol, 
+    name: symbol, 
+    market: 'futures',
+    description: `${symbol} Futures Contract`,
+    exchange: 'CME'
+  })),
+  
+  // Options
+  ...POPULAR_SYMBOLS.options.map(symbol => ({ 
+    symbol, 
+    name: symbol, 
+    market: 'options',
+    description: `${symbol} Options`,
+    exchange: 'CBOE'
+  }))
+];
+
 // Popular trading strategies
 export const TRADING_STRATEGIES = [
   { value: 'breakout', label: 'Breakout' },
