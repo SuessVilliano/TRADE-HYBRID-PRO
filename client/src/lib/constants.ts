@@ -172,6 +172,46 @@ export const TRADING_STRATEGIES = [
   { value: 'range_trading', label: 'Range Trading' }
 ];
 
+// API Endpoints
+export const API_ENDPOINTS = {
+  // Core API endpoints
+  base: '/api',
+  auth: '/api/auth',
+  users: '/api/users',
+  trading: '/api/trading',
+  signals: '/api/signals',
+  journal: '/api/journal',
+  webhooks: '/api/webhooks',
+  brokers: '/api/brokers',
+  markets: '/api/markets',
+  
+  // Broker connections
+  brokerConnections: '/api/brokers/connections',
+  alpaca: '/api/brokers/alpaca',
+  oanda: '/api/brokers/oanda',
+  ninjaTrader: '/api/brokers/ninjatrader',
+  tradingView: '/api/webhooks/tradingview',
+  
+  // Advanced services
+  abatev: '/api/services/abatev',
+  marketData: '/api/market-data',
+  sentiment: '/api/analysis/sentiment',
+  predictions: '/api/analysis/predictions',
+  
+  // User data
+  profile: '/api/users/profile',
+  settings: '/api/users/settings',
+  notifications: '/api/users/notifications',
+  
+  // Crypto and tokens
+  crypto: '/api/crypto',
+  thcToken: '/api/crypto/thc',
+  staking: '/api/crypto/staking',
+  
+  // WebSockets
+  ws: '/ws'
+};
+
 // THC Token configuration
 export const THC_TOKEN = {
   name: 'Trade Hybrid Coin',
