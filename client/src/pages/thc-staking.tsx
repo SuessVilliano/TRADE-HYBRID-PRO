@@ -244,7 +244,7 @@ export default function StakeAndBake() {
   
   // Handle staking action
   const handleStake = () => {
-    if (!connectedWallet) return;
+    if (!solanaAuth.walletConnected) return;
     
     const amount = parseFloat(stakeAmount);
     
@@ -878,10 +878,10 @@ export default function StakeAndBake() {
                   <CardFooter>
                     <Button 
                       className="w-full" 
-                      disabled={!connectedWallet || parseFloat(solStakeAmount) <= 0}
+                      disabled={!solanaAuth.walletConnected || parseFloat(solStakeAmount) <= 0}
                       onClick={handleStakeSol}
                     >
-                      {!connectedWallet ? 'Connect Wallet to Stake' : 'Stake SOL to Validator'}
+                      {!solanaAuth.walletConnected ? 'Connect Wallet to Stake' : 'Stake SOL to Validator'}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -1219,10 +1219,10 @@ export default function StakeAndBake() {
                   <CardFooter>
                     <Button 
                       className="w-full" 
-                      disabled={!connectedWallet || parseFloat(stakeAmount) <= 0 || parseFloat(stakeAmount) > thcBalance}
+                      disabled={!solanaAuth.walletConnected || parseFloat(stakeAmount) <= 0 || parseFloat(stakeAmount) > thcBalance}
                       onClick={handleStake}
                     >
-                      {!connectedWallet ? 'Connect Wallet to Stake' : 'Stake THC Tokens'}
+                      {!solanaAuth.walletConnected ? 'Connect Wallet to Stake' : 'Stake THC Tokens'}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -1376,10 +1376,10 @@ export default function StakeAndBake() {
                         
                         <Button 
                           onClick={handleCreateMatrix}
-                          disabled={!connectedWallet}
+                          disabled={!solanaAuth.walletConnected}
                           className="w-full"
                         >
-                          {!connectedWallet ? 'Connect Wallet to Create Matrix' : 'Create Your Matrix (0.1 SOL)'}
+                          {!solanaAuth.walletConnected ? 'Connect Wallet to Create Matrix' : 'Create Your Matrix (0.1 SOL)'}
                         </Button>
                       </div>
                     ) : (
