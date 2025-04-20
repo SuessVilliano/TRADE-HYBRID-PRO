@@ -48,7 +48,7 @@ router.get('/', (req, res) => {
 router.post('/connect', (req, res) => {
   try {
     // Get userId from session or use a demo userId
-    const userId = req.session?.userId || 'demo-user-123';
+    const userId = (req.session?.userId || 'demo-user-123').toString();
     
     // Get connection details from request body
     const { clientVersion, features, supportedBrokers } = req.body;
@@ -89,7 +89,7 @@ router.post('/connect', (req, res) => {
 router.post('/disconnect', (req, res) => {
   try {
     // Get userId from session or use a demo userId
-    const userId = req.session?.userId || 'demo-user-123';
+    const userId = (req.session?.userId || 'demo-user-123').toString();
     
     // Get connection ID from request body
     const { connectionId } = req.body;
@@ -135,7 +135,7 @@ router.post('/disconnect', (req, res) => {
 router.get('/status/:connectionId', (req, res) => {
   try {
     // Get userId from session or use a demo userId
-    const userId = req.session?.userId || 'demo-user-123';
+    const userId = (req.session?.userId || 'demo-user-123').toString();
     
     // Get connection ID from request params
     const { connectionId } = req.params;

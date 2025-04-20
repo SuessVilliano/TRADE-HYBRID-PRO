@@ -155,7 +155,11 @@ class ABATEVService {
         id: data.connectionId || `abatev-${Date.now()}`,
         status: 'connected',
         lastConnected: new Date(),
-        features: Object.keys(ABATEV_CONFIG.features).filter(key => ABATEV_CONFIG.features[key]),
+        features: Object.keys(ABATEV_CONFIG.features).filter(key => {
+          // Safely check features by using type assertion
+          const features = ABATEV_CONFIG.features as Record<string, boolean>;
+          return features[key];
+        }),
         supportedBrokers: ABATEV_CONFIG.supportedBrokers,
       };
       

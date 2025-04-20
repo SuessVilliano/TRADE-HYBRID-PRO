@@ -131,6 +131,7 @@ import alpacaTestRoutes from './routes/alpaca-test'; // Import for Alpaca API te
 import fixAlpacaRoutes from './routes/fix-alpaca'; // Import for Alpaca fixed credentials route
 import testAlpacaAuthRoutes from './routes/test-alpaca-auth'; // Import for direct Alpaca auth test
 import testCredentialsRoutes from './routes/test-credentials'; // Import for API credential testing routes
+import abatevRoutes from './api/abatev'; // Import for ABATEV integration routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Market data routes
@@ -415,6 +416,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // API Credential Manager test routes
   app.use("/api/test-credentials", testCredentialsRoutes);
+  
+  // ABATEV integration routes
+  app.use("/api/abatev", abatevRoutes);
 
   // News route using multiple sources
   app.get("/api/rss-feeds/news", async (req, res) => {
