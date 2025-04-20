@@ -99,7 +99,7 @@ export default function StakeAndBake() {
   const [stakeAmount, setStakeAmount] = useState('100');
   const [stakeDuration, setStakeDuration] = useState('90');
   const [autoCompound, setAutoCompound] = useState(true);
-  const [connectedWallet, setConnectedWallet] = useState(false);
+  // No longer need connectedWallet state since we use solanaAuth.walletConnected directly
   const [phantomInstalled, setPhantomInstalled] = useState(false);
   const [thcBalance, setThcBalance] = useState(156.75);
   const [stakedAmount, setStakedAmount] = useState(325.5);
@@ -163,24 +163,22 @@ export default function StakeAndBake() {
     const checkPhantomWallet = async () => {
       try {
         // Try modern approach first (via window.phantom)
-        if (window.phantom?.solana) {
+        if ((window as any).phantom?.solana) {
           console.log("Phantom wallet is available (modern API)");
           setPhantomInstalled(true);
           
-          // If already connected, update our state
+          // If already connected, log it
           if (solanaAuth.walletConnected) {
-            setConnectedWallet(true);
             console.log('Wallet already connected via SolanaAuth');
           }
         } 
         // Fallback to legacy approach (window.solana)
-        else if (window.solana?.isPhantom) {
+        else if ((window as any).solana?.isPhantom) {
           console.log("Phantom wallet is available (legacy API)");
           setPhantomInstalled(true);
           
-          // If already connected, update our state
+          // If already connected, log it
           if (solanaAuth.walletConnected) {
-            setConnectedWallet(true);
             console.log('Wallet already connected via SolanaAuth');
           }
         }
@@ -331,7 +329,7 @@ export default function StakeAndBake() {
   
   // Fetch validator information from Solana network
   const fetchValidatorInfo = async () => {
-    if (!window.solana || !solanaAuth.walletConnected) {
+    if (!((window as any).solana) || !solanaAuth.walletConnected) {
       toast({
         title: "Connect Wallet",
         description: "Please connect your Solana wallet first",
@@ -443,7 +441,7 @@ export default function StakeAndBake() {
 
   // Update validator commission
   const handleUpdateCommission = async () => {
-    if (!window.solana || !solanaAuth.walletConnected || !isValidatorOperator) {
+    if (!((window as any).solana) || !solanaAuth.walletConnected || !isValidatorOperator) {
       toast({
         title: "Access Denied",
         description: "You must be the validator operator to change commission",
@@ -572,7 +570,7 @@ export default function StakeAndBake() {
   
   // Handle SOL staking
   const handleStakeSol = async () => {
-    if (!window.solana || !solanaAuth.walletConnected) {
+    if (!((window as any).solana) || !solanaAuth.walletConnected) {
       toast({
         title: "Connect Wallet",
         description: "Please connect your Solana wallet first",
@@ -760,7 +758,7 @@ export default function StakeAndBake() {
                         </p>
                       </div>
                       
-                      {!connectedWallet ? (
+                      {!solanaAuth.walletConnected ? (
                         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-4 rounded-md">
                           <div className="flex items-center justify-between mb-3">
                             <h3 className="text-sm font-medium flex items-center">
