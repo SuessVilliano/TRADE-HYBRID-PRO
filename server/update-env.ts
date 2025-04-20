@@ -52,21 +52,21 @@ export function updateEnvironmentVariables(): void {
 // Export a function to update specific variables
 export function updateApiCredentials(): void {
   try {
-    // Update Alpaca credentials
-    process.env.ALPACA_API_KEY = 'CKE6QEC625ODXIY3KR3B';
-    process.env.ALPACA_API_SECRET = 'zhj0lFDODB2LFJdFm0juD8tpevfJPuRNH9ZMl0Ao';
+    // Update Alpaca credentials with the new values
+    process.env.ALPACA_API_KEY = 'PKCBXRXBYIZ100B87CO0';
+    process.env.ALPACA_API_SECRET = '4tZAchGqy3EWSdAycUeywGcjgaGsBOz9LNKnkOJL';
     
     // Update client-side variables too
-    process.env.VITE_ALPACA_API_KEY = 'CKE6QEC625ODXIY3KR3B';
-    process.env.VITE_ALPACA_API_SECRET = 'zhj0lFDODB2LFJdFm0juD8tpevfJPuRNH9ZMl0Ao';
+    process.env.VITE_ALPACA_API_KEY = 'PKCBXRXBYIZ100B87CO0';
+    process.env.VITE_ALPACA_API_SECRET = '4tZAchGqy3EWSdAycUeywGcjgaGsBOz9LNKnkOJL';
     
     // Disable mock services
     process.env.USE_MOCK_SERVICE = 'false';
     process.env.VITE_USE_MOCK_SERVICE = 'false';
     
-    console.log('API credentials updated manually:');
-    console.log(`ALPACA_API_KEY: ${process.env.ALPACA_API_KEY.substring(0, 4)}...`);
-    console.log(`ALPACA_API_SECRET: ${process.env.ALPACA_API_SECRET.substring(0, 4)}...`);
+    console.log('API credentials updated manually with new values:');
+    console.log(`ALPACA_API_KEY: ${process.env.ALPACA_API_KEY.substring(0, 4)}...${process.env.ALPACA_API_KEY.substring(process.env.ALPACA_API_KEY.length - 4)}`);
+    console.log(`ALPACA_API_SECRET: ${process.env.ALPACA_API_SECRET.substring(0, 4)}...${process.env.ALPACA_API_SECRET.substring(process.env.ALPACA_API_SECRET.length - 4)}`);
   } catch (error) {
     console.error('Error updating API credentials:', error);
   }

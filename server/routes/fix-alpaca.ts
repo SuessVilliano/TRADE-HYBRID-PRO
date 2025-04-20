@@ -10,8 +10,8 @@ router.get('/', async (req: Request, res: Response) => {
     console.log('Testing Alpaca API connection with hardcoded credentials...');
     
     // Use hardcoded new credentials directly
-    const apiKey = 'CKE6QEC625ODXIY3KR3B';
-    const apiSecret = 'zhj0lFDODB2LFJdFm0juD8tpevfJPuRNH9ZMl0Ao';
+    const apiKey = 'PKCBXRXBYIZ100B87CO0';
+    const apiSecret = '4tZAchGqy3EWSdAycUeywGcjgaGsBOz9LNKnkOJL';
     const baseUrl = 'https://paper-api.alpaca.markets/v2';
     
     console.log(`Using API Key: ${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}`);
