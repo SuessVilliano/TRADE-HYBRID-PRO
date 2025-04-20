@@ -100,6 +100,7 @@ export default function StakeAndBake() {
   const [stakeDuration, setStakeDuration] = useState('90');
   const [autoCompound, setAutoCompound] = useState(true);
   const [connectedWallet, setConnectedWallet] = useState(false);
+  const [phantomInstalled, setPhantomInstalled] = useState(false);
   const [thcBalance, setThcBalance] = useState(156.75);
   const [stakedAmount, setStakedAmount] = useState(325.5);
   const [referralCount, setReferralCount] = useState(5);
@@ -229,7 +230,7 @@ export default function StakeAndBake() {
       checkMembership();
     }
     
-    return () => clearTimeout(timer);
+    // No need for timer cleanup as we're not setting any timers
   }, [generateReferralLink, solanaAuth.walletConnected, solanaAuth.isAuthenticated, solanaAuth.tokenMembership]);
   
   // Calculate estimated rewards
@@ -774,10 +775,11 @@ export default function StakeAndBake() {
                           <Button 
                             variant="outline" 
                             className="w-full bg-white dark:bg-slate-800"
-                            onClick={() => setConnectedWallet(true)} // In real app, this would use actual wallet connect
+                            onClick={() => solanaAuth.connectAndAuthenticate()}
+                            disabled={solanaAuth.isAuthenticating}
                           >
                             <Wallet className="mr-2 h-4 w-4" />
-                            Connect Wallet
+                            {solanaAuth.isAuthenticating ? 'Connecting...' : 'Connect Wallet'}
                           </Button>
                         </div>
                       ) : (
@@ -797,9 +799,10 @@ export default function StakeAndBake() {
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={() => setConnectedWallet(false)} // In real app, this would use actual wallet disconnect
+                              onClick={() => solanaAuth.logoutFromSolana()}
+                              disabled={solanaAuth.isAuthenticating}
                             >
-                              Disconnect
+                              {solanaAuth.isAuthenticating ? 'Disconnecting...' : 'Disconnect'}
                             </Button>
                           </div>
                         </div>
