@@ -404,14 +404,7 @@ export function WebhookSettings() {
                   Cancel
                 </Button>
                 <Button 
-                  onClick={async () => {
-                    // Close the dialog when done by simulating a click on the close button
-                    await createWebhook();
-                    const closeButton = document.querySelector('[data-radix-collection-item]');
-                    if (closeButton) {
-                      (closeButton as HTMLElement).click();
-                    }
-                  }} 
+                  onClick={createWebhook} 
                   disabled={isCreating || !newWebhookName.trim()}
                 >
                   {isCreating ? 'Creating...' : 'Create Webhook'}

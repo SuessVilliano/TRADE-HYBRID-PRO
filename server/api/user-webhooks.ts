@@ -82,11 +82,11 @@ router.post('/', async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     
     // For demo purposes, let's use a demo user if not authenticated
-    let userId = authReq.session.userId || 'demo-user-123';
+    let userId = authReq.session.userId || 1; // Using ID 1 for demo user (integer)
     
     // If we're using the demo user, log it
     if (!authReq.session.userId) {
-      console.log('Using demo user ID for webhook creation: demo-user-123');
+      console.log('Using demo user ID for webhook creation: 1');
     }
     const { name } = req.body;
     
@@ -155,11 +155,11 @@ router.delete('/:webhookId', async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     
     // For demo purposes, let's use a demo user if not authenticated
-    let userId = authReq.session.userId || 'demo-user-123';
+    let userId = authReq.session.userId || 1; // Using ID 1 for demo user (integer)
     
     // If we're using the demo user, log it
     if (!authReq.session.userId) {
-      console.log('Using demo user ID for webhook deletion: demo-user-123');
+      console.log('Using demo user ID for webhook deletion: 1');
     }
     const { webhookId } = req.params;
     
@@ -191,11 +191,11 @@ router.post('/:webhookId/regenerate', async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     
     // For demo purposes, let's use a demo user if not authenticated
-    let userId = authReq.session.userId || 'demo-user-123';
+    let userId = authReq.session.userId || 1; // Using ID 1 for demo user (integer)
     
     // If we're using the demo user, log it
     if (!authReq.session.userId) {
-      console.log('Using demo user ID for webhook regeneration: demo-user-123');
+      console.log('Using demo user ID for webhook regeneration: 1');
     }
     const { webhookId } = req.params;
     
@@ -279,9 +279,11 @@ export const getUserWebhookByToken = async (token: string): Promise<UserWebhook 
       console.log('Found hardcoded test webhook');
       return {
         id: 2,
-        userId: '1',
+        userId: 1, // Use number instead of string
         name: 'Testing Webhook',
         token: 'test1234',
+        broker: 'webhook', // Add missing broker
+        brokerConfig: {}, // Add missing brokerConfig
         createdAt: new Date(),
         lastUsedAt: null,
         signalCount: 0,
@@ -311,6 +313,8 @@ export const getUserWebhookByToken = async (token: string): Promise<UserWebhook 
         userId: webhook.user_id,
         name: webhook.name,
         token: webhook.token,
+        broker: webhook.broker || 'webhook',
+        brokerConfig: webhook.broker_config || {},
         createdAt: createdAt,
         lastUsedAt: lastUsedAt,
         signalCount: webhook.signal_count || 0,
@@ -402,11 +406,11 @@ router.get('/status', async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     
     // For demo purposes, let's use a demo user if not authenticated
-    let userId = authReq.session.userId || 'demo-user-123';
+    let userId = authReq.session.userId || 1; // Using ID 1 for demo user (integer)
     
     // If we're using the demo user, log it
     if (!authReq.session.userId) {
-      console.log('Using demo user ID for fetching webhook status: demo-user-123');
+      console.log('Using demo user ID for fetching webhook status: 1');
     }
     
     // Get all user webhooks
@@ -437,7 +441,7 @@ router.get('/:webhookId/status', async (req, res) => {
     const { webhookId } = req.params;
     
     // For demo purposes, let's use a demo user if not authenticated
-    let userId = authReq.session.userId || 'demo-user-123';
+    let userId = authReq.session.userId || 1; // Using ID 1 for demo user (integer)
     
     // Verify the webhook belongs to the user
     const query = `
@@ -510,7 +514,15 @@ export const processUserWebhook = async (token: string, payload: any): Promise<b
     };
     
     // Process the webhook signal using the userId to properly store user-specific signals
-    processWebhookSignal(enrichedPayload, webhook.userId);
+    // Convert userId to string if processWebhookSignal expects a string
+    const userIdStr = webhook.userId.toString();
+    
+    // Check if processWebhookSignal is defined
+    if (typeof processWebhookSignal === 'function') {
+      processWebhookSignal(enrichedPayload, userIdStr);
+    } else {
+      console.log('Webhook signal received but processWebhookSignal is not defined:', enrichedPayload);
+    }
     
     // Calculate response time and update webhook status
     const responseTime = Date.now() - startTime;
