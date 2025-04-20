@@ -38,5 +38,17 @@ CREATE TABLE quiz_attempts (
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- 5. Update the schema.ts file to match these changes (this will be done in the code)
+-- 5. Recreate certificates with integer user_id
+CREATE TABLE certificates (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  course_id INTEGER NOT NULL REFERENCES courses(id),
+  certificate_id TEXT NOT NULL,
+  issue_date TIMESTAMP NOT NULL DEFAULT NOW(),
+  expiry_date TIMESTAMP,
+  metadata JSONB,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- 6. Update the schema.ts file to match these changes (this will be done in the code)
 -- Table schemas should be updated to use integer for user_id fields

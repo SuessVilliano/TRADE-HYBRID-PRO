@@ -322,7 +322,7 @@ export const tradeSignals = pgTable("trade_signals", {
 // Copy trade logs table
 export const copyTradeLogs = pgTable('copy_trade_logs', {
   id: text('id').primaryKey(),
-  userId: text('user_id').notNull(),
+  userId: integer('user_id').notNull().references(() => users.id),
   signalId: text('signal_id').notNull().references(() => tradeSignals.id),
   timestamp: timestamp('timestamp').notNull().defaultNow(),
   autoExecute: boolean('auto_execute').default(false),
@@ -343,7 +343,7 @@ export const copyTradeLogsRelations = relations(copyTradeLogs, ({ one }) => ({
 // Signal subscriptions table for users subscribing to trading signals
 export const signalSubscriptions = pgTable("signal_subscriptions", {
   id: text('id').primaryKey(),
-  userId: text('user_id').notNull(),
+  userId: integer('user_id').notNull().references(() => users.id),
   providerId: text('provider_id').notNull(), // Signal provider ID or source
   symbol: text('symbol'), // Optional: subscribe to specific symbol only
   status: text('status').notNull().default('active'), // 'active', 'paused', 'cancelled'
