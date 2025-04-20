@@ -111,7 +111,8 @@ export const MainSidebar: React.FC<{ onClose?: () => void, mobile?: boolean }> =
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     trading: false,
     learning: false,
-    tools: false
+    tools: false,
+    crypto: false
   });
 
   const isLoggedIn = isAuthenticated || solanaAuth.walletConnected;
