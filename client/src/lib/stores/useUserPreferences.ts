@@ -28,6 +28,7 @@ interface UserPreferencesState {
   showTradingTips: boolean;
   showMicroTips: boolean;
   sidebarCollapsed: boolean;
+  showBottomNav: boolean;  // New option to control bottom nav visibility
   bottomNavTabs: TabConfig[];
   defaultPage: string;
   
@@ -51,6 +52,7 @@ interface UserPreferencesState {
   toggleTradingTips: () => void;
   toggleMicroTips: () => void;
   toggleSidebarCollapsed: () => void;
+  toggleShowBottomNav: () => void;
   setBottomNavTabs: (tabs: TabConfig[]) => void;
   toggleBottomNavTab: (tabId: string) => void;
   reorderBottomNavTabs: (tabId: string, newOrder: number) => void;
@@ -183,6 +185,7 @@ const defaultState = {
   showTradingTips: true,
   showMicroTips: true,
   sidebarCollapsed: false,
+  showBottomNav: true, // Show bottom nav by default
   bottomNavTabs: defaultBottomNavTabs,
   defaultPage: 'home',
   
