@@ -9,6 +9,7 @@ import { ThemeProvider } from './lib/hooks/useTheme';
 import { OnboardingTooltip } from './components/ui/onboarding-tooltip';
 import { OnboardingButton } from './components/ui/onboarding-button';
 import { BottomNav } from './components/ui/bottom-nav';
+import { UniversalHeader } from './components/ui/universal-header';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Pages
@@ -109,10 +110,15 @@ const App: React.FC = () => {
                 {/* Onboarding Components */}
                 <OnboardingTooltip />
                 <OnboardingButton />
-                {/* Use the fixed version of the customizable bottom nav */}
+                
+                {/* Universal Header for consistent navigation */}
+                <UniversalHeader />
+                
+                {/* Bottom Nav Bar (optional based on user preferences) */}
                 <BottomNav />
                 
-                <Routes>
+                <div className="mt-14"> {/* Add margin to account for fixed header */}
+                  <Routes>
                   {/* Public routes */}
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/trading-freedom-podcast" element={<TradingFreedomPodcast />} />
@@ -210,6 +216,7 @@ const App: React.FC = () => {
                   {/* Fallback route */}
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
+                </div>
               </Router>
             </OnboardingProvider>
           </SolanaAuthProvider>

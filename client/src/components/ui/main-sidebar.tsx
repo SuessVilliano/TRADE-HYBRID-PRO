@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, createContext, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   BarChart2, 
@@ -29,6 +29,13 @@ import { useAuth } from '@/lib/context/AuthContext';
 import { useSolanaAuth } from '@/lib/context/SolanaAuthProvider';
 import { Separator } from './separator';
 
+// Context for passing the onNavItemClick function to nested NavItems
+interface NavItemContextType {
+  onNavItemClick?: () => void;
+}
+
+const NavItemContext = createContext<NavItemContextType>({});
+
 type NavItemProps = {
   href: string;
   icon: React.ReactNode;
@@ -50,6 +57,8 @@ const NavItem: React.FC<NavItemProps> = ({
   expanded,
   onExpand
 }) => {
+  // Get the outer component's onNavItemClick if it exists
+  const { onNavItemClick } = React.useContext(NavItemContext);
   const hasChildren = !!children;
 
   return (
@@ -102,9 +111,16 @@ const NavItem: React.FC<NavItemProps> = ({
   );
 };
 
-export const MainSidebar: React.FC<{ onClose?: () => void, mobile?: boolean }> = ({ 
+export const MainSidebar: React.FC<{ 
+  onClose?: () => void, 
+  mobile?: boolean,
+  className?: string,
+  onNavItemClick?: () => void
+}> = ({ 
   onClose, 
-  mobile = false 
+  mobile = false,
+  className = "",
+  onNavItemClick
 }) => {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
@@ -135,7 +151,8 @@ export const MainSidebar: React.FC<{ onClose?: () => void, mobile?: boolean }> =
   return (
     <div className={cn(
       "flex flex-col h-full bg-background border-r border-border",
-      mobile ? "w-full" : "w-64"
+      mobile ? "w-full" : "w-64",
+      className
     )}>
       {/* Header with Logo */}
       <div className="flex items-center justify-between p-4">
