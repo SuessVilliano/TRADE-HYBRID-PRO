@@ -191,10 +191,10 @@ export const MainSidebar: React.FC<{ onClose?: () => void, mobile?: boolean }> =
             onClick={mobile ? onClose : undefined}
           />
           <NavItem 
-            href="/broker-connections" 
+            href="/connections" 
             icon={<Zap className="h-4 w-4" />} 
-            label="Broker Connections" 
-            active={isActive("/broker-connections")} 
+            label="Connections" 
+            active={isActive("/connections")} 
             onClick={mobile ? onClose : undefined}
           />
         </NavItem>
