@@ -24,21 +24,21 @@ router.get('/', async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     
     // For demo purposes, let's use a demo user if not authenticated
-    let userId = authReq.session.userId || 'demo-user-123';
+    let userId = authReq.session.userId || 2; // Using ID 2 for demo user (integer)
     
     // If we're using the demo user, log it
     if (!authReq.session.userId) {
-      console.log('Using demo user ID for fetching webhooks: demo-user-123');
+      console.log('Using demo user ID for fetching webhooks: 2');
     }
     
-    // Get webhooks from database using raw SQL
+    // Get webhooks from database using parameterized query
     const query = `
       SELECT * FROM user_webhooks
-      WHERE user_id = '${userId}'
+      WHERE user_id = $1
       ORDER BY created_at DESC
     `;
     
-    const rows = await executeQueryFromFile(query);
+    const rows = await executeQueryFromFile(query, [userId]);
     
     // Convert rows to webhook objects and mask tokens for security
     const webhooks = rows.map(row => ({
@@ -82,11 +82,11 @@ router.post('/', async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     
     // For demo purposes, let's use a demo user if not authenticated
-    let userId = authReq.session.userId || 1; // Using ID 1 for demo user (integer)
+    let userId = authReq.session.userId || 2; // Using ID 2 for demo user (integer) since we have a user with ID 2
     
     // If we're using the demo user, log it
     if (!authReq.session.userId) {
-      console.log('Using demo user ID for webhook creation: 1');
+      console.log('Using demo user ID for webhook creation: 2');
     }
     const { name } = req.body;
     
@@ -155,11 +155,11 @@ router.delete('/:webhookId', async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     
     // For demo purposes, let's use a demo user if not authenticated
-    let userId = authReq.session.userId || 1; // Using ID 1 for demo user (integer)
+    let userId = authReq.session.userId || 2; // Using ID 2 for demo user (integer)
     
     // If we're using the demo user, log it
     if (!authReq.session.userId) {
-      console.log('Using demo user ID for webhook deletion: 1');
+      console.log('Using demo user ID for webhook deletion: 2');
     }
     const { webhookId } = req.params;
     
@@ -191,11 +191,11 @@ router.post('/:webhookId/regenerate', async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     
     // For demo purposes, let's use a demo user if not authenticated
-    let userId = authReq.session.userId || 1; // Using ID 1 for demo user (integer)
+    let userId = authReq.session.userId || 2; // Using ID 2 for demo user (integer)
     
     // If we're using the demo user, log it
     if (!authReq.session.userId) {
-      console.log('Using demo user ID for webhook regeneration: 1');
+      console.log('Using demo user ID for webhook regeneration: 2');
     }
     const { webhookId } = req.params;
     
@@ -406,11 +406,11 @@ router.get('/status', async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     
     // For demo purposes, let's use a demo user if not authenticated
-    let userId = authReq.session.userId || 1; // Using ID 1 for demo user (integer)
+    let userId = authReq.session.userId || 2; // Using ID 2 for demo user (integer)
     
     // If we're using the demo user, log it
     if (!authReq.session.userId) {
-      console.log('Using demo user ID for fetching webhook status: 1');
+      console.log('Using demo user ID for fetching webhook status: 2');
     }
     
     // Get all user webhooks
@@ -441,7 +441,7 @@ router.get('/:webhookId/status', async (req, res) => {
     const { webhookId } = req.params;
     
     // For demo purposes, let's use a demo user if not authenticated
-    let userId = authReq.session.userId || 1; // Using ID 1 for demo user (integer)
+    let userId = authReq.session.userId || 2; // Using ID 2 for demo user (integer)
     
     // Verify the webhook belongs to the user
     const query = `
