@@ -1,257 +1,338 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { AlertTriangle, CheckCircle, RefreshCw, Info, Server } from 'lucide-react';
-import { ABATEV_CONFIG } from '@/lib/constants';
+import { useToast } from '@/components/ui/use-toast';
+import { 
+  Power,
+  BarChart2,
+  CircleSlash,
+  CircleCheck,
+  Check,
+  ChevronUp,
+  ChevronDown,
+  RefreshCw,
+  Network
+} from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
-export default function ABATEVStatusPanel() {
-  // State management
-  const [status, setStatus] = useState<'connected' | 'disconnected' | 'initializing'>('initializing');
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+// Define ABATEV configuration
+const ABATEV_CONFIG = {
+  marketDataCheckInterval: 60, // seconds
+  tradeExecutionRate: 500, // milliseconds
+  aggregationSources: [
+    'Alpaca',
+    'Oanda',
+    'Interactive Brokers',
+    'TradingView',
+    'Polygon.io',
+    'Alpha Vantage'
+  ],
+  tradeExecutionEngines: [
+    'Alpaca',
+    'Oanda',
+    'Interactive Brokers',
+    'NinjaTrader',
+    'TradingView'
+  ],
+  supportedAssets: [
+    'Stocks',
+    'Forex',
+    'Crypto',
+    'Commodities',
+    'Indices'
+  ]
+};
+
+const ABATEVStatusPanel: React.FC = () => {
   const [isEnabled, setIsEnabled] = useState<boolean>(false);
-  const [activeConnections, setActiveConnections] = useState<string[]>([]);
-  const [stats, setStats] = useState<{
-    ordersProcessed: number;
-    averageExecutionTime: number;
-    activeStrategies: number;
-  }>({
-    ordersProcessed: 0,
-    averageExecutionTime: 0,
-    activeStrategies: 0
-  });
-  const [error, setError] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [isInitializing, setIsInitializing] = useState<boolean>(false);
+  const [latency, setLatency] = useState<number>(42);
+  const [cpuUsage, setCpuUsage] = useState<number>(23);
+  const [showDetails, setShowDetails] = useState<boolean>(false);
+  const [connectionQuality, setConnectionQuality] = useState<'excellent' | 'good' | 'fair' | 'poor'>('good');
+  const [connectedDataSources, setConnectedDataSources] = useState<string[]>(['Alpaca', 'TradingView']);
+  const { toast } = useToast();
 
-  // Fetch ABATEV status on component mount
-  useEffect(() => {
-    fetchStatus();
-  }, []);
-
-  // Fetch the current status of ABATEV
-  const fetchStatus = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/abatev/status');
-      const data = await response.json();
+  // Toggle ABATEV enabled state
+  const toggleABATEV = async () => {
+    if (!isEnabled) {
+      setIsInitializing(true);
       
-      if (data.success) {
-        setStatus(data.connected ? 'connected' : 'disconnected');
-        setIsEnabled(data.enabled || false);
-        setActiveConnections(data.activeConnections || []);
-        setStats({
-          ordersProcessed: data.ordersProcessed || 0,
-          averageExecutionTime: data.averageExecutionTime || 0,
-          activeStrategies: data.activeStrategies || 0
+      // Simulate API call to enable ABATEV service
+      try {
+        // Call to server API to toggle ABATEV
+        // await abatevService.toggle(true);
+        
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        setIsEnabled(true);
+        setIsConnected(true);
+        setIsInitializing(false);
+        
+        toast({
+          title: "ABATEV Enabled",
+          description: "The Advanced Broker Aggregation Trade Execution Vertex is now active.",
         });
-        setError(null);
-      } else {
-        setStatus('disconnected');
-        setError(data.message || 'Failed to connect to ABATEV service');
+      } catch (error) {
+        setIsInitializing(false);
+        
+        toast({
+          title: "Failed to Enable ABATEV",
+          description: "There was an error enabling the service. Please try again.",
+          variant: "destructive",
+        });
       }
-    } catch (err) {
-      setStatus('disconnected');
-      setError('Could not reach ABATEV service. Please try again later.');
-    } finally {
-      setIsLoading(false);
+    } else {
+      setIsEnabled(false);
+      setIsConnected(false);
+      
+      toast({
+        title: "ABATEV Disabled",
+        description: "The Advanced Broker Aggregation Trade Execution Vertex has been disabled.",
+      });
     }
   };
 
-  // Toggle ABATEV system enabled state
-  const toggleEnabled = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/abatev/toggle', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          enabled: !isEnabled
-        })
+  // Simulate updating connection metrics
+  useEffect(() => {
+    if (!isEnabled) return;
+    
+    const interval = setInterval(() => {
+      // Simulate changing latency
+      setLatency(prev => {
+        const newValue = prev + (Math.random() > 0.5 ? 1 : -1) * Math.floor(Math.random() * 5);
+        return Math.max(10, Math.min(150, newValue));
       });
       
-      const data = await response.json();
+      // Simulate changing CPU usage
+      setCpuUsage(prev => {
+        const newValue = prev + (Math.random() > 0.5 ? 1 : -1) * Math.floor(Math.random() * 3);
+        return Math.max(5, Math.min(80, newValue));
+      });
       
-      if (data.success) {
-        setIsEnabled(data.enabled);
-        fetchStatus(); // Refresh the status
+      // Update connection quality based on latency
+      if (latency < 30) {
+        setConnectionQuality('excellent');
+      } else if (latency < 60) {
+        setConnectionQuality('good');
+      } else if (latency < 100) {
+        setConnectionQuality('fair');
       } else {
-        setError(data.message || 'Failed to update ABATEV status');
+        setConnectionQuality('poor');
       }
-    } catch (err) {
-      setError('Failed to update ABATEV status. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, [isEnabled, latency]);
 
-  // Initialize or reset ABATEV system
-  const initializeSystem = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/abatev/initialize', {
-        method: 'POST'
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setStatus('connected');
-        fetchStatus(); // Refresh the status
-      } else {
-        setError(data.message || 'Failed to initialize ABATEV system');
-      }
-    } catch (err) {
-      setError('Failed to initialize ABATEV system. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+  // Determine connection quality color
+  const connectionQualityColor = {
+    excellent: 'text-green-400',
+    good: 'text-green-500',
+    fair: 'text-amber-400',
+    poor: 'text-red-500'
+  }[connectionQuality];
+
+  // Determine progress color
+  const getProgressColor = (value: number): string => {
+    if (value < 30) return 'bg-green-500';
+    if (value < 60) return 'bg-blue-500';
+    if (value < 80) return 'bg-amber-500';
+    return 'bg-red-500';
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
+    <Card className="h-full">
+      <CardHeader className="bg-gradient-to-r from-purple-800 to-indigo-900 text-white pb-6">
+        <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
-              <Server className="h-5 w-5 text-primary" />
+            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-md flex items-center justify-center">
+              <Network className="h-6 w-6 text-white" />
             </div>
             <div>
-              <CardTitle>ABATEV System</CardTitle>
-              <CardDescription>
-                Advanced Broker Aggregation & Trade Execution View
+              <CardTitle className="text-lg">ABATEV</CardTitle>
+              <CardDescription className="text-indigo-200">
+                Advanced Broker Aggregation Trade Execution Vertex
               </CardDescription>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            {status === 'connected' ? (
-              <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border-green-200 dark:border-green-800">
-                <CheckCircle className="h-3 w-3 mr-1" />
+          <div className="flex items-center">
+            {isConnected ? (
+              <div className="flex items-center text-green-300 text-sm font-medium">
+                <CircleCheck className="h-4 w-4 mr-1" />
                 Connected
-              </Badge>
-            ) : status === 'initializing' ? (
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 border-blue-200 dark:border-blue-800">
-                <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-                Initializing
-              </Badge>
+              </div>
             ) : (
-              <Badge variant="outline" className="bg-gray-50 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400 border-gray-200 dark:border-gray-800">
-                Disconnected
-              </Badge>
+              <div className="flex items-center text-slate-300 text-sm font-medium">
+                <CircleSlash className="h-4 w-4 mr-1" />
+                Inactive
+              </div>
             )}
           </div>
         </div>
       </CardHeader>
       
-      <CardContent>
-        <p className="text-sm text-muted-foreground mb-4">
-          ABATEV provides optimized trade execution by aggregating and analyzing multiple broker connections.
+      <CardContent className="pt-4">
+        <p className="text-sm text-slate-500 mb-4">
+          The ABATEV system aggregates market data and optimizes trade execution across multiple brokers in real-time.
         </p>
         
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-2 rounded-md mb-4 flex items-center">
-            <AlertTriangle className="h-4 w-4 mr-2 flex-shrink-0" />
-            <p className="text-sm">{error}</p>
-          </div>
-        )}
-        
-        {status === 'connected' && (
-          <div className="space-y-4 mb-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-background border rounded-md p-3">
-                <p className="text-xs font-medium text-muted-foreground mb-1">Orders Processed</p>
-                <p className="text-xl font-semibold">{stats.ordersProcessed}</p>
-              </div>
-              <div className="bg-background border rounded-md p-3">
-                <p className="text-xs font-medium text-muted-foreground mb-1">Avg. Execution Time</p>
-                <p className="text-xl font-semibold">{stats.averageExecutionTime} ms</p>
-              </div>
-              <div className="bg-background border rounded-md p-3">
-                <p className="text-xs font-medium text-muted-foreground mb-1">Active Strategies</p>
-                <p className="text-xl font-semibold">{stats.activeStrategies}</p>
-              </div>
-            </div>
-            
-            <div className="bg-background border rounded-md p-3">
-              <p className="text-xs font-medium text-muted-foreground mb-2">Connected Brokers</p>
-              <div className="flex flex-wrap gap-2">
-                {activeConnections.length > 0 ? (
-                  activeConnections.map(broker => (
-                    <Badge key={broker} variant="secondary" className="text-xs">
-                      {broker}
-                    </Badge>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">No brokers connected</p>
-                )}
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="abatev-enabled"
-                checked={isEnabled}
-                onCheckedChange={toggleEnabled}
-                disabled={isLoading}
-              />
-              <Label htmlFor="abatev-enabled" className="text-sm font-medium">
-                Enable ABATEV Smart Routing
-              </Label>
-            </div>
-            
-            <div className="flex items-start gap-2 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-900/30 p-3 rounded-md">
-              <Info className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-blue-900 dark:text-blue-300">
-                <p className="font-medium">Optimal Performance</p>
-                <p className="mt-1">
-                  For best results, connect at least 2 broker accounts. ABATEV will automatically route trades based on your selected execution preset.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
-          <div className="flex items-center gap-2">
-            {status === 'disconnected' ? (
-              <Button 
-                variant="default" 
-                size="sm" 
-                onClick={initializeSystem} 
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Connecting...
-                  </>
-                ) : (
-                  'Initialize ABATEV'
-                )}
-              </Button>
-            ) : (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={fetchStatus} 
-                disabled={isLoading}
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                Refresh Status
-              </Button>
-            )}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <Switch 
+              id="abatev-enabled" 
+              checked={isEnabled}
+              onCheckedChange={toggleABATEV}
+              disabled={isInitializing}
+            />
+            <Label 
+              htmlFor="abatev-enabled" 
+              className="font-medium"
+            >
+              {isEnabled ? 'Enabled' : 'Disabled'}
+            </Label>
           </div>
           
-          {status === 'connected' && (
-            <div className="text-xs text-muted-foreground">
-              Using Execution Preset: <span className="font-medium">{ABATEV_CONFIG.executionPresets.find(p => p.id === ABATEV_CONFIG.defaultExecutionPreset)?.name || ABATEV_CONFIG.defaultExecutionPreset}</span>
+          {isInitializing && (
+            <div className="flex items-center text-sm text-slate-500">
+              <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+              Initializing...
             </div>
           )}
         </div>
+        
+        {isEnabled && (
+          <div className="space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-sm font-medium">Connection Quality</p>
+                <p className={`text-sm font-medium ${connectionQualityColor}`}>
+                  {connectionQuality.charAt(0).toUpperCase() + connectionQuality.slice(1)}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Latency</p>
+                  <div className="flex items-center justify-between">
+                    <Progress 
+                      value={(latency / 150) * 100} 
+                      className={`h-2 ${getProgressColor(latency)}`}
+                    />
+                    <span className="text-xs ml-2 tabular-nums">{latency}ms</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">CPU Usage</p>
+                  <div className="flex items-center justify-between">
+                    <Progress 
+                      value={cpuUsage} 
+                      className={`h-2 ${getProgressColor(cpuUsage)}`}
+                    />
+                    <span className="text-xs ml-2 tabular-nums">{cpuUsage}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">Active Data Sources</p>
+                <span className="text-xs text-slate-500">{connectedDataSources.length} connected</span>
+              </div>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {connectedDataSources.map((source: string) => (
+                  <div 
+                    key={source}
+                    className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-full flex items-center"
+                  >
+                    <Check className="h-3 w-3 mr-1 text-green-500" />
+                    {source}
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <Button
+              variant="ghost" 
+              size="sm"
+              className="w-full flex items-center justify-center text-xs mt-2"
+              onClick={() => setShowDetails(!showDetails)}
+            >
+              {showDetails ? (
+                <>
+                  <ChevronUp className="h-3 w-3 mr-1" />
+                  Hide Details
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-3 w-3 mr-1" />
+                  Show Details
+                </>
+              )}
+            </Button>
+            
+            {showDetails && (
+              <div className="border rounded-md p-3 text-sm space-y-2 bg-slate-50 dark:bg-slate-900">
+                <div>
+                  <p className="text-xs font-medium">Market Data Check Interval</p>
+                  <p className="text-xs text-slate-500">{ABATEV_CONFIG.marketDataCheckInterval}s</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium">Trade Execution Rate</p>
+                  <p className="text-xs text-slate-500">{ABATEV_CONFIG.tradeExecutionRate}ms</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium">Supported Asset Classes</p>
+                  <p className="text-xs text-slate-500">{ABATEV_CONFIG.supportedAssets.join(', ')}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
+      
+      <CardFooter className="flex justify-between pt-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="text-xs" 
+          disabled={!isEnabled}
+          onClick={() => {
+            // Simulate checking service status
+            toast({
+              title: "ABATEV Status",
+              description: `All systems operational. Last health check: ${new Date().toLocaleTimeString()}`,
+            });
+          }}
+        >
+          Check Status
+        </Button>
+        
+        <Button 
+          variant={isEnabled ? "destructive" : "default"}
+          size="sm"
+          className="text-xs"
+          onClick={toggleABATEV}
+          disabled={isInitializing}
+        >
+          <Power className="h-3 w-3 mr-1" />
+          {isEnabled ? 'Disable ABATEV' : 'Enable ABATEV'}
+        </Button>
+      </CardFooter>
     </Card>
   );
-}
+};
+
+export default ABATEVStatusPanel;

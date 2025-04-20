@@ -11,6 +11,7 @@ import {
   Newspaper, 
   PenTool, 
   Settings, 
+  ShoppingCart,
   Signal, 
   Trophy, 
   Users, 
@@ -298,6 +299,15 @@ export const MainSidebar: React.FC<{ onClose?: () => void, mobile?: boolean }> =
           icon={<Users className="h-5 w-5" />} 
           label="Community" 
           active={isActive("/social-network")} 
+          onClick={mobile ? onClose : undefined}
+        />
+
+        {/* Shop */}
+        <NavItem 
+          href="/shop" 
+          icon={<ShoppingCart className="h-5 w-5" />} 
+          label="Shop" 
+          active={isActive("/shop")} 
           onClick={mobile ? onClose : undefined}
         />
       </div>

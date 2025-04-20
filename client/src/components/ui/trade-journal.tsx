@@ -53,10 +53,30 @@ import { useTrader, Trade } from '../../lib/stores/useTrader';
 //   Legend
 // );
 
-// Mock Line, Bar, Pie components for chart.js
-const Line = (props: any) => <div className="bg-slate-800 rounded-md p-4 h-[300px] flex items-center justify-center">Line Chart Visualization (chart.js required)</div>;
-const Bar = (props: any) => <div className="bg-slate-800 rounded-md p-4 h-[300px] flex items-center justify-center">Bar Chart Visualization (chart.js required)</div>;
-const Pie = (props: any) => <div className="bg-slate-800 rounded-md p-4 h-[200px] flex items-center justify-center">Pie Chart Visualization (chart.js required)</div>;
+// Enhanced mock chart components with better visuals
+const Line = (props: any) => (
+  <div className="bg-slate-800 rounded-md p-4 h-[300px] flex flex-col items-center justify-center">
+    <LineChart className="h-16 w-16 mb-4 text-blue-400" strokeWidth={1.5} />
+    <p className="text-sm text-slate-400">Line Chart Visualization</p>
+    <p className="text-xs text-slate-500 mt-2">Performance over time</p>
+  </div>
+);
+
+const Bar = (props: any) => (
+  <div className="bg-slate-800 rounded-md p-4 h-[300px] flex flex-col items-center justify-center">
+    <BarChart4 className="h-16 w-16 mb-4 text-green-400" strokeWidth={1.5} />
+    <p className="text-sm text-slate-400">Bar Chart Visualization</p>
+    <p className="text-xs text-slate-500 mt-2">Comparative metric analysis</p>
+  </div>
+);
+
+const Pie = (props: any) => (
+  <div className="bg-slate-800 rounded-md p-4 h-[200px] flex flex-col items-center justify-center">
+    <PieChart className="h-12 w-12 mb-4 text-purple-400" strokeWidth={1.5} />
+    <p className="text-sm text-slate-400">Pie Chart Visualization</p>
+    <p className="text-xs text-slate-500 mt-2">Trade distribution</p>
+  </div>
+);
 
 // Trade Journal entry types
 interface JournalEntry {

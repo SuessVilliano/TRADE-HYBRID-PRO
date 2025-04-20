@@ -1,21 +1,33 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
+import { Separator } from '@/components/ui/separator';
 
 interface PageHeaderProps {
   title: string;
   description?: string;
-  actions?: React.ReactNode;
+  children?: ReactNode;
 }
 
-export default function PageHeader({ title, description, actions }: PageHeaderProps) {
+const PageHeader: React.FC<PageHeaderProps> = ({ 
+  title, 
+  description, 
+  children 
+}) => {
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border">
+    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+        <h1 className="text-3xl font-bold">{title}</h1>
         {description && (
           <p className="text-muted-foreground mt-1">{description}</p>
         )}
       </div>
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
+      
+      {children && (
+        <div className="flex items-center gap-2 mt-4 md:mt-0">
+          {children}
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default PageHeader;
