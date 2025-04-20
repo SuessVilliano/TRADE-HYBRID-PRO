@@ -376,7 +376,7 @@ export type UserApiKey = typeof userApiKeys.$inferSelect;
 // User Webhooks table for webhook URLs to receive trading signals
 export const userWebhooks = pgTable("user_webhooks", {
   id: serial("id").primaryKey(),
-  userId: text("user_id").notNull(), // References user ID
+  userId: integer("user_id").notNull().references(() => users.id), // Integer reference to users.id
   name: text("name").notNull(), // Display name for the webhook
   token: text("token").notNull().unique(), // Unique token for webhook URL
   broker: text("broker").notNull().default('tradingview'), // The broker type this webhook connects to
@@ -392,7 +392,7 @@ export type UserWebhook = typeof userWebhooks.$inferSelect;
 // Broker Credentials table for storing encrypted API keys
 export const brokerCredentials = pgTable("broker_credentials", {
   id: serial("id").primaryKey(),
-  userId: text("user_id").notNull(), // References user ID
+  userId: integer("user_id").notNull().references(() => users.id), // Integer reference to users.id
   broker: text("broker").notNull(), // 'alpaca', 'oanda', 'ninjaTrader', etc.
   credentials: jsonb("credentials").notNull(), // Encrypted credentials
   isConnected: boolean("is_connected").default(false),
