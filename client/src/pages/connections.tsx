@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ABATEVStatusPanel from '@/components/trade/ABATEVStatusPanel';
 import TradingViewConnector from '@/components/trade/TradingViewConnector';
 import BrokerConnectionPanel from '@/components/trade/BrokerConnectionPanel';
+import { SUPPORTED_BROKERS } from '@/lib/constants';
 
 export default function ConnectionsPage() {
   return (
@@ -36,9 +37,13 @@ export default function ConnectionsPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-6">
-              <BrokerConnectionPanel brokerId="alpaca" />
-              <BrokerConnectionPanel brokerId="oanda" />
-              <BrokerConnectionPanel brokerId="ninjatrader" />
+              {/* Display major supported brokers */}
+              {SUPPORTED_BROKERS
+                .filter(broker => ['alpaca', 'oanda', 'ninjatrader', 'kraken', 'binance'].includes(broker.id))
+                .map(broker => (
+                  <BrokerConnectionPanel key={broker.id} brokerId={broker.id} />
+                ))
+              }
             </div>
           </CardContent>
         </Card>

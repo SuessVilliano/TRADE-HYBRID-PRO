@@ -1,5 +1,11 @@
-import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { AlertTriangle, CheckCircle, Settings, RefreshCw } from 'lucide-react';
 import { SUPPORTED_BROKERS } from '@/lib/constants';
 
 interface BrokerConnectionPanelProps {
@@ -8,299 +14,289 @@ interface BrokerConnectionPanelProps {
 }
 
 export default function BrokerConnectionPanel({ 
-  brokerId, 
-  className = '' 
+  brokerId,
+  className 
 }: BrokerConnectionPanelProps) {
-  const [isConnected, setIsConnected] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [hasCredentials, setHasCredentials] = useState(false);
-  const [credentialsForm, setCredentialsForm] = useState<Record<string, string>>({});
-  const [showForm, setShowForm] = useState(false);
-
-  // Find broker details from supported brokers list
+  // Find broker details from the supported brokers list
   const broker = SUPPORTED_BROKERS.find(b => b.id === brokerId);
+  
+  // State management
+  const [connected, setConnected] = useState<boolean>(false);
+  const [connecting, setConnecting] = useState<boolean>(false);
+  const [showCredentials, setShowCredentials] = useState<boolean>(false);
+  const [credentials, setCredentials] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
+  const [lastTested, setLastTested] = useState<string | null>(null);
 
+  // Test connection when credentials change or when requested
   useEffect(() => {
-    // Check if we have credentials stored for this broker
-    const checkCredentials = async () => {
+    // Check if this broker is already connected
+    const checkConnection = async () => {
       try {
-        const response = await fetch(`/api/brokers/${brokerId}/credentials-status`);
-        if (response.ok) {
-          const data = await response.json();
-          setHasCredentials(data.hasCredentials);
-          // If we have credentials, check the connection status
-          if (data.hasCredentials) {
-            checkConnection();
-          }
+        const response = await fetch(`/api/broker/status/${brokerId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          setConnected(data.connected);
+          setLastTested(new Date().toLocaleString());
         }
-      } catch (error) {
-        console.error(`Error checking credentials for ${brokerId}:`, error);
+      } catch (err) {
+        console.error(`Failed to check broker connection status: ${err}`);
       }
     };
+    
+    checkConnection();
+  }, [brokerId]);
 
-    // Initialize the form with empty values for all credential fields
-    if (broker) {
-      const initialForm: Record<string, string> = {};
-      broker.credentialFields.forEach(field => {
-        initialForm[field.key] = '';
-      });
-      setCredentialsForm(initialForm);
-    }
-
-    checkCredentials();
-  }, [brokerId, broker]);
-
-  // Check connection status
-  const checkConnection = async () => {
-    try {
-      const response = await fetch(`/api/brokers/${brokerId}/status`);
-      if (response.ok) {
-        const data = await response.json();
-        setIsConnected(data.connected);
-      }
-    } catch (error) {
-      console.error(`Error checking connection for ${brokerId}:`, error);
-      setIsConnected(false);
-    }
-  };
-
-  // Connect to broker
-  const connectToBroker = async () => {
-    if (!hasCredentials) {
-      setShowForm(true);
-      return;
-    }
-
-    setIsConnecting(true);
-    try {
-      const response = await fetch(`/api/brokers/${brokerId}/connect`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setIsConnected(true);
-          toast.success(`Connected to ${broker?.name || brokerId}`, {
-            description: 'Successfully established connection',
-          });
-        } else {
-          toast.error(`Failed to connect to ${broker?.name || brokerId}`, {
-            description: data.message || 'Connection attempt failed',
-          });
-        }
-      } else {
-        toast.error(`Error connecting to ${broker?.name || brokerId}`, {
-          description: 'Server returned an error response',
-        });
-      }
-    } catch (error) {
-      console.error(`Error connecting to ${brokerId}:`, error);
-      toast.error(`Connection Error`, {
-        description: `An error occurred while connecting to ${broker?.name || brokerId}`,
-      });
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  // Disconnect from broker
-  const disconnectFromBroker = async () => {
-    setIsConnecting(true);
-    try {
-      const response = await fetch(`/api/brokers/${brokerId}/disconnect`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        setIsConnected(false);
-        toast.success(`Disconnected from ${broker?.name || brokerId}`, {
-          description: 'Successfully disconnected',
-        });
-      } else {
-        toast.error(`Failed to disconnect from ${broker?.name || brokerId}`, {
-          description: 'Server returned an error response',
-        });
-      }
-    } catch (error) {
-      console.error(`Error disconnecting from ${brokerId}:`, error);
-      toast.error(`Disconnection Error`, {
-        description: `An error occurred while disconnecting from ${broker?.name || brokerId}`,
-      });
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  // Save credentials
-  const saveCredentials = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsConnecting(true);
-
-    try {
-      const response = await fetch(`/api/brokers/${brokerId}/credentials`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentialsForm),
-      });
-
-      if (response.ok) {
-        setHasCredentials(true);
-        setShowForm(false);
-        toast.success(`Saved credentials for ${broker?.name || brokerId}`, {
-          description: 'API keys saved successfully',
-        });
-        // Attempt to connect with the new credentials
-        await connectToBroker();
-      } else {
-        const data = await response.json();
-        toast.error(`Failed to save credentials`, {
-          description: data.message || 'Server returned an error response',
-        });
-      }
-    } catch (error) {
-      console.error(`Error saving credentials for ${brokerId}:`, error);
-      toast.error(`Error Saving Credentials`, {
-        description: `An error occurred while saving credentials for ${broker?.name || brokerId}`,
-      });
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  // Handle form input changes
-  const handleInputChange = (key: string, value: string) => {
-    setCredentialsForm(prev => ({
+  // Update credentials
+  const handleCredentialChange = (key: string, value: string) => {
+    setCredentials(prev => ({
       ...prev,
-      [key]: value,
+      [key]: value
     }));
   };
 
-  // If broker is not found, don't render anything
+  // Connect to the broker
+  const handleConnect = async () => {
+    if (!broker) return;
+    
+    setConnecting(true);
+    setError(null);
+    
+    try {
+      const response = await fetch('/api/broker/connect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          brokerId,
+          credentials
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setConnected(true);
+        setShowCredentials(false);
+        setLastTested(new Date().toLocaleString());
+      } else {
+        setError(data.message || 'Failed to connect to broker');
+        setConnected(false);
+      }
+    } catch (err) {
+      setError('Connection failed. Please check your credentials and try again.');
+      setConnected(false);
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  // Disconnect from the broker
+  const handleDisconnect = async () => {
+    if (!broker) return;
+    
+    try {
+      const response = await fetch('/api/broker/disconnect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          brokerId
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setConnected(false);
+        setCredentials({});
+      } else {
+        setError(data.message || 'Failed to disconnect from broker');
+      }
+    } catch (err) {
+      setError('Disconnect failed. Please try again.');
+    }
+  };
+
+  // Test the connection
+  const handleTestConnection = async () => {
+    if (!broker) return;
+    
+    setConnecting(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`/api/broker/test/${brokerId}`, {
+        method: 'POST'
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setConnected(true);
+        setLastTested(new Date().toLocaleString());
+      } else {
+        setError(data.message || 'Connection test failed');
+        setConnected(false);
+      }
+    } catch (err) {
+      setError('Connection test failed. Please check your network connection.');
+      setConnected(false);
+    } finally {
+      setConnecting(false);
+    }
+  };
+
   if (!broker) {
-    return null;
+    return (
+      <Card className={`border ${className}`}>
+        <CardHeader>
+          <CardTitle>Unknown Broker</CardTitle>
+          <CardDescription>The specified broker is not supported.</CardDescription>
+        </CardHeader>
+      </Card>
+    );
   }
 
   return (
-    <div className={`rounded-lg border p-4 ${className}`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <img
-            src={broker.logo}
-            alt={`${broker.name} Logo`}
-            className="w-8 h-8"
-          />
-          <div>
-            <h3 className="font-medium">{broker.name}</h3>
-            <p className="text-xs text-muted-foreground">{broker.type}</p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-muted-foreground">
-            {isConnected ? 'Connected' : hasCredentials ? 'Disconnected' : 'Not Configured'}
-          </span>
-          <div className={`w-3 h-3 rounded-full ${
-            isConnected ? 'bg-green-500' : 
-            hasCredentials ? 'bg-yellow-500' : 'bg-gray-500'
-          }`}></div>
-        </div>
-      </div>
-
-      <p className="mt-2 text-sm text-muted-foreground">
-        {broker.description}
-      </p>
-
-      {showForm && (
-        <form onSubmit={saveCredentials} className="mt-4 space-y-3">
-          {broker.credentialFields.map(field => (
-            <div key={field.key} className="space-y-1">
-              <label htmlFor={`${brokerId}-${field.key}`} className="text-sm font-medium">
-                {field.label}
-              </label>
-              {field.type === 'checkbox' ? (
-                <input
-                  type="checkbox"
-                  id={`${brokerId}-${field.key}`}
-                  checked={credentialsForm[field.key] === 'true'}
-                  onChange={e => handleInputChange(field.key, e.target.checked ? 'true' : 'false')}
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                />
-              ) : (
-                <input
-                  type={field.type}
-                  id={`${brokerId}-${field.key}`}
-                  value={credentialsForm[field.key] || ''}
-                  onChange={e => handleInputChange(field.key, e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  required
-                />
-              )}
+    <Card className={`border ${className}`}>
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            {broker.logo && (
+              <img 
+                src={broker.logo} 
+                alt={`${broker.name} logo`} 
+                className="h-8 w-8 object-contain"
+              />
+            )}
+            <div>
+              <CardTitle>{broker.name}</CardTitle>
+              <CardDescription className="text-sm">
+                {broker.type.charAt(0).toUpperCase() + broker.type.slice(1)} Trading
+              </CardDescription>
             </div>
-          ))}
-          <div className="flex justify-end space-x-2">
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="px-3 py-1 text-sm border rounded-md bg-background"
-              disabled={isConnecting}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-3 py-1 text-sm text-white rounded-md bg-primary"
-              disabled={isConnecting}
-            >
-              {isConnecting ? 'Saving...' : 'Save Credentials'}
-            </button>
           </div>
-        </form>
-      )}
-
-      {!showForm && (
-        <div className="mt-4 flex justify-end space-x-2">
-          {!hasCredentials ? (
-            <button
-              onClick={() => setShowForm(true)}
-              className="px-3 py-1 text-sm border rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80"
-            >
-              Configure
-            </button>
-          ) : !isConnected ? (
-            <button
-              onClick={connectToBroker}
-              disabled={isConnecting}
-              className="px-3 py-1 text-sm text-white rounded-md bg-primary hover:bg-primary/90 disabled:opacity-50"
-            >
-              {isConnecting ? 'Connecting...' : 'Connect'}
-            </button>
-          ) : (
-            <button
-              onClick={disconnectFromBroker}
-              disabled={isConnecting}
-              className="px-3 py-1 text-sm rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
-            >
-              {isConnecting ? 'Disconnecting...' : 'Disconnect'}
-            </button>
-          )}
-          {hasCredentials && (
-            <button
-              onClick={() => setShowForm(true)}
-              className="px-3 py-1 text-sm border rounded-md bg-background hover:bg-accent"
-            >
-              Edit Credentials
-            </button>
-          )}
+          
+          <div className="flex items-center gap-2">
+            {connected ? (
+              <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border-green-200 dark:border-green-800">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Connected
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="bg-gray-50 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400 border-gray-200 dark:border-gray-800">
+                Disconnected
+              </Badge>
+            )}
+          </div>
         </div>
-      )}
-    </div>
+      </CardHeader>
+      
+      <CardContent>
+        <p className="text-sm text-muted-foreground mb-4">
+          {broker.description}
+        </p>
+        
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-2 rounded-md mb-4 flex items-center">
+            <AlertTriangle className="h-4 w-4 mr-2 flex-shrink-0" />
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
+        
+        {showCredentials && (
+          <div className="space-y-4 mb-4">
+            <div className="grid gap-4">
+              {broker.credentialFields.map(field => (
+                <div key={field.key} className="space-y-2">
+                  <Label htmlFor={`${brokerId}-${field.key}`}>{field.label}</Label>
+                  <Input
+                    id={`${brokerId}-${field.key}`}
+                    type={field.type}
+                    value={credentials[field.key] || ''}
+                    onChange={(e) => handleCredentialChange(field.key, e.target.value)}
+                    placeholder={`Enter your ${field.label.toLowerCase()}`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
+          <div className="flex items-center gap-2">
+            {connected ? (
+              <>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleDisconnect}
+                >
+                  Disconnect
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleTestConnection} 
+                  disabled={connecting}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${connecting ? 'animate-spin' : ''}`} />
+                  Test Connection
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  variant={showCredentials ? "outline" : "default"} 
+                  size="sm" 
+                  onClick={() => setShowCredentials(!showCredentials)}
+                >
+                  {showCredentials ? 'Hide' : 'Enter Credentials'}
+                </Button>
+                {showCredentials && (
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    onClick={handleConnect} 
+                    disabled={connecting || Object.keys(credentials).length === 0}
+                  >
+                    {connecting ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        Connecting...
+                      </>
+                    ) : (
+                      'Connect'
+                    )}
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => window.open(broker.url, '_blank')}
+            >
+              <Settings className="h-4 w-4" />
+              <span className="sr-only">Broker Settings</span>
+            </Button>
+            
+            {lastTested && (
+              <span className="text-xs text-muted-foreground">
+                Last tested: {lastTested}
+              </span>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
