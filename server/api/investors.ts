@@ -106,16 +106,16 @@ router.get('/me', async (req, res) => {
   try {
     console.log('Fetching investor profile for current user');
     
-    // Check if user is authenticated and get user ID
-    // For now, use a default user ID for testing
-    // In a production environment, this would come from the authenticated session
-    const userId = 1; // Assuming user with ID 1 exists
+    // Get user ID from the session if authenticated
+    const userId = (req.session as any)?.user?.id;
     
-    // The commented code below would be used in a properly authenticated context
-    // const userId = (req.session as any)?.user?.id;
-    // if (!userId) {
-    //   return res.status(401).json({ error: 'Not authenticated' });
-    // }
+    // Check if user is authenticated
+    if (!userId) {
+      console.log('User not authenticated, returning 401');
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    
+    console.log(`Looking up investor profile for user ID: ${userId}`);
     
     // Look up investor by user ID
     const investor = await db
@@ -125,8 +125,11 @@ router.get('/me', async (req, res) => {
       .limit(1);
     
     if (investor.length === 0) {
+      console.log(`No investor profile found for user ID: ${userId}`);
       return res.status(404).json({ error: 'No investor profile found for this user' });
     }
+    
+    console.log(`Found investor profile: ${investor[0].id} for user ID: ${userId}`);
     
     // Calculate total invested amount
     const investorInvestments = await db
@@ -138,6 +141,8 @@ router.get('/me', async (req, res) => {
       (sum, inv) => sum + (inv.initialDeposit || 0), 
       0
     );
+    
+    console.log(`Returning investor data with ${investorInvestments.length} investments`);
     
     // Return investor data with calculated fields
     res.json({

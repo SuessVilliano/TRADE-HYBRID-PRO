@@ -53,39 +53,61 @@ const InvestmentDetails: React.FC = () => {
       setIsAdmin(true);
     }
     
-    fetchInvestmentData();
-  }, [id, user]);
+    // Only fetch data if we have a user and an investment ID
+    if (id && user) {
+      fetchInvestmentData();
+    } else if (!user) {
+      // Redirect to login if no user
+      navigate('/login', { state: { from: `/investors/investment/${id}` } });
+    }
+  }, [id, user, navigate]);
 
   const fetchInvestmentData = async () => {
     try {
       setLoading(true);
+      console.log(`Fetching investment details for ID: ${id}`);
       
       // Fetch investment details
       const investmentResponse = await fetch(`/api/investments/${id}`);
       if (!investmentResponse.ok) {
-        throw new Error('Failed to fetch investment details');
+        console.error(`Investment fetch failed with status: ${investmentResponse.status}`);
+        if (investmentResponse.status === 404) {
+          throw new Error('Investment not found');
+        } else if (investmentResponse.status === 403) {
+          throw new Error('You do not have permission to view this investment');
+        } else {
+          throw new Error('Failed to fetch investment details');
+        }
       }
       
       const investmentData = await investmentResponse.json();
+      console.log('Received investment data:', investmentData);
       setInvestment(investmentData);
       setEditedInvestment(investmentData);
       
       // Fetch performance records
+      console.log(`Fetching performance data for investment ID: ${id}`);
       const performanceResponse = await fetch(`/api/investment-performance?investmentId=${id}`);
-      if (!performanceResponse.ok) {
-        throw new Error('Failed to fetch performance records');
-      }
       
-      const performanceData = await performanceResponse.json();
-      setPerformanceRecords(performanceData);
+      if (!performanceResponse.ok) {
+        console.warn(`Performance data fetch failed with status: ${performanceResponse.status}`);
+        // Don't throw error for performance data, just set empty array
+        setPerformanceRecords([]);
+      } else {
+        const performanceData = await performanceResponse.json();
+        console.log(`Received ${performanceData.length} performance records`);
+        setPerformanceRecords(Array.isArray(performanceData) ? performanceData : []);
+      }
       
     } catch (error) {
       console.error('Error fetching investment data:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load investment details. Please try again later.',
+        description: error instanceof Error ? error.message : 'Failed to load investment details. Please try again later.',
         variant: 'destructive',
       });
+      // Set investment to null to show the error state
+      setInvestment(null);
     } finally {
       setLoading(false);
     }

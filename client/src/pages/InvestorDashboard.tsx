@@ -234,7 +234,7 @@ const InvestorDashboardPage: React.FC = () => {
 
   // View investment details
   const viewInvestmentDetails = (investmentId: number) => {
-    navigate(`/investments/${investmentId}`);
+    navigate(`/investors/investment/${investmentId}`);
   };
 
   // Download performance report
