@@ -60,10 +60,10 @@ const getIcon = (iconName: string) => {
 export function BottomNav({ className = '' }: BottomNavProps) {
   const location = useLocation();
   const currentPath = location.pathname;
-  const [isVisible, setIsVisible] = React.useState(false);
+  const [isScrolled, setIsScrolled] = React.useState(false);
 
-  // Get tabs from user preferences
-  const { bottomNavTabs, toggleBottomNavTab, reorderBottomNavTabs, resetPreferences } = useUserPreferences();
+  // Get preferences from user preferences store
+  const { bottomNavTabs, showBottomNav, toggleShowBottomNav } = useUserPreferences();
   
   // Filter tabs to only show active ones and sort by order
   const visibleTabs = React.useMemo(() => {
@@ -73,12 +73,12 @@ export function BottomNav({ className = '' }: BottomNavProps) {
       .slice(0, 4); // Limit to exactly 4 buttons
   }, [bottomNavTabs]);
   
-  // Add scroll event listener to show/hide bottom nav
+  // Add scroll event listener to show/hide bottom nav based on scroll position
   React.useEffect(() => {
     const handleScroll = () => {
       // Show navbar when scrolled down at least 200px
       const scrollPosition = window.scrollY;
-      setIsVisible(scrollPosition > 200);
+      setIsScrolled(scrollPosition > 200);
     };
     
     // Initial check
@@ -92,6 +92,14 @@ export function BottomNav({ className = '' }: BottomNavProps) {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
+
+  // If bottom nav is disabled in preferences, don't render it
+  if (!showBottomNav) {
+    return null;
+  }
+  
+  // Determine visibility: show if scrolled AND enabled in preferences
+  const isVisible = isScrolled && showBottomNav;
   
   return (
     <div className={`fixed bottom-0 left-[120px] right-[120px] z-50 bg-background border-t rounded-t-2xl shadow-lg transition-all duration-300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'} ${className}`}>
@@ -135,7 +143,17 @@ export function BottomNav({ className = '' }: BottomNavProps) {
           </Link>
         ))}
         
-        {/* No customize button here anymore - moved to settings page */}
+        {/* Add settings button that opens the bottom nav customizer */}
+        <button 
+          className="flex flex-col items-center justify-center p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent"
+          onClick={() => {
+            // Toggle bottom navigation visibility when settings clicked
+            toggleShowBottomNav();
+          }}
+        >
+          <Settings className="h-5 w-5" />
+          <span className="text-xs mt-1">Settings</span>
+        </button>
       </div>
     </div>
   );

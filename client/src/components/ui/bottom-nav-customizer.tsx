@@ -62,16 +62,26 @@ interface BottomNavCustomizerProps {
 }
 
 export function BottomNavCustomizer({ trigger }: BottomNavCustomizerProps) {
-  // Get tabs from user preferences
-  const { bottomNavTabs, toggleBottomNavTab, reorderBottomNavTabs, resetPreferences } = useUserPreferences();
+  // Get tabs and preferences from user preferences
+  const { 
+    bottomNavTabs, 
+    toggleBottomNavTab, 
+    reorderBottomNavTabs, 
+    resetPreferences,
+    showBottomNav,
+    toggleShowBottomNav,
+    setBottomNavTabs
+  } = useUserPreferences();
   
   // State for edit dialog
   const [isEditing, setIsEditing] = useState(false);
   const [editableTabs, setEditableTabs] = useState<TabConfig[]>([]);
+  const [showNavBar, setShowNavBar] = useState(showBottomNav);
   
   // Open edit dialog
   const handleOpenEditDialog = () => {
     setEditableTabs([...bottomNavTabs].sort((a, b) => a.order - b.order));
+    setShowNavBar(showBottomNav);
     setIsEditing(true);
   };
   
@@ -112,9 +122,24 @@ export function BottomNavCustomizer({ trigger }: BottomNavCustomizerProps) {
     setEditableTabs(reorderedTabs);
   };
   
+  // Toggle bottom nav visibility
+  const handleToggleBottomNavVisibility = () => {
+    setShowNavBar(!showNavBar);
+  };
+  
   // Save changes
   const handleSaveChanges = () => {
-    // Update each tab in the user preferences store
+    // Update bottom nav visibility if changed
+    if (showNavBar !== showBottomNav) {
+      toggleShowBottomNav();
+    }
+
+    // Approach 1: Directly set all tabs at once to avoid race conditions
+    setBottomNavTabs(editableTabs);
+    
+    // Approach 2 (fallback): Update each tab individually
+    // This can sometimes lead to race conditions when multiple tabs are changed
+    /* 
     editableTabs.forEach(tab => {
       // Toggle tab if active state changed
       if (tab.active !== bottomNavTabs.find(t => t.id === tab.id)?.active) {
@@ -126,6 +151,7 @@ export function BottomNavCustomizer({ trigger }: BottomNavCustomizerProps) {
         reorderBottomNavTabs(tab.id, tab.order);
       }
     });
+    */
     
     setIsEditing(false);
   };
@@ -148,6 +174,18 @@ export function BottomNavCustomizer({ trigger }: BottomNavCustomizerProps) {
         </DialogHeader>
         
         <div className="space-y-4 py-2">
+          {/* Global bottom nav toggle */}
+          <div className="flex items-center justify-between p-2 rounded-md bg-muted/20 border mb-4">
+            <div className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              <span className="font-medium">Show Bottom Navigation</span>
+            </div>
+            <Switch 
+              checked={showNavBar} 
+              onCheckedChange={handleToggleBottomNavVisibility}
+            />
+          </div>
+            
           <Tabs defaultValue="tabs">
             <TabsList className="grid grid-cols-2 w-full">
               <TabsTrigger value="tabs">Tabs</TabsTrigger>

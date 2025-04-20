@@ -251,6 +251,14 @@ export const SettingsPanel = () => {
               <div className="space-y-2">
                 <h3 className="text-md font-medium">Additional Options</h3>
                 <div className="flex items-center justify-between mt-4">
+                  <Label htmlFor="showBottomNav">Show Bottom Navigation Bar</Label>
+                  <Switch 
+                    id="showBottomNav" 
+                    checked={useUserPreferences(state => state.showBottomNav)}
+                    onCheckedChange={useUserPreferences(state => state.toggleShowBottomNav)}
+                  />
+                </div>
+                <div className="flex items-center justify-between mt-4">
                   <Label htmlFor="sidebarCollapsed">Collapsed Sidebar by Default</Label>
                   <Switch id="sidebarCollapsed" />
                 </div>

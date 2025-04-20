@@ -225,6 +225,7 @@ export const useUserPreferences = create<UserPreferencesState>()(
       toggleTradingTips: () => set((state) => ({ showTradingTips: !state.showTradingTips })),
       toggleMicroTips: () => set((state) => ({ showMicroTips: !state.showMicroTips })),
       toggleSidebarCollapsed: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+      toggleShowBottomNav: () => set((state) => ({ showBottomNav: !state.showBottomNav })),
       
       // Bottom nav actions
       setBottomNavTabs: (tabs) => set({ bottomNavTabs: tabs }),
