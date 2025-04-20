@@ -130,6 +130,7 @@ import resetCredentialsRoutes from './routes/reset-credentials'; // Import for c
 import alpacaTestRoutes from './routes/alpaca-test'; // Import for Alpaca API test routes
 import fixAlpacaRoutes from './routes/fix-alpaca'; // Import for Alpaca fixed credentials route
 import testAlpacaAuthRoutes from './routes/test-alpaca-auth'; // Import for direct Alpaca auth test
+import testCredentialsRoutes from './routes/test-credentials'; // Import for API credential testing routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Market data routes
@@ -411,6 +412,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Direct Alpaca API test route with explicitly provided credentials
   app.use("/api/test-alpaca-auth", testAlpacaAuthRoutes);
+  
+  // API Credential Manager test routes
+  app.use("/api/test-credentials", testCredentialsRoutes);
 
   // News route using multiple sources
   app.get("/api/rss-feeds/news", async (req, res) => {
