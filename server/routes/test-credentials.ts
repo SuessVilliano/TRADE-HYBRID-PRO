@@ -113,7 +113,7 @@ router.get('/oanda', async (req, res) => {
     // Get system-level Oanda credentials
     const credentials = await apiCredentialManager.getCredentials('oanda');
 
-    if (!credentials || !credentials.apiToken) {
+    if (!credentials || !credentials.apiKey) {
       return res.status(400).json({
         success: false,
         message: 'Oanda credentials not found',
@@ -121,8 +121,11 @@ router.get('/oanda', async (req, res) => {
       });
     }
 
+    // The API token is stored in the apiKey property
+    const apiToken = credentials.apiKey;
+
     // Log a masked version of the credentials for debugging
-    console.log(`Testing Oanda credentials: ${credentials.apiToken.substring(0, 4)}...${credentials.apiToken.substring(credentials.apiToken.length - 4)}`);
+    console.log(`Testing Oanda credentials: ${apiToken.substring(0, 4)}...${apiToken.substring(apiToken.length - 4)}`);
     
     // Construct an account endpoint URL
     const accountId = credentials.accountId || 'primary';
