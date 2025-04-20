@@ -77,8 +77,21 @@ const THC_TOKEN = {
   name: 'TradeHybrid Coin',
   symbol: 'THC',
   decimals: 9,
-  totalSupply: 100000000
+  totalSupply: 100000000,
+  price: 0.0025,
+  priceChange24h: 3.5,
+  contractAddress: '5FJeEJR8576YxXFdGRAu4NBBFcyfmtjsZtx99Rettgww',
+  explorerUrl: 'https://explorer.solana.com/address/',
+  pumpFunUrl: 'https://www.pump.fun/token/5FJeEJR8576YxXFdGRAu4NBBFcyfmtjsZtx99Rettgww'
 };
+
+// Mock MembershipTier enum
+enum MembershipTier {
+  Basic = 'BASIC',
+  Silver = 'SILVER',
+  Gold = 'GOLD',
+  Platinum = 'PLATINUM'
+}
 
 // Mock THCMembershipCard component
 const THCMembershipCard = () => <div>Membership Card</div>;
@@ -87,11 +100,14 @@ const THCMembershipCard = () => <div>Membership Card</div>;
 const useSolanaAuth = () => ({
   walletConnected: false,
   isAuthenticated: false,
-  tokenMembership: null
+  tokenMembership: { tier: MembershipTier.Basic },
+  connectAndAuthenticate: async () => {},
+  isAuthenticating: false,
+  publicKey: '5FJeEJR8576YxXFdGRAu4NBBFcyfmtjsZtx99Rettgww',
+  logoutFromSolana: () => {},
+  login: async () => {}
 });
 
-// Mock MembershipTier type
-type MembershipTier = 'BASIC' | 'SILVER' | 'GOLD' | 'PLATINUM';
 import { Lock } from 'lucide-react';
 
 export default function StakeAndBake() {
