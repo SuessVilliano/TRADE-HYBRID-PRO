@@ -215,8 +215,6 @@ function Player({ position, character, isPlayer = false }: PlayerProps) {
             fontSize={0.5}
             anchorX="center"
             anchorY="middle"
-            backgroundColor="#00000080"
-            padding={0.2}
           >
             {character === 'bull' ? 'You (Bull)' : 'You (Bear)'}
           </Text>
@@ -425,8 +423,6 @@ function BuyZone({ position }: { position: [number, number, number] }) {
         font="/fonts/Roboto-Bold.ttf"
         anchorX="center"
         anchorY="middle"
-        backgroundColor="#00000080"
-        padding={0.2}
       >
         BUY ZONE
       </Text>
@@ -470,8 +466,6 @@ function SellZone({ position }: { position: [number, number, number] }) {
         font="/fonts/Roboto-Bold.ttf"
         anchorX="center"
         anchorY="middle"
-        backgroundColor="#00000080"
-        padding={0.2}
       >
         SELL ZONE
       </Text>
@@ -549,7 +543,7 @@ function TradingArena() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentPrice(prev => {
-        const volatility = marketTrend === 'volatile' ? 200 : 50;
+        const volatility = 50; // Default volatility
         const trend = marketTrend === 'bullish' ? 1 : marketTrend === 'bearish' ? -1 : 0;
         const change = (Math.random() - 0.5 + trend * 0.1) * volatility;
         return Math.max(10000, prev + change);
@@ -566,18 +560,23 @@ function TradingArena() {
   }, [camera]);
 
   // Determine skybox settings based on market trend
-  const skyProps = {
-    turbidity: marketTrend === 'bearish' ? 15 : 10,
-    rayleigh: marketTrend === 'bearish' ? 1 : 0.5,
-    mieCoefficient: 0.005,
-    mieDirectionalG: 0.8,
-    sunPosition: marketTrend === 'bearish' ? [10, 0.5, 10] : [0, 1, 0],
-  };
+  const skyTurbidity = marketTrend === 'bearish' ? 15 : 10;
+  const skyRayleigh = marketTrend === 'bearish' ? 1 : 0.5;
+  const sunPosition = marketTrend === 'bearish' 
+    ? [10, 0.5, 10] as [number, number, number] 
+    : [0, 1, 0] as [number, number, number];
 
   return (
     <>
       {/* Environment */}
-      <Sky distance={450000} {...skyProps} />
+      <Sky 
+        distance={450000} 
+        turbidity={skyTurbidity} 
+        rayleigh={skyRayleigh} 
+        mieCoefficient={0.005}
+        mieDirectionalG={0.8}
+        sunPosition={sunPosition}
+      />
       <Environment preset={marketTrend === 'bearish' ? 'night' : 'city'} />
       <ambientLight intensity={marketTrend === 'bearish' ? 0.3 : 0.5} />
       <directionalLight 
