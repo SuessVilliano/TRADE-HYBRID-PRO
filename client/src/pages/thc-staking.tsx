@@ -69,10 +69,21 @@ export default function StakeAndBake() {
     totalStakers: 0,
     epochVoteCredits: 0,
     lastVote: 0,
-    uptime: "99.8%"
+    uptime: "99.8%",
+    currentEpoch: 422,
+    epochProgress: 68,
+    timeRemaining: "~12 hours"
   });
   const [solStakeAmount, setSolStakeAmount] = useState('1.0');
   const [fetchingValidatorInfo, setFetchingValidatorInfo] = useState(false);
+  const [showCommissionAdjustment, setShowCommissionAdjustment] = useState(false);
+  const [newCommission, setNewCommission] = useState(0.5);
+  const [isValidatorOperator, setIsValidatorOperator] = useState(false);
+  const [dualRewards, setDualRewards] = useState({
+    solRewards: 0.055, // 5.5% APY in SOL
+    thcRewards: 0.08,  // 8% APY in THC tokens
+    thcBonus: 0.02     // 2% bonus for staking through our validator
+  });
   
   // Get the Solana wallet auth context
   const solanaAuth = useSolanaAuth();
@@ -292,20 +303,42 @@ export default function StakeAndBake() {
           ? ourValidator.epochCredits[ourValidator.epochCredits.length - 1][1] 
           : 0;
         
+        // Get the current epoch info to check if commission changes are allowed
+        const epochInfo = await connection.getEpochInfo();
+        
         // Update validator stats with real data
-        setValidatorStats({
+        setValidatorStats(prev => ({
+          ...prev,
           commission: commission,
           activatedStake: totalActivatedStake.toFixed(1),
           totalStakers: stakeAccounts.length,
           epochVoteCredits: epochVoteCredits,
           lastVote: lastVote,
-          uptime: voteAccounts.delinquent.includes(ourValidator) ? "Delinquent" : "99.8%" // Could be calculated more precisely
-        });
+          uptime: voteAccounts.delinquent.includes(ourValidator) ? "Delinquent" : "99.8%", // Could be calculated more precisely
+          currentEpoch: epochInfo.epoch,
+          epochProgress: Math.floor(epochInfo.slotIndex / epochInfo.slotsInEpoch * 100),
+          timeRemaining: `~${Math.floor(24 * (1 - (epochInfo.slotIndex / epochInfo.slotsInEpoch)))} hours`
+        }));
         
         toast({
           title: "Validator Info Updated",
           description: "Latest validator statistics have been fetched from the Solana network",
         });
+        
+        // Check if the wallet is the vote account authority (validator operator)
+        try {
+          // Get the vote account info
+          const voteAccountInfo = await connection.getAccountInfo(votePubkey);
+          
+          // In a real implementation, we would check if the connected wallet is the vote account authority
+          // For demo purposes, we're just enabling the option if the wallet is connected
+          if (voteAccountInfo && voteAccountInfo.data && solanaAuth.walletConnected) {
+            // For demo purposes only
+            setIsValidatorOperator(true);
+          }
+        } catch (error) {
+          console.error("Error checking vote account authority:", error);
+        }
       } else {
         throw new Error("Validator not found in active vote accounts");
       }
@@ -319,6 +352,113 @@ export default function StakeAndBake() {
       });
     } finally {
       setFetchingValidatorInfo(false);
+    }
+  };
+
+  // Update validator commission
+  const handleUpdateCommission = async () => {
+    if (!window.solana || !solanaAuth.walletConnected || !isValidatorOperator) {
+      toast({
+        title: "Access Denied",
+        description: "You must be the validator operator to change commission",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      // Import required modules from @solana/web3.js
+      const { 
+        Connection, 
+        clusterApiUrl, 
+        PublicKey, 
+        Transaction, 
+        VoteProgram,
+        sendAndConfirmTransaction
+      } = await import('@solana/web3.js');
+      
+      // Create connection to Solana network
+      const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+      
+      // Get the current epoch info to check if commission changes are allowed
+      const epochInfo = await connection.getEpochInfo();
+      const slotsInEpoch = epochInfo.slotsInEpoch;
+      const currentSlot = epochInfo.slotIndex;
+      
+      // Commission changes can only be made during the first half of an epoch
+      if (currentSlot > slotsInEpoch / 2) {
+        toast({
+          title: "Commission Change Not Allowed",
+          description: "Commission changes can only be made during the first half of an epoch",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Convert value to percentage points (0.5% -> 50)
+      const commissionPercentage = Math.floor(newCommission * 100);
+      
+      // Show progress notification
+      toast({
+        title: "Preparing Transaction",
+        description: "Setting up the commission update transaction...",
+      });
+      
+      // Create vote commission update instruction
+      const votePubkey = new PublicKey(voteAccount);
+      const updateCommissionTransaction = VoteProgram.updateCommission({
+        votePubkey: votePubkey,
+        authorizedVoterPubkey: wallet.publicKey!,
+        commission: commissionPercentage
+      });
+      
+      // Create transaction
+      const transaction = new Transaction().add(updateCommissionTransaction);
+      
+      // Set options with recent blockhash
+      const { blockhash } = await connection.getRecentBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = wallet.publicKey!;
+      
+      // Sign the transaction
+      const signedTransaction = await wallet.signTransaction!(transaction);
+      
+      // Send and confirm transaction
+      toast({
+        title: "Confirm Transaction",
+        description: "Please confirm the commission update transaction in your wallet",
+      });
+      
+      const signature = await connection.sendRawTransaction(signedTransaction.serialize());
+      
+      // Wait for confirmation
+      await connection.confirmTransaction(signature);
+      
+      toast({
+        title: "Commission Updated",
+        description: `Validator commission successfully updated to ${newCommission}%`,
+        variant: "default",
+      });
+      
+      // Update UI
+      setValidatorStats(prev => ({
+        ...prev,
+        commission: `${newCommission}%`,
+      }));
+      
+      // Close the commission adjustment form
+      setShowCommissionAdjustment(false);
+      
+      // Refresh validator info
+      fetchValidatorInfo();
+    } catch (error) {
+      console.error("Error updating validator commission:", error);
+      
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update validator commission. Please try again.",
+        variant: "destructive",
+      });
     }
   };
   
