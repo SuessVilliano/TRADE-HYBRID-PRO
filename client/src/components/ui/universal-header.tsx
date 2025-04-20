@@ -4,7 +4,7 @@ import { Button } from './button';
 import { Home, ArrowLeft, Menu, X, Settings, User } from 'lucide-react';
 import { useUserPreferences } from '@/lib/stores/useUserPreferences';
 import { Sheet, SheetContent, SheetTrigger } from './sheet';
-import { MainSidebar } from './main-sidebar';
+import { MainSidebar } from './main-sidebar-enhanced';
 
 interface UniversalHeaderProps {
   title?: string;

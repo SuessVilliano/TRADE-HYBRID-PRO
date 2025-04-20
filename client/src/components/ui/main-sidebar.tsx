@@ -1,4 +1,4 @@
-import React, { useState, createContext, useContext } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   BarChart2, 
@@ -29,13 +29,6 @@ import { useAuth } from '@/lib/context/AuthContext';
 import { useSolanaAuth } from '@/lib/context/SolanaAuthProvider';
 import { Separator } from './separator';
 
-// Context for passing the onNavItemClick function to nested NavItems
-interface NavItemContextType {
-  onNavItemClick?: () => void;
-}
-
-const NavItemContext = createContext<NavItemContextType>({});
-
 type NavItemProps = {
   href: string;
   icon: React.ReactNode;
@@ -57,8 +50,6 @@ const NavItem: React.FC<NavItemProps> = ({
   expanded,
   onExpand
 }) => {
-  // Get the outer component's onNavItemClick if it exists
-  const { onNavItemClick } = React.useContext(NavItemContext);
   const hasChildren = !!children;
 
   return (
@@ -148,6 +139,12 @@ export const MainSidebar: React.FC<{
     return location.pathname.startsWith(path);
   };
 
+  // Combined click handler to trigger both local onClose and passed onNavItemClick
+  const handleNavItemClick = () => {
+    if (mobile && onClose) onClose();
+    if (onNavItemClick) onNavItemClick();
+  };
+
   return (
     <div className={cn(
       "flex flex-col h-full bg-background border-r border-border",
@@ -177,7 +174,7 @@ export const MainSidebar: React.FC<{
           icon={<Home className="h-5 w-5" />} 
           label={isLoggedIn ? "Dashboard" : "Home"} 
           active={isActive(isLoggedIn ? "/dashboard" : "/")} 
-          onClick={mobile ? onClose : undefined}
+          onClick={handleNavItemClick}
         />
 
         {/* Trading Section */}
@@ -194,28 +191,28 @@ export const MainSidebar: React.FC<{
             icon={<LayoutDashboard className="h-4 w-4" />} 
             label="Trading Dashboard" 
             active={isActive("/trading-dashboard")} 
-            onClick={mobile ? onClose : undefined}
+            onClick={handleNavItemClick}
           />
           <NavItem 
             href="/trade" 
             icon={<LineChart className="h-4 w-4" />} 
             label="Chart Trading" 
             active={isActive("/trade")} 
-            onClick={mobile ? onClose : undefined}
+            onClick={handleNavItemClick}
           />
           <NavItem 
             href="/signals" 
             icon={<Signal className="h-4 w-4" />} 
             label="Signals" 
             active={isActive("/signals")} 
-            onClick={mobile ? onClose : undefined}
+            onClick={handleNavItemClick}
           />
           <NavItem 
             href="/connections" 
             icon={<Zap className="h-4 w-4" />} 
             label="Connections" 
             active={isActive("/connections")} 
-            onClick={mobile ? onClose : undefined}
+            onClick={handleNavItemClick}
           />
         </NavItem>
 
@@ -233,14 +230,14 @@ export const MainSidebar: React.FC<{
             icon={<BookOpen className="h-4 w-4" />} 
             label="Learning Center" 
             active={isActive("/learning-center")} 
-            onClick={mobile ? onClose : undefined}
+            onClick={handleNavItemClick}
           />
           <NavItem 
             href="/educational-games" 
             icon={<Trophy className="h-4 w-4" />} 
             label="Trading Games" 
             active={isActive("/educational-games")} 
-            onClick={mobile ? onClose : undefined}
+            onClick={handleNavItemClick}
           />
         </NavItem>
 
@@ -250,7 +247,7 @@ export const MainSidebar: React.FC<{
           icon={<Newspaper className="h-5 w-5" />} 
           label="Market News" 
           active={isActive("/news")} 
-          onClick={mobile ? onClose : undefined}
+          onClick={handleNavItemClick}
         />
 
         {/* Tools */}
@@ -267,21 +264,21 @@ export const MainSidebar: React.FC<{
             icon={<PenTool className="h-4 w-4" />} 
             label="Trading Tools" 
             active={isActive("/trading-tools")} 
-            onClick={mobile ? onClose : undefined}
+            onClick={handleNavItemClick}
           />
           <NavItem 
             href="/signals-analyzer" 
             icon={<Signal className="h-4 w-4" />} 
             label="Signal Analyzer" 
             active={isActive("/signals-analyzer")} 
-            onClick={mobile ? onClose : undefined}
+            onClick={handleNavItemClick}
           />
           <NavItem 
             href="/ai-market-analysis" 
             icon={<Zap className="h-4 w-4" />} 
             label="AI Analysis" 
             active={isActive("/ai-market-analysis")} 
-            onClick={mobile ? onClose : undefined}
+            onClick={handleNavItemClick}
           />
         </NavItem>
 
@@ -291,7 +288,7 @@ export const MainSidebar: React.FC<{
           icon={<MessageSquare className="h-5 w-5" />} 
           label="Trading Journal" 
           active={isActive("/journal")} 
-          onClick={mobile ? onClose : undefined}
+          onClick={handleNavItemClick}
         />
 
         {/* Prop Firm */}
@@ -300,7 +297,7 @@ export const MainSidebar: React.FC<{
           icon={<DollarSign className="h-5 w-5" />} 
           label="Prop Firm" 
           active={isActive("/prop-firm")} 
-          onClick={mobile ? onClose : undefined}
+          onClick={handleNavItemClick}
         />
         
         {/* Leaderboard */}
@@ -309,7 +306,7 @@ export const MainSidebar: React.FC<{
           icon={<Trophy className="h-5 w-5" />} 
           label="Leaderboard" 
           active={isActive("/leaderboard")} 
-          onClick={mobile ? onClose : undefined}
+          onClick={handleNavItemClick}
         />
 
         {/* Social Network */}
@@ -318,7 +315,7 @@ export const MainSidebar: React.FC<{
           icon={<Users className="h-5 w-5" />} 
           label="Community" 
           active={isActive("/social-network")} 
-          onClick={mobile ? onClose : undefined}
+          onClick={handleNavItemClick}
         />
 
         {/* Crypto Section */}
@@ -335,14 +332,14 @@ export const MainSidebar: React.FC<{
             icon={<Coins className="h-4 w-4" />} 
             label="THC Staking" 
             active={isActive("/thc-staking")} 
-            onClick={mobile ? onClose : undefined}
+            onClick={handleNavItemClick}
           />
           <NavItem 
             href="/nft-marketplace" 
             icon={<Wallet className="h-4 w-4" />} 
             label="NFT Marketplace" 
             active={isActive("/nft-marketplace")} 
-            onClick={mobile ? onClose : undefined}
+            onClick={handleNavItemClick}
           />
         </NavItem>
         
@@ -352,7 +349,7 @@ export const MainSidebar: React.FC<{
           icon={<ShoppingCart className="h-5 w-5" />} 
           label="Shop" 
           active={isActive("/shop")} 
-          onClick={mobile ? onClose : undefined}
+          onClick={handleNavItemClick}
         />
       </div>
 
@@ -367,14 +364,14 @@ export const MainSidebar: React.FC<{
               icon={<Wallet className="h-5 w-5" />} 
               label="Connect Wallet" 
               active={isActive("/wallet")} 
-              onClick={mobile ? onClose : undefined}
+              onClick={handleNavItemClick}
             />
             <NavItem 
               href="/settings" 
               icon={<Settings className="h-5 w-5" />} 
               label="Settings" 
               active={isActive("/settings")} 
-              onClick={mobile ? onClose : undefined}
+              onClick={handleNavItemClick}
             />
           </>
         ) : (
@@ -383,7 +380,7 @@ export const MainSidebar: React.FC<{
               <Button 
                 variant="outline" 
                 className="w-full justify-center"
-                onClick={mobile ? onClose : undefined}
+                onClick={handleNavItemClick}
               >
                 Login
               </Button>
@@ -391,7 +388,7 @@ export const MainSidebar: React.FC<{
             <Link to="/register" className="w-full">
               <Button 
                 className="w-full justify-center"
-                onClick={mobile ? onClose : undefined}
+                onClick={handleNavItemClick}
               >
                 Register
               </Button>
@@ -400,7 +397,7 @@ export const MainSidebar: React.FC<{
               <Button 
                 variant="outline"
                 className="w-full justify-center"
-                onClick={mobile ? onClose : undefined}
+                onClick={handleNavItemClick}
               >
                 <Wallet className="h-4 w-4 mr-2" />
                 Connect Wallet
