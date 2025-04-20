@@ -377,6 +377,14 @@ export default function StakeAndBake() {
         sendAndConfirmTransaction
       } = await import('@solana/web3.js');
       
+      // Import Solana wallet adapter
+      const { useWallet } = await import('@solana/wallet-adapter-react');
+      const walletAdapter = useWallet();
+      
+      if (!walletAdapter.publicKey || !walletAdapter.signTransaction) {
+        throw new Error("Wallet not connected or doesn't support signing");
+      }
+      
       // Create connection to Solana network
       const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
       
@@ -406,22 +414,36 @@ export default function StakeAndBake() {
       
       // Create vote commission update instruction
       const votePubkey = new PublicKey(voteAccount);
-      const updateCommissionTransaction = VoteProgram.updateCommission({
-        votePubkey: votePubkey,
-        authorizedVoterPubkey: wallet.publicKey!,
-        commission: commissionPercentage
-      });
+      
+      // For demo purposes: In production, this would use the actual VoteProgram.updateCommission method
+      // Using a simplified version here since we don't need to complete the actual transaction
+      const uint32Array = new Uint32Array([commissionPercentage]);
+      const uint8Array = new Uint8Array(uint32Array.buffer);
+      const instructionData = Buffer.alloc(5); // 1 byte for instruction index + 4 bytes for commission
+      instructionData[0] = 0x03; // Instruction index for update commission
+      instructionData.set(uint8Array, 1);
+      
+      const authorizedPubkey = walletAdapter.publicKey;
+      
+      const updateCommissionInstruction = {
+        keys: [
+          { pubkey: votePubkey, isSigner: false, isWritable: true },
+          { pubkey: authorizedPubkey, isSigner: true, isWritable: false }
+        ],
+        programId: new PublicKey("Vote111111111111111111111111111111111111111"),
+        data: instructionData
+      };
       
       // Create transaction
-      const transaction = new Transaction().add(updateCommissionTransaction);
+      const transaction = new Transaction().add(updateCommissionInstruction);
       
       // Set options with recent blockhash
       const { blockhash } = await connection.getRecentBlockhash();
       transaction.recentBlockhash = blockhash;
-      transaction.feePayer = wallet.publicKey!;
+      transaction.feePayer = authorizedPubkey;
       
       // Sign the transaction
-      const signedTransaction = await wallet.signTransaction!(transaction);
+      const signedTransaction = await walletAdapter.signTransaction(transaction);
       
       // Send and confirm transaction
       toast({
@@ -652,6 +674,52 @@ export default function StakeAndBake() {
                         </p>
                       </div>
                       
+                      {!connectedWallet ? (
+                        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-4 rounded-md">
+                          <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-medium flex items-center">
+                              <Wallet className="h-4 w-4 mr-2 text-amber-600" />
+                              <span>Connect Your Wallet</span>
+                            </h3>
+                            <Badge variant="outline" className="text-amber-600 border-amber-300">Required</Badge>
+                          </div>
+                          <p className="text-xs mb-3 text-slate-600 dark:text-slate-400">
+                            To stake SOL with our validator and earn dual rewards, please connect your Solana wallet.
+                          </p>
+                          <Button 
+                            variant="outline" 
+                            className="w-full bg-white dark:bg-slate-800"
+                            onClick={() => setConnectedWallet(true)} // In real app, this would use actual wallet connect
+                          >
+                            <Wallet className="mr-2 h-4 w-4" />
+                            Connect Wallet
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 rounded-md">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="h-6 w-6 rounded-full bg-green-500 flex items-center justify-center mr-2">
+                                <CheckCircle2 className="h-4 w-4 text-white" />
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium">Wallet Connected</div>
+                                <div className="text-xs text-slate-500">
+                                  {solanaAuth.publicKey ? `${solanaAuth.publicKey.slice(0, 4)}...${solanaAuth.publicKey.slice(-4)}` : '8Kvj...9ZqT'}
+                                </div>
+                              </div>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => setConnectedWallet(false)} // In real app, this would use actual wallet disconnect
+                            >
+                              Disconnect
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      
                       <div>
                         <Label htmlFor="solStakeAmount">Amount to Stake (SOL)</Label>
                         <div className="flex mt-2">
@@ -677,19 +745,43 @@ export default function StakeAndBake() {
                       </div>
                       
                       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-md">
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between items-center mb-3">
                           <div className="flex items-center gap-2">
-                            <RefreshCcw size={16} className="text-blue-600 dark:text-blue-400" />
-                            <span className="text-sm font-medium">Estimated Rewards</span>
+                            <Sparkles size={16} className="text-blue-600 dark:text-blue-400" />
+                            <span className="text-sm font-medium">Dual Rewards</span>
                           </div>
-                          <Badge className="bg-blue-600">~5.5% APY</Badge>
+                          <Badge className="bg-blue-600">~{(dualRewards.solRewards * 100).toFixed(1)}% SOL + {(dualRewards.thcRewards * 100).toFixed(1)}% THC</Badge>
                         </div>
-                        <div className="mt-2">
-                          <div className="text-xl font-bold">
-                            +{(parseFloat(solStakeAmount || '0') * 0.055).toFixed(3)} SOL
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="h-3 w-3 rounded-full bg-blue-500 mr-2"></div>
+                              <span className="text-sm text-slate-700 dark:text-slate-300">SOL Rewards</span>
+                            </div>
+                            <div className="text-sm font-medium">
+                              +{(parseFloat(solStakeAmount || '0') * dualRewards.solRewards).toFixed(3)} SOL
+                            </div>
                           </div>
-                          <div className="text-sm text-slate-500 dark:text-slate-400">
-                            Annual yield (paid out continuously)
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="h-3 w-3 rounded-full bg-purple-500 mr-2"></div>
+                              <span className="text-sm text-slate-700 dark:text-slate-300">THC Rewards</span>
+                            </div>
+                            <div className="text-sm font-medium">
+                              +{(parseFloat(solStakeAmount || '0') * dualRewards.thcRewards).toFixed(3)} THC
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between pt-1 border-t border-blue-100 dark:border-blue-800">
+                            <div className="flex items-center">
+                              <div className="h-3 w-3 rounded-full bg-green-500 mr-2"></div>
+                              <span className="text-sm text-slate-700 dark:text-slate-300">Validator Bonus</span>
+                            </div>
+                            <div className="text-sm font-medium text-green-600 dark:text-green-400">
+                              +{(parseFloat(solStakeAmount || '0') * dualRewards.thcBonus).toFixed(3)} THC
+                            </div>
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                            Annual yield (rewards paid out continuously)
                           </div>
                         </div>
                       </div>
@@ -747,10 +839,71 @@ export default function StakeAndBake() {
                         </div>
                       </div>
                       
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center">
                         <span className="text-sm text-slate-500">Commission:</span>
-                        <span className="text-sm font-semibold">{validatorStats.commission}</span>
+                        <div className="flex items-center">
+                          <span className="text-sm font-semibold mr-2">{validatorStats.commission}</span>
+                          {isValidatorOperator && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6" 
+                              onClick={() => setShowCommissionAdjustment(true)}
+                            >
+                              <ChevronsUpDown className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
+                      
+                      {showCommissionAdjustment && isValidatorOperator && (
+                        <div className="mt-3 p-3 bg-slate-100 dark:bg-slate-800 rounded-md">
+                          <div className="text-sm font-medium mb-2 flex justify-between items-center">
+                            <span>Adjust Commission</span>
+                            <Badge variant="outline" className="text-xs">
+                              First Half of Epoch Only
+                            </Badge>
+                          </div>
+                          <div className="mb-2">
+                            <div className="flex justify-between text-xs mb-1">
+                              <span>0%</span>
+                              <span>10%</span>
+                            </div>
+                            <Slider
+                              value={[newCommission]}
+                              min={0}
+                              max={10}
+                              step={0.1}
+                              onValueChange={(values) => setNewCommission(values[0])}
+                              className="mb-1"
+                            />
+                            <div className="text-center font-medium">
+                              {newCommission.toFixed(1)}%
+                            </div>
+                          </div>
+                          <div className="flex justify-between gap-2 mt-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => setShowCommissionAdjustment(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="flex-1"
+                              onClick={handleUpdateCommission}
+                            >
+                              Update
+                            </Button>
+                          </div>
+                          <div className="text-xs text-slate-500 mt-2">
+                            <InfoIcon className="h-3 w-3 inline mr-1" />
+                            Commission changes can only be made during the first half of an epoch
+                          </div>
+                        </div>
+                      )}
                       
                       <div className="flex justify-between">
                         <span className="text-sm text-slate-500">Activated Stake:</span>
