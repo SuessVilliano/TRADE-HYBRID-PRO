@@ -1,4 +1,4 @@
-import { MarketData } from "@/lib/types";
+import { MarketData } from "./broker-service";
 import { MarketData as BrokerMarketData } from "./broker-service";
 import { TradingSignal } from "@/lib/stores/useSignals";
 import { config } from "@/lib/config";
@@ -76,34 +76,130 @@ export class AIMarketAnalysisService {
       return cachedAnalysis;
     }
     
-    // Try to use OpenAI if available
+    // Use server-side AI endpoint which will use the OpenAI API
     try {
-      const openaiKey = config.OPENAI_API_KEY;
-      if (openaiKey) {
-        console.log("Using OpenAI for market analysis");
-        // Get the most recent market data points to analyze
-        const recentData = marketData.slice(-20);
+      // Only call the API if either:
+      // 1. Server-side AI is enabled and the server has the OpenAI API key, or
+      // 2. We have a direct OpenAI API key available client-side
+      if (config.USE_SERVER_AI || config.OPENAI_API_KEY) {
+        console.log("Fetching AI market analysis from server");
         
-        // This would actually call the OpenAI API in a real implementation
-        // For now, we'll still use our generator but log that we would use OpenAI
+        // Prepare API call parameters
+        const apiEndpoint = '/api/ai-market-analysis';
+        const queryParams = new URLSearchParams({
+          symbol,
+          timeframe,
+          depth: 'advanced',
+          includeTechnicals: 'true',
+          includeFundamentals: 'true',
+          includeSentiment: 'true'
+        });
+        
+        // Make the API request to our backend
+        const response = await fetch(`${apiEndpoint}?${queryParams.toString()}`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`API request failed: ${response.status} - ${errorText}`);
+        }
+        
+        const serverResponse = await response.json();
+        console.log("Received AI analysis from server:", serverResponse);
+        
+        // Convert server response to client AIMarketAnalysis format
+        const aiAnalysis = this.convertServerResponseToAnalysis(symbol, serverResponse);
         
         // Cache the result
-        const analysis = this.generateMarketAnalysis(symbol, marketData, timeframe, true);
-        this.analysisCache.set(symbol, analysis);
-        return analysis;
+        this.analysisCache.set(symbol, aiAnalysis);
+        return aiAnalysis;
       }
     } catch (error) {
-      console.error("Error using OpenAI for market analysis:", error);
+      console.error("Error fetching AI market analysis:", error);
     }
     
-    // Fallback to generated analysis
-    console.log("Using generated market analysis (OpenAI unavailable)");
+    // Fallback to generated analysis if API call fails
+    console.log("Using generated market analysis (API unavailable)");
     const analysis = this.generateMarketAnalysis(symbol, marketData, timeframe);
     
     // Cache the result
     this.analysisCache.set(symbol, analysis);
     
     return analysis;
+  }
+  
+  /**
+   * Converts server API response to client AIMarketAnalysis format
+   */
+  private convertServerResponseToAnalysis(symbol: string, serverResponse: any): AIMarketAnalysis {
+    if (!serverResponse || !serverResponse.analysis) {
+      throw new Error("Invalid server response format");
+    }
+    
+    // Extract the main parts of the server response
+    const { analysis, hybridScore, timeframe } = serverResponse;
+    
+    // Convert server technical indicators to client patterns format
+    const patterns: MarketPattern[] = [];
+    
+    if (analysis.technicalAnalysis?.keyIndicators) {
+      analysis.technicalAnalysis.keyIndicators.forEach((indicator: any) => {
+        // Determine pattern type based on interpretation content
+        let patternType: 'bullish' | 'bearish' | 'neutral' = 'neutral';
+        if (indicator.interpretation.toLowerCase().includes('bullish') || 
+            indicator.interpretation.toLowerCase().includes('upside')) {
+          patternType = 'bullish';
+        } else if (indicator.interpretation.toLowerCase().includes('bearish') || 
+                   indicator.interpretation.toLowerCase().includes('downside')) {
+          patternType = 'bearish';
+        }
+        
+        patterns.push({
+          name: indicator.name,
+          type: patternType,
+          confidence: Math.round(hybridScore.confidence * 0.8 + Math.random() * 20),
+          description: indicator.interpretation
+        });
+      });
+    }
+    
+    // Extract insights from various analysis sections
+    const insights: string[] = [analysis.summary];
+    
+    if (analysis.technicalAnalysis) {
+      insights.push(analysis.technicalAnalysis.shortTerm);
+      insights.push(analysis.technicalAnalysis.mediumTerm);
+      insights.push(analysis.technicalAnalysis.longTerm);
+    }
+    
+    if (analysis.fundamentalAnalysis) {
+      insights.push(analysis.fundamentalAnalysis.outlook);
+    }
+    
+    if (analysis.sentimentAnalysis) {
+      insights.push(analysis.sentimentAnalysis.overall);
+    }
+    
+    // Filter out any undefined insights and ensure uniqueness
+    const uniqueInsights = [...new Set(insights.filter(Boolean))];
+    
+    // Convert to client AIMarketAnalysis format
+    return {
+      symbol,
+      prediction: {
+        direction: hybridScore.direction,
+        confidence: hybridScore.confidence,
+        priceTarget: analysis.tradingSuggestions.targetPrice || null,
+        timeframe: this.mapTimeframeToHuman(timeframe)
+      },
+      patterns,
+      signals: [], // These would be generated separately
+      insights: uniqueInsights,
+      riskAssessment: {
+        level: analysis.riskAssessment.overallRisk,
+        factors: analysis.riskAssessment.keyRisks
+      },
+      lastUpdated: new Date()
+    };
   }
   
   /**
@@ -128,13 +224,80 @@ export class AIMarketAnalysisService {
       }
     }
     
-    // Generate new suggestions
+    // Use server-side AI endpoint for trading suggestions
+    try {
+      if (config.USE_SERVER_AI || config.OPENAI_API_KEY) {
+        console.log("Fetching AI trading suggestions from server");
+        
+        // Prepare API call parameters
+        const apiEndpoint = '/api/trading-suggestions';
+        const queryParams = new URLSearchParams({
+          symbol,
+          riskProfile: 'medium' // Default risk profile
+        });
+        
+        // Make the API request to our backend
+        const response = await fetch(`${apiEndpoint}?${queryParams.toString()}`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`API request failed: ${response.status} - ${errorText}`);
+        }
+        
+        const serverResponse = await response.json();
+        console.log("Received trading suggestions from server:", serverResponse);
+        
+        if (serverResponse.suggestions && Array.isArray(serverResponse.suggestions)) {
+          // Convert server response to client AITradeSuggestion format
+          const suggestions = this.convertServerSuggestionsToClientFormat(symbol, serverResponse.suggestions);
+          
+          // Cache the result
+          this.suggestionCache.set(symbol, suggestions);
+          return suggestions;
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching AI trading suggestions:", error);
+    }
+    
+    // Fallback to generated suggestions
+    console.log("Using generated trading suggestions (API unavailable)");
     const suggestions = this.generateTradeSuggestions(symbol, count);
     
     // Cache the result
     this.suggestionCache.set(symbol, suggestions);
     
     return suggestions;
+  }
+  
+  /**
+   * Converts server API suggestions to client AITradeSuggestion format
+   */
+  private convertServerSuggestionsToClientFormat(symbol: string, serverSuggestions: any[]): AITradeSuggestion[] {
+    return serverSuggestions.map(suggestion => {
+      // Create expiration date (3 days in the future by default)
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 3);
+      
+      // Generate a unique ID for the suggestion
+      const id = `suggestion-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      
+      // Convert server suggestion to client format
+      return {
+        id,
+        symbol,
+        operation: suggestion.direction,
+        entryPrice: typeof suggestion.entryPrice === 'string' ? parseFloat(suggestion.entryPrice) : suggestion.entryPrice,
+        targetPrice: suggestion.takeProfit && suggestion.takeProfit.length > 0 ? suggestion.takeProfit[0] : null,
+        stopLoss: suggestion.stopLoss,
+        confidence: Math.round(Math.random() * 30 + 60), // 60-90% confidence
+        reasoning: suggestion.reasoning.split('.').filter(Boolean),
+        timeframe: suggestion.timeframe || "short-term",
+        timestamp: new Date(),
+        expiresAt,
+        status: 'active'
+      };
+    });
   }
   
   /**

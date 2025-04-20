@@ -7,8 +7,14 @@ export const config = {
   ALPACA_API_SECRET: import.meta.env.VITE_ALPACA_API_SECRET || '',
   ALPACA_API_URL: import.meta.env.VITE_ALPACA_API_URL || 'https://paper-api.alpaca.markets/v2',
   
+  // OpenAI API
+  OPENAI_API_KEY: import.meta.env.VITE_OPENAI_API_KEY || '',
+  
   // BrokerServices flags
   USE_MOCK_SERVICE: import.meta.env.VITE_USE_MOCK_SERVICE || 'false',
+  
+  // AI Service flags
+  USE_SERVER_AI: true, // Use server-side AI endpoints instead of direct OpenAI calls
   
   // Feature flags
   ENABLE_AI_INSIGHTS: import.meta.env.VITE_ENABLE_AI_INSIGHTS !== 'false',
