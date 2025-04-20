@@ -29,16 +29,13 @@ const toggleAbatevSchema = z.object({
  */
 router.get('/status', async (req, res) => {
   try {
-    // Check all broker connections to see which ones are active
-    const credentialManager = ApiCredentialManager.getInstance();
-    
     // If ABATEV is initialized, refresh the active connections
     if (abatevState.connected) {
       // Check each supported broker to see if it's connected
       const activeConnections = [];
       
       // Check Alpaca
-      const alpacaCredentials = credentialManager.getCredentials('alpaca');
+      const alpacaCredentials = await apiCredentialManager.getCredentials('alpaca');
       if (alpacaCredentials?.apiKey && alpacaCredentials?.secretKey) {
         try {
           const alpacaConnected = await testBrokerConnection('alpaca');
@@ -46,25 +43,25 @@ router.get('/status', async (req, res) => {
             activeConnections.push('alpaca');
           }
         } catch (err) {
-          logger.error(`Error checking Alpaca connection: ${err}`);
+          logError(err as Error, 'abatev');
         }
       }
       
       // Check Oanda
-      const oandaCredentials = credentialManager.getCredentials('oanda');
-      if (oandaCredentials?.apiToken && oandaCredentials?.accountId) {
+      const oandaCredentials = await apiCredentialManager.getCredentials('oanda');
+      if (oandaCredentials?.apiKey) { // Support apiKey instead of apiToken
         try {
           const oandaConnected = await testBrokerConnection('oanda');
           if (oandaConnected) {
             activeConnections.push('oanda');
           }
         } catch (err) {
-          logger.error(`Error checking Oanda connection: ${err}`);
+          logError(err as Error, 'abatev');
         }
       }
       
       // Check NinjaTrader (if applicable)
-      const ninjaCredentials = credentialManager.getCredentials('ninjatrader');
+      const ninjaCredentials = await apiCredentialManager.getCredentials('ninjatrader');
       if (ninjaCredentials) {
         try {
           const ninjaConnected = await testBrokerConnection('ninjatrader');
@@ -72,7 +69,7 @@ router.get('/status', async (req, res) => {
             activeConnections.push('ninjatrader');
           }
         } catch (err) {
-          logger.error(`Error checking NinjaTrader connection: ${err}`);
+          logError(err as Error, 'abatev');
         }
       }
       
@@ -86,7 +83,7 @@ router.get('/status', async (req, res) => {
       ...abatevState
     });
   } catch (err) {
-    logger.error(`Error getting ABATEV status: ${err}`);
+    logError(err as Error, 'abatev');
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve ABATEV status'
@@ -111,11 +108,10 @@ router.post('/initialize', async (req, res) => {
     }
     
     // Check which brokers are connected
-    const credentialManager = ApiCredentialManager.getInstance();
     const activeConnections = [];
     
     // Check Alpaca
-    const alpacaCredentials = credentialManager.getCredentials('alpaca');
+    const alpacaCredentials = await apiCredentialManager.getCredentials('alpaca');
     if (alpacaCredentials?.apiKey && alpacaCredentials?.secretKey) {
       try {
         const alpacaConnected = await testBrokerConnection('alpaca');
@@ -123,25 +119,25 @@ router.post('/initialize', async (req, res) => {
           activeConnections.push('alpaca');
         }
       } catch (err) {
-        logger.error(`Error checking Alpaca connection: ${err}`);
+        logError(err as Error, 'abatev');
       }
     }
     
     // Check Oanda
-    const oandaCredentials = credentialManager.getCredentials('oanda');
-    if (oandaCredentials?.apiToken && oandaCredentials?.accountId) {
+    const oandaCredentials = await apiCredentialManager.getCredentials('oanda');
+    if (oandaCredentials?.apiKey && oandaCredentials?.accountId) {
       try {
         const oandaConnected = await testBrokerConnection('oanda');
         if (oandaConnected) {
           activeConnections.push('oanda');
         }
       } catch (err) {
-        logger.error(`Error checking Oanda connection: ${err}`);
+        logError(err as Error, 'abatev');
       }
     }
     
     // Check NinjaTrader (if applicable)
-    const ninjaCredentials = credentialManager.getCredentials('ninjatrader');
+    const ninjaCredentials = await apiCredentialManager.getCredentials('ninjatrader');
     if (ninjaCredentials) {
       try {
         const ninjaConnected = await testBrokerConnection('ninjatrader');
@@ -149,7 +145,7 @@ router.post('/initialize', async (req, res) => {
           activeConnections.push('ninjatrader');
         }
       } catch (err) {
-        logger.error(`Error checking NinjaTrader connection: ${err}`);
+        logError(err as Error, 'abatev');
       }
     }
     
@@ -163,7 +159,7 @@ router.post('/initialize', async (req, res) => {
       ...abatevState
     });
   } catch (err) {
-    logger.error(`Error initializing ABATEV: ${err}`);
+    logError(err as Error, 'abatev');
     return res.status(500).json({
       success: false,
       message: 'Failed to initialize ABATEV system'
@@ -204,7 +200,7 @@ router.post('/toggle', async (req, res) => {
       message: `ABATEV system ${enabled ? 'enabled' : 'disabled'} successfully`
     });
   } catch (err) {
-    logger.error(`Error toggling ABATEV: ${err}`);
+    logError(err as Error, 'abatev');
     return res.status(500).json({
       success: false,
       message: 'Failed to toggle ABATEV system'
@@ -216,8 +212,7 @@ router.post('/toggle', async (req, res) => {
  * Helper function to test a broker connection
  */
 async function testBrokerConnection(brokerId: string): Promise<boolean> {
-  const credentialManager = ApiCredentialManager.getInstance();
-  const credentials = credentialManager.getCredentials(brokerId);
+  const credentials = await apiCredentialManager.getCredentials(brokerId);
   
   if (!credentials) {
     return false;
@@ -243,21 +238,21 @@ async function testBrokerConnection(brokerId: string): Promise<boolean> {
         // If we get a 200 response, the connection is valid
         return alpacaResponse.status === 200;
       } catch (err) {
-        logger.error(`Error testing Alpaca connection: ${err}`);
+        logError(err as Error, 'abatev');
         return false;
       }
       
     case 'oanda':
       // Test Oanda connection
       try {
-        if (!credentials.apiToken || !credentials.accountId) {
+        if (!credentials.apiKey || !credentials.accountId) {
           return false;
         }
         
         // Simple check against Oanda API
         const oandaResponse = await fetch(`https://api-fxpractice.oanda.com/v3/accounts/${credentials.accountId}`, {
           headers: {
-            'Authorization': `Bearer ${credentials.apiToken}`,
+            'Authorization': `Bearer ${credentials.apiKey}`,
             'Content-Type': 'application/json'
           }
         });
@@ -265,7 +260,7 @@ async function testBrokerConnection(brokerId: string): Promise<boolean> {
         // If we get a 200 response, the connection is valid
         return oandaResponse.status === 200;
       } catch (err) {
-        logger.error(`Error testing Oanda connection: ${err}`);
+        logError(err as Error, 'abatev');
         return false;
       }
       
