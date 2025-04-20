@@ -1,76 +1,86 @@
-import React, { useEffect, useState } from 'react';
+import React, { useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
+import { Text } from '@react-three/drei';
+import * as THREE from 'three';
 import { useGameStore } from './gameStore';
-import { usePriceStore } from './priceStore';
 
-// Game score and timer display component
-export function GameScore() {
-  const { player, gameActive, gameTime, updateGameTime } = useGameStore();
-  const { marketTrend } = usePriceStore();
-  const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
+// Props for the GameScore component
+interface GameScoreProps {
+  position: [number, number, number];
+  scale?: number;
+}
+
+// 3D visualization of game score that follows player
+export function GameScore({ position, scale = 1 }: GameScoreProps) {
+  const scoreRef = useRef<THREE.Group>(null);
+  const { humanPlayer, winningTrades, totalTrades } = useGameStore();
   
-  // Set up game timer
-  useEffect(() => {
-    if (gameActive && !timerInterval) {
-      const interval = setInterval(() => {
-        updateGameTime(gameTime + 1);
-      }, 1000);
-      
-      setTimerInterval(interval);
-      
-      return () => {
-        clearInterval(interval);
-        setTimerInterval(null);
-      };
-    }
-    
-    // Clear timer when game ends
-    if (!gameActive && timerInterval) {
-      clearInterval(timerInterval);
-      setTimerInterval(null);
-    }
-  }, [gameActive, gameTime, timerInterval]);
+  // Calculate win rate
+  const winRate = totalTrades > 0 ? Math.round((winningTrades / totalTrades) * 100) : 0;
   
-  // Don't show anything if game is not active
-  if (!gameActive) {
-    return null;
-  }
-  
-  // Format time as mm:ss
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  // Format score with comma for thousands
+  const formatNumber = (num: number) => {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
   
-  // Get color based on market trend
-  const trendColor = marketTrend === 'bullish' 
-    ? 'bg-green-600' 
-    : marketTrend === 'bearish' 
-      ? 'bg-red-600' 
-      : 'bg-blue-600';
+  // Animated floating effect
+  useFrame(({ clock }) => {
+    if (scoreRef.current) {
+      // Make it float up and down
+      scoreRef.current.position.y = position[1] + Math.sin(clock.elapsedTime) * 0.1;
+      // Ensure it always faces the camera
+      scoreRef.current.quaternion.copy(
+        scoreRef.current.parent?.quaternion.clone().invert() || new THREE.Quaternion()
+      );
+    }
+  });
+  
+  // Determine score color based on whether it's positive or negative
+  const scoreColor = (humanPlayer?.balance || 0) > 10000 ? '#4caf50' : '#f44336';
   
   return (
-    <div className="flex items-center space-x-4">
-      <div className={`px-4 py-2 rounded-lg shadow-lg ${trendColor}`}>
-        <div className="flex items-center space-x-2">
-          <div className="font-bold text-white">{marketTrend.toUpperCase()}</div>
-          <div className="text-xs text-white opacity-70">MARKET</div>
-        </div>
-      </div>
+    <group ref={scoreRef} position={position} scale={[scale, scale, scale]}>
+      {/* Score display */}
+      <Text
+        position={[0, 0.4, 0]}
+        fontSize={0.3}
+        color={scoreColor}
+        font="/fonts/Roboto-Bold.ttf"
+        anchorX="center"
+        anchorY="middle"
+      >
+        ${formatNumber(humanPlayer?.balance || 0)}
+      </Text>
       
-      <div className="bg-gray-900 px-4 py-2 rounded-lg shadow-lg">
-        <div className="flex items-center space-x-2">
-          <div className="font-bold text-white">{player.score}</div>
-          <div className="text-xs text-white opacity-70">SCORE</div>
-        </div>
-      </div>
+      {/* Win rate */}
+      <Text
+        position={[0, 0, 0]}
+        fontSize={0.2}
+        color="white"
+        font="/fonts/Roboto-Medium.ttf"
+        anchorX="center"
+        anchorY="middle"
+      >
+        Win Rate: {winRate}%
+      </Text>
       
-      <div className="bg-gray-900 px-4 py-2 rounded-lg shadow-lg">
-        <div className="flex items-center space-x-2">
-          <div className="font-bold text-white">{formatTime(gameTime)}</div>
-          <div className="text-xs text-white opacity-70">TIME</div>
-        </div>
-      </div>
-    </div>
+      {/* Trades count */}
+      <Text
+        position={[0, -0.3, 0]}
+        fontSize={0.15}
+        color="#9e9e9e"
+        font="/fonts/Roboto-Regular.ttf"
+        anchorX="center"
+        anchorY="middle"
+      >
+        Trades: {winningTrades}/{totalTrades}
+      </Text>
+      
+      {/* Background panel for better readability */}
+      <mesh position={[0, 0, -0.05]}>
+        <planeGeometry args={[2, 1.2]} />
+        <meshBasicMaterial color="#000000" transparent opacity={0.6} />
+      </mesh>
+    </group>
   );
 }

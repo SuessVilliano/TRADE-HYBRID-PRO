@@ -1,159 +1,100 @@
-import React, { useMemo, useRef } from 'react';
-import { usePriceStore } from './priceStore';
+import React, { useRef, useEffect } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { Text } from '@react-three/drei';
+import { usePriceStore } from './priceStore';
 
+// Props for the PriceChart component
 interface PriceChartProps {
   position: [number, number, number];
   scale?: [number, number, number];
+  width?: number;
+  height?: number;
+  depth?: number;
 }
 
-// 3D price chart visualization
-export function PriceChart({ position, scale = [10, 5, 1] }: PriceChartProps) {
-  const { prices, currentPrice, marketTrend } = usePriceStore();
+// 3D visualization of price chart
+export function PriceChart({ 
+  position, 
+  scale = [1, 1, 1],
+  width = 10, 
+  height = 5, 
+  depth = 0.2 
+}: PriceChartProps) {
+  // References to meshes for animation
   const chartRef = useRef<THREE.Group>(null);
+  const lineRef = useRef<THREE.Line>(null);
   
-  // Get chart color based on market trend
-  const chartColor = useMemo(() => {
-    switch (marketTrend) {
-      case 'bullish':
-        return new THREE.Color('#4caf50'); // Green
-      case 'bearish':
-        return new THREE.Color('#f44336'); // Red
-      default:
-        return new THREE.Color('#2196f3'); // Blue
-    }
-  }, [marketTrend]);
+  // Get price data from the store
+  const { prices, marketTrend } = usePriceStore();
   
-  // Generate points for price line
-  const points = useMemo(() => {
-    if (prices.length < 2) return [];
+  // Create the price line geometry
+  useEffect(() => {
+    if (!lineRef.current || prices.length < 2) return;
     
-    // Get min and max for scaling
-    const allPrices = prices.map(p => p.price);
-    const minPrice = Math.min(...allPrices);
-    const maxPrice = Math.max(...allPrices);
-    const priceRange = maxPrice - minPrice;
+    // Create points for the line based on prices
+    const points: THREE.Vector3[] = [];
+    const maxPrice = Math.max(...prices.map(p => p.price));
+    const minPrice = Math.min(...prices.map(p => p.price));
+    const priceRange = maxPrice - minPrice || 1;
     
-    // Create normalized points along width
-    return prices.map((point, index) => {
-      // X position is normalized between -1 and 1 for the chart width
-      const x = (index / (prices.length - 1)) * 2 - 1;
-      
-      // Y position is normalized between -1 and 1 for the chart height
-      // Add small buffer (0.1) at top and bottom for visual spacing
-      const normalizedPrice = priceRange > 0 
-        ? (point.price - minPrice) / priceRange
-        : 0.5;
-      const y = (normalizedPrice * 0.8) + 0.1;
-      
-      return new THREE.Vector3(x, y * 2 - 1, 0);
+    // Normalize the price data to fit the chart
+    prices.forEach((price, index) => {
+      const x = (index / (prices.length - 1)) * width - width / 2;
+      const y = ((price.price - minPrice) / priceRange) * height - height / 2;
+      points.push(new THREE.Vector3(x, y, 0));
     });
-  }, [prices]);
-  
-  // Create the price line
-  const priceLine = useMemo(() => {
-    if (points.length < 2) return null;
     
-    const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+    // Create and update the line geometry
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    lineRef.current.geometry.dispose();
+    lineRef.current.geometry = geometry;
     
-    return (
-      <primitive object={new THREE.Line(
-        lineGeometry,
-        new THREE.LineBasicMaterial({ color: chartColor, linewidth: 2 })
-      )} />
-    );
-  }, [points, chartColor]);
+  }, [prices, width, height]);
   
-  // Calculate percentage change for price display
-  const percentChange = useMemo(() => {
-    if (prices.length < 2) return 0;
-    
-    const firstPrice = prices[0].price;
-    const lastPrice = prices[prices.length - 1].price;
-    return ((lastPrice - firstPrice) / firstPrice) * 100;
-  }, [prices]);
+  // Animate the chart
+  useFrame(({ clock }) => {
+    if (chartRef.current) {
+      // Subtle floating animation
+      chartRef.current.position.y = position[1] + Math.sin(clock.elapsedTime * 0.5) * 0.1;
+    }
+  });
   
-  const changeColor = percentChange >= 0 ? '#4caf50' : '#f44336';
+  // Determine the chart color based on market trend
+  const chartColor = marketTrend === 'bullish' ? '#4caf50' : 
+                     marketTrend === 'bearish' ? '#f44336' : 
+                     '#9e9e9e';
   
   return (
-    <group position={position} scale={scale} ref={chartRef}>
-      {/* Chart background */}
-      <mesh position={[0, 0, -0.1]}>
-        <planeGeometry args={[2, 2]} />
-        <meshStandardMaterial color="#0a1929" transparent opacity={0.7} />
+    <group ref={chartRef} position={position} scale={scale}>
+      {/* Chart background panel */}
+      <mesh position={[0, 0, -depth/2]} receiveShadow>
+        <boxGeometry args={[width, height, depth]} />
+        <meshStandardMaterial color="#1e1e1e" transparent opacity={0.8} />
       </mesh>
       
       {/* Price line */}
-      {priceLine}
+      <line ref={lineRef as any}>
+        <bufferGeometry />
+        <lineBasicMaterial color={chartColor} linewidth={2} />
+      </line>
       
-      {/* Current price text */}
-      <group position={[0, 1.1, 0]}>
-        <Text
-          position={[0, 0, 0.1]}
-          fontSize={0.15}
-          color="white"
-          anchorX="center"
-          anchorY="middle"
-        >
-          THC: ${currentPrice.toFixed(2)}
-        </Text>
-        
-        <Text
-          position={[0, -0.2, 0.1]}
-          fontSize={0.1}
-          color={changeColor}
-          anchorX="center"
-          anchorY="middle"
-        >
-          {percentChange >= 0 ? '+' : ''}{percentChange.toFixed(2)}%
-        </Text>
-      </group>
+      {/* Chart border */}
+      <lineSegments>
+        <edgesGeometry args={[new THREE.BoxGeometry(width, height, depth)]} />
+        <lineBasicMaterial color="#555555" />
+      </lineSegments>
       
-      {/* Chart grid lines */}
-      <group position={[0, 0, 0.05]}>
-        {/* Horizontal grid lines */}
-        {[0, 0.25, 0.5, 0.75, 1].map((y) => {
-          const points = [
-            new THREE.Vector3(-1, y * 2 - 1, 0),
-            new THREE.Vector3(1, y * 2 - 1, 0)
-          ];
-          const geometry = new THREE.BufferGeometry().setFromPoints(points);
-          const material = new THREE.LineBasicMaterial({ 
-            color: "#2a3f5f", 
-            transparent: true, 
-            opacity: 0.3 
-          });
-          
-          return (
-            <primitive 
-              key={`h-line-${y}`} 
-              object={new THREE.Line(geometry, material)} 
-            />
-          );
-        })}
-        
-        {/* Vertical grid lines */}
-        {[0, 0.25, 0.5, 0.75, 1].map((x) => {
-          const points = [
-            new THREE.Vector3(x * 2 - 1, -1, 0),
-            new THREE.Vector3(x * 2 - 1, 1, 0)
-          ];
-          const geometry = new THREE.BufferGeometry().setFromPoints(points);
-          const material = new THREE.LineBasicMaterial({ 
-            color: "#2a3f5f", 
-            transparent: true, 
-            opacity: 0.3 
-          });
-          
-          return (
-            <primitive 
-              key={`v-line-${x}`} 
-              object={new THREE.Line(geometry, material)} 
-            />
-          );
-        })}
-      </group>
+      {/* X axis */}
+      <mesh position={[0, -height/2 + 0.1, 0.01]}>
+        <boxGeometry args={[width, 0.05, 0.01]} />
+        <meshBasicMaterial color="#555555" />
+      </mesh>
+      
+      {/* Y axis */}
+      <mesh position={[-width/2 + 0.1, 0, 0.01]}>
+        <boxGeometry args={[0.05, height, 0.01]} />
+        <meshBasicMaterial color="#555555" />
+      </mesh>
     </group>
   );
 }

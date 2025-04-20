@@ -1,289 +1,247 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGameStore } from './gameStore';
 import { usePriceStore } from './priceStore';
-import { GameScore } from './GameScore';
 
-// Trading UI Panel
-interface TradingPanelProps {
-  onTrade: (type: 'buy' | 'sell', amount: number) => void;
-}
-
-function TradingPanel({ onTrade }: TradingPanelProps) {
-  const [amount, setAmount] = useState(1);
-  const { currentPrice } = usePriceStore();
-  const { player } = useGameStore();
+// Game UI overlay component
+export function GameUI() {
+  const { 
+    isGameStarted, 
+    isGamePaused, 
+    isGameOver, 
+    humanPlayer, 
+    round, 
+    timeRemaining, 
+    totalTrades, 
+    winningTrades, 
+    initializeGame, 
+    startGame, 
+    pauseGame, 
+    resumeGame, 
+    resetGame, 
+    placeTrade 
+  } = useGameStore();
   
-  return (
-    <div className="p-4 bg-gray-900 rounded-lg shadow-lg">
-      <h3 className="text-lg font-semibold text-white mb-3">Trade THC Coins</h3>
-      
-      <div className="mb-3">
-        <p className="text-sm text-gray-400">Current Price</p>
-        <p className="text-xl font-bold text-white">{currentPrice.toFixed(2)} THC</p>
-      </div>
-      
-      <div className="mb-4">
-        <p className="text-sm text-gray-400">Your Balance</p>
-        <p className="text-lg font-semibold text-white">{player.balance.toFixed(2)} $</p>
-        <p className="text-sm text-gray-400">THC Coins</p>
-        <p className="text-lg font-semibold text-white">{player.inventory.coins}</p>
-      </div>
-      
-      <div className="mb-4">
-        <label className="block text-sm text-gray-400 mb-1">Amount</label>
-        <div className="flex items-center">
-          <button
-            className="px-2 py-1 bg-gray-700 text-white rounded-l"
-            onClick={() => setAmount(prev => Math.max(1, prev - 1))}
-          >
-            -
-          </button>
+  const { marketTrend, currentPrice } = usePriceStore();
+  
+  // Game settings
+  const [showSettings, setShowSettings] = useState(!isGameStarted);
+  const [playerName, setPlayerName] = useState('Trader');
+  const [playerType, setPlayerType] = useState<'bull' | 'bear'>('bull');
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [aiCount, setAiCount] = useState(5);
+  
+  // Game timer formatting
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+  
+  // Handle game start
+  const handleStartGame = () => {
+    initializeGame({
+      mode: 'single_player',
+      difficulty,
+      playerName,
+      playerType,
+      aiCount
+    });
+    startGame();
+    setShowSettings(false);
+  };
+  
+  // Handle game reset
+  const handleResetGame = () => {
+    resetGame();
+    setShowSettings(true);
+  };
+  
+  // Game settings UI
+  const GameSettings = () => (
+    <div className="absolute inset-0 flex justify-center items-center bg-black bg-opacity-80 z-20">
+      <div className="bg-slate-800 p-6 rounded-lg max-w-md text-white">
+        <h2 className="text-2xl font-bold mb-4 text-center">Bulls vs Bears Game</h2>
+        
+        <div className="mb-4">
+          <label className="block mb-1">Your Name</label>
           <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-16 px-2 py-1 text-center bg-gray-800 text-white border-0"
+            type="text"
+            value={playerName}
+            onChange={(e) => setPlayerName(e.target.value)}
+            className="w-full p-2 bg-slate-700 rounded"
           />
-          <button
-            className="px-2 py-1 bg-gray-700 text-white rounded-r"
-            onClick={() => setAmount(prev => prev + 1)}
-          >
-            +
-          </button>
         </div>
-      </div>
-      
-      <div className="flex space-x-2">
+        
+        <div className="mb-4">
+          <label className="block mb-1">Character Type</label>
+          <div className="flex gap-3 mb-2">
+            <button
+              className={`flex-1 py-2 px-3 rounded-lg ${playerType === 'bull' ? 'bg-green-600' : 'bg-slate-600'}`}
+              onClick={() => setPlayerType('bull')}
+            >
+              Bull (Buy)
+            </button>
+            <button
+              className={`flex-1 py-2 px-3 rounded-lg ${playerType === 'bear' ? 'bg-red-600' : 'bg-slate-600'}`}
+              onClick={() => setPlayerType('bear')}
+            >
+              Bear (Sell)
+            </button>
+          </div>
+        </div>
+        
+        <div className="mb-4">
+          <label className="block mb-1">Difficulty</label>
+          <select
+            value={difficulty}
+            onChange={(e) => setDifficulty(e.target.value as any)}
+            className="w-full p-2 bg-slate-700 rounded"
+          >
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+        
+        <div className="mb-4">
+          <label className="block mb-1">AI Traders: {aiCount}</label>
+          <input
+            type="range"
+            min="1"
+            max="10"
+            value={aiCount}
+            onChange={(e) => setAiCount(parseInt(e.target.value))}
+            className="w-full"
+          />
+        </div>
+        
         <button
-          className="px-4 py-2 bg-green-600 text-white rounded-lg flex-1 hover:bg-green-700 transition-colors"
-          onClick={() => onTrade('buy', amount)}
-          disabled={player.balance < amount * currentPrice}
-        >
-          Buy
-        </button>
-        <button
-          className="px-4 py-2 bg-red-600 text-white rounded-lg flex-1 hover:bg-red-700 transition-colors"
-          onClick={() => onTrade('sell', amount)}
-          disabled={player.inventory.coins < amount}
-        >
-          Sell
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// Game events panel
-function GameEventsPanel() {
-  const { gameEvents } = usePriceStore();
-  
-  // Show only recent events
-  const recentEvents = gameEvents.slice(-5).reverse();
-  
-  return (
-    <div className="p-4 bg-gray-900 rounded-lg shadow-lg">
-      <h3 className="text-lg font-semibold text-white mb-3">Market Events</h3>
-      
-      {recentEvents.length === 0 ? (
-        <p className="text-gray-500 italic">No recent events</p>
-      ) : (
-        <ul className="space-y-2">
-          {recentEvents.map((event) => (
-            <li key={event.id} className="border-l-4 pl-3 py-1" style={{
-              borderColor: event.impact > 0 ? '#4caf50' : '#f44336'
-            }}>
-              <p className="text-sm text-white">{event.message}</p>
-              <p className="text-xs text-gray-400">
-                {new Date(event.timestamp).toLocaleTimeString()}
-              </p>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-// Game menu/controls
-interface GameMenuProps {
-  onStartGame: (character: 'bull' | 'bear') => void;
-  onEndGame: () => void;
-}
-
-function GameMenu({ onStartGame, onEndGame }: GameMenuProps) {
-  const { gameActive, gameMode, player } = useGameStore();
-  const [characterSelect, setCharacterSelect] = useState(false);
-  
-  if (!gameActive && !characterSelect) {
-    return (
-      <div className="p-6 bg-gray-900 rounded-lg shadow-lg text-center">
-        <h2 className="text-2xl font-bold text-white mb-4">Bulls vs Bears</h2>
-        <p className="text-gray-300 mb-6">
-          Trade your way to victory in this fast-paced market simulation game!
-        </p>
-        <button
-          className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors mb-2 w-full"
-          onClick={() => setCharacterSelect(true)}
+          onClick={handleStartGame}
+          className="w-full bg-blue-600 py-2 rounded-lg font-bold hover:bg-blue-700 transition-colors"
         >
           Start Game
         </button>
       </div>
-    );
-  }
+    </div>
+  );
   
-  if (!gameActive && characterSelect) {
-    return (
-      <div className="p-6 bg-gray-900 rounded-lg shadow-lg">
-        <h2 className="text-xl font-bold text-white mb-4">Choose Your Character</h2>
+  // Game controls UI
+  const GameControls = () => (
+    <div className="absolute bottom-0 left-0 right-0 bg-slate-900 bg-opacity-80 p-3 flex flex-col md:flex-row justify-between items-center">
+      <div className="flex gap-2 mb-2 md:mb-0">
+        <button
+          onClick={() => placeTrade('buy')}
+          className="bg-green-600 py-2 px-4 rounded-lg font-bold hover:bg-green-700 transition-colors text-white"
+          disabled={isGamePaused || isGameOver}
+        >
+          Buy
+        </button>
+        <button
+          onClick={() => placeTrade('sell')}
+          className="bg-red-600 py-2 px-4 rounded-lg font-bold hover:bg-red-700 transition-colors text-white"
+          disabled={isGamePaused || isGameOver}
+        >
+          Sell
+        </button>
+        <button
+          onClick={() => placeTrade('neutral')}
+          className="bg-gray-600 py-2 px-4 rounded-lg font-bold hover:bg-gray-700 transition-colors text-white"
+          disabled={isGamePaused || isGameOver}
+        >
+          Hold
+        </button>
+      </div>
+      
+      <div className="flex gap-2">
+        {isGameStarted && !isGameOver && (
+          <button
+            onClick={isGamePaused ? resumeGame : pauseGame}
+            className={`py-2 px-4 rounded-lg font-bold transition-colors text-white ${
+              isGamePaused ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-600 hover:bg-yellow-700'
+            }`}
+          >
+            {isGamePaused ? 'Resume' : 'Pause'}
+          </button>
+        )}
         
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <button
-            className="p-4 bg-green-800 rounded-lg text-center hover:bg-green-700 transition-colors"
-            onClick={() => onStartGame('bull')}
-          >
-            <div className="mb-2 flex justify-center">
-              <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center">
-                <span className="text-2xl">🐂</span>
-              </div>
-            </div>
-            <h3 className="text-white font-semibold">Bull</h3>
-            <p className="text-sm text-gray-300">Long-term trader, buys low and sells high</p>
-          </button>
-          
-          <button
-            className="p-4 bg-red-800 rounded-lg text-center hover:bg-red-700 transition-colors"
-            onClick={() => onStartGame('bear')}
-          >
-            <div className="mb-2 flex justify-center">
-              <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center">
-                <span className="text-2xl">🐻</span>
-              </div>
-            </div>
-            <h3 className="text-white font-semibold">Bear</h3>
-            <p className="text-sm text-gray-300">Short-term trader, profits from price drops</p>
-          </button>
+        <button
+          onClick={handleResetGame}
+          className="bg-red-600 py-2 px-4 rounded-lg font-bold hover:bg-red-700 transition-colors text-white"
+        >
+          Reset
+        </button>
+      </div>
+    </div>
+  );
+  
+  // Game statistics UI
+  const GameStats = () => (
+    <div className="absolute top-0 left-0 right-0 bg-slate-900 bg-opacity-80 p-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-white">
+      <div>
+        <h3 className="text-sm font-semibold">Round</h3>
+        <div className="text-lg">{round} / 10</div>
+        <div className="text-xs">Time: {formatTime(timeRemaining)}</div>
+      </div>
+      
+      <div>
+        <h3 className="text-sm font-semibold">Market</h3>
+        <div className={`text-lg ${
+          marketTrend === 'bullish' ? 'text-green-500' : 
+          marketTrend === 'bearish' ? 'text-red-500' : 
+          'text-gray-400'
+        }`}>
+          {marketTrend.toUpperCase()} (${currentPrice.toFixed(2)})
+        </div>
+      </div>
+      
+      <div>
+        <h3 className="text-sm font-semibold">Balance</h3>
+        <div className="text-lg">${humanPlayer?.balance.toFixed(2) || '0.00'}</div>
+        <div className="text-xs">
+          Win rate: {totalTrades > 0 ? Math.round((winningTrades / totalTrades) * 100) : 0}%
+        </div>
+      </div>
+    </div>
+  );
+  
+  // Game over UI
+  const GameOver = () => (
+    <div className="absolute inset-0 flex justify-center items-center bg-black bg-opacity-80 z-20">
+      <div className="bg-slate-800 p-6 rounded-lg max-w-md text-white text-center">
+        <h2 className="text-3xl font-bold mb-4">Game Over</h2>
+        
+        <div className="mb-6">
+          <p className="text-xl">Final Score: {humanPlayer?.score || 0}</p>
+          <p className="text-md mt-2">Balance: ${humanPlayer?.balance.toFixed(2) || '0.00'}</p>
+          <p className="text-sm mt-4">
+            Win Rate: {totalTrades > 0 ? Math.round((winningTrades / totalTrades) * 100) : 0}%
+            ({winningTrades} / {totalTrades})
+          </p>
         </div>
         
         <button
-          className="px-4 py-2 bg-gray-700 text-white rounded-lg w-full hover:bg-gray-600 transition-colors"
-          onClick={() => setCharacterSelect(false)}
+          onClick={handleResetGame}
+          className="bg-blue-600 py-2 px-6 rounded-lg font-bold hover:bg-blue-700 transition-colors"
         >
-          Back
+          Play Again
         </button>
       </div>
-    );
-  }
-  
-  return (
-    <div className="p-4 bg-gray-900 rounded-lg shadow-lg">
-      <div className="flex justify-between items-center mb-3">
-        <h3 className="text-lg font-semibold text-white">Game Controls</h3>
-        <div className="text-sm px-2 py-1 bg-purple-700 text-white rounded">
-          {player.character === 'bull' ? '🐂 Bull' : '🐻 Bear'}
-        </div>
-      </div>
-      
-      <div className="mb-4 grid grid-cols-2 gap-2">
-        <div>
-          <p className="text-xs text-gray-400">Score</p>
-          <p className="text-lg font-semibold text-white">{player.score}</p>
-        </div>
-        <div>
-          <p className="text-xs text-gray-400">Balance</p>
-          <p className="text-lg font-semibold text-white">${player.balance.toFixed(2)}</p>
-        </div>
-      </div>
-      
-      <div className="mb-4">
-        <h4 className="text-sm font-semibold text-gray-300 mb-1">Controls</h4>
-        <ul className="text-xs text-gray-400 space-y-1">
-          <li>WASD or Arrow Keys: Move</li>
-          <li>Space: Jump</li>
-          <li>E: Interact / Trade</li>
-          <li>Buy Zone: Green Building</li>
-          <li>Sell Zone: Red Building</li>
-        </ul>
-      </div>
-      
-      <button
-        className="px-4 py-2 bg-red-600 text-white rounded-lg w-full hover:bg-red-700 transition-colors"
-        onClick={onEndGame}
-      >
-        End Game
-      </button>
     </div>
   );
-}
-
-// Main Game UI Component
-export function GameUI() {
-  const { 
-    startGame, 
-    endGame, 
-    gameActive, 
-    makeTrade,
-    generateAITraders,
-  } = useGameStore();
-  
-  const { 
-    simulateMarketCycle,
-    generatePrices,
-    resetPriceStore,
-    stopSimulation,
-  } = usePriceStore();
-  
-  // Handler for starting the game
-  const handleStartGame = (character: 'bull' | 'bear') => {
-    // Reset price store and generate initial data
-    resetPriceStore();
-    generatePrices(100, 100);
-    
-    // Generate AI traders
-    generateAITraders(10);
-    
-    // Start market simulation
-    simulateMarketCycle(300, 1000);
-    
-    // Start the game
-    startGame('singleplayer', character);
-  };
-  
-  // Handler for ending the game
-  const handleEndGame = () => {
-    stopSimulation();
-    endGame();
-  };
-  
-  // Handler for executing trades
-  const handleTrade = (type: 'buy' | 'sell', amount: number) => {
-    const { currentPrice } = usePriceStore.getState();
-    makeTrade(type, amount, currentPrice);
-  };
   
   return (
-    <div className="absolute inset-0 pointer-events-none">
-      {/* Top UI - Score */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 pointer-events-auto">
-        <GameScore />
-      </div>
+    <>
+      {/* Show game settings at start */}
+      {showSettings && <GameSettings />}
       
-      {/* Left UI - Trading Panel */}
-      <div className="absolute top-4 left-4 w-64 pointer-events-auto">
-        {gameActive && <TradingPanel onTrade={handleTrade} />}
-      </div>
+      {/* Game stats when playing */}
+      {isGameStarted && !showSettings && <GameStats />}
       
-      {/* Right UI - Game Events */}
-      <div className="absolute top-4 right-4 w-64 pointer-events-auto">
-        {gameActive && <GameEventsPanel />}
-      </div>
+      {/* Game controls when playing */}
+      {isGameStarted && !showSettings && <GameControls />}
       
-      {/* Bottom UI - Game Menu */}
-      <div className="absolute bottom-4 left-4 w-64 pointer-events-auto">
-        <GameMenu 
-          onStartGame={handleStartGame}
-          onEndGame={handleEndGame}
-        />
-      </div>
-    </div>
+      {/* Game over screen */}
+      {isGameOver && <GameOver />}
+    </>
   );
 }
