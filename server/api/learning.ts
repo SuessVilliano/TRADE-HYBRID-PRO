@@ -25,6 +25,24 @@ router.get('/courses', async (req, res) => {
   }
 });
 
+// Get all modules for a course
+router.get('/courses/:courseId/modules', async (req, res) => {
+  try {
+    const courseId = parseInt(req.params.courseId);
+    
+    const moduleList = await db
+      .select()
+      .from(modules)
+      .where(eq(modules.courseId, courseId))
+      .orderBy(modules.orderNum);
+    
+    res.json(moduleList);
+  } catch (error) {
+    console.error(`Error fetching modules for course ${req.params.courseId}:`, error);
+    res.status(500).json({ error: 'Failed to fetch modules' });
+  }
+});
+
 // Get a specific course with its modules and lessons
 router.get('/courses/:id', async (req, res) => {
   try {
