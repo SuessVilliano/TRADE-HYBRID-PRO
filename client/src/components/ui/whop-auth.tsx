@@ -23,6 +23,7 @@ export function WhopAuth({ onStatusChange }: WhopAuthProps) {
   const [authError, setAuthError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const { setUserLevel } = useFeatureDisclosure();
+  const auth = useAuth();
   
   // Check for saved Whop ID in localStorage
   useEffect(() => {
@@ -39,26 +40,14 @@ export function WhopAuth({ onStatusChange }: WhopAuthProps) {
     setAuthError(null);
     
     try {
-      // Call the server API for direct auth
-      const response = await fetch('/api/whop/direct-auth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ whopId: userId }),
-        credentials: 'include' // Include cookies for session
-      });
+      // Use the auth context to authenticate with Whop
+      console.log('Authenticating with Whop ID/email:', userId);
+      const userData = await auth.login(userId);
       
-      const data = await response.json();
+      console.log('Authentication successful:', userData);
       
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Authentication failed');
-      }
-      
-      console.log('Direct Whop authentication successful:', data);
-      
-      // Get user level from response or use the client-side whop service as fallback
-      const userLevel = data.membershipLevel || await whopService.getUserExperienceLevel(userId);
+      // Get user level from the userData or use client-side whop service as fallback
+      const userLevel = userData.membershipLevel || await whopService.getUserExperienceLevel(userId);
       
       // Set the new user level
       setUserLevel(userLevel);
@@ -99,14 +88,27 @@ export function WhopAuth({ onStatusChange }: WhopAuthProps) {
     }
   };
   
-  // Special demo code for testing - sets user to expert level
-  const enableDemoAccess = () => {
-    setUserLevel(UserExperienceLevel.EXPERT);
-    setIsAuthenticated(true);
-    localStorage.setItem('userExperienceLevel', UserExperienceLevel.EXPERT);
-    
-    if (onStatusChange) {
-      onStatusChange(true);
+  // Special demo code for testing - uses the auth context for consistent login
+  const enableDemoAccess = async () => {
+    try {
+      setIsLoading(true);
+      // Use the auth context's demo login method
+      const userData = await auth.loginWithDemo();
+      console.log('Demo login successful:', userData);
+      
+      // Set the user level to expert for demo users
+      setUserLevel(UserExperienceLevel.EXPERT);
+      setIsAuthenticated(true);
+      
+      // Notify parent component of status change
+      if (onStatusChange) {
+        onStatusChange(true);
+      }
+    } catch (error) {
+      console.error('Demo login failed:', error);
+      setAuthError('Demo login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
   
