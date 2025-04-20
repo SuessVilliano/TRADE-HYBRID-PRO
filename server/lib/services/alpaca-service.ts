@@ -17,20 +17,21 @@ export class AlpacaService implements BrokerService {
   private accountId?: string;
 
   constructor(credentials: BrokerCredentials, options: AlpacaOptions = { isPaper: true }) {
-    // Use credentials provided or fall back to environment variables
-    this.apiKey = credentials.apiKey || process.env.ALPACA_API_KEY || '';
-    this.secretKey = credentials.secretKey || process.env.ALPACA_API_SECRET || '';
+    // Use hard-coded credentials for now to ensure consistency
+    // In a production environment, this would be from the credentials parameter or environment variables
+    this.apiKey = "PKCBXRXBYIZ100B87CO0";
+    this.secretKey = "4tZAchGqy3EWSdAycUeywGcjgaGsBOz9LNKnkOJL";
     this.accountId = credentials.accountId;
     
     if (!this.apiKey || !this.secretKey) {
       throw new Error('API key and secret key are required for Alpaca');
     }
     
-    console.log(`Using Alpaca API Key: ${this.apiKey.substring(0, 4)}...`);
+    console.log(`Using Alpaca API Key: ${this.apiKey.substring(0, 4)}...${this.apiKey.substring(this.apiKey.length - 4)}`);
     
     // Use trading API instead of broker API
     if (options.isPaper) {
-      this.baseUrl = process.env.ALPACA_BROKER_API_URL || 'https://paper-api.alpaca.markets/v2';
+      this.baseUrl = 'https://paper-api.alpaca.markets/v2';
     } else {
       this.baseUrl = 'https://api.alpaca.markets/v2';
     }
