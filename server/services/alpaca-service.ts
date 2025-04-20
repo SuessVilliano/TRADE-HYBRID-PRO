@@ -59,6 +59,17 @@ export function createAlpacaClient(): AlpacaClient {
       'Content-Type': 'application/json'
     }
   });
+
+  // Add request interceptor to ensure credentials are always correct
+  tradeApi.interceptors.request.use(config => {
+    // Force override headers with the correct credentials on every request
+    config.headers['APCA-API-KEY-ID'] = 'PKCBXRXBYIZ100B87CO0';
+    config.headers['APCA-API-SECRET-KEY'] = '4tZAchGqy3EWSdAycUeywGcjgaGsBOz9LNKnkOJL';
+    console.log('Alpaca API Request with credentials:', 
+      config.headers['APCA-API-KEY-ID'].substring(0, 4) + '...' + 
+      config.headers['APCA-API-KEY-ID'].substring(config.headers['APCA-API-KEY-ID'].length - 4));
+    return config;
+  });
   
   const dataApi = axios.create({
     baseURL: `${dataBaseUrl}/v2`,
@@ -67,6 +78,14 @@ export function createAlpacaClient(): AlpacaClient {
       'APCA-API-SECRET-KEY': apiSecret,
       'Content-Type': 'application/json'
     }
+  });
+  
+  // Add request interceptor to ensure credentials are always correct for data API
+  dataApi.interceptors.request.use(config => {
+    // Force override headers with the correct credentials on every request
+    config.headers['APCA-API-KEY-ID'] = 'PKCBXRXBYIZ100B87CO0';
+    config.headers['APCA-API-SECRET-KEY'] = '4tZAchGqy3EWSdAycUeywGcjgaGsBOz9LNKnkOJL';
+    return config;
   });
   
   // Implement the client interface with API methods
@@ -401,7 +420,14 @@ function createDummyAlpacaClient(errorMessage: string): AlpacaClient {
  * Reset the Alpaca client instance (useful for testing or after environment changes)
  */
 export function resetAlpacaClient(): void {
+  console.log('Forcefully resetting Alpaca client...');
+  // Reset instance
   alpacaClient = null;
+  // Reset API availability flag to force recreation
+  isRealApiAvailable = true;
+  // Create a new client to ensure it uses the latest credentials
+  alpacaClient = createAlpacaClient();
+  console.log('Alpaca client reset completed with new credentials');
 }
 
 /**
