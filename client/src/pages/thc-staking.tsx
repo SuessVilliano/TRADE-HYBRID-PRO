@@ -101,11 +101,11 @@ const useSolanaAuth = () => ({
   walletConnected: false,
   isAuthenticated: false,
   tokenMembership: { tier: MembershipTier.Basic },
-  connectAndAuthenticate: async () => {},
+  connectAndAuthenticate: async (): Promise<boolean> => { return false; },
   isAuthenticating: false,
   publicKey: '5FJeEJR8576YxXFdGRAu4NBBFcyfmtjsZtx99Rettgww',
   logoutFromSolana: () => {},
-  login: async () => {}
+  login: async (): Promise<boolean> => { return false; }
 });
 
 import { Lock } from 'lucide-react';
@@ -146,6 +146,7 @@ export default function StakeAndBake() {
   const [showCommissionAdjustment, setShowCommissionAdjustment] = useState(false);
   const [newCommission, setNewCommission] = useState(0.5);
   const [isValidatorOperator, setIsValidatorOperator] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false); // Add state for tracking connection process
   const [dualRewards, setDualRewards] = useState({
     solRewards: 0.055, // 5.5% APY in SOL
     thcRewards: 0.08,  // 8% APY in THC tokens
@@ -875,6 +876,38 @@ export default function StakeAndBake() {
                               {solanaAuth.isAuthenticating ? 'Disconnecting...' : 'Disconnect'}
                             </Button>
                           </div>
+                        </div>
+                      )}
+                      
+                      {/* Add Connect as Validator button if wallet is connected but not as a validator */}
+                      {solanaAuth.walletConnected && !isValidatorOperator && (
+                        <div className="mt-4">
+                          <Button 
+                            variant="default" 
+                            className="w-full flex items-center justify-center bg-green-600 hover:bg-green-700"
+                            onClick={connectAsValidator}
+                            disabled={isConnecting || fetchingValidatorInfo}
+                          >
+                            {isConnecting ? (
+                              <>
+                                <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
+                                Connecting as Validator...
+                              </>
+                            ) : fetchingValidatorInfo ? (
+                              <>
+                                <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
+                                Verifying Validator...
+                              </>
+                            ) : (
+                              <>
+                                <Server className="mr-2 h-4 w-4" />
+                                Connect as Validator
+                              </>
+                            )}
+                          </Button>
+                          <p className="text-xs text-center mt-2 text-slate-400">
+                            Connect your wallet as a validator to access additional controls
+                          </p>
                         </div>
                       )}
                       
