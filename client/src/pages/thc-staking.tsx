@@ -179,8 +179,11 @@ export default function StakeAndBake() {
     // Check if Phantom wallet is available
     const checkPhantomWallet = async () => {
       try {
+        const hasModernPhantom = !!(window as any).phantom?.solana;
+        const hasLegacyPhantom = !!(window as any).solana?.isPhantom;
+        
         // Try modern approach first (via window.phantom)
-        if ((window as any).phantom?.solana) {
+        if (hasModernPhantom) {
           console.log("Phantom wallet is available (modern API)");
           setPhantomInstalled(true);
           
@@ -190,7 +193,7 @@ export default function StakeAndBake() {
           }
         } 
         // Fallback to legacy approach (window.solana)
-        else if ((window as any).solana?.isPhantom) {
+        else if (hasLegacyPhantom) {
           console.log("Phantom wallet is available (legacy API)");
           setPhantomInstalled(true);
           
@@ -201,11 +204,14 @@ export default function StakeAndBake() {
         }
         else {
           console.log("Phantom wallet is not installed");
-          toast({
-            title: "Wallet Not Found",
-            description: "Please install the Phantom wallet extension to connect",
-            variant: "destructive",
-          });
+          // Use toast notification only once on initial load, not on every re-render
+          if (!phantomInstalled) {
+            toast({
+              title: "Wallet Not Found",
+              description: "To use validator features, please install the Phantom wallet extension",
+              variant: "destructive",
+            });
+          }
         }
       } catch (error) {
         console.error("Error checking wallet:", error);
@@ -246,7 +252,7 @@ export default function StakeAndBake() {
     }
     
     // No need for timer cleanup as we're not setting any timers
-  }, [generateReferralLink, solanaAuth.walletConnected, solanaAuth.isAuthenticated, solanaAuth.tokenMembership]);
+  }, [generateReferralLink, solanaAuth.walletConnected, solanaAuth.isAuthenticated]);
   
   // Calculate estimated rewards
   const estimatedRewards = calculateStakingRewards(
@@ -346,13 +352,19 @@ export default function StakeAndBake() {
   
   // Connect wallet explicitly as a validator
   const connectAsValidator = async () => {
-    // First check if Phantom extension is installed
-    if (!((window as any).phantom?.solana) && !((window as any).solana?.isPhantom)) {
+    // Check if Phantom extension is installed using the consistent methods
+    const hasModernPhantom = !!(window as any).phantom?.solana;
+    const hasLegacyPhantom = !!(window as any).solana?.isPhantom;
+    
+    if (!hasModernPhantom && !hasLegacyPhantom) {
       toast({
         title: "Wallet Not Detected",
         description: "Please install Phantom wallet extension and reload the page",
         variant: "destructive",
       });
+      
+      // Open Phantom website in a new tab for convenience
+      window.open('https://phantom.app/', '_blank');
       return;
     }
     
@@ -360,31 +372,77 @@ export default function StakeAndBake() {
       // If wallet is not connected, connect it
       if (!solanaAuth.walletConnected) {
         setIsConnecting(true);
+        let connectionSuccessful = false;
         
         // Try modern approach first (via window.phantom)
-        if ((window as any).phantom?.solana) {
+        if (hasModernPhantom) {
           try {
             console.log("Connecting via modern Phantom API...");
-            await (window as any).phantom.solana.connect();
+            const response = await (window as any).phantom.solana.connect();
+            console.log("Connection response:", response);
+            
             // Give the wallet adapter time to update
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 700));
+            
+            // Check if public key is available
+            if (response && response.publicKey) {
+              console.log("Connected successfully with public key:", response.publicKey.toString());
+              connectionSuccessful = true;
+            }
           } catch (error) {
             console.error("Error connecting via modern API:", error);
+            
+            // If user rejects the connection, handle gracefully
+            if (error instanceof Error && error.message.includes('User rejected')) {
+              toast({
+                title: "Connection Cancelled",
+                description: "You cancelled the wallet connection request",
+                variant: "default",
+              });
+              setIsConnecting(false);
+              return;
+            }
           }
         }
         
-        // If still not connected, try the wallet adapter
-        if (!solanaAuth.walletConnected) {
+        // If modern approach failed, try the legacy approach
+        if (!connectionSuccessful && hasLegacyPhantom) {
+          try {
+            console.log("Trying to connect via legacy Phantom API...");
+            const response = await (window as any).solana.connect();
+            console.log("Legacy connection response:", response);
+            
+            if (response && response.publicKey) {
+              console.log("Connected successfully with public key:", response.publicKey.toString());
+              connectionSuccessful = true;
+            }
+          } catch (error) {
+            console.error("Error connecting via legacy API:", error);
+          }
+        }
+        
+        // If direct connections failed, try the SolanaAuth context
+        if (!connectionSuccessful) {
           console.log("Trying to connect via SolanaAuth...");
           const success = await solanaAuth.connectAndAuthenticate();
-          if (!success) {
+          if (success) {
+            connectionSuccessful = true;
+          } else {
             throw new Error("Failed to connect wallet");
           }
         }
         
         setIsConnecting(false);
-        // After connection, immediately fetch validator info
-        await fetchValidatorInfo();
+        
+        // After connection, immediately fetch validator info if connection was successful
+        if (connectionSuccessful || solanaAuth.walletConnected) {
+          toast({
+            title: "Wallet Connected",
+            description: "Successfully connected to Phantom wallet",
+            variant: "default",
+          });
+          await fetchValidatorInfo();
+        }
       } else {
         // If already connected, just fetch validator info
         await fetchValidatorInfo();
@@ -402,10 +460,22 @@ export default function StakeAndBake() {
   
   // Fetch validator information from Solana network
   const fetchValidatorInfo = async () => {
-    if (!((window as any).solana) || !solanaAuth.walletConnected) {
+    // Check if wallet is connected using the SolanaAuth context
+    if (!solanaAuth.walletConnected) {
       toast({
         title: "Connect Wallet",
         description: "Please connect your Solana wallet first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check for modern or legacy Phantom wallet
+    const hasPhantomWallet = !!(window as any).phantom?.solana || !!(window as any).solana?.isPhantom;
+    if (!hasPhantomWallet) {
+      toast({
+        title: "Wallet Not Detected",
+        description: "Please install Phantom wallet extension to use validator features",
         variant: "destructive",
       });
       return;
