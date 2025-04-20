@@ -10,6 +10,9 @@ export const config = {
   // OpenAI API
   OPENAI_API_KEY: import.meta.env.VITE_OPENAI_API_KEY || '',
   
+  // Whop API
+  WHOP_API_KEY: import.meta.env.VITE_WHOP_API_KEY || 'demo_access_key',
+  
   // BrokerServices flags
   USE_MOCK_SERVICE: import.meta.env.VITE_USE_MOCK_SERVICE || 'false',
   
