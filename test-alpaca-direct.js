@@ -1,43 +1,112 @@
-// Test Alpaca connection directly with API keys
-// Run with: node test-alpaca-direct.js
+/**
+ * Test Alpaca API connection directly using Node.js fetch API
+ * This script tests different endpoints and credential combinations
+ */
 
-import axios from 'axios';
+import dotenv from 'dotenv';
+dotenv.config();
 
-// Use environment variables for API keys
-const ALPACA_API_KEY = process.env.ALPACA_API_KEY;
-const ALPACA_API_SECRET = process.env.ALPACA_API_SECRET;
-
-console.log('----- Testing Alpaca API Connection (Direct Keys) -----');
-console.log(`Using API Key: ${ALPACA_API_KEY}`);
-
-// Function to test connection
 async function testAlpacaConnection() {
-  try {
-    const response = await axios.get('https://paper-api.alpaca.markets/v2/account', {
-      headers: {
-        'APCA-API-KEY-ID': ALPACA_API_KEY,
-        'APCA-API-SECRET-KEY': ALPACA_API_SECRET,
-        'Content-Type': 'application/json'
+  console.log('Testing Alpaca API Connection Directly');
+  
+  // Get credentials from environment variables
+  const apiKey = process.env.ALPACA_API_KEY;
+  const apiSecret = process.env.ALPACA_API_SECRET;
+  
+  if (!apiKey || !apiSecret) {
+    console.error('Alpaca API credentials not found in environment variables');
+    return false;
+  }
+  
+  console.log(`API Key: ${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}`);
+  console.log(`API Secret: ${apiSecret.substring(0, 4)}...${apiSecret.substring(apiSecret.length - 4)}`);
+  
+  // Test different endpoints and environments
+  const environments = [
+    { 
+      name: 'Paper Trading API',
+      baseUrl: 'https://paper-api.alpaca.markets'
+    },
+    { 
+      name: 'Live Trading API',
+      baseUrl: 'https://api.alpaca.markets'
+    },
+    { 
+      name: 'Data API',
+      baseUrl: 'https://data.alpaca.markets'
+    },
+    { 
+      name: 'Broker API',
+      baseUrl: 'https://broker-api.alpaca.markets'
+    }
+  ];
+  
+  const endpoints = [
+    {
+      path: '/v2/account',
+      description: 'Account Information'
+    },
+    {
+      path: '/v2/positions',
+      description: 'Open Positions'
+    },
+    {
+      path: '/v2/orders',
+      description: 'Orders'
+    },
+    {
+      path: '/v1/trading/accounts',
+      description: 'Broker API Trading Accounts (broker api only)'
+    }
+  ];
+  
+  let successCount = 0;
+  let totalAttempts = 0;
+  
+  // Test each combination of environment and endpoint
+  for (const env of environments) {
+    console.log(`\nTesting ${env.name} (${env.baseUrl}):`);
+    
+    for (const endpoint of endpoints) {
+      // Skip broker-specific endpoints for non-broker environments
+      if (endpoint.path.includes('/v1/trading/accounts') && !env.baseUrl.includes('broker-api')) {
+        continue;
       }
-    });
-    
-    console.log('Connection successful!');
-    console.log('Account Info:', response.data);
-  } catch (error) {
-    console.error('Error testing Alpaca API connection:');
-    
-    if (error.response) {
-      // The request was made and the server responded with a status code outside of 2xx
-      console.error('Response status:', error.response.status);
-      console.error('Response data:', error.response.data);
-    } else if (error.request) {
-      // The request was made but no response was received
-      console.error('No response received from server');
-    } else {
-      // Something happened in setting up the request that triggered an Error
-      console.error('Error message:', error.message);
+      
+      totalAttempts++;
+      const url = `${env.baseUrl}${endpoint.path}`;
+      console.log(`\n  Testing endpoint: ${endpoint.description} (${url})`);
+      
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'APCA-API-KEY-ID': apiKey,
+            'APCA-API-SECRET-KEY': apiSecret,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`  ✅ Success! Status: ${response.status}`);
+          console.log(`  Response data sample:`, JSON.stringify(data).substring(0, 150) + '...');
+          successCount++;
+        } else {
+          const errorText = await response.text();
+          console.error(`  ❌ Error: ${response.status} - ${errorText}`);
+        }
+      } catch (error) {
+        console.error(`  ❌ Fetch error:`, error.message);
+      }
     }
   }
+  
+  console.log(`\nTest Results: ${successCount} successful endpoints out of ${totalAttempts} attempts`);
+  return successCount > 0;
 }
 
-testAlpacaConnection();
+// Run the test
+testAlpacaConnection().then(success => {
+  console.log(`\nOverall test ${success ? 'passed ✅' : 'failed ❌'}`);
+});

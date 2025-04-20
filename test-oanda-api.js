@@ -1,12 +1,21 @@
 // Test script for Oanda API connection
 import axios from 'axios';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 async function testOandaConnection() {
   try {
     console.log('Testing Oanda API connection...');
     
-    // Get API token from environment
+    // Get credentials from environment
     const apiToken = process.env.OANDA_API_TOKEN;
+    const accountId = process.env.OANDA_ACCOUNT_ID;
+    
+    console.log('Environment variables:');
+    console.log('- OANDA_ACCOUNT_ID:', accountId ? `${accountId.substring(0, 4)}...` : 'Not set');
+    console.log('- OANDA_API_TOKEN:', apiToken ? `${apiToken.substring(0, 4)}...` : 'Not set');
     
     if (!apiToken) {
       console.error('Error: Missing Oanda API token in environment variables');

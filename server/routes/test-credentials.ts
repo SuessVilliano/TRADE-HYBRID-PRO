@@ -104,6 +104,122 @@ router.post('/alpaca/test', async (req, res) => {
   }
 });
 
+// Test Oanda credentials
+router.get('/oanda', async (req, res) => {
+  try {
+    // First initialize the credential manager
+    await apiCredentialManager.initialize();
+
+    // Get system-level Oanda credentials
+    const credentials = await apiCredentialManager.getCredentials('oanda');
+
+    if (!credentials || !credentials.apiToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Oanda credentials not found',
+        error: 'Missing API token'
+      });
+    }
+
+    // Log a masked version of the credentials for debugging
+    console.log(`Testing Oanda credentials: ${credentials.apiToken.substring(0, 4)}...${credentials.apiToken.substring(credentials.apiToken.length - 4)}`);
+    
+    // Construct an account endpoint URL
+    const accountId = credentials.accountId || 'primary';
+    const isPractice = credentials.isPractice !== false;
+    const baseUrl = isPractice ? 'https://api-fxpractice.oanda.com' : 'https://api-fxtrade.oanda.com';
+    const url = `${baseUrl}/v3/accounts/${accountId}`;
+    
+    try {
+      // Try to get account info
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${credentials.apiToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Connection successful
+        return res.json({
+          success: true,
+          message: 'Successfully connected to Oanda API',
+          accountInfo: data.account
+        });
+      } else {
+        const errorText = await response.text();
+        // Connection failed
+        return res.status(401).json({
+          success: false,
+          message: 'Failed to connect to Oanda API',
+          error: errorText
+        });
+      }
+    } catch (connectionError: any) {
+      // Connection failed
+      return res.status(401).json({
+        success: false,
+        message: 'Failed to connect to Oanda API',
+        error: connectionError.message
+      });
+    }
+  } catch (error: any) {
+    console.error('Error testing Oanda credentials:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+});
+
+// Test Oanda credentials with provided keys
+router.post('/oanda/test', async (req, res) => {
+  try {
+    const { apiToken, accountId, isPractice } = req.body;
+    
+    if (!apiToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required credentials',
+        error: 'API token is required'
+      });
+    }
+    
+    // Create temporary credentials
+    const credentials: BrokerCredentials = {
+      apiToken,
+      accountId: accountId || 'primary',
+      isPractice: isPractice !== false
+    };
+    
+    // Test the connection
+    const isValid = await apiCredentialManager.validateCredentials('oanda', credentials);
+    
+    if (isValid) {
+      return res.json({
+        success: true,
+        message: 'Credentials are valid'
+      });
+    } else {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+  } catch (error: any) {
+    console.error('Error testing provided Oanda credentials:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+});
+
 // Add other broker test endpoints here as needed
 
 export default router;
