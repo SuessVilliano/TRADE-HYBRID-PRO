@@ -128,17 +128,26 @@ router.get('/oanda', async (req, res) => {
     console.log(`Testing Oanda credentials: ${apiToken.substring(0, 4)}...${apiToken.substring(apiToken.length - 4)}`);
     
     // Construct an account endpoint URL
-    const accountId = credentials.accountId || 'primary';
+    // If account ID is available, use it for a specific account lookup
+    // Otherwise, fallback to the accounts list endpoint
     const isPractice = credentials.isPractice !== false;
     const baseUrl = isPractice ? 'https://api-fxpractice.oanda.com' : 'https://api-fxtrade.oanda.com';
-    const url = `${baseUrl}/v3/accounts/${accountId}`;
+    
+    let url;
+    if (credentials.accountId) {
+      console.log(`Using Oanda account ID: ${credentials.accountId}`);
+      url = `${baseUrl}/v3/accounts/${credentials.accountId}`;
+    } else {
+      console.log('No specific Oanda account ID provided, using accounts list endpoint');
+      url = `${baseUrl}/v3/accounts`;
+    }
     
     try {
       // Try to get account info
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${credentials.apiToken}`,
+          'Authorization': `Bearer ${apiToken}`,
           'Content-Type': 'application/json'
         }
       });
@@ -147,11 +156,21 @@ router.get('/oanda', async (req, res) => {
         const data = await response.json();
         
         // Connection successful
-        return res.json({
-          success: true,
-          message: 'Successfully connected to Oanda API',
-          accountInfo: data.account
-        });
+        if (credentials.accountId) {
+          // Single account response
+          return res.json({
+            success: true,
+            message: 'Successfully connected to Oanda API',
+            accountInfo: data.account
+          });
+        } else {
+          // Accounts list response
+          return res.json({
+            success: true, 
+            message: 'Successfully connected to Oanda API',
+            accounts: data.accounts
+          });
+        }
       } else {
         const errorText = await response.text();
         // Connection failed
@@ -194,7 +213,7 @@ router.post('/oanda/test', async (req, res) => {
     
     // Create temporary credentials
     const credentials: BrokerCredentials = {
-      apiToken,
+      apiKey: apiToken, // Store as apiKey for consistency with our updated credential system
       accountId: accountId || 'primary',
       isPractice: isPractice !== false
     };

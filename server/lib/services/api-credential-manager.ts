@@ -89,7 +89,8 @@ export class ApiCredentialManager {
     // Load OANDA credentials
     if (process.env.OANDA_API_TOKEN) {
       const oandaCredentials: BrokerCredentials = {
-        apiKey: process.env.OANDA_API_TOKEN
+        apiKey: process.env.OANDA_API_TOKEN,
+        accountId: process.env.OANDA_ACCOUNT_ID
       };
       
       this.setCredentials('oanda', 'system', oandaCredentials, CredentialSource.Environment);
@@ -281,7 +282,8 @@ export class ApiCredentialManager {
       case 'oanda':
         if (process.env.OANDA_API_TOKEN) {
           return {
-            apiKey: process.env.OANDA_API_TOKEN
+            apiKey: process.env.OANDA_API_TOKEN,
+            accountId: process.env.OANDA_ACCOUNT_ID
           };
         }
         break;
@@ -452,7 +454,10 @@ export class ApiCredentialManager {
    * Validate OANDA credentials
    */
   private async validateOandaCredentials(credentials: BrokerCredentials): Promise<boolean> {
-    if (!credentials.apiKey) {
+    // Support credentials passed either as apiKey or apiToken (for backwards compatibility)
+    const apiToken = credentials.apiKey || credentials.apiToken;
+    
+    if (!apiToken) {
       return false;
     }
     
@@ -460,7 +465,7 @@ export class ApiCredentialManager {
       const response = await fetch('https://api-fxpractice.oanda.com/v3/accounts', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${credentials.apiKey}`,
+          'Authorization': `Bearer ${apiToken}`,
           'Content-Type': 'application/json'
         }
       });
