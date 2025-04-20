@@ -8,9 +8,10 @@
  * It will prompt for new API keys and then update the .env file.
  */
 
-const fs = require('fs');
-const path = require('path');
-const readline = require('readline');
+import fs from 'fs';
+import path from 'path';
+import readline from 'readline';
+import { fileURLToPath } from 'url';
 
 // Create readline interface for user input
 const rl = readline.createInterface({
@@ -18,8 +19,12 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
+// Get current file directory path (ES module compatible)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // Define the path to the .env file
-const envFilePath = path.resolve(process.cwd(), '.env');
+const envFilePath = path.resolve(path.join(__dirname, '..'), '.env');
 
 /**
  * Prompt the user for input with a question
