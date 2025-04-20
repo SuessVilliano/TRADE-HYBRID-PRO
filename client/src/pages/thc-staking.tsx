@@ -158,10 +158,48 @@ export default function StakeAndBake() {
   ]);
   
   useEffect(() => {
-    // Simulate connected wallet after 2 seconds
-    const timer = setTimeout(() => {
-      setConnectedWallet(true);
-    }, 2000);
+    // Check if Phantom wallet is available
+    const checkPhantomWallet = async () => {
+      try {
+        const provider = window.solana;
+        if (provider && provider.isPhantom) {
+          console.log("Phantom wallet is available");
+          // Listen for wallet connection events
+          provider.on('connect', (publicKey) => {
+            console.log('Wallet connected:', publicKey.toString());
+            setConnectedWallet(true);
+            // Update solanaAuth state with connected wallet info
+            setSolanaAuth(prev => ({
+              ...prev,
+              walletConnected: true,
+              publicKey: publicKey.toString()
+            }));
+          });
+          
+          provider.on('disconnect', () => {
+            console.log('Wallet disconnected');
+            setConnectedWallet(false);
+            // Update solanaAuth state
+            setSolanaAuth(prev => ({
+              ...prev,
+              walletConnected: false,
+              publicKey: null
+            }));
+          });
+        } else {
+          console.log("Phantom wallet is not installed");
+          toast({
+            title: "Wallet Not Found",
+            description: "Please install the Phantom wallet extension to connect",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error checking wallet:", error);
+      }
+    };
+    
+    checkPhantomWallet();
     
     // Generate random referral address
     const generatedAddress = 'TH' + Math.random().toString(36).substring(2, 10).toUpperCase();
