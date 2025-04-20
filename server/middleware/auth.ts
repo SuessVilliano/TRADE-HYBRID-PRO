@@ -21,27 +21,51 @@ declare global {
  */
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    // Log the request details for debugging
+    console.log(`Auth middleware: ${req.method} ${req.path}`, {
+      hasSession: !!req.session,
+      hasUserId: req.session && !!req.session.userId,
+      userId: req.session?.userId,
+      sessionData: req.session ? { ...req.session } : null
+    });
+
     // Check for session-based authentication (primary method)
     if (req.session && req.session.userId) {
       const userId = req.session.userId;
+      console.log(`Auth middleware: Checking session-based authentication for user ID ${userId}`);
       
       // Fetch user from database
       const userResult = await db.select().from(users).where(eq(users.id, userId));
       
       if (userResult.length > 0) {
         const user = userResult[0];
+        console.log(`Auth middleware: User ${user.username} (ID: ${user.id}) authenticated successfully`);
+        
         // Set both legacy userId and new user object
         req.userId = user.id;
         req.isAdmin = user.isAdmin || false;
         req.walletAddress = user.walletAddress || undefined;
         req.user = user;
         return next();
+      } else {
+        console.warn(`Auth middleware: Session contained user ID ${userId}, but no matching user found in database`);
+        
+        // Clear invalid session
+        if (req.session) {
+          req.session.destroy((err) => {
+            if (err) {
+              console.error('Error destroying invalid session:', err);
+            }
+          });
+        }
       }
+    } else {
+      console.log('Auth middleware: No user ID in session');
     }
     
     // If development mode is enabled and ENABLE_DEV_USER is true
     if (process.env.NODE_ENV === 'development' && process.env.ENABLE_DEV_USER === 'true') {
-      console.warn('Using development user in auth middleware. This should not happen in production!');
+      console.warn('Auth middleware: Using development user. This should not happen in production!');
       req.userId = 1;
       req.isAdmin = true;
       req.walletAddress = "test-wallet-address";
@@ -56,10 +80,12 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
       return next();
     }
     
-    // For development and testing - this bypasses authentication
+    // For development and testing - this bypasses authentication only in development
     // IMPORTANT: This should be removed in production!
     if (process.env.NODE_ENV === 'development') {
-      console.warn('TEST MODE: Bypassing authentication check in development mode');
+      console.warn('Auth middleware: TEST MODE - Bypassing authentication check in development mode');
+      
+      // Create a fixed user for testing purposes
       req.userId = 999;
       req.isAdmin = true;
       req.walletAddress = "test-wallet-address";
@@ -71,14 +97,28 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
         membershipLevel: 'lifetime',
         hasConnectedApis: true
       };
+      
+      // For testing purposes we also update the session
+      if (req.session) {
+        req.session.userId = 999;
+        req.session.username = 'test_user';
+      }
+      
       return next();
     }
     
     // User is not authenticated
-    return res.status(401).json({ error: 'Unauthorized' });
+    console.log('Auth middleware: Authentication failed, returning 401 Unauthorized');
+    return res.status(401).json({ 
+      error: 'Unauthorized',
+      message: 'You must be logged in to access this resource' 
+    });
   } catch (error) {
     console.error('Auth middleware error:', error);
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ 
+      error: 'Unauthorized',
+      message: 'Authentication error occurred' 
+    });
   }
 };
 
