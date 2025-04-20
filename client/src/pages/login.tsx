@@ -335,6 +335,47 @@ export default function LoginPage() {
           </>
         )}
       </div>
+      
+      {/* WhopAuth Dialog */}
+      <div
+        id="whop-auth-dialog"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 hidden"
+      >
+        <div className="relative bg-gray-800 rounded-lg border border-gray-700 shadow-xl max-w-md w-full">
+          <button
+            onClick={() => {
+              const dialog = document.getElementById('whop-auth-dialog');
+              if (dialog) dialog.classList.add('hidden');
+            }}
+            className="absolute top-3 right-3 text-gray-400 hover:text-white p-1 rounded-full"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          </button>
+          
+          <WhopAuth
+            onStatusChange={(status) => {
+              if (status) {
+                const dialog = document.getElementById('whop-auth-dialog');
+                if (dialog) dialog.classList.add('hidden');
+                navigate('/dashboard');
+              }
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 }

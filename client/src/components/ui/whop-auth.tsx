@@ -10,6 +10,8 @@ import { Input } from './input';
 import { Alert, AlertTitle, AlertDescription } from './alert';
 import { AlertCircle, CheckCircle, Info } from 'lucide-react';
 import { whopService } from '@/lib/services/whop-service';
+import { authService } from '@/lib/services/auth-service';
+import { useAuth } from '@/lib/context/AuthContext';
 
 interface WhopAuthProps {
   onStatusChange?: (isAuthenticated: boolean) => void;
@@ -37,26 +39,39 @@ export function WhopAuth({ onStatusChange }: WhopAuthProps) {
     setAuthError(null);
     
     try {
-      // Get appropriate user level from Whop service
-      const userLevel = await whopService.getUserExperienceLevel(userId);
+      // Call the server API for direct auth
+      const response = await fetch('/api/whop/direct-auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ whopId: userId }),
+        credentials: 'include' // Include cookies for session
+      });
       
-      // If user is at least a BEGINNER, they're authenticated
-      const authenticated = userLevel !== undefined;
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Authentication failed');
+      }
+      
+      console.log('Direct Whop authentication successful:', data);
+      
+      // Get user level from response or use the client-side whop service as fallback
+      const userLevel = data.membershipLevel || await whopService.getUserExperienceLevel(userId);
       
       // Set the new user level
       setUserLevel(userLevel);
       
       // Update authentication state
-      setIsAuthenticated(authenticated);
+      setIsAuthenticated(true);
       
-      // Save user ID to localStorage if authenticated
-      if (authenticated) {
-        localStorage.setItem('whopUserId', userId);
-      }
+      // Save user ID to localStorage
+      localStorage.setItem('whopUserId', userId);
       
       // Notify parent component of status change
       if (onStatusChange) {
-        onStatusChange(authenticated);
+        onStatusChange(true);
       }
       
       // Show appropriate messaging

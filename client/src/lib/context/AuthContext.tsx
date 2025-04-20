@@ -63,10 +63,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user: currentUser, // Add user as alias for currentUser
     
     login: async (whopId: string) => {
-      const userData = await authService.login(whopId);
-      setCurrentUser(userData);
-      setIsAuthenticated(true);
-      return userData;
+      try {
+        // First try direct Whop authentication
+        const userData = await authService.loginWithWhop(whopId);
+        setCurrentUser(userData);
+        setIsAuthenticated(true);
+        return userData;
+      } catch (error) {
+        // Fallback to regular login if direct auth fails
+        console.log('Direct Whop auth failed, falling back to regular login');
+        const userData = await authService.login(whopId);
+        setCurrentUser(userData);
+        setIsAuthenticated(true);
+        return userData;
+      }
     },
     
     loginWithDemo: async () => {

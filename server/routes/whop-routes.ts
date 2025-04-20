@@ -181,4 +181,58 @@ router.get('/verify', async (req, res) => {
   }
 });
 
+/**
+ * Direct authentication with Whop ID or email
+ * This endpoint allows users to authenticate directly without OAuth
+ */
+router.post('/direct-auth', async (req, res) => {
+  try {
+    const { whopId } = req.body;
+    
+    if (!whopId || typeof whopId !== 'string' || whopId.trim() === '') {
+      return res.status(400).json({ error: 'Invalid Whop ID or email' });
+    }
+    
+    console.log('Attempting direct auth with Whop ID/email:', whopId);
+    
+    // Find or create user based on Whop ID
+    const result = await whopService.findOrCreateUser(whopId.trim());
+    
+    if (!result.success) {
+      console.error('Failed to authenticate with Whop ID:', whopId, result.message);
+      return res.status(401).json({ 
+        success: false,
+        error: result.message || 'Authentication failed' 
+      });
+    }
+    
+    console.log('Successfully authenticated with Whop ID/email:', whopId, 'User ID:', result.userId);
+    
+    // Set user in session
+    if (req.session) {
+      req.session.userId = result.userId;
+      req.session.username = result.username;
+      req.session.whopId = whopId.trim();
+      req.session.membershipLevel = result.membershipLevel;
+      
+      // Set the session cookie to expire in 30 days
+      req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+    }
+    
+    // Return success with user data
+    res.json({
+      success: true,
+      userId: result.userId,
+      username: result.username,
+      membershipLevel: result.membershipLevel
+    });
+  } catch (error) {
+    console.error('Direct Whop auth error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Internal server error' 
+    });
+  }
+});
+
 export default router;

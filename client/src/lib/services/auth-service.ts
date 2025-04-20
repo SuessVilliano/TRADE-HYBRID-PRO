@@ -31,6 +31,39 @@ export const authService = {
       throw error;
     }
   },
+  
+  async loginWithWhop(whopId: string) {
+    try {
+      console.log('Logging in with direct Whop ID/email:', whopId);
+      const response = await fetch('/api/whop/direct-auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ whopId }),
+        credentials: 'include', // Important for sending/receiving cookies
+      });
+      
+      if (!response.ok) {
+        console.error('Whop direct auth failed with status:', response.status);
+        throw new Error('Whop authentication failed');
+      }
+      
+      const userData = await response.json();
+      console.log('Whop authentication succeeded, user data:', userData);
+      
+      // Store user data in zustand store
+      useAuthStore.getState().setUser({
+        ...userData,
+        authenticated: true // Ensure authenticated flag is set
+      });
+      
+      return userData;
+    } catch (error) {
+      console.error('Whop auth error:', error);
+      throw error;
+    }
+  },
 
   async getCurrentUser() {
     try {
