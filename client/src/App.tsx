@@ -57,6 +57,7 @@ import LearnEmbeddedPage from './pages/learn-embedded';
 import EducationalGamesPage from './pages/educational-games';
 import TradingFreedomPodcast from './pages/trading-freedom-podcast';
 import LearningCenterPage from './pages/learning-center';
+import LearningCenterNewPage from './pages/learning-center-new';
 import CourseDetail from './components/learning/CourseDetail';
 import LessonDetail from './components/learning/LessonDetail';
 
@@ -169,9 +170,13 @@ const App: React.FC = () => {
                   <Route path="/learn-embed" element={<ProtectedRoute><LearnEmbeddedPage /></ProtectedRoute>} />
                   <Route path="/educational-games" element={<ProtectedRoute><EducationalGamesPage /></ProtectedRoute>} />
                   
-                  {/* Learning Center Routes */}
-                  <Route path="/learning-center" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
-                  <Route path="/learning-center/:tab" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
+                  {/* Learning Center Routes - Pro Trader Academy */}
+                  <Route path="/learning-center" element={<ProtectedRoute><LearningCenterNewPage /></ProtectedRoute>} />
+                  <Route path="/learning-center/:view/:id" element={<ProtectedRoute><LearningCenterNewPage /></ProtectedRoute>} />
+                  
+                  {/* Legacy Learning Center Routes - Keeping for backward compatibility */}
+                  <Route path="/learning-center/old" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
+                  <Route path="/learning-center/old/:tab" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
                   <Route path="/learning-center/courses/:courseId" element={<ProtectedRoute><CourseDetail /></ProtectedRoute>} />
                   <Route path="/learning-center/courses/:courseId/lessons/:lessonId" element={<ProtectedRoute><LessonDetail /></ProtectedRoute>} />
                   
