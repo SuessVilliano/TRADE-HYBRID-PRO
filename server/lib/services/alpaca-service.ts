@@ -1,9 +1,11 @@
 import { BrokerCredentials } from './broker-connection-service';
 import { BrokerService, BrokerAccountInfo, BrokerPosition, BrokerOrderRequest, BrokerOrderResponse } from './broker-service';
+import { apiCredentialManager } from './api-credential-manager';
 import axios from 'axios';
 
 interface AlpacaOptions {
   isPaper: boolean;
+  userId?: string | number; // Added user ID for user-specific credentials
 }
 
 /**
@@ -15,19 +17,24 @@ export class AlpacaService implements BrokerService {
   private baseUrl: string;
   private dataUrl: string;
   private accountId?: string;
+  private userId?: string | number; // Track which user's credentials we're using
 
   constructor(credentials: BrokerCredentials, options: AlpacaOptions = { isPaper: true }) {
-    // Use hard-coded credentials for now to ensure consistency
-    // In a production environment, this would be from the credentials parameter or environment variables
-    this.apiKey = "PKCBXRXBYIZ100B87CO0";
-    this.secretKey = "4tZAchGqy3EWSdAycUeywGcjgaGsBOz9LNKnkOJL";
+    // Store user ID if provided
+    this.userId = options.userId;
+    
+    // Use provided credentials or get from credential manager
+    // This allows immediate use with passed credentials or lazy loading from the manager
+    this.apiKey = credentials.apiKey || '';
+    this.secretKey = credentials.secretKey || '';
     this.accountId = credentials.accountId;
     
     if (!this.apiKey || !this.secretKey) {
-      throw new Error('API key and secret key are required for Alpaca');
+      // We'll try to get credentials lazily during API calls if not provided here
+      console.log('Credentials not provided in constructor, will load from credential manager when needed');
+    } else {
+      console.log(`Using Alpaca API Key: ${this.apiKey.substring(0, 4)}...${this.apiKey.substring(this.apiKey.length - 4)}`);
     }
-    
-    console.log(`Using Alpaca API Key: ${this.apiKey.substring(0, 4)}...${this.apiKey.substring(this.apiKey.length - 4)}`);
     
     // Use trading API instead of broker API
     if (options.isPaper) {
@@ -59,8 +66,9 @@ export class AlpacaService implements BrokerService {
    */
   async validateCredentials(): Promise<boolean> {
     try {
+      const headers = await this.getHeaders();
       const response = await axios.get(`${this.baseUrl}/account`, {
-        headers: this.getHeaders(),
+        headers,
       });
       
       return response.status === 200;
@@ -75,8 +83,9 @@ export class AlpacaService implements BrokerService {
    */
   async getAccountInfo(): Promise<BrokerAccountInfo> {
     try {
+      const headers = await this.getHeaders();
       const response = await axios.get(`${this.baseUrl}/account`, {
-        headers: this.getHeaders(),
+        headers,
       });
       
       const data = response.data;
@@ -111,8 +120,9 @@ export class AlpacaService implements BrokerService {
    */
   async getPositions(): Promise<BrokerPosition[]> {
     try {
+      const headers = await this.getHeaders();
       const response = await axios.get(`${this.baseUrl}/positions`, {
-        headers: this.getHeaders(),
+        headers,
       });
       
       return response.data.map((position: any) => ({
@@ -167,8 +177,9 @@ export class AlpacaService implements BrokerService {
         orderParams.client_order_id = order.clientOrderId;
       }
 
+      const headers = await this.getHeaders();
       const response = await axios.post(`${this.baseUrl}/orders`, orderParams, {
-        headers: this.getHeaders(),
+        headers,
       });
 
       const data = response.data;
@@ -318,8 +329,32 @@ export class AlpacaService implements BrokerService {
 
   /**
    * Get headers for API requests
+   * Will attempt to load credentials from credential manager if not already available
    */
-  private getHeaders() {
+  private async getHeaders() {
+    // If we don't have credentials already, try to get them from credential manager
+    if (!this.apiKey || !this.secretKey) {
+      try {
+        // Lazily initialize credential manager if needed
+        await apiCredentialManager.initialize();
+        
+        // Get credentials for this user (or system if no user ID provided)
+        const credentials = await apiCredentialManager.getCredentials('alpaca', this.userId);
+        
+        if (credentials && credentials.apiKey && credentials.secretKey) {
+          // Update our cached credentials
+          this.apiKey = credentials.apiKey;
+          this.secretKey = credentials.secretKey;
+          console.log(`Loaded Alpaca credentials from manager: ${this.apiKey.substring(0, 4)}...`);
+        } else {
+          throw new Error('Failed to retrieve valid Alpaca credentials from credential manager');
+        }
+      } catch (error) {
+        console.error('Error getting Alpaca credentials:', error);
+        throw new Error('No valid Alpaca credentials available');
+      }
+    }
+    
     return {
       'APCA-API-KEY-ID': this.apiKey,
       'APCA-API-SECRET-KEY': this.secretKey,
