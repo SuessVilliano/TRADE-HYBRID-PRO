@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import { authenticateUser, authenticateWallet, registerUser } from '../lib/auth-service';
+import { db } from '../db';
+import { users } from '../../shared/schema';
+import { eq } from 'drizzle-orm';
 
 // Create express router
 const router = Router();
@@ -126,17 +129,45 @@ router.post('/logout', (req, res) => {
 /**
  * Get current user
  */
-router.get('/user', (req, res) => {
-  if (req.session && req.session.userId) {
-    res.json({
-      authenticated: true,
-      userId: req.session.userId,
-      username: req.session.username,
-      walletAddress: req.session.walletAddress
-    });
-  } else {
-    res.json({
-      authenticated: false
+router.get('/user', async (req, res) => {
+  try {
+    if (req.session && req.session.userId) {
+      // Get complete user data from the database for consistency
+      const result = await db.select().from(users).where(eq(users.id, req.session.userId));
+      
+      if (result.length > 0) {
+        const user = result[0];
+        
+        // Return only necessary user data (don't include password)
+        res.json({
+          authenticated: true,
+          userId: user.id,
+          username: user.username,
+          email: user.email,
+          walletAddress: user.walletAddress,
+          membershipLevel: req.session.membershipLevel || user.membershipLevel,
+          whopId: req.session.whopId || user.whopId,
+          hasConnectedApis: user.hasConnectedApis,
+          balance: user.balance,
+          isAdmin: user.isAdmin || false,
+          isTokenHolder: user.thcTokenHolder || false
+        });
+      } else {
+        // User found in session but not in database
+        console.warn(`User with ID ${req.session.userId} found in session but not in database`);
+        req.session.destroy((err) => {
+          if (err) console.error('Error destroying invalid session:', err);
+        });
+        res.json({ authenticated: false });
+      }
+    } else {
+      res.json({ authenticated: false });
+    }
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).json({
+      authenticated: false,
+      error: 'Internal server error'
     });
   }
 });
