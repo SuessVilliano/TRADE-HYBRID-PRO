@@ -1150,11 +1150,11 @@ export default function StakeAndBake() {
               <div>
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center">
+                    <CardTitle className="flex items-center text-white">
                       <Coins className="mr-2 h-5 w-5 text-blue-500" />
                       Stake THC Tokens
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-gray-300">
                       Earn rewards by staking your THC tokens. The longer you stake, the higher the APY.
                     </CardDescription>
                   </CardHeader>
@@ -1245,11 +1245,11 @@ export default function StakeAndBake() {
               <div>
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center">
+                    <CardTitle className="flex items-center text-white">
                       <ShieldCheck className="mr-2 h-5 w-5 text-purple-500" />
                       Your Staking Stats
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-gray-300">
                       Overview of your current staking positions and rewards.
                     </CardDescription>
                   </CardHeader>
@@ -1348,11 +1348,11 @@ export default function StakeAndBake() {
               <div>
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center">
+                    <CardTitle className="flex items-center text-white">
                       <Network className="mr-2 h-5 w-5 text-indigo-500" />
                       Matrix System
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-gray-300">
                       Build your affiliate network and earn passive income through our infinite spillover matrix structure.
                     </CardDescription>
                   </CardHeader>
@@ -1477,11 +1477,11 @@ export default function StakeAndBake() {
               <div>
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center">
+                    <CardTitle className="flex items-center text-white">
                       <ChevronsUpDown className="mr-2 h-5 w-5 text-emerald-500" />
                       Your Matrix Visualization
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-gray-300">
                       Visual representation of your infinite spillover matrix structure and positions.
                     </CardDescription>
                   </CardHeader>
@@ -1582,7 +1582,7 @@ export default function StakeAndBake() {
               </h3>
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center">
+                  <CardTitle className="flex items-center text-white">
                     <LinkIcon className="mr-2 h-5 w-5 text-blue-500" />
                     Affiliate Link Generator
                   </CardTitle>
@@ -1696,11 +1696,11 @@ export default function StakeAndBake() {
             <div className="max-w-4xl mx-auto">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center">
+                  <CardTitle className="flex items-center text-white">
                     <Rocket className="mr-2 h-5 w-5 text-blue-500" />
                     Acquire THC Tokens
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-gray-300">
                     Get your THC tokens via pump.fun and join our ecosystem with multiple benefits
                   </CardDescription>
                 </CardHeader>
