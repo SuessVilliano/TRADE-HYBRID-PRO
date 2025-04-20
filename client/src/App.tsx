@@ -38,6 +38,7 @@ import WebhookSettingsPage from './pages/webhook-settings';
 import { WebhookLogsPage } from './pages/WebhookLogsPage';
 import { BrokerApiSettingsPage } from './pages/BrokerApiSettingsPage';
 import ConnectionsPage from './pages/connections';
+import ConnectionsSimplePage from './pages/connections-simple';
 
 // Trading & Markets
 import AdvancedTradingDashboard from './pages/advanced-trading-dashboard';
@@ -154,6 +155,7 @@ const App: React.FC = () => {
                   <Route path="/dex" element={<ProtectedRoute><SolanaDexEmbedded /></ProtectedRoute>} />
                   <Route path="/broker-connections" element={<ProtectedRoute><BrokerConnectionsView /></ProtectedRoute>} />
                   <Route path="/connections" element={<ProtectedRoute><ConnectionsPage /></ProtectedRoute>} />
+                  <Route path="/connections-simple" element={<ProtectedRoute><ConnectionsSimplePage /></ProtectedRoute>} />
 
                   {/* Learning & Education */}
                   <Route path="/learning-journey" element={<ProtectedRoute><LearningJourneyPage /></ProtectedRoute>} />
