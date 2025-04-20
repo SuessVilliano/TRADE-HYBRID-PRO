@@ -67,36 +67,70 @@ const InvestmentDetails: React.FC = () => {
       setLoading(true);
       console.log(`Fetching investment details for ID: ${id}`);
       
-      // Fetch investment details
-      const investmentResponse = await fetch(`/api/investments/${id}`);
+      // Fetch investment details with better credentials handling
+      const investmentResponse = await fetch(`/api/investments/${id}`, {
+        credentials: 'include', // Include cookies for authentication
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      // Handle different error states
       if (!investmentResponse.ok) {
         console.error(`Investment fetch failed with status: ${investmentResponse.status}`);
+        
+        let errorMessage = 'Failed to fetch investment details';
+        try {
+          // Try to get a more specific error message from the response
+          const errorData = await investmentResponse.json();
+          if (errorData && errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch (parseError) {
+          // If the response isn't JSON, use the default error message
+          console.warn('Could not parse error response:', parseError);
+        }
+        
         if (investmentResponse.status === 404) {
-          throw new Error('Investment not found');
-        } else if (investmentResponse.status === 403) {
-          throw new Error('You do not have permission to view this investment');
+          throw new Error('Investment not found. It may have been deleted or you entered an invalid URL.');
+        } else if (investmentResponse.status === 401 || investmentResponse.status === 403) {
+          throw new Error('You do not have permission to view this investment. Please check your login status.');
         } else {
-          throw new Error('Failed to fetch investment details');
+          throw new Error(`${errorMessage}. Server returned status: ${investmentResponse.status}`);
         }
       }
       
       const investmentData = await investmentResponse.json();
       console.log('Received investment data:', investmentData);
+      
+      // Validate the response data
+      if (!investmentData || !investmentData.id) {
+        throw new Error('Invalid investment data received from server');
+      }
+      
       setInvestment(investmentData);
       setEditedInvestment(investmentData);
       
-      // Fetch performance records
+      // Fetch performance records with better error handling
       console.log(`Fetching performance data for investment ID: ${id}`);
-      const performanceResponse = await fetch(`/api/investment-performance?investmentId=${id}`);
-      
-      if (!performanceResponse.ok) {
-        console.warn(`Performance data fetch failed with status: ${performanceResponse.status}`);
-        // Don't throw error for performance data, just set empty array
+      try {
+        const performanceResponse = await fetch(`/api/investment-performance?investmentId=${id}`, {
+          credentials: 'include' // Include cookies for authentication
+        });
+        
+        if (!performanceResponse.ok) {
+          console.warn(`Performance data fetch failed with status: ${performanceResponse.status}`);
+          // Don't throw error for performance data, just set empty array
+          setPerformanceRecords([]);
+        } else {
+          const performanceData = await performanceResponse.json();
+          console.log(`Received ${performanceData.length} performance records`);
+          setPerformanceRecords(Array.isArray(performanceData) ? performanceData : []);
+        }
+      } catch (perfError) {
+        console.error('Error fetching performance data:', perfError);
+        // Don't fail the entire operation for performance data issues
         setPerformanceRecords([]);
-      } else {
-        const performanceData = await performanceResponse.json();
-        console.log(`Received ${performanceData.length} performance records`);
-        setPerformanceRecords(Array.isArray(performanceData) ? performanceData : []);
       }
       
     } catch (error) {
@@ -116,24 +150,47 @@ const InvestmentDetails: React.FC = () => {
   const handleEditInvestment = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Prepare data with proper type conversions
+      const investmentData = {
+        ...editedInvestment,
+        performanceFeePercent: parseFloat(editedInvestment.performanceFeePercent) || 0,
+        setupFee: parseFloat(editedInvestment.setupFee) || 0,
+        propFirmAccountId: editedInvestment.propFirmAccountId ? parseInt(editedInvestment.propFirmAccountId) : null
+      };
+      
+      console.log(`Updating investment ID: ${id} with data:`, investmentData);
+      
       const response = await fetch(`/api/investments/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
-        body: JSON.stringify({
-          ...editedInvestment,
-          performanceFeePercent: parseFloat(editedInvestment.performanceFeePercent),
-          setupFee: parseFloat(editedInvestment.setupFee),
-          propFirmAccountId: editedInvestment.propFirmAccountId ? parseInt(editedInvestment.propFirmAccountId) : null
-        }),
+        credentials: 'include', // Include cookies for authentication
+        body: JSON.stringify(investmentData),
       });
       
+      // Handle different error responses
       if (!response.ok) {
-        throw new Error('Failed to update investment');
+        console.error(`Investment update failed with status: ${response.status}`);
+        
+        let errorMessage = 'Failed to update investment';
+        try {
+          // Try to get a more specific error message from the response
+          const errorData = await response.json();
+          if (errorData && errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch (parseError) {
+          // If the response isn't JSON, use the default error message
+          console.warn('Could not parse error response:', parseError);
+        }
+        
+        throw new Error(errorMessage);
       }
       
       const updatedInvestment = await response.json();
+      console.log('Investment updated successfully:', updatedInvestment);
       setInvestment(updatedInvestment);
       
       toast({
@@ -148,7 +205,7 @@ const InvestmentDetails: React.FC = () => {
       console.error('Error updating investment:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update investment. Please try again later.',
+        description: error instanceof Error ? error.message : 'Failed to update investment. Please try again later.',
         variant: 'destructive',
       });
     }

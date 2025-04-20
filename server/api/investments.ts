@@ -2,6 +2,7 @@ import express from 'express';
 import { db } from '../db';
 import { investments, investors, insertInvestmentSchema } from '../../shared/schema';
 import { eq, and } from 'drizzle-orm';
+import { authMiddleware } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -204,13 +205,15 @@ export const deleteInvestment = async (req: express.Request, res: express.Respon
 };
 
 // Routes using the exported handlers
-router.get('/', getAllInvestments);
-router.get('/:id', getInvestmentById);
-router.post('/', createInvestment);
-router.put('/:id', updateInvestment);
-router.delete('/:id', deleteInvestment);
+// Add auth middleware to protect all investment routes
+// First, define specific routes before generic /:id route to prevent interception
+router.get('/investor/:investorId', authMiddleware, getInvestmentsByInvestorId);
 
-// Add a route for getting investments by investor ID
-router.get('/investor/:investorId', getInvestmentsByInvestorId);
+// Then define the other routes
+router.get('/', authMiddleware, getAllInvestments);
+router.get('/:id', authMiddleware, getInvestmentById);
+router.post('/', authMiddleware, createInvestment);
+router.put('/:id', authMiddleware, updateInvestment);
+router.delete('/:id', authMiddleware, deleteInvestment);
 
 export default router;
