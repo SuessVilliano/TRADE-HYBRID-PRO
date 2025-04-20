@@ -161,32 +161,29 @@ export default function StakeAndBake() {
     // Check if Phantom wallet is available
     const checkPhantomWallet = async () => {
       try {
-        const provider = window.solana;
-        if (provider && provider.isPhantom) {
-          console.log("Phantom wallet is available");
-          // Listen for wallet connection events
-          provider.on('connect', (publicKey) => {
-            console.log('Wallet connected:', publicKey.toString());
-            setConnectedWallet(true);
-            // Update solanaAuth state with connected wallet info
-            setSolanaAuth(prev => ({
-              ...prev,
-              walletConnected: true,
-              publicKey: publicKey.toString()
-            }));
-          });
+        // Try modern approach first (via window.phantom)
+        if (window.phantom?.solana) {
+          console.log("Phantom wallet is available (modern API)");
+          setPhantomInstalled(true);
           
-          provider.on('disconnect', () => {
-            console.log('Wallet disconnected');
-            setConnectedWallet(false);
-            // Update solanaAuth state
-            setSolanaAuth(prev => ({
-              ...prev,
-              walletConnected: false,
-              publicKey: null
-            }));
-          });
-        } else {
+          // If already connected, update our state
+          if (solanaAuth.walletConnected) {
+            setConnectedWallet(true);
+            console.log('Wallet already connected via SolanaAuth');
+          }
+        } 
+        // Fallback to legacy approach (window.solana)
+        else if (window.solana?.isPhantom) {
+          console.log("Phantom wallet is available (legacy API)");
+          setPhantomInstalled(true);
+          
+          // If already connected, update our state
+          if (solanaAuth.walletConnected) {
+            setConnectedWallet(true);
+            console.log('Wallet already connected via SolanaAuth');
+          }
+        }
+        else {
           console.log("Phantom wallet is not installed");
           toast({
             title: "Wallet Not Found",
