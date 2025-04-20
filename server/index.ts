@@ -13,7 +13,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Configure session middleware with secure cookies
+// Configure session middleware with secure cookies and extended persistence
 app.use(session({
   secret: process.env.SESSION_SECRET || 'trade-hybrid-session-secret',
   resave: false,
@@ -21,9 +21,10 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
     httpOnly: true, // Prevents client-side JS from reading the cookie
-    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days for long-term persistence
     sameSite: 'lax' // Helps with CSRF
-  }
+  },
+  rolling: true // Reset expiration countdown on each response
 }));
 
 app.use((req, res, next) => {
