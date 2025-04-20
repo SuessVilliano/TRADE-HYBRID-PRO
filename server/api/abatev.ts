@@ -1,176 +1,289 @@
 import { Router } from 'express';
-import crypto from 'crypto';
+import { z } from 'zod';
+import { db } from '../db';
+import { apiCredentialManager } from '../lib/services/api-credential-manager';
+import { log, logError } from '../utils/logger';
 
+// Create a new router
 const router = Router();
 
-// In-memory store for ABATEV connections
-// In a production environment, this would be stored in a database
-const abatevConnections = new Map<string, ABATEVConnection>();
+// Initialize in-memory state for ABATEV (Advanced Broker Aggregation & Trade Execution View)
+let abatevState = {
+  enabled: false,
+  connected: false,
+  activeConnections: [] as string[],
+  ordersProcessed: 0,
+  averageExecutionTime: 0,
+  activeStrategies: 0,
+  executionPreset: 'bestPrice',
+  lastInitialized: null as Date | null,
+};
 
-// ABATEV connection interface
-interface ABATEVConnection {
-  id: string;
-  userId: string;
-  clientVersion: string;
-  features: string[];
-  supportedBrokers: string[];
-  status: 'connected' | 'disconnected' | 'error';
-  connectedAt: Date;
-  lastActivityAt: Date;
+// Schema for toggling ABATEV
+const toggleAbatevSchema = z.object({
+  enabled: z.boolean()
+});
+
+/**
+ * Get the status of the ABATEV system
+ */
+router.get('/status', async (req, res) => {
+  try {
+    // Check all broker connections to see which ones are active
+    const credentialManager = ApiCredentialManager.getInstance();
+    
+    // If ABATEV is initialized, refresh the active connections
+    if (abatevState.connected) {
+      // Check each supported broker to see if it's connected
+      const activeConnections = [];
+      
+      // Check Alpaca
+      const alpacaCredentials = credentialManager.getCredentials('alpaca');
+      if (alpacaCredentials?.apiKey && alpacaCredentials?.secretKey) {
+        try {
+          const alpacaConnected = await testBrokerConnection('alpaca');
+          if (alpacaConnected) {
+            activeConnections.push('alpaca');
+          }
+        } catch (err) {
+          logger.error(`Error checking Alpaca connection: ${err}`);
+        }
+      }
+      
+      // Check Oanda
+      const oandaCredentials = credentialManager.getCredentials('oanda');
+      if (oandaCredentials?.apiToken && oandaCredentials?.accountId) {
+        try {
+          const oandaConnected = await testBrokerConnection('oanda');
+          if (oandaConnected) {
+            activeConnections.push('oanda');
+          }
+        } catch (err) {
+          logger.error(`Error checking Oanda connection: ${err}`);
+        }
+      }
+      
+      // Check NinjaTrader (if applicable)
+      const ninjaCredentials = credentialManager.getCredentials('ninjatrader');
+      if (ninjaCredentials) {
+        try {
+          const ninjaConnected = await testBrokerConnection('ninjatrader');
+          if (ninjaConnected) {
+            activeConnections.push('ninjatrader');
+          }
+        } catch (err) {
+          logger.error(`Error checking NinjaTrader connection: ${err}`);
+        }
+      }
+      
+      // Update the active connections in the state
+      abatevState.activeConnections = activeConnections;
+    }
+    
+    // Return the current status
+    return res.json({
+      success: true,
+      ...abatevState
+    });
+  } catch (err) {
+    logger.error(`Error getting ABATEV status: ${err}`);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve ABATEV status'
+    });
+  }
+});
+
+/**
+ * Initialize or reset the ABATEV system
+ */
+router.post('/initialize', async (req, res) => {
+  try {
+    // Initialize the ABATEV system
+    abatevState.connected = true;
+    abatevState.lastInitialized = new Date();
+    
+    // Reset metrics
+    if (!abatevState.enabled) {
+      abatevState.ordersProcessed = 0;
+      abatevState.averageExecutionTime = 0;
+      abatevState.activeStrategies = 0;
+    }
+    
+    // Check which brokers are connected
+    const credentialManager = ApiCredentialManager.getInstance();
+    const activeConnections = [];
+    
+    // Check Alpaca
+    const alpacaCredentials = credentialManager.getCredentials('alpaca');
+    if (alpacaCredentials?.apiKey && alpacaCredentials?.secretKey) {
+      try {
+        const alpacaConnected = await testBrokerConnection('alpaca');
+        if (alpacaConnected) {
+          activeConnections.push('alpaca');
+        }
+      } catch (err) {
+        logger.error(`Error checking Alpaca connection: ${err}`);
+      }
+    }
+    
+    // Check Oanda
+    const oandaCredentials = credentialManager.getCredentials('oanda');
+    if (oandaCredentials?.apiToken && oandaCredentials?.accountId) {
+      try {
+        const oandaConnected = await testBrokerConnection('oanda');
+        if (oandaConnected) {
+          activeConnections.push('oanda');
+        }
+      } catch (err) {
+        logger.error(`Error checking Oanda connection: ${err}`);
+      }
+    }
+    
+    // Check NinjaTrader (if applicable)
+    const ninjaCredentials = credentialManager.getCredentials('ninjatrader');
+    if (ninjaCredentials) {
+      try {
+        const ninjaConnected = await testBrokerConnection('ninjatrader');
+        if (ninjaConnected) {
+          activeConnections.push('ninjatrader');
+        }
+      } catch (err) {
+        logger.error(`Error checking NinjaTrader connection: ${err}`);
+      }
+    }
+    
+    // Update active connections
+    abatevState.activeConnections = activeConnections;
+    
+    // Return the updated status
+    return res.json({
+      success: true,
+      message: 'ABATEV system initialized successfully',
+      ...abatevState
+    });
+  } catch (err) {
+    logger.error(`Error initializing ABATEV: ${err}`);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to initialize ABATEV system'
+    });
+  }
+});
+
+/**
+ * Toggle the ABATEV system on/off
+ */
+router.post('/toggle', async (req, res) => {
+  try {
+    // Validate request body
+    const validation = toggleAbatevSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid request data',
+        errors: validation.error.errors
+      });
+    }
+    
+    const { enabled } = validation.data;
+    
+    // Update the enabled state
+    abatevState.enabled = enabled;
+    
+    // If enabling, verify that the system is connected
+    if (enabled && !abatevState.connected) {
+      // Initialize the system if it's not already connected
+      abatevState.connected = true;
+      abatevState.lastInitialized = new Date();
+    }
+    
+    return res.json({
+      success: true,
+      enabled,
+      message: `ABATEV system ${enabled ? 'enabled' : 'disabled'} successfully`
+    });
+  } catch (err) {
+    logger.error(`Error toggling ABATEV: ${err}`);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to toggle ABATEV system'
+    });
+  }
+});
+
+/**
+ * Helper function to test a broker connection
+ */
+async function testBrokerConnection(brokerId: string): Promise<boolean> {
+  const credentialManager = ApiCredentialManager.getInstance();
+  const credentials = credentialManager.getCredentials(brokerId);
+  
+  if (!credentials) {
+    return false;
+  }
+  
+  // Handle different broker types
+  switch (brokerId) {
+    case 'alpaca':
+      // Test Alpaca connection
+      try {
+        if (!credentials.apiKey || !credentials.secretKey) {
+          return false;
+        }
+        
+        // Simple check against Alpaca API
+        const alpacaResponse = await fetch('https://api.alpaca.markets/v2/account', {
+          headers: {
+            'APCA-API-KEY-ID': credentials.apiKey,
+            'APCA-API-SECRET-KEY': credentials.secretKey
+          }
+        });
+        
+        // If we get a 200 response, the connection is valid
+        return alpacaResponse.status === 200;
+      } catch (err) {
+        logger.error(`Error testing Alpaca connection: ${err}`);
+        return false;
+      }
+      
+    case 'oanda':
+      // Test Oanda connection
+      try {
+        if (!credentials.apiToken || !credentials.accountId) {
+          return false;
+        }
+        
+        // Simple check against Oanda API
+        const oandaResponse = await fetch(`https://api-fxpractice.oanda.com/v3/accounts/${credentials.accountId}`, {
+          headers: {
+            'Authorization': `Bearer ${credentials.apiToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        // If we get a 200 response, the connection is valid
+        return oandaResponse.status === 200;
+      } catch (err) {
+        logger.error(`Error testing Oanda connection: ${err}`);
+        return false;
+      }
+      
+    case 'ninjatrader':
+      // For NinjaTrader, we would typically connect to a local instance
+      // This is a simplified check - in reality would need a more complex procedure
+      try {
+        // Check if the local NinjaTrader service is responding
+        const ninjaResponse = await fetch('http://localhost:8000/ninjatrader/status');
+        return ninjaResponse.status === 200;
+      } catch (err) {
+        // Most likely the local NinjaTrader service is not running
+        return false;
+      }
+      
+    default:
+      return false;
+  }
 }
-
-// Get all active ABATEV connections
-router.get('/', (req, res) => {
-  try {
-    // Get userId from session or use a demo userId
-    const userId = req.session?.userId || 'demo-user-123';
-    
-    // Get all connections for this user
-    const userConnections = Array.from(abatevConnections.values())
-      .filter(conn => conn.userId === userId)
-      .map(conn => ({
-        id: conn.id,
-        status: conn.status,
-        connectedAt: conn.connectedAt,
-        lastActivityAt: conn.lastActivityAt,
-        features: conn.features,
-        supportedBrokers: conn.supportedBrokers
-      }));
-    
-    res.json({ connections: userConnections });
-  } catch (error) {
-    console.error('Error getting ABATEV connections:', error);
-    res.status(500).json({ error: 'Failed to get ABATEV connections' });
-  }
-});
-
-// Connect to ABATEV
-router.post('/connect', (req, res) => {
-  try {
-    // Get userId from session or use a demo userId
-    const userId = (req.session?.userId || 'demo-user-123').toString();
-    
-    // Get connection details from request body
-    const { clientVersion, features, supportedBrokers } = req.body;
-    
-    // Generate a connection ID
-    const connectionId = crypto.randomBytes(16).toString('hex');
-    
-    // Create a new connection
-    const connection: ABATEVConnection = {
-      id: connectionId,
-      userId,
-      clientVersion: clientVersion || '1.0.0',
-      features: features || [],
-      supportedBrokers: supportedBrokers || [],
-      status: 'connected',
-      connectedAt: new Date(),
-      lastActivityAt: new Date()
-    };
-    
-    // Store the connection
-    abatevConnections.set(connectionId, connection);
-    
-    console.log(`ABATEV connected: ${connectionId} for user ${userId}`);
-    
-    // Return connection details
-    res.status(200).json({
-      connectionId,
-      status: 'connected',
-      message: 'Successfully connected to ABATEV protocol'
-    });
-  } catch (error) {
-    console.error('Error connecting to ABATEV:', error);
-    res.status(500).json({ error: 'Failed to connect to ABATEV protocol' });
-  }
-});
-
-// Disconnect from ABATEV
-router.post('/disconnect', (req, res) => {
-  try {
-    // Get userId from session or use a demo userId
-    const userId = (req.session?.userId || 'demo-user-123').toString();
-    
-    // Get connection ID from request body
-    const { connectionId } = req.body;
-    
-    if (!connectionId) {
-      return res.status(400).json({ error: 'Connection ID is required' });
-    }
-    
-    // Get the connection
-    const connection = abatevConnections.get(connectionId);
-    
-    if (!connection) {
-      return res.status(404).json({ error: 'Connection not found' });
-    }
-    
-    // Check if the connection belongs to the user
-    if (connection.userId !== userId) {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
-    
-    // Update connection status
-    connection.status = 'disconnected';
-    connection.lastActivityAt = new Date();
-    
-    // Store the updated connection
-    abatevConnections.set(connectionId, connection);
-    
-    console.log(`ABATEV disconnected: ${connectionId} for user ${userId}`);
-    
-    // Return success
-    res.status(200).json({
-      connectionId,
-      status: 'disconnected',
-      message: 'Successfully disconnected from ABATEV protocol'
-    });
-  } catch (error) {
-    console.error('Error disconnecting from ABATEV:', error);
-    res.status(500).json({ error: 'Failed to disconnect from ABATEV protocol' });
-  }
-});
-
-// Check connection status
-router.get('/status/:connectionId', (req, res) => {
-  try {
-    // Get userId from session or use a demo userId
-    const userId = (req.session?.userId || 'demo-user-123').toString();
-    
-    // Get connection ID from request params
-    const { connectionId } = req.params;
-    
-    if (!connectionId) {
-      return res.status(400).json({ error: 'Connection ID is required' });
-    }
-    
-    // Get the connection
-    const connection = abatevConnections.get(connectionId);
-    
-    if (!connection) {
-      return res.status(404).json({ error: 'Connection not found' });
-    }
-    
-    // Check if the connection belongs to the user
-    if (connection.userId !== userId) {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
-    
-    // Update last activity time
-    connection.lastActivityAt = new Date();
-    abatevConnections.set(connectionId, connection);
-    
-    // Return connection status
-    res.status(200).json({
-      connectionId,
-      status: connection.status,
-      connectedAt: connection.connectedAt,
-      lastActivityAt: connection.lastActivityAt
-    });
-  } catch (error) {
-    console.error('Error checking ABATEV status:', error);
-    res.status(500).json({ error: 'Failed to check ABATEV status' });
-  }
-});
 
 export default router;
