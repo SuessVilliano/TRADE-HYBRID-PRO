@@ -99,19 +99,25 @@ router.get('/callback', async (req, res) => {
       
       const whopUserId = userResponse.data.id;
       
-      // Find or create user based on Whop ID
+      // Find or create user based on Whop ID, including membership details
       const result = await whopService.findOrCreateUser(whopUserId);
       
       if (!result.success) {
+        console.error('Failed to create/find user with Whop ID:', whopUserId, result.message);
         return res.status(401).json({ error: result.message });
       }
       
-      // Set user in session
+      console.log('Successfully authenticated user with Whop ID:', whopUserId, 'User ID:', result.userId);
+      
+      // Set user in session with complete information
       if (req.session) {
         req.session.userId = result.userId;
         req.session.username = result.username;
         req.session.whopId = whopUserId;
         req.session.membershipLevel = result.membershipLevel;
+        
+        // Set the session cookie to expire in 30 days for persistent login
+        req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
       }
       
       // Redirect to dashboard
@@ -127,15 +133,21 @@ router.get('/callback', async (req, res) => {
       const result = await whopService.findOrCreateUser(demoWhopUserId);
       
       if (!result.success) {
+        console.error('Failed to create/find demo user:', result.message);
         return res.status(401).json({ error: result.message });
       }
       
-      // Set user in session
+      console.log('Successfully authenticated with demo user, User ID:', result.userId);
+      
+      // Set user in session with complete information
       if (req.session) {
         req.session.userId = result.userId;
         req.session.username = result.username;
         req.session.whopId = demoWhopUserId;
         req.session.membershipLevel = result.membershipLevel;
+        
+        // Set the session cookie to expire in 30 days for persistent login
+        req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
       }
       
       // Redirect to dashboard

@@ -184,14 +184,22 @@ export function WhopAuth({ onStatusChange }: WhopAuthProps) {
           <Alert className="bg-blue-900/20 border-blue-800">
             <Info className="h-4 w-4 text-blue-500" />
             <AlertTitle>Don't have a membership?</AlertTitle>
-            <AlertDescription>
+            <AlertDescription className="flex flex-col space-y-2">
               <a 
-                href="https://www.tradehybrid.club" 
+                href="https://tradehybrid.club" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-blue-400 hover:text-blue-300 underline"
               >
-                Sign up on TradeHybrid.club
+                View membership options
+              </a>
+              <a 
+                href="https://whop.com/checkout/plan_N7GQvjEjCOB0k" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:text-blue-300 underline"
+              >
+                Purchase Trade Hybrid membership
               </a>
             </AlertDescription>
           </Alert>
