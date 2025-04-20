@@ -13,7 +13,6 @@ interface ProtectedRouteProps {
  */
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const { isAuthenticated: solanaAuthenticated, isAuthenticating } = useSolanaAuth();
   const { isAuthenticated: contextAuthenticated, getCurrentUser } = useAuth();
   
@@ -112,7 +111,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
             onClick={() => {
               setAuthError(null);
-              navigate('/login', { replace: true });
+              window.location.href = '/login';
             }}
           >
             Go to Login
