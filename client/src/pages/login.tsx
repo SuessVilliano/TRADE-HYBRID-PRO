@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSolanaAuth } from "../lib/context/SolanaAuthProvider";
 import { useAuth } from "../lib/context/AuthContext";
+import { WhopAuth } from "../components/ui/whop-auth";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -55,9 +56,16 @@ export default function LoginPage() {
     }
   };
   
-  // Handle Whop authentication
+  // Handle Whop authentication - direct method
   const handleWhopAuth = () => {
-    window.location.href = '/api/whop/login';
+    // Show the WhopAuth modal/dialog
+    const whopAuthDialog = document.getElementById('whop-auth-dialog');
+    if (whopAuthDialog) {
+      whopAuthDialog.classList.remove('hidden');
+    } else {
+      // Fallback to the redirect method if the dialog isn't available
+      window.location.href = '/api/whop/login';
+    }
   };
   
   // Handle demo login
