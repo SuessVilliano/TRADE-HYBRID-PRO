@@ -208,8 +208,9 @@ export class AlpacaService implements BrokerService {
    */
   async getOrderHistory(): Promise<any[]> {
     try {
+      const headers = await this.getHeaders();
       const response = await axios.get(`${this.baseUrl}/orders?status=all&limit=100`, {
-        headers: this.getHeaders(),
+        headers,
       });
       
       return response.data.map((order: any) => ({
@@ -241,9 +242,10 @@ export class AlpacaService implements BrokerService {
    */
   async getQuote(symbol: string): Promise<{ symbol: string; bid: number; ask: number; last?: number }> {
     try {
+      const headers = await this.getHeaders();
       const response = await axios.get(
         `${this.dataUrl}/stocks/${symbol}/quotes/latest`, 
-        { headers: this.getHeaders() }
+        { headers }
       );
       
       const quote = response.data.quote;
@@ -268,9 +270,10 @@ export class AlpacaService implements BrokerService {
       const url = quantity 
         ? `${this.baseUrl}/positions/${symbol}?qty=${quantity}`
         : `${this.baseUrl}/positions/${symbol}`;
-        
+      
+      const headers = await this.getHeaders();  
       const response = await axios.delete(url, {
-        headers: this.getHeaders(),
+        headers,
       });
       
       return response.data;
@@ -285,8 +288,9 @@ export class AlpacaService implements BrokerService {
    */
   async cancelOrder(orderId: string): Promise<boolean> {
     try {
+      const headers = await this.getHeaders();
       await axios.delete(`${this.baseUrl}/orders/${orderId}`, {
-        headers: this.getHeaders(),
+        headers,
       });
       
       return true;
@@ -301,8 +305,9 @@ export class AlpacaService implements BrokerService {
    */
   async getOrderStatus(orderId: string): Promise<any> {
     try {
+      const headers = await this.getHeaders();
       const response = await axios.get(`${this.baseUrl}/orders/${orderId}`, {
-        headers: this.getHeaders(),
+        headers,
       });
       
       const order = response.data;
