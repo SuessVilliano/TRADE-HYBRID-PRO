@@ -343,6 +343,62 @@ export default function StakeAndBake() {
     });
   };
   
+  // Connect wallet explicitly as a validator
+  const connectAsValidator = async () => {
+    // First check if Phantom extension is installed
+    if (!((window as any).phantom?.solana) && !((window as any).solana?.isPhantom)) {
+      toast({
+        title: "Wallet Not Detected",
+        description: "Please install Phantom wallet extension and reload the page",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      // If wallet is not connected, connect it
+      if (!solanaAuth.walletConnected) {
+        setIsConnecting(true);
+        
+        // Try modern approach first (via window.phantom)
+        if ((window as any).phantom?.solana) {
+          try {
+            console.log("Connecting via modern Phantom API...");
+            await (window as any).phantom.solana.connect();
+            // Give the wallet adapter time to update
+            await new Promise(resolve => setTimeout(resolve, 500));
+          } catch (error) {
+            console.error("Error connecting via modern API:", error);
+          }
+        }
+        
+        // If still not connected, try the wallet adapter
+        if (!solanaAuth.walletConnected) {
+          console.log("Trying to connect via SolanaAuth...");
+          const success = await solanaAuth.connectAndAuthenticate();
+          if (!success) {
+            throw new Error("Failed to connect wallet");
+          }
+        }
+        
+        setIsConnecting(false);
+        // After connection, immediately fetch validator info
+        await fetchValidatorInfo();
+      } else {
+        // If already connected, just fetch validator info
+        await fetchValidatorInfo();
+      }
+    } catch (error) {
+      console.error("Error connecting as validator:", error);
+      toast({
+        title: "Connection Error",
+        description: error instanceof Error ? error.message : "Failed to connect as validator",
+        variant: "destructive",
+      });
+      setIsConnecting(false);
+    }
+  };
+  
   // Fetch validator information from Solana network
   const fetchValidatorInfo = async () => {
     if (!((window as any).solana) || !solanaAuth.walletConnected) {
@@ -361,7 +417,7 @@ export default function StakeAndBake() {
       const { Connection, clusterApiUrl, PublicKey } = await import('@solana/web3.js');
       
       // Create connection to Solana network (mainnet-beta for production, devnet for testing)
-      const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+      const connection = new Connection(clusterApiUrl('devnet'), 'confirmed'); // Using devnet for testing
       
       // Convert validator identity and vote account to PublicKey objects
       const identityPubkey = new PublicKey(validatorIdentity);
