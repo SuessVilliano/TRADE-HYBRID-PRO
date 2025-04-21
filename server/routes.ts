@@ -47,42 +47,81 @@ import { processUserWebhook, getUserWebhookByToken, executeQueryFromFile } from 
 import { processTradingViewWebhook } from './api/tradingview-webhooks';
 
 const receiveWebhook = async (req: any, res: any) => {
+  let start = Date.now();
+  let executionSuccess = false;
+  let resultMessage = '';
+  let errorDetails = null;
+  
   try {
     // Check if there's a payload and forward it to the signal processor
     if (req.body && (req.body.content || req.body.data)) {
       const payload = req.body;
       
       // Process the webhook signal
-      const result = await processWebhookSignal(payload);
+      processWebhookSignal(payload);
       
+      executionSuccess = true;
+      resultMessage = 'Webhook received and processed successfully';
       console.log('Received and processed webhook signal');
-      
-      // Log the webhook execution
-      try {
-        // Import the webhook service to log the execution
-        const { logWebhookExecution } = await import('./services/webhook-service');
-        
-        // Log the webhook execution
-        await logWebhookExecution(
-          'webhook-' + Date.now().toString(), // Generate a simple webhook ID
-          'demo-user-123', // Use demo user ID
-          req.body.broker || req.body.source || req.body.channel_name || 'tradingview', // Try to determine broker
-          payload, // The full payload
-          { success: true, message: 'Webhook received and processed' }, // Result
-          req, // The request object
-          50 // Fake response time
-        );
-        console.log('Webhook execution logged successfully');
-      } catch (logError) {
-        console.error('Error logging webhook execution:', logError);
-      }
+    } else {
+      // Invalid payload
+      executionSuccess = false;
+      resultMessage = 'Invalid webhook payload, missing content or data';
+      errorDetails = ['Missing content or data fields in payload'];
+      console.warn('Received invalid webhook payload:', req.body);
     }
-  } catch (error) {
+  } catch (error: any) {
+    executionSuccess = false;
+    resultMessage = 'Error processing webhook';
+    errorDetails = [error.message || 'Unknown error'];
     console.error('Error processing webhook:', error);
   }
   
+  // Calculate response time
+  const responseTime = Date.now() - start;
+  
+  // Log the webhook execution
+  try {
+    // Import the webhook service to log the execution
+    const { logWebhookExecution } = await import('./services/webhook-service');
+    
+    // Determine broker type from payload
+    const broker = req.body.broker || 
+                  req.body.source || 
+                  req.body.channel_name || 
+                  (req.body.content && req.body.content.includes('Cash Cow') ? 'cashcow' : 'tradingview');
+    
+    // Generate a unique webhook ID
+    const webhookId = `webhook-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    
+    // Log the webhook execution
+    await logWebhookExecution(
+      webhookId, // Generate a unique webhook ID
+      'demo-user-123', // Use demo user ID
+      broker, // Try to determine broker
+      req.body, // The full payload
+      { 
+        success: executionSuccess, 
+        message: resultMessage,
+        errors: errorDetails
+      },
+      req, 
+      responseTime // Real response time
+    );
+    console.log(`Webhook execution logged with ID: ${webhookId}, broker: ${broker}, success: ${executionSuccess}`);
+  } catch (logError) {
+    console.error('Error logging webhook execution:', logError);
+  }
+  
   // Always return success to prevent the webhook sender from retrying
-  return res.json({success: true, message: 'Webhook received'});
+  return res.json({
+    success: true, 
+    message: 'Webhook received',
+    execution: {
+      success: executionSuccess,
+      message: resultMessage
+    }
+  });
 };
 
 // Process user webhook signals
@@ -128,14 +167,14 @@ const receiveUserWebhook = async (req: any, res: any) => {
     }
     
     return res.json({ success: true, message: 'User webhook received' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error processing user webhook:', error);
     
     // Log the failed webhook execution
     try {
       const { logWebhookExecution } = await import('./services/webhook-service');
       await logWebhookExecution(
-        'user-webhook-' + token, // Use token as webhook ID
+        'user-webhook-' + req.params.token, // Use token as webhook ID
         'demo-user-123', // Use demo user ID
         req.body.broker || req.body.source || 'custom', // Try to determine broker
         req.body, // The full payload
@@ -237,6 +276,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Solaris AI forex signals
   app.post("/api/v1/webhooks/OXdqSQ0du1D7gFEEDBUsS", receiveWebhook); // EURUSD & AUDUSD - Solaris AI - forex
+  
+  // Direct webhook logs access endpoint (public) - for easier access to webhook logs
+  app.get("/api/webhooks/logs-public", async (req, res) => {
+    try {
+      console.log('Public webhook logs endpoint called directly from routes.ts');
+      
+      // Import webhook service dynamically
+      const { getWebhookExecutionLogs } = await import('./services/webhook-service');
+      
+      // Get all webhook logs (no filtering by user)
+      const logs = await getWebhookExecutionLogs();
+      console.log('Direct public logs found:', logs.length);
+      
+      return res.json({ logs });
+    } catch (error: any) {
+      console.error('Error getting public webhook logs:', error);
+      return res.status(500).json({ error: error.message || 'An error occurred' });
+    }
+  });
   
   // User webhook route for custom integrations
   app.post("/api/webhooks/user/:token", receiveUserWebhook); // Custom user webhooks
