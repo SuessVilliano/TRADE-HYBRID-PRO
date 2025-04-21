@@ -1066,7 +1066,7 @@ export const TradeJournal = () => {
                 New Entry
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl">
+            <DialogContent className="w-full max-w-lg md:max-w-2xl lg:max-w-3xl overflow-y-auto max-h-[90vh]">
               <DialogHeader>
                 <DialogTitle>Create Journal Entry</DialogTitle>
                 <DialogDescription>
@@ -1850,7 +1850,7 @@ export const TradeJournal = () => {
                     New Entry
                   </Button>
                 </DialogTrigger>
-                <DialogContent>{/* Dialog content same as above */}</DialogContent>
+                <DialogContent className="w-full max-w-lg md:max-w-2xl lg:max-w-3xl overflow-y-auto max-h-[90vh]">{/* Dialog content same as above */}</DialogContent>
               </Dialog>
             </div>
           )}
@@ -2289,7 +2289,7 @@ export const TradeJournal = () => {
               Add Entry
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="w-full max-w-lg md:max-w-2xl lg:max-w-3xl overflow-y-auto max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>Create Journal Entry</DialogTitle>
               <DialogDescription>
