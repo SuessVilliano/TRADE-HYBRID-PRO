@@ -370,10 +370,10 @@ export const MainSidebar: React.FC<{
           {isLoggedIn ? (
             <>
               <NavItem 
-                href="/wallet" 
+                href="/wallet-connection" 
                 icon={<Wallet className="h-5 w-5" />} 
-                label="Connect Wallet" 
-                active={isActive("/wallet")} 
+                label={solanaAuth.walletConnected ? "Wallet Connected" : "Connect Wallet"} 
+                active={isActive("/wallet-connection") || isActive("/wallet")} 
                 onClick={mobile ? onClose : undefined}
               />
               <NavItem 
@@ -403,7 +403,7 @@ export const MainSidebar: React.FC<{
                   Register
                 </Button>
               </Link>
-              <Link to="/wallet" className="w-full">
+              <Link to="/wallet-connection" className="w-full">
                 <Button 
                   variant="outline"
                   className="w-full justify-center"

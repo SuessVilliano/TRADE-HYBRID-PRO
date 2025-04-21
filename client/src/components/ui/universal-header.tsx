@@ -27,6 +27,7 @@ export function UniversalHeader({
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const { toggleSidebarCollapsed } = useUserPreferences();
+  const { walletConnected } = useSolanaAuth();
 
   const handleBackClick = () => {
     if (onBackClick) {
@@ -46,6 +47,10 @@ export function UniversalHeader({
 
   const handleProfileClick = () => {
     navigate('/profile');
+  };
+  
+  const handleWalletClick = () => {
+    navigate('/wallet-connection');
   };
 
   return (
@@ -103,6 +108,18 @@ export function UniversalHeader({
           </div>
           
           <div className="flex items-center gap-2">
+            {/* Wallet button */}
+            <Button 
+              variant={walletConnected ? "ghost" : "default"} 
+              size="icon" 
+              className={walletConnected ? "" : "bg-green-600 hover:bg-green-700"}
+              onClick={handleWalletClick}
+              title={walletConnected ? "Wallet Connected" : "Connect Wallet"}
+            >
+              <Wallet className={`h-5 w-5 ${walletConnected ? "text-green-500" : "text-white"}`} />
+              <span className="sr-only">Wallet</span>
+            </Button>
+            
             {/* Settings button */}
             {showSettingsButton && (
               <Button variant="ghost" size="icon" onClick={handleSettingsClick}>
