@@ -136,11 +136,21 @@ const App: React.FC = () => {
                     title="TradingView Chart"
                     allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                   />} />
+                  <Route path="/tv-direct" element={<React.Suspense fallback={<div>Loading chart...</div>}>
+                    {React.createElement(React.lazy(() => import('./pages/tradingview-direct-chart')))}
+                  </React.Suspense>} />
                   <Route path="/tv-calendar" element={<iframe 
                     src="https://www.tradingview.com/markets/currencies/economic-calendar/" 
                     style={{ width: '100%', height: '90vh', border: 'none' }}
                     title="TradingView Economic Calendar"
                     allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                  />} />
+                  <Route path="/th-video" element={<iframe 
+                    src="https://elearning.builderall.com/course/52786/aaLZMM95/" 
+                    style={{ width: '100%', height: '90vh', border: 'none' }}
+                    title="Trade Hybrid Learning Video"
+                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
                   />} />
                   
                   {/* Auth routes */}
