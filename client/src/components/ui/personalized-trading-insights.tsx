@@ -7,7 +7,6 @@ import {
   Clock, 
   Info, 
   ChevronRight, 
-  LineChart, 
   PercentCircle
 } from 'lucide-react';
 import { Button } from './button';
@@ -145,7 +144,7 @@ export function PersonalizedTradingInsights({ symbol = 'BTCUSDT' }: Personalized
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div className="bg-slate-800/50 rounded-md p-3">
             <div className="flex items-center mb-2">
-              <LineChart className="h-4 w-4 text-teal-400 mr-2" />
+              <TrendingUp className="h-4 w-4 text-teal-400 mr-2" />
               <h4 className="font-medium text-teal-300">Sentiment</h4>
             </div>
             

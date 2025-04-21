@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Coins, Users, LineChart, ArrowUpRight, ExternalLink, Award, Lock, Rocket, Layers } from "lucide-react";
+import { Coins, Users, TrendingUp, ArrowUpRight, ExternalLink, Award, Lock, Rocket, Layers } from "lucide-react";
 import { THC_TOKEN } from "@/lib/constants";
 
 interface ThcTokenInfoProps {
@@ -205,7 +205,7 @@ export function ThcTokenInfo({ className }: ThcTokenInfoProps) {
                   <div className="bg-white dark:bg-gray-800 border rounded-lg p-3">
                     <div className="flex gap-3">
                       <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-full h-fit">
-                        <LineChart size={16} className="text-green-600 dark:text-green-400" />
+                        <TrendingUp size={16} className="text-green-600 dark:text-green-400" />
                       </div>
                       <div>
                         <h4 className="font-medium">Reduced Trading Fees</h4>

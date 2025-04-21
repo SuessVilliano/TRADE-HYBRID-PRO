@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Coins, LandPlot, LineChart, Rocket, TrendingUp, ArrowDown } from 'lucide-react';
+import { Coins, LandPlot, Rocket, TrendingUp, ArrowDown } from 'lucide-react';
 
 export function NftStatsWidget() {
   return (
@@ -25,7 +25,7 @@ export function NftStatsWidget() {
             value="1.2M THC" 
             change="+12.8%" 
             trend="up" 
-            icon={<LineChart className="h-4 w-4" />} 
+            icon={<TrendingUp className="h-4 w-4" />} 
           />
           <StatCard 
             title="NFTs Traded" 

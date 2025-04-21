@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Bot, Cpu, BarChart3, AreaChart, BrainCircuit, MessageSquare, LineChart } from 'lucide-react';
+import { Bot, Cpu, BarChart3, AreaChart, BrainCircuit, MessageSquare, TrendingUp } from 'lucide-react';
 import { Button } from '../components/ui/button';
 
 const SmartTradeExplainer: React.FC = () => {
@@ -78,7 +78,7 @@ const SmartTradeExplainer: React.FC = () => {
             
             <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
               <div className="flex items-center mb-4">
-                <LineChart className="h-8 w-8 text-blue-400 mr-3" />
+                <TrendingUp className="h-8 w-8 text-blue-400 mr-3" />
                 <h3 className="text-xl font-semibold">Pattern Recognition</h3>
               </div>
               <p>Automatically identify chart patterns and candlestick formations with our advanced pattern recognition technology.</p>

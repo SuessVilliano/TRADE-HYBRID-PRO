@@ -23,8 +23,7 @@ import {
   TrendingUp,
   DollarSign,
   Plus,
-  FileCheck,
-  LineChart
+  FileCheck
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { formatCurrency, formatPercent, formatDate } from '@/lib/utils/formatters';
@@ -757,7 +756,7 @@ const InvestorAdminDashboard: React.FC = () => {
                   <p className="text-sm font-medium">Performance Fee</p>
                   <h3 className="text-2xl font-bold mt-1">{formatPercent(feeSettings.default_performance_fee_percent || 20)}</h3>
                 </div>
-                <LineChart className="h-8 w-8 text-primary opacity-80" />
+                <TrendingUp className="h-8 w-8 text-primary opacity-80" />
               </div>
               <div className="mt-4 text-xs text-muted-foreground">
                 <span className="font-medium">{formatCurrency(feeSettings.default_setup_fee || 100)}</span> setup fee

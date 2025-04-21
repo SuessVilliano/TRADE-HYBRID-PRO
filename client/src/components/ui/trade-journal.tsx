@@ -20,7 +20,7 @@ import {
   FileText, 
   BarChart4, 
   PieChart, 
-  LineChart, 
+  TrendingUp, // Changed from LineChart
   Award, 
   Brain, 
   BookOpenCheck,
@@ -56,7 +56,7 @@ import { useTrader, Trade } from '../../lib/stores/useTrader';
 // Enhanced mock chart components with better visuals
 const Line = (props: any) => (
   <div className="bg-slate-800 rounded-md p-4 h-[300px] flex flex-col items-center justify-center">
-    <LineChart className="h-16 w-16 mb-4 text-blue-400" strokeWidth={1.5} />
+    <TrendingUp className="h-16 w-16 mb-4 text-blue-400" strokeWidth={1.5} />
     <p className="text-sm text-slate-400">Line Chart Visualization</p>
     <p className="text-xs text-slate-500 mt-2">Performance over time</p>
   </div>
@@ -2134,7 +2134,7 @@ export const TradeJournal = () => {
                 
                 <div className="rounded-lg border p-4">
                   <h4 className="font-medium flex items-center">
-                    <LineChart className="h-4 w-4 mr-2" />
+                    <TrendingUp className="h-4 w-4 mr-2" />
                     Emotion Correlation
                   </h4>
                   <p className="text-sm mt-2">
