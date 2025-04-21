@@ -66,10 +66,7 @@ export default function EmbeddedBrowserPage() {
   
   // Handle mobile settings toggle
   const handleShowSettings = () => {
-    toast({
-      title: "Settings",
-      description: "Settings panel will open here"
-    });
+    toast.info("Settings panel will open here");
   };
   
   return (

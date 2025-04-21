@@ -79,6 +79,7 @@ import VoiceTradeDemoPage from './pages/voice-trade-demo';
 import ApiDemoPage from './pages/api-demo-page';
 import SmartTradeExplainer from './pages/smart-trade-explainer';
 import TradingToolsPage from './pages/trading-tools';
+import EmbeddedBrowserPage from './pages/embedded-browser-page';
 
 // Prop Firm
 import PropFirmDashboardPage from './pages/PropFirmDashboard';
@@ -223,6 +224,7 @@ const App: React.FC = () => {
                   <Route path="/voice-trade" element={<ProtectedRoute><VoiceTradeDemoPage /></ProtectedRoute>} />
                   <Route path="/smart-trade-explainer" element={<ProtectedRoute><SmartTradeExplainer /></ProtectedRoute>} />
                   <Route path="/api-demo" element={<ProtectedRoute><ApiDemoPage /></ProtectedRoute>} />
+                  <Route path="/web-browser" element={<ProtectedRoute><EmbeddedBrowserPage /></ProtectedRoute>} />
                   
                   {/* Prop Firm */}
                   <Route path="/prop-firm" element={<ProtectedRoute><PropFirmDashboardPage /></ProtectedRoute>} />

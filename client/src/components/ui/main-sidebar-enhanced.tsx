@@ -290,6 +290,13 @@ export const MainSidebar: React.FC<{
               active={isActive("/ai-market-analysis")} 
               onClick={mobile ? onClose : undefined}
             />
+            <NavItem 
+              href="/web-browser" 
+              icon={<Globe className="h-4 w-4" />} 
+              label="Trading Browser" 
+              active={isActive("/web-browser")} 
+              onClick={mobile ? onClose : undefined}
+            />
           </NavItem>
 
           {/* Journal */}
