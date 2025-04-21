@@ -130,6 +130,9 @@ const App: React.FC = () => {
                   <Route path="/simple-charting" element={<React.Suspense fallback={<div>Loading chart...</div>}><SimpleChartingDashboard /></React.Suspense>} />
                   <Route path="/test-page" element={<React.Suspense fallback={<div>Loading test page...</div>}><TestPage /></React.Suspense>} />
                   <Route path="/tv-widgets" element={<React.Suspense fallback={<div>Loading TradingView widgets...</div>}><TradingViewWidgetsTest /></React.Suspense>} />
+                  <Route path="/tv-simple" element={<React.Suspense fallback={<div>Loading simple demo...</div>}>
+                    {React.createElement(React.lazy(() => import('./pages/simple-tradingview-demo')))}
+                  </React.Suspense>} />
                   
                   {/* Auth routes */}
                   <Route path="/login" element={<LoginPage />} />
