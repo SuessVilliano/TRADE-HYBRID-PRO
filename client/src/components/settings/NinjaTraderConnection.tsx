@@ -172,28 +172,45 @@ export function NinjaTraderConnection() {
     });
   };
   
-  // Download the NinjaTrader adapter
-  const handleDownload = () => {
+  // Download the NinjaTrader adapter main package
+  const handleDownload = (fileName?: string) => {
     setIsDownloading(true);
     
     // Simulate download preparation
     setTimeout(() => {
-      // Trigger download of the ZIP file
+      // Trigger download of the appropriate file
       const downloadLink = document.createElement('a');
-      downloadLink.href = '/downloads/TradeHybrid_NinjaTrader_Adapter.zip';
-      downloadLink.download = 'TradeHybrid_NinjaTrader_Adapter.zip';
+      
+      // If specific file is requested (doc or adapter)
+      if (fileName) {
+        downloadLink.href = `/downloads/${fileName}`;
+        
+        // If it's a README file or HTML file, open in new tab instead of download
+        if (fileName.endsWith('.md') || fileName.endsWith('.html')) {
+          window.open(`/downloads/${fileName}`, '_blank');
+          setIsDownloading(false);
+          return;
+        }
+        
+        downloadLink.download = fileName;
+      } else {
+        // Default is to download the main adapter package
+        downloadLink.href = '/downloads/TradeHybrid_NinjaTrader_Adapter.zip';
+        downloadLink.download = 'TradeHybrid_NinjaTrader_Adapter.zip';
+        
+        toast({
+          title: "Download Started",
+          description: "The NinjaTrader adapter is being downloaded. Check your downloads folder.",
+          variant: "default"
+        });
+      }
+      
       document.body.appendChild(downloadLink);
       downloadLink.click();
       document.body.removeChild(downloadLink);
       
-      toast({
-        title: "Download Started",
-        description: "The NinjaTrader adapter is being downloaded. Check your downloads folder.",
-        variant: "default"
-      });
-      
       setIsDownloading(false);
-    }, 1500);
+    }, 1000);
   };
   
   // Get the appropriate status badge based on connection state
@@ -306,7 +323,7 @@ export function NinjaTraderConnection() {
                   
                   <Button 
                     variant="outline" 
-                    onClick={handleDownload} 
+                    onClick={() => handleDownload()} 
                     disabled={isDownloading} 
                     className="gap-2"
                   >
@@ -391,13 +408,23 @@ export function NinjaTraderConnection() {
         <div className="text-sm text-muted-foreground">
           <p>The NinjaTrader Adapter needs to be installed on your computer to receive signals.</p>
           <p className="mt-1">
-            <a href="/downloads/README.md" className="text-blue-600 hover:underline" target="_blank">
+            <Button 
+              variant="link" 
+              size="sm" 
+              className="p-0 text-blue-600 hover:underline"
+              onClick={() => handleDownload('README.md')}
+            >
               View Documentation
-            </a>
+            </Button>
             {" | "}
-            <a href="/downloads/NinjaTraderAdapter.html" className="text-blue-600 hover:underline" target="_blank">
+            <Button 
+              variant="link" 
+              size="sm" 
+              className="p-0 text-blue-600 hover:underline"
+              onClick={() => handleDownload('NinjaTraderAdapter.html')}
+            >
               Open Web Adapter
-            </a>
+            </Button>
           </p>
         </div>
       </CardFooter>
