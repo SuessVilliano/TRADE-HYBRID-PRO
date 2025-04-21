@@ -84,11 +84,27 @@ export function WebhookLogs() {
     setError(null);
     
     try {
+      console.log('Fetching webhook logs from server...');
+      
       // Use the public endpoint that doesn't require authentication
       const response = await axios.get('/api/webhooks/logs-public');
       
       if (response.data && response.data.logs) {
         const newLogs = response.data.logs;
+        console.log(`Fetched ${newLogs.length} webhook logs`);
+        
+        // Log first 3 logs for debugging
+        if (newLogs.length > 0) {
+          console.log('Sample logs:', newLogs.slice(0, 3).map((log: WebhookLog) => ({
+            id: log.id,
+            broker: log.broker,
+            webhookId: log.webhookId,
+            timestamp: log.timestamp,
+            payload: typeof log.payload === 'object' ? 
+              (log.payload.content ? 'Has content field' : JSON.stringify(log.payload).substring(0, 50)) : 
+              'Not an object'
+          })));
+        }
         
         if (newLogs.length > logs.length && logs.length > 0) {
           // Check if there are new logs
@@ -106,11 +122,16 @@ export function WebhookLogs() {
           }
         }
         
-        setLogs(newLogs);
+        // Sort logs by timestamp (newest first)
+        const sortedLogs = [...newLogs].sort((a, b) => 
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+        
+        setLogs(sortedLogs);
         
         // Check if our test log appeared (if we have a lastLogId)
         if (lastLogId) {
-          const foundTestLog = newLogs.find((log: WebhookLog) => log.id === lastLogId);
+          const foundTestLog = sortedLogs.find((log: WebhookLog) => log.id === lastLogId);
           if (foundTestLog) {
             console.log('Test log was found in the logs!');
             setLastLogId(null); // Clear the last log ID since we found it
@@ -123,6 +144,7 @@ export function WebhookLogs() {
           }
         }
       } else {
+        console.error('No logs data found in response:', response.data);
         if (showLoadingIndicator) {
           setLogs([]);
           setError('No logs were returned from the server');
@@ -192,11 +214,36 @@ export function WebhookLogs() {
   // Format payload for display
   const formatPayload = (payload: any) => {
     try {
+      // Handle string payload
       if (typeof payload === 'string') {
         return payload;
       }
+      
+      // Handle real webhook signals with content and data
+      if (payload.content && payload.data) {
+        return `${payload.content.substring(0, 30)}${payload.content.length > 30 ? '...' : ''} | ${JSON.stringify(payload.data).substring(0, 50)}${JSON.stringify(payload.data).length > 50 ? '...' : ''}`;
+      }
+      
+      // For trading signals, prioritize showing symbol and action
+      if (payload.symbol || (payload.data && payload.data.symbol)) {
+        const symbol = payload.symbol || (payload.data && payload.data.symbol) || '';
+        const action = payload.action || (payload.data && payload.data.action) || '';
+        const price = payload.price || (payload.data && payload.data.price) || '';
+        
+        if (symbol && action) {
+          return `${symbol} ${action} ${price ? `@ ${price}` : ''}`;
+        }
+      }
+      
+      // For TradingView alerts
+      if (payload.strategy && payload.ticker) {
+        return `${payload.ticker}: ${payload.strategy.order_action} ${payload.strategy.position_size || payload.strategy.order_contracts || ''} @ ${payload.price || payload.strategy.order_price || ''}`;
+      }
+      
+      // Default formatting for other payloads
       return JSON.stringify(payload, null, 2).substring(0, 100) + (JSON.stringify(payload).length > 100 ? '...' : '');
     } catch (e) {
+      console.error('Error formatting payload:', e);
       return 'Invalid payload format';
     }
   };
@@ -209,7 +256,17 @@ export function WebhookLogs() {
       'ninjatrader': 'NinjaTrader',
       'tradingview': 'TradingView',
       'generic': 'Generic',
+      'custom-webhook': 'Custom',
+      'cashcow': 'Cash Cow',
+      'paradox': 'Paradox AI',
+      'hybrid': 'Hybrid AI',
+      'solaris': 'Solaris AI',
     };
+    
+    // Handle webhook sources with 'api' or specific identifiers
+    if (broker.includes('webhook') || broker.includes('api')) {
+      return 'External Source';
+    }
     
     return brokerMap[broker.toLowerCase()] || broker;
   };
@@ -353,10 +410,12 @@ export function WebhookLogs() {
                           {formatPayload(log.payload)}
                         </code>
                       </TableCell>
-                      <TableCell className="max-w-xs truncate text-white">
-                        {log.result.message || (log.result.success ? 'Success' : 'Failed')}
+                      <TableCell className="max-w-xs truncate">
+                        <div className="text-gray-800">
+                          {log.result.message || (log.result.success ? 'Success' : 'Failed')}
+                        </div>
                         {log.result.errors && log.result.errors.length > 0 && (
-                          <div className="text-xs text-red-400 font-semibold">
+                          <div className="text-xs text-red-600 font-semibold">
                             {Array.isArray(log.result.errors) ? log.result.errors[0] : log.result.errors}
                           </div>
                         )}
