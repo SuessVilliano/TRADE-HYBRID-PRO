@@ -88,32 +88,77 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
     }));
   };
 
-  // Fetch signals from the service
+  // Fetch signals from the selected data source
   const fetchSignals = async () => {
     setIsLoading(true);
     try {
-      console.log("Fetching signals from Google Sheets...");
+      let allSignals: any[] = [];
       
-      // Try to fetch signals from service first
-      let allSignals = [];
-      try {
-        // Log that we're using real Google credentials now
-        console.log("Using Google Sheet ID: 1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8");
+      // Fetch signals based on selected data source
+      if (dataSource === 'uploaded') {
+        console.log("Fetching signals from Google Sheets...");
         
-        // Fetch signals from all three providers
-        allSignals = await googleSheetsService.fetchAllSignals();
-        console.log("Signals received:", allSignals.length, "signals");
-        
-        // If signals were found, log success
-        if (allSignals.length > 0) {
-          console.log("Successfully loaded real signals from Google Sheets!");
+        try {
+          // Log that we're using real Google credentials now
+          console.log("Using Google Sheet ID: 1jWQKlzry3PJ1ECJO_SbNczpRjfpvi4sMEaYu_pN6Jg8");
+          
+          // Fetch signals from all three providers
+          allSignals = await googleSheetsService.fetchAllSignals();
+          console.log("Signals received:", allSignals.length, "signals");
+          
+          // If signals were found, log success
+          if (allSignals.length > 0) {
+            console.log("Successfully loaded real signals from Google Sheets!");
+          }
+        } catch (serviceError) {
+          console.error('Error fetching signals from service:', serviceError);
+          allSignals = [];
         }
-      } catch (serviceError) {
-        console.error('Error fetching signals from service:', serviceError);
-        allSignals = [];
+      } else if (dataSource === 'tradingview-webhooks') {
+        // Fetch TradingView webhook signals
+        console.log("Fetching signals from TradingView webhooks...");
+        try {
+          allSignals = await signalsAnalyzerService.getTradingViewWebhookSignals();
+          console.log(`Successfully fetched ${allSignals.length} signals from TradingView webhooks`);
+        } catch (error) {
+          console.error('Error fetching signals from TradingView webhooks:', error);
+          allSignals = [];
+        }
+      } else if (dataSource === 'internal-webhooks') {
+        // Fetch internal webhook signals
+        console.log("Fetching signals from internal webhooks...");
+        try {
+          allSignals = await signalsAnalyzerService.getInternalWebhookSignals();
+          console.log(`Successfully fetched ${allSignals.length} signals from internal webhooks`);
+        } catch (error) {
+          console.error('Error fetching signals from internal webhooks:', error);
+          allSignals = [];
+        }
+      } else if (dataSource === 'all') {
+        // Fetch signals from all sources
+        console.log("Fetching signals from all sources...");
+        
+        try {
+          // Get signals from all sources
+          const uploadedSignals = await googleSheetsService.fetchAllSignals().catch(() => []);
+          const tradingViewSignals = await signalsAnalyzerService.getTradingViewWebhookSignals().catch(() => []);
+          const internalWebhookSignals = await signalsAnalyzerService.getInternalWebhookSignals().catch(() => []);
+          
+          // Combine all signals
+          allSignals = [
+            ...uploadedSignals,
+            ...tradingViewSignals,
+            ...internalWebhookSignals
+          ];
+          
+          console.log(`Successfully fetched a total of ${allSignals.length} signals from all sources`);
+        } catch (error) {
+          console.error('Error fetching signals from combined sources:', error);
+          allSignals = [];
+        }
       }
       
-      // Only use demo data if explicitly set in URL parameter
+      // Only use demo data if explicitly set in URL parameter and no signals were found
       const urlParams = new URLSearchParams(window.location.search);
       const useDemo = urlParams.get('demo') === 'true';
       
