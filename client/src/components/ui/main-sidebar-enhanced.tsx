@@ -6,7 +6,7 @@ import {
   DollarSign, 
   Home, 
   LayoutDashboard, 
-  LineChart, 
+  TrendingUp, // Changed from LineChart to TrendingUp
   MessageSquare, 
   Newspaper, 
   PenTool, 
@@ -205,7 +205,7 @@ export const MainSidebar: React.FC<{
             />
             <NavItem 
               href="/trade" 
-              icon={<LineChart className="h-4 w-4" />} 
+              icon={<TrendingUp className="h-4 w-4" />} 
               label="Chart Trading" 
               active={isActive("/trade")} 
               onClick={mobile ? onClose : undefined}
@@ -366,6 +366,42 @@ export const MainSidebar: React.FC<{
         <Separator />
 
         {/* Footer section */}
+        {/* Direct TradingView Links */}
+        <div className="px-4 py-2 space-y-1">
+          <div className="text-xs font-semibold text-muted-foreground uppercase pb-1">
+            Direct Tools
+          </div>
+          <a 
+            href="/tradingview-chart.html" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="flex items-center gap-2 py-1.5 px-2 text-sm text-muted-foreground hover:text-foreground rounded-md hover:bg-primary/5"
+          >
+            <TrendingUp className="h-4 w-4" />
+            <span>TradingView Chart</span>
+          </a>
+          <a 
+            href="/economic-calendar.html" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="flex items-center gap-2 py-1.5 px-2 text-sm text-muted-foreground hover:text-foreground rounded-md hover:bg-primary/5"
+          >
+            <BarChart2 className="h-4 w-4" />
+            <span>Economic Calendar</span>
+          </a>
+          <a 
+            href="/learning-video.html" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="flex items-center gap-2 py-1.5 px-2 text-sm text-muted-foreground hover:text-foreground rounded-md hover:bg-primary/5"
+          >
+            <BookOpen className="h-4 w-4" />
+            <span>Trading Video</span>
+          </a>
+        </div>
+
+        <Separator />
+
         <div className="p-4 space-y-2">
           {isLoggedIn ? (
             <>
