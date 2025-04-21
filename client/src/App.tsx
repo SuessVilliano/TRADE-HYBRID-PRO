@@ -129,6 +129,7 @@ const App: React.FC = () => {
                   <Route path="/trading-freedom-podcast" element={<TradingFreedomPodcast />} />
                   <Route path="/simple-charting" element={<React.Suspense fallback={<div>Loading chart...</div>}><SimpleChartingDashboard /></React.Suspense>} />
                   <Route path="/test-page" element={<React.Suspense fallback={<div>Loading test page...</div>}><TestPage /></React.Suspense>} />
+                  <Route path="/tv-widgets" element={<React.Suspense fallback={<div>Loading TradingView widgets...</div>}><TradingViewWidgetsTest /></React.Suspense>} />
                   
                   {/* Auth routes */}
                   <Route path="/login" element={<LoginPage />} />
