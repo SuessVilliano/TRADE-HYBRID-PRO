@@ -34,7 +34,7 @@ export const WalletProvider: FC<WalletProviderProps> = ({ children }) => {
       (window as any).phantom?.solana !== undefined;
       
     console.log("WalletProvider initializing, Phantom available:", phantomAvailable);
-    return [phantom];
+    return [phantom] as Adapter[]; // Cast to Adapter[] to satisfy TypeScript
   }, []);
 
   return (

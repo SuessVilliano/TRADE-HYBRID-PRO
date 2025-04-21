@@ -237,6 +237,7 @@ import fixAlpacaRoutes from './routes/fix-alpaca'; // Import for Alpaca fixed cr
 import testAlpacaAuthRoutes from './routes/test-alpaca-auth'; // Import for direct Alpaca auth test
 import testCredentialsRoutes from './routes/test-credentials'; // Import for API credential testing routes
 import abatevRoutes from './api/abatev'; // Import for ABATEV integration routes
+import validatorRoutes from './routes/validator'; // Import for Solana validator routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Market data routes
@@ -639,6 +640,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // ABATEV integration routes
   app.use("/api/abatev", abatevRoutes);
+  
+  // Solana validator routes
+  app.use("/api/validator", validatorRoutes);
 
   // News route using multiple sources
   app.get("/api/rss-feeds/news", async (req, res) => {
