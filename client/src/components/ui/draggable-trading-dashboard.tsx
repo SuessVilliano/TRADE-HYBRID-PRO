@@ -7,7 +7,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from './dropdown-menu';
-import LineChartComponent from './line-chart';
+import TradingViewChart from './trading-view-chart';
 import MarketOverview from './market-overview';
 import StockHeatmap from './stock-heatmap';
 import { TradeSignals } from './trade-signals';
@@ -52,7 +52,7 @@ interface DraggableTradingDashboardProps {
 function getWidgetComponent(type: string, props: WidgetComponentProps) {
   switch (type) {
     case 'chart':
-      return <LineChartComponent symbol={props.symbol} />;
+      return <TradingViewChart symbol={props.symbol} />;
     case 'order-form':
       return <TradingOrderForm symbol={props.symbol} />;
     case 'orders':

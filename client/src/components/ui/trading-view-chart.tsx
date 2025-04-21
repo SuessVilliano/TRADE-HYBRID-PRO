@@ -206,5 +206,4 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({ symbol, timeframe =
 
 // Using TradingView type definition from types/trading-view.d.ts
 
-// Export as default export
 export default memo(TradingViewChart);
