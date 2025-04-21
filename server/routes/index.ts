@@ -7,6 +7,7 @@ import brokerRoutes from './brokers';
 import oandaMarketRoutes from './oanda-market';
 import marketDataRoutes from './market-data';
 import marketDataStatusRoutes from './market-data-status';
+import validatorRoutes from './validator';
 import aiInsightsHandler from '../api/ai-insights';
 import marketDataHandler from '../api/market-data';
 
@@ -41,5 +42,8 @@ router.use('/oanda', oandaMarketRoutes);
 
 // Legacy Market Data provider routes
 router.use('/market-data/:provider', (req, res) => marketDataHandler(req, res));
+
+// Validator routes
+router.use('/validator', validatorRoutes);
 
 export default router;
