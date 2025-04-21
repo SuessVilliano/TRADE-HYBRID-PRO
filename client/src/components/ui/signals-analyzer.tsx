@@ -123,7 +123,7 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
         takeProfit3: signal.TP3 ? Number(signal.TP3) : undefined,
         status: (signal.Status || 'active').toLowerCase() as 'active' | 'completed' | 'stopped' | 'cancelled',
         marketType: (signal.marketType || 'crypto') as 'crypto' | 'forex' | 'futures',
-        provider: 'TradingView' as any,
+        provider: (signal.Provider || 'TradingView') as any,
         notes: signal.Notes || `${signal.Direction || 'Trade'} signal for ${signal.Symbol || signal.Asset}`,
       }));
       
@@ -181,7 +181,7 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
         takeProfit3: signal.takeProfit3 ? Number(signal.takeProfit3) : undefined,
         status: (signal.status || 'active').toLowerCase() as 'active' | 'completed' | 'stopped' | 'cancelled',
         marketType: (signal.marketType || 'crypto') as 'crypto' | 'forex' | 'futures',
-        provider: 'Internal' as any,
+        provider: (signal.provider || signal.Provider || 'Internal') as any,
         notes: signal.notes || `${signal.type || signal.direction || 'Trade'} signal for ${signal.symbol || signal.asset}`,
       }));
       
@@ -298,7 +298,7 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
               takeProfit3: s.TP3 ? Number(s.TP3) : undefined,
               status: (s.Status || 'active').toLowerCase() as 'active' | 'completed' | 'stopped' | 'cancelled',
               marketType: (s.marketType || 'crypto') as 'crypto' | 'forex' | 'futures',
-              provider: 'TradingView' as any,
+              provider: (s.Provider || 'TradingView') as any,
               notes: s.Notes || `${s.Direction || 'Trade'} signal for ${s.Symbol || s.Asset}`,
             })),
             ...internalSignals.map((s: any) => ({
