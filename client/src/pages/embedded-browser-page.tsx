@@ -8,16 +8,15 @@ import {
   FileQuestion, 
   ArrowUpRightFromCircle, 
   Globe,
-  MonitorPlay
+  MonitorPlay,
+  Menu,
+  Settings
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import { PopupContainer } from '../components/ui/popup-container';
 import { useMediaQuery } from '../lib/hooks/useMediaQuery';
-import { HamburgerMenu } from '../components/mobile/hamburger-menu';
-import { MobileQuickActions } from '../components/mobile/mobile-quick-actions';
 import { EmbeddedBrowser, MultiTabBrowser } from '../components/ui/embedded-browser';
 import { toast } from 'sonner';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 
 // Popular broker and platform websites
 const brokerPresets = [
@@ -78,9 +77,11 @@ export default function EmbeddedBrowserPage() {
       <div className="container mx-auto">
         <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            {/* Mobile Hamburger Menu (only visible on mobile) */}
+            {/* Menu icon instead of hamburger component */}
             <div className="md:hidden">
-              <HamburgerMenu />
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
             </div>
             
             <div>
@@ -176,10 +177,12 @@ export default function EmbeddedBrowserPage() {
           </div>
         </div>
         
-        {/* Mobile Quick Actions */}
-        <MobileQuickActions 
-          onShowSettings={handleShowSettings}
-        />
+        {/* Mobile actions replaced with simple button */}
+        <div className="fixed bottom-4 right-4 md:hidden">
+          <Button size="icon" className="rounded-full h-12 w-12 shadow-lg">
+            <Settings className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
     </PopupContainer>
   );

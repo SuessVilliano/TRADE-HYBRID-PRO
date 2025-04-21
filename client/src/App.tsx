@@ -224,7 +224,7 @@ const App: React.FC = () => {
                   <Route path="/voice-trade" element={<ProtectedRoute><VoiceTradeDemoPage /></ProtectedRoute>} />
                   <Route path="/smart-trade-explainer" element={<ProtectedRoute><SmartTradeExplainer /></ProtectedRoute>} />
                   <Route path="/api-demo" element={<ProtectedRoute><ApiDemoPage /></ProtectedRoute>} />
-                  <Route path="/web-browser" element={<ProtectedRoute><EmbeddedBrowserPage /></ProtectedRoute>} />
+                  <Route path="/web-browser" element={<EmbeddedBrowserPage />} />
                   
                   {/* Prop Firm */}
                   <Route path="/prop-firm" element={<ProtectedRoute><PropFirmDashboardPage /></ProtectedRoute>} />

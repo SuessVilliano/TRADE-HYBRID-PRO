@@ -21,7 +21,8 @@ import {
   X,
   ChevronDown,
   ChevronRight,
-  Coins
+  Coins,
+  Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './button';
