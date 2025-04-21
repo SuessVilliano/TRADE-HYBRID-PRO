@@ -73,9 +73,12 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
   const [jsonImportContent, setJsonImportContent] = useState('');
   const [visibleResultDetails, setVisibleResultDetails] = useState<Record<string, boolean>>({});
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
-  const [aiAnalysisResults, setAiAnalysisResults] = useState<Record<string, string>>({});
+  
+  // New state for data source selection
+  const [dataSource, setDataSource] = useState<'uploaded' | 'tradingview-webhooks' | 'internal-webhooks' | 'all'>('uploaded');
   const [selectedChartImage, setSelectedChartImage] = useState<File | null>(null);
   const [chartImageUrl, setChartImageUrl] = useState<string>('');
+  const [aiAnalysisResults, setAiAnalysisResults] = useState<Record<string, string>>({});
 
   // Toggle result details visibility
   const toggleResultDetails = (resultId: string) => {
@@ -519,10 +522,211 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
     }
   };
   
+  // New function to fetch TradingView webhooks
+  const fetchTradingViewWebhooks = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/signals/trading-signals?marketType=all');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch TradingView webhooks');
+      }
+      
+      const data = await response.json();
+      console.log('TradingView webhook signals:', data);
+      
+      // Handle both array format and {signals: [...]} format
+      const webhookSignals = Array.isArray(data) ? data : (data.signals || []);
+      
+      // Convert TradingView webhook format to our TradeSignal format
+      const formattedSignals = webhookSignals.map((signal: any) => ({
+        id: signal.id || `signal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        asset: signal.Symbol || signal.Asset || '',
+        timestamp: new Date(signal.Date || signal.Time || new Date()).toISOString(),
+        direction: (signal.Direction || '').toLowerCase() === 'buy' ? 'long' : 'short',
+        entryPrice: signal['Entry Price'] || 0,
+        stopLoss: signal['Stop Loss'] || 0,
+        takeProfit1: signal['Take Profit'] || signal.TP1 || 0,
+        takeProfit2: signal.TP2 || 0,
+        takeProfit3: signal.TP3 || 0,
+        status: (signal.Status || 'active').toLowerCase() as 'active' | 'completed' | 'stopped' | 'cancelled',
+        marketType: signal.marketType || 'crypto',
+        provider: signal.source || 'TradeHybrid',
+        notes: signal.Notes || `${signal.Direction || 'Trade'} signal for ${signal.Symbol || signal.Asset}`,
+      }));
+      
+      setSignals(formattedSignals);
+      
+      // Extract unique assets
+      const assets = new Set(formattedSignals.map(signal => signal.asset));
+      setAvailableAssets(Array.from(assets));
+      
+      if (assets.size > 0 && !selectedAsset) {
+        setSelectedAsset(Array.from(assets)[0]);
+      }
+      
+      setUploadStatus({
+        success: true,
+        message: `Loaded ${formattedSignals.length} signals from TradingView webhooks.`
+      });
+    } catch (error) {
+      console.error('Error fetching TradingView webhooks:', error);
+      setUploadStatus({
+        success: false,
+        message: 'Failed to fetch TradingView webhooks. Please try again.'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // New function to fetch internal user-created webhooks
+  const fetchInternalWebhooks = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/webhooks/signals');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch internal webhooks');
+      }
+      
+      const data = await response.json();
+      console.log('Internal webhook signals:', data);
+      
+      // Handle both array format and {signals: [...]} format
+      const webhookSignals = Array.isArray(data) ? data : (data.signals || []);
+      
+      // Convert internal webhook format to our TradeSignal format
+      const formattedSignals = webhookSignals.map((signal: any) => ({
+        id: signal.id || `signal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        asset: signal.symbol || signal.asset || '',
+        timestamp: new Date(signal.timestamp || signal.date || new Date()).toISOString(),
+        direction: (signal.type || signal.direction || '').toLowerCase() === 'buy' ? 'long' : 'short',
+        entryPrice: signal.entry || signal.entryPrice || 0,
+        stopLoss: signal.stopLoss || signal.sl || 0,
+        takeProfit1: signal.takeProfit || signal.tp || signal.takeProfit1 || 0,
+        takeProfit2: signal.takeProfit2 || signal.tp2 || 0,
+        takeProfit3: signal.takeProfit3 || signal.tp3 || 0,
+        status: (signal.status || 'active').toLowerCase() as 'active' | 'completed' | 'stopped' | 'cancelled',
+        marketType: signal.marketType || 'crypto',
+        provider: signal.provider || signal.source || 'Internal',
+        notes: signal.notes || signal.description || `${signal.type || 'Trade'} signal for ${signal.symbol || signal.asset}`,
+      }));
+      
+      setSignals(formattedSignals);
+      
+      // Extract unique assets
+      const assets = new Set(formattedSignals.map(signal => signal.asset));
+      setAvailableAssets(Array.from(assets));
+      
+      if (assets.size > 0 && !selectedAsset) {
+        setSelectedAsset(Array.from(assets)[0]);
+      }
+      
+      setUploadStatus({
+        success: true,
+        message: `Loaded ${formattedSignals.length} signals from internal webhooks.`
+      });
+    } catch (error) {
+      console.error('Error fetching internal webhooks:', error);
+      setUploadStatus({
+        success: false,
+        message: 'Failed to fetch internal webhooks. Please try again.'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   // Load initial data
   useEffect(() => {
-    if (!initialSignals) {
-      fetchSignals();
+    if (initialSignals) {
+      return; // Skip if signals are provided directly
+    }
+    
+    // Fetch signals based on selected data source
+    switch (dataSource) {
+      case 'tradingview-webhooks':
+        fetchTradingViewWebhooks();
+        break;
+      case 'internal-webhooks':
+        fetchInternalWebhooks();
+        break;
+      case 'all':
+        // Fetch both types and combine them
+        Promise.all([
+          fetch('/api/signals/trading-signals?marketType=all').then(res => res.json()),
+          fetch('/api/webhooks/signals').then(res => res.json())
+        ])
+          .then(([tradingViewData, internalData]) => {
+            console.log('Combined webhook data:', tradingViewData, internalData);
+            
+            // Convert to arrays if needed
+            const tradingViewSignals = Array.isArray(tradingViewData) ? tradingViewData : (tradingViewData.signals || []);
+            const internalSignals = Array.isArray(internalData) ? internalData : (internalData.signals || []);
+            
+            // Convert to compatible format and combine
+            const combinedSignals = [
+              ...tradingViewSignals.map((s: any) => ({
+                id: s.id || `tv-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                asset: s.Symbol || s.Asset || '',
+                timestamp: new Date(s.Date || s.Time || new Date()).toISOString(),
+                direction: (s.Direction || '').toLowerCase() === 'buy' ? 'long' : 'short',
+                entryPrice: s['Entry Price'] || 0,
+                stopLoss: s['Stop Loss'] || 0,
+                takeProfit1: s['Take Profit'] || s.TP1 || 0,
+                takeProfit2: s.TP2 || 0,
+                takeProfit3: s.TP3 || 0,
+                status: (s.Status || 'active').toLowerCase() as 'active' | 'completed' | 'stopped' | 'cancelled',
+                marketType: s.marketType || 'crypto',
+                provider: 'TradingView',
+              })),
+              ...internalSignals.map((s: any) => ({
+                id: s.id || `int-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                asset: s.symbol || s.asset || '',
+                timestamp: new Date(s.timestamp || s.date || new Date()).toISOString(),
+                direction: (s.type || s.direction || '').toLowerCase() === 'buy' ? 'long' : 'short',
+                entryPrice: s.entry || s.entryPrice || 0,
+                stopLoss: s.stopLoss || s.sl || 0,
+                takeProfit1: s.takeProfit || s.tp || s.takeProfit1 || 0,
+                takeProfit2: s.takeProfit2 || s.tp2 || 0,
+                takeProfit3: s.takeProfit3 || s.tp3 || 0,
+                status: (s.status || 'active').toLowerCase() as 'active' | 'completed' | 'stopped' | 'cancelled',
+                marketType: s.marketType || 'crypto',
+                provider: 'Internal',
+              }))
+            ];
+            
+            setSignals(combinedSignals);
+            
+            // Extract unique assets
+            const assets = new Set(combinedSignals.map(signal => signal.asset));
+            setAvailableAssets(Array.from(assets));
+            
+            if (assets.size > 0 && !selectedAsset) {
+              setSelectedAsset(Array.from(assets)[0]);
+            }
+            
+            setUploadStatus({
+              success: true,
+              message: `Loaded ${combinedSignals.length} signals from all webhook sources.`
+            });
+          })
+          .catch(error => {
+            console.error('Error fetching combined webhooks:', error);
+            setUploadStatus({
+              success: false,
+              message: 'Failed to fetch webhook signals. Please try again.'
+            });
+          })
+          .finally(() => {
+            setIsLoading(false);
+          });
+        break;
+      default:
+        // Default to fetching from Google Sheets/uploaded data
+        fetchSignals();
+        break;
     }
     
     // Get available historical data assets
@@ -534,7 +738,7 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
         });
       })
       .catch(error => console.error('Error fetching available historical data:', error));
-  }, [initialSignals]);
+  }, [initialSignals, dataSource]);
   
   // Render the outcome badge
   const renderOutcomeBadge = (outcome: TradeAnalysisResult['outcome']) => {
@@ -571,6 +775,56 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
       </CardHeader>
       
       <CardContent>
+        {/* Data Source Selector */}
+        <div className="mb-4 border rounded p-4 bg-muted/10">
+          <h3 className="text-sm font-medium mb-2">Signal Data Source</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div 
+              className={`p-3 rounded-md cursor-pointer transition-colors ${dataSource === 'uploaded' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'}`}
+              onClick={() => setDataSource('uploaded')}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <Upload className="h-4 w-4" />
+                <span className="font-medium">Uploaded Data</span>
+              </div>
+              <p className="text-xs opacity-80">CSV files & Google Sheets</p>
+            </div>
+            
+            <div 
+              className={`p-3 rounded-md cursor-pointer transition-colors ${dataSource === 'tradingview-webhooks' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'}`}
+              onClick={() => setDataSource('tradingview-webhooks')}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <LineChart className="h-4 w-4" />
+                <span className="font-medium">TradingView</span>
+              </div>
+              <p className="text-xs opacity-80">TradingView Webhooks</p>
+            </div>
+            
+            <div 
+              className={`p-3 rounded-md cursor-pointer transition-colors ${dataSource === 'internal-webhooks' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'}`}
+              onClick={() => setDataSource('internal-webhooks')}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <Database className="h-4 w-4" />
+                <span className="font-medium">Internal</span>
+              </div>
+              <p className="text-xs opacity-80">User-created Webhooks</p>
+            </div>
+            
+            <div 
+              className={`p-3 rounded-md cursor-pointer transition-colors ${dataSource === 'all' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'}`}
+              onClick={() => setDataSource('all')}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <Sparkles className="h-4 w-4" />
+                <span className="font-medium">All Sources</span>
+              </div>
+              <p className="text-xs opacity-80">Combined Data</p>
+            </div>
+          </div>
+        </div>
+        
         <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as any)}>
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="signals">
