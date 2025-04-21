@@ -687,19 +687,38 @@ export function WebhookSettings() {
       </CardFooter>
 
       <CardFooter className="bg-gray-50 border-t p-4">
-        <div className="flex items-center justify-between w-full">
-          <div>
-            <h3 className="text-sm font-medium">Broker API Settings</h3>
-            <p className="text-sm text-muted-foreground">
-              Connect your broker accounts to enable automated trading via webhooks.
-            </p>
+        <div className="flex flex-col w-full gap-4">
+          <div className="flex items-center justify-between w-full">
+            <div>
+              <h3 className="text-sm font-medium">Broker API Settings</h3>
+              <p className="text-sm text-muted-foreground">
+                Connect your broker accounts to enable automated trading via webhooks.
+              </p>
+            </div>
+            <Button variant="outline" className="flex items-center gap-2" asChild>
+              <Link to="/broker-api-settings">
+                <Settings className="h-4 w-4" />
+                Configure Broker APIs
+              </Link>
+            </Button>
           </div>
-          <Button variant="outline" className="flex items-center gap-2" asChild>
-            <Link to="/broker-api-settings">
-              <Settings className="h-4 w-4" />
-              Configure Broker APIs
-            </Link>
-          </Button>
+          
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between w-full">
+              <div>
+                <h3 className="text-sm font-medium">NinjaTrader Connection</h3>
+                <p className="text-sm text-muted-foreground">
+                  Connect to NinjaTrader for automated futures and forex trading.
+                </p>
+              </div>
+              <Button variant="outline" className="flex items-center gap-2" asChild>
+                <Link to="/ninjatrader-connection">
+                  <Settings className="h-4 w-4" />
+                  Manage NinjaTrader
+                </Link>
+              </Button>
+            </div>
+          </div>
         </div>
       </CardFooter>
     </Card>

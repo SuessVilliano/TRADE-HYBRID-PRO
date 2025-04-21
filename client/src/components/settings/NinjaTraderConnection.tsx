@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Switch } from "../ui/switch";
 import { useToast } from "../ui/use-toast";
 import { Download, Check, Activity, AlertTriangle, Loader2, RefreshCw } from "lucide-react";
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 
 // Define connection status types
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
