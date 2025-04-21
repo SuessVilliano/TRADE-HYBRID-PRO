@@ -7,7 +7,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from './dropdown-menu';
-import LineChart from './line-chart';
+import LineChartComponent from './line-chart';
 import MarketOverview from './market-overview';
 import StockHeatmap from './stock-heatmap';
 import { TradeSignals } from './trade-signals';
@@ -52,7 +52,7 @@ interface DraggableTradingDashboardProps {
 function getWidgetComponent(type: string, props: WidgetComponentProps) {
   switch (type) {
     case 'chart':
-      return <LineChart symbol={props.symbol} />;
+      return <LineChartComponent symbol={props.symbol} />;
     case 'order-form':
       return <TradingOrderForm symbol={props.symbol} />;
     case 'orders':
@@ -66,7 +66,9 @@ function getWidgetComponent(type: string, props: WidgetComponentProps) {
     case 'market-overview':
       return <MarketOverview />;
     case 'stock-heatmap':
-      return <StockHeatmap colorTheme="dark" dataSource="crypto" />;
+      return <StockHeatmap colorTheme="dark" market="stock" />;
+    case 'crypto-heatmap':
+      return <StockHeatmap colorTheme="dark" market="crypto" />;
     case 'order-book':
       return <OrderBook symbol={props.symbol} />;
     case 'recent-trades':
@@ -243,10 +245,18 @@ export function DraggableTradingDashboard({
     },
     {
       id: 'stock-heatmap-1',
-      title: 'Crypto Heatmap',
+      title: 'Stocks Heatmap',
       type: 'stock-heatmap',
       position: { x: 10, y: 370 },
-      size: { width: 600, height: 300 },
+      size: { width: 300, height: 300 },
+      isMaximized: false
+    },
+    {
+      id: 'crypto-heatmap-1',
+      title: 'Crypto Heatmap',
+      type: 'crypto-heatmap',
+      position: { x: 320, y: 370 },
+      size: { width: 290, height: 300 },
       isMaximized: false
     },
     {
@@ -267,7 +277,8 @@ export function DraggableTradingDashboard({
     { id: 'market-depth', title: 'Market Depth', type: 'market-depth' },
     { id: 'sentiment', title: 'Market Sentiment', type: 'sentiment' },
     { id: 'market-overview', title: 'Market Overview', type: 'market-overview' },
-    { id: 'stock-heatmap', title: 'Crypto Heatmap', type: 'stock-heatmap' },
+    { id: 'stock-heatmap', title: 'Stocks Heatmap', type: 'stock-heatmap' },
+    { id: 'crypto-heatmap', title: 'Crypto Heatmap', type: 'crypto-heatmap' },
     { id: 'order-book', title: 'Order Book', type: 'order-book' },
     { id: 'recent-trades', title: 'Recent Trades', type: 'recent-trades' },
     { id: 'alerts', title: 'Price Alerts', type: 'alerts' },

@@ -8,6 +8,7 @@ interface StockHeatmapProps {
   height?: string;
   width?: string;
   showTopBar?: boolean;
+  market?: 'crypto' | 'stock';
 }
 
 export function StockHeatmap({
@@ -15,8 +16,17 @@ export function StockHeatmap({
   colorTheme = 'dark',
   height = '100%',
   width = '100%',
-  showTopBar = true
+  showTopBar = true,
+  market = 'stock'
 }: StockHeatmapProps) {
+  // If market is specified, override dataSource accordingly
+  useEffect(() => {
+    if (market === 'crypto' && dataSource === 'SPX500') {
+      dataSource = 'crypto';
+    } else if (market === 'stock' && dataSource === 'crypto') {
+      dataSource = 'SPX500';
+    }
+  }, [market, dataSource]);
   const container = useRef<HTMLDivElement>(null);
   const scriptLoaded = useRef(false);
   const [loading, setLoading] = useState(true);
