@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Card,
   CardContent,
@@ -14,7 +14,7 @@ import { Label } from "../ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Switch } from "../ui/switch";
 import { useToast } from "../ui/use-toast";
-import { Download, Check, Activity, AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { Download, Check, Activity, AlertTriangle, Loader2 } from "lucide-react";
 import { Link } from 'react-router-dom';
 
 // Define connection status types
@@ -173,7 +173,7 @@ export function NinjaTraderConnection() {
   };
   
   // Download the NinjaTrader adapter main package
-  const handleDownload = (fileName?: string) => {
+  const handleDownload = useCallback((fileName?: string) => {
     setIsDownloading(true);
     
     // Simulate download preparation
@@ -211,7 +211,7 @@ export function NinjaTraderConnection() {
       
       setIsDownloading(false);
     }, 1000);
-  };
+  }, [toast]);
   
   // Get the appropriate status badge based on connection state
   const getStatusBadge = () => {
