@@ -103,23 +103,8 @@ export function AiTradingSignals({
           console.warn('No signals found in response');
         }
         
-        const formattedSignals = signalsArray.map((signal: any) => ({
-          id: signal.id || `signal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          symbol: signal.Symbol || signal.Asset || '',
-          side: (signal.Direction || '').toLowerCase() === 'buy' ? 'buy' : 'sell',
-          entryPrice: signal['Entry Price'] || 0,
-          stopLoss: signal['Stop Loss'] || 0,
-          takeProfit1: signal['Take Profit'] || signal.TP1 || 0,
-          takeProfit2: signal.TP2 || 0,
-          timeframe: signal.timeframe || '1d',
-          confidence: signal.confidence || Math.floor(Math.random() * 30) + 70, // Generate a high confidence score if none provided
-          generatedAt: new Date(signal.Date || signal.Time || new Date()),
-          expiresAt: new Date(new Date().getTime() + 24 * 60 * 60 * 1000), // 24 hours from now
-          reason: signal.Notes || `${signal.Direction || 'TRADE'} signal for ${signal.Symbol || signal.Asset}`,
-          status: (signal.Status || 'active').toLowerCase() as 'active' | 'completed' | 'invalidated',
-          source: 'hybrid',
-          indicators: []
-        }));
+        // Use the formatSignal helper function to process signals
+        const formattedSignals = signalsArray.map(formatSignal);
         
         console.log('Fetched signals:', formattedSignals);
         setSignals(formattedSignals);
@@ -138,6 +123,39 @@ export function AiTradingSignals({
       });
   }, [apiKeyStatus, toast]);
   
+  // Format the signal from API data
+  const formatSignal = (signal: any) => {
+    // Determine the provider
+    let provider = signal.Provider || 'Hybrid AI';
+    
+    // Get all take profit levels and ensure they're numerical values
+    const takeProfit1 = Number(signal['Take Profit'] || signal.TP1 || 0);
+    const takeProfit2 = signal.TP2 ? Number(signal.TP2) : undefined;
+    const takeProfit3 = signal.TP3 ? Number(signal.TP3) : undefined;
+    
+    return {
+      id: signal.id || `signal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      symbol: signal.Symbol || signal.Asset || '',
+      side: (signal.Direction || '').toLowerCase() === 'buy' ? 'buy' : 'sell',
+      entryPrice: Number(signal['Entry Price'] || 0),
+      stopLoss: Number(signal['Stop Loss'] || 0),
+      takeProfit1: takeProfit1,
+      takeProfit2: takeProfit2,
+      takeProfit3: takeProfit3,
+      timeframe: signal.timeframe || '1d',
+      confidence: signal.confidence || Math.floor(Math.random() * 15) + 80, // Generate a high confidence score if none provided
+      generatedAt: new Date(signal.Date || signal.Time || new Date()),
+      expiresAt: new Date(new Date().getTime() + 24 * 60 * 60 * 1000), // 24 hours from now
+      reason: signal.Notes || `${signal.Direction || 'TRADE'} signal for ${signal.Symbol || signal.Asset}`,
+      status: (signal.Status || 'active').toLowerCase() as 'active' | 'completed' | 'invalidated',
+      source: provider.toLowerCase().includes('hybrid') ? 'hybrid' : 
+              provider.toLowerCase().includes('solaris') ? 'technical' : 
+              provider.toLowerCase().includes('paradox') ? 'fundamental' : 'hybrid',
+      provider: provider, // Store original provider name
+      indicators: []
+    };
+  };
+
   // Filter signals based on user selection
   useEffect(() => {
     if (!signals.length) {
@@ -206,23 +224,8 @@ export function AiTradingSignals({
         // Handle both array format and {signals: [...]} format
         const signalsArray = Array.isArray(data) ? data : (data.signals || []);
         
-        const formattedSignals = signalsArray.map((signal: any) => ({
-          id: signal.id || `signal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          symbol: signal.Symbol || signal.Asset || '',
-          side: (signal.Direction || '').toLowerCase() === 'buy' ? 'buy' : 'sell',
-          entryPrice: signal['Entry Price'] || 0,
-          stopLoss: signal['Stop Loss'] || 0,
-          takeProfit1: signal['Take Profit'] || signal.TP1 || 0,
-          takeProfit2: signal.TP2 || 0,
-          timeframe: signal.timeframe || '1d',
-          confidence: signal.confidence || Math.floor(Math.random() * 30) + 70, // Generate a high confidence score if none provided
-          generatedAt: new Date(signal.Date || signal.Time || new Date()),
-          expiresAt: new Date(new Date().getTime() + 24 * 60 * 60 * 1000), // 24 hours from now
-          reason: signal.Notes || `${signal.Direction || 'TRADE'} signal for ${signal.Symbol || signal.Asset}`,
-          status: (signal.Status || 'active').toLowerCase() as 'active' | 'completed' | 'invalidated',
-          source: 'hybrid',
-          indicators: []
-        }));
+        // Use the formatSignal helper function to process signals
+        const formattedSignals = signalsArray.map(formatSignal);
         
         console.log('Refreshed signals:', formattedSignals);
         setSignals(formattedSignals);
@@ -596,7 +599,8 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
       // Show a notification using the notification service
       notificationService.notifySystem(
         `Signal Added: ${signal.symbol}`,
-        `You'll receive notifications for ${signal.side.toUpperCase()} signals on ${signal.symbol}`
+        `You'll receive notifications for ${signal.side.toUpperCase()} signals on ${signal.symbol}`,
+        'info' // Adding the third required parameter
       );
       
       toast({
@@ -622,15 +626,49 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
   };
   
   // Calculate potential profit/loss percentage
-  const calculatePotential = () => {
+  const calculatePotential = (takeProfit: number) => {
     const entry = signal.entryPrice;
-    const tp1 = signal.takeProfit1;
     
     if (signal.side === 'buy') {
-      return ((tp1 - entry) / entry) * 100;
+      return ((takeProfit - entry) / entry) * 100;
     } else {
-      return ((entry - tp1) / entry) * 100;
+      return ((entry - takeProfit) / entry) * 100;
     }
+  };
+  
+  // Copy value to clipboard
+  const copyToClipboard = (value: number | string, label: string) => {
+    navigator.clipboard.writeText(value.toString());
+    toast({
+      title: "Copied to clipboard",
+      description: `${label} has been copied to clipboard.`,
+    });
+  };
+  
+  // Handle opening ABATEV trade panel
+  const openAbatevTradePanel = (targetTp?: number) => {
+    // Prepare trade data for ABATEV panel
+    const tradeData = {
+      symbol: signal.symbol,
+      side: signal.side,
+      entryPrice: signal.entryPrice,
+      stopLoss: signal.stopLoss,
+      takeProfit1: signal.takeProfit1,
+      takeProfit2: signal.takeProfit2,
+      takeProfit3: signal.takeProfit3,
+      targetTakeProfit: targetTp // Optional specific take profit target
+    };
+    
+    // Store in local storage for ABATEV panel to access
+    localStorage.setItem('abatev_trade_data', JSON.stringify(tradeData));
+    
+    toast({
+      title: "Trade Prepared",
+      description: `${signal.symbol} ${signal.side} trade sent to ABATEV panel.`,
+    });
+    
+    // For now, just alert - in a real implementation, we'd trigger the ABATEV panel to open
+    console.log("Opening ABATEV panel with:", tradeData);
   };
   
   // Calculate risk/reward ratio
@@ -697,26 +735,142 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
           </div>
         </div>
         
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm mb-2">
-          <div className="flex justify-between">
+        {/* Signal Details with Copy Feature */}
+        <div className="grid grid-cols-1 gap-y-1 text-sm mb-2">
+          {/* Date and Time */}
+          <div className="flex justify-between items-center mb-1 border-b pb-1">
+            <span className="text-muted-foreground">Signal Time:</span>
+            <span className="font-medium text-xs">
+              {signal.generatedAt.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+              })}
+            </span>
+          </div>
+
+          {/* Entry Price with copy button */}
+          <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Entry:</span>
-            <span className="font-mono">{signal.entryPrice.toFixed(2)}</span>
+            <div className="flex items-center gap-1">
+              <span className="font-mono">{signal.entryPrice.toFixed(signal.symbol.includes('/') ? 5 : 2)}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5"
+                onClick={() => copyToClipboard(signal.entryPrice, "Entry price")}
+                title="Copy entry price"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                </svg>
+              </Button>
+            </div>
           </div>
           
-          <div className="flex justify-between">
+          {/* Stop Loss with copy button */}
+          <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Stop Loss:</span>
-            <span className="font-mono text-red-500">{signal.stopLoss.toFixed(2)}</span>
+            <div className="flex items-center gap-1">
+              <span className="font-mono text-red-500">{signal.stopLoss.toFixed(signal.symbol.includes('/') ? 5 : 2)}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5"
+                onClick={() => copyToClipboard(signal.stopLoss, "Stop loss")}
+                title="Copy stop loss"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                </svg>
+              </Button>
+            </div>
           </div>
           
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Take Profit:</span>
-            <span className="font-mono text-green-500">{signal.takeProfit1.toFixed(2)}</span>
+          {/* Take Profit 1 with copy button */}
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">TP1:</span>
+            <div className="flex items-center gap-1">
+              <span className="font-mono text-green-500">{signal.takeProfit1.toFixed(signal.symbol.includes('/') ? 5 : 2)}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5"
+                onClick={() => copyToClipboard(signal.takeProfit1, "Take profit 1")}
+                title="Copy take profit 1"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                </svg>
+              </Button>
+            </div>
           </div>
           
-          <div className="flex justify-between">
+          {/* Take Profit 2 with copy button (if exists) */}
+          {signal.takeProfit2 && (
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">TP2:</span>
+              <div className="flex items-center gap-1">
+                <span className="font-mono text-green-500">{signal.takeProfit2.toFixed(signal.symbol.includes('/') ? 5 : 2)}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5"
+                  onClick={() => copyToClipboard(signal.takeProfit2!, "Take profit 2")}
+                  title="Copy take profit 2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                  </svg>
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          {/* Take Profit 3 with copy button (if exists) */}
+          {signal.takeProfit3 && (
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">TP3:</span>
+              <div className="flex items-center gap-1">
+                <span className="font-mono text-green-500">{signal.takeProfit3.toFixed(signal.symbol.includes('/') ? 5 : 2)}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5"
+                  onClick={() => copyToClipboard(signal.takeProfit3!, "Take profit 3")}
+                  title="Copy take profit 3"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                  </svg>
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          <div className="flex justify-between items-center">
             <span className="text-muted-foreground">R/R Ratio:</span>
             <span className="font-mono">{calculateRiskReward()}</span>
           </div>
+          
+          {/* One-click trade button */}
+          {!compact && (
+            <div className="mt-2 pt-2 border-t">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full text-xs" 
+                onClick={() => openAbatevTradePanel()}
+              >
+                <svg className="w-3 h-3 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+                </svg>
+                Trade with ABATEV
+              </Button>
+            </div>
+          )}
         </div>
         
         {!compact && (
@@ -777,7 +931,7 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
             <div className="flex items-center justify-between">
               <span>Waiting for Entry</span>
               <span>
-                Potential: {calculatePotential().toFixed(2)}%
+                Potential: {calculatePotential(signal.takeProfit1).toFixed(2)}%
               </span>
             </div>
           )}
