@@ -74,6 +74,9 @@ app.use((req, res, next) => {
   // Log successful initialization
   console.log('Services initialized successfully');
   
+  // Register our API router for the validator endpoints
+  app.use('/api', apiRouter);
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
