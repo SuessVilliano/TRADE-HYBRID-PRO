@@ -27,7 +27,7 @@ interface EmbeddedBrowserProps {
  * Includes basic browser controls like navigation, refresh, and bookmarks
  */
 export function EmbeddedBrowser({ 
-  defaultUrl = "https://pro.tradingview.com/chart/", 
+  defaultUrl = "https://tv.tradehybrid.club", 
   height = 600,
   className = ""
 }: EmbeddedBrowserProps) {
@@ -37,6 +37,7 @@ export function EmbeddedBrowser({
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [title, setTitle] = useState('Embedded Browser');
   const [bookmarks, setBookmarks] = useState<{ title: string; url: string }[]>([
+    { title: 'TradeHybrid TV', url: 'https://tv.tradehybrid.club' },
     { title: 'TradingView', url: 'https://pro.tradingview.com/chart/' },
     { title: 'MetaTrader Web', url: 'https://trade.mql5.com/trade' },
     { title: 'Interactive Brokers', url: 'https://www.interactivebrokers.com/portal' },
@@ -265,8 +266,8 @@ export function EmbeddedBrowser({
             src={currentUrl}
             className="w-full h-full border-0"
             onLoad={handleIframeLoad}
-            sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-            allow="fullscreen"
+            sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation"
+            allow="fullscreen; camera; microphone; payment"
             title="Embedded Browser"
           />
         )}

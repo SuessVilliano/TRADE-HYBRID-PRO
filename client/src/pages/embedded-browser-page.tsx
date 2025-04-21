@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 
 // Popular broker and platform websites
 const brokerPresets = [
+  { name: "TradeHybrid TV", url: "https://tv.tradehybrid.club", icon: <MonitorPlay className="w-4 h-4 mr-2" /> },
   { name: "TradingView", url: "https://pro.tradingview.com/chart/", icon: <Globe className="w-4 h-4 mr-2" /> },
   { name: "MetaTrader Web", url: "https://trade.mql5.com/trade", icon: <Globe className="w-4 h-4 mr-2" /> },
   { name: "Interactive Brokers", url: "https://www.interactivebrokers.com/portal", icon: <Globe className="w-4 h-4 mr-2" /> },
@@ -29,11 +30,10 @@ const brokerPresets = [
   { name: "E*TRADE", url: "https://us.etrade.com/platforms/power-etrade", icon: <Globe className="w-4 h-4 mr-2" /> },
   { name: "Binance", url: "https://www.binance.com/en/trade", icon: <Globe className="w-4 h-4 mr-2" /> },
   { name: "Coinbase Pro", url: "https://pro.coinbase.com/", icon: <Globe className="w-4 h-4 mr-2" /> },
-  { name: "FTX", url: "https://ftx.com/trade", icon: <Globe className="w-4 h-4 mr-2" /> },
 ];
 
 export default function EmbeddedBrowserPage() {
-  const [browserUrl, setBrowserUrl] = useState('https://pro.tradingview.com/chart/');
+  const [browserUrl, setBrowserUrl] = useState('https://tv.tradehybrid.club');
   const [activeTab, setActiveTab] = useState('single');
   
   // Check if mobile
@@ -153,8 +153,8 @@ export default function EmbeddedBrowserPage() {
           <TabsContent value="multi" className="mt-4">
             <MultiTabBrowser 
               defaultTabs={[
-                { title: 'TradingView', url: 'https://pro.tradingview.com/chart/' },
-                { title: 'MetaTrader Web', url: 'https://trade.mql5.com/trade' }
+                { title: 'TradeHybrid TV', url: 'https://tv.tradehybrid.club' },
+                { title: 'TradingView', url: 'https://pro.tradingview.com/chart/' }
               ]} 
               height={750} 
               className="bg-slate-800 border-slate-700" 
