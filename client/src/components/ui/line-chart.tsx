@@ -1,210 +1,107 @@
-import React, { useState, useEffect, useRef, memo } from 'react';
-import { AlertTriangle, RefreshCcw } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent } from './card';
 import { Button } from './button';
+import { RefreshCcw, AlertTriangle } from 'lucide-react';
 
-interface TradingViewChartProps {
-  symbol: string;
-  timeframe?: string;
-  className?: string;
+interface LineChartProps {
+  data: {
+    name: string;
+    data: Array<{ x: string; y: number }>;
+  }[];
+  categories: string[];
+  colors: string[];
+  yAxisWidth?: number;
+  showLegend?: boolean;
+  showGridLines?: boolean;
+  showGradient?: boolean;
+  height?: number | string;
+  title?: string;
+  subtitle?: string;
 }
 
-const TradingViewChart: React.FC<TradingViewChartProps> = ({ symbol, timeframe = '1d', className }) => {
-  const container = useRef<HTMLDivElement>(null);
-  const scriptLoaded = useRef<boolean>(false);
+export function LineChart({
+  data,
+  categories,
+  colors,
+  yAxisWidth = 40,
+  showLegend = true,
+  showGridLines = true,
+  showGradient = false,
+  height = 'auto',
+  title,
+  subtitle
+}: LineChartProps) {
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [selectedTimeframe, setSelectedTimeframe] = useState<string>(timeframe);
   
-  const loadTradingViewChart = () => {
-    if (!container.current) return;
+  useEffect(() => {
+    // Simulate loading the chart
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  const handleReload = () => {
     setLoading(true);
     setError(null);
     
-    // Clear any existing widgets
-    container.current.innerHTML = '';
-    
-    try {
-      // Format symbol correctly
-      let formattedSymbol = symbol;
-      
-      // Handle different exchange prefixes
-      if (!symbol.includes(':')) {
-        // If no exchange specified, default to BINANCE for crypto pairs
-        if (symbol.endsWith('USD') || symbol.endsWith('USDT')) {
-          formattedSymbol = `BINANCE:${symbol}`;
-        }
-      }
-      
-      // Special case for CME futures
-      if ((symbol.includes('MNQ') || symbol.includes('NQ')) && !symbol.includes('CME:')) {
-        formattedSymbol = `CME:${symbol.replace('!', '')}`;
-      }
-      
-      console.log(`Loading TradingView chart with symbol: ${formattedSymbol}, timeframe: ${selectedTimeframe}`);
-      
-      // Create script element
-      const script = document.createElement('script');
-      script.src = 'https://s3.tradingview.com/tv.js';
-      script.async = true;
-      script.onload = () => {
-        if (typeof window.TradingView !== 'undefined' && container.current) {
-          new window.TradingView.widget({
-            autosize: true,
-            symbol: formattedSymbol,
-            interval: convertTimeframeToInterval(selectedTimeframe),
-            container_id: container.current.id,
-            library_path: 'https://s3.tradingview.com/charting_library/',
-            locale: 'en',
-            timezone: 'exchange',
-            theme: 'dark',
-            style: '1',
-            toolbar_bg: '#1E293B', // Matches slate-800
-            withdateranges: true,
-            hide_side_toolbar: false,
-            allow_symbol_change: true,
-            save_image: true,
-            show_popup_button: true,
-            popup_width: '1000',
-            popup_height: '650',
-            studies: [
-              "RSI@tv-basicstudies",
-              "MASimple@tv-basicstudies",
-              "VWAP@tv-basicstudies"
-            ],
-            enabled_features: [
-              "use_localstorage_for_settings",
-              "chart_property_page_trading",
-              "chart_property_page_style",
-              "property_pages"
-            ],
-            disabled_features: [
-              "header_symbol_search"
-            ],
-            overrides: {
-              "mainSeriesProperties.candleStyle.wickUpColor": '#26A69A',
-              "mainSeriesProperties.candleStyle.wickDownColor": '#EF5350',
-              "mainSeriesProperties.candleStyle.upColor": '#26A69A',
-              "mainSeriesProperties.candleStyle.downColor": '#EF5350',
-              "paneProperties.background": '#1E293B', // Matches slate-800
-              "paneProperties.vertGridProperties.color": '#334155', // Matches slate-700
-              "paneProperties.horzGridProperties.color": '#334155', // Matches slate-700
-              "scalesProperties.textColor": '#94A3B8', // Matches slate-400
-            }
-          });
-          scriptLoaded.current = true;
-          setLoading(false);
-          console.log('TradingView chart loaded successfully');
-        }
-      };
-      
-      script.onerror = () => {
-        setError('Failed to load TradingView chart. Please check your internet connection.');
-        setLoading(false);
-        console.error('Failed to load TradingView script');
-      };
-      
-      container.current.appendChild(script);
-    } catch (err) {
-      setError('An error occurred while loading the chart.');
+    // Simulate reloading
+    setTimeout(() => {
       setLoading(false);
-      console.error('Error initializing TradingView widget:', err);
-    }
-    
-    return () => {
-      if (container.current) {
-        container.current.innerHTML = '';
-      }
-    };
-  };
-
-  // Convert timeframe string to TradingView interval
-  const convertTimeframeToInterval = (tf: string) => {
-    switch (tf) {
-      case '1m': return '1';
-      case '3m': return '3';
-      case '5m': return '5';
-      case '15m': return '15';
-      case '30m': return '30';
-      case '1h': return '60';
-      case '2h': return '120';
-      case '4h': return '240';
-      case '1d': return 'D';
-      case '1w': return 'W';
-      case '1M': return 'M';
-      default: return 'D';
-    }
+    }, 1000);
   };
   
-  useEffect(() => {
-    return loadTradingViewChart();
-  }, [symbol, selectedTimeframe]);
-  
-  const handleTimeframeChange = (tf: string) => {
-    setSelectedTimeframe(tf);
-  };
-  
-  const handleReload = () => {
-    scriptLoaded.current = false;
-    loadTradingViewChart();
-  };
-
   return (
-    <div className={`w-full h-full bg-slate-800 rounded-md flex flex-col ${className}`}>
-      <div className="p-2 border-b border-slate-700 flex justify-between items-center">
-        <div className="font-medium text-sm">{symbol}</div>
-        <div className="flex gap-1">
-          {['5m', '15m', '1h', '4h', '1d', '1w'].map((tf) => (
-            <button
-              key={tf}
-              className={`text-xs px-2 py-1 rounded ${
-                tf === selectedTimeframe 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-              }`}
-              onClick={() => handleTimeframeChange(tf)}
-            >
-              {tf}
-            </button>
-          ))}
-        </div>
-      </div>
-      
-      <div className="flex-grow relative">
-        <div 
-          id={`tv-chart-${symbol.replace(/[^a-zA-Z0-9]/g, '')}`} 
-          ref={container} 
-          className="w-full h-full"
-        />
-        
-        {/* Loading indicator */}
-        {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-800 bg-opacity-75 z-10">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-              <p className="text-sm text-slate-300">Loading {symbol} chart...</p>
-            </div>
+    <div className={`w-full ${typeof height === 'number' ? `h-[${height}px]` : `h-${height}`}`}>
+      <Card className="w-full h-full">
+        {title && (
+          <div className="p-4 pb-0">
+            <h3 className="text-lg font-semibold">{title}</h3>
+            {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
           </div>
         )}
-        
-        {/* Error message */}
-        {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-800 bg-opacity-90 z-10">
-            <div className="text-center p-6 max-w-md">
-              <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-500" />
-              <p className="text-sm text-red-400 mb-4">{error}</p>
-              <Button onClick={handleReload} size="sm" variant="outline" className="gap-2">
-                <RefreshCcw className="h-4 w-4" />
-                Reload Chart
-              </Button>
+        <CardContent className="p-4 relative h-full">
+          {loading ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-card">
+              <div className="flex flex-col items-center">
+                <RefreshCcw className="h-8 w-8 animate-spin text-primary mb-2" />
+                <p className="text-sm text-muted-foreground">Loading chart data...</p>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          ) : error ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-800 bg-opacity-90 z-10">
+              <div className="text-center p-6 max-w-md">
+                <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-500" />
+                <p className="text-sm text-red-400 mb-4">{error}</p>
+                <Button onClick={handleReload} size="sm" variant="outline" className="gap-2">
+                  <RefreshCcw className="h-4 w-4" />
+                  Reload Chart
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="text-center text-muted-foreground">
+                <p>Chart Placeholder</p>
+                <p className="text-xs mt-2">Using Adaptive Market Mood Colors</p>
+                <div className="flex gap-2 mt-4 justify-center">
+                  {data.map((series, i) => (
+                    <div key={i} className="flex items-center gap-1">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: colors[i % colors.length] }}
+                      />
+                      <span className="text-xs">{series.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
-
-// Using TradingView type definition from types/trading-view.d.ts
-
-// Export as default export
-export default memo(TradingViewChart);

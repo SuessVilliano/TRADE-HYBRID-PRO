@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LineChart, BarChart3, Signal, Bot, BookOpen, Users, FileText, 
+import { BarChart3, Signal, Bot, BookOpen, Users, FileText, 
   Settings, Cpu, Calendar, MessageSquare, Podcast, Zap, Activity, BrainCircuit, Wallet } from 'lucide-react';
+import { LineChart } from 'lucide-react';
 import { Button } from '../ui/button';
 import { CryptoWalletOnboardingModal } from '../ui/crypto-wallet-onboarding-modal';
 

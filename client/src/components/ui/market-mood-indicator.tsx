@@ -1,139 +1,116 @@
-import React from 'react';
-import { useMarketMood } from '../../lib/context/MarketMoodContext';
-import { Badge } from './badge';
+import { useEffect, useState } from 'react';
+import { BarChart2, TrendingUp, TrendingDown, RefreshCw, Activity } from 'lucide-react';
 import { Button } from './button';
 import { Switch } from './switch';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './card';
-import { ArrowDown, ArrowUp, BarChart2, RefreshCw } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
+import { cn } from '@/lib/utils';
+import { useMarketMood } from '@/lib/context/MarketMoodContext';
 
+/**
+ * Market Mood Indicator Component
+ * Displays the current market sentiment and allows toggling adaptive color scheme
+ */
 export function MarketMoodIndicator() {
-  const { 
-    marketMood, 
-    refreshMood, 
-    adaptiveColorSchemeEnabled,
-    toggleAdaptiveColorScheme
-  } = useMarketMood();
-
-  const getBadgeVariant = () => {
-    if (marketMood.mood === 'bullish') return 'success';
-    if (marketMood.mood === 'bearish') return 'destructive';
-    return 'secondary';
-  };
-
-  const getIcon = () => {
-    if (marketMood.mood === 'bullish') return <ArrowUp className="w-4 h-4" />;
-    if (marketMood.mood === 'bearish') return <ArrowDown className="w-4 h-4" />;
-    return <BarChart2 className="w-4 h-4" />;
-  };
-
-  const getIntensityLabel = () => {
-    switch (marketMood.intensity) {
-      case 'high': return 'Strong';
-      case 'medium': return 'Moderate';
-      case 'low': return 'Mild';
-      default: return 'Neutral';
+  const { currentMood, moodScore, adaptiveColorsEnabled, setAdaptiveColorsEnabled, fetchMarketMood } = useMarketMood();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Handle refreshing market mood data
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await fetchMarketMood();
+    } catch (error) {
+      console.error('Failed to refresh market mood:', error);
+    } finally {
+      setIsRefreshing(false);
     }
   };
-
-  const getMoodLabel = () => {
-    return marketMood.mood.charAt(0).toUpperCase() + marketMood.mood.slice(1);
+  
+  // Format score as percentage
+  const formatScore = (score: number) => {
+    // Convert -1 to 1 scale to 0-100 percentage
+    const percentage = Math.round(((score + 1) / 2) * 100);
+    return `${percentage}%`;
   };
-
-  const handleRefresh = async () => {
-    await refreshMood();
-  };
-
+  
   return (
-    <Card className="market-mood-card">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-base">Market Mood</CardTitle>
-          <Badge variant={getBadgeVariant()}>
-            {getIcon()}
-            <span className="ml-1">{getMoodLabel()}</span>
-          </Badge>
-        </div>
-        <CardDescription className="text-xs">
-          Sentiment for {marketMood.symbol}
-          {marketMood.lastUpdated && (
-            <span className="ml-1">• Updated {new Date(marketMood.lastUpdated).toLocaleTimeString()}</span>
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="text-sm pb-2">
-        <div className="flex justify-between items-center">
-          <div>
-            <span className="text-muted-foreground">Intensity:</span>{' '}
-            <span className="font-medium">{getIntensityLabel()}</span>
+    <div className={cn(
+      "p-4 rounded-lg border",
+      adaptiveColorsEnabled
+        ? "border-market-primary/30 bg-card"
+        : "border-slate-700 bg-slate-800"
+    )}>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-medium flex items-center">
+          <BarChart2 className="h-5 w-5 mr-2" />
+          Market Mood
+        </h3>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={handleRefresh} 
+          disabled={isRefreshing}
+          title="Refresh market sentiment"
+        >
+          <RefreshCw className={cn(
+            "h-4 w-4",
+            isRefreshing && "animate-spin"
+          )} />
+        </Button>
+      </div>
+      
+      <div className="grid gap-4">
+        <div className={cn(
+          "flex items-center justify-between p-3 rounded-md",
+          currentMood === 'bullish' && "bg-market-bullish-accent/10",
+          currentMood === 'neutral' && "bg-market-neutral-accent/10",
+          currentMood === 'bearish' && "bg-market-bearish-accent/10"
+        )}>
+          <div className="flex items-center">
+            {currentMood === 'bullish' && <TrendingUp className="h-5 w-5 mr-2 text-market-bullish-accent" />}
+            {currentMood === 'neutral' && <Activity className="h-5 w-5 mr-2 text-market-neutral-accent" />}
+            {currentMood === 'bearish' && <TrendingDown className="h-5 w-5 mr-2 text-market-bearish-accent" />}
+            <div>
+              <div className="font-medium capitalize">{currentMood}</div>
+              <div className="text-xs text-muted-foreground">Sentiment Score: {formatScore(moodScore)}</div>
+            </div>
           </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-7 w-7 p-0" 
-                  onClick={handleRefresh}
-                  disabled={marketMood.isLoading}
-                >
-                  <RefreshCw className={`h-4 w-4 ${marketMood.isLoading ? 'animate-spin' : ''}`} />
-                  <span className="sr-only">Refresh</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Refresh market sentiment</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         </div>
-      </CardContent>
-      <CardFooter className="pt-1 flex justify-between items-center">
-        <span className="text-xs text-muted-foreground">Adaptive Colors</span>
-        <Switch
-          checked={adaptiveColorSchemeEnabled}
-          onCheckedChange={toggleAdaptiveColorScheme}
-          aria-label="Toggle adaptive color scheme"
-        />
-      </CardFooter>
-    </Card>
+        
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="font-medium">Adaptive Colors</div>
+            <div className="text-xs text-muted-foreground">Change UI colors based on market mood</div>
+          </div>
+          <Switch
+            checked={adaptiveColorsEnabled}
+            onCheckedChange={setAdaptiveColorsEnabled}
+          />
+        </div>
+      </div>
+    </div>
   );
 }
 
+/**
+ * Market Mood Badge Component
+ * A compact badge displaying current market mood
+ */
 export function MarketMoodBadge() {
-  const { marketMood } = useMarketMood();
-
-  const getBadgeVariant = () => {
-    if (marketMood.mood === 'bullish') return 'success';
-    if (marketMood.mood === 'bearish') return 'destructive';
-    return 'secondary';
-  };
-
-  const getIcon = () => {
-    if (marketMood.mood === 'bullish') return <ArrowUp className="w-3 h-3" />;
-    if (marketMood.mood === 'bearish') return <ArrowDown className="w-3 h-3" />;
-    return <BarChart2 className="w-3 h-3" />;
-  };
-
+  const { currentMood, adaptiveColorsEnabled } = useMarketMood();
+  
+  if (!adaptiveColorsEnabled) return null;
+  
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Badge variant={getBadgeVariant()} className="text-xs">
-            {getIcon()}
-            <span className="ml-1">{marketMood.symbol}</span>
-          </Badge>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p className="text-xs">
-            Market mood for {marketMood.symbol} is{' '}
-            <span className="font-semibold">
-              {marketMood.mood.charAt(0).toUpperCase() + marketMood.mood.slice(1)}
-            </span>{' '}
-            with {marketMood.intensity} intensity
-          </p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div className={cn(
+      "inline-flex items-center px-2 py-1 rounded-full text-xs",
+      currentMood === 'bullish' && "bg-market-bullish-accent/10 text-market-bullish-accent",
+      currentMood === 'neutral' && "bg-market-neutral-accent/10 text-market-neutral-accent",
+      currentMood === 'bearish' && "bg-market-bearish-accent/10 text-market-bearish-accent"
+    )}>
+      {currentMood === 'bullish' && <TrendingUp className="h-3 w-3 mr-1" />}
+      {currentMood === 'neutral' && <Activity className="h-3 w-3 mr-1" />}
+      {currentMood === 'bearish' && <TrendingDown className="h-3 w-3 mr-1" />}
+      <span className="capitalize">{currentMood}</span>
+    </div>
   );
 }

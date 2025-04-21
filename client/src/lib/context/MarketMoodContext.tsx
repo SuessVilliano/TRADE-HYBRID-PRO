@@ -1,197 +1,140 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { marketSentimentService, SentimentScore } from '../services/market-sentiment-service';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { marketSentimentService } from '../services/market-sentiment-service';
 
-// Market mood types
-export type MarketMoodType = 'neutral' | 'bullish' | 'bearish';
+export type MarketMoodType = 'bullish' | 'neutral' | 'bearish';
 
-// Intensity levels for mood (determines color intensity)
-export type MoodIntensityType = 'low' | 'medium' | 'high';
-
-// Market Mood state interface
-interface MarketMoodState {
-  mood: MarketMoodType;
-  intensity: MoodIntensityType;
-  symbol: string;
-  lastUpdated: Date | null;
-  isLoading: boolean;
-  error: string | null;
+export interface MarketMoodContextType {
+  currentMood: MarketMoodType;
+  setCurrentMood: (mood: MarketMoodType) => void;
+  moodScore: number; // -1 to 1
+  adaptiveColorsEnabled: boolean;
+  setAdaptiveColorsEnabled: (enabled: boolean) => void;
+  fetchMarketMood: (symbol?: string) => Promise<void>;
 }
 
-// Context interface
-interface MarketMoodContextType {
-  marketMood: MarketMoodState;
-  setSymbol: (symbol: string) => void;
-  refreshMood: () => Promise<void>;
-  adaptiveColorSchemeEnabled: boolean;
-  toggleAdaptiveColorScheme: () => void;
-}
+const MarketMoodContext = createContext<MarketMoodContextType | undefined>(undefined);
 
-// Create context
-const MarketMoodContext = createContext<MarketMoodContextType>({
-  marketMood: {
-    mood: 'neutral',
-    intensity: 'medium',
-    symbol: 'SPY',
-    lastUpdated: null,
-    isLoading: false,
-    error: null
-  },
-  setSymbol: () => {},
-  refreshMood: async () => {},
-  adaptiveColorSchemeEnabled: true,
-  toggleAdaptiveColorScheme: () => {}
-});
-
-// Hook to use the market mood context
-export const useMarketMood = () => useContext(MarketMoodContext);
-
-interface MarketMoodProviderProps {
-  children: React.ReactNode;
-  defaultSymbol?: string;
-}
-
-// Convert sentiment score to mood intensity
-const getMoodIntensity = (sentiment: SentimentScore): MoodIntensityType => {
-  const score = Math.abs(sentiment.score);
-  if (score > 0.7) return 'high';
-  if (score > 0.3) return 'medium';
-  return 'low';
-};
-
-// Provider component
-export const MarketMoodProvider: React.FC<MarketMoodProviderProps> = ({
-  children,
-  defaultSymbol = 'SPY' // Default to SPY (S&P 500 ETF)
-}) => {
-  // State for market mood
-  const [marketMood, setMarketMood] = useState<MarketMoodState>({
-    mood: 'neutral',
-    intensity: 'medium',
-    symbol: defaultSymbol,
-    lastUpdated: null,
-    isLoading: true,
-    error: null
-  });
-
-  // State for enabling/disabling adaptive color scheme
-  const [adaptiveColorSchemeEnabled, setAdaptiveColorSchemeEnabled] = useState<boolean>(() => {
-    // Try to get preference from localStorage
-    const savedPreference = typeof window !== 'undefined' 
-      ? localStorage.getItem('adaptiveColorScheme') 
-      : null;
-    return savedPreference !== null ? savedPreference === 'true' : true; // Default to true
-  });
-
-  // Function to set the symbol
-  const setSymbol = (symbol: string) => {
-    setMarketMood(prev => ({
-      ...prev,
-      symbol,
-      isLoading: true
+export function MarketMoodProvider({ children }: { children: ReactNode }) {
+  const [currentMood, setCurrentMood] = useState<MarketMoodType>('neutral');
+  const [moodScore, setMoodScore] = useState<number>(0);
+  const [adaptiveColorsEnabled, setAdaptiveColorsEnabled] = useState<boolean>(false);
+  
+  // Apply CSS variables based on the current mood
+  useEffect(() => {
+    // Exit early if adaptive colors are disabled
+    if (!adaptiveColorsEnabled) {
+      // Reset to default theme
+      document.documentElement.style.removeProperty('--market-primary');
+      document.documentElement.style.removeProperty('--market-secondary');
+      document.documentElement.style.removeProperty('--market-accent');
+      return;
+    }
+    
+    let primary = '';
+    let secondary = '';
+    let accent = '';
+    
+    switch (currentMood) {
+      case 'bullish':
+        primary = 'var(--market-bullish-primary)';
+        secondary = 'var(--market-bullish-secondary)';
+        accent = 'var(--market-bullish-accent)';
+        break;
+      case 'bearish':
+        primary = 'var(--market-bearish-primary)';
+        secondary = 'var(--market-bearish-secondary)';
+        accent = 'var(--market-bearish-accent)';
+        break;
+      case 'neutral':
+      default:
+        primary = 'var(--market-neutral-primary)';
+        secondary = 'var(--market-neutral-secondary)';
+        accent = 'var(--market-neutral-accent)';
+        break;
+    }
+    
+    // Apply variables to root element
+    document.documentElement.style.setProperty('--market-primary', primary);
+    document.documentElement.style.setProperty('--market-secondary', secondary);
+    document.documentElement.style.setProperty('--market-accent', accent);
+  }, [currentMood, adaptiveColorsEnabled]);
+  
+  // Load settings from localStorage
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('tradeHybrid_marketMoodSettings');
+    if (savedSettings) {
+      try {
+        const { adaptiveColorsEnabled: savedEnabled } = JSON.parse(savedSettings);
+        setAdaptiveColorsEnabled(savedEnabled);
+      } catch (error) {
+        console.error('Error parsing saved market mood settings:', error);
+      }
+    }
+  }, []);
+  
+  // Save settings to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('tradeHybrid_marketMoodSettings', JSON.stringify({
+      adaptiveColorsEnabled
     }));
-  };
-
-  // Function to refresh the mood
-  const refreshMood = async () => {
-    setMarketMood(prev => ({
-      ...prev,
-      isLoading: true,
-      error: null
-    }));
-
+  }, [adaptiveColorsEnabled]);
+  
+  // Fetch market mood data
+  const fetchMarketMood = async (symbol: string = 'SPY') => {
     try {
-      await marketSentimentService.initialize();
-      const sentimentData = await marketSentimentService.getMarketSentiment(marketMood.symbol);
+      const sentimentData = await marketSentimentService.getMarketSentiment(symbol);
       
       if (sentimentData) {
-        const { overallSentiment } = sentimentData;
-        
-        setMarketMood({
-          mood: overallSentiment.label,
-          intensity: getMoodIntensity(overallSentiment),
-          symbol: marketMood.symbol,
-          lastUpdated: new Date(),
-          isLoading: false,
-          error: null
-        });
+        setCurrentMood(sentimentData.overallSentiment.label);
+        setMoodScore(sentimentData.overallSentiment.score);
+        console.log(`Market mood updated: ${sentimentData.overallSentiment.label} (${sentimentData.overallSentiment.score})`);
       } else {
-        // If no sentiment data, fallback to neutral
-        setMarketMood(prev => ({
-          ...prev,
-          mood: 'neutral',
-          intensity: 'low',
-          lastUpdated: new Date(),
-          isLoading: false,
-          error: 'No sentiment data available'
-        }));
+        // Default to neutral if no data is available
+        setCurrentMood('neutral');
+        setMoodScore(0);
       }
     } catch (error) {
       console.error('Error fetching market mood:', error);
-      setMarketMood(prev => ({
-        ...prev,
-        isLoading: false,
-        error: 'Failed to fetch market sentiment'
-      }));
+      // Default to neutral on error
+      setCurrentMood('neutral');
+      setMoodScore(0);
     }
   };
-
-  // Toggle adaptive color scheme
-  const toggleAdaptiveColorScheme = () => {
-    setAdaptiveColorSchemeEnabled(prev => {
-      const newValue = !prev;
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('adaptiveColorScheme', String(newValue));
-      }
-      return newValue;
-    });
-  };
-
-  // Save preference to localStorage
+  
+  // Initial fetch of market mood
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('adaptiveColorScheme', String(adaptiveColorSchemeEnabled));
-    }
-  }, [adaptiveColorSchemeEnabled]);
-
-  // Initial fetch and periodic refresh
-  useEffect(() => {
-    // Initial fetch
-    refreshMood();
-
-    // Set up periodic refresh (every 5 minutes)
-    const intervalId = setInterval(refreshMood, 5 * 60 * 1000);
-
+    fetchMarketMood();
+    
+    // Set up interval to refresh market mood every 10 minutes
+    const intervalId = setInterval(() => {
+      fetchMarketMood();
+    }, 10 * 60 * 1000);
+    
     return () => clearInterval(intervalId);
-  }, [marketMood.symbol]);
-
-  // Apply market mood to CSS variables when mood changes
-  useEffect(() => {
-    if (!adaptiveColorSchemeEnabled) return;
-    
-    const root = window.document.documentElement;
-    
-    // Remove all mood classes first
-    root.classList.remove('mood-neutral', 'mood-bullish', 'mood-bearish');
-    root.classList.remove('intensity-low', 'intensity-medium', 'intensity-high');
-    
-    // Add the current mood and intensity classes
-    root.classList.add(`mood-${marketMood.mood}`, `intensity-${marketMood.intensity}`);
-    
-  }, [marketMood.mood, marketMood.intensity, adaptiveColorSchemeEnabled]);
-
+  }, []);
+  
   return (
-    <MarketMoodContext.Provider 
-      value={{ 
-        marketMood, 
-        setSymbol, 
-        refreshMood,
-        adaptiveColorSchemeEnabled,
-        toggleAdaptiveColorScheme
+    <MarketMoodContext.Provider
+      value={{
+        currentMood,
+        setCurrentMood,
+        moodScore,
+        adaptiveColorsEnabled,
+        setAdaptiveColorsEnabled,
+        fetchMarketMood
       }}
     >
       {children}
     </MarketMoodContext.Provider>
   );
-};
+}
 
-export default useMarketMood;
+export function useMarketMood(): MarketMoodContextType {
+  const context = useContext(MarketMoodContext);
+  
+  if (!context) {
+    throw new Error('useMarketMood must be used within a MarketMoodProvider');
+  }
+  
+  return context;
+}

@@ -11,6 +11,7 @@ import { useAudio } from '@/lib/stores/useAudio';
 import { SignalTestButtons } from './signal-test-buttons';
 import { useSignals } from '@/lib/stores/useSignals';
 import { useMarketMood } from '@/lib/context/MarketMoodContext';
+import { MarketMoodToggle, MarketMoodPreview } from './market-mood-components';
 
 /**
  * Settings Popup Component
@@ -438,6 +439,24 @@ export function SettingsPopup({
                   </div>
                   
                   <div>
+                    <h3 className="text-lg font-medium mb-4">Market Mood Colors</h3>
+                    
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Adaptive Color Scheme</p>
+                          <p className="text-sm text-muted-foreground">
+                            Dynamically adjust UI colors based on market sentiment
+                          </p>
+                        </div>
+                        <MarketMoodToggle />
+                      </div>
+                      
+                      <MarketMoodPreview />
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6">
                     <h3 className="text-lg font-medium mb-4">Display Settings</h3>
                     
                     <div className="space-y-4">

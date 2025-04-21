@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Market Mood Color Variables */
+:root {
+  /* Bullish Theme */
+  --market-bullish-primary: #10b981;    /* Green */
+  --market-bullish-secondary: #064e3b;  /* Dark Green */
+  --market-bullish-accent: #34d399;     /* Light Green */
+  
+  /* Bearish Theme */
+  --market-bearish-primary: #ef4444;    /* Red */
+  --market-bearish-secondary: #7f1d1d;  /* Dark Red */
+  --market-bearish-accent: #f87171;     /* Light Red */
+  
+  /* Neutral Theme */
+  --market-neutral-primary: #3b82f6;    /* Blue */
+  --market-neutral-secondary: #1e3a8a;  /* Dark Blue */
+  --market-neutral-accent: #60a5fa;     /* Light Blue */
+  
+  /* Default market mood variables (will be updated dynamically) */
+  --market-primary: var(--market-neutral-primary);
+  --market-secondary: var(--market-neutral-secondary);
+  --market-accent: var(--market-neutral-accent);
+}
+
 /* Mobile Trade Panel Optimizations */
 @media (max-width: 767px) {
   .mobile-trade-panel {
