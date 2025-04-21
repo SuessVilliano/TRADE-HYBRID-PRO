@@ -1,13 +1,60 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { TradingDashboardLayout } from '../components/ui/trading-dashboard-layout';
-import { Bot, BrainCircuit, ActivitySquare, Settings, Play, Clock, ChevronRight, Plus } from 'lucide-react';
+import { Bot, BrainCircuit, ActivitySquare, Settings, Play, Clock, ChevronRight, Plus, X, Check } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { toast } from 'sonner';
 
 export default function TradingBotsPage() {
+  const [showNewBotDialog, setShowNewBotDialog] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newBotData, setNewBotData] = useState({
+    name: '',
+    strategy: 'momentum',
+    assets: ['BTC'],
+    maxDrawdown: '10',
+    stopLoss: '5',
+    takeProfit: '15',
+    initialCapital: '1000'
+  });
+
+  const handleCreateBot = () => {
+    setCreating(true);
+    
+    // Simulate API call to create a new bot
+    setTimeout(() => {
+      setCreating(false);
+      setShowNewBotDialog(false);
+      
+      // Reset form
+      setNewBotData({
+        name: '',
+        strategy: 'momentum',
+        assets: ['BTC'],
+        maxDrawdown: '10',
+        stopLoss: '5',
+        takeProfit: '15',
+        initialCapital: '1000'
+      });
+      
+      // Show success notification
+      toast.success('Trading bot created successfully', {
+        description: `${newBotData.name} has been created and is ready to configure.`,
+        action: {
+          label: 'View',
+          onClick: () => console.log('View bot settings')
+        }
+      });
+    }, 1500);
+  };
+  
   const activeTraders = [
     {
       id: '1',
@@ -102,7 +149,10 @@ export default function TradingBotsPage() {
               Create, deploy and monitor autonomous trading bots powered by AI
             </p>
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={() => setShowNewBotDialog(true)}
+          >
             <Bot className="mr-2 h-4 w-4" />
             Create New Bot
           </Button>
@@ -179,7 +229,11 @@ export default function TradingBotsPage() {
                   <p className="text-sm text-slate-400 mb-4">
                     Deploy AI-powered trading strategies automatically
                   </p>
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                  <Button 
+                    size="sm" 
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => setShowNewBotDialog(true)}
+                  >
                     <Plus className="h-4 w-4 mr-1" />
                     New Bot
                   </Button>
@@ -312,6 +366,149 @@ export default function TradingBotsPage() {
           </div>
         </div>
       </div>
+      
+      {/* Create New Bot Dialog */}
+      <Dialog open={showNewBotDialog} onOpenChange={setShowNewBotDialog}>
+        <DialogContent className="sm:max-w-md bg-slate-900 border-slate-800">
+          <DialogHeader>
+            <DialogTitle>Create Trading Bot</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Configure your new AI-powered trading bot. You can adjust all settings later.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-3">
+            <div className="space-y-2">
+              <Label htmlFor="botName">Bot Name</Label>
+              <Input
+                id="botName"
+                placeholder="e.g., BTC Momentum Trader"
+                className="bg-slate-800 border-slate-700"
+                value={newBotData.name}
+                onChange={(e) => setNewBotData({...newBotData, name: e.target.value})}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="strategy">Strategy</Label>
+                <Select 
+                  value={newBotData.strategy}
+                  onValueChange={(value) => setNewBotData({...newBotData, strategy: value})}
+                >
+                  <SelectTrigger className="bg-slate-800 border-slate-700">
+                    <SelectValue placeholder="Select strategy" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-700">
+                    <SelectItem value="momentum">Momentum</SelectItem>
+                    <SelectItem value="mean-reversion">Mean Reversion</SelectItem>
+                    <SelectItem value="grid-trading">Grid Trading</SelectItem>
+                    <SelectItem value="smart-beta">Smart Beta</SelectItem>
+                    <SelectItem value="trend-following">Trend Following</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="assets">Primary Asset</Label>
+                <Select 
+                  defaultValue="BTC"
+                  onValueChange={(value) => setNewBotData({...newBotData, assets: [value]})}
+                >
+                  <SelectTrigger className="bg-slate-800 border-slate-700">
+                    <SelectValue placeholder="Select asset" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-700">
+                    <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
+                    <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
+                    <SelectItem value="SOL">Solana (SOL)</SelectItem>
+                    <SelectItem value="AVAX">Avalanche (AVAX)</SelectItem>
+                    <SelectItem value="DOT">Polkadot (DOT)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="initialCapital">Initial Capital ($)</Label>
+                <Input
+                  id="initialCapital"
+                  type="number"
+                  className="bg-slate-800 border-slate-700"
+                  value={newBotData.initialCapital}
+                  onChange={(e) => setNewBotData({...newBotData, initialCapital: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="maxDrawdown">Max Drawdown (%)</Label>
+                <Input
+                  id="maxDrawdown"
+                  type="number"
+                  className="bg-slate-800 border-slate-700"
+                  value={newBotData.maxDrawdown}
+                  onChange={(e) => setNewBotData({...newBotData, maxDrawdown: e.target.value})}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="stopLoss">Stop Loss (%)</Label>
+                <Input
+                  id="stopLoss"
+                  type="number"
+                  className="bg-slate-800 border-slate-700"
+                  value={newBotData.stopLoss}
+                  onChange={(e) => setNewBotData({...newBotData, stopLoss: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="takeProfit">Take Profit (%)</Label>
+                <Input
+                  id="takeProfit"
+                  type="number"
+                  className="bg-slate-800 border-slate-700"
+                  value={newBotData.takeProfit}
+                  onChange={(e) => setNewBotData({...newBotData, takeProfit: e.target.value})}
+                />
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter className="sm:justify-between">
+            <Button
+              variant="ghost"
+              type="button"
+              onClick={() => setShowNewBotDialog(false)}
+              className="text-slate-400 hover:text-white hover:bg-slate-800"
+            >
+              <X className="mr-2 h-4 w-4" />
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              disabled={!newBotData.name || creating}
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={handleCreateBot}
+            >
+              {creating ? (
+                <>
+                  <Bot className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  Create Bot
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </TradingDashboardLayout>
   );
 }

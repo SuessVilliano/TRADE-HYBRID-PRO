@@ -219,7 +219,12 @@ const App: React.FC = () => {
                   
                   {/* Tools & Analysis */}
                   <Route path="/trading-tools" element={<ProtectedRoute><TradingToolsPage /></ProtectedRoute>} />
+                  <Route path="/ai-analysis" element={<ProtectedRoute><AiMarketAnalysisPage /></ProtectedRoute>} />
                   <Route path="/ai-market-analysis" element={<ProtectedRoute><AiMarketAnalysisPage /></ProtectedRoute>} />
+                  <Route path="/market-overview" element={<ProtectedRoute><TradingToolsPage /></ProtectedRoute>} />
+                  <Route path="/portfolio-dashboard" element={<ProtectedRoute><InvestorDashboardPage /></ProtectedRoute>} />
+                  <Route path="/user-settings" element={<ProtectedRoute><SettingsView /></ProtectedRoute>} />
+                  <Route path="/help-center" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
                   <Route path="/signals-analyzer" element={<ProtectedRoute><SignalsAnalyzerPage /></ProtectedRoute>} />
                   <Route path="/voice-trade" element={<ProtectedRoute><VoiceTradeDemoPage /></ProtectedRoute>} />
                   <Route path="/smart-trade-explainer" element={<ProtectedRoute><SmartTradeExplainer /></ProtectedRoute>} />
