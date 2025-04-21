@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { 
   Card, 
@@ -17,8 +17,10 @@ import {
   TableRow 
 } from '../ui/table';
 import { Button } from '../ui/button';
-import { RefreshCw, Info, CheckCircle, AlertCircle } from 'lucide-react';
+import { RefreshCw, Info, CheckCircle, AlertCircle, Bell } from 'lucide-react';
 import { useToast } from '../ui/use-toast';
+import { Switch } from '../ui/switch';
+import { Label } from '../ui/label';
 
 interface WebhookLog {
   id: string;
@@ -44,37 +46,141 @@ export function WebhookLogs() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [isSendingTest, setIsSendingTest] = useState(false);
+  const [lastLogId, setLastLogId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Load webhook logs on component mount
+  // Load webhook logs on component mount and set up auto-refresh
   useEffect(() => {
-    fetchLogs();
-  }, []);
+    // Initial load of logs
+    const loadLogs = () => {
+      fetchLogs(true);
+    };
+    loadLogs();
+
+    // Set up auto-refresh if enabled
+    let intervalId: NodeJS.Timeout | null = null;
+    if (autoRefresh) {
+      intervalId = setInterval(() => {
+        console.log('Auto-refreshing webhook logs...');
+        fetchLogs(false); // Don't show loading indicator on auto-refresh
+      }, 10000); // Refresh every 10 seconds
+    }
+
+    // Cleanup interval on component unmount or when autoRefresh changes
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [autoRefresh]); // Re-run effect when autoRefresh changes
 
   // Fetch webhook logs from server
-  const fetchLogs = async () => {
-    setIsRefreshing(true);
+  const fetchLogs = async (showLoadingIndicator = true) => {
+    if (showLoadingIndicator) {
+      setIsRefreshing(true);
+    }
     setError(null);
+    
     try {
       // Use the public endpoint that doesn't require authentication
       const response = await axios.get('/api/webhooks/logs-public');
+      
       if (response.data && response.data.logs) {
-        setLogs(response.data.logs);
+        const newLogs = response.data.logs;
+        
+        if (newLogs.length > logs.length && logs.length > 0) {
+          // Check if there are new logs
+          const oldIds = new Set(logs.map((log: WebhookLog) => log.id));
+          const newLogItems = newLogs.filter((log: WebhookLog) => !oldIds.has(log.id));
+          
+          if (newLogItems.length > 0) {
+            console.log(`Found ${newLogItems.length} new logs!`);
+            // Show a notification for new logs
+            toast({
+              title: `${newLogItems.length} New Webhook${newLogItems.length > 1 ? 's' : ''} Received`,
+              description: `${newLogItems.length} new webhook execution${newLogItems.length > 1 ? 's' : ''} have been logged.`,
+              variant: 'default',
+            });
+          }
+        }
+        
+        setLogs(newLogs);
+        
+        // Check if our test log appeared (if we have a lastLogId)
+        if (lastLogId) {
+          const foundTestLog = newLogs.find((log: WebhookLog) => log.id === lastLogId);
+          if (foundTestLog) {
+            console.log('Test log was found in the logs!');
+            setLastLogId(null); // Clear the last log ID since we found it
+            
+            toast({
+              title: 'Test Webhook Found',
+              description: 'The test webhook was successfully logged and displayed!',
+              variant: 'default',
+            });
+          }
+        }
       } else {
-        setLogs([]);
-        setError('No logs were returned from the server');
+        if (showLoadingIndicator) {
+          setLogs([]);
+          setError('No logs were returned from the server');
+        }
       }
     } catch (error: any) {
       console.error('Error fetching webhook logs:', error);
-      setError(error.message || 'Failed to fetch webhook logs');
+      if (showLoadingIndicator) {
+        setError(error.message || 'Failed to fetch webhook logs');
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch webhook logs',
+          variant: 'destructive'
+        });
+      }
+    } finally {
+      if (showLoadingIndicator) {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
+    }
+  };
+  
+  // Send a test webhook to verify logging works
+  const sendTestWebhook = async () => {
+    setIsSendingTest(true);
+    try {
+      // Call our test endpoint to create a test webhook log
+      const response = await axios.get('/api/test/create-log');
+      
+      if (response.data && response.data.success) {
+        // Save the test log ID to check for it in subsequent refreshes
+        setLastLogId(response.data.log_id);
+        
+        toast({
+          title: 'Test Webhook Sent',
+          description: 'A test webhook has been sent to the system. It should appear in the logs shortly.',
+          variant: 'default',
+        });
+        
+        // Immediately refresh logs to try to see the new test
+        fetchLogs();
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to create test webhook log',
+          variant: 'destructive'
+        });
+      }
+    } catch (error: any) {
+      console.error('Error sending test webhook:', error);
       toast({
         title: 'Error',
-        description: 'Failed to fetch webhook logs',
+        description: error.message || 'Failed to send test webhook',
         variant: 'destructive'
       });
     } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+      setIsSendingTest(false);
     }
   };
 
@@ -137,16 +243,38 @@ export function WebhookLogs() {
               View recent webhook executions and their results.
             </CardDescription>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-2"
-            onClick={fetchLogs}
-            disabled={isRefreshing}
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="auto-refresh"
+                checked={autoRefresh}
+                onCheckedChange={setAutoRefresh}
+              />
+              <Label htmlFor="auto-refresh" className="text-sm">Auto Refresh</Label>
+            </div>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={sendTestWebhook}
+              disabled={isSendingTest}
+            >
+              <Bell className={`h-4 w-4 ${isSendingTest ? 'animate-pulse' : ''}`} />
+              Test Log
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={() => fetchLogs(true)}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -162,7 +290,13 @@ export function WebhookLogs() {
               {error}
             </p>
             <div className="mt-4">
-              <Button variant="outline" onClick={fetchLogs}>
+              <Button 
+                variant="outline" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  fetchLogs(true);
+                }}
+              >
                 Try Again
               </Button>
             </div>

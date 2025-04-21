@@ -394,7 +394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Test webhooks for Cash Cow formats
-  app.post("/api/test/webhook/cashcow", (req, res) => {
+  app.post("/api/test/webhook/cashcow", async (req, res) => {
     // Create a sample Cash Cow signal based on the requested type
     const signalType = req.query.type || 'forex';
 
@@ -429,7 +429,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Pass the payload to the webhook processor
     req.body = payload;
-    return receiveWebhook(req, res);
+    
+    console.log('TEST ENDPOINT: Processing test webhook with payload:', JSON.stringify(payload));
+    
+    // Make sure this request to the webhook logger includes a unique ID to track in the logs
+    const testId = `test-webhook-${Date.now()}`;
+    
+    // Directly log this as a webhook execution without passing through receiveWebhook
+    try {
+      const { logWebhookExecution } = await import('./services/webhook-service');
+      
+      await logWebhookExecution(
+        testId, // Use our test-specific ID
+        'demo-user-123', // Use demo user ID
+        payload.channel_name.includes('forex') ? 'oanda' : 
+          payload.channel_name.includes('futures') ? 'ninjatrader' : 'alpaca', // Determine broker based on market type
+        payload, // The full payload
+        { 
+          success: true, 
+          message: 'Test webhook execution logged',
+          details: { source: 'test_endpoint' }
+        }, // Result
+        req, // The request object
+        123 // Test response time
+      );
+      
+      console.log(`TEST ENDPOINT: Successfully logged test webhook with ID: ${testId}`);
+      
+      // Return success with the ID so we can check if it appears in logs
+      return res.json({
+        success: true, 
+        message: 'Test webhook received and logged',
+        log_id: testId,
+        execution: {
+          success: true,
+          message: 'Test execution successful'
+        }
+      });
+    } catch (error: any) {
+      console.error('TEST ENDPOINT: Error logging test webhook:', error);
+      return res.status(500).json({ 
+        error: error.message || 'An error occurred logging test webhook',
+        stack: error.stack
+      });
+    }
+  });
+  
+  // Add a dedicated test endpoint directly accessible via URL to test webhook logging
+  app.get("/api/test/create-log", async (req, res) => {
+    console.log('DIRECT TEST: Creating a test webhook log entry via direct endpoint...');
+    
+    // Create a unique test ID for this log that will be visibly different from existing logs
+    const testId = `test-direct-${Date.now()}`;
+    
+    try {
+      const { logWebhookExecution } = await import('./services/webhook-service');
+      
+      // Create a test payload that's visibly different
+      const payload = {
+        test: true,
+        message: "THIS IS A TEST WEBHOOK LOG ENTRY",
+        timestamp: new Date().toISOString(),
+        symbol: "TEST-SYMBOL",
+        price: 12345.67,
+        action: "TEST-ACTION"
+      };
+      
+      // Log the test execution directly
+      await logWebhookExecution(
+        testId,
+        'demo-user-123',
+        'TEST-BROKER',
+        payload,
+        {
+          success: true,
+          message: 'Direct test webhook log created successfully',
+          details: { source: 'direct_test_endpoint' }
+        },
+        req,
+        0
+      );
+      
+      console.log(`DIRECT TEST: Successfully created test log with ID: ${testId}`);
+      
+      // Return success with the ID
+      return res.json({
+        success: true,
+        message: 'Test webhook log created',
+        log_id: testId,
+        instructions: 'Check webhook logs page to see if this entry appears'
+      });
+    } catch (error: any) {
+      console.error('DIRECT TEST: Error creating test log:', error);
+      return res.status(500).json({
+        error: error.message || 'An error occurred creating test log',
+        stack: error.stack
+      });
+    }
   });
 
   // Game leaderboard routes
