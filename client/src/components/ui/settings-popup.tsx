@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from './button';
-import { X, Save, Volume2, Volume1, VolumeX, Mic, MicOff, Monitor, Smartphone, Moon, Sun, RotateCcw } from 'lucide-react';
+import { X, Save, Volume2, Volume1, VolumeX, Mic, MicOff, Monitor, Smartphone, Moon, Sun, RotateCcw, BarChart2 } from 'lucide-react';
 import { Switch } from './switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 import { Input } from './input';
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { useAudio } from '@/lib/stores/useAudio';
 import { SignalTestButtons } from './signal-test-buttons';
 import { useSignals } from '@/lib/stores/useSignals';
+import { useMarketMood } from '@/lib/context/MarketMoodContext';
 
 /**
  * Settings Popup Component

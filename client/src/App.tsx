@@ -107,22 +107,21 @@ const App: React.FC = () => {
   console.log("App component rendering");
   return (
     <AuthProvider>
-      <ThemeProvider defaultTheme="dark">
-        <SolanaWalletProvider>
-          <SolanaAuthProvider>
-            <OnboardingProvider>
-              <Router>
-                {/* Onboarding Components */}
-                <OnboardingTooltip />
-                <OnboardingButton />
-                
-                {/* Universal Header for consistent navigation */}
-                <UniversalHeader />
-                
-                {/* Bottom Nav Bar (optional based on user preferences) */}
-                <BottomNav />
-                
-                <div className="mt-14"> {/* Add margin to account for fixed header */}
+      <SolanaWalletProvider>
+        <SolanaAuthProvider>
+          <OnboardingProvider>
+            <Router>
+              {/* Onboarding Components */}
+              <OnboardingTooltip />
+              <OnboardingButton />
+              
+              {/* Universal Header for consistent navigation */}
+              <UniversalHeader />
+              
+              {/* Bottom Nav Bar (optional based on user preferences) */}
+              <BottomNav />
+              
+              <div className="mt-14"> {/* Add margin to account for fixed header */}
                   <Routes>
                   {/* Public routes */}
                   <Route path="/" element={<LandingPage />} />
@@ -256,8 +255,7 @@ const App: React.FC = () => {
             </OnboardingProvider>
           </SolanaAuthProvider>
         </SolanaWalletProvider>
-      </ThemeProvider>
-    </AuthProvider>
+      </AuthProvider>
   );
 };
 

@@ -157,6 +157,95 @@
   --slate-900: 245, 243, 255;
 }
 
+/* Market Mood: Bullish (Dark theme) */
+.dark.mood-bullish {
+  --primary: 16, 185, 129; /* Green #10b981 */
+  --secondary: 5, 150, 105; /* Darker green #059669 */
+  --accent: 52, 211, 153; /* Light green #34d399 */
+  --panel-bg: 15, 23, 25; /* Slightly green-tinted dark */
+  --card-bg: 17, 24, 26; /* Slightly green-tinted dark */
+  --border-primary: 16, 185, 129, 0.5; /* Green border */
+  --border-secondary: 5, 150, 105, 0.5; /* Darker green border */
+  
+  /* Green glow effects */
+  --purple-glow: 0 0 10px rgba(16, 185, 129, 0.5), 0 0 20px rgba(16, 185, 129, 0.3);
+  --blue-glow: 0 0 10px rgba(5, 150, 105, 0.5), 0 0 20px rgba(5, 150, 105, 0.3);
+  --pink-glow: 0 0 10px rgba(52, 211, 153, 0.5), 0 0 20px rgba(52, 211, 153, 0.3);
+}
+
+/* Market Mood: Bullish with High Intensity (Dark theme) */
+.dark.mood-bullish.intensity-high {
+  --primary: 16, 185, 129; /* Green #10b981 */
+  --secondary: 5, 150, 105; /* Darker green #059669 */
+  --accent: 52, 211, 153; /* Light green #34d399 */
+  --success: 16, 185, 129; /* Green #10b981 */
+  --panel-bg: 10, 27, 22; /* More green-tinted dark */
+  --card-bg: 15, 30, 25; /* More green-tinted dark */
+  --border-primary: 16, 185, 129, 0.7; /* Green border */
+  --border-secondary: 5, 150, 105, 0.7; /* Darker green border */
+  
+  /* Enhanced Green glow effects */
+  --purple-glow: 0 0 15px rgba(16, 185, 129, 0.6), 0 0 30px rgba(16, 185, 129, 0.4);
+  --blue-glow: 0 0 15px rgba(5, 150, 105, 0.6), 0 0 30px rgba(5, 150, 105, 0.4);
+  --pink-glow: 0 0 15px rgba(52, 211, 153, 0.6), 0 0 30px rgba(52, 211, 153, 0.4);
+}
+
+/* Market Mood: Bearish (Dark theme) */
+.dark.mood-bearish {
+  --primary: 220, 38, 38; /* Red #dc2626 */
+  --secondary: 185, 28, 28; /* Darker red #b91c1c */
+  --accent: 248, 113, 113; /* Light red #f87171 */
+  --panel-bg: 25, 15, 15; /* Slightly red-tinted dark */
+  --card-bg: 26, 17, 17; /* Slightly red-tinted dark */
+  --border-primary: 220, 38, 38, 0.5; /* Red border */
+  --border-secondary: 185, 28, 28, 0.5; /* Darker red border */
+  
+  /* Red glow effects */
+  --purple-glow: 0 0 10px rgba(220, 38, 38, 0.5), 0 0 20px rgba(220, 38, 38, 0.3);
+  --blue-glow: 0 0 10px rgba(185, 28, 28, 0.5), 0 0 20px rgba(185, 28, 28, 0.3);
+  --pink-glow: 0 0 10px rgba(248, 113, 113, 0.5), 0 0 20px rgba(248, 113, 113, 0.3);
+}
+
+/* Market Mood: Bearish with High Intensity (Dark theme) */
+.dark.mood-bearish.intensity-high {
+  --primary: 220, 38, 38; /* Red #dc2626 */
+  --secondary: 185, 28, 28; /* Darker red #b91c1c */
+  --accent: 248, 113, 113; /* Light red #f87171 */
+  --danger: 220, 38, 38; /* Red #dc2626 */
+  --panel-bg: 27, 10, 10; /* More red-tinted dark */
+  --card-bg: 30, 15, 15; /* More red-tinted dark */
+  --border-primary: 220, 38, 38, 0.7; /* Red border */
+  --border-secondary: 185, 28, 28, 0.7; /* Darker red border */
+  
+  /* Enhanced Red glow effects */
+  --purple-glow: 0 0 15px rgba(220, 38, 38, 0.6), 0 0 30px rgba(220, 38, 38, 0.4);
+  --blue-glow: 0 0 15px rgba(185, 28, 28, 0.6), 0 0 30px rgba(185, 28, 28, 0.4);
+  --pink-glow: 0 0 15px rgba(248, 113, 113, 0.6), 0 0 30px rgba(248, 113, 113, 0.4);
+}
+
+/* Market Mood: Light theme variants */
+.light.mood-bullish {
+  --primary: 16, 185, 129; /* Green #10b981 */
+  --secondary: 5, 150, 105; /* Darker green #059669 */
+  --accent: 52, 211, 153; /* Light green #34d399 */
+  --background: 240, 253, 244; /* Light green background #f0fdf4 */
+  --panel-bg: 235, 250, 245; /* Slightly green-tinted light */
+  --card-bg: 240, 255, 250; /* Slightly green-tinted light */
+  --border-primary: 16, 185, 129, 0.5; /* Green border */
+  --border-secondary: 5, 150, 105, 0.5; /* Darker green border */
+}
+
+.light.mood-bearish {
+  --primary: 220, 38, 38; /* Red #dc2626 */
+  --secondary: 185, 28, 28; /* Darker red #b91c1c */
+  --accent: 248, 113, 113; /* Light red #f87171 */
+  --background: 254, 242, 242; /* Light red background #fef2f2 */
+  --panel-bg: 250, 235, 235; /* Slightly red-tinted light */
+  --card-bg: 255, 240, 240; /* Slightly red-tinted light */
+  --border-primary: 220, 38, 38, 0.5; /* Red border */
+  --border-secondary: 185, 28, 28, 0.5; /* Darker red border */
+}
+
 @layer base {
   body {
     font-feature-settings: "rlig" 1, "calt" 1;

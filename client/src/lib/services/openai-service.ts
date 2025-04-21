@@ -1,253 +1,123 @@
-import axios from 'axios';
-import { TradeSignal } from './google-sheets-service';
-import { TradeAnalysisResult } from './signals-analyzer-service';
-
-// Interface for OpenAI API request
-interface OpenAIRequest {
-  model: string;
-  messages: Array<{
-    role: 'system' | 'user' | 'assistant';
-    content: string | Array<{
-      type: 'text' | 'image_url';
-      text?: string;
-      image_url?: {
-        url: string;
-      };
-    }>;
-  }>;
-  max_tokens?: number;
-  temperature?: number;
-}
-
-// Interface for OpenAI API response
-interface OpenAIResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  choices: Array<{
-    index: number;
-    message: {
-      role: string;
-      content: string;
-    };
-    finish_reason: string;
-  }>;
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-}
-
-export class OpenAIService {
-  private readonly API_URL = 'https://api.openai.com/v1/chat/completions';
+/**
+ * OpenAI Service
+ * Handles interactions with OpenAI's API for AI-powered features
+ */
+class OpenAIService {
+  private initialized = false;
+  private apiKey?: string;
   
-  // Models
-  private readonly TEXT_MODEL = 'gpt-4-turbo-preview'; // or 'gpt-3.5-turbo' for lower cost
-  private readonly VISION_MODEL = 'gpt-4-vision-preview'; // Model that supports image analysis
+  constructor() {}
   
-  // Method to analyze trade signals
-  async analyzeSignals(signals: TradeSignal[]): Promise<{ [signalId: string]: string }> {
-    if (!signals || signals.length === 0) {
-      return {};
+  async initialize(): Promise<boolean> {
+    if (!this.initialized) {
+      // In a real implementation, this would verify the API key
+      // by making a test call to OpenAI
+      console.log('Initializing OpenAI service...');
+      this.initialized = true;
+      return true;
+    }
+    return true;
+  }
+  
+  /**
+   * Analyze market sentiment using AI
+   * @param text The text to analyze
+   */
+  async analyzeMarketSentiment(text: string): Promise<{
+    sentiment: {
+      score: number;
+      label: string;
+      confidence: number;
+    }
+  }> {
+    // This is a mock implementation since we're not actually calling OpenAI
+    // In a real implementation, this would make an API call to OpenAI
+    
+    // Simple keyword-based sentiment analysis
+    const bullishKeywords = [
+      'bullish', 'positive', 'growth', 'rally', 'surge', 'jump', 'gain',
+      'uptrend', 'recovery', 'optimistic', 'strong', 'upside', 'opportunity'
+    ];
+    
+    const bearishKeywords = [
+      'bearish', 'negative', 'decline', 'drop', 'fall', 'plunge', 'loss',
+      'downtrend', 'pessimistic', 'weak', 'risk', 'concern', 'warning'
+    ];
+    
+    // Count occurrences of bullish and bearish keywords
+    const textLower = text.toLowerCase();
+    let bullishCount = 0;
+    let bearishCount = 0;
+    
+    bullishKeywords.forEach(keyword => {
+      const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+      const matches = textLower.match(regex);
+      if (matches) bullishCount += matches.length;
+    });
+    
+    bearishKeywords.forEach(keyword => {
+      const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+      const matches = textLower.match(regex);
+      if (matches) bearishCount += matches.length;
+    });
+    
+    // Calculate sentiment score (-1 to 1)
+    let score = 0;
+    if (bullishCount + bearishCount > 0) {
+      score = (bullishCount - bearishCount) / (bullishCount + bearishCount);
     }
     
-    try {
-      // Prepare context for the analysis
-      const context = `
-You are an expert crypto and forex trader analyzing trade signals. 
-Review these ${signals.length} trade signals and provide a brief analysis for each one.
-Focus on potential success factors, risk assessment, and market context.
-Keep each analysis concise (2-3 sentences per signal).
-`;
-      
-      // Format signals data for the API
-      const signalsData = signals.map(signal => {
-        return `
-Signal ID: ${signal.id}
-Asset: ${signal.asset}
-Direction: ${signal.direction}
-Entry Price: ${signal.entryPrice}
-Stop Loss: ${signal.stopLoss}
-Take Profit 1: ${signal.takeProfit1}
-Take Profit 2: ${signal.takeProfit2 || 'N/A'}
-Take Profit 3: ${signal.takeProfit3 || 'N/A'}
-Market Type: ${signal.marketType}
-Status: ${signal.status}
-`;
-      }).join('\n---\n');
-      
-      // Prepare the request
-      const request: OpenAIRequest = {
-        model: this.TEXT_MODEL,
-        messages: [
-          {
-            role: 'system',
-            content: context
-          },
-          {
-            role: 'user',
-            content: `Here are the signals to analyze:\n\n${signalsData}\n\nPlease provide your analysis for each signal. Format the response as "Signal ID: Your analysis here."`
-          }
-        ],
-        temperature: 0.3, // Lower temperature for more focused/deterministic responses
-        max_tokens: 2000 // Adjust based on the number of signals
-      };
-      
-      // Send the request to OpenAI API
-      const response = await this.callOpenAI(request);
-      
-      // Process the response
-      const analysisText = response.choices[0].message.content.trim();
-      
-      // Parse the analysis into a map of signal ID to analysis text
-      const analysisMap: { [signalId: string]: string } = {};
-      
-      // Split the response by signal ID pattern
-      const analysisSegments = analysisText.split(/Signal ID: |Signal ID:|SignalID:|Signal:/);
-      
-      for (const segment of analysisSegments) {
-        if (!segment.trim()) continue;
-        
-        // Extract signal ID and analysis text
-        const match = segment.match(/([^:\n]+):(.*?)(?=Signal ID:|$)/s);
-        if (match) {
-          const signalId = match[1].trim();
-          const analysis = match[2].trim();
-          analysisMap[signalId] = analysis;
-        } else {
-          // Try another parsing approach for different response formats
-          const lines = segment.split('\n');
-          if (lines.length > 0) {
-            const firstLine = lines[0].trim();
-            // Check if the first line contains the signal ID
-            const signalId = firstLine.split(' ')[0];
-            if (signalId && signals.find(s => s.id === signalId)) {
-              const analysis = segment.substring(signalId.length).trim();
-              analysisMap[signalId] = analysis;
-            }
-          }
-        }
+    // Determine label based on score
+    let label = 'neutral';
+    if (score > 0.2) label = 'bullish';
+    if (score < -0.2) label = 'bearish';
+    
+    // Calculate confidence (0.5 to 1)
+    const confidence = 0.5 + Math.min(0.5, Math.abs(score) * 0.5);
+    
+    return {
+      sentiment: {
+        score,
+        label,
+        confidence
       }
-      
-      return analysisMap;
-    } catch (error) {
-      console.error('Error analyzing signals with OpenAI:', error);
-      return {};
-    }
+    };
   }
   
-  // Method to analyze a chart image
-  async analyzeChart(chartImageUrl: string, assetName: string, timeframe: string): Promise<string> {
-    try {
-      const request: OpenAIRequest = {
-        model: this.VISION_MODEL,
-        messages: [
-          {
-            role: 'system',
-            content: `You are an expert technical analyst. Analyze this ${assetName} chart on ${timeframe} timeframe. 
-                     Identify key patterns, support/resistance levels, trend direction, and potential entry/exit points. 
-                     Be specific about what you see on the chart and provide actionable insights.`
-          },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'image_url',
-                image_url: {
-                  url: chartImageUrl
-                }
-              },
-              {
-                type: 'text',
-                text: `Please analyze this ${assetName} chart on the ${timeframe} timeframe. 
-                      What patterns do you see? What's the overall trend? 
-                      Where are key support and resistance levels? 
-                      What would be your trading recommendation based on this chart?`
-              }
-            ]
-          }
-        ],
-        max_tokens: 1000
-      };
-      
-      const response = await this.callOpenAI(request);
-      return response.choices[0].message.content.trim();
-    } catch (error) {
-      console.error('Error analyzing chart with OpenAI:', error);
-      return 'Unable to analyze chart. Please try again later.';
+  /**
+   * Generate a market prediction summary using AI
+   * @param symbol The stock or crypto symbol
+   * @param data Contextual data for the prediction
+   */
+  async generateMarketPrediction(
+    symbol: string,
+    data: {
+      news: Array<{ title: string; sentiment: string }>;
+      overallSentiment: string;
     }
-  }
-  
-  // Method to evaluate trade performance
-  async evaluateTradePerformance(results: TradeAnalysisResult[]): Promise<string> {
-    if (!results || results.length === 0) {
-      return 'No trade results to analyze.';
-    }
+  ): Promise<string> {
+    // This is a mock implementation
+    // In a real implementation, this would prompt OpenAI to generate
+    // a prediction summary based on the provided data
     
-    try {
-      // Calculate some basic statistics for context
-      const totalTrades = results.length;
-      const winningTrades = results.filter(r => r.outcome.includes('TP')).length;
-      const losingTrades = results.filter(r => r.outcome === 'SL Hit').length;
-      const activeTrades = results.filter(r => r.outcome === 'Active').length;
-      const winRate = totalTrades > 0 ? (winningTrades / (winningTrades + losingTrades)) * 100 : 0;
-      
-      // Aggregate PnL
-      const pnlValues = results.filter(r => r.pnl !== undefined).map(r => r.pnl as number);
-      const totalPnl = pnlValues.reduce((sum, pnl) => sum + pnl, 0);
-      
-      // Prepare the request
-      const request: OpenAIRequest = {
-        model: this.TEXT_MODEL,
-        messages: [
-          {
-            role: 'system',
-            content: `You are an expert trading performance analyst. Analyze the trading results and provide insights.`
-          },
-          {
-            role: 'user',
-            content: `
-Here's a summary of trading performance:
-- Total Trades: ${totalTrades}
-- Winning Trades: ${winningTrades}
-- Losing Trades: ${losingTrades}
-- Active Trades: ${activeTrades}
-- Win Rate: ${winRate.toFixed(2)}%
-- Total PnL: ${totalPnl.toFixed(2)}
-
-Please provide a brief analysis of this trading performance. Include strengths, weaknesses, and recommendations for improvement.
-Keep it concise but actionable. Maximum 5 bullet points with key insights.
-`
-          }
-        ],
-        temperature: 0.4,
-        max_tokens: 800
-      };
-      
-      // Send the request to OpenAI API
-      const response = await this.callOpenAI(request);
-      
-      return response.choices[0].message.content.trim();
-    } catch (error) {
-      console.error('Error evaluating trade performance with OpenAI:', error);
-      return 'Unable to analyze trade performance. Please try again later.';
-    }
-  }
-  
-  // Helper method to call OpenAI API
-  private async callOpenAI(request: OpenAIRequest): Promise<OpenAIResponse> {
-    try {
-      // Make API call through backend proxy to protect API key
-      const response = await axios.post('/api/openai-proxy', request);
-      return response.data;
-    } catch (error) {
-      console.error('Error calling OpenAI API:', error);
-      throw error;
+    const sentimentMap: Record<string, string> = {
+      'bullish': 'positive',
+      'bearish': 'negative',
+      'neutral': 'neutral'
+    };
+    
+    const sentiment = sentimentMap[data.overallSentiment] || 'neutral';
+    
+    // Generate a simple prediction based on the sentiment
+    if (sentiment === 'positive') {
+      return `Based on recent news and market sentiment analysis, ${symbol} appears to be trending positively. Multiple news sources indicate potential for growth, though investors should always consider market volatility and perform their own due diligence before making investment decisions.`;
+    } else if (sentiment === 'negative') {
+      return `Recent news and market sentiment for ${symbol} suggests caution. Several indicators point to potential downward pressure, though market conditions can change rapidly. Investors should carefully evaluate their risk tolerance and consider diversification strategies.`;
+    } else {
+      return `${symbol} is currently showing mixed signals in market sentiment analysis. While some indicators suggest positive movement, others indicate potential challenges ahead. This could indicate a period of consolidation before the next significant price movement.`;
     }
   }
 }
 
-// Export a singleton instance
+// Export singleton instance
 export const openAIService = new OpenAIService();
