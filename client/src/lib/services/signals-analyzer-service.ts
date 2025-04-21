@@ -398,7 +398,8 @@ export class SignalsAnalyzerService {
       const takeProfit3 = signal.TP3;
       const provider = signal.Provider || 'Unknown';
       const notes = signal.Notes || '';
-      const status = signal.Status || 'Active';
+      const status = signal.Status || 'active';
+      const marketType = (signal.marketType || 'crypto') as 'crypto' | 'forex' | 'futures';
       
       return {
         id: signal.id,
@@ -410,9 +411,10 @@ export class SignalsAnalyzerService {
         takeProfit1,
         takeProfit2,
         takeProfit3,
-        provider,
+        provider: provider as any, // Handle string to specific provider type conversion
         notes,
-        status
+        status: status.toLowerCase() as 'active' | 'completed' | 'stopped' | 'cancelled',
+        marketType
       };
     });
   }
