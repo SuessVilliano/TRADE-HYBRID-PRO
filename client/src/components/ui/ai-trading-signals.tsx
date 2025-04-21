@@ -26,6 +26,7 @@ interface TradingSignal {
   stopLoss: number;
   takeProfit1: number;
   takeProfit2?: number;
+  takeProfit3?: number; // Added third take profit level for Polaris/Hybrid AI
   timeframe: string;
   confidence: number;
   generatedAt: Date;
@@ -33,6 +34,7 @@ interface TradingSignal {
   reason: string;
   status: 'active' | 'completed' | 'invalidated';
   source: 'technical' | 'fundamental' | 'sentiment' | 'hybrid';
+  provider?: string; // Added provider name to preserve original AI system name
   indicators?: {
     name: string;
     value: string;
