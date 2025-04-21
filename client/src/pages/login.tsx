@@ -49,6 +49,12 @@ export default function LoginPage() {
             src="/images/trade_hybrid_logo.png" 
             alt="Trade Hybrid Logo" 
             className="h-16 w-auto object-contain mx-auto mb-4" 
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              console.log("Logo load error - using fallback");
+              target.onerror = null;
+              target.style.display = 'none';
+            }}
           />
           <h1 className="text-3xl font-bold text-white">
             Welcome to Trade Hybrid
