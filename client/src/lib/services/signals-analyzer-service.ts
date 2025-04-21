@@ -1,6 +1,26 @@
 import axios from 'axios';
 import { TradeSignal } from './google-sheets-service';
 
+// Define a standardized webhook signal interface that maps to TradeSignal format
+export interface WebhookSignal {
+  id: string;
+  Symbol?: string;
+  Asset?: string;
+  Direction?: string;
+  'Entry Price'?: number;
+  'Stop Loss'?: number;
+  'Take Profit'?: number;
+  TP1?: number;
+  TP2?: number;
+  TP3?: number;
+  Status?: string;
+  Date?: string;
+  Time?: string;
+  Provider?: string;
+  Notes?: string;
+  [key: string]: any; // Allow for additional fields
+}
+
 // Types for historical data
 interface HistoricalDataPoint {
   timestamp: string;
@@ -331,6 +351,70 @@ export class SignalsAnalyzerService {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  }
+  
+  // Fetch TradingView webhook signals
+  async getTradingViewWebhookSignals(): Promise<TradeSignal[]> {
+    try {
+      const response = await axios.get('/api/webhooks/tradingview');
+      
+      // Map the response data to TradeSignal format
+      return this.convertWebhookSignalsToTradeSignals(response.data);
+    } catch (error) {
+      console.error('Error fetching TradingView webhook signals:', error);
+      return [];
+    }
+  }
+  
+  // Fetch internal webhook signals
+  async getInternalWebhookSignals(): Promise<TradeSignal[]> {
+    try {
+      const response = await axios.get('/api/webhooks/signals');
+      
+      // Map the response data to TradeSignal format
+      return this.convertWebhookSignalsToTradeSignals(response.data);
+    } catch (error) {
+      console.error('Error fetching internal webhook signals:', error);
+      return [];
+    }
+  }
+  
+  // Helper method to convert webhook signals to TradeSignal format
+  private convertWebhookSignalsToTradeSignals(webhookSignals: WebhookSignal[]): TradeSignal[] {
+    if (!Array.isArray(webhookSignals)) {
+      console.error('Expected array of webhook signals but got:', typeof webhookSignals);
+      return [];
+    }
+    
+    return webhookSignals.map(signal => {
+      // Convert signal to TradeSignal format
+      const timestamp = signal.Date || new Date().toISOString();
+      const asset = signal.Symbol || signal.Asset || 'UNKNOWN';
+      const direction = signal.Direction?.toLowerCase() || 'long';
+      const entryPrice = signal['Entry Price'] || 0;
+      const stopLoss = signal['Stop Loss'] || 0;
+      const takeProfit1 = signal['Take Profit'] || signal.TP1 || 0;
+      const takeProfit2 = signal.TP2;
+      const takeProfit3 = signal.TP3;
+      const provider = signal.Provider || 'Unknown';
+      const notes = signal.Notes || '';
+      const status = signal.Status || 'Active';
+      
+      return {
+        id: signal.id,
+        timestamp,
+        asset,
+        direction: direction as 'long' | 'short',
+        entryPrice,
+        stopLoss,
+        takeProfit1,
+        takeProfit2,
+        takeProfit3,
+        provider,
+        notes,
+        status
+      };
+    });
   }
 }
 

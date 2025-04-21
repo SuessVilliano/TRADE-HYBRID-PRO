@@ -539,19 +539,19 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
       const webhookSignals = Array.isArray(data) ? data : (data.signals || []);
       
       // Convert TradingView webhook format to our TradeSignal format
-      const formattedSignals = webhookSignals.map((signal: any) => ({
+      const formattedSignals: TradeSignal[] = webhookSignals.map((signal: any) => ({
         id: signal.id || `signal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         asset: signal.Symbol || signal.Asset || '',
         timestamp: new Date(signal.Date || signal.Time || new Date()).toISOString(),
-        direction: (signal.Direction || '').toLowerCase() === 'buy' ? 'long' : 'short',
-        entryPrice: signal['Entry Price'] || 0,
-        stopLoss: signal['Stop Loss'] || 0,
-        takeProfit1: signal['Take Profit'] || signal.TP1 || 0,
-        takeProfit2: signal.TP2 || 0,
-        takeProfit3: signal.TP3 || 0,
+        direction: (signal.Direction || '').toLowerCase() === 'buy' ? 'long' as const : 'short' as const,
+        entryPrice: Number(signal['Entry Price'] || 0),
+        stopLoss: Number(signal['Stop Loss'] || 0),
+        takeProfit1: Number(signal['Take Profit'] || signal.TP1 || 0),
+        takeProfit2: signal.TP2 ? Number(signal.TP2) : undefined,
+        takeProfit3: signal.TP3 ? Number(signal.TP3) : undefined,
         status: (signal.Status || 'active').toLowerCase() as 'active' | 'completed' | 'stopped' | 'cancelled',
-        marketType: signal.marketType || 'crypto',
-        provider: signal.source || 'TradeHybrid',
+        marketType: (signal.marketType || 'crypto') as 'crypto' | 'forex' | 'futures',
+        provider: (signal.source || 'TradeHybrid') as 'Paradox' | 'Hybrid' | 'Solaris',
         notes: signal.Notes || `${signal.Direction || 'Trade'} signal for ${signal.Symbol || signal.Asset}`,
       }));
       
@@ -597,19 +597,19 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
       const webhookSignals = Array.isArray(data) ? data : (data.signals || []);
       
       // Convert internal webhook format to our TradeSignal format
-      const formattedSignals = webhookSignals.map((signal: any) => ({
+      const formattedSignals: TradeSignal[] = webhookSignals.map((signal: any) => ({
         id: signal.id || `signal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         asset: signal.symbol || signal.asset || '',
         timestamp: new Date(signal.timestamp || signal.date || new Date()).toISOString(),
-        direction: (signal.type || signal.direction || '').toLowerCase() === 'buy' ? 'long' : 'short',
-        entryPrice: signal.entry || signal.entryPrice || 0,
-        stopLoss: signal.stopLoss || signal.sl || 0,
-        takeProfit1: signal.takeProfit || signal.tp || signal.takeProfit1 || 0,
-        takeProfit2: signal.takeProfit2 || signal.tp2 || 0,
-        takeProfit3: signal.takeProfit3 || signal.tp3 || 0,
+        direction: (signal.type || signal.direction || '').toLowerCase() === 'buy' ? 'long' as const : 'short' as const,
+        entryPrice: Number(signal.entry || signal.entryPrice || 0),
+        stopLoss: Number(signal.stopLoss || signal.sl || 0),
+        takeProfit1: Number(signal.takeProfit || signal.tp || signal.takeProfit1 || 0),
+        takeProfit2: signal.takeProfit2 ? Number(signal.takeProfit2) : undefined,
+        takeProfit3: signal.takeProfit3 ? Number(signal.takeProfit3) : undefined,
         status: (signal.status || 'active').toLowerCase() as 'active' | 'completed' | 'stopped' | 'cancelled',
-        marketType: signal.marketType || 'crypto',
-        provider: signal.provider || signal.source || 'Internal',
+        marketType: (signal.marketType || 'crypto') as 'crypto' | 'forex' | 'futures',
+        provider: (signal.provider || signal.source || 'Internal') as 'Paradox' | 'Hybrid' | 'Solaris',
         notes: signal.notes || signal.description || `${signal.type || 'Trade'} signal for ${signal.symbol || signal.asset}`,
       }));
       
@@ -666,34 +666,34 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
             const internalSignals = Array.isArray(internalData) ? internalData : (internalData.signals || []);
             
             // Convert to compatible format and combine
-            const combinedSignals = [
+            const combinedSignals: TradeSignal[] = [
               ...tradingViewSignals.map((s: any) => ({
                 id: s.id || `tv-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
                 asset: s.Symbol || s.Asset || '',
                 timestamp: new Date(s.Date || s.Time || new Date()).toISOString(),
-                direction: (s.Direction || '').toLowerCase() === 'buy' ? 'long' : 'short',
-                entryPrice: s['Entry Price'] || 0,
-                stopLoss: s['Stop Loss'] || 0,
-                takeProfit1: s['Take Profit'] || s.TP1 || 0,
-                takeProfit2: s.TP2 || 0,
-                takeProfit3: s.TP3 || 0,
+                direction: (s.Direction || '').toLowerCase() === 'buy' ? 'long' as const : 'short' as const,
+                entryPrice: Number(s['Entry Price'] || 0),
+                stopLoss: Number(s['Stop Loss'] || 0),
+                takeProfit1: Number(s['Take Profit'] || s.TP1 || 0),
+                takeProfit2: s.TP2 ? Number(s.TP2) : undefined,
+                takeProfit3: s.TP3 ? Number(s.TP3) : undefined,
                 status: (s.Status || 'active').toLowerCase() as 'active' | 'completed' | 'stopped' | 'cancelled',
-                marketType: s.marketType || 'crypto',
-                provider: 'TradingView',
+                marketType: (s.marketType || 'crypto') as 'crypto' | 'forex' | 'futures',
+                provider: 'TradingView' as 'Paradox' | 'Hybrid' | 'Solaris',
               })),
               ...internalSignals.map((s: any) => ({
                 id: s.id || `int-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
                 asset: s.symbol || s.asset || '',
                 timestamp: new Date(s.timestamp || s.date || new Date()).toISOString(),
-                direction: (s.type || s.direction || '').toLowerCase() === 'buy' ? 'long' : 'short',
-                entryPrice: s.entry || s.entryPrice || 0,
-                stopLoss: s.stopLoss || s.sl || 0,
-                takeProfit1: s.takeProfit || s.tp || s.takeProfit1 || 0,
-                takeProfit2: s.takeProfit2 || s.tp2 || 0,
-                takeProfit3: s.takeProfit3 || s.tp3 || 0,
+                direction: (s.type || s.direction || '').toLowerCase() === 'buy' ? 'long' as const : 'short' as const,
+                entryPrice: Number(s.entry || s.entryPrice || 0),
+                stopLoss: Number(s.stopLoss || s.sl || 0),
+                takeProfit1: Number(s.takeProfit || s.tp || s.takeProfit1 || 0),
+                takeProfit2: s.takeProfit2 ? Number(s.takeProfit2) : undefined,
+                takeProfit3: s.takeProfit3 ? Number(s.takeProfit3) : undefined,
                 status: (s.status || 'active').toLowerCase() as 'active' | 'completed' | 'stopped' | 'cancelled',
-                marketType: s.marketType || 'crypto',
-                provider: 'Internal',
+                marketType: (s.marketType || 'crypto') as 'crypto' | 'forex' | 'futures',
+                provider: 'Internal' as 'Paradox' | 'Hybrid' | 'Solaris',
               }))
             ];
             
@@ -861,7 +861,93 @@ export function SignalsAnalyzer({ initialSignals }: SignalsAnalyzerProps) {
                 <Button 
                   variant="default" 
                   size="sm" 
-                  onClick={fetchSignals}
+                  onClick={() => {
+                    // Refresh signals based on the selected data source
+                    switch (dataSource) {
+                      case 'tradingview-webhooks':
+                        fetchTradingViewWebhooks();
+                        break;
+                      case 'internal-webhooks':
+                        fetchInternalWebhooks();
+                        break;
+                      case 'all':
+                        // Use the same fetch logic from the useEffect
+                        setIsLoading(true);
+                        Promise.all([
+                          fetch('/api/signals/trading-signals?marketType=all').then(res => res.json()),
+                          fetch('/api/webhooks/signals').then(res => res.json())
+                        ])
+                          .then(([tradingViewData, internalData]) => {
+                            console.log('Combined webhook data:', tradingViewData, internalData);
+                            
+                            // Convert to arrays if needed
+                            const tradingViewSignals = Array.isArray(tradingViewData) ? tradingViewData : (tradingViewData.signals || []);
+                            const internalSignals = Array.isArray(internalData) ? internalData : (internalData.signals || []);
+                            
+                            // Convert to compatible format and combine
+                            const combinedSignals: TradeSignal[] = [
+                              ...tradingViewSignals.map((s: any) => ({
+                                id: s.id || `tv-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                                asset: s.Symbol || s.Asset || '',
+                                timestamp: new Date(s.Date || s.Time || new Date()).toISOString(),
+                                direction: (s.Direction || '').toLowerCase() === 'buy' ? 'long' as const : 'short' as const,
+                                entryPrice: Number(s['Entry Price'] || 0),
+                                stopLoss: Number(s['Stop Loss'] || 0),
+                                takeProfit1: Number(s['Take Profit'] || s.TP1 || 0),
+                                takeProfit2: s.TP2 ? Number(s.TP2) : undefined,
+                                takeProfit3: s.TP3 ? Number(s.TP3) : undefined,
+                                status: (s.Status || 'active').toLowerCase() as 'active' | 'completed' | 'stopped' | 'cancelled',
+                                marketType: (s.marketType || 'crypto') as 'crypto' | 'forex' | 'futures',
+                                provider: 'TradingView' as 'Paradox' | 'Hybrid' | 'Solaris',
+                              })),
+                              ...internalSignals.map((s: any) => ({
+                                id: s.id || `int-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                                asset: s.symbol || s.asset || '',
+                                timestamp: new Date(s.timestamp || s.date || new Date()).toISOString(),
+                                direction: (s.type || s.direction || '').toLowerCase() === 'buy' ? 'long' as const : 'short' as const,
+                                entryPrice: Number(s.entry || s.entryPrice || 0),
+                                stopLoss: Number(s.stopLoss || s.sl || 0),
+                                takeProfit1: Number(s.takeProfit || s.tp || s.takeProfit1 || 0),
+                                takeProfit2: s.takeProfit2 ? Number(s.takeProfit2) : undefined,
+                                takeProfit3: s.takeProfit3 ? Number(s.takeProfit3) : undefined,
+                                status: (s.status || 'active').toLowerCase() as 'active' | 'completed' | 'stopped' | 'cancelled',
+                                marketType: (s.marketType || 'crypto') as 'crypto' | 'forex' | 'futures',
+                                provider: 'Internal' as 'Paradox' | 'Hybrid' | 'Solaris',
+                              }))
+                            ];
+                            
+                            setSignals(combinedSignals);
+                            
+                            // Extract unique assets
+                            const assets = new Set(combinedSignals.map(signal => signal.asset));
+                            setAvailableAssets(Array.from(assets));
+                            
+                            if (assets.size > 0 && !selectedAsset) {
+                              setSelectedAsset(Array.from(assets)[0]);
+                            }
+                            
+                            setUploadStatus({
+                              success: true,
+                              message: `Loaded ${combinedSignals.length} signals from all webhook sources.`
+                            });
+                          })
+                          .catch(error => {
+                            console.error('Error fetching combined webhooks:', error);
+                            setUploadStatus({
+                              success: false,
+                              message: 'Failed to fetch webhook signals. Please try again.'
+                            });
+                          })
+                          .finally(() => {
+                            setIsLoading(false);
+                          });
+                        break;
+                      default:
+                        // Default to fetching from Google Sheets/uploaded data
+                        fetchSignals();
+                        break;
+                    }
+                  }}
                   disabled={isLoading}
                 >
                   <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />

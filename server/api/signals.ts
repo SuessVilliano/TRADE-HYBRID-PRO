@@ -144,7 +144,10 @@ const globalSignals: SignalStorage = {
 };
 
 // User-specific signals storage
-const userSignals: UserSignals = {};
+export const userSignals: UserSignals = {};
+
+// Export globalSignals for use in routes
+export { globalSignals };
 
 // Helper method to initialize user signals if needed
 const initializeUserSignals = (userId: string): void => {

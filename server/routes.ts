@@ -42,7 +42,7 @@ const getSignals = (req: any, res: any) => {
   });
 };
 // Import at the top to avoid circular dependency
-import { processWebhookSignal } from './api/signals';
+import { processWebhookSignal, globalSignals, userSignals } from './api/signals';
 import { processUserWebhook, getUserWebhookByToken, executeQueryFromFile } from './api/user-webhooks';
 import { processTradingViewWebhook } from './api/tradingview-webhooks';
 
@@ -312,6 +312,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   app.post("/api/webhooks/signals", receiveWebhook);
+  
+  // GET endpoint to retrieve webhook signals for the signals analyzer
+  app.get("/api/webhooks/signals", async (req, res) => {
+    try {
+      console.log('Fetching webhook signals from in-memory storage');
+      
+      // Return both global and user signals for the analyzer
+      const signals = [
+        ...Object.values(userSignals).flatMap(storage => [
+          ...storage.crypto,
+          ...storage.forex,
+          ...storage.futures
+        ]),
+        ...globalSignals.crypto,
+        ...globalSignals.forex,
+        ...globalSignals.futures
+      ];
+      
+      console.log(`Returning ${signals.length} webhook signals for analyzer`);
+      res.json(signals);
+    } catch (error) {
+      console.error('Error fetching webhook signals:', error);
+      res.status(500).json({ error: 'Failed to fetch webhook signals' });
+    }
+  });
 
   // New signal webhook endpoints from user
   // Paradox AI signals
