@@ -82,8 +82,8 @@ export function AiTradingSignals({
     // Set loading state
     setLoading(true);
     
-    // Fetch signals from our new endpoint
-    fetch('/api/signals/trading-signals?marketType=crypto')
+    // Fetch signals from our trading-signals endpoint - get all market types
+    fetch('/api/signals/trading-signals?marketType=all')
       .then(response => {
         if (!response.ok) {
           throw new Error('Failed to fetch signals');
@@ -91,13 +91,17 @@ export function AiTradingSignals({
         return response.json();
       })
       .then(data => {
-        // Format the received signals to match our component's expected format
-        if (!data.signals || !Array.isArray(data.signals)) {
-          console.error('Invalid signal data format:', data);
-          throw new Error('Invalid signal data format');
+        // Log the raw response for debugging
+        console.log('Signals API response:', data);
+        
+        // Handle both array format and {signals: [...]} format
+        const signalsArray = Array.isArray(data) ? data : (data.signals || []);
+        
+        if (signalsArray.length === 0) {
+          console.warn('No signals found in response');
         }
         
-        const formattedSignals = data.signals.map((signal: any) => ({
+        const formattedSignals = signalsArray.map((signal: any) => ({
           id: signal.id || `signal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           symbol: signal.Symbol || signal.Asset || '',
           side: (signal.Direction || '').toLowerCase() === 'buy' ? 'buy' : 'sell',
@@ -200,7 +204,7 @@ export function AiTradingSignals({
         // Handle both array format and {signals: [...]} format
         const signalsArray = Array.isArray(data) ? data : (data.signals || []);
         
-        const formattedSignals = data.signals.map((signal: any) => ({
+        const formattedSignals = signalsArray.map((signal: any) => ({
           id: signal.id || `signal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           symbol: signal.Symbol || signal.Asset || '',
           side: (signal.Direction || '').toLowerCase() === 'buy' ? 'buy' : 'sell',
