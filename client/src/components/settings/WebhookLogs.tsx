@@ -309,7 +309,13 @@ export function WebhookLogs() {
               Webhook execution logs will appear here once your webhooks are triggered.
             </p>
             <div className="mt-4">
-              <Button variant="outline" onClick={fetchLogs}>
+              <Button 
+                variant="outline"
+                onClick={(e) => {
+                  e.preventDefault();
+                  fetchLogs(true);
+                }}
+              >
                 Refresh Logs
               </Button>
             </div>
