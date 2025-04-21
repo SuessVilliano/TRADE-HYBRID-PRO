@@ -6,6 +6,7 @@ import { encryptionService } from "./lib/services/encryption-service";
 import { brokerConnectionService } from "./lib/services/broker-connection-service";
 import { userIdentityService } from "./lib/services/user-identity-service";
 import { updateApiCredentials } from "./update-env";
+import apiRouter from "./routes/index";
 // Using mock prop firm service instead of the actual one for development
 // import { propFirmService } from "./lib/services/prop-firm-service";
 

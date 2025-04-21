@@ -220,6 +220,31 @@ export default function StakeAndBake() {
     };
     
     checkPhantomWallet();
+
+    // Fetch validator credentials from the server API
+    const fetchValidatorCredentialsFromServer = async () => {
+      try {
+        console.log('Fetching validator credentials from server...');
+        const credentials = await getValidatorCredentials();
+        
+        if (credentials && credentials.validatorIdentity && credentials.voteAccount) {
+          console.log('Received validator credentials:', {
+            identity: credentials.validatorIdentity.substring(0, 6) + '...',
+            vote: credentials.voteAccount.substring(0, 6) + '...'
+          });
+          
+          setValidatorIdentity(credentials.validatorIdentity);
+          setVoteAccount(credentials.voteAccount);
+        } else {
+          console.warn('Did not receive valid validator credentials from server');
+        }
+      } catch (error) {
+        console.error('Error fetching validator credentials:', error);
+      }
+    };
+    
+    // Fetch validator credentials on initial load
+    fetchValidatorCredentialsFromServer();
     
     // Generate random referral address
     const generatedAddress = 'TH' + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -485,24 +510,51 @@ export default function StakeAndBake() {
     setFetchingValidatorInfo(true);
     
     try {
+      // First fetch the latest validator credentials from our server
+      let validatorId = validatorIdentity;
+      let voteAcc = voteAccount;
+      
+      try {
+        console.log('Fetching latest validator credentials from server...');
+        const credentials = await getValidatorCredentials();
+        
+        if (credentials && credentials.validatorIdentity && credentials.voteAccount) {
+          console.log('Using server-provided validator credentials');
+          validatorId = credentials.validatorIdentity;
+          voteAcc = credentials.voteAccount;
+          
+          // Update state with the new values
+          setValidatorIdentity(validatorId);
+          setVoteAccount(voteAcc);
+        } else {
+          console.warn('Did not receive valid validator credentials from server, using existing values');
+        }
+      } catch (credError) {
+        console.error('Error fetching validator credentials from server:', credError);
+      }
+      
       // Import required modules from @solana/web3.js
       const { Connection, clusterApiUrl, PublicKey } = await import('@solana/web3.js');
       
-      // Create connection to Solana network (mainnet-beta for production, devnet for testing)
-      const connection = new Connection(clusterApiUrl('devnet'), 'confirmed'); // Using devnet for testing
+      // Create connection to Solana network (using mainnet-beta for production validator)
+      // Note we're connecting to mainnet here since our validator is on mainnet
+      const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+      
+      console.log('Using validator identity:', validatorId);
+      console.log('Using vote account:', voteAcc);
       
       // Convert validator identity and vote account to PublicKey objects
-      const identityPubkey = new PublicKey(validatorIdentity);
-      const votePubkey = new PublicKey(voteAccount);
+      const identityPubkey = new PublicKey(validatorId);
+      const votePubkey = new PublicKey(voteAcc);
       
       // Fetch validator information from the network
       const voteAccounts = await connection.getVoteAccounts();
       
       // Find our validator in the vote accounts
       const ourValidator = voteAccounts.current.find(
-        account => account.votePubkey === voteAccount
+        account => account.votePubkey === voteAcc
       ) || voteAccounts.delinquent.find(
-        account => account.votePubkey === voteAccount
+        account => account.votePubkey === voteAcc
       );
       
       if (ourValidator) {
