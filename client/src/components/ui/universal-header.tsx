@@ -1,10 +1,11 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from './button';
-import { Home, ArrowLeft, Menu, X, Settings, User } from 'lucide-react';
+import { Home, ArrowLeft, Menu, X, Settings, User, Wallet } from 'lucide-react';
 import { useUserPreferences } from '@/lib/stores/useUserPreferences';
 import { Sheet, SheetContent, SheetTrigger } from './sheet';
 import { MainSidebar } from './main-sidebar-enhanced';
+import { useSolanaAuth } from '../../lib/context/SolanaAuthProvider';
 
 interface UniversalHeaderProps {
   title?: string;

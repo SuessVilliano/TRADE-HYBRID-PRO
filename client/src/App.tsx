@@ -35,6 +35,7 @@ import NotFoundPage from './pages/not-found';
 import SocialNetworkPage from './pages/social-network';
 import CopyTradingPage from './pages/copy-trading';
 import WalletConnectOnboarding from './pages/wallet-connect-onboarding';
+import WalletConnectionPage from './pages/wallet-connection';
 import WebhookSettingsPage from './pages/webhook-settings';
 import { WebhookLogsPage } from './pages/WebhookLogsPage';
 import { BrokerApiSettingsPage } from './pages/BrokerApiSettingsPage';
@@ -130,6 +131,7 @@ const App: React.FC = () => {
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/signup" element={<SignupPage />} />
                   <Route path="/wallet" element={<WalletConnectOnboarding />} />
+                  <Route path="/wallet-connection" element={<ProtectedRoute><WalletConnectionPage /></ProtectedRoute>} />
                   
                   {/* Core Platform Routes */}
                   <Route path="/dashboard" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
