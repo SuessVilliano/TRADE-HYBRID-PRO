@@ -59,7 +59,8 @@ export const useSignals = create<SignalsState>()(
         set({ loading: true, error: null });
         
         try {
-          const response = await axios.get('/api/signals');
+          // Use the trading-signals endpoint to get real webhook signals
+          const response = await axios.get('/api/signals/trading-signals');
           
           if (response.status === 200) {
             // Parse and fix dates from the response

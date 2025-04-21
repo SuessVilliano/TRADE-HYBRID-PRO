@@ -184,8 +184,8 @@ export function AiTradingSignals({
   const handleRefresh = () => {
     setLoading(true);
     
-    // Fetch signals from our new endpoint
-    fetch('/api/signals/trading-signals?marketType=crypto')
+    // Fetch signals from our trading-signals endpoint
+    fetch('/api/signals/trading-signals?marketType=all')
       .then(response => {
         if (!response.ok) {
           throw new Error('Failed to fetch signals');
@@ -193,11 +193,12 @@ export function AiTradingSignals({
         return response.json();
       })
       .then(data => {
+        // Log the raw response to debug
+        console.log('Raw signals response:', data);
+        
         // Format the received signals to match our component's expected format
-        if (!data.signals || !Array.isArray(data.signals)) {
-          console.error('Invalid signal data format:', data);
-          throw new Error('Invalid signal data format');
-        }
+        // Handle both array format and {signals: [...]} format
+        const signalsArray = Array.isArray(data) ? data : (data.signals || []);
         
         const formattedSignals = data.signals.map((signal: any) => ({
           id: signal.id || `signal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
