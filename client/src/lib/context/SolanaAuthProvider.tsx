@@ -236,95 +236,108 @@ export const SolanaAuthProvider: React.FC<SolanaAuthProviderProps> = ({ children
     setError(null);
     
     try {
-      // Try connecting with window.phantom approach first (modern method)
-      if (typeof window !== 'undefined' && window.phantom?.solana) {
+      console.log('Starting wallet connection process...');
+      
+      // First check if Phantom is available
+      const isPhantomInstalled = 
+        (typeof window !== 'undefined' && window.phantom?.solana) || 
+        (typeof window !== 'undefined' && window.solana?.isPhantom);
+      
+      if (!isPhantomInstalled) {
+        console.error('Phantom wallet extension not detected');
+        setError('Phantom wallet extension not detected. Please install the Phantom wallet browser extension and reload the page.');
+        return false;
+      }
+      
+      // Try using wallet adapter first (preferred method)
+      if (!walletConnected && wallet) {
         try {
-          console.log('Detected Phantom wallet via window.phantom.solana, attempting direct connection...');
-          const phantomWallet = window.phantom?.solana;
+          if (!wallet.wallet && wallet.wallets && wallet.select) {
+            // Find and select Phantom
+            const phantomWallet = wallet.wallets.find(w => 
+              w.adapter.name.toLowerCase().includes('phantom')
+            );
+            
+            if (phantomWallet) {
+              console.log('Found Phantom wallet in adapter list, selecting...');
+              await wallet.select(phantomWallet.adapter.name);
+            }
+          }
           
-          if (!phantomWallet.isConnected) {
-            const resp = await phantomWallet.connect();
+          // Connect to wallet if it's available but not connected
+          if (wallet.wallet && !wallet.connected) {
+            console.log('Connecting via wallet adapter...');
+            await wallet.connect();
+            console.log('Wallet adapter connection successful');
+            
+            // Give the wallet connection time to stabilize
+            await new Promise(resolve => setTimeout(resolve, 800));
+          }
+        } catch (adapterError) {
+          console.error('Error connecting via wallet adapter:', adapterError);
+          // Fall through to direct connection methods
+        }
+      }
+      
+      // If wallet adapter didn't work, try direct connection
+      if (!wallet.connected && typeof window !== 'undefined') {
+        try {
+          // Try modern method first
+          if (window.phantom?.solana && !window.phantom.solana.isConnected) {
+            console.log('Attempting direct connection via window.phantom.solana...');
+            const resp = await window.phantom.solana.connect();
             console.log('Direct Phantom connection successful:', resp.publicKey.toString());
             
-            // Give wallet adapter context time to update
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // Synchronize state with the adapter
+            await new Promise(resolve => setTimeout(resolve, 800));
+          } 
+          // Try legacy method as fallback
+          else if (window.solana?.isPhantom && !window.solana.isConnected) {
+            console.log('Attempting legacy connection via window.solana...');
+            const resp = await window.solana.connect();
+            console.log('Legacy Phantom connection successful');
+            
+            // Synchronize state with the adapter
+            await new Promise(resolve => setTimeout(resolve, 800));
           }
-        } catch (directConnectErr) {
-          console.warn('Direct Phantom connection failed, falling back to adapter:', directConnectErr);
-          // Continue with wallet adapter approach
-        }
-      }
-      
-      // Continue with wallet adapter approach if we're still not connected
-      if (!walletConnected) {
-        console.log('Wallet adapter not connected, attempting to connect via adapter...');
-        
-        // Check if wallet adapter is installed
-        if (typeof window !== 'undefined' && !window.solana && !window.phantom?.solana) {
-          setError('Phantom wallet extension not detected. Please install the Phantom wallet browser extension and reload the page.');
-          console.error('Phantom wallet extension not detected');
-          return false;
-        }
-        
-        // Check if wallet is available through adapter
-        if (!wallet.wallet) {
-          console.log('Wallet not selected in adapter, attempting to select Phantom...');
-          try {
-            // Try multiple wallet selection approaches to increase compatibility
-            if (wallet.wallets && wallet.wallets.length > 0) {
-              // Find Phantom wallet in the list if available
-              const phantomWallet = wallet.wallets.find(w => 
-                w.adapter.name.toLowerCase().includes('phantom')
-              );
-              
-              if (phantomWallet) {
-                console.log('Found Phantom wallet in wallet list, selecting...');
-                await wallet.select(phantomWallet.adapter.name);
-              } else {
-                console.log('Phantom wallet not found in list, trying default method...');
-                // Try generic method if we can't find Phantom specifically
-                await wallet.select('phantom' as any);
-              }
-            } else {
-              // Fallback to direct method
-              console.log('No wallet list available, using direct select method...');
-              await wallet.select('phantom' as any);
-            }
-          } catch (selectErr) {
-            console.error('Error selecting wallet:', selectErr);
-            setError('Unable to select wallet. Please make sure Phantom is installed and try again.');
-            return false;
-          }
-        }
-        
-        try {
-          console.log('Attempting to connect to selected wallet via adapter...');
-          await wallet.connect();
-        } catch (connectErr) {
-          console.error('Error connecting to wallet via adapter:', connectErr);
-          setError('Unable to connect to wallet. Please make sure Phantom is unlocked and try again.');
+        } catch (directError) {
+          console.error('Error with direct wallet connection:', directError);
+          setError('Unable to connect to Phantom wallet. Please ensure Phantom is unlocked and try again.');
           return false;
         }
       }
       
-      // Try to get public key from multiple sources
+      // Check connection status from multiple sources
+      const isAdapterConnected = wallet.connected && wallet.publicKey !== null;
+      const isDirectConnected = window.phantom?.solana?.isConnected || false;
+      const isLegacyConnected = window.solana?.isConnected || false;
+      
+      console.log('Connection status check:', {
+        adapter: isAdapterConnected,
+        direct: isDirectConnected,
+        legacy: isLegacyConnected
+      });
+      
+      // Get public key from available sources
       const adapterPublicKey = wallet.publicKey?.toString();
       const directPublicKey = window.phantom?.solana?.publicKey?.toString();
       const legacyPublicKey = window.solana?.publicKey?.toString();
       
-      console.log('Public key sources:', {
-        adapter: adapterPublicKey,
-        direct: directPublicKey,
-        legacy: legacyPublicKey
+      console.log('Public keys available:', {
+        adapter: adapterPublicKey ? `${adapterPublicKey.slice(0, 4)}...${adapterPublicKey.slice(-4)}` : null,
+        direct: directPublicKey ? `${directPublicKey.slice(0, 4)}...${directPublicKey.slice(-4)}` : null,
+        legacy: legacyPublicKey ? `${legacyPublicKey.slice(0, 4)}...${legacyPublicKey.slice(-4)}` : null
       });
       
-      if (!wallet.connected && !adapterPublicKey && !directPublicKey && !legacyPublicKey) {
-        console.error('Wallet seems connected but no public key is available from any source');
-        setError('Failed to establish a proper connection with your wallet. Please try refreshing the page.');
+      // Verify we have a successful connection
+      if (!isAdapterConnected && !isDirectConnected && !isLegacyConnected) {
+        console.error('Failed to connect to wallet through any available method');
+        setError('Failed to connect to your wallet. Please ensure Phantom is unlocked and try again.');
         return false;
       }
       
-      console.log('Wallet connected successfully with public key:', adapterPublicKey || directPublicKey || legacyPublicKey);
+      // Connection successful!
+      console.log('Wallet connection successful!');
       
       // Now proceed with authentication
       return await login();
