@@ -130,15 +130,15 @@ const globalSignals: SignalStorage = {
       Symbol: 'EURUSD',
       Asset: 'EURUSD',
       Direction: 'BUY',
-      'Entry Price': 1.0850,
-      'Stop Loss': 1.0830,
-      'Take Profit': 1.0890,
-      TP1: 1.0890,
+      'Entry Price': 1.15331,
+      'Stop Loss': 1.15228,
+      'Take Profit': 1.15846,
+      TP1: 1.15846,
       Status: 'active',
       Date: new Date().toISOString(),
       Time: '08:30:00',
       Provider: 'Solaris',
-      Notes: 'Bouncing off key support level',
+      Notes: 'EURUSD alert - DO NOT RISK MORE THAN 0.25-1%',
     }
   ]
 };

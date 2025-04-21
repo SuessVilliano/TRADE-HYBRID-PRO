@@ -600,7 +600,7 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
       notificationService.notifySystem(
         `Signal Added: ${signal.symbol}`,
         `You'll receive notifications for ${signal.side.toUpperCase()} signals on ${signal.symbol}`,
-        'info' // Adding the third required parameter
+        'info' // Adding the third required parameter 
       );
       
       toast({
@@ -755,7 +755,18 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Entry:</span>
             <div className="flex items-center gap-1">
-              <span className="font-mono">{signal.entryPrice.toFixed(signal.symbol.includes('/') ? 5 : 2)}</span>
+              <span className="font-mono">{
+                // Use proper decimal precision based on asset type
+                // Forex - 5 decimals
+                // Crypto/futures - different by pair, use dynamic detection
+                signal.symbol.includes('USD') && !signal.symbol.includes('USDT') 
+                  ? signal.entryPrice.toFixed(5) 
+                  : signal.symbol.includes('/') 
+                    ? signal.entryPrice.toFixed(5)
+                    : signal.entryPrice < 1 
+                      ? signal.entryPrice.toFixed(8)
+                      : signal.entryPrice.toFixed(2)
+              }</span>
               <Button
                 variant="ghost"
                 size="icon"
@@ -774,7 +785,16 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Stop Loss:</span>
             <div className="flex items-center gap-1">
-              <span className="font-mono text-red-500">{signal.stopLoss.toFixed(signal.symbol.includes('/') ? 5 : 2)}</span>
+              <span className="font-mono text-red-500">{
+                // Use proper decimal precision based on asset type
+                signal.symbol.includes('USD') && !signal.symbol.includes('USDT') 
+                  ? signal.stopLoss.toFixed(5) 
+                  : signal.symbol.includes('/') 
+                    ? signal.stopLoss.toFixed(5)
+                    : signal.stopLoss < 1 
+                      ? signal.stopLoss.toFixed(8)
+                      : signal.stopLoss.toFixed(2)
+              }</span>
               <Button
                 variant="ghost"
                 size="icon"
@@ -793,7 +813,16 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">TP1:</span>
             <div className="flex items-center gap-1">
-              <span className="font-mono text-green-500">{signal.takeProfit1.toFixed(signal.symbol.includes('/') ? 5 : 2)}</span>
+              <span className="font-mono text-green-500">{
+                // Use proper decimal precision based on asset type
+                signal.symbol.includes('USD') && !signal.symbol.includes('USDT') 
+                  ? signal.takeProfit1.toFixed(5) 
+                  : signal.symbol.includes('/') 
+                    ? signal.takeProfit1.toFixed(5)
+                    : signal.takeProfit1 < 1 
+                      ? signal.takeProfit1.toFixed(8)
+                      : signal.takeProfit1.toFixed(2)
+              }</span>
               <Button
                 variant="ghost"
                 size="icon"
@@ -813,7 +842,15 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">TP2:</span>
               <div className="flex items-center gap-1">
-                <span className="font-mono text-green-500">{signal.takeProfit2.toFixed(signal.symbol.includes('/') ? 5 : 2)}</span>
+                <span className="font-mono text-green-500">{
+                  signal.symbol.includes('USD') && !signal.symbol.includes('USDT') 
+                    ? signal.takeProfit2.toFixed(5) 
+                    : signal.symbol.includes('/') 
+                      ? signal.takeProfit2.toFixed(5)
+                      : signal.takeProfit2 < 1 
+                        ? signal.takeProfit2.toFixed(8)
+                        : signal.takeProfit2.toFixed(2)
+                }</span>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -834,7 +871,15 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">TP3:</span>
               <div className="flex items-center gap-1">
-                <span className="font-mono text-green-500">{signal.takeProfit3.toFixed(signal.symbol.includes('/') ? 5 : 2)}</span>
+                <span className="font-mono text-green-500">{
+                  signal.symbol.includes('USD') && !signal.symbol.includes('USDT') 
+                    ? signal.takeProfit3.toFixed(5) 
+                    : signal.symbol.includes('/') 
+                      ? signal.takeProfit3.toFixed(5)
+                      : signal.takeProfit3 < 1 
+                        ? signal.takeProfit3.toFixed(8)
+                        : signal.takeProfit3.toFixed(2)
+                }</span>
                 <Button
                   variant="ghost"
                   size="icon"

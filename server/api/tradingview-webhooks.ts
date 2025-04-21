@@ -41,21 +41,37 @@ export const parseTradingViewAlert = (payload: any) => {
       normalizedDirection = 'sell';
     }
     
+    // Determine asset type
+    const assetType = determineAssetType(symbol);
+    
+    // Get correct decimal precision based on asset type
+    // Use more decimal places for forex (5) than for other assets
+    const isForex = assetType === 'forex';
+    
+    // Parse price values with full precision - don't lose decimals
+    const parsePrice = (value: any): number | null => {
+      if (!value) return null;
+      
+      // Ensure we get the full precision for the value
+      const parsed = typeof value === 'string' ? parseFloat(value) : value;
+      return parsed || null;
+    };
+    
     // Map to our standardized format
     const signal = {
       id: crypto.randomUUID(),
       Symbol: symbol,
-      Asset: determineAssetType(symbol),
+      Asset: assetType,
       Direction: normalizedDirection,
-      'Entry Price': entryPrice,
-      'Stop Loss': parseFloat(data.sl || data.stop_loss || 0) || null,
-      'Take Profit': parseFloat(data.tp || data.take_profit || 0) || null,
-      TP1: parseFloat(data.tp1 || data.tp || 0) || null,
-      TP2: parseFloat(data.tp2 || 0) || null,
-      TP3: parseFloat(data.tp3 || 0) || null,
+      'Entry Price': parsePrice(data.entry || data.Entry || data['Entry Price'] || entryPrice),
+      'Stop Loss': parsePrice(data.sl || data['Stop Loss'] || data.stop_loss || 0),
+      'Take Profit': parsePrice(data.tp || data['Take Profit'] || data.take_profit || 0),
+      TP1: parsePrice(data.tp1 || data.TP1 || data.tp || 0),
+      TP2: parsePrice(data.tp2 || data.TP2 || 0),
+      TP3: parsePrice(data.tp3 || data.TP3 || 0),
       Status: 'active',
-      Date: new Date().toISOString().split('T')[0],
-      Time: new Date().toISOString().split('T')[1].slice(0, 8),
+      Date: new Date().toISOString(),
+      Time: new Date().toTimeString().substring(0, 8),
       Provider: data.provider || 'TradingView',
       Notes: data.notes || data.message || `TradingView Alert for ${symbol}`
     };
