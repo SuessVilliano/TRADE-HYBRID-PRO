@@ -209,15 +209,15 @@ export function WebhookLogs() {
                         {getStatusBadge(log.result.success)}
                       </TableCell>
                       <TableCell className="max-w-xs truncate">
-                        <code className="text-xs bg-slate-100 p-1 rounded">
+                        <code className="text-xs bg-slate-100 p-1 rounded text-black">
                           {formatPayload(log.payload)}
                         </code>
                       </TableCell>
-                      <TableCell className="max-w-xs truncate">
+                      <TableCell className="max-w-xs truncate text-white">
                         {log.result.message || (log.result.success ? 'Success' : 'Failed')}
                         {log.result.errors && log.result.errors.length > 0 && (
-                          <div className="text-xs text-red-600">
-                            {log.result.errors[0]}
+                          <div className="text-xs text-red-400 font-semibold">
+                            {Array.isArray(log.result.errors) ? log.result.errors[0] : log.result.errors}
                           </div>
                         )}
                       </TableCell>

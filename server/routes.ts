@@ -46,16 +46,36 @@ import { processWebhookSignal } from './api/signals';
 import { processUserWebhook, getUserWebhookByToken, executeQueryFromFile } from './api/user-webhooks';
 import { processTradingViewWebhook } from './api/tradingview-webhooks';
 
-const receiveWebhook = (req: any, res: any) => {
+const receiveWebhook = async (req: any, res: any) => {
   try {
     // Check if there's a payload and forward it to the signal processor
     if (req.body && (req.body.content || req.body.data)) {
       const payload = req.body;
       
       // Process the webhook signal
-      processWebhookSignal(payload);
+      const result = await processWebhookSignal(payload);
       
       console.log('Received and processed webhook signal');
+      
+      // Log the webhook execution
+      try {
+        // Import the webhook service to log the execution
+        const { logWebhookExecution } = await import('./services/webhook-service');
+        
+        // Log the webhook execution
+        await logWebhookExecution(
+          'webhook-' + Date.now().toString(), // Generate a simple webhook ID
+          'demo-user-123', // Use demo user ID
+          req.body.broker || req.body.source || req.body.channel_name || 'tradingview', // Try to determine broker
+          payload, // The full payload
+          { success: true, message: 'Webhook received and processed' }, // Result
+          req, // The request object
+          50 // Fake response time
+        );
+        console.log('Webhook execution logged successfully');
+      } catch (logError) {
+        console.error('Error logging webhook execution:', logError);
+      }
     }
   } catch (error) {
     console.error('Error processing webhook:', error);
@@ -82,9 +102,55 @@ const receiveUserWebhook = async (req: any, res: any) => {
     }
     
     console.log('Received and processed user webhook signal');
+    
+    // Log the webhook execution
+    try {
+      // Import the webhook service to log the execution
+      const { logWebhookExecution } = await import('./services/webhook-service');
+      
+      // Log the webhook execution
+      await logWebhookExecution(
+        'user-webhook-' + token, // Use token as webhook ID
+        'demo-user-123', // Use demo user ID
+        req.body.broker || req.body.source || 'custom', // Try to determine broker from payload
+        req.body, // The full payload
+        { 
+          success: true, 
+          message: 'User webhook received and processed',
+          details: { token }
+        }, // Result
+        req, // The request object
+        75 // Fake response time
+      );
+      console.log('User webhook execution logged successfully');
+    } catch (logError) {
+      console.error('Error logging user webhook execution:', logError);
+    }
+    
     return res.json({ success: true, message: 'User webhook received' });
   } catch (error) {
     console.error('Error processing user webhook:', error);
+    
+    // Log the failed webhook execution
+    try {
+      const { logWebhookExecution } = await import('./services/webhook-service');
+      await logWebhookExecution(
+        'user-webhook-' + token, // Use token as webhook ID
+        'demo-user-123', // Use demo user ID
+        req.body.broker || req.body.source || 'custom', // Try to determine broker
+        req.body, // The full payload
+        { 
+          success: false, 
+          message: 'Failed to process user webhook',
+          errors: [error.message || 'Unknown error']
+        }, // Result
+        req, // The request object
+        30 // Fake response time
+      );
+    } catch (logError) {
+      console.error('Error logging failed user webhook execution:', logError);
+    }
+    
     return res.status(500).json({ error: 'Failed to process webhook' });
   }
 };
