@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Wallet, Shield, Coins, ExternalLink } from 'lucide-react';
+// Import from UI components since we've moved them there
 import { PageHeader } from '../components/layout/page-header';
 import { PageContainer } from '../components/layout/page-container';
 import { WalletConnectionPanel } from '../components/wallet/WalletConnectionPanel';

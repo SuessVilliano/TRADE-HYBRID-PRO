@@ -7,8 +7,9 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from './dropdown-menu';
-import { LineChart } from './line-chart';
-import { MarketOverview } from './market-overview';
+import LineChart from './line-chart';
+import MarketOverview from './market-overview';
+import StockHeatmap from './stock-heatmap';
 import { TradeSignals } from './trade-signals';
 import { PersonalizedTradingInsights } from './personalized-trading-insights';
 import { SmartTradePanel } from './smart-trade-panel';
@@ -64,6 +65,8 @@ function getWidgetComponent(type: string, props: WidgetComponentProps) {
       return <MarketSentiment symbol={props.symbol} />;
     case 'market-overview':
       return <MarketOverview />;
+    case 'stock-heatmap':
+      return <StockHeatmap colorTheme="dark" dataSource="crypto" />;
     case 'order-book':
       return <OrderBook symbol={props.symbol} />;
     case 'recent-trades':
@@ -231,17 +234,17 @@ export function DraggableTradingDashboard({
       isMaximized: false
     },
     {
-      id: 'trading-insights-1',
-      title: 'Personalized Trading Insights',
-      type: 'trading-insights',
+      id: 'market-overview-1',
+      title: 'Market Overview',
+      type: 'market-overview',
       position: { x: 620, y: 10 },
       size: { width: 550, height: 350 },
       isMaximized: false
     },
     {
-      id: 'trade-signals-1',
-      title: 'AI Trading Signals',
-      type: 'trade-signals',
+      id: 'stock-heatmap-1',
+      title: 'Crypto Heatmap',
+      type: 'stock-heatmap',
       position: { x: 10, y: 370 },
       size: { width: 600, height: 300 },
       isMaximized: false
@@ -264,6 +267,7 @@ export function DraggableTradingDashboard({
     { id: 'market-depth', title: 'Market Depth', type: 'market-depth' },
     { id: 'sentiment', title: 'Market Sentiment', type: 'sentiment' },
     { id: 'market-overview', title: 'Market Overview', type: 'market-overview' },
+    { id: 'stock-heatmap', title: 'Crypto Heatmap', type: 'stock-heatmap' },
     { id: 'order-book', title: 'Order Book', type: 'order-book' },
     { id: 'recent-trades', title: 'Recent Trades', type: 'recent-trades' },
     { id: 'alerts', title: 'Price Alerts', type: 'alerts' },
