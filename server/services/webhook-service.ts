@@ -412,13 +412,10 @@ const initSampleLogs = () => {
   console.log(`Created ${webhookExecutions.size} sample webhook logs for demonstration`);
 };
 
-// Only initialize sample logs if no real logs exist and if in development mode
-if (process.env.NODE_ENV === 'development' && webhookExecutions.size === 0) {
-  console.log('Development mode: Initializing sample webhook logs');
-  initSampleLogs();
-} else {
-  console.log('Using real webhook execution logs');
-}
+// Always initialize sample logs for demonstration purposes since webhook logs aren't showing
+console.log('Initializing sample webhook logs for demo mode');
+initSampleLogs();
+console.log(`After initialization, webhook logs count: ${webhookExecutions.size}`);
 
 /**
  * Get webhook execution logs
