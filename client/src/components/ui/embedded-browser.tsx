@@ -50,26 +50,43 @@ export function EmbeddedBrowser({
   const handleNavigate = (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!url.trim()) {
+      // If URL is empty, do nothing
+      return;
+    }
+    
     // Add https:// if not present and not local
-    let navigateUrl = url;
-    if (!navigateUrl.startsWith('http') && !navigateUrl.startsWith('localhost')) {
+    let navigateUrl = url.trim();
+    if (!navigateUrl.startsWith('http') && 
+        !navigateUrl.startsWith('localhost') && 
+        !navigateUrl.startsWith('about:')) {
       navigateUrl = `https://${navigateUrl}`;
       setUrl(navigateUrl);
     }
     
+    console.log("Navigating to:", navigateUrl);
     setCurrentUrl(navigateUrl);
     setIsLoading(true);
+    
+    // Ensure the URL input field shows the full URL
+    setUrl(navigateUrl);
   };
   
   // Go back in history
   const handleBack = () => {
     if (iframeRef.current) {
       try {
-        // This will work only for same-origin frames due to security restrictions
+        // Try to navigate back in iframe history
         iframeRef.current.contentWindow?.history.back();
       } catch (error) {
         console.error("Could not navigate back:", error);
       }
+      
+      // For cross-origin sites where we can't access history, reload with special marker
+      setTimeout(() => {
+        // Since we can't detect if history navigation worked, we'll set a visual indicator
+        setTitle(`${title} (navigating back...)`);
+      }, 100);
     }
   };
   
@@ -81,17 +98,44 @@ export function EmbeddedBrowser({
       } catch (error) {
         console.error("Could not navigate forward:", error);
       }
+      
+      // For cross-origin sites where we can't access history, reload with special marker
+      setTimeout(() => {
+        // Since we can't detect if history navigation worked, we'll set a visual indicator
+        setTitle(`${title} (navigating forward...)`);
+      }, 100);
     }
   };
   
   // Refresh the current page
   const handleRefresh = () => {
     setIsLoading(true);
-    // Force refresh by setting to empty and back
-    setCurrentUrl('');
-    setTimeout(() => {
-      setCurrentUrl(url);
-    }, 100);
+    console.log("Refreshing page:", currentUrl);
+    
+    // Save the current URL
+    const urlToRefresh = currentUrl;
+    
+    // Force refresh by recreating the iframe
+    if (iframeRef.current) {
+      try {
+        // First try to reload using the iframe's native reload
+        iframeRef.current.contentWindow?.location.reload();
+      } catch (error) {
+        console.error("Could not reload iframe directly:", error);
+        
+        // Fallback: clear and reset URL with small delay
+        setCurrentUrl('');
+        setTimeout(() => {
+          setCurrentUrl(urlToRefresh);
+        }, 100);
+      }
+    } else {
+      // If no iframe ref, just reset the URL
+      setCurrentUrl('');
+      setTimeout(() => {
+        setCurrentUrl(urlToRefresh);
+      }, 100);
+    }
   };
   
   // Go to home URL
@@ -129,8 +173,9 @@ export function EmbeddedBrowser({
         setTitle(iframeRef.current.contentDocument.title);
       }
     } catch (error) {
-      // Ignore cross-origin errors
-      setTitle(url);
+      // For cross-origin frames, use the URL as the title
+      console.log("Cross-origin frame loaded, using URL as title");
+      setTitle(currentUrl);
     }
   };
 
@@ -266,9 +311,10 @@ export function EmbeddedBrowser({
             src={currentUrl}
             className="w-full h-full border-0"
             onLoad={handleIframeLoad}
-            sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation"
-            allow="fullscreen; camera; microphone; payment"
+            sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation allow-top-navigation-by-user-activation allow-downloads allow-presentation allow-storage-access-by-user-activation"
+            allow="fullscreen; camera; microphone; payment; clipboard-read; clipboard-write; web-share"
             title="Embedded Browser"
+            style={{backgroundColor: "#ffffff"}}
           />
         )}
       </div>

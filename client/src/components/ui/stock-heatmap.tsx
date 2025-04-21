@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { AlertTriangle, ExternalLink, RefreshCcw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { AlertTriangle, RefreshCcw, ExternalLink } from 'lucide-react';
 import { Button } from './button';
 
 interface StockHeatmapProps {
@@ -38,11 +38,13 @@ export function StockHeatmap({
   
   // Handle iframe load events
   const handleIframeLoad = () => {
+    console.log("TradingView iframe loaded successfully");
     setLoading(false);
   };
   
   // Handle iframe error events
   const handleIframeError = () => {
+    console.error("Error loading TradingView iframe");
     setError('Unable to load TradingView heatmap. Please check your connection.');
     setLoading(false);
   };
@@ -64,16 +66,19 @@ export function StockHeatmap({
     }
   };
   
-  // Set iframe height based on prop
-  const getIframeHeight = () => {
-    if (typeof height === 'string') {
-      if (height.endsWith('%')) {
-        return 'h-full';
-      }
-      return height;
+  // Set up a timeout to detect if loading takes too long
+  useEffect(() => {
+    if (loading) {
+      const timeoutId = setTimeout(() => {
+        if (loading) {
+          setError('Loading the heatmap is taking longer than expected. Click below to open in a new tab.');
+          setLoading(false);
+        }
+      }, 10000); // 10 second timeout
+      
+      return () => clearTimeout(timeoutId);
     }
-    return '100%';
-  };
+  }, [loading]);
 
   return (
     <div className="tradingview-widget-container relative h-full w-full bg-slate-900 overflow-hidden">
@@ -111,7 +116,7 @@ export function StockHeatmap({
       <iframe
         id="tradingview-heatmap-iframe"
         src={getTradingViewHeatmapUrl()}
-        style={{ width: '100%', height: getIframeHeight() }}
+        style={{ width: '100%', height: typeof height === 'string' ? height : '100%' }}
         onLoad={handleIframeLoad}
         onError={handleIframeError}
         frameBorder="0"
