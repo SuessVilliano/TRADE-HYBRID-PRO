@@ -6,9 +6,7 @@ import {
   Share2, 
   Bookmark, 
   FileQuestion, 
-  ArrowUpRightFromCircle, 
-  Globe,
-  MonitorPlay,
+  ArrowUpRightFromCircle,
   Menu,
   Settings
 } from 'lucide-react';
@@ -18,19 +16,7 @@ import { useMediaQuery } from '../lib/hooks/useMediaQuery';
 import { EmbeddedBrowser, MultiTabBrowser } from '../components/ui/embedded-browser';
 import { toast } from 'sonner';
 
-// Popular broker and platform websites
-const brokerPresets = [
-  { name: "TradeHybrid TV", url: "https://tv.tradehybrid.club", icon: <MonitorPlay className="w-4 h-4 mr-2" /> },
-  { name: "TradingView", url: "https://pro.tradingview.com/chart/", icon: <Globe className="w-4 h-4 mr-2" /> },
-  { name: "MetaTrader Web", url: "https://trade.mql5.com/trade", icon: <Globe className="w-4 h-4 mr-2" /> },
-  { name: "Interactive Brokers", url: "https://www.interactivebrokers.com/portal", icon: <Globe className="w-4 h-4 mr-2" /> },
-  { name: "cTrader", url: "https://ctrader.com/", icon: <Globe className="w-4 h-4 mr-2" /> },
-  { name: "Oanda", url: "https://www.oanda.com/trade/", icon: <Globe className="w-4 h-4 mr-2" /> },
-  { name: "TD Ameritrade", url: "https://www.tdameritrade.com/tools-and-platforms.html", icon: <Globe className="w-4 h-4 mr-2" /> },
-  { name: "E*TRADE", url: "https://us.etrade.com/platforms/power-etrade", icon: <Globe className="w-4 h-4 mr-2" /> },
-  { name: "Binance", url: "https://www.binance.com/en/trade", icon: <Globe className="w-4 h-4 mr-2" /> },
-  { name: "Coinbase Pro", url: "https://pro.coinbase.com/", icon: <Globe className="w-4 h-4 mr-2" /> },
-];
+// Broker presets removed as requested
 
 export default function EmbeddedBrowserPage() {
   const [browserUrl, setBrowserUrl] = useState('https://tv.tradehybrid.club');
@@ -54,14 +40,7 @@ export default function EmbeddedBrowserPage() {
     toast.success('Page bookmarked');
   };
   
-  // Handle selection of a broker from the preset list
-  const handleBrokerSelect = (value: string) => {
-    const selected = brokerPresets.find(broker => broker.name === value);
-    if (selected) {
-      setBrowserUrl(selected.url);
-      toast.success(`Loading ${selected.name}`);
-    }
-  };
+  // Broker selection function removed as requested
   
   // Handle mobile settings toggle
   const handleShowSettings = () => {
@@ -108,29 +87,7 @@ export default function EmbeddedBrowserPage() {
           </div>
         </div>
         
-        <div className="mb-6">
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Quick Access</CardTitle>
-              <p className="text-sm text-slate-400">Select a trading platform or broker website to open</p>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {brokerPresets.map((broker, index) => (
-                  <Button 
-                    key={index} 
-                    variant="outline" 
-                    className="flex items-center"
-                    onClick={() => setBrowserUrl(broker.url)}
-                  >
-                    {broker.icon}
-                    {broker.name}
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Quick access buttons removed as requested */}
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
           <TabsList className="bg-slate-800 border border-slate-700">
