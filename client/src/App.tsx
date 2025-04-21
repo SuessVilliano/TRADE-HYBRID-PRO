@@ -130,9 +130,18 @@ const App: React.FC = () => {
                   <Route path="/simple-charting" element={<React.Suspense fallback={<div>Loading chart...</div>}><SimpleChartingDashboard /></React.Suspense>} />
                   <Route path="/test-page" element={<React.Suspense fallback={<div>Loading test page...</div>}><TestPage /></React.Suspense>} />
                   <Route path="/tv-widgets" element={<React.Suspense fallback={<div>Loading TradingView widgets...</div>}><TradingViewWidgetsTest /></React.Suspense>} />
-                  <Route path="/tv-simple" element={<React.Suspense fallback={<div>Loading simple demo...</div>}>
-                    {React.createElement(React.lazy(() => import('./pages/simple-tradingview-demo')))}
-                  </React.Suspense>} />
+                  <Route path="/tv-simple" element={<iframe 
+                    src="https://www.tradingview.com/chart/GtJVbpFg/" 
+                    style={{ width: '100%', height: '90vh', border: 'none' }}
+                    title="TradingView Chart"
+                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                  />} />
+                  <Route path="/tv-calendar" element={<iframe 
+                    src="https://www.tradingview.com/markets/currencies/economic-calendar/" 
+                    style={{ width: '100%', height: '90vh', border: 'none' }}
+                    title="TradingView Economic Calendar"
+                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                  />} />
                   
                   {/* Auth routes */}
                   <Route path="/login" element={<LoginPage />} />
