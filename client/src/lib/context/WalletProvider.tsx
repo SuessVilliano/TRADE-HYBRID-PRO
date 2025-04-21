@@ -20,13 +20,20 @@ interface WalletProviderProps {
 }
 
 export const WalletProvider: FC<WalletProviderProps> = ({ children }) => {
-  // Set up endpoint (devnet)
-  const endpoint = useMemo(() => clusterApiUrl('devnet'), []);
+  // Set up endpoint to mainnet-beta for validator staking
+  const endpoint = useMemo(() => clusterApiUrl('mainnet-beta'), []);
+  
+  console.log('WalletProvider connecting to Solana network:', endpoint);
 
   // Set up wallet adapters
   const wallets = useMemo(() => {
     const phantom = new PhantomWalletAdapter();
-    console.log("Initializing wallets, Phantom available:", phantom.ready);
+    const phantomAvailable = 
+      typeof window !== 'undefined' && 
+      'phantom' in window && 
+      (window as any).phantom?.solana !== undefined;
+      
+    console.log("WalletProvider initializing, Phantom available:", phantomAvailable);
     return [phantom];
   }, []);
 
@@ -41,5 +48,5 @@ export const WalletProvider: FC<WalletProviderProps> = ({ children }) => {
   );
 };
 
-// We don't need this anymore as we are using SolanaWalletProvider
+// This component is provided for backwards compatibility
 export default WalletProvider;
