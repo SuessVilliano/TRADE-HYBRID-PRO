@@ -391,9 +391,9 @@ export function NinjaTraderConnection() {
         <div className="text-sm text-muted-foreground">
           <p>The NinjaTrader Adapter needs to be installed on your computer to receive signals.</p>
           <p className="mt-1">
-            <Link href="/downloads/README.md" className="text-blue-600 hover:underline" target="_blank">
+            <a href="/downloads/README.md" className="text-blue-600 hover:underline" target="_blank">
               View Documentation
-            </Link>
+            </a>
             {" | "}
             <a href="/downloads/NinjaTraderAdapter.html" className="text-blue-600 hover:underline" target="_blank">
               Open Web Adapter
