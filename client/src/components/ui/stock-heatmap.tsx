@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { AlertTriangle, RefreshCcw } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { AlertTriangle, ExternalLink, RefreshCcw } from 'lucide-react';
 import { Button } from './button';
 
 interface StockHeatmapProps {
@@ -11,6 +11,10 @@ interface StockHeatmapProps {
   market?: 'crypto' | 'stock';
 }
 
+/**
+ * TradingView stock heatmap widget using iframes for better stability
+ * This approach avoids the script initialization errors by using a direct iframe
+ */
 export function StockHeatmap({
   dataSource = 'SPX500',
   colorTheme = 'dark',
@@ -19,121 +23,60 @@ export function StockHeatmap({
   showTopBar = true,
   market = 'stock'
 }: StockHeatmapProps) {
-  // If market is specified, override dataSource accordingly
-  useEffect(() => {
-    if (market === 'crypto' && dataSource === 'SPX500') {
-      dataSource = 'crypto';
-    } else if (market === 'stock' && dataSource === 'crypto') {
-      dataSource = 'SPX500';
-    }
-  }, [market, dataSource]);
-  const container = useRef<HTMLDivElement>(null);
-  const scriptLoaded = useRef(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const uniqueId = useRef(`tv_heatmap_${Math.floor(Math.random() * 1000000)}`);
-
-  // Function to load the heatmap
-  const loadHeatmap = () => {
-    if (!container.current) return;
-    
-    // Clear any existing content
-    while (container.current.firstChild) {
-      container.current.removeChild(container.current.firstChild);
+  
+  // Determine the correct URL for TradingView heatmap based on market type
+  const getTradingViewHeatmapUrl = () => {
+    if (market === 'crypto') {
+      return 'https://www.tradingview.com/markets/cryptocurrencies/prices-all/';
+    } else {
+      // Stock market heatmap
+      return 'https://www.tradingview.com/heatmap/stock/';
     }
-    
+  };
+  
+  // Handle iframe load events
+  const handleIframeLoad = () => {
+    setLoading(false);
+  };
+  
+  // Handle iframe error events
+  const handleIframeError = () => {
+    setError('Unable to load TradingView heatmap. Please check your connection.');
+    setLoading(false);
+  };
+  
+  // Open TradingView in a new tab
+  const openTradingView = () => {
+    window.open(getTradingViewHeatmapUrl(), '_blank');
+  };
+  
+  // Retry loading the iframe
+  const handleReload = () => {
     setLoading(true);
     setError(null);
     
-    try {
-      // Create widget container
-      const widgetContainer = document.createElement('div');
-      widgetContainer.className = 'tradingview-widget-container__widget';
-      widgetContainer.id = uniqueId.current;
-      
-      // Create script element
-      const script = document.createElement('script');
-      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-stock-heatmap.js';
-      script.type = 'text/javascript';
-      script.async = true;
-      
-      // Set widget configuration
-      const widgetConfig = {
-        exchanges: [],
-        dataSource: dataSource,
-        grouping: "sector",
-        blockSize: "market_cap_calc",
-        blockColor: "change",
-        locale: "en",
-        symbolUrl: "",
-        colorTheme: colorTheme,
-        hasTopBar: showTopBar,
-        isDataSetEnabled: true,
-        isZoomEnabled: true,
-        hasSymbolTooltip: true,
-        width: width,
-        height: height
-      };
-      
-      script.innerHTML = JSON.stringify(widgetConfig);
-      
-      // Add loading and error handlers
-      script.onload = () => {
-        console.log('Heatmap script loaded successfully');
-        setLoading(false);
-      };
-      
-      script.onerror = () => {
-        console.error('Failed to load heatmap script');
-        setError('Failed to load market heatmap. Please try again later.');
-        setLoading(false);
-      };
-      
-      // Create a timeout to detect if the widget doesn't load properly
-      const loadTimeout = setTimeout(() => {
-        // Check if widget content has been added
-        const widgetContent = document.querySelector(`#${uniqueId.current} iframe`);
-        if (!widgetContent) {
-          setError('The market heatmap is taking longer than expected to load. Please try refreshing.');
-          setLoading(false);
-        }
-      }, 10000); // 10 second timeout
-      
-      // Add widget container and script to the DOM
-      container.current.appendChild(widgetContainer);
-      container.current.appendChild(script);
-      
-      scriptLoaded.current = true;
-      
-      return () => {
-        clearTimeout(loadTimeout);
-        if (container.current) {
-          while (container.current.firstChild) {
-            container.current.removeChild(container.current.firstChild);
-          }
-        }
-        scriptLoaded.current = false;
-      };
-    } catch (err) {
-      console.error('Error initializing heatmap:', err);
-      setError('An error occurred while loading the market heatmap.');
-      setLoading(false);
+    // Force reload by recreating the iframe
+    const iframe = document.getElementById('tradingview-heatmap-iframe') as HTMLIFrameElement;
+    if (iframe) {
+      iframe.src = getTradingViewHeatmapUrl();
     }
   };
-
-  // Load heatmap on component mount and when props change
-  useEffect(() => {
-    return loadHeatmap();
-  }, [dataSource, colorTheme, height, width, showTopBar]);
   
-  // Reload heatmap when requested
-  const handleReload = () => {
-    scriptLoaded.current = false;
-    loadHeatmap();
+  // Set iframe height based on prop
+  const getIframeHeight = () => {
+    if (typeof height === 'string') {
+      if (height.endsWith('%')) {
+        return 'h-full';
+      }
+      return height;
+    }
+    return '100%';
   };
 
   return (
-    <div className="tradingview-widget-container relative h-full w-full" ref={container}>
+    <div className="tradingview-widget-container relative h-full w-full bg-slate-900 overflow-hidden">
       {/* Loading indicator */}
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background bg-opacity-75 z-10">
@@ -150,13 +93,31 @@ export function StockHeatmap({
           <div className="text-center p-6 max-w-md">
             <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-destructive" />
             <p className="text-sm text-destructive mb-4">{error}</p>
-            <Button onClick={handleReload} size="sm" variant="outline" className="gap-2">
-              <RefreshCcw className="h-4 w-4" />
-              Reload Heatmap
-            </Button>
+            <div className="flex justify-center gap-2">
+              <Button onClick={handleReload} size="sm" variant="outline" className="gap-2">
+                <RefreshCcw className="h-4 w-4" />
+                Reload
+              </Button>
+              <Button onClick={openTradingView} size="sm" variant="outline" className="gap-2">
+                <ExternalLink className="h-4 w-4" />
+                Open in New Tab
+              </Button>
+            </div>
           </div>
         </div>
       )}
+      
+      {/* Direct TradingView iframe */}
+      <iframe
+        id="tradingview-heatmap-iframe"
+        src={getTradingViewHeatmapUrl()}
+        style={{ width: '100%', height: getIframeHeight() }}
+        onLoad={handleIframeLoad}
+        onError={handleIframeError}
+        frameBorder="0"
+        allowFullScreen
+        className={`w-full ${loading ? 'opacity-0' : 'opacity-100'} transition-opacity`}
+      />
     </div>
   );
 }
