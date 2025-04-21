@@ -129,8 +129,8 @@ export default function StakeAndBake() {
   const [referrerCode, setReferrerCode] = useState<string | null>(null);
   
   // Solana Validator Information
-  const [validatorIdentity, setValidatorIdentity] = useState("2wbzum5jnZscYNqBwTUPmk7X6RngRnJajY8KMpocJTNQ");
-  const [voteAccount, setVoteAccount] = useState("7BTUDc1EaAgWjQvm4BipvrXJsbmxRxRRrShcQzCPcRJ2");
+  const [validatorIdentity, setValidatorIdentity] = useState("5Mp3EF1donYwLxhe5hs6HoWpAucZGLZ76NKRNztkjEej");
+  const [voteAccount, setVoteAccount] = useState("3QHakLBiTrmXaEcFnjeGFf8ScD4Yp6cxHSdMinEqBjWy");
   const [validatorStats, setValidatorStats] = useState({
     commission: "0.5%",
     activatedStake: "0.0",
