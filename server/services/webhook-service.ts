@@ -17,6 +17,9 @@ import BrokerConnectorFactory from './broker-connector';
 const webhookConfigs = new Map<string, WebhookConfig>();
 const webhookExecutions = new Map<string, any>();
 
+// Flag to prevent sample data from overwriting real webhook logs
+let hasRealWebhookLogs = false;
+
 // For tracking performance metrics
 interface WebhookPerformanceMetric {
   id: string;
@@ -248,6 +251,12 @@ export const logWebhookExecution = async (
   // In a real app, this would save to a database
   webhookExecutions.set(executionId, execution);
   
+  // Mark that we have real webhook logs if this isn't from initialization
+  if (webhookId.startsWith('webhook-') && !webhookId.includes('abc') && !webhookId.includes('def') && !webhookId.includes('ghi')) {
+    hasRealWebhookLogs = true;
+    console.log('Real webhook log received and stored. Current log count:', webhookExecutions.size);
+  }
+  
   // Also log to console for debugging
   console.log(`Webhook execution logged: ${execution.id}`, {
     timestamp: timestamp.toISOString(),
@@ -255,6 +264,7 @@ export const logWebhookExecution = async (
     userId,
     webhookId,
     success: result.success,
+    isReal: hasRealWebhookLogs,
     payload: JSON.stringify(payload).substring(0, 200) + (JSON.stringify(payload).length > 200 ? '...' : '')
   });
   
@@ -289,7 +299,10 @@ export const logWebhookExecution = async (
     let oldestId = null;
     let oldestTime = new Date();
     
-    for (const [id, exec] of webhookExecutions.entries()) {
+    // Convert to array first to avoid iterator issues
+    const entries = Array.from(webhookExecutions.entries());
+    
+    for (const [id, exec] of entries) {
       if (exec.timestamp < oldestTime) {
         oldestId = id;
         oldestTime = exec.timestamp;
@@ -329,8 +342,9 @@ export const getErrorInsightsForWebhook = async (webhookId: string): Promise<Err
  * Initialize sample logs for demonstration
  */
 const initSampleLogs = () => {
-  // If we already have logs, don't create samples
-  if (webhookExecutions.size > 0) {
+  // If we already have logs or real webhook data, don't create samples
+  if (webhookExecutions.size > 0 || hasRealWebhookLogs) {
+    console.log('Skipping sample log creation - using existing logs');
     return;
   }
   

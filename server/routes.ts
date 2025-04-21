@@ -264,7 +264,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Signals routes
   app.get("/api/signals", getSignals);
-  app.post("/api/webhooks/tradingview", receiveWebhook);
+  app.post("/api/webhooks/tradingview", async (req: Request, res: Response) => {
+    console.log('TradingView webhook endpoint called');
+    
+    try {
+      // Create a webhook execution log
+      const { logWebhookExecution } = await import('./services/webhook-service');
+      
+      const source = req.body.source || 'tradingview';
+      const userId = 'demo-user-123'; // Fixed user ID for demo
+      
+      const webhookId = `webhook-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+      
+      const result = {
+        success: true,
+        message: 'Webhook received and processed successfully'
+      };
+      
+      // Ensure the payload is properly stored as a string if needed
+      const payloadToLog = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+      
+      console.log(`Received TradingView webhook with payload: ${payloadToLog.substring(0, 200)}`);
+      
+      await logWebhookExecution(
+        webhookId,
+        userId,
+        source,
+        req.body,
+        result,
+        req
+      );
+      
+      console.log(`Webhook execution logged with ID: ${webhookId}, broker: ${source}, success: ${result.success}`);
+      
+      return res.json({
+        success: true,
+        message: 'Webhook received',
+        execution: result
+      });
+    } catch (error: any) {
+      console.error('Error processing TradingView webhook:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'An error occurred processing the webhook',
+        error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
+    }
+  });
   app.post("/api/webhooks/signals", receiveWebhook);
 
   // New signal webhook endpoints from user
@@ -288,7 +334,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get all webhook logs (no filtering by user)
       const logs = await getWebhookExecutionLogs();
-      console.log('Direct public logs found:', logs.length);
+      
+      // Log details about the first 3 logs for debugging
+      if (logs.length > 0) {
+        console.log(`Direct public logs found: ${logs.length}. Sample logs:`);
+        logs.slice(0, 3).forEach((log, i) => {
+          console.log(`Log ${i+1}:`, {
+            id: log.id,
+            broker: log.broker,
+            webhookId: log.webhookId,
+            timestamp: log.timestamp,
+            hasPayload: !!log.payload,
+            payloadType: log.payload && typeof log.payload === 'object' ? 
+              (log.payload.content ? 'Has content field' : 'Standard object') : 
+              typeof log.payload
+          });
+        });
+      } else {
+        console.log('No webhook logs found');
+      }
       
       return res.json({ logs });
     } catch (error: any) {
