@@ -2,6 +2,7 @@ import * as React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 const SimpleChartingDashboard = React.lazy(() => import('./pages/simple-charting'));
 const TestPage = React.lazy(() => import('./pages/test-page'));
+const TradingViewWidgetsTest = React.lazy(() => import('./pages/tradingview-widgets-test'));
 import { AuthProvider } from './lib/context/AuthContext';
 import { SolanaAuthProvider } from './lib/context/SolanaAuthProvider';
 import { SolanaWalletProvider } from './lib/context/SolanaWalletProvider';
