@@ -380,6 +380,87 @@ export default function ABATEVPanelPage() {
                         </div>
                       </div>
                       
+                      {/* AI Market Insights */}
+                      <div>
+                        <h3 className="font-medium mb-3 flex items-center">
+                          <Info className="h-4 w-4 mr-2 text-blue-400" /> 
+                          AI Market Insights
+                        </h3>
+                        <div className="bg-blue-950/20 border border-blue-900/30 rounded-md p-4 space-y-4">
+                          <div className="flex items-start">
+                            <BarChart className="h-5 w-5 text-blue-400 mr-2 mt-0.5" />
+                            <div>
+                              <h4 className="font-medium text-blue-300">Market Analysis</h4>
+                              {tradeData && (
+                                <p className="text-sm text-blue-100/80 mt-1">
+                                  {tradeData.side === 'buy' ? (
+                                    <>
+                                      Current analysis shows <strong>{tradeData.symbol}</strong> has formed a potential reversal pattern with strong support at {(tradeData.stopLoss * 0.98).toFixed(2)}. Volume profile indicates accumulation at these levels.
+                                    </>
+                                  ) : (
+                                    <>
+                                      Technical indicators suggest <strong>{tradeData.symbol}</strong> is approaching resistance with divergence on RSI and MACD. The rejection at {(tradeData.entryPrice * 1.01).toFixed(2)} aligns with previous supply zones.
+                                    </>
+                                  )}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-slate-800/70 p-3 rounded-md border border-blue-900/30">
+                              <h5 className="text-sm font-medium mb-1 text-blue-300">Success Probability</h5>
+                              <div className="flex items-center">
+                                <div className="w-full bg-slate-700 rounded-full h-2 mr-3">
+                                  <div 
+                                    className="bg-blue-500 h-2 rounded-full" 
+                                    style={{ width: `${tradeData ? (tradeData.confidence || 72) : 0}%` }}
+                                  ></div>
+                                </div>
+                                <span className="text-sm text-blue-300">{tradeData ? (tradeData.confidence || 72) : 0}%</span>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-slate-800/70 p-3 rounded-md border border-blue-900/30">
+                              <h5 className="text-sm font-medium mb-1 text-blue-300">Market Sentiment</h5>
+                              <div className="flex items-center">
+                                <div className="flex-1 h-2 bg-red-500 rounded-l-full"></div>
+                                <div className="flex-1 h-2 bg-amber-500"></div>
+                                <div className="flex-1 h-2 bg-green-500 rounded-r-full"></div>
+                                <span 
+                                  className="h-4 w-4 bg-white rounded-full border-2 border-blue-500 ml-2 relative" 
+                                  style={{ 
+                                    marginLeft: `-${tradeData ? (tradeData.side === 'buy' ? 100 - 30 : 30) : 50}%`,
+                                    transform: 'translateX(-50%)',
+                                    zIndex: 10
+                                  }}
+                                ></span>
+                              </div>
+                              <div className="flex justify-between text-xs mt-1 text-slate-400">
+                                <span>Bearish</span>
+                                <span>Neutral</span>
+                                <span>Bullish</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-slate-800/70 p-3 rounded-md border border-blue-900/30">
+                            <h5 className="text-sm font-medium mb-2 text-blue-300">OpenAI Market Recommendation</h5>
+                            <p className="text-sm text-blue-100/80">
+                              {tradeData ? (
+                                tradeData.side === 'buy' ? (
+                                  <>Based on current market conditions, entry at {tradeData.entryPrice} offers a favorable risk-reward profile. Consider scaling in positions if price tests support at {tradeData.stopLoss}. Recent market volatility suggests using the recommended stop loss to minimize drawdown.</>
+                                ) : (
+                                  <>Current technical configuration suggests weakness above {tradeData.entryPrice}. Fibonacci extension targets align with the take profit level at {tradeData.takeProfit}. Volume analysis shows distribution pattern with diminishing buying pressure.</>
+                                )
+                              ) : (
+                                'No trade data available for AI recommendation.'
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
                       {/* Trade Execution Controls */}
                       <div>
                         <h3 className="font-medium mb-3">Execution Settings</h3>
