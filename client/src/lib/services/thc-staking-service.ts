@@ -16,6 +16,14 @@ export interface StakeAccount {
   rewardsClaimed: number;
   lastClaimedTime: number;
   isActive: boolean;
+  
+  // Enhanced properties for UI experience
+  stakeId?: string;                 // Unique identifier for this stake
+  lockPeriodDays?: number;          // Original lock period in days
+  formattedStartDate?: string;      // Human-readable start date
+  formattedEndDate?: string;        // Human-readable end date
+  stakingTier?: string;             // Tier name (e.g., "Diamond Tier")
+  estimatedRewardsAtMaturity?: number; // Estimated rewards at full term
 }
 
 export interface StakingStats {
@@ -23,6 +31,12 @@ export interface StakingStats {
   stakerCount: number;
   validator: string;
   apyTiers: Array<{period: number, apy: number}>;
+  
+  // Enhanced stats data
+  validatorUptime?: string;
+  epoch?: number;
+  epochProgress?: number;
+  rewardsDistributed?: number;
 }
 
 /**
@@ -69,6 +83,51 @@ export class THCStakingService {
     
     // Randomize staker count between 500 and 1500
     this.mockStakingStats.stakerCount = 500 + Math.floor(Math.random() * 1000);
+    
+    // Add enhanced validator stats
+    this.mockStakingStats.validatorUptime = "99.8%";
+    this.mockStakingStats.epoch = 422;
+    this.mockStakingStats.epochProgress = 68;
+    this.mockStakingStats.rewardsDistributed = 25000;
+    
+    // Create a demo stake for the current user if wallet is connected
+    if (this.wallet && this.wallet.publicKey) {
+      const publicKeyStr = this.wallet.publicKey.toString();
+      
+      // Only create if one doesn't already exist
+      if (!this.mockStakeData.has(publicKeyStr)) {
+        const currentTime = Math.floor(Date.now() / 1000);
+        
+        // Create a stake that started 30 days ago with 90 day term
+        const startTime = currentTime - (30 * 86400);
+        const unlockTime = startTime + (90 * 86400);
+        const stakeId = `stake_${startTime}_${Math.random().toString(36).substring(2, 10)}`;
+        
+        // Demo stake with 100 THC for 90 days
+        const stakeAccount: StakeAccount = {
+          owner: publicKeyStr,
+          depositAmount: 100,
+          startTime: startTime,
+          unlockTime: unlockTime,
+          apy: 8, // 8% for 90 day term
+          rewardsClaimed: 0,
+          lastClaimedTime: startTime,
+          isActive: true,
+          
+          // Enhanced details for UI
+          stakeId: stakeId,
+          lockPeriodDays: 90,
+          formattedStartDate: new Date(startTime * 1000).toLocaleDateString(),
+          formattedEndDate: new Date(unlockTime * 1000).toLocaleDateString(),
+          stakingTier: this.getStakingTierName(90),
+          estimatedRewardsAtMaturity: (100 * 8 / 100) * (90 / 365)
+        };
+        
+        // Add to mock data
+        this.mockStakeData.set(publicKeyStr, stakeAccount);
+        console.log(`[Mock] Created demo stake of 100 THC for connected wallet`);
+      }
+    }
   }
 
   /**
@@ -111,6 +170,16 @@ export class THCStakingService {
       throw new Error('Wallet not connected');
     }
 
+    // Validate input
+    if (amount <= 0) {
+      throw new Error('Stake amount must be greater than 0');
+    }
+    
+    const validPeriods = [30, 90, 180, 365];
+    if (!validPeriods.includes(lockPeriodDays)) {
+      throw new Error('Invalid staking period. Must be one of: 30, 90, 180, or 365 days');
+    }
+
     // Mock transaction hash - in real implementation this would be a blockchain tx
     const txHash = 'mock_tx_' + Math.random().toString(36).substring(2, 15);
     
@@ -123,7 +192,10 @@ export class THCStakingService {
     // Calculate APY based on staking period
     const apy = calculateStakingApy(lockPeriodDays);
     
-    // Create stake account
+    // Create a unique stake ID for this stake
+    const stakeId = `stake_${currentTime}_${Math.random().toString(36).substring(2, 10)}`;
+    
+    // Create stake account with enhanced details
     const stakeAccount: StakeAccount = {
       owner: this.wallet.publicKey.toString(),
       depositAmount: amount,
@@ -132,7 +204,15 @@ export class THCStakingService {
       apy: apy,
       rewardsClaimed: 0,
       lastClaimedTime: currentTime,
-      isActive: true
+      isActive: true,
+      
+      // Enhanced details for UI
+      stakeId: stakeId,
+      lockPeriodDays: lockPeriodDays,
+      formattedStartDate: new Date(currentTime * 1000).toLocaleDateString(),
+      formattedEndDate: new Date(unlockTime * 1000).toLocaleDateString(),
+      stakingTier: this.getStakingTierName(lockPeriodDays),
+      estimatedRewardsAtMaturity: (amount * apy / 100) * (lockPeriodDays / 365)
     };
     
     // Save stake account
@@ -143,9 +223,20 @@ export class THCStakingService {
     this.mockStakingStats.stakerCount += 1;
     
     console.log(`[Mock] Staked ${amount} THC for ${lockPeriodDays} days at ${apy}% APY`);
+    console.log(`[Mock] Stake ID: ${stakeId}, Unlock date: ${new Date(unlockTime * 1000).toLocaleDateString()}`);
     
     // In a real implementation, this would return the transaction signature
     return txHash;
+  }
+  
+  /**
+   * Get a human-readable tier name based on staking period
+   */
+  private getStakingTierName(days: number): string {
+    if (days >= 365) return 'Diamond Tier';
+    if (days >= 180) return 'Gold Tier';
+    if (days >= 90) return 'Silver Tier';
+    return 'Bronze Tier';
   }
 
   /**

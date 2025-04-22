@@ -196,6 +196,57 @@ pub mod thc_staking {
         
         Ok(())
     }
+    
+    // Get staking stats
+    pub fn get_staking_stats(ctx: Context<GetStakingStats>) -> Result<StakingStatsResult> {
+        let staking_authority = &ctx.accounts.staking_authority;
+        
+        // Return staking stats
+        Ok(StakingStatsResult {
+            total_staked: staking_authority.total_staked,
+            staker_count: staking_authority.staker_count,
+            validator: staking_authority.validator,
+            apy_tiers: vec![
+                ApyTier { period_days: 30, apy_bps: 500 },
+                ApyTier { period_days: 90, apy_bps: 800 },
+                ApyTier { period_days: 180, apy_bps: 1200 },
+                ApyTier { period_days: 365, apy_bps: 1500 }
+            ]
+        })
+    }
+    
+    // Calculate available rewards for a stake account
+    pub fn calculate_rewards(ctx: Context<CalculateRewards>) -> Result<RewardsResult> {
+        let clock = Clock::get()?;
+        let current_time = clock.unix_timestamp;
+        
+        // Get stake account
+        let stake_account = &ctx.accounts.stake_account;
+        if !stake_account.is_active {
+            return Ok(RewardsResult {
+                available_rewards: 0,
+                apy: stake_account.apy,
+                time_staked: 0,
+                unlock_time: stake_account.unlock_time,
+                current_time
+            });
+        }
+        
+        // Calculate time staked
+        let time_staked = current_time - stake_account.last_claimed_time;
+        let time_staked_years = time_staked as f64 / (365.0 * 86400.0);
+        let apy_decimal = stake_account.apy as f64 / 10000.0;
+        let rewards = (stake_account.deposit_amount as f64 * apy_decimal * time_staked_years) as u64;
+        
+        // Return rewards result
+        Ok(RewardsResult {
+            available_rewards: rewards,
+            apy: stake_account.apy,
+            time_staked,
+            unlock_time: stake_account.unlock_time,
+            current_time
+        })
+    }
 }
 
 #[derive(Accounts)]
@@ -362,6 +413,58 @@ pub struct StakeAccount {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]
 pub struct AuthorityBumps {
     pub staking_authority: u8,
+}
+
+// API result structs
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct ApyTier {
+    pub period_days: u16,
+    pub apy_bps: u16,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct StakingStatsResult {
+    pub total_staked: u64,
+    pub staker_count: u64,
+    pub validator: Pubkey,
+    pub apy_tiers: Vec<ApyTier>,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct RewardsResult {
+    pub available_rewards: u64,
+    pub apy: u16,
+    pub time_staked: i64,
+    pub unlock_time: i64,
+    pub current_time: i64,
+}
+
+// Account contexts for view methods
+#[derive(Accounts)]
+pub struct GetStakingStats<'info> {
+    #[account(
+        seeds = [b"staking_authority", staking_authority.token_mint.as_ref()],
+        bump = staking_authority.bumps.staking_authority,
+    )]
+    pub staking_authority: Account<'info, StakingAuthority>,
+}
+
+#[derive(Accounts)]
+pub struct CalculateRewards<'info> {
+    pub owner: Signer<'info>,
+    
+    #[account(
+        seeds = [b"staking_authority", staking_authority.token_mint.as_ref()],
+        bump = staking_authority.bumps.staking_authority,
+    )]
+    pub staking_authority: Account<'info, StakingAuthority>,
+    
+    #[account(
+        seeds = [b"stake_account", owner.key().as_ref(), staking_authority.token_mint.as_ref()],
+        bump = stake_account.bump,
+        constraint = stake_account.owner == owner.key(),
+    )]
+    pub stake_account: Account<'info, StakeAccount>,
 }
 
 #[error_code]

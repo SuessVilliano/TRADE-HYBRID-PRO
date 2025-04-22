@@ -154,6 +154,44 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "getStakingStats",
+      "accounts": [
+        {
+          "name": "stakingAuthority",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "returns": {
+        "defined": "StakingStatsResult"
+      }
+    },
+    {
+      "name": "calculateRewards",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "stakingAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stakeAccount",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "returns": {
+        "defined": "RewardsResult"
+      }
     }
   ],
   "accounts": [
@@ -257,6 +295,78 @@
           {
             "name": "stakingAuthority",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ApyTier",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "periodDays",
+            "type": "u16"
+          },
+          {
+            "name": "apyBps",
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakingStatsResult",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "totalStaked",
+            "type": "u64"
+          },
+          {
+            "name": "stakerCount",
+            "type": "u64"
+          },
+          {
+            "name": "validator",
+            "type": "publicKey"
+          },
+          {
+            "name": "apyTiers",
+            "type": {
+              "vec": {
+                "defined": "ApyTier"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "RewardsResult",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "availableRewards",
+            "type": "u64"
+          },
+          {
+            "name": "apy",
+            "type": "u16"
+          },
+          {
+            "name": "timeStaked",
+            "type": "i64"
+          },
+          {
+            "name": "unlockTime",
+            "type": "i64"
+          },
+          {
+            "name": "currentTime",
+            "type": "i64"
           }
         ]
       }
