@@ -12,6 +12,7 @@ import MarketOverview from './market-overview';
 import StockHeatmap from './stock-heatmap';
 import TradingViewStockHeatmapWidget from './tradingview-stock-heatmap-widget';
 import TradingViewCryptoHeatmapWidget from './tradingview-crypto-heatmap-widget';
+import { TradeHybridAppWidget } from './tradehybrid-app-widget';
 import { TradeSignals } from './trade-signals';
 import { PersonalizedTradingInsights } from './personalized-trading-insights';
 import { SmartTradePanel } from './smart-trade-panel';
@@ -287,6 +288,14 @@ export function DraggableTradingDashboard({
       type: 'smart-trade',
       position: { x: 620, y: 370 },
       size: { width: 550, height: 300 },
+      isMaximized: false
+    },
+    {
+      id: 'tradehybrid-app-1',
+      title: 'TradeHybrid Web App',
+      type: 'tradehybrid-app',
+      position: { x: 10, y: 680 },
+      size: { width: 900, height: 500 },
       isMaximized: false
     }
   ]);

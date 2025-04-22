@@ -15,7 +15,7 @@ export function CustomizableTradingDashboard({ defaultSymbol = 'BTCUSDT' }: Cust
       </div>
       
       <div className="h-[calc(100vh-8rem)] overflow-auto scrollable-dashboard trading-dashboard-container">
-        <div className="min-h-[1200px]"> {/* Ensure minimum height to accommodate all widgets */}
+        <div className="min-h-[1800px]"> {/* Ensure minimum height to accommodate all widgets including TradeHybrid app */}
           <DraggableTradingDashboard defaultSymbol={defaultSymbol} />
         </div>
       </div>

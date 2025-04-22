@@ -98,42 +98,19 @@ export default function AdvancedTradingDashboard({}: AdvancedTradingDashboardPro
           {/* Dashboard Content */}
           {selectedTab === 'dashboard' && (
             <div className="grid gap-6">
-              {/* Quick symbol select and actions */}
+              {/* Dashboard actions */}
               <Card className="bg-slate-800 border-slate-700">
                 <CardContent className="p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex flex-wrap gap-2">
-                      {tradingSymbols.slice(0, 4).map(symbol => (
-                        <Button 
-                          key={symbol.value}
-                          variant={selectedSymbol === symbol.value ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setSelectedSymbol(symbol.value)}
-                          className={selectedSymbol === symbol.value ? "bg-purple-600 hover:bg-purple-700" : ""}
-                        >
-                          {symbol.label}
-                        </Button>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" className="gap-2">
-                        <RefreshCw className="h-4 w-4" />
-                        Refresh
-                      </Button>
-                      <Button variant="outline" size="sm" className="gap-2">
-                        <Save className="h-4 w-4" />
-                        Save Layout
-                      </Button>
-                      <Button 
-                        variant="default" 
-                        size="sm" 
-                        className="gap-2 bg-purple-600 hover:bg-purple-700"
-                        onClick={() => window.location.href = '/trading-dashboard/custom'}
-                      >
-                        <LayoutDashboard className="h-4 w-4" />
-                        Customizable Dashboard
-                      </Button>
-                    </div>
+                  <div className="flex flex-wrap items-center justify-end gap-4">
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="gap-2 bg-purple-600 hover:bg-purple-700"
+                      onClick={() => window.location.href = '/trading-dashboard/custom'}
+                    >
+                      <LayoutDashboard className="h-4 w-4" />
+                      Customizable Dashboard
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
