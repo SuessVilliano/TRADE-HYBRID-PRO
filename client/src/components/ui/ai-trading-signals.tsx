@@ -667,8 +667,9 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
       description: `${signal.symbol} ${signal.side} trade sent to ABATEV panel.`,
     });
     
-    // For now, just alert - in a real implementation, we'd trigger the ABATEV panel to open
+    // Redirect to ABATEV panel
     console.log("Opening ABATEV panel with:", tradeData);
+    window.location.href = '/abatev';
   };
   
   // Calculate risk/reward ratio
