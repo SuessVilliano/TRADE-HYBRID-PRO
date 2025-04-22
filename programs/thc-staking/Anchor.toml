@@ -2,6 +2,12 @@
 seeds = false
 skip-lint = false
 
+[programs.localnet]
+thc_staking = "tHCStAk1ng1111111111111111111111111111111"
+
+[programs.devnet]
+thc_staking = "tHCStAk1ng1111111111111111111111111111111"
+
 [programs.mainnet]
 thc_staking = "tHCStAk1ng1111111111111111111111111111111"
 
@@ -14,3 +20,18 @@ wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[workspace]
+types = "target/types/thc_staking"
+
+[test]
+startup_wait = 5000
+
+[test.validator]
+url = "https://api.mainnet-beta.solana.com"
+
+[[test.validator.clone]]
+address = "4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4"
+
+[[test.validator.clone]]
+address = "5Mp3EF1donYwLxhe5hs6HoWpAucZGLZ76NKRNztkjEej"

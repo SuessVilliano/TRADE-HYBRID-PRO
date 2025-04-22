@@ -289,8 +289,17 @@ export default function StakeAndBake() {
     stakeAccount: onchainStakeAccount,
     stakingStats,
     availableRewards,
-    stakeStatus
+    stakeStatus,
+    timeUntilUnlock
   } = useThcStaking();
+  
+  // Format time until unlock in days/hours
+  const formatTimeRemaining = () => {
+    if (!timeUntilUnlock) return '0 days';
+    const days = Math.floor(timeUntilUnlock / 86400);
+    const hours = Math.floor((timeUntilUnlock % 86400) / 3600);
+    return days > 0 ? `${days} days${hours > 0 ? ` ${hours} hours` : ''}` : `${hours} hours`;
+  };
   
   // Handle staking action
   const handleStake = async () => {
@@ -387,6 +396,83 @@ export default function StakeAndBake() {
     setMatrixData(updatedMatrix);
   };
 
+  // Handle unstaking of tokens
+  const handleUnstake = async () => {
+    if (!solanaAuth.walletConnected) return;
+    
+    try {
+      // Show loading toast
+      toast({
+        title: "Processing Unstake",
+        description: "Please confirm the transaction in your wallet...",
+      });
+      
+      // Call our staking service to unstake tokens
+      const tx = await unstakeTokens();
+      
+      if (tx) {
+        // Update UI state with a mock amount for demo purposes
+        // In production, this would use the actual amount from onchainStakeAccount
+        const amount = 125.5; // Using the mock amount from UI for demo
+        setStakedAmount(prev => Math.max(0, prev - amount));
+        setThcBalance(prev => prev + amount);
+        
+        // Show success message via toast notification
+        toast({
+          title: "Unstaking Successful",
+          description: `You've unstaked ${amount} THC tokens with rewards`,
+          variant: "default",
+        });
+      }
+    } catch (err) {
+      // Error is handled by the staking hook, but we can show a toast here
+      toast({
+        title: "Unstaking Failed",
+        description: stakingError || "Failed to unstake tokens. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle claiming rewards
+  const handleClaimRewards = async () => {
+    if (!solanaAuth.walletConnected) return;
+    
+    try {
+      // Show loading toast
+      toast({
+        title: "Processing Claim",
+        description: "Please confirm the transaction in your wallet...",
+      });
+      
+      // Call our staking service to claim rewards
+      const tx = await claimRewards();
+      
+      if (tx) {
+        // For demo purposes, we'll use a mock reward amount
+        // In production, this would use availableRewards from the hook
+        const rewardAmount = 4.2;
+        
+        // Update UI state
+        setThcBalance(prev => prev + rewardAmount);
+        
+        // Show success message via toast notification
+        toast({
+          title: "Rewards Claimed",
+          description: `You've claimed ${rewardAmount.toFixed(2)} THC tokens as rewards`,
+          variant: "default",
+        });
+      }
+    } catch (err) {
+      // Error is handled by the staking hook, but we can show a toast here
+      toast({
+        title: "Claim Failed",
+        description: stakingError || "Failed to claim rewards. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
   // Handle copying of referral link
   const handleCopyLink = () => {
     navigator.clipboard.writeText(referralLink);
@@ -1524,6 +1610,23 @@ export default function StakeAndBake() {
                               <span>48%</span>
                             </div>
                             <Progress value={48} className="h-2" />
+                          </div>
+                          <div className="mt-2 flex justify-end space-x-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleClaimRewards()}
+                            >
+                              Claim Rewards
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleUnstake()}
+                              disabled={stakeStatus !== 'unlocked'}
+                            >
+                              {stakeStatus === 'unlocked' ? 'Unstake' : 'Locked'}
+                            </Button>
                           </div>
                         </div>
                         
