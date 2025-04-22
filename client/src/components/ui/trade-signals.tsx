@@ -198,6 +198,44 @@ export function TradeSignals({ symbol = 'BTCUSDT' }: TradeSignalsProps) {
   
   // Copy a value to clipboard
   const copyToClipboard = (value: string | number, label: string) => {
+    // Fallback for browsers that don't support navigator.clipboard
+    if (!navigator.clipboard) {
+      const textArea = document.createElement('textarea');
+      textArea.value = String(value);
+      
+      // Avoid scrolling to bottom
+      textArea.style.top = '0';
+      textArea.style.left = '0';
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          toast.success(`Copied ${label}`, {
+            description: `${label} has been copied to clipboard`,
+            duration: 2000
+          });
+        } else {
+          throw new Error('Copy command failed');
+        }
+      } catch (err) {
+        console.error('Fallback: Failed to copy:', err);
+        toast.error(`Failed to copy ${label}`, {
+          description: 'Please try again',
+          duration: 2000
+        });
+      }
+      
+      document.body.removeChild(textArea);
+      return;
+    }
+    
+    // Use the Clipboard API if available
     navigator.clipboard.writeText(String(value))
       .then(() => {
         toast.success(`Copied ${label}`, {

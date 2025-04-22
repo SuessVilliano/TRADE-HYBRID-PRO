@@ -637,11 +637,60 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
   
   // Copy value to clipboard
   const copyToClipboard = (value: number | string, label: string) => {
-    navigator.clipboard.writeText(value.toString());
-    toast({
-      title: "Copied to clipboard",
-      description: `${label} has been copied to clipboard.`,
-    });
+    // Fallback for browsers that don't support navigator.clipboard
+    if (!navigator.clipboard) {
+      const textArea = document.createElement('textarea');
+      textArea.value = value.toString();
+      
+      // Avoid scrolling to bottom
+      textArea.style.top = '0';
+      textArea.style.left = '0';
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          toast({
+            title: "Copied to clipboard",
+            description: `${label} has been copied to clipboard.`,
+          });
+        } else {
+          throw new Error('Copy command failed');
+        }
+      } catch (err) {
+        console.error('Fallback: Failed to copy:', err);
+        toast({
+          title: "Failed to copy",
+          description: "Please try again",
+          variant: "destructive"
+        });
+      }
+      
+      document.body.removeChild(textArea);
+      return;
+    }
+    
+    // Use the Clipboard API if available
+    navigator.clipboard.writeText(value.toString())
+      .then(() => {
+        toast({
+          title: "Copied to clipboard",
+          description: `${label} has been copied to clipboard.`,
+        });
+      })
+      .catch(err => {
+        console.error('Failed to copy:', err);
+        toast({
+          title: "Failed to copy",
+          description: "Please try again",
+          variant: "destructive"
+        });
+      });
   };
   
   // Handle opening ABATEV trade panel
