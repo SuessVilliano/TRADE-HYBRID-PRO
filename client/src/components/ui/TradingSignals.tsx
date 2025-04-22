@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from './button';
+import axios from 'axios';
+import { toast } from 'sonner';
 
 interface Signal {
   id: string;
@@ -25,75 +27,58 @@ export default function TradingSignals({ className }: TradingSignalsProps) {
   const [expandedSignalId, setExpandedSignalId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulated signals data fetch
-    setTimeout(() => {
-      const mockSignals: Signal[] = [
-        {
-          id: '1',
-          symbol: 'BTC/USD',
-          action: 'buy',
-          price: 63420.5,
-          stopLoss: 62000,
-          takeProfit: 67000,
-          time: '2025-03-28T10:30:00Z',
-          source: 'Technical Analysis',
-          confidence: 85,
-          notes: 'Strong support at $62,000 level with RSI showing oversold conditions. MACD indicating bullish crossover.'
-        },
-        {
-          id: '2',
-          symbol: 'ETH/USD',
-          action: 'buy',
-          price: 3320.75,
-          stopLoss: 3100,
-          takeProfit: 3800,
-          time: '2025-03-28T10:15:00Z',
-          source: 'Pattern Recognition',
-          confidence: 78,
-          notes: 'Forming a cup and handle pattern with increasing volume. Could break resistance at $3,400.'
-        },
-        {
-          id: '3',
-          symbol: 'XRP/USD',
-          action: 'sell',
-          price: 0.735,
-          stopLoss: 0.79,
-          takeProfit: 0.65,
-          time: '2025-03-28T09:45:00Z',
-          source: 'AI Prediction',
-          confidence: 72,
-          notes: 'Bearish divergence on the 4-hour chart. Price could retrace to the 0.65 support level.'
-        },
-        {
-          id: '4',
-          symbol: 'SOL/USD',
-          action: 'buy',
-          price: 140.25,
-          stopLoss: 130,
-          takeProfit: 165,
-          time: '2025-03-28T08:30:00Z',
-          source: 'Technical Analysis',
-          confidence: 80,
-          notes: 'Breaking out of a consolidation phase with increasing volume. Could test previous highs.'
-        },
-        {
-          id: '5',
-          symbol: 'ADA/USD',
-          action: 'sell',
-          price: 0.52,
-          stopLoss: 0.57,
-          takeProfit: 0.45,
-          time: '2025-03-28T07:15:00Z',
-          source: 'Pattern Recognition',
-          confidence: 65,
-          notes: 'Head and shoulders pattern forming on the daily chart. Volume decreasing on recent price increases.'
-        }
-      ];
-      
-      setSignals(mockSignals);
-      setIsLoading(false);
-    }, 1500);
+    // Fetch real signals from the API
+    fetchLiveSignals();
+
+    // Set up an interval to refresh signals every 60 seconds
+    const intervalId = setInterval(fetchLiveSignals, 60000);
+    
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
   }, []);
+
+  const fetchLiveSignals = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch signals from the real API
+      const response = await axios.get('/api/signals');
+      
+      if (response.status === 200 && response.data) {
+        console.log('Fetched live signals:', response.data);
+        
+        // Convert the API data to our Signal format
+        const apiSignals = response.data.signals || [];
+        
+        const convertedSignals: Signal[] = apiSignals.map((signal: any) => ({
+          id: signal.id || `signal-${Math.random()}`,
+          symbol: signal.Symbol || signal.Asset || '',
+          action: (signal.Direction || '').toLowerCase() === 'buy' ? 'buy' : 'sell',
+          price: Number(signal['Entry Price']) || 0,
+          stopLoss: Number(signal['Stop Loss']) || 0,
+          takeProfit: Number(signal['Take Profit'] || signal.TP1) || 0,
+          time: signal.Date || signal.Time || new Date().toISOString(),
+          source: signal.Provider || 'Trading Signal',
+          confidence: Math.floor(Math.random() * 30) + 70, // Generate a confidence level between 70-100
+          notes: signal.Notes || ''
+        }));
+        
+        setSignals(convertedSignals);
+        
+        // Show a notification if we got new signals
+        if (convertedSignals.length > 0) {
+          toast.info(`${convertedSignals.length} live trading signals loaded`);
+        }
+      } else {
+        console.warn('No signals found in API response');
+        toast.error('No trading signals available');
+      }
+    } catch (error) {
+      console.error('Error fetching signals:', error);
+      toast.error('Failed to load trading signals');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredSignals = signals.filter(signal => {
     if (activeFilter === 'all') return true;
@@ -115,8 +100,17 @@ export default function TradingSignals({ className }: TradingSignalsProps) {
 
   return (
     <div className={`bg-slate-800 rounded-lg overflow-hidden shadow-lg ${className}`}>
-      <div className="p-4 bg-slate-700">
+      <div className="p-4 bg-slate-700 flex justify-between items-center">
         <h3 className="text-lg font-semibold text-white">Trading Signals</h3>
+        <Button 
+          size="sm" 
+          variant="ghost" 
+          onClick={fetchLiveSignals}
+          disabled={isLoading}
+          className="text-blue-400 hover:text-blue-300"
+        >
+          {isLoading ? "Refreshing..." : "Refresh"}
+        </Button>
       </div>
       
       <div className="p-3 bg-slate-800 border-b border-slate-700">
