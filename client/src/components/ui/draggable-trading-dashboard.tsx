@@ -123,9 +123,14 @@ function DraggableWidget({
   onMove
 }: DraggableWidgetProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [resizeStartPos, setResizeStartPos] = useState({ x: 0, y: 0 });
+  const [resizeStartSize, setResizeStartSize] = useState({ width: 0, height: 0 });
   
+  // Handle start of dragging the widget
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isMaximized) return;
     setIsDragging(true);
     const rect = e.currentTarget.getBoundingClientRect();
     setDragOffset({
@@ -134,6 +139,16 @@ function DraggableWidget({
     });
   };
   
+  // Handle start of resizing the widget
+  const handleResizeStart = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    if (isMaximized) return;
+    setIsResizing(true);
+    setResizeStartPos({ x: e.clientX, y: e.clientY });
+    setResizeStartSize({ width: size.width, height: size.height });
+  };
+  
+  // Effect for handling dragging
   useEffect(() => {
     if (!isDragging) return;
     
@@ -157,17 +172,50 @@ function DraggableWidget({
     };
   }, [isDragging, dragOffset, id, onMove]);
   
+  // Effect for handling resizing
+  useEffect(() => {
+    if (!isResizing) return;
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      // Calculate new width and height
+      const deltaX = e.clientX - resizeStartPos.x;
+      const deltaY = e.clientY - resizeStartPos.y;
+      
+      // Apply minimum size constraints
+      const newWidth = Math.max(300, resizeStartSize.width + deltaX);
+      const newHeight = Math.max(200, resizeStartSize.height + deltaY);
+      
+      onResize(id, {
+        width: newWidth,
+        height: newHeight
+      });
+    };
+    
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, resizeStartPos, resizeStartSize, id, onResize]);
+  
   return (
     <div
       className={`absolute bg-slate-800 border border-slate-700 rounded-lg overflow-hidden shadow-lg widget-container ${
-        isMaximized ? 'fixed inset-4 z-50' : ''
+        isMaximized ? 'fixed inset-4 z-50' : 'resize-handle'
       }`}
       style={{
         left: isMaximized ? undefined : position.x,
         top: isMaximized ? undefined : position.y,
         width: isMaximized ? undefined : size.width,
         height: isMaximized ? undefined : size.height,
-        transition: isDragging ? 'none' : 'all 0.2s ease'
+        transition: isDragging || isResizing ? 'none' : 'all 0.2s ease',
+        position: 'absolute'
       }}
     >
       <div className="flex items-center justify-between bg-slate-800 border-b border-slate-700 p-2">
@@ -240,6 +288,19 @@ function DraggableWidget({
           isDragging
         })}
       </div>
+      
+      {/* Resize handle in the bottom-right corner */}
+      {!isMaximized && (
+        <div 
+          className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize z-10"
+          onMouseDown={handleResizeStart}
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='rgba(255, 255, 255, 0.3)' viewBox='0 0 16 16'%3E%3Cpath d='M11 5.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V6.5H11a.5.5 0 0 1-.5-.5z'/%3E%3Cpath d='M5.5 11a.5.5 0 0 0-.5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 0-1H6.5V11.5a.5.5 0 0 0-.5-.5z'/%3E%3C/svg%3E")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right bottom'
+          }}
+        />
+      )}
     </div>
   );
 }
