@@ -84,6 +84,13 @@ function getWidgetComponent(type: string, props: WidgetComponentProps) {
         height="100%"
         width="100%"
       />;
+    case 'tradehybrid-app':
+      return <TradeHybridAppWidget 
+        isMaximized={props.isMaximized} 
+        onMaximize={props.onMaximize}
+        height="100%"
+        width="100%"
+      />;
     case 'order-book':
       return <OrderBook symbol={props.symbol} />;
     case 'recent-trades':
@@ -294,6 +301,7 @@ export function DraggableTradingDashboard({
     { id: 'market-overview', title: 'Market Overview', type: 'market-overview' },
     { id: 'stock-heatmap', title: 'Stocks Heatmap', type: 'stock-heatmap' },
     { id: 'crypto-heatmap', title: 'Crypto Heatmap', type: 'crypto-heatmap' },
+    { id: 'tradehybrid-app', title: 'TradeHybrid Web App', type: 'tradehybrid-app' }, 
     { id: 'order-book', title: 'Order Book', type: 'order-book' },
     { id: 'recent-trades', title: 'Recent Trades', type: 'recent-trades' },
     { id: 'alerts', title: 'Price Alerts', type: 'alerts' },
