@@ -421,9 +421,9 @@ export function DraggableTradingDashboard({
   };
   
   return (
-    <div className={`relative w-full h-full bg-slate-900 ${className}`}>
-      {/* Edit mode */}
-      <div className="sticky top-4 right-4 z-40 flex justify-end gap-2 mb-4">
+    <div className={`relative w-full h-full bg-slate-900 overflow-y-auto ${className}`}>
+      {/* Edit mode - Fixed position toolbar at top */}
+      <div className="sticky top-0 right-0 z-50 flex justify-end gap-2 p-2 bg-slate-900/90 backdrop-blur-sm border-b border-slate-800">
         <Button
           variant={isEditMode ? "default" : "outline"}
           size="sm"
@@ -456,8 +456,8 @@ export function DraggableTradingDashboard({
         )}
       </div>
       
-      {/* Widgets */}
-      <div className="relative w-full h-full min-h-[1000px]">
+      {/* Widgets Container with proper scrolling */}
+      <div className="relative w-full min-h-[1200px] pt-2">
         {widgets.map(widget => (
           <DraggableWidget
             key={widget.id}

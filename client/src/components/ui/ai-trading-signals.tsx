@@ -597,11 +597,10 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
       audio.play().catch(err => console.error('Error playing sound:', err));
       
       // Show a notification using the notification service
-      notificationService.notifySystem({
-        title: `Signal Added: ${signal.symbol}`,
-        message: `You'll receive notifications for ${signal.side.toUpperCase()} signals on ${signal.symbol}`,
-        type: 'info' 
-      });
+      notificationService.showSystemNotification(
+        `Signal Added: ${signal.symbol}`,
+        `You'll receive notifications for ${signal.side.toUpperCase()} signals on ${signal.symbol}`
+      );
       
       toast({
         title: "Signal subscribed",
