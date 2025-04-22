@@ -152,7 +152,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({ symbol, timeframe =
     <div className={`w-full h-full bg-slate-800 rounded-md flex flex-col ${className}`}>
       <div className="p-2 border-b border-slate-700 flex justify-between items-center">
         <div className="font-medium text-sm">{symbol}</div>
-        <div className="flex gap-1">
+        <div className="flex gap-1 flex-wrap">
           {['5m', '15m', '1h', '4h', '1d', '1w'].map((tf) => (
             <button
               key={tf}

@@ -422,7 +422,7 @@ export function DraggableTradingDashboard({
   
   return (
     <div className={`relative w-full h-full bg-slate-900 overflow-y-auto ${className}`}>
-      {/* Edit mode - Fixed position toolbar at top */}
+      {/* Simplified header with just essential controls */}
       <div className="sticky top-0 right-0 z-50 flex justify-end gap-2 p-2 bg-slate-900/90 backdrop-blur-sm border-b border-slate-800">
         <Button
           variant={isEditMode ? "default" : "outline"}
