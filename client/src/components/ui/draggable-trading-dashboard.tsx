@@ -10,6 +10,8 @@ import {
 import TradingViewChart from './trading-view-chart';
 import MarketOverview from './market-overview';
 import StockHeatmap from './stock-heatmap';
+import TradingViewStockHeatmapWidget from './tradingview-stock-heatmap-widget';
+import TradingViewCryptoHeatmapWidget from './tradingview-crypto-heatmap-widget';
 import { TradeSignals } from './trade-signals';
 import { PersonalizedTradingInsights } from './personalized-trading-insights';
 import { SmartTradePanel } from './smart-trade-panel';
@@ -66,9 +68,22 @@ function getWidgetComponent(type: string, props: WidgetComponentProps) {
     case 'market-overview':
       return <MarketOverview />;
     case 'stock-heatmap':
-      return <StockHeatmap colorTheme="dark" market="stock" />;
+      return <TradingViewStockHeatmapWidget 
+        colorTheme="dark" 
+        dataSource="NASDAQ100" 
+        hasTopBar={true}
+        isZoomEnabled={true}
+        height="100%"
+        width="100%"
+      />;
     case 'crypto-heatmap':
-      return <StockHeatmap colorTheme="dark" market="crypto" />;
+      return <TradingViewCryptoHeatmapWidget 
+        colorTheme="dark" 
+        hasTopBar={true}
+        isZoomEnabled={true}
+        height="100%"
+        width="100%"
+      />;
     case 'order-book':
       return <OrderBook symbol={props.symbol} />;
     case 'recent-trades':
@@ -136,7 +151,7 @@ function DraggableWidget({
   
   return (
     <div
-      className={`absolute bg-slate-800 border border-slate-700 rounded-lg overflow-hidden shadow-lg ${
+      className={`absolute bg-slate-800 border border-slate-700 rounded-lg overflow-hidden shadow-lg widget-container ${
         isMaximized ? 'fixed inset-4 z-50' : ''
       }`}
       style={{
@@ -328,9 +343,9 @@ export function DraggableTradingDashboard({
   };
   
   return (
-    <div className={`relative w-full h-full bg-slate-900 overflow-hidden ${className}`}>
+    <div className={`relative w-full h-full bg-slate-900 ${className}`}>
       {/* Edit mode */}
-      <div className="absolute top-4 right-4 z-40 flex gap-2">
+      <div className="sticky top-4 right-4 z-40 flex justify-end gap-2 mb-4">
         <Button
           variant={isEditMode ? "default" : "outline"}
           size="sm"
@@ -364,7 +379,7 @@ export function DraggableTradingDashboard({
       </div>
       
       {/* Widgets */}
-      <div className="relative w-full h-full">
+      <div className="relative w-full h-full min-h-[1000px]">
         {widgets.map(widget => (
           <DraggableWidget
             key={widget.id}
