@@ -83,6 +83,7 @@ import ApiDemoPage from './pages/api-demo-page';
 import SmartTradeExplainer from './pages/smart-trade-explainer';
 import TradingToolsPage from './pages/trading-tools';
 import EmbeddedBrowserPage from './pages/embedded-browser-page';
+import ABATEVPanelPage from './pages/abatev-panel';
 
 // Prop Firm
 import PropFirmDashboardPage from './pages/PropFirmDashboard';
@@ -238,6 +239,7 @@ const App: React.FC = () => {
                   <Route path="/smart-trade-explainer" element={<ProtectedRoute><SmartTradeExplainer /></ProtectedRoute>} />
                   <Route path="/api-demo" element={<ProtectedRoute><ApiDemoPage /></ProtectedRoute>} />
                   <Route path="/web-browser" element={<EmbeddedBrowserPage />} />
+                  <Route path="/abatev" element={<ProtectedRoute><ABATEVPanelPage /></ProtectedRoute>} />
                   
                   {/* Prop Firm */}
                   <Route path="/prop-firm" element={<ProtectedRoute><PropFirmDashboardPage /></ProtectedRoute>} />

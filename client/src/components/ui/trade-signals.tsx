@@ -237,7 +237,7 @@ export function TradeSignals({ symbol = 'BTCUSDT' }: TradeSignalsProps) {
     });
     
     // Redirect to ABATEV panel page
-    window.location.href = '/abatev-panel';
+    window.location.href = '/abatev';
   };
   
   // Format date to relative time
