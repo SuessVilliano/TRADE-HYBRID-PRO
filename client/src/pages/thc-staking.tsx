@@ -38,27 +38,17 @@ import {
   BarChart3,
   Clock
 } from 'lucide-react';
-// Temporarily create mock implementations of required functionality
-const THC_TOKEN_CONFIG = {
-  stakingApyTiers: [
-    { minStakingPeriod: 30, apy: 5 },
-    { minStakingPeriod: 60, apy: 7.5 },
-    { minStakingPeriod: 90, apy: 10 }
-  ]
-};
+// Import THC token functions
+import { 
+  calculateStakingApy, 
+  calculateStakingRewards 
+} from '../lib/contracts/thc-token-info';
 
-// Mock function to calculate staking rewards
-const calculateStakingRewards = (amount: number, days: number) => {
-  const apy = calculateStakingApy(days);
-  return (amount * apy / 100) * (days / 365);
-};
+// Import staking hook
+import { useThcStaking } from '../lib/hooks/useThcStaking';
 
-// Mock function to calculate APY based on staking period
-const calculateStakingApy = (days: number) => {
-  if (days >= 90) return 10;
-  if (days >= 60) return 7.5;
-  return 5;
-};
+// Import connection provider
+import { useConnection } from '@solana/wallet-adapter-react';
 
 // Mock affiliate service
 const AffiliateService = {
