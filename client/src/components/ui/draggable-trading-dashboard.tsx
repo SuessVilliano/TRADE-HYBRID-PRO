@@ -172,7 +172,7 @@ function DraggableWidget({
     };
   }, [isDragging, dragOffset, id, onMove]);
   
-  // Effect for handling resizing
+  // Effect for handling resizing with improved flexibility
   useEffect(() => {
     if (!isResizing) return;
     
@@ -181,10 +181,12 @@ function DraggableWidget({
       const deltaX = e.clientX - resizeStartPos.x;
       const deltaY = e.clientY - resizeStartPos.y;
       
-      // Apply minimum size constraints
-      const newWidth = Math.max(300, resizeStartSize.width + deltaX);
-      const newHeight = Math.max(200, resizeStartSize.height + deltaY);
+      // Apply minimum size constraints but allow more flexibility
+      // Smaller min size allows for better fitting widgets on screen
+      const newWidth = Math.max(250, resizeStartSize.width + deltaX);
+      const newHeight = Math.max(150, resizeStartSize.height + deltaY);
       
+      // Apply the resize changes
       onResize(id, {
         width: newWidth,
         height: newHeight
@@ -241,25 +243,7 @@ function DraggableWidget({
             )}
           </Button>
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-slate-400 hover:text-white hover:bg-slate-700"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-slate-800 border-slate-700 text-white">
-              <DropdownMenuItem className="hover:bg-slate-700 cursor-pointer">
-                Edit Widget
-              </DropdownMenuItem>
-              <DropdownMenuItem className="hover:bg-slate-700 cursor-pointer">
-                Change Symbol
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+
           
           <Button
             variant="ghost"
@@ -289,15 +273,18 @@ function DraggableWidget({
         })}
       </div>
       
-      {/* Resize handle in the bottom-right corner */}
+      {/* Enhanced resize handle in the bottom-right corner */}
       {!isMaximized && (
         <div 
-          className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize z-10"
+          className="absolute bottom-0 right-0 w-8 h-8 cursor-nwse-resize z-10 hover:bg-blue-700/20 transition-colors"
           onMouseDown={handleResizeStart}
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='rgba(255, 255, 255, 0.3)' viewBox='0 0 16 16'%3E%3Cpath d='M11 5.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V6.5H11a.5.5 0 0 1-.5-.5z'/%3E%3Cpath d='M5.5 11a.5.5 0 0 0-.5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 0-1H6.5V11.5a.5.5 0 0 0-.5-.5z'/%3E%3C/svg%3E")`,
+            borderTop: '1px solid rgba(100, 116, 139, 0.3)',
+            borderLeft: '1px solid rgba(100, 116, 139, 0.3)',
+            borderTopLeftRadius: '4px',
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='rgba(255, 255, 255, 0.5)' viewBox='0 0 16 16'%3E%3Cpath d='M11 5.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V6.5H11a.5.5 0 0 1-.5-.5z'/%3E%3Cpath d='M5.5 11a.5.5 0 0 0-.5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 0-1H6.5V11.5a.5.5 0 0 0-.5-.5z'/%3E%3C/svg%3E")`,
             backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'right bottom'
+            backgroundPosition: 'center center'
           }}
         />
       )}
