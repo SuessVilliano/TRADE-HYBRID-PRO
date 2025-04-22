@@ -1,162 +1,111 @@
 import React from 'react';
 import { Button } from './button';
-import { Separator } from './separator';
 import { notificationService } from '@/lib/services/notification-service';
-import { pushNotificationService } from '@/lib/services/push-notification-service';
-import { toast } from 'sonner';
-import { API_ENDPOINTS } from '@/lib/constants';
-import { useAuth } from '@/lib/hooks/use-auth';
+import { Bell } from 'lucide-react';
 
-/**
- * A simple button to test the notification system
- */
+// Export as named export and default export
 export function TestNotificationButton() {
-  const { user } = useAuth();
+  // Send a test notification
   const sendTestNotification = () => {
-    // Send a test system notification
-    notificationService.notifySystem(
-      'Test Notification',
-      'This is a test of the notification system. Everything is working properly!',
-      5 // High priority
-    );
+    notificationService.showNotification({
+      title: 'Test Notification',
+      body: 'This is a test notification to verify the notification system is working properly.',
+      type: 'system',
+      priority: 'normal',
+      dismissable: true,
+      link: '/dashboard',
+      linkText: 'Go to Dashboard'
+    });
   };
   
-  const sendTestPriceAlert = () => {
-    // Send a test price alert notification
-    notificationService.notifyPriceAlert(
-      'BTC/USD',
-      42069.42,
-      'above',
-      42000,
-      'crypto',
-      4 // Medium-high priority
-    );
-  };
-  
-  const sendTestSignalEntry = () => {
-    // Send a test signal entry notification
-    notificationService.notifySignalEntry(
-      'ETH/USD',
+  // Send a test signal notification
+  const sendTestSignalNotification = () => {
+    notificationService.showSignalNotification(
+      'BTCUSDT',
       'buy',
-      2420.50,
-      2350.00,
-      2550.00,
-      'crypto',
-      87,
-      4 // Medium-high priority
+      68500,
+      'Paradox AI'
     );
   };
   
-  const sendTestTakeProfit = () => {
-    // Send a test take profit notification
-    notificationService.notifyTakeProfit(
-      'SOL/USD',
-      137.25,
-      '+14.5%',
-      'crypto',
-      4 // Medium-high priority
+  // Send a test price alert notification
+  const sendTestPriceAlertNotification = () => {
+    notificationService.showPriceAlertNotification(
+      'ETHUSDT',
+      3400,
+      'above',
+      3350
     );
   };
   
-  const sendTestStopLoss = () => {
-    // Send a test stop loss notification
-    notificationService.notifyStopLoss(
-      'AAPL',
-      178.50,
-      '-3.2%',
-      'stocks',
-      4 // Medium-high priority
+  // Send a test take profit notification
+  const sendTestTakeProfitNotification = () => {
+    notificationService.showTakeProfitNotification(
+      'BTCUSDT',
+      69500,
+      '+5.3%'
     );
   };
   
-  // Send a test push notification (browser notification)
-  const sendTestPushNotification = async () => {
-    if (!user || !user.id) {
-      toast.error('You need to be logged in to test push notifications');
-      return;
-    }
-    
-    try {
-      // Initialize push notification service if needed
-      await pushNotificationService.initialize(user.id);
-      
-      // Test the push notification
-      const success = await pushNotificationService.testPushNotification();
-      
-      if (success) {
-        toast.success('Test push notification sent. Check your notifications.');
-      } else {
-        toast.error('Failed to send test push notification. Check console for details.');
-      }
-    } catch (error) {
-      console.error('Error sending test push notification:', error);
-      toast.error('Error sending test push notification');
-    }
-  };
-  
-  // Send a test push notification via server API (works when browser is closed)
-  const sendTestServerPushNotification = async () => {
-    if (!user || !user.id) {
-      toast.error('You need to be logged in to test push notifications');
-      return;
-    }
-    
-    try {
-      // Send a push notification via the server API
-      const response = await fetch(`${API_ENDPOINTS.NOTIFICATIONS}/push/send`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          title: 'Test Push Notification',
-          body: 'This is a test push notification from the server!'
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        toast.success(`Push notification sent to ${data.stats.successful} of ${data.stats.total} devices`);
-      } else {
-        toast.error(data.error || 'Failed to send push notification');
-      }
-    } catch (error) {
-      console.error('Error sending server push notification:', error);
-      toast.error('Error sending server push notification');
-    }
+  // Send a test stop loss notification
+  const sendTestStopLossNotification = () => {
+    notificationService.showStopLossNotification(
+      'SOLUSDT',
+      142.50,
+      '-2.8%'
+    );
   };
   
   return (
-    <div className="flex flex-col gap-2">
-      <Button variant="outline" size="sm" onClick={sendTestNotification}>
-        Test System Notification
-      </Button>
-      <Button variant="outline" size="sm" onClick={sendTestPriceAlert}>
-        Test Price Alert
-      </Button>
-      <Button variant="outline" size="sm" onClick={sendTestSignalEntry}>
-        Test Signal Entry
-      </Button>
-      <Button variant="outline" size="sm" onClick={sendTestTakeProfit}>
-        Test Take Profit
-      </Button>
-      <Button variant="outline" size="sm" onClick={sendTestStopLoss}>
-        Test Stop Loss
+    <div className="fixed bottom-4 right-4 flex flex-col space-y-2">
+      <Button 
+        size="sm" 
+        variant="outline"
+        className="bg-slate-800/90 border-slate-700 gap-1"
+        onClick={sendTestNotification}
+      >
+        <Bell className="h-4 w-4" />
+        Test Notification
       </Button>
       
-      <Separator className="my-2" />
-      <h4 className="text-sm font-medium mb-2">Push Notifications (Service Worker)</h4>
-      
-      <Button variant="outline" size="sm" onClick={sendTestPushNotification}>
-        Test Client Push Notification
+      <Button 
+        size="sm" 
+        variant="outline"
+        className="bg-slate-800/90 border-slate-700 gap-1 text-blue-400 hover:text-blue-300"
+        onClick={sendTestSignalNotification}
+      >
+        Signal Notification
       </Button>
-      <Button variant="outline" size="sm" onClick={sendTestServerPushNotification}>
-        Test Server Push Notification
+      
+      <Button 
+        size="sm" 
+        variant="outline"
+        className="bg-slate-800/90 border-slate-700 gap-1 text-amber-400 hover:text-amber-300"
+        onClick={sendTestPriceAlertNotification}
+      >
+        Price Alert
+      </Button>
+      
+      <Button 
+        size="sm" 
+        variant="outline"
+        className="bg-slate-800/90 border-slate-700 gap-1 text-green-400 hover:text-green-300"
+        onClick={sendTestTakeProfitNotification}
+      >
+        Take Profit
+      </Button>
+      
+      <Button 
+        size="sm" 
+        variant="outline"
+        className="bg-slate-800/90 border-slate-700 gap-1 text-red-400 hover:text-red-300"
+        onClick={sendTestStopLossNotification}
+      >
+        Stop Loss
       </Button>
     </div>
   );
 }
 
+// Also export as default
 export default TestNotificationButton;

@@ -12,6 +12,9 @@ import { OnboardingTooltip } from './components/ui/onboarding-tooltip';
 import { OnboardingButton } from './components/ui/onboarding-button';
 import { BottomNav } from './components/ui/bottom-nav';
 import { UniversalHeader } from './components/ui/universal-header';
+import { NotificationListener } from './components/ui/notification-listener';
+// TestNotificationButton temporarily disabled
+// import { TestNotificationButton } from './components/ui/test-notification-button';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Pages
@@ -121,6 +124,11 @@ const App: React.FC = () => {
               
               {/* Bottom Nav Bar (optional based on user preferences) */}
               <BottomNav />
+              
+              {/* Notification System */}
+              <NotificationListener />
+              
+              {/* Test Notification Button temporarily disabled during development */}
               
               <div className="mt-14"> {/* Add margin to account for fixed header */}
                   <Routes>
@@ -253,6 +261,15 @@ const App: React.FC = () => {
                   <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
                   <Route path="/live-stream" element={<ProtectedRoute><LiveStreamPage /></ProtectedRoute>} />
                   <Route path="/social-network" element={<ProtectedRoute><SocialNetworkPage /></ProtectedRoute>} />
+                  
+                  {/* Admin Pages */}
+                  <Route path="/admin/notifications" element={
+                    <ProtectedRoute>
+                      <React.Suspense fallback={<div>Loading notifications manager...</div>}>
+                        {React.createElement(React.lazy(() => import('./pages/admin/notifications')))}
+                      </React.Suspense>
+                    </ProtectedRoute>
+                  } />
                   
                   {/* Fallback route */}
                   <Route path="*" element={<NotFoundPage />} />
