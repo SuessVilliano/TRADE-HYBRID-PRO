@@ -279,31 +279,65 @@ export default function StakeAndBake() {
   // Calculate APY based on staking period
   const currentApy = calculateStakingApy(parseInt(stakeDuration) || 0);
   
+  // Use our new THC staking hook
+  const { 
+    stakeTokens,
+    unstakeTokens,
+    claimRewards,
+    loading: stakingLoading,
+    error: stakingError,
+    stakeAccount: onchainStakeAccount,
+    stakingStats,
+    availableRewards,
+    stakeStatus
+  } = useThcStaking();
+  
   // Handle staking action
-  const handleStake = () => {
+  const handleStake = async () => {
     if (!solanaAuth.walletConnected) return;
     
     const amount = parseFloat(stakeAmount);
+    const lockPeriodDays = parseInt(stakeDuration);
     
-    // Update UI with staked amount
-    setStakedAmount(prev => prev + amount);
-    setThcBalance(prev => prev - amount);
-    setStakeAmount('');
-    
-    // Track staking action for affiliate rewards
-    trackAction('stake', amount);
-    
-    // Log referrer if exists
-    if (referrerCode) {
-      console.log(`Staking ${amount} THC with referral from: ${referrerCode}`);
+    try {
+      // Show loading toast
+      toast({
+        title: "Processing Stake",
+        description: "Please confirm the transaction in your wallet...",
+      });
+      
+      // Call our staking service to stake tokens
+      const tx = await stakeTokens(amount, lockPeriodDays);
+      
+      if (tx) {
+        // Update UI state
+        setStakedAmount(prev => prev + amount);
+        setThcBalance(prev => prev - amount);
+        setStakeAmount('');
+        
+        // Track staking action for affiliate rewards
+        trackAction('stake', amount);
+        
+        // Log referrer if exists
+        if (referrerCode) {
+          console.log(`Staking ${amount} THC with referral from: ${referrerCode}`);
+        }
+        
+        // Show success message via toast notification
+        toast({
+          title: "Staking Successful",
+          description: `You've staked ${amount} THC tokens for ${stakeDuration} days`,
+          variant: "default",
+        });
+      }
+    } catch (err) {
+      // Error is handled by the staking hook, but we can show a toast here
+      toast({
+        title: "Staking Failed",
+        description: stakingError || "Failed to stake tokens. Please try again.",
+        variant: "destructive",
+      });
     }
-    
-    // Show success message via toast notification
-    toast({
-      title: "Staking Successful",
-      description: `You've staked ${amount} THC tokens for ${stakeDuration} days`,
-      variant: "default",
-    });
   };
   
   // Handle matrix creation
@@ -1393,11 +1427,10 @@ export default function StakeAndBake() {
                             <SelectValue placeholder="Select staking period" />
                           </SelectTrigger>
                           <SelectContent>
-                            {THC_TOKEN_CONFIG.stakingApyTiers.map((tier, index) => (
-                              <SelectItem key={index} value={tier.minStakingPeriod.toString()}>
-                                {tier.minStakingPeriod} Days - {tier.apy}% APY
-                              </SelectItem>
-                            ))}
+                            <SelectItem value="30">30 Days - 5% APY</SelectItem>
+                            <SelectItem value="90">90 Days - 8% APY</SelectItem>
+                            <SelectItem value="180">180 Days - 12% APY</SelectItem>
+                            <SelectItem value="365">365 Days - 15% APY</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

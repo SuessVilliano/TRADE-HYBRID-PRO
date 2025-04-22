@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useConnection } from '@solana/wallet-adapter-react';
-import { THCStakingService } from '../services/thc-staking-service';
+import THCStakingService, { StakeAccount, StakingStats } from '../services/thc-staking-service';
 import { calculateStakingApy } from '../contracts/thc-token-info';
 
 /**
@@ -9,7 +9,7 @@ import { calculateStakingApy } from '../contracts/thc-token-info';
  * Provides an easy-to-use interface for all staking operations
  */
 export const useThcStaking = () => {
-  const { publicKey, wallet, connected, signTransaction, signAllTransactions } = useWallet();
+  const { publicKey, wallet, connected } = useWallet();
   const { connection } = useConnection();
   
   // States
@@ -19,13 +19,8 @@ export const useThcStaking = () => {
   const [statsLoaded, setStatsLoaded] = useState<boolean>(false);
   
   // Staking data
-  const [stakeAccount, setStakeAccount] = useState<any>(null);
-  const [stakingStats, setStakingStats] = useState<{
-    totalStaked: number;
-    stakerCount: number;
-    validator: string;
-    apyTiers: Array<{period: number, apy: number}>;
-  }>({
+  const [stakeAccount, setStakeAccount] = useState<StakeAccount | null>(null);
+  const [stakingStats, setStakingStats] = useState<StakingStats>({
     totalStaked: 0,
     stakerCount: 0,
     validator: '',
@@ -35,28 +30,19 @@ export const useThcStaking = () => {
   
   // Create service instance when wallet is connected
   const stakingService = useMemo(() => {
-    if (!connected || !publicKey || !wallet || !signTransaction) {
+    if (!connected || !publicKey || !wallet) {
       return null;
     }
     
-    // Create adapter object for Anchor provider
+    // Create a simplified wallet adapter
     const adapter = {
       publicKey,
-      signTransaction,
-      signAllTransactions: signAllTransactions || (async (txs) => txs.map(signTransaction)),
-      sendTransaction: async (tx, connection, options = {}) => {
-        try {
-          const { signature } = await wallet.adapter.sendTransaction(tx, connection, options);
-          return signature;
-        } catch (error) {
-          console.error('Error sending transaction:', error);
-          throw error;
-        }
-      }
+      // We'll use a simplified adapter for our mock implementation
+      sendTransaction: async () => 'mock_tx'
     };
     
     return new THCStakingService(adapter, connection.rpcEndpoint);
-  }, [publicKey, wallet, connected, signTransaction, signAllTransactions, connection]);
+  }, [publicKey, wallet, connected, connection]);
   
   // Load staking data when service is available
   useEffect(() => {
@@ -212,35 +198,6 @@ export const useThcStaking = () => {
   };
   
   /**
-   * Initialize staking program (admin only)
-   */
-  const initializeStaking = async () => {
-    if (!stakingService || !connected) {
-      setError('Wallet not connected');
-      return null;
-    }
-    
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const tx = await stakingService.initialize();
-      
-      // Update staking stats
-      const stats = await stakingService.getStakingStats();
-      setStakingStats(stats);
-      
-      return tx;
-    } catch (err: any) {
-      console.error('Error initializing staking program:', err);
-      setError(err.message || 'Failed to initialize staking program. Please try again.');
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  /**
    * Calculate estimated rewards for given amount and duration
    */
   const calculateEstimatedRewards = (amount: number, days: number) => {
@@ -298,7 +255,6 @@ export const useThcStaking = () => {
     stakeTokens,
     unstakeTokens,
     claimRewards,
-    initializeStaking,
     calculateEstimatedRewards
   };
 };
