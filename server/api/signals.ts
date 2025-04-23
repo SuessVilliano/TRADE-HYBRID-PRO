@@ -305,6 +305,92 @@ export const processWebhookSignal = (payload: any, userId?: string): void => {
 };
 
 // New endpoint to fetch trading signals (using in-memory storage now)
+
+// Create a dedicated endpoint for demo signals
+router.get('/demo-signals', (req, res) => {
+  console.log('Fetching demo signals from dedicated endpoint');
+  
+  const demoSignals = [
+    {
+      id: 'hybrid-demo-1',
+      Symbol: 'BTCUSDT',
+      Asset: 'BTCUSDT', 
+      Direction: 'BUY',
+      'Entry Price': 68500,
+      'Stop Loss': 67800,
+      'Take Profit': 70000,
+      TP1: 70000,
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: '12:30:00',
+      Provider: 'Hybrid',
+      Notes: 'Demo signal for BTC showing strong support at current level'
+    },
+    {
+      id: 'paradox-demo-1',
+      Symbol: 'ETHUSDT',
+      Asset: 'ETHUSDT',
+      Direction: 'BUY',
+      'Entry Price': 3350,
+      'Stop Loss': 3250,
+      'Take Profit': 3550,
+      TP1: 3550,
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: '13:15:00',
+      Provider: 'Paradox',
+      Notes: 'Demo signal for ETH following BTC momentum'
+    },
+    {
+      id: 'solaris-demo-1',
+      Symbol: 'SOLUSDT',
+      Asset: 'SOLUSDT',
+      Direction: 'BUY',
+      'Entry Price': 149.5,
+      'Stop Loss': 145.8,
+      'Take Profit': 158.0,
+      TP1: 158.0,
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: '13:30:00',
+      Provider: 'Solaris',
+      Notes: 'Solaris signal for SOL with strong uptrend potential'
+    },
+    {
+      id: 'hybrid-demo-2',
+      Symbol: 'ADAUSDT',
+      Asset: 'ADAUSDT',
+      Direction: 'BUY',
+      'Entry Price': 0.45,
+      'Stop Loss': 0.42,
+      'Take Profit': 0.52,
+      TP1: 0.52,
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: '10:15:00',
+      Provider: 'Hybrid',
+      Notes: 'Bullish pattern forming on ADA, looks ready for a breakout'
+    },
+    {
+      id: 'paradox-demo-2',
+      Symbol: 'MATICUSDT',
+      Asset: 'MATICUSDT',
+      Direction: 'BUY',
+      'Entry Price': 0.71,
+      'Stop Loss': 0.68,
+      'Take Profit': 0.78,
+      TP1: 0.78,
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: '11:30:00',
+      Provider: 'Paradox',
+      Notes: 'Momentum building with increased volume'
+    }
+  ];
+  
+  return res.json({ signals: demoSignals });
+});
+
 // Helper function to generate demo signals
 function getDemoSignals() {
   return [
