@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { notificationService } from '@/lib/services/notification-service';
 import { SavedSignal } from '@/components/ui/saved-signals';
 import useLocalStorage from '@/lib/hooks/useLocalStorage';
+import { useLoadingScreen } from '@/lib/context/LoadingScreenContext';
 
 interface TradingSignal {
   id: string;
@@ -694,6 +695,9 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
   };
   
   // Handle opening ABATEV trade panel
+  // Use loading screen context
+  const { showLoading } = useLoadingScreen();
+  
   const openAbatevTradePanel = (targetTp?: number) => {
     // Prepare trade data for ABATEV panel
     const tradeData = {
@@ -715,9 +719,18 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
       description: `${signal.symbol} ${signal.side} trade sent to ABATEV panel.`,
     });
     
+    // Show loading screen before redirecting
+    showLoading({ 
+      message: "Preparing ABATEV Smart Trade...", 
+      imageType: "thTower",
+      duration: 1500 // Auto-hide after 1.5 seconds
+    });
+    
     // Redirect to ABATEV panel
     console.log("Opening ABATEV panel with:", tradeData);
-    window.location.href = '/abatev';
+    setTimeout(() => {
+      window.location.href = '/abatev';
+    }, 800); // Slight delay to ensure loading screen is shown
   };
   
   // Calculate risk/reward ratio

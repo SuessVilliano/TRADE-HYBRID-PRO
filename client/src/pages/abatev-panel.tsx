@@ -34,7 +34,11 @@ interface TradeData {
   side: 'buy' | 'sell';
   entryPrice: number;
   stopLoss: number;
-  takeProfit: number;
+  takeProfit?: number;     // For backward compatibility
+  takeProfit1?: number;    // Primary take profit level
+  takeProfit2?: number;    // Secondary take profit level
+  takeProfit3?: number;    // Tertiary take profit level
+  targetTakeProfit?: number; // Selected take profit target
   confidence?: number;
   provider?: string;
 }
@@ -50,6 +54,12 @@ export default function ABATEVPanelPage() {
       const storedData = localStorage.getItem('abatev_trade_data');
       if (storedData) {
         const parsedData = JSON.parse(storedData);
+        
+        // Ensure takeProfit field is set properly
+        if (!parsedData.takeProfit && parsedData.takeProfit1) {
+          parsedData.takeProfit = parsedData.takeProfit1;
+        }
+        
         setTradeData(parsedData);
         
         // Show info toast
@@ -101,15 +111,17 @@ export default function ABATEVPanelPage() {
   const calculateRiskReward = () => {
     if (!tradeData) return 0;
     
-    const { entryPrice, stopLoss, takeProfit, side } = tradeData;
+    const { entryPrice, stopLoss, side } = tradeData;
+    // Use takeProfit1 as fallback if takeProfit is not available
+    const takeProfitValue = tradeData.takeProfit || tradeData.takeProfit1 || 0;
     
     if (side === 'buy') {
       const risk = entryPrice - stopLoss;
-      const reward = takeProfit - entryPrice;
+      const reward = takeProfitValue - entryPrice;
       return risk !== 0 ? reward / risk : 0;
     } else {
       const risk = stopLoss - entryPrice;
-      const reward = entryPrice - takeProfit;
+      const reward = entryPrice - takeProfitValue;
       return risk !== 0 ? reward / risk : 0;
     }
   };
@@ -280,7 +292,7 @@ export default function ABATEVPanelPage() {
                             <Label htmlFor="tp">Take Profit</Label>
                             <Input 
                               id="tp" 
-                              value={tradeData.takeProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 })} 
+                              value={(tradeData.takeProfit || tradeData.takeProfit1 || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 })} 
                               readOnly 
                               className="mt-1 bg-slate-900"
                             />
@@ -451,7 +463,7 @@ export default function ABATEVPanelPage() {
                                 tradeData.side === 'buy' ? (
                                   <>Based on current market conditions, entry at {tradeData.entryPrice} offers a favorable risk-reward profile. Consider scaling in positions if price tests support at {tradeData.stopLoss}. Recent market volatility suggests using the recommended stop loss to minimize drawdown.</>
                                 ) : (
-                                  <>Current technical configuration suggests weakness above {tradeData.entryPrice}. Fibonacci extension targets align with the take profit level at {tradeData.takeProfit}. Volume analysis shows distribution pattern with diminishing buying pressure.</>
+                                  <>Current technical configuration suggests weakness above {tradeData.entryPrice}. Fibonacci extension targets align with the take profit level at {tradeData.takeProfit || tradeData.takeProfit1 || 0}. Volume analysis shows distribution pattern with diminishing buying pressure.</>
                                 )
                               ) : (
                                 'No trade data available for AI recommendation.'

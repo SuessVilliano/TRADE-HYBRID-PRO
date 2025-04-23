@@ -98,8 +98,8 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Serve on port 5000 to match workflow configuration
-  const port = 5000;
+  // Serve on port 5001 instead of 5000 to avoid conflicts
+  const port = 5001;
   process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
     process.exit(1);

@@ -1047,7 +1047,8 @@ export default function StakeAndBake() {
           {/* Validator Tab */}
           <TabsContent value="validator">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
+              <div className="space-y-6">
+                {/* Validator Status Card */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
@@ -1058,114 +1059,27 @@ export default function StakeAndBake() {
                       Stake your SOL tokens to our validator and earn rewards while supporting the Solana network.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-4">
-                      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4 rounded-md">
-                        <h3 className="text-sm font-medium flex items-center">
-                          <Activity className="h-4 w-4 mr-2 text-green-600" />
-                          Validator Status: <span className="ml-1 font-bold text-green-600">Active</span>
-                        </h3>
-                        <p className="text-xs mt-1 text-slate-600 dark:text-slate-400">
-                          Our validator is currently active and processing transactions on the Solana network.
-                        </p>
-                      </div>
-                      
-                      {/* Wallet Connect Component */}
-                      <WalletConnect />
-                      
-                      {/* NFT Boost Indicator */}
-                      <NftBoostIndicator />
-                      
-                      {/* Old wallet connect code here for reference */}
-                      {false && !solanaAuth.walletConnected ? (
-                        <div className="hidden">
-                          {/* Hidden, replaced by WalletConnect component */}
-                        </div>
-                      ) : (
-                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 rounded-md">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <div className="h-6 w-6 rounded-full bg-green-500 flex items-center justify-center mr-2">
-                                <CheckCircle2 className="h-4 w-4 text-white" />
-                              </div>
-                              <div>
-                                <div className="text-sm font-medium">Wallet Connected</div>
-                                <div className="text-xs text-slate-500">
-                                  {solanaAuth.publicKey ? `${solanaAuth.publicKey.slice(0, 4)}...${solanaAuth.publicKey.slice(-4)}` : '8Kvj...9ZqT'}
-                                </div>
-                              </div>
-                            </div>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => solanaAuth.logoutFromSolana()}
-                              disabled={solanaAuth.isAuthenticating}
-                            >
-                              {solanaAuth.isAuthenticating ? 'Disconnecting...' : 'Disconnect'}
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Add Connect as Validator button if wallet is connected but not as a validator */}
-                      {solanaAuth.walletConnected && !isValidatorOperator && (
-                        <div className="mt-4">
-                          <Button 
-                            variant="default" 
-                            className="w-full flex items-center justify-center bg-green-600 hover:bg-green-700"
-                            onClick={connectAsValidator}
-                            disabled={isConnecting || fetchingValidatorInfo}
-                          >
-                            {isConnecting ? (
-                              <>
-                                <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
-                                Connecting as Validator...
-                              </>
-                            ) : fetchingValidatorInfo ? (
-                              <>
-                                <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
-                                Verifying Validator...
-                              </>
-                            ) : (
-                              <>
-                                <Server className="mr-2 h-4 w-4" />
-                                Connect as Validator
-                              </>
-                            )}
-                          </Button>
-                          <p className="text-xs text-center mt-2 text-slate-400">
-                            Connect your wallet as a validator to access additional controls
-                          </p>
-                        </div>
-                      )}
-                      
-                      {/* Replace the original stake form UI with our new component */}
-                      <div className="hidden">
-                        {/* Hidden, replaced by StakeForm component */}
-                      </div>
+                  <CardContent className="space-y-4">
+                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4 rounded-md">
+                      <h3 className="text-sm font-medium flex items-center">
+                        <Activity className="h-4 w-4 mr-2 text-green-600" />
+                        Validator Status: <span className="ml-1 font-bold text-green-600">Active</span>
+                      </h3>
+                      <p className="text-xs mt-1 text-slate-600 dark:text-slate-400">
+                        Our validator is currently active and processing transactions on the Solana network.
+                      </p>
                     </div>
                   </CardContent>
-                  <CardFooter>
-                    <Button
-                      className="w-full"
-                      onClick={() => {
-                        // This just ensures the UI doesn't break - our new component handles staking now
-                        toast({
-                          title: "Staking Update",
-                          description: "Please use the Stake SOL form below for an enhanced staking experience",
-                        });
-                      }}
-                    >
-                      Use Enhanced Staking Form Below
-                    </Button>
-                  </CardFooter>
                 </Card>
                 
-                {/* Add our new stake form and claim rewards components */}
-                <div className="mt-6 space-y-6">
-                  <StakeForm validatorIdentity={validatorIdentity} />
-                  <ClaimRewards validatorIdentity={validatorIdentity} />
-                </div>
+                {/* Wallet Connect Component */}
+                <WalletConnect />
+                
+                {/* NFT Boost Indicator - shows once wallet is connected */}
+                <NftBoostIndicator />
+                
+                {/* Stake Form - to stake SOL to validator */}
+                <StakeForm validatorIdentity={validatorIdentity} />
                 
                 <Card className="mt-6">
                   <CardHeader>

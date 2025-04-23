@@ -7,6 +7,7 @@ import { AuthProvider } from './lib/context/AuthContext';
 import { SolanaAuthProvider } from './lib/context/SolanaAuthProvider';
 import { SolanaWalletProvider } from './lib/context/SolanaWalletProvider';
 import OnboardingProvider from './lib/context/OnboardingProvider';
+import { LoadingScreenProvider } from './lib/context/LoadingScreenContext';
 import { ThemeProvider } from './lib/hooks/useTheme';
 import { OnboardingTooltip } from './components/ui/onboarding-tooltip';
 import { OnboardingButton } from './components/ui/onboarding-button';
@@ -115,7 +116,8 @@ const App: React.FC = () => {
       <SolanaWalletProvider>
         <SolanaAuthProvider>
           <OnboardingProvider>
-            <Router>
+            <LoadingScreenProvider>
+              <Router>
               {/* Onboarding Components */}
               <OnboardingTooltip />
               <OnboardingButton />
@@ -278,7 +280,8 @@ const App: React.FC = () => {
                 </Routes>
                 </div>
               </Router>
-            </OnboardingProvider>
+            </LoadingScreenProvider>
+          </OnboardingProvider>
           </SolanaAuthProvider>
         </SolanaWalletProvider>
       </AuthProvider>
