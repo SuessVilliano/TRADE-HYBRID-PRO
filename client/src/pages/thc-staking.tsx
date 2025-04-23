@@ -129,7 +129,7 @@ export default function StakeAndBake() {
   const [validatorIdentity, setValidatorIdentity] = useState("5Mp3EF1donYwLxhe5hs6HoWpAucZGLZ76NKRNztkjEej");
   const [voteAccount, setVoteAccount] = useState("3QHakLBiTrmXaEcFnjeGFf8ScD4Yp6cxHSdMinEqBjWy");
   const [validatorStats, setValidatorStats] = useState({
-    commission: "0.5%",
+    commission: "1.0%",
     activatedStake: "0.0",
     totalStakers: 0,
     epochVoteCredits: 0,
@@ -143,7 +143,7 @@ export default function StakeAndBake() {
   const [fetchingValidatorInfo, setFetchingValidatorInfo] = useState(false);
   const [showCommissionAdjustment, setShowCommissionAdjustment] = useState(false);
   
-  const [newCommission, setNewCommission] = useState(0.5);
+  const [newCommission, setNewCommission] = useState(1.0);
   const [isValidatorOperator, setIsValidatorOperator] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false); // Add state for tracking connection process
   const [dualRewards, setDualRewards] = useState({
