@@ -53,13 +53,19 @@ export function TradeSignalsPanel() {
     // Listen for WebSocket trading signals
     const handleWebSocketSignal = (event: MessageEvent) => {
       try {
+        console.log('WebSocket message received:', event.data);
         const data = JSON.parse(event.data);
+        console.log('Parsed WebSocket data:', data);
         
         // Check if this is a trading signal message
         if (data.type === 'trading_signal' && data.data) {
+          console.log('Trading signal received via WebSocket:', data.data);
           const { signal, provider } = data.data;
           
-          if (!signal || !signal.symbol) return;
+          if (!signal || !signal.symbol) {
+            console.warn('Missing required signal data (symbol):', signal);
+            return;
+          }
           
           // Convert to our TradeSignal format
           const newSignal: TradeSignal = {
@@ -75,63 +81,119 @@ export function TradeSignalsPanel() {
             notes: signal.description || ''
           };
           
+          console.log('Created new signal from WebSocket:', newSignal);
+          
           // Add to signals list
           handleNewSignal(newSignal);
           
           // Add to trading service
           tradeSignalService.addSignal(newSignal);
+          
+          // Display a more prominent notification
+          toast.success(`New ${newSignal.type.toUpperCase()} Signal: ${newSignal.symbol}`, {
+            description: `Entry: ${newSignal.entry} | Provider: ${newSignal.source}`,
+            duration: 8000,
+          });
         }
       } catch (error) {
         console.error('Error processing WebSocket message:', error);
       }
     };
     
-    // Connect to WebSocket (optional)
+    // Connect to WebSocket with reconnection logic
     if (typeof window !== 'undefined') {
-      // Try to connect to WebSocket, but wrap in try/catch to prevent app failure
-      try {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws`;
-        
-        // Wrap WebSocket connection in try-catch to handle potential errors
-        let ws: WebSocket | null = null;
+      // Keep track of WebSocket instance
+      let ws: WebSocket | null = null;
+      let reconnectAttempts = 0;
+      let reconnectInterval: any = null;
+      
+      // Function to create and setup the WebSocket
+      const setupWebSocket = () => {
         try {
+          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          const wsUrl = `${protocol}//${window.location.host}/ws`;
+          
+          console.log(`Attempting to connect to WebSocket at ${wsUrl}`);
+          
+          // Create new WebSocket
           ws = new WebSocket(wsUrl);
           
-          // Add event listeners only if ws was successfully created
+          // Add event listeners
           ws.addEventListener('message', handleWebSocketSignal);
           
           // Handle connection events
           ws.addEventListener('open', () => {
-            console.log('WebSocket connected for trading signals');
+            console.log('🟢 WebSocket connected for trading signals');
+            toast.success('Trading signal connection established', { 
+              description: 'You will receive real-time trading signals',
+              duration: 3000
+            });
+            reconnectAttempts = 0; // Reset reconnect attempts on successful connection
+            
+            // Manual test signal to verify connection
+            console.log('Sending test ping message to WebSocket server');
+            try {
+              ws?.send(JSON.stringify({ 
+                type: 'ping', 
+                data: { timestamp: Date.now(), client: 'trade-signals-panel' } 
+              }));
+            } catch (e) {
+              console.error('Error sending test message:', e);
+            }
           });
           
           ws.addEventListener('error', (error) => {
-            console.log('WebSocket connection not available - using polling fallback');
+            console.log('WebSocket connection error:', error);
           });
-        } catch (wsError) {
-          console.log('WebSocket instantiation failed - using polling fallback');
-          console.error(wsError);
+          
+          ws.addEventListener('close', (event) => {
+            console.log(`WebSocket connection closed. Code: ${event.code}, Reason: ${event.reason}`);
+            
+            // Attempt to reconnect with exponential backoff
+            if (reconnectAttempts < 5) {
+              const timeout = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+              console.log(`Attempting to reconnect in ${timeout/1000} seconds...`);
+              
+              // Clear any existing reconnect interval
+              if (reconnectInterval) {
+                clearTimeout(reconnectInterval);
+              }
+              
+              // Set new reconnect timeout
+              reconnectInterval = setTimeout(() => {
+                reconnectAttempts++;
+                setupWebSocket();
+              }, timeout);
+            } else {
+              console.log('Max reconnect attempts reached. Using polling fallback.');
+              toast.error('Signal connection lost', {
+                description: 'Unable to establish real-time connection. Refreshing signals manually.',
+              });
+            }
+          });
+        } catch (error) {
+          console.error('Error setting up WebSocket:', error);
+        }
+      };
+      
+      // Initial WebSocket setup
+      setupWebSocket();
+      
+      // Return cleanup function
+      return () => {
+        if (ws) {
+          try {
+            ws.removeEventListener('message', handleWebSocketSignal);
+            ws.close(1000, 'Component unmounting');
+          } catch (e) {
+            console.log('Error during WebSocket cleanup:', e);
+          }
         }
         
-        // Return cleanup function that handles null ws case
-        return () => {
-          if (ws) {
-            try {
-              ws.removeEventListener('message', handleWebSocketSignal);
-              ws.close();
-            } catch (e) {
-              // Ignore errors during cleanup
-              console.log('Error during WebSocket cleanup:', e);
-            }
-          }
-        };
-      } catch (e) {
-        console.log('WebSocket setup failed - using polling fallback');
-        console.error(e);
-        // Return empty cleanup function
-        return () => {};
-      }
+        if (reconnectInterval) {
+          clearTimeout(reconnectInterval);
+        }
+      };
     }
     
     tradeSignalService.subscribe('signal_added', handleNewSignal);

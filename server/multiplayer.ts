@@ -69,6 +69,16 @@ export class MultiplayerServer {
     this.userIdToClientId.delete(userId);
   }
   
+  // Get all connected client IDs
+  public getClientsCount(): number {
+    return this.clients.size;
+  }
+  
+  // Get all registered user IDs
+  public getUserIds(): string[] {
+    return Array.from(this.userIdToClientId.keys());
+  }
+  
   // Send a message to a specific user by their user ID
   public sendToUser(userId: string, message: any) {
     const clientId = this.userIdToClientId.get(userId);

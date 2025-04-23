@@ -120,12 +120,16 @@ export const processTradingViewWebhook = async (req: Request, res: Response) => 
     const { token } = req.params;
     const payload = req.body;
     
+    console.log(`[DEBUG] TradingView webhook received with payload:`, JSON.stringify(payload));
+    
     if (!token) {
       log('TradingView webhook missing token', 'webhook');
+      console.error('TradingView webhook missing token');
       return res.status(400).json({ error: 'Missing token parameter' });
     }
     
     log(`Received TradingView webhook with token: ${token}`, 'webhook');
+    console.log(`[DEBUG] Received TradingView webhook with token: ${token}`);
     
     // Get userId from token (via user-webhooks module)
     try {
@@ -135,14 +139,19 @@ export const processTradingViewWebhook = async (req: Request, res: Response) => 
       const webhook = await getUserWebhookByToken(token);
       if (!webhook) {
         log(`Invalid webhook token: ${token}`, 'webhook');
+        console.error(`[ERROR] Invalid webhook token: ${token}`);
         return res.status(404).json({ error: 'Webhook not found' });
       }
       
+      console.log(`[DEBUG] Found webhook for token ${token}, userId: ${webhook.userId}`);
+      
       // Parse the TradingView alert format
       const parsedSignal = parseTradingViewAlert(payload);
+      console.log(`[DEBUG] Parsed TradingView signal:`, JSON.stringify(parsedSignal));
       
       // Process the signal through the regular webhook system
       const success = await processUserWebhook(token, parsedSignal);
+      console.log(`[DEBUG] Process webhook result: ${success ? "Success" : "Failed"}`);
       
       if (success) {
         // If we have a multiplayer server instance, send directly to the user
@@ -158,6 +167,8 @@ export const processTradingViewWebhook = async (req: Request, res: Response) => 
             description: parsedSignal.Notes
           };
           
+          console.log(`[DEBUG] Sending trading signal to user ${webhook.userId}:`, JSON.stringify(clientSignal));
+          
           // Send the signal to the specific user
           MultiplayerServer.instance.sendToUser(webhook.userId, {
             type: 'trading_signal',
@@ -167,19 +178,51 @@ export const processTradingViewWebhook = async (req: Request, res: Response) => 
             }
           });
           
+          // Note: We can't use broadcast directly as it's private
+          // Instead, we'll log this for debugging purposes
+          console.log(`Would broadcast signal to all users as fallback, but method is private`);
+          
+          // Save signal to in-memory storage for the global signals API endpoint
+          try {
+            const { processWebhookSignal } = require('./signals');
+            processWebhookSignal({
+              channel_name: parsedSignal.Asset || 'crypto',
+              content: `Symbol: ${parsedSignal.Symbol} Direction: ${parsedSignal.Direction}`,
+              metadata: {
+                symbol: parsedSignal.Symbol,
+                action: parsedSignal.Direction,
+                price: parsedSignal['Entry Price'],
+                levels: {
+                  entry: parsedSignal['Entry Price'],
+                  stopLoss: parsedSignal['Stop Loss'],
+                  takeProfit: parsedSignal['Take Profit'],
+                }
+              }
+            }, webhook.userId);
+            console.log(`Added signal to in-memory storage`);
+          } catch (storageError) {
+            console.error(`Error adding signal to storage:`, storageError);
+          }
+          
           log(`Sent trading signal to user ${webhook.userId}`, 'webhook');
+          console.log(`[DEBUG] Sent trading signal to user ${webhook.userId}`);
+        } else {
+          console.log(`[ERROR] Cannot send signal - MultiplayerServer.instance: ${!!MultiplayerServer.instance}, userId: ${webhook?.userId}`);
         }
         
         return res.status(200).json({ success: true, message: 'Webhook processed successfully' });
       } else {
+        console.error(`[ERROR] Failed to process webhook`);
         return res.status(500).json({ error: 'Failed to process webhook' });
       }
     } catch (error) {
       log(`Error processing TradingView webhook: ${error}`, 'webhook');
+      console.error(`[ERROR] Error processing TradingView webhook:`, error);
       return res.status(500).json({ error: `Error processing webhook: ${error}` });
     }
   } catch (error) {
     log(`TradingView webhook error: ${error}`, 'webhook');
+    console.error(`[ERROR] TradingView webhook error:`, error);
     return res.status(500).json({ error: `Server error: ${error}` });
   }
 };

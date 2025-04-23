@@ -566,6 +566,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Add a dedicated test endpoint directly accessible via URL to test webhook logging
+  // Test endpoint for WebSocket signal broadcasting
+  app.get("/api/test/broadcast-signal", async (req, res) => {
+    console.log('WEBSOCKET TEST: Broadcasting a test trading signal to all WebSocket clients...');
+    
+    // Create a unique test signal ID
+    const signalId = `test-signal-${Date.now()}`;
+    const symbol = req.query.symbol?.toString() || "BTCUSDT";
+    const side = req.query.side?.toString() || "buy";
+    const provider = req.query.provider?.toString() || "TEST-AI";
+    
+    try {
+      // Check if we have an active WebSocket server
+      if (!MultiplayerServer.instance) {
+        return res.status(500).json({
+          success: false,
+          message: 'WebSocket server not initialized'
+        });
+      }
+      
+      // Create a test signal
+      const testSignal = {
+        symbol,
+        side,
+        entryPrice: 69420.50,
+        stopLoss: 68500.00,
+        takeProfit: 71000.00,
+        timeframe: "1d",
+        description: "This is a test signal generated via the API"
+      };
+      
+      // First check if any clients are connected
+      const clientCount = MultiplayerServer.instance.getClientsCount?.() || 0;
+      console.log(`WebSocket clients connected: ${clientCount}`);
+      
+      // Create the message to send
+      const message = {
+        type: 'trading_signal',
+        data: {
+          signal: testSignal,
+          provider
+        }
+      };
+      
+      // Get all connected user IDs if available
+      const userIds = MultiplayerServer.instance.getUserIds?.();
+      console.log(`Connected user IDs: ${userIds ? JSON.stringify(userIds) : 'not available'}`);
+      
+      // Attempt to send to each user
+      if (userIds && userIds.length > 0) {
+        userIds.forEach(userId => {
+          console.log(`Sending test signal to user ${userId}`);
+          MultiplayerServer.instance.sendToUser(userId, message);
+        });
+      }
+      
+      // Also add to in-memory signal storage for API requests
+      try {
+        const { processWebhookSignal } = require('./api/signals');
+        processWebhookSignal({
+          channel_name: 'crypto',
+          content: `Symbol: ${symbol} Direction: ${side}`,
+          metadata: {
+            symbol,
+            action: side,
+            price: 69420.50,
+            levels: {
+              entry: 69420.50,
+              stopLoss: 68500.00,
+              takeProfit: 71000.00,
+            }
+          }
+        });
+        console.log(`Added test signal to in-memory storage`);
+      } catch (storageError) {
+        console.error(`Error adding signal to storage:`, storageError);
+      }
+      
+      // Return success with the signal details
+      return res.json({
+        success: true,
+        message: 'Test signal broadcast initiated',
+        signalId,
+        clientCount,
+        signal: testSignal,
+        provider
+      });
+    } catch (error: any) {
+      console.error('Error broadcasting test signal:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error broadcasting test signal',
+        error: error.message
+      });
+    }
+  });
+
   app.get("/api/test/create-log", async (req, res) => {
     console.log('DIRECT TEST: Creating a test webhook log entry via direct endpoint...');
     
