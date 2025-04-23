@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
-import * as anchor from '@project-serum/anchor';
+import { LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, Keypair } from '@solana/web3.js';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -42,7 +41,7 @@ export default function StakeForm({ validatorIdentity }: StakeFormProps) {
       const validatorPubkey = new PublicKey(validatorIdentity);
       
       // Create a new stake account
-      const stakeAccount = anchor.web3.Keypair.generate();
+      const stakeAccount = Keypair.generate();
       
       // Create a transaction to create the stake account and delegate to validator
       const tx = new Transaction();
