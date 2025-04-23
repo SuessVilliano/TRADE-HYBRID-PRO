@@ -85,11 +85,13 @@ export function AiTradingSignals({
     // Set loading state
     setLoading(true);
     
+    console.log('Fetching real trading signals from API...');
+    
     // Fetch signals from our trading-signals endpoint - get all market types
     fetch('/api/signals/trading-signals?marketType=all')
       .then(response => {
         if (!response.ok) {
-          throw new Error('Failed to fetch signals');
+          throw new Error(`Failed to fetch signals: ${response.status} ${response.statusText}`);
         }
         return response.json();
       })
@@ -98,6 +100,7 @@ export function AiTradingSignals({
         console.log('Signals API response:', data);
         
         // Handle both array format and {signals: [...]} format
+        // The server returns { signals: [...] } so we need to extract the signals array
         const signalsArray = Array.isArray(data) ? data : (data.signals || []);
         
         if (signalsArray.length === 0) {
