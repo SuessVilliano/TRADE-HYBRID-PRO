@@ -44,17 +44,17 @@ import {
   calculateStakingRewards 
 } from '../lib/contracts/thc-token-info';
 
-// Import staking hook
-import { useThcStaking } from '../lib/hooks/useThcStaking';
-
-// Import connection provider
-import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-
 // Import validator components
 import WalletConnect from '../components/validator/WalletConnect';
 import StakeForm from '../components/validator/StakeForm';
 import ClaimRewards from '../components/validator/ClaimRewards';
 import NftBoostIndicator from '../components/validator/NftBoostIndicator';
+
+// Import staking hook
+import { useThcStaking } from '../lib/hooks/useThcStaking';
+
+// Import connection provider
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 
 // Mock affiliate service
 const AffiliateService = {
@@ -105,6 +105,7 @@ const useSolanaAuth = () => ({
   login: async (): Promise<boolean> => { return false; }
 });
 
+// Additional lucide icons
 import { Lock } from 'lucide-react';
 
 export default function StakeAndBake() {
@@ -141,13 +142,14 @@ export default function StakeAndBake() {
   const [solStakeAmount, setSolStakeAmount] = useState('1.0');
   const [fetchingValidatorInfo, setFetchingValidatorInfo] = useState(false);
   const [showCommissionAdjustment, setShowCommissionAdjustment] = useState(false);
+  
   const [newCommission, setNewCommission] = useState(0.5);
   const [isValidatorOperator, setIsValidatorOperator] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false); // Add state for tracking connection process
   const [dualRewards, setDualRewards] = useState({
-    solRewards: 0.055, // 5.5% APY in SOL
+    solRewards: 0.065, // 6.5% APY in SOL
     thcRewards: 0.08,  // 8% APY in THC tokens
-    thcBonus: 0.02     // 2% bonus for staking through our validator
+    thcBonus: 0.025    // 2.5% bonus with NFT boost
   });
   
   // Get the Solana wallet auth context
@@ -1239,7 +1241,14 @@ export default function StakeAndBake() {
                 </Card>
               </div>
               
-              <div>
+              <div className="space-y-6">
+                {/* Add ClaimRewards component at the top of the right column */}
+                <ClaimRewards validatorIdentity={validatorIdentity} solanaAuth={solanaAuth} />
+                
+                {/* NFT Boost Indicator for Rewards - Shows boost status */}
+                <NftBoostIndicator solanaAuth={solanaAuth} />
+                
+                {/* Validator Performance Card */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
@@ -1318,6 +1327,40 @@ export default function StakeAndBake() {
                           <span>Secure key management with hardware security modules</span>
                         </div>
                       </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Dual Rewards Info Card */}
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Sparkles className="mr-2 h-5 w-5 text-yellow-500" />
+                      Dual Rewards Program
+                    </CardTitle>
+                    <CardDescription>
+                      Earn both SOL and THC tokens when staking with our validator
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4 rounded-md">
+                      <div className="flex items-center text-yellow-800 dark:text-yellow-300 font-medium mb-2">
+                        <Coins className="h-4 w-4 mr-2" />
+                        Dual Reward Rates
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 mt-3">
+                        <div className="bg-white dark:bg-slate-800 p-3 rounded-md text-center">
+                          <p className="text-xs text-slate-500 mb-1">SOL APR</p>
+                          <p className="font-medium text-lg">{(dualRewards.solRewards * 100).toFixed(1)}%</p>
+                        </div>
+                        <div className="bg-white dark:bg-slate-800 p-3 rounded-md text-center">
+                          <p className="text-xs text-slate-500 mb-1">THC Bonus</p>
+                          <p className="font-medium text-lg">{((dualRewards.thcRewards + dualRewards.thcBonus) * 100).toFixed(1)}%</p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-3">
+                        Stake your SOL with our validator and earn both SOL staking rewards plus additional THC tokens!
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
