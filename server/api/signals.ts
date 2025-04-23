@@ -305,18 +305,111 @@ export const processWebhookSignal = (payload: any, userId?: string): void => {
 };
 
 // New endpoint to fetch trading signals (using in-memory storage now)
+// Helper function to generate demo signals
+function getDemoSignals() {
+  return [
+    {
+      id: 'hybrid-demo-1',
+      Symbol: 'BTCUSDT',
+      Asset: 'BTCUSDT', 
+      Direction: 'BUY',
+      'Entry Price': 68500,
+      'Stop Loss': 67800,
+      'Take Profit': 70000,
+      TP1: 70000,
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: '12:30:00',
+      Provider: 'Hybrid',
+      Notes: 'Demo signal for BTC showing strong support at current level'
+    },
+    {
+      id: 'paradox-demo-1',
+      Symbol: 'ETHUSDT',
+      Asset: 'ETHUSDT',
+      Direction: 'BUY',
+      'Entry Price': 3350,
+      'Stop Loss': 3250,
+      'Take Profit': 3550,
+      TP1: 3550,
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: '13:15:00',
+      Provider: 'Paradox',
+      Notes: 'Demo signal for ETH following BTC momentum'
+    },
+    {
+      id: 'solaris-demo-1',
+      Symbol: 'SOLUSDT',
+      Asset: 'SOLUSDT',
+      Direction: 'BUY',
+      'Entry Price': 149.5,
+      'Stop Loss': 145.8,
+      'Take Profit': 158.0,
+      TP1: 158.0,
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: '13:30:00',
+      Provider: 'Solaris',
+      Notes: 'Solaris signal for SOL with strong uptrend potential'
+    },
+    {
+      id: 'hybrid-demo-2',
+      Symbol: 'ADAUSDT',
+      Asset: 'ADAUSDT',
+      Direction: 'BUY',
+      'Entry Price': 0.45,
+      'Stop Loss': 0.42,
+      'Take Profit': 0.52,
+      TP1: 0.52,
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: '10:15:00',
+      Provider: 'Hybrid',
+      Notes: 'Bullish pattern forming on ADA, looks ready for a breakout'
+    },
+    {
+      id: 'paradox-demo-2',
+      Symbol: 'MATICUSDT',
+      Asset: 'MATICUSDT',
+      Direction: 'BUY',
+      'Entry Price': 0.71,
+      'Stop Loss': 0.68,
+      'Take Profit': 0.78,
+      TP1: 0.78,
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: '11:30:00',
+      Provider: 'Paradox',
+      Notes: 'Momentum building with increased volume'
+    }
+  ];
+}
+
 router.get('/trading-signals', async (req, res) => {
   try {
     const marketType = (req.query.marketType as string || 'crypto').toLowerCase();
     const userId = (req.query.userId as string) || undefined;
     
-    // Get user membership level from session if authenticated
-    let membershipLevel = 'free';
-    if (req.session && req.session.userId) {
-      membershipLevel = req.session.membershipLevel || 'free';
+    // Check if we're in demo mode
+    const demoMode = req.query.demo === 'true';
+    
+    // If in demo mode, just return demo signals immediately
+    if (demoMode) {
+      console.log('Returning demo signals from direct demo mode');
+      return res.json({ signals: getDemoSignals() });
     }
     
-    console.log(`Fetching signals for user with membership level: ${membershipLevel}`);
+    // Get user membership level from session if authenticated
+    let membershipLevel = 'free';
+    let isDemoUser = false;
+    
+    if (req.session && req.session.userId) {
+      membershipLevel = req.session.membershipLevel || 'free';
+      isDemoUser = membershipLevel === 'demo';
+    }
+    
+    console.log(`Fetching signals for user with membership level: ${membershipLevel}${isDemoUser ? ' (demo mode)' : ''}`);
     
     // Get signals based on market type
     let signals: any[] = [];
@@ -439,6 +532,76 @@ router.get('/trading-signals', async (req, res) => {
       }
       
       console.log(`Filtered to ${signals.length} signals based on membership level ${membershipLevel}`);
+    }
+    
+    // If this is a demo user, ensure they get a rich set of signals
+    if (isDemoUser && signals.length < 6) {
+      const demoSignals = [
+        {
+          id: 'hybrid-demo-2',
+          Symbol: 'ADAUSDT',
+          Asset: 'ADAUSDT',
+          Direction: 'BUY',
+          'Entry Price': 0.45,
+          'Stop Loss': 0.42,
+          'Take Profit': 0.52,
+          TP1: 0.52,
+          Status: 'active',
+          Date: new Date().toISOString(),
+          Time: '10:15:00',
+          Provider: 'Hybrid',
+          Notes: 'Bullish pattern forming on ADA, looks ready for a breakout'
+        },
+        {
+          id: 'paradox-demo-2',
+          Symbol: 'MATICUSDT',
+          Asset: 'MATICUSDT',
+          Direction: 'BUY',
+          'Entry Price': 0.71,
+          'Stop Loss': 0.68,
+          'Take Profit': 0.78,
+          TP1: 0.78,
+          Status: 'active',
+          Date: new Date().toISOString(),
+          Time: '11:30:00',
+          Provider: 'Paradox',
+          Notes: 'Momentum building with increased volume'
+        },
+        {
+          id: 'solaris-demo-2',
+          Symbol: 'EURUSD',
+          Asset: 'EURUSD',
+          Direction: 'SELL',
+          'Entry Price': 1.0785,
+          'Stop Loss': 1.0815,
+          'Take Profit': 1.0725,
+          TP1: 1.0725,
+          Status: 'active',
+          Date: new Date().toISOString(),
+          Time: '09:45:00',
+          Provider: 'Solaris',
+          Notes: 'Bearish trend continuation after resistance test'
+        },
+        {
+          id: 'hybrid-demo-3',
+          Symbol: 'AVAXUSDT',
+          Asset: 'AVAXUSDT',
+          Direction: 'BUY',
+          'Entry Price': 28.5,
+          'Stop Loss': 27.2,
+          'Take Profit': 31.5,
+          TP1: 31.5,
+          Status: 'active',
+          Date: new Date().toISOString(),
+          Time: '14:20:00',
+          Provider: 'Hybrid',
+          Notes: 'Bullish flag pattern on AVAX, technical breakout imminent'
+        }
+      ];
+      
+      // Add additional demo signals
+      signals = [...signals, ...demoSignals];
+      console.log(`Added ${demoSignals.length} additional demo signals for demo user`);
     }
     
     // Return the signals
