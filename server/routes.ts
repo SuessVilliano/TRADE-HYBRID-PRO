@@ -52,29 +52,104 @@ const receiveWebhook = async (req: any, res: any) => {
   let resultMessage = '';
   let errorDetails = null;
   
+  console.log('🚀 WEBHOOK RECEIVED:', { 
+    url: req.originalUrl,
+    method: req.method,
+    body: typeof req.body === 'object' ? JSON.stringify(req.body).substring(0, 500) : 'Not an object',
+    headers: req.headers
+  });
+  
   try {
     // Check if there's a payload and forward it to the signal processor
     if (req.body && (req.body.content || req.body.data)) {
       const payload = req.body;
+      console.log('✅ VALID WEBHOOK PAYLOAD:', { 
+        hasContent: !!payload.content, 
+        hasData: !!payload.data,
+        contentSample: payload.content ? payload.content.substring(0, 100) : undefined,
+        dataSample: payload.data ? JSON.stringify(payload.data).substring(0, 100) : undefined
+      });
+      
+      // Extract source info
+      const source = payload.source || 
+                    payload.broker || 
+                    payload.provider || 
+                    (payload.channel_name ? 
+                      (payload.channel_name.includes('forex') ? 'Solaris AI' :
+                       payload.channel_name.includes('futures') ? 'Hybrid AI' : 'Paradox AI')
+                      : 'Unknown');
+      
+      console.log(`📡 Processing signal from source: ${source}`);
       
       // Process the webhook signal
       processWebhookSignal(payload);
       
+      // Save signal in formats expected by multiple parts of the system
+      try {
+        // Try to add to database storage as well
+        processWebhookSignal(payload, 'demo-user-123');
+        
+        // If we have a MultiplayerServer instance, broadcast to all users
+        if (MultiplayerServer.instance) {
+          const symbol = payload.symbol || 
+                        (payload.metadata && payload.metadata.symbol) || 
+                        (payload.data && payload.data.symbol) ||
+                        (payload.content && payload.content.match(/Symbol: ([A-Za-z0-9!_/]+)/) ? 
+                         payload.content.match(/Symbol: ([A-Za-z0-9!_/]+)/)[1] : 'UNKNOWN');
+                         
+          const direction = payload.action || 
+                           (payload.metadata && payload.metadata.action) || 
+                           (payload.data && payload.data.direction) ||
+                           (payload.content && payload.content.match(/Direction: (buy|sell|BUY|SELL)/) ? 
+                            payload.content.match(/Direction: (buy|sell|BUY|SELL)/)[1].toLowerCase() : 'buy');
+          
+          console.log(`📣 Broadcasting signal to WebSocket clients: ${symbol} ${direction}`);
+          
+          const clientSignal = {
+            symbol,
+            side: direction.toLowerCase(),
+            entryPrice: payload.price || 0,
+            stopLoss: 0,
+            takeProfit: 0,
+            timeframe: "Unknown",
+            description: payload.content || "Webhook signal"
+          };
+          
+          // Broadcast to all users as there might be issues with user mapping
+          const userIds = MultiplayerServer.instance.getUserIds();
+          console.log(`Connected user IDs: ${userIds ? JSON.stringify(userIds) : 'none'}`);
+          
+          if (userIds && userIds.length > 0) {
+            userIds.forEach(userId => {
+              MultiplayerServer.instance.sendToUser(userId, {
+                type: 'trading_signal',
+                data: {
+                  signal: clientSignal,
+                  provider: source
+                }
+              });
+            });
+          }
+        }
+      } catch (broadcastError) {
+        console.error('Error broadcasting signal:', broadcastError);
+      }
+      
       executionSuccess = true;
       resultMessage = 'Webhook received and processed successfully';
-      console.log('Received and processed webhook signal');
+      console.log('✅ Successfully processed webhook signal');
     } else {
       // Invalid payload
       executionSuccess = false;
       resultMessage = 'Invalid webhook payload, missing content or data';
       errorDetails = ['Missing content or data fields in payload'];
-      console.warn('Received invalid webhook payload:', req.body);
+      console.warn('❌ INVALID WEBHOOK PAYLOAD:', req.body);
     }
   } catch (error: any) {
     executionSuccess = false;
     resultMessage = 'Error processing webhook';
     errorDetails = [error.message || 'Unknown error'];
-    console.error('Error processing webhook:', error);
+    console.error('❌ ERROR PROCESSING WEBHOOK:', error);
   }
   
   // Calculate response time
