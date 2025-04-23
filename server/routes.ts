@@ -79,7 +79,14 @@ const receiveWebhook = async (req: any, res: any) => {
                        payload.channel_name.includes('futures') ? 'Hybrid AI' : 'Paradox AI')
                       : 'Unknown');
       
-      console.log(`📡 Processing signal from source: ${source}`);
+      // Determine correct timeframe based on provider
+      const timeframe = 
+        source.includes('Solaris') ? '5m' :
+        source.includes('Hybrid') ? '10m' :
+        source.includes('Paradox') ? '30m' : 
+        payload.timeframe || '1h';
+      
+      console.log(`📡 Processing signal from source: ${source} with timeframe: ${timeframe}`);
       
       // Process the webhook signal
       processWebhookSignal(payload);
@@ -111,7 +118,7 @@ const receiveWebhook = async (req: any, res: any) => {
             entryPrice: payload.price || 0,
             stopLoss: 0,
             takeProfit: 0,
-            timeframe: "Unknown",
+            timeframe, // Use the timeframe we determined above
             description: payload.content || "Webhook signal"
           };
           
@@ -651,6 +658,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const side = req.query.side?.toString() || "buy";
     const provider = req.query.provider?.toString() || "TEST-AI";
     
+    // Determine the correct timeframe based on the provider name
+    let timeframe = req.query.timeframe?.toString();
+    if (!timeframe) {
+      timeframe = 
+        provider.toLowerCase().includes('solaris') ? '5m' :
+        provider.toLowerCase().includes('hybrid') ? '10m' :
+        provider.toLowerCase().includes('paradox') ? '30m' : 
+        '1h';
+    }
+    
     try {
       // Check if we have an active WebSocket server
       if (!MultiplayerServer.instance) {
@@ -667,8 +684,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entryPrice: 69420.50,
         stopLoss: 68500.00,
         takeProfit: 71000.00,
-        timeframe: "1d",
-        description: "This is a test signal generated via the API"
+        timeframe, // Use the provider-specific timeframe
+        description: `This is a test signal from ${provider} with ${timeframe} timeframe`
       };
       
       // First check if any clients are connected
@@ -701,11 +718,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { processWebhookSignal } = require('./api/signals');
         processWebhookSignal({
           channel_name: 'crypto',
-          content: `Symbol: ${symbol} Direction: ${side}`,
+          content: `Symbol: ${symbol} Direction: ${side} Timeframe: ${timeframe}`,
+          provider: provider,
+          timeframe: timeframe,
           metadata: {
             symbol,
             action: side,
             price: 69420.50,
+            timeframe: timeframe,
             levels: {
               entry: 69420.50,
               stopLoss: 68500.00,
