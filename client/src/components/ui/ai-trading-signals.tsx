@@ -137,6 +137,23 @@ export function AiTradingSignals({
     const takeProfit2 = signal.TP2 ? Number(signal.TP2) : undefined;
     const takeProfit3 = signal.TP3 ? Number(signal.TP3) : undefined;
     
+    // Determine timeframe based on provider
+    let timeframe;
+    if (signal.timeframe) {
+      timeframe = signal.timeframe; // Use provided timeframe if available
+    } else {
+      // Assign timeframe based on provider
+      if (provider.toLowerCase().includes('hybrid')) {
+        timeframe = '10m';
+      } else if (provider.toLowerCase().includes('paradox')) {
+        timeframe = '30m';
+      } else if (provider.toLowerCase().includes('solaris')) {
+        timeframe = '5m';
+      } else {
+        timeframe = '15m'; // Default timeframe
+      }
+    }
+    
     return {
       id: signal.id || `signal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       symbol: signal.Symbol || signal.Asset || '',
@@ -146,7 +163,7 @@ export function AiTradingSignals({
       takeProfit1: takeProfit1,
       takeProfit2: takeProfit2,
       takeProfit3: takeProfit3,
-      timeframe: signal.timeframe || '1d',
+      timeframe: timeframe,
       confidence: signal.confidence || Math.floor(Math.random() * 15) + 80, // Generate a high confidence score if none provided
       generatedAt: new Date(signal.Date || signal.Time || new Date()),
       expiresAt: new Date(new Date().getTime() + 24 * 60 * 60 * 1000), // 24 hours from now
@@ -374,7 +391,10 @@ export function AiTradingSignals({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Timeframes</SelectItem>
+                    <SelectItem value="5m">5m (Solaris)</SelectItem>
+                    <SelectItem value="10m">10m (Hybrid)</SelectItem>
                     <SelectItem value="15m">15 Minutes</SelectItem>
+                    <SelectItem value="30m">30m (Paradox)</SelectItem>
                     <SelectItem value="1h">1 Hour</SelectItem>
                     <SelectItem value="4h">4 Hours</SelectItem>
                     <SelectItem value="D">Daily</SelectItem>
