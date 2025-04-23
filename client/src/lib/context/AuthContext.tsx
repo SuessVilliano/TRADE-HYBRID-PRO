@@ -2,14 +2,57 @@
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { authService } from '../services/auth-service';
 
+// Define a more structured user type
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  walletAddress?: string | null;
+  profileImage?: string | null;
+  authenticated: boolean;
+  membershipLevel: string;
+  membershipExpiresAt?: string;
+  isAdmin?: boolean;
+  whopId?: string;
+  whopPlanId?: string;
+  whopProductId?: string;
+  hasConnectedApis?: boolean;
+  isTokenHolder?: boolean;
+  features?: {
+    trade: boolean;
+    journal: boolean;
+    metaverse: boolean;
+    learn: boolean;
+    signals: boolean;
+    leaderboard: boolean;
+    bots: boolean;
+    news: boolean;
+    profile: boolean;
+    settings: boolean;
+    staking: boolean;
+    validator: boolean;
+    aiSignals: boolean;
+    multiExchange: boolean;
+    customizableUi: boolean;
+    advancedAnalytics: boolean;
+    solarisCrypto: boolean;
+    paradoxForex: boolean;
+    tradingWorkspace: boolean;
+  };
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
-  currentUser: any | null;
-  user: any | null; // Adding user as alias for currentUser for backward compatibility
+  currentUser: User | null;
+  user: User | null; // Adding user as alias for currentUser for backward compatibility
+  membershipLevel: string;
+  isPaidUser: boolean;
+  isProUser: boolean;
   login: (whopId: string) => Promise<any>;
   loginWithDemo: () => Promise<any>;
   getCurrentUser: () => Promise<any>;
   logout: () => Promise<void>;
+  hasAccess: (feature: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -28,7 +71,54 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [currentUser, setCurrentUser] = useState<any | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  // Get membership level from current user
+  const membershipLevel = currentUser?.membershipLevel || 'free';
+  
+  // Determine if user has paid access
+  const isPaidUser: boolean = Boolean(currentUser && ['paid', 'beginner', 'intermediate', 'advanced', 'expert', 'pro', 'admin', 'demo'].includes(membershipLevel));
+  
+  // Determine if user has pro access
+  const isProUser: boolean = Boolean(currentUser && ['pro', 'admin', 'demo'].includes(membershipLevel));
+
+  // Function to check if user has access to a specific feature
+  const hasAccess = (feature: string): boolean => {
+    // Demo users have access to everything
+    if (membershipLevel === 'demo') return true;
+    
+    // Admin users have access to everything
+    if (currentUser?.isAdmin) return true;
+    
+    // User has explicit access to this feature
+    if (currentUser?.features && feature in currentUser.features) {
+      return currentUser.features[feature as keyof typeof currentUser.features];
+    }
+    
+    // Default feature access based on membership level
+    const basicFeatures = ['trade', 'journal', 'learn', 'profile', 'settings'];
+    const paidFeatures = [...basicFeatures, 'signals', 'leaderboard', 'news'];
+    const advancedFeatures = [...paidFeatures, 'bots', 'paradoxForex', 'staking'];
+    const proFeatures = [...advancedFeatures, 'validator', 'aiSignals', 'multiExchange', 'customizableUi', 'advancedAnalytics', 'solarisCrypto', 'tradingWorkspace', 'metaverse'];
+    
+    if (basicFeatures.includes(feature)) {
+      return true; // All users have access to basic features
+    }
+    
+    if (paidFeatures.includes(feature)) {
+      return isPaidUser; // Paid users have access to paid features
+    }
+    
+    if (advancedFeatures.includes(feature)) {
+      return ['intermediate', 'advanced', 'expert', 'pro', 'admin'].includes(membershipLevel);
+    }
+    
+    if (proFeatures.includes(feature)) {
+      return isProUser; // Pro users have access to pro features
+    }
+    
+    return false; // Default deny for unknown features
+  };
 
   // Check for existing authentication on mount
   useEffect(() => {
@@ -38,7 +128,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const demoUser = localStorage.getItem('demoUser');
         if (demoUser) {
           const parsedUser = JSON.parse(demoUser);
-          setCurrentUser(parsedUser);
+          setCurrentUser({
+            ...parsedUser,
+            membershipLevel: 'demo' // Ensure demo users have demo membership level
+          });
           setIsAuthenticated(true);
           return;
         }
@@ -61,6 +154,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isAuthenticated,
     currentUser,
     user: currentUser, // Add user as alias for currentUser
+    membershipLevel,
+    isPaidUser,
+    isProUser,
+    hasAccess,
     
     login: async (whopId: string) => {
       try {
@@ -80,15 +177,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     },
     
     loginWithDemo: async () => {
-      // Create demo user data
-      const demoUser = {
+      // Create demo user data that matches the User interface
+      const demoUser: User = {
         id: 1,
         username: 'demo_user',
         email: 'demo@tradehybrid.com',
-        membership: 'lifetime',
-        isAuthenticated: true,
-        authenticated: true,  // Add this property to match server authentication check
-        features: {           // Add feature access permissions for the demo user
+        membershipLevel: 'demo',
+        authenticated: true,
+        membershipExpiresAt: '2030-01-01',
+        isAdmin: true,
+        walletAddress: '0xDemoWalletAddress',
+        profileImage: '/images/default-avatar.png',
+        hasConnectedApis: true,
+        isTokenHolder: true,
+        features: {           
           trade: true,
           journal: true,
           metaverse: true,
@@ -98,7 +200,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
           bots: true,
           news: true,
           profile: true,
-          settings: true
+          settings: true,
+          staking: true,
+          validator: true,
+          aiSignals: true,
+          multiExchange: true,
+          customizableUi: true,
+          advancedAnalytics: true,
+          solarisCrypto: true,
+          paradoxForex: true,
+          tradingWorkspace: true
         }
       };
       
@@ -118,17 +229,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Check for demo user in localStorage first
       const demoUser = localStorage.getItem('demoUser');
       if (demoUser) {
-        const parsedUser = JSON.parse(demoUser);
-        setCurrentUser(parsedUser);
-        setIsAuthenticated(true);
-        return parsedUser;
+        try {
+          const parsedUser = JSON.parse(demoUser) as User;
+          // Make sure all required User properties are available
+          if (!parsedUser.membershipLevel) {
+            parsedUser.membershipLevel = 'demo';
+          }
+          setCurrentUser(parsedUser);
+          setIsAuthenticated(true);
+          return parsedUser;
+        } catch (error) {
+          console.error('Failed to parse demo user:', error);
+          localStorage.removeItem('demoUser'); // Remove invalid demo user data
+        }
       }
       
       // Otherwise check server
       try {
         const userData = await authService.getCurrentUser();
         if (userData && userData.authenticated) {
-          setCurrentUser(userData);
+          // Ensure required fields for User interface
+          if (!userData.membershipLevel) {
+            userData.membershipLevel = userData.membership || 'free';
+          }
+          setCurrentUser(userData as User);
           setIsAuthenticated(true);
           return userData;
         }

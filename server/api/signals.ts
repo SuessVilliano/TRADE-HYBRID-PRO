@@ -310,6 +310,14 @@ router.get('/trading-signals', async (req, res) => {
     const marketType = (req.query.marketType as string || 'crypto').toLowerCase();
     const userId = (req.query.userId as string) || undefined;
     
+    // Get user membership level from session if authenticated
+    let membershipLevel = 'free';
+    if (req.session && req.session.userId) {
+      membershipLevel = req.session.membershipLevel || 'free';
+    }
+    
+    console.log(`Fetching signals for user with membership level: ${membershipLevel}`);
+    
     // Get signals based on market type
     let signals: any[] = [];
     
@@ -348,6 +356,36 @@ router.get('/trading-signals', async (req, res) => {
           ...signals
         ];
       }
+    }
+    
+    // Filter signals based on membership level if not demo mode
+    if (membershipLevel !== 'demo') {
+      // Limit number of signals based on membership level
+      let signalLimit = 3; // Default for free users
+      
+      if (['paid', 'beginner', 'intermediate'].includes(membershipLevel)) {
+        signalLimit = 5;
+      } else if (['advanced', 'expert'].includes(membershipLevel)) {
+        signalLimit = 10;
+      } else if (membershipLevel === 'pro' || membershipLevel === 'admin') {
+        signalLimit = 999; // No limit for pro users
+      }
+      
+      // Limit providers based on membership level
+      let allowedProviders = ['Hybrid']; // Free users only get Hybrid signals
+      
+      if (['paid', 'beginner'].includes(membershipLevel)) {
+        allowedProviders = ['Hybrid', 'Paradox']; // Beginner/paid get Hybrid + Paradox
+      } else if (['intermediate', 'advanced', 'expert', 'pro', 'admin'].includes(membershipLevel)) {
+        allowedProviders = ['Hybrid', 'Paradox', 'Solaris']; // Higher tiers get all
+      }
+      
+      // Apply the filters
+      signals = signals
+        .filter(signal => allowedProviders.includes(signal.Provider))
+        .slice(0, signalLimit);
+      
+      console.log(`Filtered to ${signals.length} signals based on membership level ${membershipLevel}`);
     }
     
     // Return the signals
