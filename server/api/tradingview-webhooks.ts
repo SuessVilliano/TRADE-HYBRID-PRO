@@ -156,6 +156,19 @@ export const processTradingViewWebhook = async (req: Request, res: Response) => 
       if (success) {
         // If we have a multiplayer server instance, send directly to the user
         if (MultiplayerServer.instance && webhook.userId) {
+          // Determine timeframe based on provider
+          let timeframe = payload.timeframe || '1d';
+          if (parsedSignal.Provider) {
+            const provider = parsedSignal.Provider.toLowerCase();
+            if (provider.includes('hybrid')) {
+              timeframe = '10m';
+            } else if (provider.includes('paradox')) {
+              timeframe = '30m';
+            } else if (provider.includes('solaris')) {
+              timeframe = '5m';
+            }
+          }
+          
           // Convert the server-side signal format to client-side format
           const clientSignal = {
             symbol: parsedSignal.Symbol,
@@ -163,7 +176,7 @@ export const processTradingViewWebhook = async (req: Request, res: Response) => 
             entryPrice: parsedSignal['Entry Price'],
             takeProfit: parsedSignal['Take Profit'],
             stopLoss: parsedSignal['Stop Loss'],
-            timeframe: payload.timeframe || 'Unknown',
+            timeframe: timeframe,
             description: parsedSignal.Notes
           };
           
@@ -192,6 +205,7 @@ export const processTradingViewWebhook = async (req: Request, res: Response) => 
                 symbol: parsedSignal.Symbol,
                 action: parsedSignal.Direction,
                 price: parsedSignal['Entry Price'],
+                timeframe: timeframe,
                 levels: {
                   entry: parsedSignal['Entry Price'],
                   stopLoss: parsedSignal['Stop Loss'],

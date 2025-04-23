@@ -12,6 +12,7 @@ export type TradeSignal = {
   source: string;
   risk: number;
   notes?: string;
+  timeframe?: string; // Added timeframe field
 };
 
 // Event handlers
@@ -28,8 +29,8 @@ class TradeSignalService {
   private notificationsEnabled: boolean = true; // Default to enabled
 
   constructor() {
-    // Add some mock data for development
-    this.initializeMockData();
+    // Load real signals from the API instead of mock data
+    this.fetchRealSignals();
     
     // Subscribe to user settings changes
     userSettingsService.subscribe('settings_changed', (settings) => {
@@ -39,6 +40,66 @@ class TradeSignalService {
     // Initialize notification state from user settings
     const settings = userSettingsService.getSettings();
     this.notificationsEnabled = settings.notifications.signalAlerts;
+    
+    // Set up periodic refresh of signals (every 60 seconds)
+    if (typeof window !== 'undefined') {
+      setInterval(() => this.fetchRealSignals(), 60000);
+    }
+  }
+  
+  // Fetch real signals from the API
+  async fetchRealSignals(): Promise<void> {
+    try {
+      console.log('Fetching real trading signals from API...');
+      const response = await fetch('/api/signals/trading-signals');
+      
+      if (!response.ok) {
+        throw new Error(`Error fetching signals: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Raw signals response:', data);
+      
+      if (data && data.signals && Array.isArray(data.signals)) {
+        // Convert the API signal format to our internal format
+        const newSignals: TradeSignal[] = data.signals.map((apiSignal: any) => {
+          const confidence = Math.floor(Math.random() * 20) + 80; // Random confidence between 80-99
+          
+          // Determine which timeframe to use
+          let timeframe = apiSignal.timeframe || '1d';
+          if (apiSignal.Provider) {
+            if (apiSignal.Provider.includes('Hybrid')) {
+              timeframe = '10m';
+            } else if (apiSignal.Provider.includes('Paradox')) {
+              timeframe = '30m';
+            } else if (apiSignal.Provider.includes('Solaris')) {
+              timeframe = '5m';
+            }
+          }
+          
+          return {
+            id: apiSignal.id || `api-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            symbol: apiSignal.Symbol || apiSignal.symbol || 'UNKNOWN',
+            type: (apiSignal.Direction || apiSignal.side || 'buy').toLowerCase() === 'buy' ? 'buy' : 'sell',
+            entry: apiSignal['Entry Price'] || apiSignal.entryPrice || 0,
+            stopLoss: apiSignal['Stop Loss'] || apiSignal.stopLoss || 0,
+            takeProfit: apiSignal['Take Profit'] || apiSignal.takeProfit || apiSignal.TP1 || 0,
+            timestamp: new Date(apiSignal.Date || apiSignal.generatedAt || Date.now()),
+            source: apiSignal.Provider || apiSignal.provider || 'API',
+            risk: 1,
+            notes: apiSignal.Notes || apiSignal.notes || `${timeframe} timeframe signal`,
+            timeframe: timeframe
+          };
+        });
+        
+        console.log('Refreshed signals:', newSignals);
+        
+        // Replace the existing signals array with the new signals
+        this.signals = newSignals;
+      }
+    } catch (error) {
+      console.error('Error fetching signals:', error);
+    }
   }
 
   // Subscribe to signal events

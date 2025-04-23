@@ -187,6 +187,7 @@ export const processWebhookSignal = (payload: any, userId?: string): void => {
     let entryPrice = 0;
     let stopLoss = 0;
     let takeProfit = 0;
+    let timeframe = '1d'; // Default timeframe
     let tp2 = undefined;
     let tp3 = undefined;
     
@@ -198,6 +199,7 @@ export const processWebhookSignal = (payload: any, userId?: string): void => {
       entryPrice = meta.levels?.entry || meta.price || 0;
       stopLoss = meta.levels?.stopLoss || 0;
       takeProfit = meta.levels?.takeProfit || 0;
+      timeframe = meta.timeframe || timeframe;
     } else {
       // Otherwise parse from text content
       const symbolMatch = content.match(/Symbol: ([A-Za-z0-9!_/]+)/);

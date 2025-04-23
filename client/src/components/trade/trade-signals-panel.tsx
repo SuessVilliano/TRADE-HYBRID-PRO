@@ -67,6 +67,18 @@ export function TradeSignalsPanel() {
             return;
           }
           
+          // Determine timeframe based on provider
+          let timeframe = signal.timeframe || '1d';
+          if (provider) {
+            if (provider.toLowerCase().includes('hybrid')) {
+              timeframe = '10m';
+            } else if (provider.toLowerCase().includes('paradox')) {
+              timeframe = '30m';
+            } else if (provider.toLowerCase().includes('solaris')) {
+              timeframe = '5m';
+            }
+          }
+          
           // Convert to our TradeSignal format
           const newSignal: TradeSignal = {
             id: `ws-${Date.now()}`,
@@ -78,7 +90,8 @@ export function TradeSignalsPanel() {
             timestamp: new Date(),
             source: provider || 'WebSocket',
             risk: 1,
-            notes: signal.description || ''
+            notes: signal.description || `${timeframe} timeframe alert`,
+            timeframe: timeframe
           };
           
           console.log('Created new signal from WebSocket:', newSignal);
@@ -257,9 +270,12 @@ export function TradeSignalsPanel() {
   const refreshSignals = async () => {
     try {
       // Show a loading toast
-      toast.loading("Refreshing signals from Google Sheets...");
+      toast.loading("Refreshing trading signals...");
       
-      // This would normally fetch from the API, but for now we'll use the service directly
+      // Trigger a refresh from the API in the service
+      await tradeSignalService.fetchRealSignals();
+      
+      // Get updated signals
       const allSignals = tradeSignalService.getAllSignals();
       setSignals(allSignals);
       
@@ -419,10 +435,11 @@ export function TradeSignalsPanel() {
                         </div>
                         
                         <div className="text-sm text-slate-500 mt-1">
-                          <div className="grid grid-cols-3 gap-x-4 gap-y-0.5">
+                          <div className="grid grid-cols-4 gap-x-4 gap-y-0.5">
                             <div>Entry: <span className="font-medium">{signal.entry}</span></div>
                             <div>SL: <span className="font-medium">{signal.stopLoss}</span></div>
                             <div>TP: <span className="font-medium">{signal.takeProfit}</span></div>
+                            <div>TF: <span className="font-medium text-orange-500">{signal.timeframe || "1d"}</span></div>
                           </div>
                           {signal.notes && (
                             <div className="mt-1 text-xs italic">{signal.notes}</div>
