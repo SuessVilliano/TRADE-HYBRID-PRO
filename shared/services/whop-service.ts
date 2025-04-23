@@ -24,12 +24,21 @@ export interface WhopMembershipStatus {
   planId?: string;
   memberId?: string;
   memberSince?: string;
+  productId?: string;
+  accessPassId?: string;
+  productName?: string;
+  productDescription?: string;
+  membershipStatus?: string;
+  expiresAt?: string;
   error?: string;
   userDetails?: {
     name?: string;
     email?: string;
     profileImage?: string;
     discord?: string;
+    walletAddress?: string | null;
+    customerId?: string;
+    metadata?: any;
   };
 }
 
@@ -105,21 +114,70 @@ export class WhopServiceBase {
       
       if (memberships.length > 0) {
         const activeMembership = memberships[0];
+        
+        // Get product details for this membership to get more info about the plan
+        let productDetails = null;
+        try {
+          const productResponse = await axios.get(`${this.baseUrl}/products/${activeMembership.product_id}`, {
+            headers: {
+              'Authorization': `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          productDetails = productResponse.data;
+        } catch (productError) {
+          console.warn('Could not fetch product details:', productError);
+        }
+        
+        // Get access pass details for this membership
+        let accessPass = null;
+        try {
+          const accessPassResponse = await axios.get(`${this.baseUrl}/access_passes/${activeMembership.access_pass_id}`, {
+            headers: {
+              'Authorization': `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          accessPass = accessPassResponse.data;
+        } catch (accessPassError) {
+          console.warn('Could not fetch access pass details:', accessPassError);
+        }
+        
         return {
           isActive: true,
           planId: activeMembership.plan_id,
           memberId: activeMembership.id,
           memberSince: activeMembership.created_at,
+          productId: activeMembership.product_id,
+          accessPassId: activeMembership.access_pass_id,
+          productName: productDetails?.name || '',
+          productDescription: productDetails?.description || '',
+          membershipStatus: activeMembership.status,
+          expiresAt: activeMembership.expires_at,
           userDetails: {
             name: userInfo.username,
             email: userInfo.email,
             profileImage: userInfo.profile_pic_url,
-            discord: userInfo.discord_username
+            discord: userInfo.discord_username,
+            walletAddress: userInfo.wallet_address || null,
+            customerId: userInfo.id,
+            metadata: userInfo.metadata || {}
           }
         };
       }
       
-      return { isActive: false };
+      return { 
+        isActive: false,
+        userDetails: {
+          name: userInfo.username,
+          email: userInfo.email,
+          profileImage: userInfo.profile_pic_url,
+          discord: userInfo.discord_username,
+          walletAddress: userInfo.wallet_address || null,
+          customerId: userInfo.id,
+          metadata: userInfo.metadata || {}
+        }
+      };
     } catch (error) {
       console.error('Error validating Whop membership:', error);
       return { isActive: false };
@@ -143,11 +201,33 @@ export class WhopServiceBase {
       // If a plan ID exists, determine the appropriate membership tier
       if (membershipStatus.planId) {
         // Map the Whop planId to our membership tiers
-        // This is placeholder logic - customize based on actual Whop plans
+        // Exact plan mapping based on Whop product IDs or names
         const planIdLower = membershipStatus.planId.toLowerCase();
         
-        if (planIdLower.includes('pro') || planIdLower.includes('premium')) {
+        // Premium/Enterprise plans
+        if (planIdLower.includes('pro') || 
+            planIdLower.includes('premium') || 
+            planIdLower.includes('enterprise')) {
           return UserExperienceLevel.PRO;
+        }
+        
+        // Advanced trading plans
+        if (planIdLower.includes('advanced') || 
+            planIdLower.includes('professional')) {
+          return UserExperienceLevel.ADVANCED;
+        }
+        
+        // Intermediate trading plans
+        if (planIdLower.includes('intermediate') || 
+            planIdLower.includes('standard')) {
+          return UserExperienceLevel.INTERMEDIATE;
+        }
+        
+        // Beginner/Basic trading plans
+        if (planIdLower.includes('beginner') || 
+            planIdLower.includes('basic') || 
+            planIdLower.includes('starter')) {
+          return UserExperienceLevel.BEGINNER;
         }
         
         // Default to PAID tier for all other active subscriptions
