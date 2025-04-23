@@ -40,8 +40,26 @@ class ServerWhopService extends WhopServiceBase {
         const user = existingUsers[0];
         console.log(`Found existing user: ${user.id}`);
         
-        // Get latest membership level
+        // Get latest membership info from Whop
+        const membershipStatus = await this.validateMembership(whopId);
         const level = await this.getUserExperienceLevel(whopId);
+        
+        // Update user with latest Whop data
+        await db.update(users)
+          .set({
+            whopPlanId: membershipStatus.planId,
+            whopProductId: membershipStatus.productId,
+            whopAccessPassId: membershipStatus.accessPassId,
+            walletAddress: membershipStatus.userDetails?.walletAddress || user.walletAddress,
+            discord: membershipStatus.userDetails?.discord || user.discord,
+            profileImage: membershipStatus.userDetails?.profileImage || user.profileImage,
+            membershipLevel: level,
+            whopMembershipExpiresAt: membershipStatus.expiresAt,
+            updatedAt: new Date()
+          })
+          .where(eq(users.id, user.id));
+        
+        console.log(`Updated user ${user.id} with latest Whop membership data`);
         
         return {
           success: true,
@@ -87,6 +105,11 @@ class ServerWhopService extends WhopServiceBase {
           password: 'temppassword', // Temporary password, will need reset
           email: membershipStatus.userDetails?.email || 'user@example.com',
           whopId: whopId,
+          walletAddress: membershipStatus.userDetails?.walletAddress || null,
+          discord: membershipStatus.userDetails?.discord || null,
+          profileImage: membershipStatus.userDetails?.profileImage || null,
+          membershipLevel: UserExperienceLevel.FREE,
+          whopCustomerId: membershipStatus.userDetails?.customerId,
           createdAt: new Date(),
           updatedAt: new Date()
         }).returning();
@@ -106,6 +129,15 @@ class ServerWhopService extends WhopServiceBase {
         email: membershipStatus.userDetails?.email || 'user@example.com',
         whopId: whopId,
         whopPlanId: membershipStatus.planId,
+        whopProductId: membershipStatus.productId,
+        whopAccessPassId: membershipStatus.accessPassId,
+        walletAddress: membershipStatus.userDetails?.walletAddress || null,
+        discord: membershipStatus.userDetails?.discord || null,
+        profileImage: membershipStatus.userDetails?.profileImage || null,
+        membershipLevel: level,
+        whopCustomerId: membershipStatus.userDetails?.customerId,
+        whopMemberSince: membershipStatus.memberSince || new Date().toISOString(),
+        whopMembershipExpiresAt: membershipStatus.expiresAt,
         createdAt: new Date(),
         updatedAt: new Date()
       }).returning();

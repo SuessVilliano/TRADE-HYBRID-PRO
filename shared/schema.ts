@@ -110,7 +110,13 @@ export const users = pgTable("users", {
   // Whop membership fields
   whopId: text("whop_id").unique(),
   whopPlanId: text("whop_plan_id"),
+  whopProductId: text("whop_product_id"),
+  whopAccessPassId: text("whop_access_pass_id"),
+  whopCustomerId: text("whop_customer_id"),
   whopMemberSince: text("whop_member_since"),
+  whopMembershipExpiresAt: text("whop_membership_expires_at"),
+  discord: text("discord"),
+  profileImage: text("profile_image"),
   // Wallet integration fields
   walletAddress: text("wallet_address").unique(),
   walletAuthEnabled: boolean("wallet_auth_enabled").default(false),
