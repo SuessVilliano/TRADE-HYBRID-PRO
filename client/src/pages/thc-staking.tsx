@@ -48,7 +48,13 @@ import {
 import { useThcStaking } from '../lib/hooks/useThcStaking';
 
 // Import connection provider
-import { useConnection } from '@solana/wallet-adapter-react';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+
+// Import validator components
+import WalletConnect from '../components/validator/WalletConnect';
+import StakeForm from '../components/validator/StakeForm';
+import ClaimRewards from '../components/validator/ClaimRewards';
+import NftBoostIndicator from '../components/validator/NftBoostIndicator';
 
 // Mock affiliate service
 const AffiliateService = {
