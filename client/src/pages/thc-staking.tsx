@@ -1070,27 +1070,16 @@ export default function StakeAndBake() {
                         </p>
                       </div>
                       
-                      {!solanaAuth.walletConnected ? (
-                        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-4 rounded-md">
-                          <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-sm font-medium flex items-center">
-                              <Wallet className="h-4 w-4 mr-2 text-amber-600" />
-                              <span>Connect Your Wallet</span>
-                            </h3>
-                            <Badge variant="outline" className="text-amber-600 border-amber-300">Required</Badge>
-                          </div>
-                          <p className="text-xs mb-3 text-slate-600 dark:text-slate-400">
-                            To stake SOL with our validator and earn dual rewards, please connect your Solana wallet.
-                          </p>
-                          <Button 
-                            variant="outline" 
-                            className="w-full bg-white dark:bg-slate-800"
-                            onClick={() => solanaAuth.connectAndAuthenticate()}
-                            disabled={solanaAuth.isAuthenticating}
-                          >
-                            <Wallet className="mr-2 h-4 w-4" />
-                            {solanaAuth.isAuthenticating ? 'Connecting...' : 'Connect Wallet'}
-                          </Button>
+                      {/* Wallet Connect Component */}
+                      <WalletConnect />
+                      
+                      {/* NFT Boost Indicator */}
+                      <NftBoostIndicator />
+                      
+                      {/* Old wallet connect code here for reference */}
+                      {false && !solanaAuth.walletConnected ? (
+                        <div className="hidden">
+                          {/* Hidden, replaced by WalletConnect component */}
                         </div>
                       ) : (
                         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 rounded-md">
@@ -1150,83 +1139,33 @@ export default function StakeAndBake() {
                         </div>
                       )}
                       
-                      <div>
-                        <Label htmlFor="solStakeAmount">Amount to Stake (SOL)</Label>
-                        <div className="flex mt-2">
-                          <Input 
-                            id="solStakeAmount" 
-                            type="number" 
-                            value={solStakeAmount} 
-                            onChange={(e) => setSolStakeAmount(e.target.value)} 
-                            placeholder="Enter SOL amount" 
-                            className="flex-1" 
-                          />
-                          <Button 
-                            variant="outline" 
-                            className="ml-2"
-                            onClick={() => setSolStakeAmount('1.0')}
-                          >
-                            Max
-                          </Button>
-                        </div>
-                        <p className="text-sm text-slate-400 mt-1">
-                          Minimum stake: 0.1 SOL
-                        </p>
-                      </div>
-                      
-                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-md">
-                        <div className="flex justify-between items-center mb-3">
-                          <div className="flex items-center gap-2">
-                            <Sparkles size={16} className="text-blue-600 dark:text-blue-400" />
-                            <span className="text-sm font-medium">Dual Rewards</span>
-                          </div>
-                          <Badge className="bg-blue-600">~{(dualRewards.solRewards * 100).toFixed(1)}% SOL + {(dualRewards.thcRewards * 100).toFixed(1)}% THC</Badge>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <div className="h-3 w-3 rounded-full bg-blue-500 mr-2"></div>
-                              <span className="text-sm text-slate-700 dark:text-slate-300">SOL Rewards</span>
-                            </div>
-                            <div className="text-sm font-medium">
-                              +{(parseFloat(solStakeAmount || '0') * dualRewards.solRewards).toFixed(3)} SOL
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <div className="h-3 w-3 rounded-full bg-purple-500 mr-2"></div>
-                              <span className="text-sm text-slate-700 dark:text-slate-300">THC Rewards</span>
-                            </div>
-                            <div className="text-sm font-medium">
-                              +{(parseFloat(solStakeAmount || '0') * dualRewards.thcRewards).toFixed(3)} THC
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between pt-1 border-t border-blue-100 dark:border-blue-800">
-                            <div className="flex items-center">
-                              <div className="h-3 w-3 rounded-full bg-green-500 mr-2"></div>
-                              <span className="text-sm text-slate-700 dark:text-slate-300">Validator Bonus</span>
-                            </div>
-                            <div className="text-sm font-medium text-green-600 dark:text-green-400">
-                              +{(parseFloat(solStakeAmount || '0') * dualRewards.thcBonus).toFixed(3)} THC
-                            </div>
-                          </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                            Annual yield (rewards paid out continuously)
-                          </div>
-                        </div>
+                      {/* Replace the original stake form UI with our new component */}
+                      <div className="hidden">
+                        {/* Hidden, replaced by StakeForm component */}
                       </div>
                     </div>
                   </CardContent>
                   <CardFooter>
-                    <Button 
-                      className="w-full" 
-                      disabled={!solanaAuth.walletConnected || parseFloat(solStakeAmount) <= 0}
-                      onClick={handleStakeSol}
+                    <Button
+                      className="w-full"
+                      onClick={() => {
+                        // This just ensures the UI doesn't break - our new component handles staking now
+                        toast({
+                          title: "Staking Update",
+                          description: "Please use the Stake SOL form below for an enhanced staking experience",
+                        });
+                      }}
                     >
-                      {!solanaAuth.walletConnected ? 'Connect Wallet to Stake' : 'Stake SOL to Validator'}
+                      Use Enhanced Staking Form Below
                     </Button>
                   </CardFooter>
                 </Card>
+                
+                {/* Add our new stake form and claim rewards components */}
+                <div className="mt-6 space-y-6">
+                  <StakeForm validatorIdentity={validatorIdentity} />
+                  <ClaimRewards validatorIdentity={validatorIdentity} />
+                </div>
                 
                 <Card className="mt-6">
                   <CardHeader>
