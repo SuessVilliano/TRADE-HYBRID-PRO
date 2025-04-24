@@ -105,7 +105,7 @@ export default function WalletConnectionPage() {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => window.open('https://www.pump.fun/token/5FJeEJR8576YxXFdGRAu4NBBFcyfmtjsZtx99Rettgww', '_blank')}
+                    onClick={() => window.open('https://pump.fun/coin/2tQXeJtmzEqMvvMYwb6ZKJ2RXWfrbnzg3fUX1e8GuAUD', '_blank')}
                   >
                     <ExternalLink className="h-4 w-4 mr-2" />
                     View THC on Pump.fun

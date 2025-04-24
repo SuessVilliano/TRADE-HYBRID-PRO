@@ -218,7 +218,8 @@ export const THC_TOKEN = {
   symbol: 'THC',
   decimals: 18,
   totalSupply: 100000000, // 100 million
-  contractAddress: '0xTHCcontractAddressPlaceholder',
+  contractAddress: '2tQXeJtmzEqMvvMYwb6ZKJ2RXWfrbnzg3fUX1e8GuAUD',
+  pumpFunUrl: 'https://pump.fun/coin/2tQXeJtmzEqMvvMYwb6ZKJ2RXWfrbnzg3fUX1e8GuAUD',
   network: 'Solana',
   icon: '/assets/icons/thc-token-logo.svg',
   explorerUrl: 'https://explorer.solana.com/address/{{address}}',
@@ -232,6 +233,8 @@ export const THC_TOKEN = {
     reserve: 5,
     community: 5
   },
+  price: 0.002500,
+  priceChange24h: 3.5,
   stakingAPY: 12.5,
   minimumStakingAmount: 100,
   stakingTiers: [
