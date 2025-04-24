@@ -78,11 +78,6 @@ export function Layout({ children }: LayoutProps) {
         <div className="hidden md:flex md:w-64 min-h-full flex-col bg-gray-900 border-r border-gray-800">
           <div className="p-4 border-b border-gray-800">
             <Link to="/dashboard" className="flex items-center space-x-2">
-              <img 
-                src="/images/trade_hybrid_logo.png" 
-                alt="Trade Hybrid Logo" 
-                className="h-10 w-auto object-contain" 
-              />
               <span className="text-xl font-semibold">Trade Hybrid</span>
             </Link>
           </div>
@@ -151,11 +146,6 @@ export function Layout({ children }: LayoutProps) {
         <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-gray-900 border-b border-gray-800 p-4">
           <div className="flex items-center justify-between">
             <Link to="/dashboard" className="flex items-center space-x-2">
-              <img 
-                src="/images/trade_hybrid_logo.png" 
-                alt="Trade Hybrid Logo" 
-                className="h-8 w-auto object-contain" 
-              />
               <span className="text-lg font-semibold">Trade Hybrid</span>
             </Link>
             

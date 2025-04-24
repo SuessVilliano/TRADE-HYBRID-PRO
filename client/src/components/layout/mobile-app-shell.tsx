@@ -113,8 +113,10 @@ export function MobileAppShell({
     }
   }, [isMobile, isTablet]);
 
-  // Handle logout
+  // Get toast functionality
   const { toast } = useToast();
+  
+  // Handle logout
   const handleLogout = async () => {
     try {
       await auth.logout();

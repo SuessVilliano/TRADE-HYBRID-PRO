@@ -154,7 +154,6 @@ export const MainSidebar: React.FC<{
       {/* Header with Logo */}
       <div className="flex items-center justify-between p-4">
         <Link to="/" className="flex items-center gap-2">
-          <img src="/assets/logo.png" alt="TradeHybrid" className="h-8 w-8" />
           <span className="font-bold text-xl">TradeHybrid</span>
         </Link>
         {mobile && (
