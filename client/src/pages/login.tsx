@@ -45,17 +45,6 @@ export default function LoginPage() {
     <div className="flex min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
       <div className="w-full max-w-md m-auto bg-gray-800 rounded-lg border border-gray-700 shadow-lg p-8">
         <div className="text-center mb-6">
-          <img 
-            src="/images/trade_hybrid_logo.png" 
-            alt="Trade Hybrid Logo" 
-            className="h-16 w-auto object-contain mx-auto mb-4" 
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              console.log("Logo load error - using fallback");
-              target.onerror = null;
-              target.style.display = 'none';
-            }}
-          />
           <h1 className="text-3xl font-bold text-white">
             Welcome to Trade Hybrid
           </h1>
