@@ -141,7 +141,6 @@ export default function StakeAndBake() {
   
   // Get the Solana wallet auth context
   const solanaAuth = useSolanaAuth();
-  const [membershipTier, setMembershipTier] = useState<MembershipTier | null>(null);
   
   // Get the toast function for notifications
   const { toast } = useToast();
@@ -251,7 +250,6 @@ export default function StakeAndBake() {
         try {
           // Access the membership tier directly from the context
           if (solanaAuth.tokenMembership) {
-            setMembershipTier(solanaAuth.tokenMembership.tier);
             console.log('User membership tier:', solanaAuth.tokenMembership.tier);
           }
         } catch (error) {
@@ -2089,7 +2087,8 @@ export default function StakeAndBake() {
                           <THCMembershipCard />
                           <p className="text-sm mt-3 text-slate-600 dark:text-slate-400">
                             Your THC token balance determines your membership tier and platform benefits.
-                            {membershipTier === MembershipTier.Basic && "Upgrade to Advanced tier by acquiring more THC tokens!"}
+                            {solanaAuth.tokenMembership && solanaAuth.tokenMembership.tier === MembershipTier.Basic && 
+                              "Upgrade to Advanced tier by acquiring more THC tokens!"}
                           </p>
                         </div>
                       ) : (
