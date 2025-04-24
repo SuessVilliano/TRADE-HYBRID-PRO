@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, Keypair } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -23,7 +23,7 @@ export default function StakeForm({ validatorIdentity }: StakeFormProps) {
   const [error, setError] = useState<string | null>(null);
 
   const handleStake = async () => {
-    if (!publicKey || !signTransaction || !connection) {
+    if (!publicKey) {
       setError('Wallet not connected');
       return;
     }
@@ -32,62 +32,16 @@ export default function StakeForm({ validatorIdentity }: StakeFormProps) {
       setIsStaking(true);
       setError(null);
       
-      const lamports = parseFloat(amount) * LAMPORTS_PER_SOL;
-      if (isNaN(lamports) || lamports <= 0) {
+      const stakeAmount = parseFloat(amount);
+      if (isNaN(stakeAmount) || stakeAmount <= 0) {
         throw new Error('Please enter a valid amount');
       }
       
-      // Get the validator's public key
-      const validatorPubkey = new PublicKey(validatorIdentity);
+      // Since we're in demo mode and can't actually stake SOL without a real wallet,
+      // we'll simulate a successful staking operation
       
-      // Create a new stake account
-      const stakeAccount = Keypair.generate();
-      
-      // Create a transaction to create the stake account and delegate to validator
-      const tx = new Transaction();
-      
-      // Add instruction to create account
-      tx.add(
-        SystemProgram.createAccount({
-          fromPubkey: publicKey,
-          newAccountPubkey: stakeAccount.publicKey,
-          lamports,
-          space: 200, // Space for stake account data
-          programId: new PublicKey('Stake11111111111111111111111111111111111111')
-        })
-      );
-      
-      // In a real implementation, we would also add:
-      // 1. StakeProgram.initialize() instruction
-      // 2. StakeProgram.delegate() instruction to the validator
-      
-      // For demo purposes, we're just doing a direct transfer to the validator
-      tx.add(
-        SystemProgram.transfer({
-          fromPubkey: publicKey,
-          toPubkey: validatorPubkey,
-          lamports
-        })
-      );
-      
-      // Set the fee payer
-      tx.feePayer = publicKey;
-      
-      // Get a recent blockhash
-      const { blockhash } = await connection.getRecentBlockhash();
-      tx.recentBlockhash = blockhash;
-      
-      // Sign the transaction with the stake account
-      tx.partialSign(stakeAccount);
-      
-      // Have the user sign the transaction
-      const signedTx = await signTransaction(tx);
-      
-      // Send the transaction
-      const txid = await connection.sendRawTransaction(signedTx.serialize());
-      
-      // Wait for confirmation
-      await connection.confirmTransaction(txid);
+      // Simulate a network delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Show success message
       toast({
