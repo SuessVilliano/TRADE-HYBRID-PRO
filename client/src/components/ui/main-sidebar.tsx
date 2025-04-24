@@ -28,6 +28,7 @@ import { Button } from './button';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useSolanaAuth } from '@/lib/context/SolanaAuthProvider';
 import { Separator } from './separator';
+import { THCPriceDisplay } from './thc-price-display';
 
 type NavItemProps = {
   href: string;
@@ -353,6 +354,11 @@ export const MainSidebar: React.FC<{
       </div>
 
       <Separator />
+      
+      {/* THC Price Display */}
+      <div className="px-4 py-3 border-b border-border">
+        <THCPriceDisplay />
+      </div>
 
       {/* Footer section */}
       <div className="p-4 space-y-2">

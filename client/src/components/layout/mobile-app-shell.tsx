@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/components/ui/use-toast';
+import { THCPriceDisplay } from '@/components/ui/thc-price-display';
 
 interface MobileAppShellProps {
   children: React.ReactNode;
@@ -165,7 +166,7 @@ export function MobileAppShell({
               <ScrollArea className="h-[calc(100vh-3.5rem)] pb-10">
                 <div className="flex flex-col gap-2 p-4">
                   {auth.isAuthenticated && (
-                    <div className="flex items-center gap-2 mb-6 p-2 rounded-lg border">
+                    <div className="flex items-center gap-2 mb-2 p-2 rounded-lg border">
                       <Avatar>
                         <AvatarImage src="/avatars/user-avatar.png" />
                         <AvatarFallback>
@@ -178,14 +179,18 @@ export function MobileAppShell({
                       </div>
                       <Button 
                         variant="ghost" 
-                        size="icon" 
-                        className="ml-auto" 
+                        size="sm" 
+                        className="ml-auto text-xs" 
                         onClick={handleLogout}
                       >
-                        <ChevronRight className="h-4 w-4" />
+                        Logout
                       </Button>
                     </div>
                   )}
+                  
+                  <div className="mb-4 p-2 rounded-lg border">
+                    <THCPriceDisplay />
+                  </div>
                   {navItems.map((item) => (
                     <button
                       key={item.path}
@@ -208,10 +213,11 @@ export function MobileAppShell({
             </SheetContent>
           </Sheet>
           
-          <div className="flex items-center gap-2 flex-1">
+          <div className="flex items-center gap-4 flex-1">
             <span className="font-semibold text-lg">
               Trade Hybrid
             </span>
+            <THCPriceDisplay compact={true} className="hidden sm:flex" />
           </div>
           
           <div className="flex items-center gap-2">
@@ -225,15 +231,25 @@ export function MobileAppShell({
             </Button>
             
             {auth.isAuthenticated ? (
-              <Avatar 
-                className="h-8 w-8 cursor-pointer" 
-                onClick={() => navigate('/profile')}
-              >
-                <AvatarImage src="/avatars/user-avatar.png" />
-                <AvatarFallback>
-                  {auth.username?.substring(0, 2).toUpperCase() || 'TH'}
-                </AvatarFallback>
-              </Avatar>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleLogout}
+                  className="text-xs"
+                >
+                  Logout
+                </Button>
+                <Avatar 
+                  className="h-8 w-8 cursor-pointer" 
+                  onClick={() => navigate('/profile')}
+                >
+                  <AvatarImage src="/avatars/user-avatar.png" />
+                  <AvatarFallback>
+                    {auth.username?.substring(0, 2).toUpperCase() || 'TH'}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
             ) : (
               <Button size="sm" onClick={() => navigate('/login')}>
                 Login
