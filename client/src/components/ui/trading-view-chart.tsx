@@ -2,6 +2,13 @@ import React, { useState, useEffect, useRef, memo } from 'react';
 import { AlertTriangle, RefreshCcw } from 'lucide-react';
 import { Button } from './button';
 
+// Declare global TradingView type
+declare global {
+  interface Window {
+    TradingView: any;
+  }
+}
+
 interface TradingViewChartProps {
   symbol: string;
   timeframe?: string;
@@ -42,68 +49,97 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({ symbol, timeframe =
       
       console.log(`Loading TradingView chart with symbol: ${formattedSymbol}, timeframe: ${selectedTimeframe}`);
       
-      // Create script element
-      const script = document.createElement('script');
-      script.src = 'https://s3.tradingview.com/tv.js';
-      script.async = true;
-      script.onload = () => {
-        if (typeof window.TradingView !== 'undefined' && container.current) {
-          new window.TradingView.widget({
-            autosize: true,
-            symbol: formattedSymbol,
-            interval: convertTimeframeToInterval(selectedTimeframe),
-            container_id: container.current.id,
-            library_path: 'https://s3.tradingview.com/charting_library/',
-            locale: 'en',
-            timezone: 'exchange',
-            theme: 'dark',
-            style: '1',
-            toolbar_bg: '#1E293B', // Matches slate-800
-            withdateranges: true,
-            hide_side_toolbar: false,
-            allow_symbol_change: true,
-            save_image: true,
-            show_popup_button: true,
-            popup_width: '1000',
-            popup_height: '650',
-            studies: [
-              "RSI@tv-basicstudies",
-              "MASimple@tv-basicstudies",
-              "VWAP@tv-basicstudies"
-            ],
-            enabled_features: [
-              "use_localstorage_for_settings",
-              "chart_property_page_trading",
-              "chart_property_page_style",
-              "property_pages"
-            ],
-            disabled_features: [
-              "header_symbol_search"
-            ],
-            overrides: {
-              "mainSeriesProperties.candleStyle.wickUpColor": '#26A69A',
-              "mainSeriesProperties.candleStyle.wickDownColor": '#EF5350',
-              "mainSeriesProperties.candleStyle.upColor": '#26A69A',
-              "mainSeriesProperties.candleStyle.downColor": '#EF5350',
-              "paneProperties.background": '#1E293B', // Matches slate-800
-              "paneProperties.vertGridProperties.color": '#334155', // Matches slate-700
-              "paneProperties.horzGridProperties.color": '#334155', // Matches slate-700
-              "scalesProperties.textColor": '#94A3B8', // Matches slate-400
-            }
-          });
-          scriptLoaded.current = true;
-          setLoading(false);
-          console.log('TradingView chart loaded successfully');
+      // Check if TradingView script is already loaded
+      const loadChart = () => {
+        if (window.TradingView && container.current) {
+          // Generate a unique ID for this chart instance
+          const chartId = `tv-chart-${symbol.replace(/[^a-zA-Z0-9]/g, '')}-${Math.floor(Math.random() * 1000000)}`;
+          container.current.id = chartId;
+          
+          try {
+            new window.TradingView.widget({
+              autosize: true,
+              symbol: formattedSymbol,
+              interval: convertTimeframeToInterval(selectedTimeframe),
+              container_id: chartId,
+              locale: 'en',
+              timezone: 'exchange',
+              theme: 'dark',
+              style: '1',
+              toolbar_bg: '#1E293B', // Matches slate-800
+              withdateranges: true,
+              hide_side_toolbar: false,
+              allow_symbol_change: true,
+              save_image: true,
+              show_popup_button: true,
+              popup_width: '1000',
+              popup_height: '650',
+              studies: [
+                "RSI@tv-basicstudies",
+                "MASimple@tv-basicstudies",
+                "VWAP@tv-basicstudies"
+              ],
+              enabled_features: [
+                "use_localstorage_for_settings",
+                "chart_property_page_trading",
+                "chart_property_page_style",
+                "property_pages"
+              ],
+              disabled_features: [
+                "header_symbol_search"
+              ],
+              overrides: {
+                "mainSeriesProperties.candleStyle.wickUpColor": '#26A69A',
+                "mainSeriesProperties.candleStyle.wickDownColor": '#EF5350',
+                "mainSeriesProperties.candleStyle.upColor": '#26A69A',
+                "mainSeriesProperties.candleStyle.downColor": '#EF5350',
+                "paneProperties.background": '#1E293B', // Matches slate-800
+                "paneProperties.vertGridProperties.color": '#334155', // Matches slate-700
+                "paneProperties.horzGridProperties.color": '#334155', // Matches slate-700
+                "scalesProperties.textColor": '#94A3B8', // Matches slate-400
+              },
+              debug: true,
+              onChartReady: () => {
+                console.log('TradingView chart is ready');
+                setLoading(false);
+              }
+            });
+            
+            scriptLoaded.current = true;
+            console.log('TradingView chart widget initialized');
+          } catch (widgetError) {
+            console.error('Error creating TradingView widget:', widgetError);
+            setError('Error initializing chart. Please try again.');
+            setLoading(false);
+          }
+        } else {
+          // If TradingView is not available yet, try again after a short delay
+          setTimeout(loadChart, 500);
         }
       };
       
-      script.onerror = () => {
-        setError('Failed to load TradingView chart. Please check your internet connection.');
-        setLoading(false);
-        console.error('Failed to load TradingView script');
-      };
-      
-      container.current.appendChild(script);
+      if (window.TradingView) {
+        loadChart();
+      } else {
+        // Load TradingView script if not already in document
+        const existingScript = document.querySelector('script[src="https://s3.tradingview.com/tv.js"]');
+        
+        if (!existingScript) {
+          const script = document.createElement('script');
+          script.src = 'https://s3.tradingview.com/tv.js';
+          script.async = true;
+          script.onload = loadChart;
+          script.onerror = () => {
+            setError('Failed to load TradingView chart. Please check your internet connection.');
+            setLoading(false);
+            console.error('Failed to load TradingView script');
+          };
+          document.head.appendChild(script);
+        } else {
+          // If script is already in document but TradingView not defined yet, wait for it
+          loadChart();
+        }
+      }
     } catch (err) {
       setError('An error occurred while loading the chart.');
       setLoading(false);
