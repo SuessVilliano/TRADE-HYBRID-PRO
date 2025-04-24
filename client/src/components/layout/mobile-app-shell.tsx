@@ -23,7 +23,7 @@ import { useSolanaAuth } from '@/lib/context/SolanaAuthProvider';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 interface MobileAppShellProps {
   children: React.ReactNode;
@@ -114,6 +114,7 @@ export function MobileAppShell({
   }, [isMobile, isTablet]);
 
   // Handle logout
+  const { toast } = useToast();
   const handleLogout = async () => {
     try {
       await auth.logout();
@@ -147,11 +148,6 @@ export function MobileAppShell({
             <SheetContent side="left" className="w-64 p-0">
               <div className="flex h-14 items-center px-4 border-b">
                 <div className="flex items-center space-x-2">
-                  <img 
-                    src="/logos/trade-hybrid-logo.svg" 
-                    alt="Trade Hybrid" 
-                    className="h-6 w-auto"
-                  />
                   <span className="font-semibold">Trade Hybrid</span>
                 </div>
                 <Button 
@@ -211,12 +207,7 @@ export function MobileAppShell({
           </Sheet>
           
           <div className="flex items-center gap-2 flex-1">
-            <img 
-              src="/logos/trade-hybrid-mobile-logo.svg" 
-              alt="Trade Hybrid" 
-              className="h-6 w-auto"
-            />
-            <span className="font-semibold text-lg hidden sm:inline-block">
+            <span className="font-semibold text-lg">
               Trade Hybrid
             </span>
           </div>
