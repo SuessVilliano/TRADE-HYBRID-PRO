@@ -63,8 +63,7 @@ export default function TradingDashboard() {
   // Handle mobile add trade action
   const handleAddTrade = () => {
     setSelectedTab('journal');
-    toast({
-      title: "Journal opened",
+    toast("Journal opened", {
       description: "You can now add a new trade entry"
     });
   };
@@ -72,8 +71,7 @@ export default function TradingDashboard() {
   // Handle mobile settings toggle
   const handleShowSettings = () => {
     // We could navigate to settings page or toggle settings panel
-    toast({
-      title: "Settings",
+    toast("Settings", {
       description: "Settings panel will open here"
     });
   };
@@ -256,8 +254,7 @@ export default function TradingDashboard() {
                     if (selectedTab !== 'journal') {
                       setSelectedTab('journal');
                     }
-                    toast({
-                      title: "Journal opened",
+                    toast("Journal opened", {
                       description: "You can now add a new trade entry"
                     });
                   }}
