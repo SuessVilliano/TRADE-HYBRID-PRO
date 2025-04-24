@@ -26,6 +26,8 @@ import { useMediaQuery } from '../lib/hooks/useMediaQuery';
 import { TradeJournal } from '../components/ui/trade-journal';
 import { HamburgerMenu } from '../components/mobile/hamburger-menu';
 import { MobileQuickActions } from '../components/mobile/mobile-quick-actions';
+import { TradingViewTickerTape } from '../components/ui/tradingview-ticker-tape';
+import { TradingViewWidgetPanel } from '../components/ui/tradingview-widget-panel';
 
 export default function TradingDashboard() {
   const [selectedTab, setSelectedTab] = useState('trading');
@@ -157,6 +159,11 @@ export default function TradingDashboard() {
           )}
         </div>
         
+        {/* Add Ticker Tape at the top of the dashboard */}
+        <div className="mb-4">
+          <TradingViewTickerTape className="w-full" />
+        </div>
+        
         {selectedTab === 'trading' && (
           selectedLayout === 'classic' ? (
             <DraggableTradingDashboard defaultSymbol="BTCUSDT" />
@@ -182,17 +189,26 @@ export default function TradingDashboard() {
         )}
         
         {selectedTab === 'analysis' && (
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader>
-              <CardTitle>Market Analysis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Advanced market analysis tools will be available here.</p>
-              <Button className="mt-4" onClick={() => setSelectedTab('trading')}>
-                Return to Trading Dashboard
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle>Market Analysis Tools</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* TradingView Ticker Tape */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium mb-3">Market Overview</h3>
+                  <TradingViewTickerTape className="w-full" />
+                </div>
+                
+                {/* TradingView Widget Panel */}
+                <div>
+                  <h3 className="text-lg font-medium mb-3">TradingView Tools</h3>
+                  <TradingViewWidgetPanel height={500} />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
         
         <div className="mt-6 bg-blue-900/20 border border-blue-700/50 rounded-lg p-4">
