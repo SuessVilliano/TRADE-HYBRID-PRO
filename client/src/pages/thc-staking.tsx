@@ -55,6 +55,7 @@ import { useThcStaking } from '../lib/hooks/useThcStaking';
 
 // Import connection provider
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
 // Mock affiliate service
 const AffiliateService = {
@@ -82,28 +83,14 @@ const THC_TOKEN = {
   pumpFunUrl: 'https://www.pump.fun/token/5FJeEJR8576YxXFdGRAu4NBBFcyfmtjsZtx99Rettgww'
 };
 
-// Mock MembershipTier enum
-enum MembershipTier {
-  Basic = 'BASIC',
-  Silver = 'SILVER',
-  Gold = 'GOLD',
-  Platinum = 'PLATINUM'
-}
+// Import MembershipTier from SolanaAuthProvider
+import { MembershipTier } from '../lib/context/SolanaAuthProvider';
 
-// Mock THCMembershipCard component
-const THCMembershipCard = () => <div>Membership Card</div>;
+// Import actual THCMembershipCard component
+import { THCMembershipCard } from '../components/ui/thc-membership-display';
 
-// Mock SolanaAuth hook
-const useSolanaAuth = () => ({
-  walletConnected: false,
-  isAuthenticated: false,
-  tokenMembership: { tier: MembershipTier.Basic },
-  connectAndAuthenticate: async (): Promise<boolean> => { return false; },
-  isAuthenticating: false,
-  publicKey: '5FJeEJR8576YxXFdGRAu4NBBFcyfmtjsZtx99Rettgww',
-  logoutFromSolana: () => {},
-  login: async (): Promise<boolean> => { return false; }
-});
+// Import actual SolanaAuth hook
+import { useSolanaAuth } from '../lib/context/SolanaAuthProvider';
 
 // Additional lucide icons
 import { Lock } from 'lucide-react';
@@ -2108,14 +2095,9 @@ export default function StakeAndBake() {
                       ) : (
                         <div className="text-center p-4 bg-slate-100 dark:bg-slate-800 rounded-md">
                           <p className="text-sm mb-3">Connect your Solana wallet to check your membership status</p>
-                          <Button 
-                            variant="outline" 
-                            onClick={() => solanaAuth.login()}
-                            disabled={solanaAuth.isAuthenticating}
-                            className="text-sm"
-                          >
-                            {solanaAuth.isAuthenticating ? 'Connecting...' : 'Connect Wallet'}
-                          </Button>
+                          <div className="flex justify-center">
+                            <WalletMultiButton className="!bg-primary !h-10 !rounded-md !text-sm !py-2 !px-4" />
+                          </div>
                         </div>
                       )}
                     </div>
