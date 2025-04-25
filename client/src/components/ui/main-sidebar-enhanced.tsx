@@ -192,7 +192,7 @@ export const MainSidebar: React.FC<{
             href="#" 
             icon={<BarChart2 className="h-5 w-5" />} 
             label="Trading" 
-            active={isActive("/trading") || isActive("/trade") || isActive("/trading-dashboard")}
+            active={isActive("/trading") || isActive("/trade") || isActive("/trading-dashboard") || isActive("/signals-performance")}
             expanded={expandedSections.trading}
             onExpand={() => toggleSection('trading')}
           >
@@ -215,6 +215,13 @@ export const MainSidebar: React.FC<{
               icon={<Signal className="h-4 w-4" />} 
               label="Signals" 
               active={isActive("/signals")} 
+              onClick={mobile ? onClose : undefined}
+            />
+            <NavItem 
+              href="/signals-performance" 
+              icon={<BarChart2 className="h-4 w-4" />} 
+              label="Signal Performance" 
+              active={isActive("/signals-performance")} 
               onClick={mobile ? onClose : undefined}
             />
             <NavItem 
