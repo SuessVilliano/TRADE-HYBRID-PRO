@@ -1,4 +1,4 @@
-import React, { FC, ReactNode, useMemo } from 'react';
+import React, { FC, ReactNode, useMemo, useState, useEffect } from 'react';
 import { 
   ConnectionProvider, 
   WalletProvider as SolanaWalletProvider 
@@ -20,8 +20,42 @@ interface WalletProviderProps {
 }
 
 export const WalletProvider: FC<WalletProviderProps> = ({ children }) => {
-  // Set up endpoint to mainnet-beta for validator staking
-  const endpoint = useMemo(() => clusterApiUrl('mainnet-beta'), []);
+  const [rpcEndpoint, setRpcEndpoint] = useState<string>('');
+  
+  // Set up endpoint to use custom RPC URL if available, otherwise fall back to mainnet-beta
+  const endpoint = useMemo(() => {
+    // If we have a custom RPC URL from environment variables, use it
+    if (rpcEndpoint) {
+      return rpcEndpoint;
+    }
+    // Otherwise fall back to the default mainnet URL
+    return clusterApiUrl('mainnet-beta');
+  }, [rpcEndpoint]);
+  
+  // Fetch the RPC URL from environment variables on component mount
+  useEffect(() => {
+    const fetchRpcUrl = async () => {
+      try {
+        // Try to get the SOLANA_RPC_URL from the server
+        const response = await fetch('/api/config/rpc-url');
+        const data = await response.json();
+        
+        if (data.rpcUrl) {
+          console.log('WalletProvider using custom Solana RPC URL');
+          setRpcEndpoint(data.rpcUrl);
+        } else {
+          console.log('WalletProvider: No custom RPC URL found, using default Solana endpoint');
+          setRpcEndpoint(clusterApiUrl('mainnet-beta'));
+        }
+      } catch (error) {
+        console.error('WalletProvider: Error fetching RPC URL:', error);
+        console.log('WalletProvider: Falling back to default Solana endpoint due to error');
+        setRpcEndpoint(clusterApiUrl('mainnet-beta'));
+      }
+    };
+    
+    fetchRpcUrl();
+  }, []);
   
   console.log('WalletProvider connecting to Solana network:', endpoint);
 
