@@ -24,31 +24,31 @@ interface DocumentInfo {
 const documents: DocumentInfo[] = [
   {
     id: DocumentType.KnowledgeBase,
-    title: 'TradeHybrid Knowledge Base',
+    title: 'Trade Hybrid Knowledge Base',
     description: 'Core platform information and reference',
     icon: <Book className="h-6 w-6" />,
-    filename: 'docs/TradeHybrid_Knowledge_Base.md'
+    filename: 'public/docs/TradeHybrid_Knowledge_Base.md'
   },
   {
     id: DocumentType.Support,
     title: 'Support Guide',
     description: 'Troubleshooting and common solutions',
     icon: <HelpCircle className="h-6 w-6" />,
-    filename: 'docs/TradeHybrid_Support_Guide.md'
+    filename: 'public/docs/TradeHybrid_Support_Guide.md'
   },
   {
     id: DocumentType.Overview,
     title: 'Platform Overview',
     description: 'Architecture and technical details',
     icon: <Info className="h-6 w-6" />,
-    filename: 'docs/Trade_Hybrid_Platform_Overview.md'
+    filename: 'public/docs/Trade_Hybrid_Platform_Overview.md'
   },
   {
     id: DocumentType.UserGuide,
     title: 'User Guide',
     description: 'Step-by-step instructions for all features',
     icon: <FileText className="h-6 w-6" />,
-    filename: 'docs/Comprehensive_TradeHybrid_Guide.md'
+    filename: 'public/docs/Comprehensive_TradeHybrid_Guide.md'
   }
 ];
 
@@ -66,16 +66,22 @@ const KnowledgeBaseViewer: React.FC = () => {
   
   // Fetch document content
   useEffect(() => {
+    if (!documentId) {
+      // No document selected, just viewing the main list
+      setLoading(false);
+      return;
+    }
+
     if (!currentDocument) {
-      if (documentId) {
-        setError(`Document not found: ${documentId}`);
-      }
+      setError(`Document not found: ${documentId}`);
       setLoading(false);
       return;
     }
 
     setLoading(true);
     setError(null);
+
+    console.log(`Loading document: ${currentDocument.filename}`);
 
     // Fetch the markdown file
     fetch(`/${currentDocument.filename}`)
@@ -86,6 +92,7 @@ const KnowledgeBaseViewer: React.FC = () => {
         return response.text();
       })
       .then(text => {
+        console.log(`Document loaded, length: ${text.length} characters`);
         setContent(text);
         setLoading(false);
       })
@@ -111,7 +118,7 @@ const KnowledgeBaseViewer: React.FC = () => {
       <div className="w-full max-w-6xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold">TradeHybrid Documentation</h1>
+            <h1 className="text-2xl font-bold">Trade Hybrid Documentation</h1>
             <p className="text-gray-500">Browse guides and resources</p>
           </div>
           <button 
@@ -214,7 +221,7 @@ const KnowledgeBaseViewer: React.FC = () => {
           Back to Documents
         </button>
       </div>
-      <div className="prose max-w-none">
+      <div className="prose prose-invert dark:prose-invert max-w-none bg-gray-900 text-gray-100 p-6 rounded-lg">
         <ReactMarkdown>{content}</ReactMarkdown>
       </div>
     </div>

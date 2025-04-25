@@ -270,8 +270,8 @@ const App: React.FC = () => {
                   <Route path="/social-network" element={<ProtectedRoute><SocialNetworkPage /></ProtectedRoute>} />
                   
                   {/* Knowledge Base */}
-                  <Route path="/knowledge" element={<KnowledgeBasePage />} />
-                  <Route path="/knowledge/:documentId" element={<KnowledgeBasePage />} />
+                  <Route path="/knowledge" element={<ProtectedRoute><KnowledgeBasePage /></ProtectedRoute>} />
+                  <Route path="/knowledge/:documentId" element={<ProtectedRoute><KnowledgeBasePage /></ProtectedRoute>} />
                   
                   {/* Admin Pages */}
                   <Route path="/admin/notifications" element={
