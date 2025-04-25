@@ -1,40 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Button } from './button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
-import { Separator } from './separator';
-import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './dialog';
-import { Label } from './label';
-import { Input } from './input';
-import { moralisService } from '@/lib/services/moralis-service';
-import { useUserStore } from '@/lib/stores/useUserStore';
-import { Badge } from './badge';
-import { ScrollArea } from './scroll-area';
-import { Web3Auth } from '@web3auth/modal';
-import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from '@web3auth/base';
-import { SolanaWallet } from '@web3auth/solana-provider';
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { useUserStore } from '../../lib/stores/useUserStore';
 
-// Wallet connect component with Web3Auth for Solana
+// Simplified wallet connect component for Web3Auth
 export function WalletConnectWeb3Auth() {
-  const { user, login, logout } = useUserStore();
+  const { login } = useUserStore();
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
-  const [address, setAddress] = useState<string>('');
-  const [solBalance, setSolBalance] = useState<string>('0');
-  const [thcBalance, setThcBalance] = useState<string>('0');
-  const [thcUsdValue, setThcUsdValue] = useState<number>(0);
-  const [web3auth, setWeb3auth] = useState<Web3Auth | null>(null);
-  const [provider, setProvider] = useState<any>(null);
-  const [walletDetails, setWalletDetails] = useState<any>(null);
-  const [showWalletDetails, setShowWalletDetails] = useState(false);
-  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
-  const [showStakeDialog, setShowStakeDialog] = useState(false);
-  const [purchaseAmount, setPurchaseAmount] = useState<string>('10');
-  const [stakeAmount, setStakeAmount] = useState<string>('1');
-  const [stakeToken, setStakeToken] = useState<string>('SOL');
-  const [solanaNetwork, setSolanaNetwork] = useState<string>('devnet');
 
   // Initialize Web3Auth
   useEffect(() => {
@@ -48,7 +20,7 @@ export function WalletConnectWeb3Auth() {
             rpcTarget: 'https://api.devnet.solana.com',
           },
           uiConfig: {
-            theme: 'dark',
+            theme: { primary: '#0364ff' },
             loginMethodsOrder: ['google', 'facebook', 'twitter', 'email_passwordless'],
             appLogo: 'https://assets-global.website-files.com/641ba798c17bb180cf7a2da2/641ba8cd5181bb07a49aa7df_TradeHybrid-Alt.png',
           },
