@@ -100,7 +100,7 @@ export function SignalPerformanceGrid({ className }: SignalPerformanceGridProps)
   // Get unique signal sources for filter dropdown
   const getUniqueSources = () => {
     const sources = signals.map(signal => signal.source);
-    return [...new Set(sources)];
+    return Array.from(new Set(sources));
   };
   
   // Refresh signals

@@ -78,6 +78,7 @@ import TradeRunnerBrowserPage from './pages/trade-runner-browser';
 
 // Tools & Analysis
 import SignalsAnalyzerPage from './pages/signals-analyzer';
+import SignalsPerformancePage from './pages/signals-performance';
 import AiMarketAnalysisPage from './pages/ai-market-analysis-page';
 import VoiceTradeDemoPage from './pages/voice-trade-demo';
 import ApiDemoPage from './pages/api-demo-page';
@@ -237,6 +238,7 @@ const App: React.FC = () => {
                   <Route path="/user-settings" element={<ProtectedRoute><SettingsView /></ProtectedRoute>} />
                   <Route path="/help-center" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
                   <Route path="/signals-analyzer" element={<ProtectedRoute><SignalsAnalyzerPage /></ProtectedRoute>} />
+                  <Route path="/signals-performance" element={<ProtectedRoute><SignalsPerformancePage /></ProtectedRoute>} />
                   <Route path="/voice-trade" element={<ProtectedRoute><VoiceTradeDemoPage /></ProtectedRoute>} />
                   <Route path="/smart-trade-explainer" element={<ProtectedRoute><SmartTradeExplainer /></ProtectedRoute>} />
                   <Route path="/api-demo" element={<ProtectedRoute><ApiDemoPage /></ProtectedRoute>} />

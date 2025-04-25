@@ -34,7 +34,7 @@ class TradeSignalService {
     this.fetchRealSignals();
     
     // Subscribe to user settings changes
-    userSettingsService.subscribe('settings_changed', (settings) => {
+    userSettingsService.subscribe('settings_changed', (settings: any) => {
       this.notificationsEnabled = settings.notifications.signalAlerts;
     });
     
