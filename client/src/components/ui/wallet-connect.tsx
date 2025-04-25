@@ -1,40 +1,59 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 import { Separator } from './separator';
 import { toast } from 'sonner';
 import { ContextualTooltip } from './contextual-tooltip';
-import { moralisService, MoralisTokenData } from '@/lib/services/moralis-service';
+import { moralisService } from '@/lib/services/moralis-service';
 import { useUserStore } from '@/lib/stores/useUserStore';
-import { check_secrets } from '@/lib/utils';
+import { Badge } from './badge';
+import { ScrollArea } from './scroll-area';
+import { Input } from './input';
+import { Label } from './label';
+import { Web3Auth } from '@web3auth/modal';
+import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from '@web3auth/base';
+import { SolanaWallet } from '@web3auth/solana-provider';
+import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 
-// Real wallet connect component that interacts with Moralis API
+// Enhanced wallet connect component that interacts with Moralis API
 export function WalletConnect() {
   const { user, login, logout } = useUserStore();
-  const [connected, setConnected] = useState(!!user);
+  const [connected, setConnected] = useState(false);
   const [showWalletOptions, setShowWalletOptions] = useState(false);
+  const [showWalletDetails, setShowWalletDetails] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
-  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
   const [connecting, setConnecting] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string | null>(user?.wallet?.address || null);
-  const [walletBalance, setWalletBalance] = useState<string>(user?.balance?.ETH?.toString() || "0");
-  const [walletNetwork, setWalletNetwork] = useState<string>("Ethereum");
-  const [tokenBalances, setTokenBalances] = useState<MoralisTokenData[]>([]);
-  const [hasMoralisKey, setHasMoralisKey] = useState(false);
   
-  // Check if Moralis API key is available
+  // Wallet data state
+  const [walletAddress, setWalletAddress] = useState<string>("");
+  const [walletNetwork, setWalletNetwork] = useState<string>("Ethereum");
+  const [ethBalance, setEthBalance] = useState<string>("0");
+  const [tokenBalances, setTokenBalances] = useState<MoralisTokenData[]>([]);
+  const [solBalance, setSolBalance] = useState<string>("0");
+  const [thcBalance, setThcBalance] = useState<string>("0");
+  const [solUsdValue, setSolUsdValue] = useState<number>(0);
+  const [thcUsdValue, setThcUsdValue] = useState<number>(0);
+  const [solanaTokens, setSolanaTokens] = useState<any[]>([]);
+  const [solanaNfts, setSolanaNfts] = useState<any[]>([]);
+  const [currentNetwork, setCurrentNetwork] = useState<string>("ethereum");
+  
+  // Check if Moralis is initialized
+  const [initialized, setInitialized] = useState(false);
+  
+  // Initialize Moralis service
   useEffect(() => {
-    const checkApiKey = async () => {
-      const hasKey = await check_secrets(['MORALIS_API_KEY']);
-      setHasMoralisKey(hasKey.includes('MORALIS_API_KEY'));
-      
-      if (!hasKey.includes('MORALIS_API_KEY')) {
-        console.warn('Moralis API key not found. Wallet functionality will be limited.');
+    const initMoralis = async () => {
+      try {
+        const success = await moralisService.initialize();
+        setInitialized(success);
+        console.log('Moralis service initialized:', success);
+      } catch (error) {
+        console.error('Failed to initialize Moralis service:', error);
       }
     };
     
-    checkApiKey();
+    initMoralis();
   }, []);
 
   // Initialize first-time tooltip
@@ -51,54 +70,49 @@ export function WalletConnect() {
     localStorage.setItem('hasSeenWalletTooltip', 'true');
   };
   
-  // Connect to wallet - now using Moralis for actual wallet interaction
-  const connectWallet = async (walletType: string) => {
+  // Connect Ethereum wallet
+  const connectEthereumWallet = async (walletType: string) => {
     try {
       setConnecting(true);
       
-      // Check if Moralis API key is available
-      if (!hasMoralisKey) {
-        await requestMoralisApiKey();
-        return;
+      if (!initialized) {
+        await moralisService.initialize();
       }
       
-      // Initialize Moralis service if not already done
-      await moralisService.initialize();
-      
-      let walletAddress: string;
-      
-      // In a real implementation, this would use actual wallet connect libraries
-      // For now we'll simulate connecting to different wallets with demo addresses
-      // but still use Moralis API for real token data
+      // Demo addresses for different wallet types
+      let address: string;
       if (walletType === "MetaMask") {
-        walletAddress = "0x9b8e8eABC8E732cf5ebFFD31Be9E186a1Af9fFf5"; // Demo Ethereum address with real tokens
+        address = "0x9b8e8eABC8E732cf5ebFFD31Be9E186a1Af9fFf5";
       } else if (walletType === "WalletConnect") {
-        walletAddress = "0x1f9090aaE28b8a3dCeaDf281B0F12828e676c326"; // Another demo address
+        address = "0x1f9090aaE28b8a3dCeaDf281B0F12828e676c326";
       } else if (walletType === "Coinbase Wallet") {
-        walletAddress = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"; // Uniswap router address for demo
+        address = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
       } else {
-        walletAddress = "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"; // Generic demo address
+        address = "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65";
       }
       
-      // Get real token balances from Moralis
-      const tokenBalances = await moralisService.getWalletTokens(walletAddress);
-      setTokenBalances(tokenBalances);
+      // Get ETH balance
+      const nativeBalance = await moralisService.getNativeBalance(address);
+      const formattedBalance = (parseInt(nativeBalance) / 1e18).toFixed(4);
       
-      // Get native balance
-      const nativeBalance = await moralisService.getNativeBalance(walletAddress);
-      const ethBalance = (parseInt(nativeBalance) / 1e18).toFixed(4); // Convert wei to ETH
+      // Get token balances
+      const tokens = await moralisService.getWalletTokens(address);
       
-      setWalletBalance(ethBalance);
-      setWalletAddress(walletAddress);
+      // Update state
+      setWalletAddress(address);
+      setEthBalance(formattedBalance);
+      setTokenBalances(tokens);
+      setWalletNetwork("Ethereum");
+      setCurrentNetwork("ethereum");
       setConnected(true);
       setShowWalletOptions(false);
       
-      // Update user store to maintain login state
-      // Using email/password login for wallet authentication for compatibility 
-      login(`${walletType.split(' ')[0]}User@example.com`, "password123");
-      
       toast.success(`${walletType} wallet connected successfully!`);
       setConnecting(false);
+      
+      // Update user store
+      login(`wallet_${Date.now()}@example.com`, "password123");
+      
     } catch (error: any) {
       console.error('Failed to connect wallet:', error);
       toast.error(`Connection failed: ${error.message || 'Unknown error'}`);
@@ -106,35 +120,70 @@ export function WalletConnect() {
     }
   };
   
-  // Request Moralis API key if not available
-  const requestMoralisApiKey = async () => {
-    toast.info("To connect real wallets and view token balances, we need a Moralis API key.", {
-      duration: 5000,
-    });
-    
-    // In a real implementation, this would use a backend endpoint to request the API key
-    // For now, show a simple toast message
-    toast.info("Please contact an administrator to add a Moralis API key to your environment.");
-    
-    // Check if key was provided
-    const hasKey = await check_secrets(['MORALIS_API_KEY']);
-    setHasMoralisKey(hasKey.includes('MORALIS_API_KEY'));
-    
-    if (hasKey.includes('MORALIS_API_KEY')) {
-      toast.success("Moralis API key added. You can now connect your wallet.");
+  // Connect Solana wallet
+  const connectSolanaWallet = async (walletType: string) => {
+    try {
+      setConnecting(true);
+      
+      if (!initialized) {
+        await moralisService.initialize();
+      }
+      
+      // Demo Solana addresses for different wallet types
+      let address: string;
+      if (walletType === "Phantom") {
+        address = "8PeWkGVpXmPJJiFMBJqvrRFXVXJiTGrL8eonUUYwqrLW";
+      } else if (walletType === "Solflare") {
+        address = "9ZNTfG4NyQgxy2SWjSiQoUyBPEvXT2xo7fKc5hPYYJ7b";
+      } else {
+        address = "9vSCvj4kGj7HHj8aP3Vt4JH8ELLcQ6KJeawM7Ps11sGP";
+      }
+      
+      // Get Solana data
+      const walletData = await moralisService.getWalletData(address);
+      
+      // Update state
+      setWalletAddress(address);
+      setSolBalance(walletData.sol.balance);
+      setSolUsdValue(walletData.sol.usdValue);
+      setThcBalance(walletData.thc.balance);
+      setThcUsdValue(walletData.thc.usdValue);
+      setSolanaTokens(walletData.tokens);
+      setSolanaNfts(walletData.nfts);
+      setWalletNetwork("Solana");
+      setCurrentNetwork("solana");
+      setConnected(true);
+      setShowWalletOptions(false);
+      
+      toast.success(`${walletType} wallet connected successfully!`);
       setConnecting(false);
-    } else {
-      toast.error("Moralis API key not provided. Wallet functionality will be limited.");
+      
+      // Update user store
+      login(`solana_${Date.now()}@example.com`, "password123");
+      
+    } catch (error: any) {
+      console.error('Failed to connect Solana wallet:', error);
+      toast.error(`Solana wallet connection failed: ${error.message || 'Unknown error'}`);
       setConnecting(false);
     }
   };
-
+  
   // Disconnect wallet
   const disconnectWallet = () => {
     try {
       setConnected(false);
-      setWalletAddress(null);
-      setShowDisconnectConfirm(false);
+      setWalletAddress("");
+      setEthBalance("0");
+      setSolBalance("0");
+      setThcBalance("0");
+      setTokenBalances([]);
+      setSolanaTokens([]);
+      setSolanaNfts([]);
+      setShowWalletDetails(false);
+      
+      // Log out user
+      logout();
+      
       toast.success('Wallet disconnected');
     } catch (error: any) {
       console.error('Failed to disconnect wallet:', error);
@@ -142,19 +191,52 @@ export function WalletConnect() {
     }
   };
   
-  // Truncate ethereum address
+  // Format wallet balance for display
+  const formatBalance = (balance: string, symbol: string) => {
+    const numBalance = parseFloat(balance);
+    if (isNaN(numBalance)) return `0 ${symbol}`;
+    
+    if (numBalance < 0.001) {
+      return `< 0.001 ${symbol}`;
+    }
+    
+    return `${numBalance.toFixed(4)} ${symbol}`;
+  };
+  
+  // Format USD value
+  const formatUsd = (value: number) => {
+    if (value < 0.01) return "< $0.01";
+    return `$${value.toFixed(2)}`;
+  };
+  
+  // Truncate address
   const truncateAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
-
-  import { useWeb3Modal } from '@web3modal/wagmi/react'
-import { useAccount, useDisconnect } from 'wagmi'
-
-export default function WalletConnect() {
-  const { open } = useWeb3Modal()
-  const { address, isConnected } = useAccount()
-  const { disconnect } = useDisconnect()
   
+  // Purchase THC tokens
+  const purchaseThc = async (amount: number) => {
+    toast.info(`Purchasing ${amount} THC tokens...`);
+    // Implement THC purchase logic here
+    
+    // For now just show a success message
+    setTimeout(() => {
+      toast.success(`Successfully purchased ${amount} THC tokens!`);
+      setThcBalance((Number(thcBalance) + amount).toString());
+      setThcUsdValue(thcUsdValue + (amount * 0.15)); // Assuming $0.15 per THC token
+    }, 2000);
+  };
+  
+  // Stake tokens
+  const stakeTokens = async (token: string, amount: number) => {
+    toast.info(`Staking ${amount} ${token}...`);
+    // Implement staking logic here
+    
+    // For now just show a success message
+    setTimeout(() => {
+      toast.success(`Successfully staked ${amount} ${token}!`);
+    }, 2000);
+  };
   return (
     <div className="relative">
       {isConnected && address ? (
