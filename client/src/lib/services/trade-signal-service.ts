@@ -12,8 +12,8 @@ export type TradeSignal = {
   source: string;
   risk: number;
   notes?: string;
-  timeframe?: string; // Added timeframe field
-  status?: 'active' | 'completed' | 'cancelled'; // Added status field
+  timeframe?: string;
+  status: 'active' | 'completed' | 'cancelled'; // Status is now required, not optional
 };
 
 // Event handlers
@@ -182,7 +182,9 @@ class TradeSignalService {
         timestamp: new Date(Date.now() - 1000 * 60 * 15),
         source: 'AI Signal',
         risk: 2,
-        notes: 'Strong support at $67,000 with increasing volume'
+        notes: 'Strong support at $67,000 with increasing volume',
+        status: 'active',
+        timeframe: '4h'
       },
       {
         id: '2',
@@ -194,7 +196,9 @@ class TradeSignalService {
         timestamp: new Date(Date.now() - 1000 * 60 * 45),
         source: 'TradingView',
         risk: 1,
-        notes: 'Breaking out of bullish flag pattern on 4h chart'
+        notes: 'Breaking out of bullish flag pattern on 4h chart',
+        status: 'active',
+        timeframe: '4h'
       },
       {
         id: '3',
@@ -206,7 +210,9 @@ class TradeSignalService {
         timestamp: new Date(Date.now() - 1000 * 60 * 120),
         source: 'Community',
         risk: 3,
-        notes: 'Bearish divergence on RSI, approaching resistance'
+        notes: 'Bearish divergence on RSI, approaching resistance',
+        status: 'active',
+        timeframe: '1h'
       },
       {
         id: '4',
@@ -218,7 +224,9 @@ class TradeSignalService {
         timestamp: new Date(Date.now() - 1000 * 60 * 180),
         source: 'AI Signal',
         risk: 2,
-        notes: 'Positive sentiment analysis from social media data'
+        notes: 'Positive sentiment analysis from social media data',
+        status: 'active',
+        timeframe: '1d'
       },
       {
         id: '5',
@@ -230,7 +238,9 @@ class TradeSignalService {
         timestamp: new Date(Date.now() - 1000 * 60 * 240),
         source: 'Oscillator',
         risk: 2,
-        notes: 'Overbought on multiple timeframes'
+        notes: 'Overbought on multiple timeframes',
+        status: 'active',
+        timeframe: '2h'
       },
       {
         id: '6',
@@ -242,7 +252,9 @@ class TradeSignalService {
         timestamp: new Date(Date.now() - 1000 * 60 * 300),
         source: 'Pattern',
         risk: 1,
-        notes: 'Double bottom pattern with increasing buy volume'
+        notes: 'Double bottom pattern with increasing buy volume',
+        status: 'active',
+        timeframe: '1d'
       },
     ];
 
@@ -278,7 +290,9 @@ class TradeSignalService {
       timestamp: new Date(),
       source: 'Test Signal',
       risk: 1,
-      notes: 'This is a test signal to verify notification settings'
+      notes: 'This is a test signal to verify notification settings',
+      status: 'active', // Set the status to active for all new test signals
+      timeframe: '15m'
     };
     
     this.addSignal(testSignal);
