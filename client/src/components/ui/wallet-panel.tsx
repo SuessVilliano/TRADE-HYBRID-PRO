@@ -13,6 +13,7 @@ import { Label } from './label';
 import { Input } from './input';
 import { Slider } from './slider';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Token interface
 interface TokenBalance {
@@ -280,21 +281,92 @@ export function WalletPanel() {
         </div>
         
         {connected && publicKey && (
-          <Tabs defaultValue="tokens" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-3 mb-4">
-              <TabsTrigger value="tokens">
-                <Coins className="h-4 w-4 mr-2" />
-                Assets
-              </TabsTrigger>
-              <TabsTrigger value="nfts">
-                <Gift className="h-4 w-4 mr-2" />
-                NFTs
-              </TabsTrigger>
-              <TabsTrigger value="staking">
-                <Sparkles className="h-4 w-4 mr-2" />
-                Staking
-              </TabsTrigger>
-            </TabsList>
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ 
+              opacity: 1, 
+              y: 0,
+              transition: {
+                type: "spring",
+                stiffness: 400,
+                damping: 25
+              }
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ 
+                scale: 1, 
+                opacity: 1,
+                transition: {
+                  delay: 0.2,
+                  duration: 0.4
+                }
+              }}
+              className="mb-4 p-3 rounded-md bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border border-emerald-200 dark:border-emerald-900/50 flex items-center gap-3"
+            >
+              <div className="h-10 w-10 flex items-center justify-center bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                <motion.div
+                  initial={{ scale: 0, rotate: -45 }}
+                  animate={{ 
+                    scale: 1, 
+                    rotate: 0,
+                    transition: {
+                      delay: 0.4,
+                      duration: 0.5,
+                      type: "spring"
+                    }
+                  }}
+                >
+                  <Wallet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </motion.div>
+              </div>
+              <div>
+                <motion.div 
+                  className="font-medium text-emerald-700 dark:text-emerald-400"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{
+                    opacity: 1,
+                    x: 0,
+                    transition: {
+                      delay: 0.6,
+                      duration: 0.3
+                    }
+                  }}
+                >
+                  Wallet Connected!
+                </motion.div>
+                <motion.div 
+                  className="text-sm text-muted-foreground"
+                  initial={{ opacity: 0 }}
+                  animate={{
+                    opacity: 1,
+                    transition: {
+                      delay: 0.8,
+                      duration: 0.3
+                    }
+                  }}
+                >
+                  {publicKey.toString().slice(0, 6)}...{publicKey.toString().slice(-4)}
+                </motion.div>
+              </div>
+            </motion.div>
+          
+            <Tabs defaultValue="tokens" value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid grid-cols-3 mb-4">
+                <TabsTrigger value="tokens">
+                  <Coins className="h-4 w-4 mr-2" />
+                  Assets
+                </TabsTrigger>
+                <TabsTrigger value="nfts">
+                  <Gift className="h-4 w-4 mr-2" />
+                  NFTs
+                </TabsTrigger>
+                <TabsTrigger value="staking">
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Staking
+                </TabsTrigger>
+              </TabsList>
             
             {/* Assets Tab */}
             <TabsContent value="tokens" className="space-y-4">
@@ -375,14 +447,53 @@ export function WalletPanel() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-bold">
-                          {formatNumber(token.balance, token.token?.symbol === 'SOL' ? 2 : 0)}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {token.token?.symbol === 'SOL' 
-                            ? `≈ $${formatNumber(parseFloat(token.balance) * 138.45, 2)}` 
-                            : `≈ $${formatNumber(parseFloat(token.balance) * 0.10, 2)}`}
-                        </div>
+                        <AnimatePresence mode="wait">
+                          <motion.div 
+                            key={`${token.token?.symbol}-${token.balance}`}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ 
+                              opacity: 1, 
+                              y: 0,
+                              transition: { 
+                                type: "spring", 
+                                stiffness: 300, 
+                                damping: 20 
+                              } 
+                            }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="relative"
+                          >
+                            <motion.div 
+                              className="font-bold"
+                              initial={{ scale: 0.8 }}
+                              animate={{ 
+                                scale: 1,
+                                transition: {
+                                  delay: 0.2,
+                                  duration: 0.5,
+                                  ease: "easeOut"
+                                }
+                              }}
+                            >
+                              {formatNumber(token.balance, token.token?.symbol === 'SOL' ? 2 : 0)}
+                            </motion.div>
+                            <motion.div 
+                              className="text-xs text-muted-foreground"
+                              initial={{ opacity: 0 }}
+                              animate={{ 
+                                opacity: 1,
+                                transition: {
+                                  delay: 0.5,
+                                  duration: 0.5
+                                }
+                              }}
+                            >
+                              {token.token?.symbol === 'SOL' 
+                                ? `≈ $${formatNumber(parseFloat(token.balance) * 138.45, 2)}` 
+                                : `≈ $${formatNumber(parseFloat(token.balance) * 0.10, 2)}`}
+                            </motion.div>
+                          </motion.div>
+                        </AnimatePresence>
                       </div>
                     </div>
                   ))}
@@ -409,30 +520,77 @@ export function WalletPanel() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {nfts.map((nft, index) => (
-                    <div 
-                      key={index} 
-                      className="border rounded-md overflow-hidden bg-slate-50 dark:bg-slate-800/50"
-                    >
-                      <div className="h-32 overflow-hidden">
-                        <img 
-                          src={nft.image} 
-                          alt={nft.name} 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="p-3">
-                        <h4 className="font-medium">{nft.name}</h4>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {nft.attributes.map((attr, i) => (
-                            <Badge key={i} variant="outline" className="text-xs">
-                              {attr.trait_type}: {attr.value}
-                            </Badge>
-                          ))}
+                  <AnimatePresence>
+                    {nfts.map((nft, index) => (
+                      <motion.div 
+                        key={nft.mint}
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ 
+                          opacity: 1, 
+                          scale: 1, 
+                          y: 0,
+                          transition: {
+                            duration: 0.5,
+                            delay: index * 0.1,
+                            ease: [0.23, 1, 0.32, 1] // cubic-bezier
+                          }
+                        }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        className="border rounded-md overflow-hidden bg-slate-50 dark:bg-slate-800/50"
+                      >
+                        <div className="h-32 overflow-hidden">
+                          <motion.img 
+                            src={nft.image} 
+                            alt={nft.name} 
+                            className="w-full h-full object-cover"
+                            initial={{ scale: 1.2 }}
+                            animate={{ 
+                              scale: 1,
+                              transition: {
+                                duration: 1,
+                                delay: index * 0.1 + 0.3,
+                              }
+                            }}
+                          />
                         </div>
-                      </div>
-                    </div>
-                  ))}
+                        <div className="p-3">
+                          <motion.h4 
+                            className="font-medium"
+                            initial={{ opacity: 0 }}
+                            animate={{ 
+                              opacity: 1,
+                              transition: {
+                                duration: 0.5,
+                                delay: index * 0.1 + 0.5
+                              }
+                            }}
+                          >
+                            {nft.name}
+                          </motion.h4>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {nft.attributes.map((attr, i) => (
+                              <motion.div
+                                key={i}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ 
+                                  opacity: 1, 
+                                  x: 0,
+                                  transition: {
+                                    duration: 0.3,
+                                    delay: index * 0.1 + 0.7 + (i * 0.1)
+                                  }
+                                }}
+                              >
+                                <Badge variant="outline" className="text-xs">
+                                  {attr.trait_type}: {attr.value}
+                                </Badge>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                   
                   {nfts.length === 0 && (
                     <div className="text-center py-6 text-muted-foreground col-span-2">
@@ -571,92 +729,173 @@ export function WalletPanel() {
                   </div>
                 ) : stakingPositions.length > 0 ? (
                   <div className="space-y-3">
-                    {stakingPositions.map((position) => (
-                      <div 
-                        key={position.id} 
-                        className="border rounded-md p-4 bg-slate-50 dark:bg-slate-800/50"
-                      >
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 rounded-full overflow-hidden">
-                              <img 
-                                src={position.tokenSymbol === 'SOL' ? '/images/crypto/sol.png' : '/images/crypto/thc.png'} 
-                                alt={position.tokenSymbol} 
-                                className="h-full w-full object-cover"
-                              />
-                            </div>
-                            <div>
-                              <div className="font-medium">{position.amount} {position.tokenSymbol}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {new Date(position.startDate).toLocaleDateString()} - {new Date(position.endDate).toLocaleDateString()}
+                    <AnimatePresence>
+                      {stakingPositions.map((position, index) => (
+                        <motion.div 
+                          key={position.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ 
+                            opacity: 1, 
+                            y: 0,
+                            transition: {
+                              type: "spring",
+                              stiffness: 400,
+                              damping: 25,
+                              delay: index * 0.15
+                            }
+                          }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          className="border rounded-md p-4 bg-slate-50 dark:bg-slate-800/50"
+                        >
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                              <motion.div 
+                                className="h-8 w-8 rounded-full overflow-hidden"
+                                initial={{ scale: 0.5 }}
+                                animate={{ 
+                                  scale: 1,
+                                  transition: {
+                                    type: "spring",
+                                    stiffness: 300,
+                                    delay: index * 0.15 + 0.1
+                                  }
+                                }}
+                              >
+                                <img 
+                                  src={position.tokenSymbol === 'SOL' ? '/images/crypto/sol.png' : '/images/crypto/thc.png'} 
+                                  alt={position.tokenSymbol} 
+                                  className="h-full w-full object-cover"
+                                />
+                              </motion.div>
+                              <div>
+                                <motion.div 
+                                  className="font-medium"
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ 
+                                    opacity: 1, 
+                                    x: 0,
+                                    transition: {
+                                      delay: index * 0.15 + 0.2,
+                                      duration: 0.3
+                                    }
+                                  }}
+                                >
+                                  {position.amount} {position.tokenSymbol}
+                                </motion.div>
+                                <motion.div 
+                                  className="text-xs text-muted-foreground"
+                                  initial={{ opacity: 0 }}
+                                  animate={{ 
+                                    opacity: 1,
+                                    transition: {
+                                      delay: index * 0.15 + 0.3,
+                                      duration: 0.3
+                                    }
+                                  }}
+                                >
+                                  {new Date(position.startDate).toLocaleDateString()} - {new Date(position.endDate).toLocaleDateString()}
+                                </motion.div>
                               </div>
                             </div>
-                          </div>
-                          <Badge variant={position.status === 'active' ? 'default' : 'outline'} className="ml-auto">
-                            {position.status === 'active' ? 'Active' : position.status === 'completed' ? 'Completed' : 'Cancelled'}
-                          </Badge>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">APY:</span> 
-                            <span className="ml-1 font-medium text-green-600">{position.apy}%</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Est. Reward:</span> 
-                            <span className="ml-1 font-medium">{position.estimatedReward.toFixed(2)} {position.tokenSymbol}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Staked:</span> 
-                            <span className="ml-1 font-medium">{position.amount} {position.tokenSymbol}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Days remaining:</span> 
-                            <span className="ml-1 font-medium">
-                              {position.status === 'active' 
-                                ? Math.max(0, Math.floor((new Date(position.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) 
-                                : 0}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        {position.status === 'active' && (
-                          <div className="mt-3 flex justify-end">
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={async () => {
-                                if (!publicKey) return;
-                                
-                                toast.loading('Processing unstake request...', {
-                                  id: 'unstake-transaction',
-                                });
-                                
-                                try {
-                                  await moralisService.unstakeTokens(publicKey.toString(), position.id);
-                                  
-                                  toast.success('Unstaked successfully', {
-                                    id: 'unstake-transaction',
-                                    description: `Your ${position.amount} ${position.tokenSymbol} has been returned to your wallet`
-                                  });
-                                  
-                                  // Reload wallet data
-                                  fetchWalletData(publicKey.toString());
-                                } catch (error) {
-                                  console.error('Error unstaking:', error);
-                                  toast.error('Failed to unstake', {
-                                    id: 'unstake-transaction',
-                                    description: 'There was an error processing your unstake request'
-                                  });
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ 
+                                opacity: 1, 
+                                scale: 1,
+                                transition: {
+                                  delay: index * 0.15 + 0.4,
+                                  duration: 0.3
                                 }
                               }}
                             >
-                              Unstake Early
-                            </Button>
+                              <Badge variant={position.status === 'active' ? 'default' : 'outline'} className="ml-auto">
+                                {position.status === 'active' ? 'Active' : position.status === 'completed' ? 'Completed' : 'Cancelled'}
+                              </Badge>
+                            </motion.div>
                           </div>
-                        )}
-                      </div>
-                    ))}
+                          
+                          <motion.div 
+                            className="grid grid-cols-2 gap-2 mt-3 text-sm"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ 
+                              opacity: 1, 
+                              y: 0,
+                              transition: {
+                                delay: index * 0.15 + 0.5,
+                                duration: 0.4
+                              }
+                            }}
+                          >
+                            <div>
+                              <span className="text-muted-foreground">APY:</span> 
+                              <span className="ml-1 font-medium text-green-600">{position.apy}%</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Est. Reward:</span> 
+                              <span className="ml-1 font-medium">{position.estimatedReward.toFixed(2)} {position.tokenSymbol}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Staked:</span> 
+                              <span className="ml-1 font-medium">{position.amount} {position.tokenSymbol}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Days remaining:</span> 
+                              <span className="ml-1 font-medium">
+                                {position.status === 'active' 
+                                  ? Math.max(0, Math.floor((new Date(position.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) 
+                                  : 0}
+                              </span>
+                            </div>
+                          </motion.div>
+                          
+                          {position.status === 'active' && (
+                            <motion.div 
+                              className="mt-3 flex justify-end"
+                              initial={{ opacity: 0 }}
+                              animate={{ 
+                                opacity: 1,
+                                transition: {
+                                  delay: index * 0.15 + 0.7,
+                                  duration: 0.3
+                                }
+                              }}
+                            >
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={async () => {
+                                  if (!publicKey) return;
+                                  
+                                  toast.loading('Processing unstake request...', {
+                                    id: 'unstake-transaction',
+                                  });
+                                  
+                                  try {
+                                    await moralisService.unstakeTokens(publicKey.toString(), position.id);
+                                    
+                                    toast.success('Unstaked successfully', {
+                                      id: 'unstake-transaction',
+                                      description: `Your ${position.amount} ${position.tokenSymbol} has been returned to your wallet`
+                                    });
+                                    
+                                    // Reload wallet data
+                                    fetchWalletData(publicKey.toString());
+                                  } catch (error) {
+                                    console.error('Error unstaking:', error);
+                                    toast.error('Failed to unstake', {
+                                      id: 'unstake-transaction',
+                                      description: 'There was an error processing your unstake request'
+                                    });
+                                  }
+                                }}
+                              >
+                                Unstake Early
+                              </Button>
+                            </motion.div>
+                          )}
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
                   </div>
                 ) : (
                   <div className="border rounded-md p-4 bg-slate-50 dark:bg-slate-800/50 text-center">
@@ -667,35 +906,78 @@ export function WalletPanel() {
               
               {/* Transaction History */}
               {userTransactions.length > 0 && (
-                <div className="mt-6">
+                <motion.div 
+                  className="mt-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ 
+                    opacity: 1, 
+                    y: 0,
+                    transition: {
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 25, 
+                      delay: 0.3
+                    }
+                  }}
+                >
                   <h3 className="font-medium mb-2">Recent Transactions</h3>
                   <div className="border rounded-md p-4 bg-slate-50 dark:bg-slate-800/50">
                     <div className="space-y-2">
-                      {userTransactions.slice(0, 5).map((tx: any) => (
-                        <div key={tx.id} className="flex justify-between items-center py-1 border-b border-slate-200 dark:border-slate-700 last:border-0">
-                          <div className="flex items-center gap-2">
-                            <div className="capitalize font-medium">
-                              {tx.type}
+                      <AnimatePresence>
+                        {userTransactions.slice(0, 5).map((tx: any, index) => (
+                          <motion.div 
+                            key={tx.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ 
+                              opacity: 1, 
+                              x: 0,
+                              transition: {
+                                type: "spring",
+                                stiffness: 500,
+                                damping: 30,
+                                delay: 0.4 + (index * 0.1)
+                              }
+                            }}
+                            exit={{ opacity: 0, x: 20 }}
+                            className="flex justify-between items-center py-1 border-b border-slate-200 dark:border-slate-700 last:border-0"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="capitalize font-medium">
+                                {tx.type}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {tx.amount} {tx.token}
+                              </div>
                             </div>
-                            <div className="text-xs text-muted-foreground">
-                              {tx.amount} {tx.token}
-                            </div>
-                          </div>
-                          <div className="text-xs text-right">
-                            <div className="text-muted-foreground">
-                              {new Date(tx.timestamp).toLocaleDateString()} {new Date(tx.timestamp).toLocaleTimeString()}
-                            </div>
-                            <div>
-                              <Badge variant="outline" className="text-xs">
-                                {tx.status}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                            <motion.div 
+                              className="text-xs text-right"
+                              initial={{ opacity: 0 }}
+                              animate={{ 
+                                opacity: 1,
+                                transition: {
+                                  delay: 0.4 + (index * 0.1) + 0.2,
+                                  duration: 0.3
+                                }
+                              }}
+                            >
+                              <div className="text-muted-foreground">
+                                {new Date(tx.timestamp).toLocaleDateString()} {new Date(tx.timestamp).toLocaleTimeString()}
+                              </div>
+                              <div>
+                                <Badge 
+                                  variant="outline" 
+                                  className={`text-xs ${tx.status === 'completed' ? 'bg-green-500/10 text-green-600' : ''}`}
+                                >
+                                  {tx.status}
+                                </Badge>
+                              </div>
+                            </motion.div>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               )}
             </TabsContent>
           </Tabs>
