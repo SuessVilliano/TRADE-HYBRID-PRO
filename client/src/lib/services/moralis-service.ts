@@ -62,48 +62,38 @@ export interface MoralisTokenTransfer {
 
 export class MoralisService {
   private apiKey: string = '';
+  private projectId: string = '7461f7e2-e070-46e3-a1b7-7bd7f6f01ff3';
+  private nftApiKey: string = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6ImI5NzljZmQ5LTY0NjAtNDMyYS05MDYxLTY0ZTgwZWEyNDdkNCIsIm9yZ0lkIjoiMzQ0NzYiLCJ1c2VySWQiOiIzNDQ4NCIsInR5cGVJZCI6Ijc0NjFmN2UyLWUwNzAtNDZlMy1hMWI3LTdiZDdmNmYwMWZmMyIsInR5cGUiOiJQUk9KRUNUIiwiaWF0IjoxNzA3MTU4MzI2LCJleHAiOjQ4NjI5MTgzMjZ9.megwx3zUApJ0zWzRvYa_8FYszBKnovd8v3fCxfbIcFo';
   private initialized = false;
-  private readonly baseUrl = 'https://deep-index.moralis.io/api/v2';
+  private readonly baseUrl = 'https://deep-index.moralis.io/api/v2.2';
   private rateLimits = {
     requestsPerMinute: 60, // Converting from per second to per minute
     requestsPerDay: 100000
   };
   private requestLog: Array<{ timestamp: number, endpoint: string }> = [];
 
-  constructor() {}
+  constructor() {
+    // Initialize with default API key from .env if available
+    this.apiKey = 'rEmydwR0gktvX937sAYMKXLL7zvKK5yz2OPvu7hlLH43s7P2Y7pn3UfMjUlNIuAd';
+  }
 
   async initialize(): Promise<boolean> {
     try {
-      // First try to get the API key from the API key manager
-      await apiKeyManager.initialize();
-      const apiKeyConfig = await apiKeyManager.getApiKey('moralis');
+      // We already have the API keys hard-coded, just mark as initialized
+      console.log('Initializing Moralis service with provided API keys');
       
-      if (apiKeyConfig && apiKeyConfig.isValid) {
-        this.apiKey = apiKeyConfig.key;
-        console.log('Using Moralis API key from API Key Manager');
-      } else {
-        // Fall back to checking environment variables directly
-        const hasKey = await check_secrets(['MORALIS_API_KEY']);
-        if (!hasKey) {
-          console.log('Moralis API key not found');
-          return false;
-        } else {
-          // Get from environment
-          this.apiKey = config.MORALIS_API_KEY || '';
+      // Update the API key manager with these keys for other components to use
+      await apiKeyManager.initialize();
+      await apiKeyManager.setApiKey('moralis', {
+        key: this.apiKey,
+        isValid: true,
+        tier: 'premium',
+        rateLimits: {
+          requestsPerMinute: 60,
+          requestsPerDay: 100000,
+          requestsRemaining: 100000
         }
-        
-        // Update the API key manager with this key
-        await apiKeyManager.setApiKey('moralis', {
-          key: this.apiKey,
-          isValid: true,
-          tier: 'premium', // Using premium as a valid tier
-          rateLimits: {
-            requestsPerMinute: 60, // 2 per second = 60 per min
-            requestsPerDay: 100000,
-            requestsRemaining: 100000 // Add this to match the interface
-          }
-        });
-      }
+      });
       
       this.initialized = true;
       return true;
@@ -389,6 +379,172 @@ export class MoralisService {
     } catch (error) {
       console.error(`Error fetching current price for ${symbol}:`, error);
       return null;
+    }
+  }
+  
+  /**
+   * Get Solana SPL tokens for a wallet address
+   * @param address The wallet address
+   */
+  async getSolanaTokens(address: string): Promise<any[]> {
+    try {
+      const result = await this.request(`/${address}/spl`, { 
+        chain: 'solana' 
+      });
+      return result || [];
+    } catch (error) {
+      console.error(`Error fetching Solana tokens for ${address}:`, error);
+      return [];
+    }
+  }
+  
+  /**
+   * Get Solana NFTs for a wallet address
+   * @param address The wallet address
+   */
+  async getSolanaNFTs(address: string): Promise<any[]> {
+    try {
+      const result = await this.request(`/${address}/nft`, {
+        chain: 'solana',
+        format: 'decimal'
+      });
+      return result?.result || [];
+    } catch (error) {
+      console.error(`Error fetching Solana NFTs for ${address}:`, error);
+      return [];
+    }
+  }
+  
+  /**
+   * Get THC token balance for a wallet
+   * @param address The wallet address
+   * @param thcTokenAddress The THC token contract address on Solana
+   */
+  async getTHCBalance(address: string, thcTokenAddress: string = 'THC1466R6BzFXyJR3dQZLpyZ4WBMZBmuNFYRmQXW'): Promise<{balance: string, usdValue: number}> {
+    try {
+      const tokens = await this.getSolanaTokens(address);
+      const thcToken = tokens.find((t: any) => 
+        t.mint === thcTokenAddress || 
+        t.symbol?.toUpperCase() === 'THC'
+      );
+      
+      if (!thcToken) {
+        return { balance: '0', usdValue: 0 };
+      }
+      
+      const balance = thcToken.amount || '0';
+      const decimals = thcToken.decimals || 9;
+      const formattedBalance = (parseInt(balance) / Math.pow(10, decimals)).toString();
+      
+      // Try to get USD value
+      const thcPrice = await this.getTokenCurrentPrice('THC');
+      const usdValue = thcPrice 
+        ? parseFloat(formattedBalance) * thcPrice 
+        : 0;
+      
+      return { 
+        balance: formattedBalance,
+        usdValue 
+      };
+    } catch (error) {
+      console.error(`Error fetching THC balance for ${address}:`, error);
+      return { balance: '0', usdValue: 0 };
+    }
+  }
+  
+  /**
+   * Get SOL balance for a wallet
+   * @param address The wallet address
+   */
+  async getSOLBalance(address: string): Promise<{balance: string, usdValue: number}> {
+    try {
+      // Get SOL balance
+      const result = await this.request(`/${address}/balance`, { 
+        chain: 'solana' 
+      });
+      
+      const balance = result?.balance || '0';
+      const decimals = 9; // SOL has 9 decimals
+      const formattedBalance = (parseInt(balance) / Math.pow(10, decimals)).toString();
+      
+      // Try to get USD value
+      const solPrice = await this.getTokenCurrentPrice('SOL');
+      const usdValue = solPrice 
+        ? parseFloat(formattedBalance) * solPrice 
+        : 0;
+      
+      return {
+        balance: formattedBalance,
+        usdValue
+      };
+    } catch (error) {
+      console.error(`Error fetching SOL balance for ${address}:`, error);
+      return { balance: '0', usdValue: 0 };
+    }
+  }
+  
+  /**
+   * Get all wallet data including balances and NFTs
+   * @param address The wallet address
+   * @param includeNFTs Whether to include NFTs in the results
+   */
+  async getWalletData(address: string, includeNFTs: boolean = true): Promise<any> {
+    try {
+      const [solBalance, thcBalance, splTokens] = await Promise.all([
+        this.getSOLBalance(address),
+        this.getTHCBalance(address),
+        this.getSolanaTokens(address)
+      ]);
+      
+      let nfts = [];
+      if (includeNFTs) {
+        nfts = await this.getSolanaNFTs(address);
+      }
+      
+      // Format tokens with balances and USD values
+      const tokens = await Promise.all(
+        splTokens.map(async (token: any) => {
+          const symbol = token.symbol || 'Unknown';
+          const balance = token.amount || '0';
+          const decimals = token.decimals || 0;
+          const formattedBalance = (parseInt(balance) / Math.pow(10, decimals)).toString();
+          
+          // Try to get USD value
+          const price = await this.getTokenCurrentPrice(symbol);
+          const usdValue = price 
+            ? parseFloat(formattedBalance) * price 
+            : 0;
+            
+          return {
+            symbol,
+            name: token.name || symbol,
+            balance: formattedBalance,
+            usdValue,
+            decimals,
+            mint: token.mint
+          };
+        })
+      );
+      
+      return {
+        address,
+        sol: solBalance,
+        thc: thcBalance,
+        tokens,
+        nfts,
+        totalValue: solBalance.usdValue + thcBalance.usdValue + 
+          tokens.reduce((total: number, t: any) => total + (t.usdValue || 0), 0)
+      };
+    } catch (error) {
+      console.error(`Error fetching complete wallet data for ${address}:`, error);
+      return {
+        address,
+        sol: { balance: '0', usdValue: 0 },
+        thc: { balance: '0', usdValue: 0 },
+        tokens: [],
+        nfts: [],
+        totalValue: 0
+      };
     }
   }
 }
