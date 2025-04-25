@@ -13,14 +13,13 @@ const router = express.Router();
 router.get('/rpc-url', (req, res) => {
   try {
     // Get RPC URL from environment variables
-    const rpcUrl = process.env.SOLANA_RPC_URL;
+    let rpcUrl = process.env.SOLANA_RPC_URL;
     
+    // Use a default public endpoint if the environment variable is not set
     if (!rpcUrl) {
-      console.warn('SOLANA_RPC_URL environment variable not found');
-      return res.status(404).json({ 
-        error: 'Solana RPC URL not configured',
-        rpcUrl: null
-      });
+      console.warn('SOLANA_RPC_URL environment variable not found, using public fallback');
+      // Use Alchemy's public Solana endpoint as a fallback
+      rpcUrl = 'https://solana-mainnet.g.alchemy.com/v2/demo';
     }
     
     console.log('Providing Solana RPC URL to client');
