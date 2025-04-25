@@ -158,8 +158,11 @@ export const SolanaAuthProvider: React.FC<SolanaAuthProviderProps> = ({ children
         throw new Error('Failed to sign message');
       }
       
-      // Convert signature to base58 for sending to server
-      const signature = bs58.encode(signedMessage);
+      // Use a browser-compatible method to encode the signature
+      // Convert Uint8Array to hex string instead of using bs58
+      const signature = Array.from(signedMessage)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
       
       // Mock authentication response - in a real app, we'd verify with the server
       // Here we're just setting the auth state based on having a valid signature
