@@ -27,28 +27,28 @@ const documents: DocumentInfo[] = [
     title: 'Trade Hybrid Knowledge Base',
     description: 'Core platform information and reference',
     icon: <Book className="h-6 w-6" />,
-    filename: 'public/docs/TradeHybrid_Knowledge_Base.md'
+    filename: 'TradeHybrid_Knowledge_Base.md'
   },
   {
     id: DocumentType.Support,
     title: 'Support Guide',
     description: 'Troubleshooting and common solutions',
     icon: <HelpCircle className="h-6 w-6" />,
-    filename: 'public/docs/TradeHybrid_Support_Guide.md'
+    filename: 'TradeHybrid_Support_Guide.md'
   },
   {
     id: DocumentType.Overview,
     title: 'Platform Overview',
     description: 'Architecture and technical details',
     icon: <Info className="h-6 w-6" />,
-    filename: 'public/docs/Trade_Hybrid_Platform_Overview.md'
+    filename: 'Trade_Hybrid_Platform_Overview.md'
   },
   {
     id: DocumentType.UserGuide,
     title: 'User Guide',
     description: 'Step-by-step instructions for all features',
     icon: <FileText className="h-6 w-6" />,
-    filename: 'public/docs/Comprehensive_TradeHybrid_Guide.md'
+    filename: 'Comprehensive_TradeHybrid_Guide.md'
   }
 ];
 
@@ -81,10 +81,12 @@ const KnowledgeBaseViewer: React.FC = () => {
     setLoading(true);
     setError(null);
 
-    console.log(`Loading document: ${currentDocument.filename}`);
+    // Extract just the filename part, removing any directory references
+    const fileName = currentDocument.filename.split('/').pop();
+    console.log(`Loading document: docs/${fileName}`);
 
     // Fetch the markdown file
-    fetch(`/${currentDocument.filename}`)
+    fetch(`/docs/${fileName}`)
       .then(response => {
         if (!response.ok) {
           throw new Error(`Failed to load document: ${response.status}`);
@@ -115,15 +117,15 @@ const KnowledgeBaseViewer: React.FC = () => {
   // If no document is selected, show the document list
   if (!documentId) {
     return (
-      <div className="w-full max-w-6xl mx-auto px-4 py-8">
+      <div className="w-full max-w-6xl mx-auto px-4 py-8 bg-gray-900 min-h-screen">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold">Trade Hybrid Documentation</h1>
-            <p className="text-gray-500">Browse guides and resources</p>
+            <h1 className="text-2xl font-bold text-white">Trade Hybrid Documentation</h1>
+            <p className="text-gray-300">Browse guides and resources</p>
           </div>
           <button 
             onClick={handleBack}
-            className="inline-flex items-center px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+            className="inline-flex items-center px-4 py-2 rounded-md bg-gray-800 text-gray-200 hover:bg-gray-700 transition-colors"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
@@ -134,7 +136,7 @@ const KnowledgeBaseViewer: React.FC = () => {
           <input
             type="text"
             placeholder="Search documentation..."
-            className="w-full p-3 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-3 pl-10 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -152,15 +154,15 @@ const KnowledgeBaseViewer: React.FC = () => {
               <div 
                 key={doc.id}
                 onClick={() => navigate(`/knowledge/${doc.id}`)}
-                className="border rounded-lg p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                className="border border-gray-700 rounded-lg p-6 cursor-pointer bg-gray-800 hover:bg-gray-700 transition-colors"
               >
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 text-blue-500 mr-4">
+                  <div className="flex-shrink-0 text-blue-400 mr-4">
                     {doc.icon}
                   </div>
                   <div>
-                    <h2 className="text-lg font-medium">{doc.title}</h2>
-                    <p className="text-gray-500 mt-1">{doc.description}</p>
+                    <h2 className="text-lg font-medium text-white">{doc.title}</h2>
+                    <p className="text-gray-300 mt-1">{doc.description}</p>
                   </div>
                 </div>
               </div>
@@ -173,12 +175,12 @@ const KnowledgeBaseViewer: React.FC = () => {
   // Show loading state
   if (loading) {
     return (
-      <div className="w-full max-w-6xl mx-auto px-4 py-8">
+      <div className="w-full max-w-6xl mx-auto px-4 py-8 bg-gray-900 min-h-screen">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-4 bg-gray-200 rounded w-full"></div>
-          <div className="h-4 bg-gray-200 rounded w-full"></div>
-          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          <div className="h-8 bg-gray-700 rounded w-1/4"></div>
+          <div className="h-4 bg-gray-700 rounded w-full"></div>
+          <div className="h-4 bg-gray-700 rounded w-full"></div>
+          <div className="h-4 bg-gray-700 rounded w-3/4"></div>
         </div>
       </div>
     );
@@ -187,22 +189,22 @@ const KnowledgeBaseViewer: React.FC = () => {
   // Show error state
   if (error) {
     return (
-      <div className="w-full max-w-6xl mx-auto px-4 py-8">
+      <div className="w-full max-w-6xl mx-auto px-4 py-8 bg-gray-900 min-h-screen">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold">Error</h1>
+            <h1 className="text-2xl font-bold text-white">Error</h1>
           </div>
           <button 
             onClick={handleBack}
-            className="inline-flex items-center px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+            className="inline-flex items-center px-4 py-2 rounded-md bg-gray-800 text-gray-200 hover:bg-gray-700 transition-colors"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </button>
         </div>
-        <div className="bg-red-50 border-l-4 border-red-500 p-4">
-          <p className="text-red-700">{error}</p>
-          <p className="text-gray-700 mt-2">Please try again later or contact support.</p>
+        <div className="bg-gray-800 border-l-4 border-red-500 p-4 rounded">
+          <p className="text-red-400">{error}</p>
+          <p className="text-gray-300 mt-2">Please try again later or contact support.</p>
         </div>
       </div>
     );
@@ -210,18 +212,18 @@ const KnowledgeBaseViewer: React.FC = () => {
 
   // Show document content
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 py-8">
+    <div className="w-full max-w-6xl mx-auto px-4 py-8 bg-gray-900 min-h-screen">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">{currentDocument?.title}</h1>
+        <h1 className="text-2xl font-bold text-white">{currentDocument?.title}</h1>
         <button 
           onClick={handleBack}
-          className="inline-flex items-center px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+          className="inline-flex items-center px-4 py-2 rounded-md bg-gray-800 text-gray-200 hover:bg-gray-700 transition-colors"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Documents
         </button>
       </div>
-      <div className="prose prose-invert dark:prose-invert max-w-none bg-gray-900 text-gray-100 p-6 rounded-lg">
+      <div className="prose prose-invert dark:prose-invert max-w-none bg-gray-800 text-gray-100 p-6 rounded-lg shadow-lg">
         <ReactMarkdown>{content}</ReactMarkdown>
       </div>
     </div>
