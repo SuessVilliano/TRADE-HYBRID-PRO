@@ -4,6 +4,7 @@ import { Button } from './button';
 import { BrainCircuit, Sparkles, ArrowUp, ArrowDown, Hourglass, Copy, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { CopyTradeButton } from '../trade/copy-trade-button';
 
 interface TradeSignal {
   id: string;
@@ -478,14 +479,33 @@ export function TradeSignals({ symbol = 'BTCUSDT' }: TradeSignalsProps) {
                     {signal.confidence}% confidence
                   </span>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs bg-blue-950/30 border-blue-800/50 hover:bg-blue-900/50 text-blue-300 mt-2 w-full sm:w-auto"
-                  onClick={() => openAbatevTradePanel(signal)}
-                >
-                  <ExternalLink className="h-3 w-3 mr-1" /> Trade with ABATEV
-                </Button>
+                <div className="flex gap-2 mt-2 w-full sm:w-auto">
+                  <CopyTradeButton 
+                    signal={{
+                      id: signal.id,
+                      symbol: signal.symbol,
+                      type: signal.type,
+                      entry: signal.price,
+                      stopLoss: signal.stopLoss,
+                      takeProfit: signal.targetPrice,
+                      timestamp: new Date(signal.timestamp),
+                      source: signal.provider || 'TradeHybrid AI',
+                      risk: 1,
+                      notes: signal.signal,
+                      timeframe: signal.timeframe,
+                      status: signal.status as 'active' | 'completed' | 'cancelled'
+                    }}
+                    size="sm"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs bg-blue-950/30 border-blue-800/50 hover:bg-blue-900/50 text-blue-300 flex-1 sm:flex-initial"
+                    onClick={() => openAbatevTradePanel(signal)}
+                  >
+                    <ExternalLink className="h-3 w-3 mr-1" /> Trade with ABATEV
+                  </Button>
+                </div>
               </div>
               
               <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-700/50">
