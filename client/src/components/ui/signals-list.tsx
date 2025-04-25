@@ -94,6 +94,11 @@ export function SignalsList() {
                   {new Date(signal.timestamp || Date.now()).toLocaleString()}
                 </div>
                 <div className="flex items-center space-x-2">
+                  {signal.status === 'active' && (
+                    <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200">
+                      Active
+                    </Badge>
+                  )}
                   <Badge variant="outline">
                     {signal.risk ? `Risk: ${signal.risk}%` : 'N/A'}
                   </Badge>

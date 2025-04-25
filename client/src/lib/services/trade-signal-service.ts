@@ -13,6 +13,7 @@ export type TradeSignal = {
   risk: number;
   notes?: string;
   timeframe?: string; // Added timeframe field
+  status?: 'active' | 'completed' | 'cancelled'; // Added status field
 };
 
 // Event handlers
@@ -88,7 +89,8 @@ class TradeSignalService {
             source: apiSignal.Provider || apiSignal.provider || 'API',
             risk: 1,
             notes: apiSignal.Notes || apiSignal.notes || `${timeframe} timeframe signal`,
-            timeframe: timeframe
+            timeframe: timeframe,
+            status: (apiSignal.Status || 'active').toLowerCase() as 'active' | 'completed' | 'cancelled'
           };
         });
         

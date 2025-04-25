@@ -16,31 +16,38 @@ export function CopyTradeButton({ signal, size = 'default' }: CopyTradeButtonPro
     setCopying(true);
     
     try {
-      // In a real implementation, this would send the signal to an actual trading system
-      // For now we just simulate a successful copy operation
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      // Create a formatted string of the trade details to copy to clipboard
+      const tradeDetails = `
+${signal.type.toUpperCase()} ${signal.symbol}
+Entry: ${signal.entry}
+Stop Loss: ${signal.stopLoss}
+Take Profit: ${signal.takeProfit}
+Risk/Reward: ${((signal.takeProfit - signal.entry) / (signal.entry - signal.stopLoss)).toFixed(1)}
+      `.trim();
       
+      // Copy the formatted trade details to clipboard
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(tradeDetails);
+      } else {
+        // Fallback for browsers that don't support the Clipboard API
+        const textArea = document.createElement('textarea');
+        textArea.value = tradeDetails;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      
+      // Show success message
       toast.success(`Signal copied successfully`, {
         description: `${signal.type.toUpperCase()} ${signal.symbol} at ${signal.entry}`,
         duration: 3000,
       });
       
-      // If you had an API endpoint to create a trade:
-      // await fetch('/api/trades/execute', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     signalId: signal.id,
-      //     symbol: signal.symbol,
-      //     type: signal.type,
-      //     entry: signal.entry,
-      //     stopLoss: signal.stopLoss,
-      //     takeProfit: signal.takeProfit
-      //   })
-      // });
-      
-      // Set a successful state
-      setCopying(true);
+      // Reset copying state after a delay
       setTimeout(() => {
         setCopying(false);
       }, 2000);
