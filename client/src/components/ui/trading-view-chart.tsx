@@ -119,25 +119,47 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({ symbol, timeframe =
       };
       
       if (window.TradingView) {
+        // TradingView is already available, use it directly
         loadChart();
       } else {
-        // Load TradingView script if not already in document
-        const existingScript = document.querySelector('script[src="https://s3.tradingview.com/tv.js"]');
+        // Check for existing script that might be loading
+        const existingScript = document.querySelector('script[src*="tradingview.com/tv.js"]');
         
         if (!existingScript) {
+          // No existing script - load a new one
           const script = document.createElement('script');
+          script.id = 'tradingview-widget-script';
           script.src = 'https://s3.tradingview.com/tv.js';
           script.async = true;
-          script.onload = loadChart;
+          
+          // When script loaded successfully
+          script.onload = () => {
+            console.log('TradingView script loaded successfully');
+            // Delay chart initialization slightly to ensure TradingView is fully initialized
+            setTimeout(loadChart, 300);
+          };
+          
+          // Handle script loading error
           script.onerror = () => {
             setError('Failed to load TradingView chart. Please check your internet connection.');
             setLoading(false);
             console.error('Failed to load TradingView script');
           };
+          
           document.head.appendChild(script);
         } else {
-          // If script is already in document but TradingView not defined yet, wait for it
-          loadChart();
+          // Script exists but TV object not ready yet - set up polling
+          const checkTradingViewLoaded = () => {
+            if (window.TradingView) {
+              // Once available, initialize chart
+              loadChart();
+            } else {
+              // Not loaded yet - check again soon
+              setTimeout(checkTradingViewLoaded, 300);
+            }
+          };
+          
+          checkTradingViewLoaded();
         }
       }
     } catch (err) {
@@ -172,7 +194,24 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({ symbol, timeframe =
   };
   
   useEffect(() => {
-    return loadTradingViewChart();
+    const cleanup = loadTradingViewChart();
+    
+    // Add window resize listener to help with chart rendering
+    const handleResize = () => {
+      if (container.current && window.TradingView) {
+        const event = new Event('resize');
+        window.dispatchEvent(event);
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (typeof cleanup === 'function') {
+        cleanup();
+      }
+    };
   }, [symbol, selectedTimeframe]);
   
   const handleTimeframeChange = (tf: string) => {
@@ -207,7 +246,6 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({ symbol, timeframe =
       
       <div className="flex-grow relative">
         <div 
-          id={`tv-chart-${symbol.replace(/[^a-zA-Z0-9]/g, '')}`} 
           ref={container} 
           className="w-full h-full"
         />
