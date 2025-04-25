@@ -167,56 +167,89 @@ export function WalletPanel() {
   };
 
   // Execute staking
-  const executeStake = () => {
-    if (!selectedStakingOption || !stakeAmount) return;
+  const executeStake = async () => {
+    if (!selectedStakingOption || !stakeAmount || !publicKey) return;
     
     try {
-      toast.success('Staking transaction initiated', {
-        description: `Staking ${stakeAmount} ${selectedStakingOption.token} for ${selectedStakingOption.lockupPeriod} days at ${selectedStakingOption.apy}% APY`
+      // Show pending state
+      toast.loading('Initiating staking transaction...', {
+        id: 'stake-transaction',
+      });
+      
+      // Call the moralis service to stake tokens
+      const stakingResult = await moralisService.stakeTokens(
+        publicKey.toString(),
+        selectedStakingOption.token,
+        stakeAmount,
+        selectedStakingOption.lockupPeriod,
+        selectedStakingOption.apy
+      );
+      
+      // Update UI with successful transaction
+      toast.success('Staking transaction successful', {
+        id: 'stake-transaction',
+        description: `You've staked ${stakeAmount} ${selectedStakingOption.token} for ${selectedStakingOption.lockupPeriod} days at ${selectedStakingOption.apy}% APY`
       });
       
       // Reset form
       setSelectedStakingOption(null);
       setStakeAmount(0);
       
-      // Reload wallet data after short delay to simulate transaction
-      setTimeout(() => {
-        if (publicKey) {
-          fetchWalletData(publicKey.toString());
-        }
-      }, 1500);
+      // Refresh wallet data to show updated balances and staking positions
+      fetchWalletData(publicKey.toString());
+      
+      // Switch to staking tab to show the staking position
+      setActiveTab('staking');
+      
     } catch (error) {
       console.error('Error during staking:', error);
       toast.error('Staking failed', {
+        id: 'stake-transaction',
         description: 'There was an error processing your staking request. Please try again.'
       });
     }
   };
 
   // Handle THC purchase
-  const handlePurchase = () => {
-    if (purchaseAmount <= 0) return;
+  const handlePurchase = async () => {
+    if (purchaseAmount <= 0 || !publicKey) return;
     
     try {
-      toast.success('Purchase initiated', {
-        description: `Purchasing ${purchaseAmount} THC tokens. Follow the payment instructions to complete your order.`
+      // Show pending toast
+      toast.loading('Processing your purchase...', {
+        id: 'purchase-transaction',
       });
       
-      setPurchaseMessage(`Thank you for your purchase of ${purchaseAmount} THC tokens. Your tokens will be delivered to your wallet once payment is confirmed.`);
+      // Initiate purchase via Moralis service
+      const purchaseResult = await moralisService.purchaseTHC(
+        publicKey.toString(),
+        purchaseAmount
+      );
       
-      // Reset form after delay
-      setTimeout(() => {
-        setPurchaseAmount(10);
-        setPurchaseMessage('');
+      if (purchaseResult) {
+        // Show success toast
+        toast.success('Purchase successful', {
+          id: 'purchase-transaction',
+          description: `${purchaseAmount} THC tokens have been added to your wallet.`
+        });
         
-        // Reload wallet data
-        if (publicKey) {
-          fetchWalletData(publicKey.toString());
-        }
-      }, 3000);
+        setPurchaseMessage(`Thank you for your purchase of ${purchaseAmount} THC tokens. The tokens have been delivered to your wallet.`);
+        
+        // Reload wallet data to show updated balance
+        fetchWalletData(publicKey.toString());
+        
+        // Reset form after delay
+        setTimeout(() => {
+          setPurchaseAmount(10);
+          setPurchaseMessage('');
+        }, 3000);
+      } else {
+        throw new Error('Purchase transaction failed');
+      }
     } catch (error) {
       console.error('Error during purchase:', error);
       toast.error('Purchase failed', {
+        id: 'purchase-transaction',
         description: 'There was an error processing your purchase. Please try again.'
       });
     }
@@ -532,10 +565,138 @@ export function WalletPanel() {
               {/* Active Staking */}
               <div className="mt-6">
                 <h3 className="font-medium mb-2">Your Active Stakes</h3>
-                <div className="border rounded-md p-4 bg-slate-50 dark:bg-slate-800/50 text-center">
-                  <p className="text-muted-foreground">You have no active staking positions</p>
-                </div>
+                {loadingWallet ? (
+                  <div className="space-y-2">
+                    <div className="h-24 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-md"></div>
+                  </div>
+                ) : stakingPositions.length > 0 ? (
+                  <div className="space-y-3">
+                    {stakingPositions.map((position) => (
+                      <div 
+                        key={position.id} 
+                        className="border rounded-md p-4 bg-slate-50 dark:bg-slate-800/50"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 rounded-full overflow-hidden">
+                              <img 
+                                src={position.tokenSymbol === 'SOL' ? '/images/crypto/sol.png' : '/images/crypto/thc.png'} 
+                                alt={position.tokenSymbol} 
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                            <div>
+                              <div className="font-medium">{position.amount} {position.tokenSymbol}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {new Date(position.startDate).toLocaleDateString()} - {new Date(position.endDate).toLocaleDateString()}
+                              </div>
+                            </div>
+                          </div>
+                          <Badge variant={position.status === 'active' ? 'default' : 'outline'} className="ml-auto">
+                            {position.status === 'active' ? 'Active' : position.status === 'completed' ? 'Completed' : 'Cancelled'}
+                          </Badge>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">APY:</span> 
+                            <span className="ml-1 font-medium text-green-600">{position.apy}%</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Est. Reward:</span> 
+                            <span className="ml-1 font-medium">{position.estimatedReward.toFixed(2)} {position.tokenSymbol}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Staked:</span> 
+                            <span className="ml-1 font-medium">{position.amount} {position.tokenSymbol}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Days remaining:</span> 
+                            <span className="ml-1 font-medium">
+                              {position.status === 'active' 
+                                ? Math.max(0, Math.floor((new Date(position.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) 
+                                : 0}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {position.status === 'active' && (
+                          <div className="mt-3 flex justify-end">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={async () => {
+                                if (!publicKey) return;
+                                
+                                toast.loading('Processing unstake request...', {
+                                  id: 'unstake-transaction',
+                                });
+                                
+                                try {
+                                  await moralisService.unstakeTokens(publicKey.toString(), position.id);
+                                  
+                                  toast.success('Unstaked successfully', {
+                                    id: 'unstake-transaction',
+                                    description: `Your ${position.amount} ${position.tokenSymbol} has been returned to your wallet`
+                                  });
+                                  
+                                  // Reload wallet data
+                                  fetchWalletData(publicKey.toString());
+                                } catch (error) {
+                                  console.error('Error unstaking:', error);
+                                  toast.error('Failed to unstake', {
+                                    id: 'unstake-transaction',
+                                    description: 'There was an error processing your unstake request'
+                                  });
+                                }
+                              }}
+                            >
+                              Unstake Early
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="border rounded-md p-4 bg-slate-50 dark:bg-slate-800/50 text-center">
+                    <p className="text-muted-foreground">You have no active staking positions</p>
+                  </div>
+                )}
               </div>
+              
+              {/* Transaction History */}
+              {userTransactions.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="font-medium mb-2">Recent Transactions</h3>
+                  <div className="border rounded-md p-4 bg-slate-50 dark:bg-slate-800/50">
+                    <div className="space-y-2">
+                      {userTransactions.slice(0, 5).map((tx: any) => (
+                        <div key={tx.id} className="flex justify-between items-center py-1 border-b border-slate-200 dark:border-slate-700 last:border-0">
+                          <div className="flex items-center gap-2">
+                            <div className="capitalize font-medium">
+                              {tx.type}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {tx.amount} {tx.token}
+                            </div>
+                          </div>
+                          <div className="text-xs text-right">
+                            <div className="text-muted-foreground">
+                              {new Date(tx.timestamp).toLocaleDateString()} {new Date(tx.timestamp).toLocaleTimeString()}
+                            </div>
+                            <div>
+                              <Badge variant="outline" className="text-xs">
+                                {tx.status}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         )}
