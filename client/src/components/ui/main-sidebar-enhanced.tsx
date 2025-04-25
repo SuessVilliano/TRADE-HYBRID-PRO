@@ -375,6 +375,15 @@ export const MainSidebar: React.FC<{
             active={isActive("/shop")} 
             onClick={mobile ? onClose : undefined}
           />
+          
+          {/* Knowledge Base */}
+          <NavItem 
+            href="/knowledge" 
+            icon={<BookOpen className="h-5 w-5" />} 
+            label="Knowledge Base" 
+            active={isActive("/knowledge")} 
+            onClick={mobile ? onClose : undefined}
+          />
         </div>
 
         <Separator />

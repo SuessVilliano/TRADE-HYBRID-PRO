@@ -109,6 +109,7 @@ import AffiliatePage from './pages/affiliate';
 import ShopPage from './pages/shop';
 import LiveStreamPage from './pages/live-stream';
 import NotificationSettingsPage from './pages/notification-settings';
+import KnowledgeBasePage from './pages/KnowledgeBasePage';
 
 const App: React.FC = () => {
   console.log("App component rendering");
@@ -267,6 +268,10 @@ const App: React.FC = () => {
                   <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
                   <Route path="/live-stream" element={<ProtectedRoute><LiveStreamPage /></ProtectedRoute>} />
                   <Route path="/social-network" element={<ProtectedRoute><SocialNetworkPage /></ProtectedRoute>} />
+                  
+                  {/* Knowledge Base */}
+                  <Route path="/knowledge" element={<KnowledgeBasePage />} />
+                  <Route path="/knowledge/:documentId" element={<KnowledgeBasePage />} />
                   
                   {/* Admin Pages */}
                   <Route path="/admin/notifications" element={
