@@ -46,6 +46,7 @@ import {
 
 // Import validator components
 import WalletConnect from '../components/validator/WalletConnect';
+import { EnhancedWalletConnect } from '../components/validator/EnhancedWalletConnect';
 import StakeForm from '../components/validator/StakeForm';
 import ClaimRewards from '../components/validator/ClaimRewards';
 import NftBoostIndicator from '../components/validator/NftBoostIndicator';
@@ -1060,7 +1061,7 @@ export default function StakeAndBake() {
                 </Card>
                 
                 {/* Wallet Connect Component */}
-                <WalletConnect />
+                <EnhancedWalletConnect />
                 
                 {/* NFT Boost Indicator - shows once wallet is connected */}
                 <NftBoostIndicator />
