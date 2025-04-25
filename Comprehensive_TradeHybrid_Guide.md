@@ -1,945 +1,963 @@
-# Trade Hybrid Platform: Comprehensive Guide
+# Comprehensive TradeHybrid Guide
 
 ## Table of Contents
-1. [Platform Overview](#platform-overview)
-2. [Dashboard and Navigation](#dashboard-and-navigation)
-3. [Trading Tools](#trading-tools)
-4. [Control Center Tabs](#control-center-tabs)
-5. [Learning Center](#learning-center)
-6. [Trade Journal](#trade-journal)
-7. [ABATEV Smart Trading System](#abatev-smart-trading-system)
-8. [Matrix Affiliate System](#matrix-affiliate-system)
-9. [3D Metaverse Environment](#3d-metaverse-environment)
-10. [Game Center](#game-center)
-11. [Wallet Integration](#wallet-integration)
-12. [Settings and Customization](#settings-and-customization)
-13. [API Integrations](#api-integrations)
-14. [Troubleshooting](#troubleshooting)
-15. [FAQ](#faq)
 
-## Platform Overview
-
-Trade Hybrid is a comprehensive decentralized trading platform that combines blockchain technology with traditional trading capabilities. The platform features an AI-driven analytics engine, integrated learning center, customizable dashboard, and a unique Matrix affiliate system.
-
-### Key Features
-- Customizable trading dashboard with multiple panels
-- Advanced charting tools including TradingView and DEX charts
-- AI-powered trading signals and insights
-- Comprehensive trade journal with analytics
-- Educational content and learning paths
-- Affiliate marketing system with blockchain-based commissions
-- 3D metaverse trading environment
-- Blockchain wallet integration
-
-## Dashboard and Navigation
-
-### Main Navigation
-The platform features a customizable bottom navigation bar that can be accessed on all pages. Users can reorder and hide/show tabs based on their preferences.
-
-**Default Navigation Tabs:**
-- **Home**: Platform dashboard and overview
-- **Trade**: Main trading interface
-- **Learn**: Learning center access
-- **Journal**: Trade tracking and analytics
-- **Game**: Access to Trade Runner and trading games
-- **Metaverse**: 3D trading environment
-- **Affiliate**: Matrix marketing system
-- **Settings**: Account and platform configuration
-
-### Customizing Navigation
-1. Click on the gear icon in the navigation bar
-2. Drag and drop tabs to reorder them
-3. Toggle visibility for each tab
-4. Click "Save" to apply your changes
-
-## Trading Tools
-
-The trading dashboard is fully customizable with various panel types that can be arranged according to your preference.
-
-### Dashboard Layouts
-The platform offers several predefined layouts:
-- **Default**: Standard trading setup with primary chart and order panels
-- **Dual Chart**: Two chart panels (TradingView and DEX) side by side
-- **DEX Focused**: Optimized for decentralized exchange trading
-- **Analytics**: Emphasis on performance metrics and analysis
-- **Custom**: Create and save your own layout
-
-### Available Panels
-
-#### Chart Panels
-- **TradingView Chart**: Professional grade charting with technical indicators
-  - **Configuration**: Symbol, timeframe, indicators, drawing tools
-  - **Features**: Save layouts, apply studies, multiple timeframes
-  - **Shortcut Keys**: Press "S" for screenshots, "Spacebar" to toggle crosshair
-
-- **DEX Chart**: Decentralized exchange price charts
-  - **Supported DEXes**: Jupiter, OpenBook, Raydium
-  - **Features**: Liquidity visualization, trade history, depth chart
-  - **Settings**: Custom time ranges, indicator overlays, theme options
-
-#### Data Panels
-- **Order Book**: Shows buy and sell orders for selected asset
-  - **Display Options**: Depth visualization, grouped prices, custom colors
-  - **Interactions**: Click price level to auto-fill order entry
-
-- **Market Depth**: Visual representation of buy/sell order volume
-  - **Display Types**: Area chart, bars, or heatmap
-  - **Settings**: Depth range, zoom level, refresh rate
-
-- **Position Manager**: Track and manage open positions
-  - **Features**: One-click close, modify orders, add stop-loss/take-profit
-  - **Views**: List view, grid view, or compact view
-  - **Sorting**: By P/L, entry time, or symbol
-
-#### Analysis Panels
-- **Trading Signals**: AI-driven trade recommendations
-  - **Signal Sources**: Google Sheets integration, platform algorithms
-  - **Display**: Entry/exit levels, confidence rating, timeframe
-  - **Filtering**: By asset class, timeframe, or signal provider
-
-- **Performance Metrics**: Trading statistics and analytics
-  - **Metrics**: Win rate, average profit/loss, drawdown
-  - **Visualization**: Charts and graphs of performance over time
-  - **Timeframes**: Daily, weekly, monthly, yearly, or custom ranges
-
-- **AI Insights**: Personalized trading pattern analysis
-  - **Features**: Pattern recognition, behavior analysis, improvement suggestions
-  - **Categories**: Pattern, Performance, Risk, Opportunity
-  - **Personalization**: Tailored to your trade history and style
-
-- **Market News**: Latest financial and crypto news
-  - **Sources**: Major financial outlets, crypto news, Twitter feeds
-  - **Filtering**: By asset, topic, or source
-  - **Features**: Sentiment analysis, relevance scoring
-
-#### Order Panels
-- **Order Entry**: Place trades and manage orders
-  - **Order Types**: Market, limit, stop, stop-limit, trailing stop
-  - **Features**: Risk calculator, position sizing tools, one-click trading
-  - **Templates**: Save and load common order configurations
-
-### Panel Management
-- **Adding Panels**: Click "+" in the dashboard header and select panel type
-- **Moving Panels**: Drag panel headers to reposition
-- **Resizing**: Drag panel edges or corners
-- **Removing**: Click "X" in panel header
-- **Minimizing**: Click "-" to collapse to taskbar
-- **Settings**: Click gear icon in panel header to configure
-
-## Control Center Tabs
-
-The Control Center serves as the main hub for trading activities, offering quick access to various tools and features.
-
-### Chart
-- **Description**: Primary trading chart with multiple timeframes and indicators
-- **Features**:
-  - Multiple chart types (candlestick, line, bars, Heikin Ashi)
-  - Technical indicators library (200+ indicators)
-  - Drawing tools for technical analysis
-  - Multi-timeframe analysis
-  - One-click trading from chart
-- **Usage**:
-  - Change symbols using the search box
-  - Add indicators by clicking the "Indicators" button
-  - Save chart layouts for quick access
-  - Use drawing tools for trend lines and patterns
-
-### Market Scanner
-- **Description**: Tool for finding trading opportunities based on criteria
-- **Features**:
-  - Pre-built scanners for different strategies
-  - Customizable scan criteria
-  - Real-time updates of scan results
-  - One-click chart access from results
-- **Usage**:
-  - Select market (Crypto, Stocks, Forex)
-  - Choose or create a scanner template
-  - Adjust parameters as needed
-  - Sort results by column
-  - Click on symbol to open chart
-
-### Trading Signals
-- **Description**: AI-generated trade suggestions from multiple sources
-- **Features**:
-  - Entry and exit price levels
-  - Stop-loss and take-profit recommendations
-  - Risk/reward calculation
-  - Signal confidence rating
-  - Historical performance metrics
-- **Setup**:
-  - Connect Google Sheets (Settings > API Credentials)
-  - Format sheet with proper columns (see API Integration section)
-  - Enable automatic updates in settings
-- **Usage**:
-  - Filter signals by asset class or timeframe
-  - Click signal to load chart with levels
-  - Use "Take Trade" button to execute with recommended parameters
-
-### ABATEV Smart Trade
-- **Description**: Proprietary trade methodology with systematic entry/exit
-- **Features**:
-  - Structured trade analysis framework
-  - Systematic entry and exit rules
-  - Risk management tools
-  - Trade monitoring dashboard
-- **Usage**:
-  - Select trading pair from dropdown
-  - Follow the step-by-step ABATEV process
-  - Use verification checklist before entering trade
-  - Track trade progress through phases
-  - Document results for your trading journal
-
-### Copy Trading
-- **Description**: Follow and copy trades from successful traders
-- **Features**:
-  - Browse trader leaderboard
-  - View detailed performance statistics
-  - Set allocation and risk limits
-  - Real-time trade copying
-- **Setup**:
-  - Enable copy trading in Settings > Trading
-  - Set maximum position size and risk parameters
-  - Connect broker or exchange account
-- **Usage**:
-  - Browse traders by performance metrics
-  - Click "Follow" to copy a trader's positions
-  - Adjust copy amount per trade
-  - Monitor positions in the Portfolio tab
-
-### AI Assistant
-- **Description**: AI-powered trading companion for analysis and suggestions
-- **Features**:
-  - Natural language interaction
-  - Market analysis on demand
-  - Strategy suggestions
-  - Learning resources
-- **Usage**:
-  - Ask questions in the chat interface
-  - Request analysis of specific assets
-  - Get explanations of chart patterns or indicators
-  - Receive personalized strategy recommendations
-
-### Trading Bots
-- **Description**: Automated trading strategies with customizable parameters
-- **Features**:
-  - Pre-built strategy templates
-  - Custom strategy builder
-  - Backtesting tools
-  - Performance monitoring
-- **Setup**:
-  - Select bot strategy from library
-  - Configure parameters and risk settings
-  - Connect to exchange via API
-  - Set monitoring preferences
-- **Usage**:
-  - Start/stop bots from the control panel
-  - Monitor performance in real-time
-  - Adjust parameters as needed
-  - Review trading history in Journal
-
-### News Feed
-- **Description**: Curated financial and crypto news from multiple sources
-- **Features**:
-  - Real-time updates
-  - Customizable news sources
-  - Asset-specific filtering
-  - Sentiment analysis
-- **Usage**:
-  - Filter by asset class or specific symbols
-  - Sort by relevance or time
-  - Click headlines to read full articles
-  - Save important news for later reference
-
-### Economic Calendar
-- **Description**: Schedule of economic events that impact markets
-- **Features**:
-  - Economic releases and announcements
-  - Central bank meetings
-  - Impact rating for each event
-  - Customizable alerts
-- **Usage**:
-  - Filter by impact level (high, medium, low)
-  - Set alerts for important events
-  - View historical data for past events
-  - Plan trading around high-impact releases
-
-### Market Overview
-- **Description**: Broad market view across multiple asset classes
-- **Features**:
-  - Heat maps for sector performance
-  - Global market indices
-  - Currency strength meter
-  - Correlation matrix
-- **Usage**:
-  - Toggle between different views (heatmap, list, grid)
-  - Sort by performance or volatility
-  - Click on sectors or assets to drill down
-  - Use time range selector for different perspectives
-
-### Stock Heatmap
-- **Description**: Visual representation of stock market performance by sector
-- **Features**:
-  - Size-based representation of market cap
-  - Color coding for performance
-  - Sector and industry grouping
-  - Filtering options
-- **Usage**:
-  - Choose market (US, Europe, Asia)
-  - Select timeframe for performance comparison
-  - Hover for detailed information
-  - Click stocks to open detailed chart
-
-### Crypto Heatmap
-- **Description**: Visual representation of cryptocurrency performance
-- **Features**:
-  - Market cap weighted display
-  - Color-coded performance
-  - Category filtering
-  - Multiple timeframe options
-- **Usage**:
-  - Select timeframe (1h, 24h, 7d, 30d)
-  - Filter by market cap or category
-  - Click on coins to open detailed chart
-  - Compare relative performance across the market
-
-### Zen Mode
-- **Description**: Distraction-free trading environment with focus tools
-- **Features**:
-  - Minimalist interface
-  - Focus timers
-  - Trading journal integration
-  - Breathing exercises for emotional control
-- **Usage**:
-  - Enter full-screen mode
-  - Set focus session duration
-  - Use breathing exercise between trades
-  - Record trading thoughts directly in journal
-
-## Learning Center
-
-The Learning Center provides structured educational content to help users improve their trading skills and knowledge.
-
-### Learning Paths
-- **Beginner Path**: Fundamental concepts and basic trading knowledge
-- **Intermediate Path**: Advanced strategies and technical analysis
-- **Advanced Path**: Professional techniques and risk management
-- **Specialized Paths**: Asset-specific training (Crypto, Forex, Options)
-
-### Course Structure
-Each course consists of:
-- **Modules**: Themed sections with related content
-- **Lessons**: Individual learning units with content and activities
-- **Quizzes**: Knowledge checks with immediate feedback
-- **Assignments**: Practical activities to apply knowledge
-- **Certificates**: Awarded upon course completion
-
-### Interactive Content
-- **Video Tutorials**: Visual demonstrations of concepts
-- **Interactive Charts**: Hands-on practice with annotations
-- **Trading Simulations**: Risk-free practice scenarios
-- **Community Discussions**: Learn from other traders
-
-### Learning Journal
-- **Description**: Personal note-taking and reflection system
-- **Features**:
-  - Note-taking during lessons
-  - Reflection prompts
-  - Connection to trade journal
-  - Progress tracking
-- **Usage**:
-  - Take notes during courses
-  - Reflect on learning experiences
-  - Connect theory to actual trades
-  - Tag entries for easy reference
-
-### Progress Tracking
-- **Description**: Monitor your educational advancement
-- **Features**:
-  - Course completion percentages
-  - Quiz performance statistics
-  - Learning streak tracking
-  - Recommended next steps
-- **Usage**:
-  - View dashboard for overall progress
-  - Check individual course completion
-  - Identify knowledge gaps from quiz results
-  - Follow personalized learning recommendations
-
-### Certificates
-- **Description**: Verification of completed learning paths
-- **Features**:
-  - Blockchain-verified credentials
-  - Shareable certificates
-  - Profile integration
-  - Achievement showcasing
-- **Usage**:
-  - Complete all required course components
-  - Pass final assessment
-  - Download certificate or share directly
-  - Display on platform profile
-
-## Trade Journal
-
-The Trade Journal is a comprehensive tool for tracking and analyzing your trading activity.
-
-### Journal Features
-- **Trade Entry**: Document all aspects of trades
-- **Performance Analytics**: Statistical analysis of trading results
-- **Emotion Tracking**: Record psychological state during trades
-- **Pattern Recognition**: Identify successful and problematic patterns
-- **Export Options**: Download data in multiple formats
-
-### Journal Tabs
-
-#### Trade Log
-- **Description**: Chronological record of all trading activity
-- **Fields**:
-  - Symbol and market
-  - Entry and exit prices
-  - Position size and direction
-  - Entry and exit times
-  - Profit/loss amounts and percentages
-  - Strategy employed
-  - Trade screenshots
-  - Tags for categorization
-  - Notes and observations
-- **Usage**:
-  - Add trades manually or via broker connection
-  - Upload screenshots for visual reference
-  - Tag trades for better organization
-  - Add detailed notes about decision process
-
-#### Analytics
-- **Description**: Statistical analysis of trading performance
-- **Metrics**:
-  - Win/loss ratio
-  - Profit factor
-  - Average win/loss size
-  - Maximum drawdown
-  - Sharpe and Sortino ratios
-  - Performance by day/time
-  - Performance by strategy
-  - Performance by asset
-- **Visualizations**:
-  - Equity curve
-  - Win/loss distribution
-  - Profit/loss by time period
-  - Drawdown chart
-  - Heat maps for optimal trading times
-- **Usage**:
-  - Select date range for analysis
-  - Filter by strategy, symbol, or tags
-  - Hover on charts for detailed information
-  - Export reports for external analysis
-
-#### Trade Review
-- **Description**: Detailed examination of individual trades
-- **Features**:
-  - Side-by-side comparison of entry and exit
-  - Market conditions during trade
-  - Strategy adherence checklist
-  - Psychological factors assessment
-  - Improvement opportunities identification
-- **Usage**:
-  - Select trade from history
-  - Review all aspects of execution
-  - Rate adherence to trading plan
-  - Identify lessons learned
-  - Create action items for improvement
-
-#### Journal
-- **Description**: Free-form reflections on trading and market observations
-- **Features**:
-  - Rich text editor
-  - Image embedding
-  - Tagging system
-  - Search functionality
-  - Template options
-- **Usage**:
-  - Record daily market observations
-  - Document strategy ideas
-  - Reflect on emotional state
-  - Track progress towards goals
-  - Review entries to identify patterns
-
-### Journal Settings
-- **Auto-import**: Connect broker accounts for automatic trade logging
-- **Templates**: Create custom templates for different trade types
-- **Tags**: Manage and organize your tagging system
-- **Export Options**: Configure data export formats and scheduling
-- **Privacy**: Control what data is shared or kept private
-
-## ABATEV Smart Trading System
-
-ABATEV is Trade Hybrid's proprietary trading methodology that provides a systematic approach to trade analysis and execution.
-
-### ABATEV Framework
-
-#### A - Analysis
-- **Market Analysis**: Overall market conditions and trend identification
-- **Asset Analysis**: Specific analysis of the trading instrument
-- **Timeframe Analysis**: Multiple timeframe confirmation
-- **Usage**:
-  - Assess market structure and trend direction
-  - Analyze volume patterns and key price levels
-  - Confirm signals across multiple timeframes
-  - Document analysis in provided fields
-
-#### B - Before
-- **Entry Criteria**: Specific conditions for trade entry
-- **Risk Assessment**: Evaluation of potential downside
-- **Position Sizing**: Calculation of appropriate trade size
-- **Usage**:
-  - Define exact entry conditions and price levels
-  - Calculate risk-reward ratio before entry
-  - Determine position size based on risk parameters
-  - Set up entry alerts or orders
-
-#### A - After
-- **Post-Entry Analysis**: Immediate market reaction assessment
-- **Initial Management**: First adjustments after trade execution
-- **Usage**:
-  - Evaluate market reaction to your entry
-  - Make initial stop-loss adjustments if necessary
-  - Record initial observations in the trade journal
-  - Monitor for early warning signs
-
-#### T - Through
-- **Trade Management**: Ongoing position monitoring and adjustment
-- **Psychological Management**: Emotional control during the trade
-- **Usage**:
-  - Monitor key technical levels during the trade
-  - Adjust stops based on market movements
-  - Record observations during the trade's lifecycle
-  - Practice emotional discipline techniques
-
-#### E - Exit
-- **Exit Strategy**: Systematic approach to closing positions
-- **Partial Exit Rules**: Guidelines for scaling out of positions
-- **Trailing Techniques**: Methods for maximizing winning trades
-- **Usage**:
-  - Follow predetermined exit rules
-  - Implement trailing stops for winning trades
-  - Scale out at specified target levels
-  - Document exit execution in journal
-
-#### V - Verification
-- **Post-Trade Analysis**: Comprehensive review after completion
-- **Improvement Identification**: Learning opportunities from the trade
-- **Usage**:
-  - Compare actual execution to plan
-  - Rate adherence to methodology
-  - Identify strengths and weaknesses
-  - Create action items for improvement
-
-### ABATEV Panel Usage
-1. Select the trading pair from the dropdown menu
-2. Complete each section of the ABATEV form sequentially
-3. Use the verification checklist before entering trades
-4. Document the entire process in your trade journal
-5. Review completed trades to improve future execution
-
-## Matrix Affiliate System
-
-The Matrix Affiliate System is a multi-level marketing structure that rewards users for referring others to the platform.
-
-### Matrix Structure
-- **Width**: Each level can hold up to 3 direct referrals
-- **Depth**: Commissions extend down to 4 levels deep
-- **Commission Rates**:
-  - Level 1: 10% commission from direct referrals
-  - Level 2: 5% commission from your referrals' referrals
-  - Level 3: 3% commission from level 3 referrals
-  - Level 4: 2% commission from level 4 referrals
-
-### Commission Types
-- **Subscription Commissions**: Recurring payments from member subscriptions
-- **Trading Fee Commissions**: Percentage of trading fees generated
-- **Service Commissions**: Fees from additional services purchased
-
-### Smart Contract Payments
-- **Automatic Distribution**: Commissions sent directly to wallet
-- **Blockchain Verification**: All transactions recorded on-chain
-- **Payment Schedule**: Real-time processing of commissions
-- **Minimum Threshold**: 0.1 SOL for automatic payments
-
-### Qualification Requirements
-- **Active Subscription**: Must maintain platform subscription
-- **Direct Referral**: Need at least one direct referral to earn from levels 2-4
-- **Tier Benefits**: Higher subscription tiers earn increased commission percentages
-
-### Affiliate Dashboard
-- **Description**: Central hub for managing your affiliate business
-- **Features**:
-  - Matrix visualization with filled positions
-  - Commission statistics and history
-  - Referral link and marketing materials
-  - Performance analytics
-- **Usage**:
-  - Track referrals and commission earnings
-  - Monitor matrix structure and growth
-  - Access promotional materials
-  - Analyze performance metrics
-
-### Marketing Materials
-- **Description**: Professional resources for promotion
-- **Available Materials**:
-  - Landing page links with tracking
-  - Banner ads in various formats
-  - Video presentations
-  - Social media content templates
-  - Email marketing materials
-- **Usage**:
-  - Copy your unique referral link
-  - Download marketing materials
-  - Track performance of different materials
-  - Request custom materials if needed
-
-## 3D Metaverse Environment
-
-The Metaverse tab provides access to a 3D virtual environment for social trading and learning interactions.
-
-### Metaverse Features
-- **Virtual Trading Floor**: Interactive space with live market data
-- **Social Interaction**: Voice chat and avatar customization
-- **Learning Areas**: Classrooms and demonstration spaces
-- **Events Hosting**: Webinars and trading competitions
-
-### Navigation Controls
-- **Movement**: WASD keys or arrow keys
-- **Camera**: Mouse for looking around
-- **Interaction**: E key or click on interactive objects
-- **Menu**: ESC key for settings and menu
-- **Voice Chat**: V key to toggle microphone
-
-### Zones and Areas
-- **Main Trading Floor**: Central hub with live market data
-- **Learning Center**: Educational content and presentations
-- **Private Offices**: Personal or group spaces for collaboration
-- **Marketplace**: NFT gallery and digital asset displays
-- **Event Hall**: Space for webinars and group meetings
-
-### Metaverse Settings
-- **Graphics Quality**: Adjust visual fidelity for performance
-- **Audio Settings**: Configure voice chat and sound effects
-- **Avatar Customization**: Personalize your appearance
-- **Privacy Options**: Control visibility and interactions
-
-## Game Center
-
-The Game Center features educational trading games to practice skills in a risk-free environment.
-
-### Trade Runner
-- **Description**: 3D trading simulation game
-- **Features**:
-  - Realistic market scenarios
-  - Skill-based challenges
-  - Leaderboards and achievements
-  - Progressive difficulty levels
-- **Controls**:
-  - Movement: WASD
-  - Interaction: E or mouse click
-  - Trading: Tab to open interface
-  - Camera: Mouse movement
-- **Game Modes**:
-  - Story Mode: Progressive trading challenges
-  - Free Play: Open-ended trading simulation
-  - Challenge Mode: Specific scenarios with objectives
-  - Multiplayer: Compete with other traders
-
-### Bulls vs Bears
-- **Description**: Strategic trading card game
-- **Features**:
-  - Collect cards representing trading strategies
-  - Build decks for different market conditions
-  - PvP and PvE modes
-  - Tournament competitions
-- **Gameplay**:
-  - Draw cards from your deck
-  - Play strategy cards to respond to market conditions
-  - Counter opponent moves with appropriate strategies
-  - Win by reaching profit target or outlasting opponent
-
-### Trade Simulator
-- **Description**: Realistic trading simulator with historical data
-- **Features**:
-  - Historical market replay
-  - Paper trading with real data
-  - Performance tracking
-  - Strategy testing
-- **Usage**:
-  - Select market and time period
-  - Trade as if in real-time
-  - Track performance metrics
-  - Compare results with optimal strategies
-
-## Wallet Integration
-
-The platform integrates with Solana blockchain wallets for payments, commissions, and digital asset management.
-
-### Supported Wallets
-- **Phantom**: Primary recommended wallet
-- **Solflare**: Alternative full-featured wallet
-- **Slope**: Mobile-friendly option
-- **Sollet**: Web-based lightweight wallet
-
-### Wallet Functions
-- **Connection**: Link wallet to platform for transactions
-- **Asset Display**: View token balances and NFTs
-- **Transaction History**: Review past blockchain activities
-- **Commission Receipts**: Receive affiliate payments
-- **Subscription Management**: Handle platform payments
-
-### Connection Process
-1. Click "Connect Wallet" in the top navigation
-2. Select your preferred wallet provider
-3. Approve the connection request in your wallet
-4. Verify connection in platform account settings
-
-### Security Best Practices
-- Enable two-factor authentication in your wallet
-- Use a hardware wallet for large balances
-- Never share your seed phrase with anyone
-- Disconnect wallet when not actively using the platform
-- Regularly verify transaction details before signing
-
-## Settings and Customization
-
-The Settings area allows for extensive platform personalization and account management.
-
-### Account Settings
-- **Profile Information**: Manage personal details
-- **Security Options**: Password, 2FA, and session settings
-- **Notification Preferences**: Email, push, and in-app alerts
-- **API Keys Management**: Secure storage of trading API credentials
-- **Subscription Management**: View and modify subscription tier
-
-### Display Settings
-- **Theme Options**: Light, dark, and custom color schemes
-- **Layout Preferences**: Default panel arrangements
-- **Font Size and Type**: Text display customization
-- **Chart Defaults**: Preferred indicators and timeframes
-- **Language Selection**: Interface language options
-
-### Trading Preferences
-- **Default Order Types**: Set preferred order methods
-- **Risk Parameters**: Define position sizing rules
-- **Confirmation Dialogs**: Toggle safety confirmation prompts
-- **Default Timeframes**: Set chart time intervals
-- **Hotkeys Configuration**: Customize keyboard shortcuts
-
-### Notification Settings
-- **Email Alerts**: Price alerts, account notifications
-- **Push Notifications**: Mobile app alerts
-- **In-Platform Alerts**: Pop-up and banner notifications
-- **Alert Sounds**: Customize audio notifications
-- **Alert Frequency**: Control notification volume
-
-### Data Management
-- **Import/Export**: Transfer settings between devices
-- **Backup Options**: Save platform configurations
-- **Data Privacy**: Control data collection settings
-- **Historical Data**: Manage downloaded market data
-- **Clear Cache**: Reset temporary storage
-
-## API Integrations
-
-The platform integrates with various external APIs for enhanced functionality.
-
-### Broker API Integration
-- **Supported Brokers**: Alpaca, Kraken, and others
-- **Connection Setup**:
-  1. Generate API keys from your broker account
-  2. Navigate to Settings > API Credentials
-  3. Enter API key and secret
-  4. Set appropriate permissions
-  5. Test connection
-- **Features**:
-  - Real-time market data
-  - Order execution
-  - Position management
-  - Account balance information
-  - Trading history synchronization
-
-### Google Sheets Integration
-For trading signals, we use Google Sheets API:
-- **Setup Process**:
-  1. Create a Google Cloud project
-  2. Enable Google Sheets API
-  3. Generate OAuth credentials
-  4. Enter credentials in platform
-  5. Share sheet with service account email
-- **Sheet Format Requirements**:
-  - Column A: Symbol (e.g., "BTC/USD", "SOL/USDT")
-  - Column B: Direction ("BUY" or "SELL")
-  - Column C: Entry Price (number)
-  - Column D: Stop Loss (number)
-  - Column E: Take Profit (number)
-  - Column F: Risk/Reward Ratio (number)
-  - Column G: Timestamp (YYYY-MM-DD HH:MM:SS format)
-  - Column H: Strategy (text)
-  - Column I: Timeframe (e.g., "15m", "1h", "4h", "1d")
-  - Column J: Confidence (number 1-10 or "High", "Medium", "Low")
-  - Column K: Notes (text)
-
-### Solana Blockchain Integration
-- **Connection**: Via Phantom or other supported wallets
-- **Features**:
-  - Commission payments
-  - NFT marketplace integration
-  - Transaction verification
-  - Smart contract execution
-- **Setup**:
-  1. Create and connect wallet
-  2. Accept transaction permissions
-  3. Configure commission payment preferences
-  4. Monitor blockchain activities in wallet
-
-### TradingView Integration
-- **Chart Types**: Advanced TradingView charts embedded in platform
-- **Features**:
-  - Technical indicators
-  - Drawing tools
-  - Alert systems
-  - Multiple timeframes
-- **Customization**:
-  - Save chart layouts
-  - Create indicator templates
-  - Customize chart appearance
-  - Set default chart preferences
-
-## Troubleshooting
-
-### Common Issues and Solutions
-
-#### Connection Issues
-
-**Problem: Cannot connect to broker**
-- Verify API credentials are entered correctly
-- Check if broker API servers are online
-- Ensure you have proper permissions set on your API key
-- Try regenerating API keys at the broker site
-- Check for IP restrictions in your broker settings
-
-**Problem: Wallet connection fails**
-- Make sure Phantom extension is installed and up to date
-- Check if you're logged into your wallet
-- Try disconnecting and reconnecting
-- Clear browser cache and cookies
-- Ensure your wallet has the correct network selected (Solana mainnet)
-
-#### Display Issues
-
-**Problem: Panels not rendering correctly**
-- Clear browser cache and cookies
-- Try a different browser
-- Disable browser extensions that might interfere
-- Check for browser updates
-- Verify you have sufficient system resources available
-
-**Problem: Charts not loading**
-- Ensure your internet connection is stable
-- Check if TradingView services are accessible
-- Try adjusting the time frame or symbol
-- Reload the specific panel
-- Clear browser cache and restart the application
-
-#### Data Issues
-
-**Problem: Trade signals not updating**
-- Verify Google API credentials
-- Check if Google Sheets source is accessible
-- Ensure sheet format matches expected structure
-- Verify you have read permissions for the connected sheet
-- Check the "Last Updated" timestamp in the signals panel
-
-**Problem: Missing trade history**
-- Verify database connection
-- Check filter settings in the journal
-- Ensure API permissions include trade history access
-- Confirm date range settings are correct
-- Check if broker API is providing historical data
-
-### Recovering from Errors
-
-1. **Refresh the page**: Often solves temporary loading issues
-2. **Check connection status**: Verify API connections are active
-3. **Restart the application**: Close and reopen for a fresh session
-4. **Clear cache and cookies**: Remove potentially corrupted data
-5. **Check system requirements**: Ensure your device meets minimums
-6. **Contact support**: For persistent issues, reach out to help desk
-
-## FAQ
-
-### Account & Access
-
-**Q: How do I create an account?**
-A: You can sign up using email/password or by connecting your Phantom wallet. Click "Sign Up" on the homepage to get started.
-
-**Q: How do I reset my password?**
-A: Click on "Forgot Password" on the login page. You'll receive an email with password reset instructions.
-
-**Q: Is my data secure?**
-A: Yes, we use industry-standard encryption for all data. API keys are stored securely and never exposed.
-
-### Trading Features
-
-**Q: How do I connect my broker?**
-A: Go to the Control Center, click on "Connect Broker" and select your broker (e.g., Alpaca). You'll need to enter your API key and secret.
-
-**Q: How do I customize my trading dashboard?**
-A: You can drag panels by their headers to reposition them. Use the layout selector at the top to switch between grid, horizontal, or vertical layouts.
-
-**Q: How do I use the AI trading assistant?**
-A: First, add your Google API credentials in Settings. Then open the AI assistant panel and ask trading-related questions.
-
-**Q: What is ABATEV smart trade?**
-A: ABATEV is our proprietary trading methodology that analyzes Before, After, Through, Exit, and Verified points of a trade for optimal entry and exit.
-
-**Q: How do I use the ABATEV trading system?**
-A: ABATEV stands for:
-- **A (Analysis)**: Analyze market conditions before entering a trade
-- **B (Before)**: Identify entry conditions and set up your trade
-- **A (After)**: Monitor immediate post-entry market reaction
-- **T (Through)**: Navigate through the trade's lifecycle
-- **E (Exit)**: Apply strategic exit rules based on profit targets or stop-loss
-- **V (Verification)**: Review completed trades to improve future decisions
-
-To use it, open the ABATEV Smart Trade panel, select your trading pair, and follow the structured approach for trade setup. The system will guide you through each phase of the trade.
-
-### Wallet & Payments
-
-**Q: How do I connect my Phantom wallet?**
-A: Click on "Connect Wallet" in the top navigation, then select Phantom. You'll need to approve the connection request in your wallet.
-
-**Q: How do commissions get paid?**
-A: Commissions are automatically distributed via smart contracts when referrals sign up or complete actions within the platform.
-
-**Q: Can I withdraw my earnings?**
-A: Yes, earnings in your connected wallet can be withdrawn or transferred at any time.
-
-### Learning Center
-
-**Q: How do I access courses?**
-A: Navigate to the Learning Center from the main menu. Browse available courses and click "Enroll" to begin.
-
-**Q: How do I track my progress?**
-A: Your progress is automatically tracked in the Learning Center. Visit "My Progress" to see completion rates and continue where you left off.
-
-**Q: How do I get certificates?**
-A: Complete all modules in a course, including quizzes. Certificates are automatically generated upon completion.
-
-### Technical Support
-
-**Q: What should I do if panels don't load?**
-A: Try refreshing the page. If issues persist, check your internet connection or try clearing your browser cache.
-
-**Q: How do I report bugs or issues?**
-A: Contact support through the Help button in the bottom right corner or email support@tradehybrid.com.
-
-**Q: Which browsers are supported?**
-A: We recommend using Chrome, Firefox, or Edge for the best experience. The platform may not function optimally on older browsers.
+1. [Getting Started](#getting-started)
+   - [Creating an Account](#creating-an-account)
+   - [Connecting Your Wallet](#connecting-your-wallet)
+   - [Navigation Overview](#navigation-overview)
+   - [Understanding Membership Tiers](#understanding-membership-tiers)
+
+2. [Trading Dashboard](#trading-dashboard)
+   - [Dashboard Layout](#dashboard-layout)
+   - [Widget Customization](#widget-customization)
+   - [Chart Navigation](#chart-navigation)
+   - [Indicator Management](#indicator-management)
+
+3. [Trading Signals System](#trading-signals-system)
+   - [Signal Types](#signal-types)
+   - [Signal Filters](#signal-filters)
+   - [Signal Details](#signal-details)
+   - [Copy Trading](#copy-trading)
+   - [Signal Performance Analytics](#signal-performance-analytics)
+
+4. [Wallet and Asset Management](#wallet-and-asset-management)
+   - [Viewing Your Portfolio](#viewing-your-portfolio)
+   - [THC Token Utility](#thc-token-utility)
+   - [Staking Guide](#staking-guide)
+   - [NFT Marketplace](#nft-marketplace)
+
+5. [Broker Connections](#broker-connections)
+   - [Connecting to Alpaca](#connecting-to-alpaca)
+   - [Connecting to OANDA](#connecting-to-oanda)
+   - [Managing API Keys](#managing-api-keys)
+   - [Execution Settings](#execution-settings)
+
+6. [Earning Opportunities](#earning-opportunities)
+   - [Staking Rewards](#staking-rewards)
+   - [Affiliate Program](#affiliate-program)
+   - [Signal Provider Program](#signal-provider-program)
+   - [Trading Competitions](#trading-competitions)
+
+7. [Platform Settings](#platform-settings)
+   - [Account Settings](#account-settings)
+   - [Notification Preferences](#notification-preferences)
+   - [Display Options](#display-options)
+   - [Security Settings](#security-settings)
+
+8. [Mobile Experience](#mobile-experience)
+   - [Mobile Navigation](#mobile-navigation)
+   - [Trading on Mobile](#trading-on-mobile)
+   - [Mobile Notifications](#mobile-notifications)
+
+9. [Troubleshooting](#troubleshooting)
+   - [Common Issues](#common-issues)
+   - [Support Resources](#support-resources)
 
 ---
 
-*Last Updated: March 31, 2025*
+## Getting Started
+
+### Creating an Account
+
+TradeHybrid offers multiple registration options:
+
+1. **Traditional Signup**:
+   - Visit the signup page and enter your email
+   - Create a secure password
+   - Verify your email address
+
+2. **Web3 Authentication**:
+   - Click "Connect Wallet"
+   - Select Phantom or another supported wallet
+   - Sign the verification message
+   - Your wallet address becomes your unique identifier
+
+3. **Web3Auth Social Login**:
+   - Select "Web3Auth" option
+   - Choose your preferred social login (Google, Twitter, etc.)
+   - Complete the authentication flow
+   - A wallet is automatically created for you
+
+### Connecting Your Wallet
+
+1. **From the Header Menu**:
+   - Click the "Connect Wallet" button in the top-right corner
+   - Select Phantom from the available wallets
+   - Approve the connection request in your wallet
+
+2. **From Profile Settings**:
+   - Navigate to Settings → Wallet Connections
+   - Click "Connect New Wallet"
+   - Follow the prompts to connect your wallet
+
+3. **Troubleshooting Connection Issues**:
+   - Ensure your wallet extension is up to date
+   - Check that your wallet is unlocked
+   - Try both connection methods (modern and legacy)
+   - Clear browser cache if persistent issues occur
+
+### Navigation Overview
+
+The TradeHybrid platform is organized into several main sections:
+
+1. **Main Dashboard**: Your personalized overview with key widgets
+2. **Trading**: Access to charts, order entry, and market data
+3. **Signals**: Browse and manage trading signals
+4. **Portfolio**: View your assets, trades, and performance
+5. **Learn**: Educational resources and tutorials
+6. **Community**: Forums and social trading features
+7. **Settings**: Account and platform preferences
+
+The persistent top navigation provides quick access to:
+- Wallet connection status
+- Notifications
+- User profile
+- Quick actions menu
+
+### Understanding Membership Tiers
+
+TradeHybrid offers four membership tiers:
+
+1. **Basic (Free)**:
+   - Access to basic charting
+   - 2 trading signals daily
+   - Basic educational content
+   - Standard support
+
+2. **Advanced**:
+   - All Basic features
+   - 5 trading signals daily
+   - Intermediate educational content
+   - Custom indicators (up to 5)
+   - Priority support
+   - Cost: 50 THC/month or equivalent
+
+3. **Premium**:
+   - All Advanced features
+   - 15 trading signals daily
+   - Premium educational content
+   - Unlimited custom indicators
+   - Copy trading functionality
+   - Premium support
+   - Cost: 120 THC/month or equivalent
+
+4. **Elite**:
+   - All Premium features
+   - Unlimited trading signals
+   - Exclusive expert signals
+   - VIP educational webinars
+   - Direct access to analysts
+   - 24/7 priority support
+   - Cost: 350 THC/month or equivalent
+
+Upgrade your membership in the Settings → Membership section.
+
+## Trading Dashboard
+
+### Dashboard Layout
+
+The TradeHybrid dashboard is a customizable workspace with these default widgets:
+
+1. **Market Overview**: Current market trends and key indices
+2. **Chart Widget**: Technical analysis with multiple timeframes
+3. **Signals Feed**: Latest trading signals based on your tier
+4. **Portfolio Summary**: Current holdings and performance
+5. **News Feed**: Real-time market news and analysis
+6. **Watchlist**: Customizable list of assets to monitor
+
+### Widget Customization
+
+Personalize your dashboard with these options:
+
+1. **Add/Remove Widgets**:
+   - Click the "+" icon in the top right of the dashboard
+   - Select from available widgets in the gallery
+   - Drag to position on your dashboard
+
+2. **Resize Widgets**:
+   - Hover over widget borders to see the resize handle
+   - Drag to adjust size as needed
+
+3. **Widget Settings**:
+   - Click the gear icon on any widget
+   - Adjust widget-specific settings
+   - Choose refresh rate and data sources
+
+4. **Save Layouts**:
+   - Create multiple dashboard configurations
+   - Save layouts for different strategies
+   - Switch between layouts using the dropdown menu
+
+### Chart Navigation
+
+Master the chart interface with these controls:
+
+1. **Timeframe Selection**:
+   - Use the toolbar buttons (1m, 5m, 15m, 1h, 4h, 1D, 1W)
+   - Right-click for additional custom timeframes
+
+2. **Drawing Tools**:
+   - Access trend lines, Fibonacci retracements, and other tools
+   - Right-click to edit or remove drawings
+   - Save drawing templates for reuse
+
+3. **Chart Types**:
+   - Switch between candlestick, bar, line, and area charts
+   - Adjust candle/bar styling in settings
+
+4. **Chart Navigation**:
+   - Scroll wheel to zoom in/out
+   - Click and drag to pan the chart
+   - Double-click to reset the view
+
+5. **Keyboard Shortcuts**:
+   - Press "S" to take a screenshot
+   - "+" or "-" to zoom in/out
+   - Spacebar to toggle crosshair
+
+### Indicator Management
+
+Enhance your analysis with technical indicators:
+
+1. **Adding Indicators**:
+   - Click the "Indicators" button in the chart toolbar
+   - Browse categories or search by name
+   - Select an indicator to add it to the chart
+
+2. **Configuring Indicators**:
+   - Click the indicator name in the legend to open settings
+   - Adjust parameters, colors, and line styles
+   - Set visual alerts for indicator crossovers
+
+3. **Indicator Templates**:
+   - Save combinations of indicators as templates
+   - Load templates with a single click
+   - Share templates with other users
+
+4. **Advanced Studies**:
+   - Access proprietary indicators (Premium+ only)
+   - Create custom indicators using the formula editor
+   - Import external indicator scripts
+
+## Trading Signals System
+
+### Signal Types
+
+TradeHybrid offers various signal types based on strategy and timeframe:
+
+1. **By Strategy**:
+   - **Trend Following**: Identify and follow established trends
+   - **Reversal**: Spot potential market direction changes
+   - **Breakout**: Identify assets breaking key levels
+   - **Momentum**: Focus on assets with strong directional movement
+   - **AI-Driven**: Generated by machine learning algorithms
+
+2. **By Timeframe**:
+   - **Scalping**: Very short-term (minutes to hours)
+   - **Day Trading**: Intraday opportunities
+   - **Swing Trading**: Multi-day to week positions
+   - **Position Trading**: Long-term investment signals
+
+3. **By Asset Class**:
+   - Cryptocurrency signals
+   - Stock and ETF signals
+   - Forex pair signals
+   - Commodity signals
+
+### Signal Filters
+
+Customize your signal feed using these filters:
+
+1. **Basic Filters**:
+   - Asset class (Crypto, Stocks, Forex, Commodities)
+   - Signal type (Buy, Sell, Exit)
+   - Timeframe (Scalp, Day, Swing, Position)
+
+2. **Advanced Filters** (Premium+ only):
+   - Success rate threshold
+   - Risk/reward ratio
+   - Maximum drawdown
+   - Volatility level
+   - Signal provider
+
+3. **Filter Presets**:
+   - Save custom filter combinations
+   - Access quick filter buttons for common views
+   - Schedule different filters for different times
+
+### Signal Details
+
+Each trading signal provides comprehensive information:
+
+1. **Essential Data**:
+   - Asset name and symbol
+   - Signal direction (Buy/Sell)
+   - Entry price or range
+   - Stop-loss level
+   - Take-profit targets
+   - Timeframe
+
+2. **Advanced Metrics**:
+   - Risk/reward ratio
+   - Success probability
+   - Expected value
+   - Signal strength rating
+   - Supporting indicators
+
+3. **Visual Context**:
+   - Mini-chart with signal visually plotted
+   - Key support/resistance levels
+   - Volume profile
+
+4. **Performance Tracking**:
+   - Real-time profit/loss for active signals
+   - Historical success rate for completed signals
+   - Comparison to benchmark performance
+
+### Copy Trading
+
+Easily copy signals to your connected brokers:
+
+1. **One-Click Copy**:
+   - Click the "Copy" button on any signal card
+   - Review the pre-filled order details
+   - Adjust quantity or risk parameters if desired
+   - Confirm to place the order with your connected broker
+
+2. **Automated Copy Trading** (Premium+ only):
+   - Enable in Settings → Copy Trading
+   - Set risk parameters (fixed amount, % of portfolio)
+   - Choose signal sources to automatically copy
+   - Set maximum positions and risk limits
+
+3. **Copy Trading Settings**:
+   - Adjust size calculation method
+   - Set default stop-loss and take-profit behavior
+   - Configure partial take-profit levels
+   - Set maximum slippage tolerance
+
+### Signal Performance Analytics
+
+Track and analyze signal performance:
+
+1. **Performance Dashboard**:
+   - Access from Signals → Performance
+   - View success rates by signal type and provider
+   - Track profit/loss metrics across timeframes
+   - Analyze drawdown and volatility statistics
+
+2. **Visual Analysis**:
+   - Interactive charts showing signal entry/exit points
+   - Performance comparison across providers
+   - Heat maps showing best performing markets
+   - Historical performance trends
+
+3. **Custom Reports** (Premium+ only):
+   - Generate detailed signal performance reports
+   - Filter by time period, asset, or signal type
+   - Export reports in PDF or CSV format
+   - Schedule automated report delivery
+
+## Wallet and Asset Management
+
+### Viewing Your Portfolio
+
+Monitor your digital assets across connected wallets:
+
+1. **Portfolio Summary**:
+   - Total portfolio value
+   - 24h change (amount and percentage)
+   - Asset allocation chart
+   - Performance overview
+
+2. **Asset Breakdown**:
+   - List of all tokens and NFTs
+   - Current value and change percentage
+   - Token quantities and cost basis
+   - Unrealized profit/loss
+
+3. **Transaction History**:
+   - Complete record of wallet transactions
+   - Filter by transaction type or asset
+   - Export history for tax reporting
+   - Link to blockchain explorer for details
+
+4. **Performance Analytics**:
+   - Historical portfolio value chart
+   - Comparison against market benchmarks
+   - Return metrics (daily, weekly, monthly, annual)
+   - Volatility and drawdown analysis
+
+### THC Token Utility
+
+The native THC token powers the TradeHybrid ecosystem:
+
+1. **Membership Payment**:
+   - Use THC to pay for subscription tiers
+   - Receive discount compared to fiat payment
+   - Auto-renewal option for convenience
+
+2. **Platform Features**:
+   - Unlock premium indicators and tools
+   - Access exclusive trading signals
+   - Participate in governance voting
+   - Enter premium trading competitions
+
+3. **Purchasing THC**:
+   - Buy directly in the platform with connected wallet
+   - Set limit or market orders
+   - View order history and average price
+   - Set up recurring purchases
+
+4. **THC Tokenomics**:
+   - View current token price and market cap
+   - Access supply distribution information
+   - Review token release schedule
+   - Track treasury allocation and usage
+
+### Staking Guide
+
+Earn passive income by staking THC tokens:
+
+1. **Staking Options**:
+   - Flexible staking (withdraw anytime, lower APY)
+   - Locked staking (30/60/90 day terms, higher APY)
+   - Liquidity provision staking (highest APY, higher risk)
+
+2. **Staking Process**:
+   - Navigate to Portfolio → Staking
+   - Select the amount to stake
+   - Choose your staking term
+   - Confirm the transaction in your wallet
+
+3. **Staking Rewards**:
+   - Real-time reward accumulation display
+   - Compound or claim options
+   - Auto-compounding for maximum returns
+   - Performance history and projected earnings
+
+4. **Unstaking Process**:
+   - Request withdrawal from staking interface
+   - Flexible stakes processed immediately
+   - Locked stakes available after term completion
+   - Emergency unstaking option (with penalty)
+
+### NFT Marketplace
+
+Discover and trade utility NFTs:
+
+1. **Browsing NFTs**:
+   - View featured collections
+   - Filter by category, price, or rarity
+   - Sort by recent listings or popularity
+   - View detailed NFT information
+
+2. **NFT Utility**:
+   - Signal Provider Badges: Access to exclusive signals
+   - Trading Credentials: Special platform features
+   - Learning Passes: Exclusive educational content
+   - Governance Tokens: Enhanced voting power
+
+3. **Buying NFTs**:
+   - Place bids or buy at listed price
+   - Connect wallet and confirm transaction
+   - View purchase in your NFT portfolio
+   - Access newly unlocked features
+
+4. **Selling NFTs**:
+   - List from your portfolio
+   - Set fixed price or auction parameters
+   - Choose listing duration
+   - Receive payments directly to your wallet
+
+## Broker Connections
+
+### Connecting to Alpaca
+
+Set up stock and ETF trading through Alpaca:
+
+1. **API Setup in Alpaca**:
+   - Create an Alpaca account if you don't have one
+   - Navigate to Alpaca dashboard → API Keys
+   - Generate a new key pair with trading permissions
+   - Copy your API Key and Secret Key
+
+2. **Connecting in TradeHybrid**:
+   - Go to Settings → Broker Connections
+   - Select "Add New Broker" → "Alpaca"
+   - Enter your API Key and Secret Key
+   - Choose between paper and live trading
+   - Test the connection before saving
+
+3. **Alpaca Settings**:
+   - Set default order types
+   - Configure risk limits
+   - Set trading hours preferences
+   - Enable/disable extended hours trading
+
+4. **Managing Orders**:
+   - View all Alpaca orders in the Orders tab
+   - Filter by status, symbol, or date
+   - Modify or cancel open orders
+   - View execution details for filled orders
+
+### Connecting to OANDA
+
+Set up forex and CFD trading through OANDA:
+
+1. **API Setup in OANDA**:
+   - Log in to your OANDA account
+   - Navigate to "My Account" → "API Access"
+   - Generate a new API token
+   - Copy your Account ID and API token
+
+2. **Connecting in TradeHybrid**:
+   - Go to Settings → Broker Connections
+   - Select "Add New Broker" → "OANDA"
+   - Enter your Account ID and API token
+   - Select your account type (Demo/Live)
+   - Test the connection before saving
+
+3. **OANDA Settings**:
+   - Set default leverage
+   - Configure position sizing
+   - Set stop-loss and take-profit defaults
+   - Enable/disable hedging mode
+
+4. **Managing Positions**:
+   - View all OANDA positions in the Positions tab
+   - Monitor running P/L in real-time
+   - Close or modify existing positions
+   - View detailed transaction history
+
+### Managing API Keys
+
+Securely manage all broker connections:
+
+1. **Viewing Connected Brokers**:
+   - Go to Settings → Broker Connections
+   - See status of all connected brokers
+   - Check last connection time and status
+   - View permission level of each connection
+
+2. **Security Best Practices**:
+   - Use read-only API keys when possible
+   - Enable IP restrictions in your broker
+   - Regularly audit and rotate API keys
+   - Monitor connection activity logs
+
+3. **Updating API Keys**:
+   - Select "Edit" next to the broker connection
+   - Enter new API credentials
+   - Test before saving
+   - Confirm successful connection
+
+4. **Revoking Access**:
+   - Remove connections from TradeHybrid
+   - Also revoke the key in your broker's dashboard
+   - Check activity logs for any unexpected behavior
+
+### Execution Settings
+
+Customize how signals are executed with your brokers:
+
+1. **Order Type Preferences**:
+   - Set default order types (Market, Limit, Stop)
+   - Configure default time-in-force settings
+   - Set slippage tolerance for market orders
+   - Configure partial fill preferences
+
+2. **Risk Management**:
+   - Set maximum position size (% of portfolio or fixed)
+   - Configure default stop-loss placement
+   - Set take-profit ladder preferences
+   - Enable/disable trailing stops
+
+3. **Automation Rules**:
+   - Create conditional order logic
+   - Set up bracket orders
+   - Configure OCO (One-Cancels-Other) orders
+   - Define re-entry conditions
+
+4. **Advanced Settings** (Premium+ only):
+   - Smart order routing preferences
+   - Custom execution algorithms
+   - Order splitting for large positions
+   - Time-weighted average price execution
+
+## Earning Opportunities
+
+### Staking Rewards
+
+Maximize your earnings through staking:
+
+1. **THC Staking Tiers**:
+   - Basic: 1-999 THC (5% APY)
+   - Silver: 1,000-4,999 THC (8% APY)
+   - Gold: 5,000-19,999 THC (12% APY)
+   - Platinum: 20,000+ THC (15% APY)
+
+2. **Reward Distribution**:
+   - Rewards calculated hourly
+   - Distributed daily at 00:00 UTC
+   - View earnings in Staking Dashboard
+   - Automatic compounding available
+
+3. **Bonus Programs**:
+   - Loyalty bonus for continuous staking
+   - Membership tier multipliers
+   - Special staking events with boosted APY
+   - Referral bonus for invited stakers
+
+4. **SOL Staking**:
+   - Delegate through platform validators
+   - Current APY displayed in staking interface
+   - Epoch rewards automatically distributed
+   - View validator performance metrics
+
+### Affiliate Program
+
+Earn by growing the TradeHybrid community:
+
+1. **Program Structure**:
+   - Three-tier referral system
+   - Direct referrals: 30% commission
+   - Level 2 referrals: 10% commission
+   - Level 3 referrals: 5% commission
+
+2. **Commission Types**:
+   - Membership subscription commissions
+   - Trading fee share (Premium+ only)
+   - NFT marketplace transaction fee share
+   - Special promotion bonuses
+
+3. **Getting Started**:
+   - Activate your affiliate account in Settings
+   - Get your unique referral link and code
+   - Access marketing materials and banners
+   - Track referrals in real-time dashboard
+
+4. **Payout Options**:
+   - Automatic distribution to your wallet
+   - Accumulate for larger payments
+   - Convert to staked THC for additional yield
+   - View complete payment history
+
+### Signal Provider Program
+
+Share your trading expertise and earn:
+
+1. **Becoming a Provider**:
+   - Apply in the Signal Provider section
+   - Submit trading history for verification
+   - Complete provider onboarding process
+   - Create your provider profile
+
+2. **Submitting Signals**:
+   - Use the signal creation interface
+   - Enter all required parameters
+   - Add supporting analysis and rationale
+   - Submit for review or publish directly (verified providers)
+
+3. **Earning Structure**:
+   - Base payment per successful signal
+   - Performance-based bonuses
+   - Subscription revenue share for premium signals
+   - Tips from signal users
+
+4. **Provider Dashboard**:
+   - Track signal performance metrics
+   - View subscriber growth
+   - Monitor revenue statistics
+   - Access provider-only educational resources
+
+### Trading Competitions
+
+Test your skills and win prizes:
+
+1. **Competition Types**:
+   - Weekly trading sprints
+   - Monthly performance leagues
+   - Special event tournaments
+   - Strategy-specific challenges
+
+2. **Participation**:
+   - Register for upcoming competitions
+   - Connect your trading account for verification
+   - Choose your competition strategy
+   - Track your ranking on the leaderboard
+
+3. **Prize Structure**:
+   - THC token prizes for top performers
+   - Exclusive NFT rewards
+   - Membership upgrades
+   - Special platform features
+
+4. **Competition Rules**:
+   - Trading parameters and restrictions
+   - Performance calculation methodology
+   - Minimum activity requirements
+   - Fair play policy and verification
+
+## Platform Settings
+
+### Account Settings
+
+Manage your personal information:
+
+1. **Profile Information**:
+   - Update display name and avatar
+   - Edit contact information
+   - Set timezone and language preferences
+   - Configure professional credentials
+
+2. **Authentication Options**:
+   - Add/remove email addresses
+   - Set up two-factor authentication
+   - Manage connected wallets
+   - Review active sessions
+
+3. **Subscription Management**:
+   - View current membership tier
+   - Manage payment methods
+   - Configure auto-renewal
+   - Access billing history
+
+4. **Data Management**:
+   - Export personal data
+   - Manage data sharing preferences
+   - Configure anonymous usage statistics
+   - Delete account option
+
+### Notification Preferences
+
+Stay informed with customized alerts:
+
+1. **Notification Channels**:
+   - In-app notifications
+   - Email alerts
+   - Push notifications (mobile app)
+   - Telegram/Discord integration (Premium+)
+
+2. **Alert Categories**:
+   - Signal alerts (new, updates, performance)
+   - Trading alerts (order execution, P/L thresholds)
+   - Account alerts (logins, settings changes)
+   - Platform alerts (announcements, updates)
+
+3. **Frequency Settings**:
+   - Real-time, hourly, or daily digests
+   - Quiet hours configuration
+   - Priority alert overrides
+   - Custom schedules by category
+
+4. **Custom Alerts**:
+   - Price level alerts
+   - Technical indicator alerts
+   - Portfolio value thresholds
+   - Custom metric triggers
+
+### Display Options
+
+Customize your visual experience:
+
+1. **Theme Settings**:
+   - Light mode / Dark mode
+   - High contrast mode
+   - Custom color schemes
+   - Font size and style
+
+2. **Layout Preferences**:
+   - Default dashboard configuration
+   - Default chart settings
+   - Column visibility in tables
+   - Compact or expanded views
+
+3. **Chart Defaults**:
+   - Preferred chart type
+   - Default indicators
+   - Color schemes for candles/bars
+   - Grid and scale settings
+
+4. **Regional Settings**:
+   - Date and time format
+   - Number formatting
+   - Currency display
+   - First day of week
+
+### Security Settings
+
+Protect your account and assets:
+
+1. **Login Security**:
+   - Password management
+   - Two-factor authentication setup
+   - Biometric authentication (mobile)
+   - IP restriction options
+
+2. **Transaction Security**:
+   - Confirmation requirements
+   - Withdrawal whitelisting
+   - Trading limits and thresholds
+   - Session timeout settings
+
+3. **API Security**:
+   - API key management
+   - Connection activity monitoring
+   - Permission levels and restrictions
+   - Auto-revocation settings
+
+4. **Security Notifications**:
+   - Unusual activity alerts
+   - New device login notifications
+   - Setting change confirmations
+   - Security status reports
+
+## Mobile Experience
+
+### Mobile Navigation
+
+Find your way around the mobile interface:
+
+1. **Main Navigation**:
+   - Bottom tab bar for primary sections
+   - Swipe gestures for common actions
+   - Quick action floating button
+   - Pull-to-refresh for updates
+
+2. **Dashboard View**:
+   - Scrollable widget cards
+   - Long-press for widget options
+   - Swipe between widget pages
+   - Tap to expand widgets to full screen
+
+3. **Accessibility Features**:
+   - Voice navigation support
+   - Haptic feedback options
+   - Screen reader compatibility
+   - Motion reduction settings
+
+4. **Offline Mode**:
+   - Cached data availability
+   - Sync status indicator
+   - Background data refresh options
+   - Reduced data usage mode
+
+### Trading on Mobile
+
+Execute trades from anywhere:
+
+1. **Mobile Charts**:
+   - Optimized chart rendering for mobile
+   - Pinch to zoom, swipe to pan
+   - Rotate to landscape for expanded view
+   - Simplified indicator management
+
+2. **Quick Trading**:
+   - Swipe actions on watchlist
+   - One-tap order entry
+   - Quick access to recent symbols
+   - Market depth visualization
+
+3. **Order Management**:
+   - Active order tracking
+   - Swipe to modify or cancel
+   - Push notifications for fills
+   - Quick position close functionality
+
+4. **Mobile-Specific Features**:
+   - Widget for home screen
+   - Biometric order confirmation
+   - Price alert setup via voice
+   - Shake to refresh quotes
+
+### Mobile Notifications
+
+Stay informed on the go:
+
+1. **Notification Types**:
+   - Trading alerts and executions
+   - Signal notifications
+   - Price alerts
+   - Account and security alerts
+
+2. **Notification Management**:
+   - Category-based toggling
+   - Priority levels and sounds
+   - Do Not Disturb integration
+   - Quick actions from notifications
+
+3. **Customization**:
+   - Per-asset notification settings
+   - Vibration and sound patterns
+   - LED indicator options (Android)
+   - Lock screen visibility settings
+
+4. **Rich Notifications**:
+   - Mini-charts in notifications
+   - Action buttons for quick response
+   - Expandable notification details
+   - Interactive notification elements
+
+## Troubleshooting
+
+### Common Issues
+
+Solutions for frequently encountered problems:
+
+1. **Wallet Connection Issues**:
+   - Clear browser cache and cookies
+   - Try alternative connection methods
+   - Check wallet extension version
+   - Ensure wallet is unlocked
+   - Verify adequate SOL for fees
+
+2. **Signal Problems**:
+   - Refresh signal list
+   - Check membership tier limits
+   - Clear active filters
+   - Verify internet connection
+   - Check notification permissions
+
+3. **Broker Connectivity**:
+   - Verify API key validity
+   - Check broker service status
+   - Re-enter API credentials
+   - Test connection from settings
+   - Verify IP restrictions
+
+4. **Performance Issues**:
+   - Reduce active indicators
+   - Clear browser cache
+   - Try different browser
+   - Check internet connection speed
+   - Disable unused widgets
+
+### Support Resources
+
+Where to get help when you need it:
+
+1. **Help Center**:
+   - Searchable knowledge base
+   - Step-by-step tutorials
+   - Video demonstrations
+   - Frequently asked questions
+
+2. **Community Support**:
+   - User forums by category
+   - Community moderator assistance
+   - User-to-user troubleshooting
+   - Feature request discussions
+
+3. **Direct Support**:
+   - Live chat during business hours
+   - Support ticket system
+   - Email support
+   - Premium tier priority support
+
+4. **Additional Resources**:
+   - Platform status page
+   - Scheduled maintenance notices
+   - Release notes and updates
+   - TradeHybrid blog and announcements

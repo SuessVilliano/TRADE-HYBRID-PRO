@@ -2,163 +2,220 @@
 
 ## Introduction
 
-Trade Hybrid is a revolutionary decentralized trading platform that combines traditional trading capabilities with blockchain technology, offering a comprehensive ecosystem for traders, investors, and affiliates. The platform integrates cutting-edge technologies including AI-driven analytics, 3D metaverse environments, and smart contract-based commission systems.
+TradeHybrid is a cutting-edge decentralized trading platform that merges traditional financial markets with blockchain technology. The platform provides a comprehensive ecosystem for traders, investors, and crypto enthusiasts to access market insights, execute trades, and manage digital assets—all within a unified interface.
 
-## Core Platform Components
+## Core Technology Stack
 
-### 1. Trading Dashboard
+TradeHybrid is built using modern web technologies to ensure performance, security, and scalability:
 
-The customizable trading dashboard is the central hub of the Trade Hybrid platform, allowing users to arrange various components according to their preferences. The dashboard features a drag-and-drop interface with multiple layout options:
+- **Frontend**: React with TypeScript, providing a responsive and type-safe user interface
+- **Styling**: Tailwind CSS for consistent, responsive design across devices
+- **Blockchain Integration**: Solana Web3.js for fast, low-cost transactions
+- **AI Intelligence**: OpenAI-powered market analysis and trading signals
+- **Data Storage**: PostgreSQL for efficient handling of trading models and user data
+- **Authentication**: Dual authentication system supporting both traditional login and Web3 wallet authentication
 
-- **Grid Layout**: Organized tiles of equal size
-- **Horizontal Layout**: Side-by-side panels
-- **Vertical Layout**: Stacked panels
+## Platform Architecture
 
-Users can freely move, resize, and customize panels by dragging panel headers, with changes persisting between sessions.
+### User Interface Layer
 
-### 2. Trading Tools
+The UI is organized into several main sections:
 
-The platform offers a comprehensive suite of trading tools:
+1. **Trading Dashboard**: Customizable multi-widget layout with draggable components
+2. **Portfolio Management**: Asset allocation, performance tracking, and trade history
+3. **Signal Marketplace**: AI and expert trading signals with performance metrics
+4. **Learning Center**: Educational resources for different experience levels
+5. **Social Trading**: Community sharing and copy trading features
 
-- **TradingView Charts**: Professional-grade charting with technical indicators
-- **DEX Charts**: Real-time decentralized exchange data visualization
-- **Market Scanner**: Pattern and opportunity detection across multiple assets
-- **Trade Signals**: AI-driven trading signals with Google Sheets integration
-- **ABATEV Smart Trade**: Proprietary methodology for systematic trade analysis
-- **Copy Trading**: Follow successful traders automatically
-- **AI Trading Assistant**: Personalized insights and recommendations
-- **Trading Bots**: Automated strategy execution
-- **Portfolio Tracker**: Real-time portfolio performance monitoring
-- **News Feed**: Curated market news and analysis
+### Middleware Layer
 
-### 3. Learning Center
+1. **API Gateway**: Centralized entry point for frontend requests
+2. **Authentication Service**: Handles both traditional and Web3 authentication flows
+3. **Signal Processing Engine**: Collects, filters, and distributes trading signals
+4. **Market Data Service**: Aggregates data from multiple exchanges and providers
+5. **Notification System**: Real-time alerts for trades, signals, and account activities
 
-An extensive educational resource featuring:
+### Blockchain Layer
 
-- **Structured Courses**: Progressive learning paths for all trading levels
-- **Interactive Content**: Quizzes, simulations, and practical exercises
-- **Course Certificates**: Verification of completed learning paths
-- **Learning Journal**: Personal note-taking and reflection system
-- **Progress Tracking**: Comprehensive monitoring of educational advancement
+1. **Wallet Integration**: Support for Phantom wallet and Web3Auth
+2. **Token System**: Native THC (TradeHybrid Coin) for platform utility
+3. **Smart Contracts**: For staking, rewards, and governance
+4. **NFT Marketplace**: For trading skill badges and exclusive signal access
 
-### 4. Matrix Affiliate System
+### Backend Services
 
-A sophisticated multi-level marketing structure:
+1. **Broker Connections**: Integration with multiple trading platforms (Alpaca, OANDA)
+2. **AI Analysis**: Market sentiment analysis and pattern recognition
+3. **User Management**: Profile, settings, and preference management
+4. **Analytics Engine**: Performance tracking and reporting
 
-- **3x4 Matrix Structure**: Three positions wide, four levels deep
-- **Smart Contract Integration**: Automated commission distribution via Solana blockchain
-- **Real-time Analytics**: Tracking of referrals and earnings
-- **Marketing Materials**: Professional promotional resources
-- **Transparent Commission System**: All transactions recorded on-chain
+## Key Features
 
-### 5. 3D Metaverse Trading Environment
+### Multi-Exchange Trading
 
-An immersive virtual trading space:
+TradeHybrid connects to multiple exchanges and brokers, allowing users to:
 
-- **Interactive 3D World**: Navigate a virtual trading floor
-- **Real-time Communication**: Voice chat with other traders
-- **Live Market Data**: Visualized in an immersive environment
-- **Virtual Offices**: Private spaces for teams and groups
-- **Events and Webinars**: Attend virtual trading seminars
+- Trade across asset classes (crypto, stocks, forex) from a single interface
+- Maintain consolidated position tracking across platforms
+- Execute signals on their preferred exchange
+- Compare execution prices and fees across exchanges
 
-### 6. AI-Powered Features
+### AI-Powered Signals
 
-Advanced artificial intelligence capabilities:
+Our proprietary AI system generates trading signals based on:
 
-- **Personalized Trading Insights**: Pattern recognition in individual trading behavior
-- **Market Analysis**: AI interpretation of complex market conditions
-- **Performance Optimization**: Suggestions for improving trading strategies
-- **Risk Management**: Automated identification of potential risks
-- **Sentiment Analysis**: Processing of news and social media for market sentiment
+- Technical analysis across multiple timeframes
+- Sentiment analysis of news and social media
+- On-chain data for crypto assets
+- Historical pattern recognition
 
-### 7. Trade Journal
+Each signal includes:
+- Entry price range
+- Stop-loss recommendations
+- Take-profit targets
+- Risk/reward ratio
+- Confidence score
 
-Comprehensive trade tracking and analysis:
+### Adaptive User Experience
 
-- **Trade Documentation**: Record all aspects of trading activity
-- **Performance Metrics**: In-depth analytics of trading performance
-- **Visual Analysis**: Charts and graphs of trading patterns
-- **Screenshot Integration**: Visual documentation of trades
-- **Export Capabilities**: Data portability in multiple formats
+The platform adjusts to each user's experience level and preferences:
 
-### 8. Broker Integration
-
-Seamless connection to trading platforms:
-
-- **Multiple Broker Support**: Integration with Alpaca, Kraken, and more
-- **API-based Connectivity**: Secure credential management
-- **Real-time Order Execution**: Trade directly from the platform
-- **Position Monitoring**: Track all open positions
-- **Historical Data**: Access to past trading activity
-
-### 9. Blockchain Integration
-
-Web3 functionality throughout the platform:
-
-- **Phantom Wallet Support**: Connect Solana wallets
-- **Smart Contract Execution**: Automated financial transactions
-- **Commission Distribution**: Blockchain-based affiliate payments
-- **Transaction Verification**: On-chain confirmation of all activities
-- **NFT Integration**: Digital asset support
-
-## Technical Architecture
-
-### Frontend
-- **Framework**: React with TypeScript
-- **State Management**: Zustand for global state
-- **UI Components**: Custom components with Tailwind CSS
-- **3D Environment**: Three.js with React Three Fiber
-- **Charts**: TradingView integration and custom chart components
-
-### Backend
-- **Server**: Express.js
-- **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: JWT with multi-factor options
-- **API Integration**: Broker APIs, Google Sheets
-- **WebSockets**: Real-time data synchronization
+- **Beginner Mode**: Simplified interface with educational tooltips
+- **Advanced Mode**: Full technical analysis tools and customization
+- **Expert Mode**: API access, advanced order types, and algorithm creation
+- **Custom Layouts**: Savable workspace configurations for different strategies
 
 ### Blockchain Integration
-- **Network**: Solana
-- **Wallet Support**: Phantom and compatible wallets
-- **Smart Contracts**: Custom commission distribution contracts
-- **Transaction Handling**: Secure signature verification
 
-## User Roles and Permissions
+The Solana blockchain is leveraged for:
 
-### Traders
-- Access to all trading tools and features
-- Ability to connect broker accounts
-- Full learning center access
-- Participation in the metaverse environment
+- **Wallet Management**: Secure storage and transfer of digital assets
+- **Token Utility**: THC tokens for platform benefits and governance
+- **Staking System**: Earn passive income by staking THC or SOL
+- **Affiliate Program**: On-chain tracking of referrals and rewards
+- **Transparent History**: Immutable record of signal performance
 
-### Affiliates
-- Matrix commission system participation
-- Marketing materials access
-- Referral tracking dashboard
-- Commission withdrawal capabilities
+### Social Trading Features
 
-### Administrators
-- User management
-- Content management for learning center
-- System configuration
-- Analytics and reporting
+Users can engage with the trading community through:
 
-## Data Security
+- Signal sharing with performance tracking
+- Discussion forums organized by asset class and strategy
+- Copy trading with customizable risk parameters
+- Trader leaderboards based on verifiable performance
+- Direct messaging with encryption for privacy
 
-The platform prioritizes security through:
+## User Journeys
 
-- **Encrypted API Keys**: All broker credentials are securely stored
-- **Secure Database**: Industry-standard encryption for user data
-- **Authentication**: Multi-factor authentication options
-- **Session Management**: Automatic timeouts and secure session handling
-- **Audit Logs**: Comprehensive activity tracking
+### New Trader Journey
 
-## Summary
+1. **Onboarding**: Simplified registration with guided tour of basic features
+2. **Education**: Direct access to beginner resources and basic trading concepts
+3. **Practice**: Paper trading account with simulated signals
+4. **First Trade**: Guided process for executing first real trade
+5. **Progress Tracking**: Achievement system for completing educational modules
 
-Trade Hybrid represents a paradigm shift in trading platform design, merging traditional trading capabilities with cutting-edge technologies like AI, blockchain, and 3D environments. Its modular design allows users to create a personalized trading experience while benefiting from community features and comprehensive educational resources.
+### Experienced Trader Journey
 
-The platform's integration of decentralized financial tools with traditional trading infrastructure bridges the gap between conventional markets and the emerging world of cryptocurrency trading, creating a unified experience for all types of traders.
+1. **Advanced Analysis**: Full suite of technical indicators and drawing tools
+2. **Strategy Development**: Backtesting tools and performance analytics
+3. **Signal Filtering**: Custom filters to match specific trading strategies
+4. **API Integration**: Direct connection to existing trading systems
+5. **Community Contribution**: Ability to publish signals and educational content
 
----
+### Crypto Enthusiast Journey
 
-*Last Updated: March 31, 2025*
+1. **Wallet Integration**: Seamless connection with Phantom and other Solana wallets
+2. **Token Management**: Portfolio tracking for all Solana tokens and NFTs
+3. **Staking Hub**: Interface for staking THC and SOL with reward projections
+4. **Governance Participation**: Voting on platform development proposals
+5. **NFT Marketplace**: Trading and collecting THC-related digital assets
+
+## Technical Integrations
+
+### Exchange Connections
+
+TradeHybrid connects to various exchanges and brokers through secure API integrations:
+
+- **Cryptocurrency**: Direct exchange APIs with websocket for real-time data
+- **Traditional Markets**: 
+  - Alpaca API for stocks and ETFs
+  - OANDA API for forex and commodities
+- **Data Providers**: Multiple sources for price data, fundamentals, and news
+
+### AI/ML Implementation
+
+The AI system consists of several specialized models:
+
+- Time-series forecasting for price prediction
+- Natural language processing for news and social media analysis
+- Classification algorithms for pattern recognition
+- Anomaly detection for unusual market conditions
+- Reinforcement learning for strategy optimization
+
+### Security Infrastructure
+
+Security is implemented at multiple levels:
+
+- End-to-end encryption for all communications
+- Multi-factor authentication options
+- Key management with hardware security module support
+- Regular penetration testing and security audits
+- Cold storage options for digital assets
+
+## Business Model
+
+TradeHybrid employs a multi-faceted revenue model:
+
+1. **Subscription Tiers**: 
+   - Free: Basic features with limited signals
+   - Advanced: More signals and intermediate tools
+   - Premium: Full access to all signals and features
+   - Elite: Premium plus exclusive signals and priority support
+
+2. **Token Economy**:
+   - THC token utility for platform features
+   - Staking rewards from treasury allocation
+   - Trading fee discounts when paying with THC
+
+3. **Signal Marketplace**:
+   - Revenue share from expert signal providers
+   - Premium signal packages for specific markets
+   - Custom signal delivery for institutional clients
+
+4. **Affiliate Program**:
+   - Multi-level referral system with on-chain tracking
+   - Performance-based rewards for active referrers
+   - Special promotions for high-performing affiliates
+
+## Roadmap
+
+### Current Version (2.5.0)
+
+- Full desktop and mobile responsive interface
+- Solana wallet integration with Web3Auth support
+- Initial AI signal system with performance tracking
+- Basic trading dashboard with customizable widgets
+- Broker connections to Alpaca and OANDA
+
+### Near-Term Developments (3-6 months)
+
+- Advanced signal filtering and notification options
+- Enhanced social trading features with copy trading
+- Expanded educational content with interactive tutorials
+- Additional technical indicators and drawing tools
+- Mobile app release for iOS and Android
+
+### Long-Term Vision (6-12 months)
+
+- Decentralized governance system for platform decisions
+- Institutional-grade API access for algorithmic trading
+- Advanced portfolio optimization tools
+- Cross-chain asset support (Ethereum, Bitcoin, etc.)
+- Fiat on/off ramps for seamless trading
+
+## Conclusion
+
+TradeHybrid represents the convergence of traditional finance, blockchain technology, and artificial intelligence. By combining the best aspects of these domains, we're creating a platform that empowers traders with better information, more efficient execution, and a supportive community—all while leveraging the security and transparency of blockchain technology.
+
+The platform is designed for continuous evolution, with regular updates based on user feedback, market developments, and technological advancements. Our ultimate goal is to democratize access to sophisticated trading tools and strategies, making them available to traders of all experience levels worldwide.

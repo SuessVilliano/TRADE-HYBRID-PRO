@@ -1,292 +1,308 @@
-# Trade Hybrid Platform Support Guide
-
-## Platform Overview
-Trade Hybrid is a cutting-edge decentralized trading and affiliate marketing platform that combines blockchain technology with gamified user experiences and sophisticated commission tracking. The platform offers cryptocurrency trading (especially Solana), AI-driven market analysis, educational content, and social features.
-
-## Key Features
-
-### 1. Trading Dashboard
-- **Customizable Trading Dashboard**: Users can arrange panels by dragging headers to reposition components
-- **Multiple Layout Options**: Grid, horizontal, or vertical arrangements available
-- **Trading Charts**: TradingView and DEX charts integration
-- **Panels Available**:
-  - Chart panels
-  - Scanner
-  - Trade signals
-  - Smart trade (ABATEV)
-  - Copy trade
-  - AI trading assistant
-  - Trading bots
-  - Trade journal
-  - Portfolio tracker
-  - News feed
-  - Matrix affiliate system
-  - Learning center
-  - Zen meditation mode
-
-### 2. Broker Connections
-- **Available Brokers**: Alpaca, Kraken, and more
-- **API Integration**: Users can connect to brokers via API keys
-- **Trade Execution**: Execute trades directly from the platform
-- **Position Tracking**: Monitor positions in real-time
-
-### 3. Wallet Integration
-- **Phantom Wallet Support**: Connect Solana wallets for crypto payments
-- **Smart Contracts**: Automated commission distribution via blockchain
-- **Transaction History**: Track all wallet activity
-
-### 4. AI Trading Features
-- **Trade Signal Analysis**: AI-powered analysis of market conditions
-- **Google Sheets Integration**: Pull trading signals from Google Sheets
-- **Debugging Support**: Automated analysis of trading performance
-- **Personalized Insights**: AI generates custom trading recommendations
-
-### 5. Learning Center
-- **Comprehensive Courses**: Structured learning paths for various trading skills
-- **Progress Tracking**: System tracks completion of modules and lessons
-- **Certificates**: Earn certificates upon completion
-- **Learning Journal**: Record notes and insights during learning
-
-### 6. Trade Journal
-- **Trade Documentation**: Record all trade details
-- **Performance Analytics**: Track win/loss ratios, profit factors, etc.
-- **Trade Screenshots**: Upload and store images of trades
-- **Export Capabilities**: Generate reports and export data
-
-### 7. Matrix Affiliate System
-- **Matrix Commission Structure**: Based on Forsage.io's model with multiple matrix levels
-- **Smart Contract Payments**: Automatic commission distribution through Solana blockchain
-- **Affiliate Analytics**: Track referrals and commissions in real-time
-- **Marketing Materials**: Access promotional materials, referral links, and banners
-- **Multi-Level Structure**: Earn from direct referrals and their subsequent referrals
-- **Commission Transparency**: All transactions recorded on blockchain for verification
-
-#### Matrix Levels
-The affiliate system uses a 3x4 matrix structure:
-- **Width**: Each level can hold up to 3 direct referrals
-- **Depth**: Commissions extend down to 4 levels deep
-- **Level 1**: Earn 10% commission from direct referrals
-- **Level 2**: Earn 5% commission from your referrals' referrals
-- **Level 3**: Earn 3% commission from level 3 referrals
-- **Level 4**: Earn 2% commission from level 4 referrals
-
-#### Qualification Requirements
-- Must have an active platform subscription
-- Must maintain at least one direct referral to earn from levels 2-4
-- Higher tier subscriptions unlock higher commission percentages
-
-### 8. 3D Metaverse Trading Environment
-- **Interactive 3D Space**: Trade and learn in a virtual environment
-- **Real-time Interaction**: Connect with other traders
-- **Voice Chat**: Built-in communication system
-
-## Common User Questions & Answers
-
-### Account & Access
-
-**Q: How do I create an account?**
-A: You can sign up using email/password or by connecting your Phantom wallet. Click "Sign Up" on the homepage to get started.
-
-**Q: How do I reset my password?**
-A: Click on "Forgot Password" on the login page. You'll receive an email with password reset instructions.
-
-**Q: Is my data secure?**
-A: Yes, we use industry-standard encryption for all data. API keys are stored securely and never exposed.
-
-### Trading Features
-
-**Q: How do I connect my broker?**
-A: Go to the Control Center, click on "Connect Broker" and select your broker (e.g., Alpaca). You'll need to enter your API key and secret.
-
-**Q: How do I customize my trading dashboard?**
-A: You can drag panels by their headers to reposition them. Use the layout selector at the top to switch between grid, horizontal, or vertical layouts.
+# TradeHybrid Support Guide
 
-**Q: How do I use the AI trading assistant?**
-A: First, add your Google API credentials in Settings. Then open the AI assistant panel and ask trading-related questions.
+## Introduction
 
-**Q: What is ABATEV smart trade?**
-A: ABATEV is our proprietary trading methodology that analyses Before, After, Through, Exit, and Verified points of a trade for optimal entry and exit.
+This guide provides detailed troubleshooting steps for common user issues with TradeHybrid platform. It includes step-by-step resolution procedures, FAQs, and reference material for support staff.
 
-**Q: How do I use the ABATEV trading system?**
-A: ABATEV stands for:
-- **A (Analysis)**: Analyze market conditions before entering a trade
-- **B (Before)**: Identify entry conditions and set up your trade
-- **A (After)**: Monitor immediate post-entry market reaction
-- **T (Through)**: Navigate through the trade's lifecycle
-- **E (Exit)**: Apply strategic exit rules based on profit targets or stop-loss
-- **V (Verification)**: Review completed trades to improve future decisions
+## Wallet Connection Issues
 
-To use it, open the ABATEV Smart Trade panel, select your trading pair, and follow the structured approach for trade setup. The system will guide you through each phase of the trade.
+### Issue: Black Screen After Wallet Connection
 
-### Wallet & Payments
+**Symptoms:**
+- User connects wallet and sees a black screen
+- Console shows error related to "Buffer is not defined"
 
-**Q: How do I connect my Phantom wallet?**
-A: Click on "Connect Wallet" in the top navigation, then select Phantom. You'll need to approve the connection request in your wallet.
+**Resolution Steps:**
+1. Ask the user to refresh the page
+2. If the issue persists, clear browser cache and cookies
+3. Ensure the user has the latest version of the Phantom wallet extension
+4. Try an alternative browser (Chrome or Firefox recommended)
 
-**Q: How do commissions get paid?**
-A: Commissions are automatically distributed via smart contracts when referrals sign up or complete actions within the platform.
+**Root Cause:** 
+This is typically caused by a client-side JavaScript dependency conflict where Node.js Buffer API is not properly polyfilled in the browser environment.
 
-**Q: Can I withdraw my earnings?**
-A: Yes, earnings in your connected wallet can be withdrawn or transferred at any time.
+### Issue: Failed Wallet Connection
 
-### Learning Center
+**Symptoms:**
+- Error message "Unable to connect to wallet"
+- Wallet popup appears but connection never completes
 
-**Q: How do I access courses?**
-A: Navigate to the Learning Center from the main menu. Browse available courses and click "Enroll" to begin.
+**Resolution Steps:**
+1. Verify the wallet is unlocked
+2. Check if the wallet has sufficient SOL for transaction fees (at least 0.01 SOL)
+3. Try the legacy connection method:
+   - Direct them to disconnect any current wallet connection
+   - Click "Connect Wallet" again and select Phantom
+   - If using mobile, suggest using the in-app browser of the Phantom app
+4. For persistent issues, suggest clearing browser permissions for the site and reconnecting
 
-**Q: How do I track my progress?**
-A: Your progress is automatically tracked in the Learning Center. Visit "My Progress" to see completion rates and continue where you left off.
+**Root Cause:**
+Usually related to wallet extension state, permissions issues, or network connectivity problems.
 
-**Q: How do I get certificates?**
-A: Complete all modules in a course, including quizzes. Certificates are automatically generated upon completion.
+### Issue: RPC Connection Errors
 
-### Technical Support
+**Symptoms:**
+- Error messages about "Failed to fetch" or "Network error"
+- Transactions fail to process
 
-**Q: What should I do if panels don't load?**
-A: Try refreshing the page. If issues persist, check your internet connection or try clearing your browser cache.
+**Resolution Steps:**
+1. Verify the user's internet connection
+2. Suggest switching to a different network location
+3. Check [Solana network status](https://status.solana.com) for outages
+4. If the issue is widespread, escalate to engineering team to check our RPC provider
 
-**Q: How do I report bugs or issues?**
-A: Contact support through the Help button in the bottom right corner or email support@tradehybrid.com.
+**Root Cause:**
+May be caused by Solana network congestion, RPC endpoint limitations, or user's network issues.
 
-**Q: Which browsers are supported?**
-A: We recommend using Chrome, Firefox, or Edge for the best experience. The platform may not function optimally on older browsers.
+## Trading Signal Issues
 
-### Trade Journal
+### Issue: No Signals Appearing
 
-**Q: How do I add a new trade entry?**
-A: Open the Trade Journal panel and click "Add New Entry." Fill in the trade details and save.
-
-**Q: Can I export my trade data?**
-A: Yes, click the "Export" button in the Trade Journal to download your data in CSV or PDF format.
-
-**Q: How do I analyze my trading performance?**
-A: The Trade Journal provides analytics including win rate, profit factor, and drawdown metrics. Check the "Analytics" tab.
-
-**Q: What metrics are available in the Trade Journal?**
-A: The Trade Journal tracks:
-- Win/Loss Ratio
-- Profit Factor
-- Average Win/Loss Size
-- Maximum Drawdown
-- Success Rate by Trading Pair
-- Success Rate by Strategy
-- Trade Distribution by Day/Time
-- Risk-Reward Analysis
-- Emotional State Correlation with Performance
-
-**Q: How does the AI analysis work with my trades?**
-A: The AI trading assistant analyzes your trade history and identifies patterns in your trading behavior. It can:
-- Detect winning and losing patterns
-- Suggest improvements to your strategy
-- Identify optimal trading times based on your history
-- Compare your results with the broader market
-- Recommend adjustments to risk management
-- Provide personalized insights into psychological biases
-
-## Troubleshooting Guide
-
-### Connection Issues
-
-**Problem: Cannot connect to broker**
-- Verify API credentials are entered correctly
-- Check if broker API servers are online
-- Ensure you have proper permissions set on your API key
-
-**Problem: Wallet connection fails**
-- Make sure Phantom extension is installed and up to date
-- Check if you're logged into your wallet
-- Try disconnecting and reconnecting
-
-### Display Issues
-
-**Problem: Panels not rendering correctly**
-- Clear browser cache and cookies
-- Try a different browser
-- Disable browser extensions that might interfere
-
-**Problem: Charts not loading**
-- Ensure your internet connection is stable
-- Check if TradingView services are accessible
-- Try adjusting the time frame or symbol
-
-### Data Issues
-
-**Problem: Trade signals not updating**
-- Verify Google API credentials
-- Check if Google Sheets source is accessible
-- Ensure sheet format matches expected structure
-
-**Problem: Missing trade history**
-- Verify database connection
-- Check filter settings in the journal
-- Ensure API permissions include trade history access
-
-## System Requirements
-
-- **Browser**: Chrome 80+, Firefox 75+, Edge 80+
-- **Internet Connection**: Broadband connection (5+ Mbps recommended)
-- **Device**: Desktop or laptop computer (mobile experience is limited)
-- **Screen Resolution**: Minimum 1366x768, recommended 1920x1080
-- **Operating System**: Windows 10+, macOS 10.14+, or Linux
-
-## API Documentation
-
-### Broker API Integration
-The platform integrates with the following broker APIs:
-- Alpaca: https://alpaca.markets/docs/api-documentation/
-- Kraken: https://docs.kraken.com/rest/
-
-### Google Sheets Integration
-For trade signals, we use Google Sheets API:
-- Documentation: https://developers.google.com/sheets/api
-
-#### Setting Up Google Sheets Integration
-1. **Create API Credentials**: Visit Google Cloud Console (https://console.cloud.google.com/)
-2. **Enable Google Sheets API**: In your Google Cloud project, enable the Google Sheets API
-3. **Create OAuth Credentials**: Generate OAuth 2.0 client ID and secret
-4. **Enter Credentials in Platform**: Go to Settings > API Credentials and enter your Google API credentials
-5. **Verify Connection**: Test the connection in the Trade Signals panel
-
-#### Google Sheets Format for Trade Signals
-Trade Hybrid expects the following column format in your Google Sheets:
-- **Column A**: Symbol (e.g., "BTC/USD", "SOL/USDT")
-- **Column B**: Direction ("BUY" or "SELL")
-- **Column C**: Entry Price (number)
-- **Column D**: Stop Loss (number)
-- **Column E**: Take Profit (number)
-- **Column F**: Risk/Reward Ratio (number)
-- **Column G**: Timestamp (YYYY-MM-DD HH:MM:SS format)
-- **Column H**: Strategy (text)
-- **Column I**: Timeframe (e.g., "15m", "1h", "4h", "1d")
-- **Column J**: Confidence (number 1-10 or "High", "Medium", "Low")
-- **Column K**: Notes (text)
-
-#### Troubleshooting Google Integration
-- Ensure the Google Sheet is shared with the email address associated with your API credentials
-- Check that your sheet follows the exact column format outlined above
-- Verify your API credentials have not expired (they typically need renewal every 6 months)
-- Confirm you have enabled both Google Sheets API and Google Drive API in your Google Cloud project
-
-### Solana/Web3 Integration
-The platform connects to Solana blockchain via:
-- Solana Web3.js: https://solana-labs.github.io/solana-web3.js/
-- Phantom Wallet: https://docs.phantom.app/
-
-## Privacy & Security Information
-
-- API keys are encrypted using industry-standard methods
-- Data is stored in secure PostgreSQL databases
-- No trading credentials are shared with third parties
-- User consent is required for all wallet transactions
-- Session timeouts automatically log users out after inactivity
-
-## Contact Information
-
-- **Support Email**: support@tradehybrid.com
-- **Hours**: 24/7 support via chatbot, human support 9am-5pm EST weekdays
-- **Response Time**: Typically within 24 hours for email inquiries
-- **Emergency Support**: Available for critical issues affecting trading functionality
-
----
-
-*Last Updated: March 31, 2025*
+**Symptoms:**
+- Signal list is empty
+- User reports "No signals found" message
+
+**Resolution Steps:**
+1. Verify user's membership tier (check `tokenMembership.tier` in their profile)
+2. For free tier users, explain that only 2 public signals are available
+3. For paid users:
+   - Check if signal filters are active (reset filters using the "Clear Filters" button)
+   - Verify the user's internet connection
+   - Try manually refreshing signals with the refresh button
+4. If the issue persists, check API status and escalate if needed
+
+**Root Cause:**
+Usually related to membership restrictions, active filters, or API connectivity issues.
+
+### Issue: Copy Trade Function Not Working
+
+**Symptoms:**
+- "Copy Trade" button doesn't respond
+- Copy action completes but nothing is copied to clipboard
+
+**Resolution Steps:**
+1. Confirm the user has granted clipboard permissions to the browser
+2. For iOS Safari users, explain clipboard limitations and suggest using the manual copy option
+3. Try using the "Copy" button in an expanded signal card instead of the quick action
+4. If using a secure browser, suggest disabling enhanced security features or using a different browser
+
+**Root Cause:**
+Browser security policies often restrict clipboard access unless specific permissions are granted.
+
+### Issue: Incorrect Signal Status
+
+**Symptoms:**
+- Signal shows as "active" when it should be completed or vice versa
+- Profit/loss calculation seems incorrect
+
+**Resolution Steps:**
+1. Verify if the user is looking at the correct timestamp for the signal
+2. Check if the signal was recently updated (within the last 5 minutes)
+3. Ask them to try refreshing the signal list
+4. For persistent issues, collect signal ID and user details and escalate to the signals team
+
+**Root Cause:**
+Signal status is usually updated every 5 minutes. Issues may occur due to caching or data synchronization delays.
+
+## Account and Billing Issues
+
+### Issue: Membership Benefits Not Active
+
+**Symptoms:**
+- User has purchased a higher tier but still sees limited features
+- Premium signals not visible after upgrade
+
+**Resolution Steps:**
+1. Verify the payment was successfully processed (check transaction hash if crypto payment)
+2. Check the user's current membership tier in the admin panel
+3. Ask them to sign out and sign back in to refresh their session
+4. For THC token purchases, verify the tokens were correctly received in our treasury wallet
+5. If all checks pass but issue persists, manually update their membership tier and escalate
+
+**Root Cause:**
+Usually related to payment processing delays or session caching issues.
+
+### Issue: THC Token Balance Not Updating
+
+**Symptoms:**
+- User has sent THC tokens but balance doesn't reflect the new amount
+- Staking rewards not appearing
+
+**Resolution Steps:**
+1. Verify the transaction on Solana Explorer using the tx hash
+2. Check if the transaction was sent to the correct wallet address
+3. For confirmed transactions not showing, ask them to refresh their wallet connection
+4. For staking rewards, explain the distribution schedule (daily at 00:00 UTC)
+
+**Root Cause:**
+Token balance synchronization happens at regular intervals and may not reflect immediately after transactions.
+
+## Performance Issues
+
+### Issue: Slow Chart Loading
+
+**Symptoms:**
+- Charts take a long time to render
+- Frequent timeouts when changing timeframes
+
+**Resolution Steps:**
+1. Suggest reducing the number of active indicators (limit to 3-5)
+2. Try using a simpler chart type (line chart instead of candlestick)
+3. For mobile users, recommend switching to WiFi if on cellular data
+4. Clear browser cache and reload
+
+**Technical Details:**
+Chart rendering is resource-intensive, especially with multiple indicators. Performance is impacted by:
+- Device processing power
+- Memory availability
+- Network connection quality
+- Number of active data subscriptions
+
+### Issue: Mobile App Crashes
+
+**Symptoms:**
+- App closes unexpectedly when opening certain pages
+- Freezes when changing chart settings
+
+**Resolution Steps:**
+1. Verify app version is latest (current: 2.5.0)
+2. Suggest force-closing the app and restarting
+3. Check device free storage (need minimum 500MB)
+4. For persistent issues, collect device information and app logs
+
+**Root Cause:**
+Most mobile crashes are related to memory limitations or unhandled edge cases in the mobile wrapper.
+
+## Data and Analytics Issues
+
+### Issue: Missing Historical Data
+
+**Symptoms:**
+- Gaps in chart history
+- Error message about "data not available"
+
+**Resolution Steps:**
+1. Verify the requested timeframe (explain that some assets have limited history)
+2. For crypto assets, we store maximum of 2 years of historical data
+3. For forex and stocks, data availability depends on the broker connection
+4. Suggest trying a different timeframe or data source
+
+**Root Cause:**
+Historical data availability varies by asset type, data provider, and timeframe.
+
+### Issue: Signal Performance Discrepancies
+
+**Symptoms:**
+- User reports different profit/loss than what's shown
+- Signal metrics don't match actual market movements
+
+**Resolution Steps:**
+1. Explain that signal performance is based on entry and exit at exact signal prices
+2. Actual execution may vary based on slippage, spreads, and execution timing
+3. For significant discrepancies, request screenshots and escalate to the signals team
+
+**Root Cause:**
+Signal performance calculation uses standardized metrics, which may differ from actual trading results due to execution factors.
+
+## Common User Questions
+
+### Q: How are trading signals generated?
+
+**Answer:** TradeHybrid signals come from three primary sources:
+1. AI algorithms analyzing market patterns and sentiment
+2. Professional traders partnered with TradeHybrid
+3. Aggregated community signals filtered by success rate
+
+Each signal includes a confidence rating and risk assessment based on historical performance.
+
+### Q: What happens if I lose connection during a trade?
+
+**Answer:** TradeHybrid operates primarily as a signal provider, not an execution platform. Your trades execute through your connected broker. If you lose connection:
+
+1. Orders already placed with your broker will still execute
+2. Pending orders in TradeHybrid that haven't been sent won't be executed
+3. Copy trading automation will pause until connection is restored
+
+We recommend setting appropriate stop losses with your broker for risk management.
+
+### Q: How do I reset my wallet connection?
+
+**Answer:** To reset your wallet connection:
+1. Go to Settings > Security > Wallet Connections
+2. Click "Disconnect Wallet"
+3. Clear site permissions in your wallet extension
+4. Refresh the page and reconnect
+
+This resolves most connection issues by establishing a fresh authentication session.
+
+### Q: Can I use multiple wallets with one account?
+
+**Answer:** Yes, TradeHybrid supports connecting multiple wallets to a single account:
+1. First, connect your primary wallet
+2. Go to Settings > Wallet Management > Add Additional Wallet
+3. Follow the connection process for the secondary wallet
+4. Verify both wallets appear in your wallet list
+
+Each wallet's assets will be displayed separately in your portfolio.
+
+## Technical Reference
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| SOLANA_RPC_URL | Custom Solana RPC endpoint | https://solana-mainnet.g.alchemy.com/v2/demo |
+| ALPACA_API_KEY | Alpaca broker API key | - |
+| ALPACA_API_SECRET | Alpaca broker API secret | - |
+| OANDA_API_KEY | OANDA broker API key | - |
+| OPENAI_API_KEY | OpenAI API key for market analysis | - |
+
+### Wallet Connection Process
+
+1. User initiates connection from UI
+2. System checks for wallet availability using both:
+   - Modern: `window.phantom?.solana`
+   - Legacy: `window.solana?.isPhantom`
+3. Connection request sent to available wallet
+4. Upon approval, signature request sent for authentication
+5. After successful signature, JWT token generated for session
+
+### Signal Status Lifecycle
+
+1. **Created**: Signal is first generated by source
+2. **Active**: Signal is currently valid and within trading parameters
+3. **Completed**: Signal has reached take profit or stop loss
+4. **Cancelled**: Signal was invalidated before completion
+5. **Expired**: Signal reached time limit without triggering
+
+Each status change triggers notifications and updates performance metrics.
+
+## Escalation Procedures
+
+### When to Escalate
+
+- User reports data loss or account security concerns
+- Payment processing issues involving more than $100
+- System-wide outages affecting multiple users
+- Bugs that prevent core functionality from working
+
+### How to Escalate
+
+1. Document the issue with:
+   - User ID and email
+   - Exact error messages
+   - Steps to reproduce
+   - Screenshots if available
+2. Create an escalation ticket in Zendesk with priority tag
+3. For urgent issues, use the #support-urgent Slack channel
+4. Follow up with the user with ticket number and ETA
+
+### After-Hours Support
+
+For issues requiring immediate attention outside regular hours:
+1. Check the on-call schedule in PagerDuty
+2. Contact the assigned engineer via the emergency contact system
+3. Use severity level "Critical" only for issues affecting:
+   - User fund security
+   - System-wide outages
+   - Data integrity problems
