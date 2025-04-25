@@ -23,29 +23,65 @@ Entry: ${signal.entry}
 Stop Loss: ${signal.stopLoss}
 Take Profit: ${signal.takeProfit}
 Risk/Reward: ${((signal.takeProfit - signal.entry) / (signal.entry - signal.stopLoss)).toFixed(1)}
+${signal.notes ? `Notes: ${signal.notes}` : ''}
+${signal.status === 'active' ? 'Status: ACTIVE' : ''}
       `.trim();
       
-      // Copy the formatted trade details to clipboard
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(tradeDetails);
-      } else {
-        // Fallback for browsers that don't support the Clipboard API
+      // Try modern clipboard API first
+      let copySucceeded = false;
+      
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(tradeDetails);
+          copySucceeded = true;
+        }
+      } catch (clipboardError) {
+        console.warn('Native clipboard API failed, trying fallback:', clipboardError);
+      }
+      
+      // Fallback method if the modern API failed or isn't available
+      if (!copySucceeded) {
         const textArea = document.createElement('textarea');
         textArea.value = tradeDetails;
+        
+        // Make the textarea out of viewport
         textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        textArea.style.zIndex = '-1000';
         textArea.style.opacity = '0';
+        
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-        document.execCommand('copy');
+        
+        try {
+          copySucceeded = document.execCommand('copy');
+        } catch (e) {
+          console.error('Fallback copy method failed:', e);
+        }
+        
         document.body.removeChild(textArea);
       }
       
-      // Show success message
-      toast.success(`Signal copied successfully`, {
-        description: `${signal.type.toUpperCase()} ${signal.symbol} at ${signal.entry}`,
-        duration: 3000,
+      if (copySucceeded) {
+        // Show success message
+        toast.success(`Signal copied successfully`, {
+          description: `${signal.type.toUpperCase()} ${signal.symbol} at ${signal.entry}`,
+          duration: 3000,
+        });
+      } else {
+        throw new Error('Both copy methods failed');
+      }
+      
+      // Also dispatch a custom event for trade panels that might be listening
+      const event = new CustomEvent('copy-trade-signal', { 
+        detail: { 
+          signal,
+          timestamp: new Date().toISOString()
+        } 
       });
+      window.dispatchEvent(event);
       
       // Reset copying state after a delay
       setTimeout(() => {
