@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import bs58 from 'bs58';
+// Replace direct bs58 import with a browser-compatible approach
 import useLocalStorage from '../hooks/useLocalStorage';
 
 // Add interface to detect Solana in window
