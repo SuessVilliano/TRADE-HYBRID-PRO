@@ -7,9 +7,9 @@
  * Run this script when disk space is getting low.
  */
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
 
 // Print pretty header
 console.log('\n===================================================');
