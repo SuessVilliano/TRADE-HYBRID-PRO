@@ -1,10 +1,10 @@
 /**
  * Coin Price Service
  * A service to fetch real-time cryptocurrency prices and market data
+ * Using Birdeye API for comprehensive Solana token data
  */
 
 import axios from 'axios';
-import { config } from '../config';
 
 // Define market data types
 export interface TokenPriceData {
@@ -24,79 +24,150 @@ export interface TokenMarketData extends TokenPriceData {
   priceHistory: PriceHistoryPoint[];
 }
 
-// CoinGecko API options
-const API_BASE_URL = 'https://api.coingecko.com/api/v3';
-const THC_CONTRACT_ADDRESS = '4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4'; // THC token contract address
-const SOLANA_PLATFORM = 'solana';
-const DEFAULT_CURRENCY = 'usd';
+// Birdeye API configuration
+const BIRDEYE_API_BASE_URL = 'https://public-api.birdeye.so';
+const THC_TOKEN_ADDRESS = '4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4'; // THC token contract address
+const BIRDEYE_API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVsIjoiYmlyZGJvdCIsImlkIjoxfQ.M2sWDUDN5-cKrPJSUVQW8Yp8RTmPD-0gj8mofaeRJH0'; // Public API key (free tier)
 
 /**
- * Fetch token price data from CoinGecko
- * @param contractAddress The token contract address
- * @param platform The blockchain platform (default: 'solana')
+ * Fetch token price and market data from Birdeye API
+ * @param tokenAddress The Solana token address
  * @returns Promise<TokenPriceData> with current price data
  */
 export async function fetchTokenPrice(
-  contractAddress: string = THC_CONTRACT_ADDRESS,
-  platform: string = SOLANA_PLATFORM
+  tokenAddress: string = THC_TOKEN_ADDRESS
 ): Promise<TokenPriceData> {
   try {
-    // First try token price by contract address
-    const response = await axios.get(`${API_BASE_URL}/simple/token_price/${platform}`, {
+    console.log('Fetching token price data from Birdeye API...');
+    
+    // Fetch token price and market data from Birdeye
+    const response = await axios.get(`${BIRDEYE_API_BASE_URL}/public/price`, {
       params: {
-        contract_addresses: contractAddress,
-        vs_currencies: DEFAULT_CURRENCY,
-        include_market_cap: true,
-        include_24hr_vol: true,
-        include_24hr_change: true,
-        include_last_updated_at: true,
+        address: tokenAddress,
+      },
+      headers: {
+        'x-api-key': BIRDEYE_API_KEY,
       },
     });
-
-    // Extract the price data from the response
-    const data = response.data?.[contractAddress.toLowerCase()];
     
-    if (data) {
+    // Check if we got a valid response
+    if (response.data?.data?.value) {
+      const priceData = response.data.data;
+      const price = priceData.value;
+      
+      // Get 24h price change data
+      // First try the Birdeye price change endpoint
+      const changeResponse = await axios.get(`${BIRDEYE_API_BASE_URL}/public/token_price_change`, {
+        params: {
+          address: tokenAddress,
+          type: '24h',
+        },
+        headers: {
+          'x-api-key': BIRDEYE_API_KEY,
+        },
+      });
+      
+      // Extract price change percentage
+      const priceChange24h = changeResponse.data?.data?.priceChange24h || 0;
+      
+      // Get additional token metadata like market cap and volume
+      const metadataResponse = await axios.get(`${BIRDEYE_API_BASE_URL}/public/tokeninfo`, {
+        params: {
+          address: tokenAddress,
+        },
+        headers: {
+          'x-api-key': BIRDEYE_API_KEY,
+        },
+      });
+      
+      // Extract market cap and volume data
+      const tokenInfo = metadataResponse.data?.data || {};
+      const marketCap = tokenInfo.mc || 0;
+      const tradingVolume24h = tokenInfo.volume24h || 0;
+      
       return {
-        price: data[`${DEFAULT_CURRENCY}`] || 0,
-        priceChange24h: data[`${DEFAULT_CURRENCY}_24h_change`] || 0,
-        marketCap: data[`${DEFAULT_CURRENCY}_market_cap`] || 0,
-        tradingVolume24h: data[`${DEFAULT_CURRENCY}_24h_vol`] || 0,
-        lastUpdated: new Date(data.last_updated_at * 1000),
+        price,
+        priceChange24h,
+        marketCap,
+        tradingVolume24h,
+        lastUpdated: new Date(),
       };
     }
     
     // If we don't get a valid response, throw an error to trigger the fallback
-    throw new Error('Failed to fetch token price data');
+    throw new Error('Failed to fetch token price data from Birdeye');
   } catch (error) {
-    console.error('Error fetching token price:', error);
+    console.error('Error fetching token price from Birdeye:', error);
     
-    // For now, we'll use our fallback price data since we don't have a real API endpoint
-    // In production, this would connect to a real price API
+    // Use fallback data if Birdeye API fails
     return fetchFallbackTokenPrice();
   }
 }
 
 /**
- * Fetch token price history for a specific number of days
- * @param days Number of days of history to fetch
- * @param contractAddress The token contract address
- * @param platform The blockchain platform (default: 'solana')
+ * Fetch token price history from Birdeye API
+ * @param days Number of days of history to fetch (defaults to 7)
+ * @param tokenAddress The Solana token address
  * @returns Promise<PriceHistoryPoint[]> with historical price data
  */
 export async function fetchTokenPriceHistory(
   days: number = 7,
-  contractAddress: string = THC_CONTRACT_ADDRESS,
-  platform: string = SOLANA_PLATFORM
+  tokenAddress: string = THC_TOKEN_ADDRESS
 ): Promise<PriceHistoryPoint[]> {
   try {
-    // In a real implementation, we would fetch from a history endpoint
-    // Example: /coins/{id}/market_chart
+    console.log('Fetching token price history from Birdeye API...');
     
-    // For now, we'll use a fallback with simulated data
-    return generateFallbackPriceHistory(days);
+    // Calculate timestamp for 'days' ago
+    const now = new Date();
+    const startTime = new Date(now);
+    startTime.setDate(startTime.getDate() - days);
+    
+    // Convert timestamps to seconds
+    const startTs = Math.floor(startTime.getTime() / 1000);
+    const endTs = Math.floor(now.getTime() / 1000);
+    
+    // Determine resolution based on days requested
+    let resolution = '1D'; // Default to daily
+    if (days <= 1) {
+      resolution = '15m'; // 15 minutes for 1 day or less
+    } else if (days <= 3) {
+      resolution = '1H'; // Hourly for 1-3 days
+    } else if (days <= 14) {
+      resolution = '4H'; // 4-hour for 3-14 days
+    }
+    
+    // Fetch price history from Birdeye
+    const response = await axios.get(`${BIRDEYE_API_BASE_URL}/public/price_history`, {
+      params: {
+        address: tokenAddress,
+        type: 'token',
+        timeframe: resolution,
+        fromTimestamp: startTs,
+        toTimestamp: endTs,
+      },
+      headers: {
+        'x-api-key': BIRDEYE_API_KEY,
+      },
+    });
+    
+    // Check if we got a valid response
+    if (response.data?.data?.items?.length > 0) {
+      // Map the Birdeye data to our format
+      return response.data.data.items.map((item: any) => {
+        const date = new Date(item.unixTime * 1000);
+        return {
+          date: date.toISOString().split('T')[0],
+          price: item.value,
+        };
+      });
+    }
+    
+    // If we don't get valid data, throw an error to trigger the fallback
+    throw new Error('Failed to fetch token price history from Birdeye');
   } catch (error) {
-    console.error('Error fetching token price history:', error);
+    console.error('Error fetching token price history from Birdeye:', error);
+    
+    // Use fallback data if Birdeye API fails
     return generateFallbackPriceHistory(days);
   }
 }
@@ -131,7 +202,7 @@ export async function fetchCompleteTokenData(): Promise<TokenMarketData> {
   }
 }
 
-// Fallback functions for testing when API is not available
+// Fallback functions for when API calls fail or while testing
 
 /**
  * Generate a realistic fallback price with random variation
