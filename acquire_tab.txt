@@ -1,0 +1,188 @@
+          <TabsContent value="acquire">
+            <div className="max-w-4xl mx-auto">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-white">
+                    <Rocket className="mr-2 h-5 w-5 text-blue-500" />
+                    Acquire THC Tokens
+                  </CardTitle>
+                  <CardDescription className="text-gray-300">
+                    Get your THC tokens via pump.fun and join our ecosystem with multiple benefits
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="bg-gradient-to-r from-pink-50 to-blue-50 dark:from-pink-900/20 dark:to-blue-900/20 
+                    border border-blue-200 dark:border-blue-800 p-6 rounded-md">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="bg-purple-100 dark:bg-purple-900/50 p-3 rounded-full">
+                        <Layers className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold">THC Token on pump.fun</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">The official Trade Hybrid platform token</p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <div className="bg-white/80 dark:bg-slate-800/80 p-4 rounded-md">
+                        <div className="text-sm text-slate-500 dark:text-slate-400">Current Price</div>
+                        <div className="text-2xl font-bold mt-1">${THC_TOKEN.price.toFixed(6)} USD</div>
+                        <div className="text-xs text-green-600 mt-1">+{THC_TOKEN.priceChange24h}% (24h)</div>
+                      </div>
+                      <div className="bg-white/80 dark:bg-slate-800/80 p-4 rounded-md">
+                        <div className="text-sm text-slate-500 dark:text-slate-400">Contract Address</div>
+                        <div className="flex items-center gap-1 mt-1 text-sm">
+                          <code className="font-mono bg-slate-100 dark:bg-slate-700 px-1 py-0.5 rounded text-xs">
+                            {THC_TOKEN.contractAddress.substring(0, 8)}...{THC_TOKEN.contractAddress.substring(THC_TOKEN.contractAddress.length - 8)}
+                          </code>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5"
+                            onClick={() => {
+                              navigator.clipboard.writeText(THC_TOKEN.contractAddress);
+                              toast({
+                                title: "Copied!",
+                                description: "Contract address copied to clipboard",
+                              });
+                            }}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <div className="flex items-center gap-1 mt-2">
+                          <a
+                            href={`${THC_TOKEN.explorerUrl}${THC_TOKEN.contractAddress}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 dark:text-blue-400 hover:underline text-xs flex items-center"
+                          >
+                            View on Solscan
+                            <ExternalLink className="ml-1 h-3 w-3" />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-5 rounded-md relative overflow-hidden mb-6">
+                      <div className="relative z-10">
+                        <h3 className="text-lg font-bold mb-2">Why Buy THC Tokens?</h3>
+                        <ul className="space-y-2 text-sm">
+                          <li className="flex items-start gap-2">
+                            <CheckCircle2 size={16} className="mt-0.5 flex-shrink-0" />
+                            <span>Reduced platform fees (up to 50% discount)</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <CheckCircle2 size={16} className="mt-0.5 flex-shrink-0" />
+                            <span>Stake to earn passive income (up to 20% APY)</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <CheckCircle2 size={16} className="mt-0.5 flex-shrink-0" />
+                            <span>Participate in platform governance</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <CheckCircle2 size={16} className="mt-0.5 flex-shrink-0" />
+                            <span>Access to exclusive premium features</span>
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="absolute top-0 right-0 opacity-10">
+                        <Coins className="h-32 w-32" />
+                      </div>
+                    </div>
+                    
+                    <div className="text-center">
+                      <a 
+                        href={THC_TOKEN.pumpFunUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center w-full md:w-auto bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-md transition-colors"
+                      >
+                        <Rocket className="mr-2 h-5 w-5" />
+                        Buy THC on pump.fun
+                        <ExternalLink className="ml-2 h-4 w-4" />
+                      </a>
+                      <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                        pump.fun is the premier Solana token platform. Make sure you're connected to your Solana wallet before purchasing.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-slate-100 dark:bg-slate-800 p-5 rounded-md">
+                    <h3 className="font-medium mb-3">THC Token Membership Benefits</h3>
+                    <p className="text-sm mb-4">
+                      Holding THC tokens automatically qualifies you for premium membership benefits on the Trade Hybrid platform. 
+                      Your membership tier depends on the amount of THC tokens in your wallet:
+                    </p>
+                    
+                    <div className="space-y-4">
+                      <div className="bg-white dark:bg-slate-700 p-3 rounded-md border border-slate-200 dark:border-slate-600">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center">
+                            <Badge className="mr-2 bg-slate-500">Basic</Badge>
+                            <span className="font-medium">0-999 THC</span>
+                          </div>
+                          <span className="text-sm text-slate-500">5% fee discount</span>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-white dark:bg-slate-700 p-3 rounded-md border border-slate-200 dark:border-slate-600">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center">
+                            <Badge className="mr-2 bg-blue-500">Advanced</Badge>
+                            <span className="font-medium">1,000-9,999 THC</span>
+                          </div>
+                          <span className="text-sm text-slate-500">25% fee discount</span>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-white dark:bg-slate-700 p-3 rounded-md border border-slate-200 dark:border-slate-600">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center">
+                            <Badge className="mr-2 bg-purple-500">Premium</Badge>
+                            <span className="font-medium">10,000-49,999 THC</span>
+                          </div>
+                          <span className="text-sm text-slate-500">35% fee discount</span>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-white dark:bg-slate-700 p-3 rounded-md border border-slate-200 dark:border-slate-600">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center">
+                            <Badge className="mr-2 bg-amber-500">Elite</Badge>
+                            <span className="font-medium">50,000+ THC</span>
+                          </div>
+                          <span className="text-sm text-slate-500">50% fee discount</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-6 p-5 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-md">
+                      <h3 className="font-medium mb-4 flex items-center">
+                        <Lock className="mr-2 h-5 w-5 text-blue-500" />
+                        Your Current Membership Status
+                      </h3>
+                      
+                      {solanaAuth.walletConnected && solanaAuth.isAuthenticated ? (
+                        <div>
+                          <THCMembershipCard />
+                          <p className="text-sm mt-3 text-slate-600 dark:text-slate-400">
+                            Your THC token balance determines your membership tier and platform benefits.
+                            {solanaAuth.tokenMembership && solanaAuth.tokenMembership.tier === MembershipTier.Basic && 
+                              "Upgrade to Advanced tier by acquiring more THC tokens!"}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="text-center p-4 bg-slate-100 dark:bg-slate-800 rounded-md">
+                          <p className="text-sm mb-3">Connect your Solana wallet to check your membership status</p>
+                          <div className="flex justify-center">
+                            <WalletMultiButton className="!bg-primary !h-10 !rounded-md !text-sm !py-2 !px-4" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>

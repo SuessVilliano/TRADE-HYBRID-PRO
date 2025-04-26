@@ -9,7 +9,7 @@ import {
   formatUsdAmount,
   formatTokenAmount
 } from '../contracts/thc-token-info';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 // THC Token purchase status
 export type PurchaseStatus = 'idle' | 'preparing' | 'confirming' | 'processing' | 'success' | 'error';
@@ -138,6 +138,9 @@ export function useThcToken(): ThcTokenState {
   
   // Purchase tokens function
   const purchaseTokens = useCallback(async () => {
+    // Get the toast function inside the callback to ensure it's available
+    const { toast } = useToast();
+    
     // Validate inputs
     if (usdAmount <= 0) {
       setPurchaseError('Please enter a valid USD amount');
