@@ -41,14 +41,14 @@ export function AcquireThcContent() {
               <div className="text-sm text-slate-400">Contract Address</div>
               <div className="flex items-center gap-1 mt-1 text-sm">
                 <code className="font-mono bg-slate-800 px-2 py-1 rounded text-xs">
-                  {THC_TOKEN.contractAddress || THC_TOKEN.tokenAddress}
+                  {THC_TOKEN.tokenAddress}
                 </code>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6"
                   onClick={() => {
-                    navigator.clipboard.writeText(THC_TOKEN.contractAddress || THC_TOKEN.tokenAddress);
+                    navigator.clipboard.writeText(THC_TOKEN.tokenAddress);
                     toast({
                       title: "Copied!",
                       description: "Contract address copied to clipboard",

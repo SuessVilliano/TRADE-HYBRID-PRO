@@ -71,8 +71,7 @@ import LessonDetail from './components/learning/LessonDetail';
 
 // Game Center
 import GamePage from './pages/game';
-import BullsVsBearsPage from './pages/bulls-vs-bears';
-import BullsVsBearsNewPage from './pages/bulls-vs-bears-new';
+// Bulls vs Bears pages removed
 import TradeRunnerPage from './pages/trade-runner';
 import TradeRunnerBrowserPage from './pages/trade-runner-browser';
 
@@ -225,8 +224,7 @@ const App: React.FC = () => {
                   
                   {/* Game Center */}
                   <Route path="/game" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
-                  <Route path="/game/bulls-vs-bears" element={<ProtectedRoute><BullsVsBearsPage /></ProtectedRoute>} />
-                  <Route path="/game/bulls-vs-bears-new" element={<ProtectedRoute><BullsVsBearsNewPage /></ProtectedRoute>} />
+                  {/* Bulls vs Bears game routes removed */}
                   <Route path="/game/trade-runner" element={<ProtectedRoute><TradeRunnerPage /></ProtectedRoute>} />
                   <Route path="/game/trade-runner-browser" element={<ProtectedRoute><TradeRunnerBrowserPage /></ProtectedRoute>} />
                   
