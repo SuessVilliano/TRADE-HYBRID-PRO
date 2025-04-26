@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Coins, BarChart3, Signal, Bot, BookOpen, Users, FileText, 
-  Settings, Activity, MessageSquare, LineChart } from 'lucide-react';
+  Settings, Activity, MessageSquare, LineChart, PlaySquare, Radio, Tv } from 'lucide-react';
 import { useAuth } from '../../lib/context/AuthContext';
 import DesktopHeader from './desktop-header';
 
@@ -40,6 +40,11 @@ const navigationItems = [
     name: 'Learning Center',
     path: '/learning-center',
     icon: <BookOpen className="h-5 w-5" />,
+  },
+  {
+    name: 'TH TV',
+    path: '/live-stream',
+    icon: <Tv className="h-5 w-5" />,
   },
   {
     name: 'Metaverse',

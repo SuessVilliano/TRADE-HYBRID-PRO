@@ -18,7 +18,9 @@ import {
   Moon,
   Sun,
   ArrowLeft,
-  LayoutGrid
+  LayoutGrid,
+  Tv,
+  PlaySquare
 } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
 // Using direct URL for logo
@@ -82,6 +84,11 @@ const navigationItems = [
     name: 'Learning Center',
     path: '/learning-center',
     icon: <BookOpen className="h-4 w-4" />,
+  },
+  {
+    name: 'TH TV',
+    path: '/live-stream',
+    icon: <Tv className="h-4 w-4" />,
   },
   {
     name: 'Metaverse',
