@@ -2,9 +2,11 @@
  * Coin Price Service
  * A service to fetch real-time cryptocurrency prices and market data
  * Using Birdeye API for comprehensive Solana token data
+ * And Raydium API for liquidity pool data transparency
  */
 
 import axios from 'axios';
+import raydiumApiService, { RaydiumPoolData } from './raydium-api-service';
 
 // Define market data types
 export interface TokenPriceData {
@@ -13,6 +15,14 @@ export interface TokenPriceData {
   marketCap: number;
   tradingVolume24h: number;
   lastUpdated: Date;
+  // Added fields for Raydium data
+  raydiumPrice?: number;
+  raydiumPriceChange24h?: number;
+  raydiumLiquidity?: number;
+  raydiumVolume24h?: number;
+  raydiumLpAddress?: string;
+  raydiumLastUpdated?: Date;
+  dataSource: 'birdeye' | 'raydium' | 'both' | 'fallback';
 }
 
 export interface PriceHistoryPoint {
@@ -30,11 +40,102 @@ const THC_TOKEN_ADDRESS = '4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4'; // THC
 const BIRDEYE_API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVsIjoiYmlyZGJvdCIsImlkIjoxfQ.M2sWDUDN5-cKrPJSUVQW8Yp8RTmPD-0gj8mofaeRJH0'; // Public API key (free tier)
 
 /**
- * Fetch token price and market data from Birdeye API
+ * Fetch token price and market data from both Birdeye and Raydium APIs
+ * for maximum transparency and reliability
  * @param tokenAddress The Solana token address
  * @returns Promise<TokenPriceData> with current price data
  */
 export async function fetchTokenPrice(
+  tokenAddress: string = THC_TOKEN_ADDRESS
+): Promise<TokenPriceData> {
+  // Create promises for both API calls to run in parallel
+  const birdeyePromise = fetchTokenPriceFromBirdeye(tokenAddress);
+  const raydiumPromise = raydiumApiService.fetchRaydiumTokenData();
+  
+  try {
+    // Wait for both API calls to complete
+    const [birdeyeData, raydiumData] = await Promise.allSettled([
+      birdeyePromise,
+      raydiumPromise
+    ]);
+    
+    // Check if both APIs returned successful results
+    if (birdeyeData.status === 'fulfilled' && raydiumData.status === 'fulfilled') {
+      console.log('Successfully fetched data from both Birdeye and Raydium');
+      
+      // Get values from both sources
+      const birdeye = birdeyeData.value;
+      const raydium = raydiumData.value;
+      
+      // Combine data from both sources
+      return {
+        // Use Birdeye as primary source for these values
+        price: birdeye.price,
+        priceChange24h: birdeye.priceChange24h,
+        marketCap: birdeye.marketCap,
+        tradingVolume24h: birdeye.tradingVolume24h,
+        lastUpdated: new Date(),
+        
+        // Include Raydium data for transparency
+        raydiumPrice: raydium.price,
+        raydiumPriceChange24h: raydium.priceChange24h,
+        raydiumLiquidity: raydium.liquidity,
+        raydiumVolume24h: raydium.volume24h,
+        raydiumLpAddress: raydium.lpAddress,
+        raydiumLastUpdated: raydium.lastUpdated,
+        
+        // Mark data source as both
+        dataSource: 'both'
+      };
+    } 
+    // If only Birdeye succeeded
+    else if (birdeyeData.status === 'fulfilled') {
+      console.log('Successfully fetched data from Birdeye only');
+      const birdeye = birdeyeData.value;
+      return {
+        ...birdeye,
+        dataSource: 'birdeye'
+      };
+    } 
+    // If only Raydium succeeded
+    else if (raydiumData.status === 'fulfilled') {
+      console.log('Successfully fetched data from Raydium only');
+      const raydium = raydiumData.value;
+      return {
+        price: raydium.price,
+        priceChange24h: raydium.priceChange24h,
+        marketCap: 0, // Raydium doesn't provide market cap
+        tradingVolume24h: raydium.volume24h,
+        lastUpdated: new Date(),
+        
+        // Include all Raydium data
+        raydiumPrice: raydium.price,
+        raydiumPriceChange24h: raydium.priceChange24h,
+        raydiumLiquidity: raydium.liquidity,
+        raydiumVolume24h: raydium.volume24h,
+        raydiumLpAddress: raydium.lpAddress,
+        raydiumLastUpdated: raydium.lastUpdated,
+        
+        dataSource: 'raydium'
+      };
+    } 
+    // If both APIs failed
+    else {
+      console.error('Both Birdeye and Raydium APIs failed');
+      return fetchFallbackTokenPrice();
+    }
+  } catch (error) {
+    console.error('Error fetching token price from APIs:', error);
+    return fetchFallbackTokenPrice();
+  }
+}
+
+/**
+ * Fetch token price data from Birdeye API only
+ * @param tokenAddress The Solana token address 
+ * @returns Promise<TokenPriceData> with price data from Birdeye
+ */
+async function fetchTokenPriceFromBirdeye(
   tokenAddress: string = THC_TOKEN_ADDRESS
 ): Promise<TokenPriceData> {
   try {
@@ -91,6 +192,7 @@ export async function fetchTokenPrice(
         marketCap,
         tradingVolume24h,
         lastUpdated: new Date(),
+        dataSource: 'birdeye'
       };
     }
     
@@ -98,9 +200,7 @@ export async function fetchTokenPrice(
     throw new Error('Failed to fetch token price data from Birdeye');
   } catch (error) {
     console.error('Error fetching token price from Birdeye:', error);
-    
-    // Use fallback data if Birdeye API fails
-    return fetchFallbackTokenPrice();
+    throw error;
   }
 }
 
@@ -219,12 +319,27 @@ function fetchFallbackTokenPrice(): Promise<TokenPriceData> {
   const variation = (Math.random() - 0.5) * 0.005; // Price varies by up to ±0.0025
   const changeVariation = (Math.random() - 0.5) * 1; // Change varies by up to ±0.5%
   
+  // Also include simulated Raydium data for fallback
+  // Raydium price is slightly different to simulate real-world variance
+  const raydiumPriceVariation = basePrice * 0.02 * (Math.random() - 0.3); // Up to ±2% different, slight bias lower
+  
   return Promise.resolve({
     price: parseFloat((basePrice + variation).toFixed(6)),
     priceChange24h: parseFloat((baseChange + changeVariation).toFixed(2)),
     marketCap: Math.round(baseMarketCap * (1 + variation * 10)),
     tradingVolume24h: Math.round(baseVolume * (1 + (Math.random() - 0.4) * 0.2)),
     lastUpdated: new Date(),
+    
+    // Include Raydium data in fallback for consistency
+    raydiumPrice: parseFloat((basePrice + raydiumPriceVariation).toFixed(6)),
+    raydiumPriceChange24h: parseFloat((baseChange + changeVariation * 0.8).toFixed(2)),
+    raydiumLiquidity: Math.round(baseMarketCap * 0.4 * (1 + variation * 5)),
+    raydiumVolume24h: Math.round(baseVolume * 0.7 * (1 + (Math.random() - 0.4) * 0.2)),
+    raydiumLpAddress: 'fallback-lp-address',
+    raydiumLastUpdated: new Date(),
+    
+    // Mark as fallback data
+    dataSource: 'fallback'
   });
 }
 

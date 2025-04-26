@@ -27,6 +27,15 @@ export interface ThcTokenState {
   isLoading: boolean;
   lastUpdated: Date | null;
   
+  // Raydium data
+  raydiumPrice?: number;
+  raydiumPriceChange24h?: number;
+  raydiumLiquidity?: number;
+  raydiumVolume24h?: number;
+  raydiumLpAddress?: string;
+  raydiumLastUpdated?: Date;
+  dataSource?: 'birdeye' | 'raydium' | 'both' | 'fallback';
+  
   // User data
   balance: number;
   pendingRewards: number;
