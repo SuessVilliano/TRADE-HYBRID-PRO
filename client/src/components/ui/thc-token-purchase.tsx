@@ -14,7 +14,8 @@ import {
   DollarSign,
   Wallet,
   Loader2,
-  Coins
+  Coins,
+  Clock
 } from 'lucide-react';
 import { useThcToken } from '@/lib/hooks/useThcToken';
 import { formatUsdAmount, formatTokenAmount } from '@/lib/contracts/thc-token-info';
@@ -46,6 +47,9 @@ export function ThcTokenPurchase({ className }: ThcTokenPurchaseProps) {
     marketCap,
     tradingVolume24h,
     balance,
+    priceHistory,
+    isLoading,
+    lastUpdated,
     usdAmount, 
     tokenAmount, 
     purchaseFee,
@@ -142,10 +146,38 @@ export function ThcTokenPurchase({ className }: ThcTokenPurchaseProps) {
   };
   
   // Format chart data for display
-  const chartData = THC_TOKEN.priceHistory.map(entry => ({
-    date: entry.date.slice(5), // Format as MM-DD
-    price: entry.price
-  }));
+  const chartData = priceHistory?.length 
+    ? priceHistory.map(entry => ({
+        date: entry.date.slice(5), // Format as MM-DD
+        price: entry.price
+      }))
+    : THC_TOKEN.priceHistory.map(entry => ({
+        date: entry.date.slice(5), // Format as MM-DD
+        price: entry.price
+      }));
+      
+  // Format the last updated timestamp
+  const formatLastUpdated = () => {
+    if (!lastUpdated) return 'Not available';
+    
+    // If it's today, show time
+    const now = new Date();
+    const today = now.toDateString();
+    const lastUpdatedDate = lastUpdated.toDateString();
+    
+    if (today === lastUpdatedDate) {
+      return `Today at ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
+    
+    // Otherwise show the date
+    return lastUpdated.toLocaleDateString([], { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
   
   return (
     <div className={className}>
@@ -169,16 +201,27 @@ export function ThcTokenPurchase({ className }: ThcTokenPurchaseProps) {
                 variant="ghost" 
                 size="icon" 
                 className="ml-1 text-slate-400 hover:text-white"
-                onClick={() => {
+                onClick={async () => {
+                  // Don't trigger multiple refreshes
+                  if (isLoading) return;
+                  
                   // Create the refresh animation effect
                   const btn = document.getElementById('refresh-price-btn');
                   if (btn) {
                     btn.classList.add('animate-spin');
-                    setTimeout(() => btn.classList.remove('animate-spin'), 1000);
                   }
-                  // Refresh price from API
-                  refreshPrice();
+                  
+                  try {
+                    // Refresh price from API
+                    await refreshPrice();
+                  } finally {
+                    // Stop the animation after refresh completes (success or error)
+                    if (btn) {
+                      setTimeout(() => btn.classList.remove('animate-spin'), 500);
+                    }
+                  }
                 }}
+                disabled={isLoading}
               >
                 <RefreshCw id="refresh-price-btn" className="h-4 w-4" />
               </Button>
@@ -190,6 +233,12 @@ export function ThcTokenPurchase({ className }: ThcTokenPurchaseProps) {
           </div>
           <CardDescription>
             Purchase THC tokens to access platform benefits, reduce trading fees, and participate in staking
+            {lastUpdated && (
+              <div className="flex items-center text-xs text-slate-400 mt-1">
+                <Clock className="h-3 w-3 mr-1" />
+                Last updated: {formatLastUpdated()}
+              </div>
+            )}
           </CardDescription>
           
           {/* Price Chart */}
