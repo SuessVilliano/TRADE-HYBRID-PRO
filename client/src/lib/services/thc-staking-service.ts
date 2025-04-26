@@ -10,9 +10,12 @@ const THC_STAKING_PROGRAM_ID = SystemProgram.programId;
 
 // Safely create THC Token Mint address - Using a default if there's any issue
 // In production, this would be the actual THC token mint address
+// We're using a hardcoded value instead of process.env to avoid browser issues
+const THC_TOKEN_MINT_ADDRESS = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+
 const THC_TOKEN_MINT = (() => {
   try {
-    return new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+    return new PublicKey(THC_TOKEN_MINT_ADDRESS);
   } catch (err) {
     console.error("Failed to create THC token mint public key:", err);
     // Return a valid fallback public key (Solana system program)

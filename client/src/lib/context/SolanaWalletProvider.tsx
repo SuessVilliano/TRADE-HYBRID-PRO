@@ -33,16 +33,17 @@ export const SolanaWalletProvider: FC<SolanaWalletProviderProps> = ({ children }
     return rpcEndpoint;
   }, [rpcEndpoint]);
   
-  // Fetch the RPC URL from environment variables on component mount
+  // Fetch the RPC URL from API
   useEffect(() => {
     const fetchRpcUrl = async () => {
       setIsLoading(true);
       try {
         // Try to get the SOLANA_RPC_URL from the server
+        // This prevents issues with process.env access in the browser
         const response = await fetch('/api/config/rpc-url');
         const data = await response.json();
         
-        if (data.rpcUrl) {
+        if (data && data.rpcUrl) {
           console.log('Using custom Solana RPC URL');
           setRpcEndpoint(data.rpcUrl);
         } else {
@@ -60,6 +61,7 @@ export const SolanaWalletProvider: FC<SolanaWalletProviderProps> = ({ children }
       }
     };
     
+    // Immediately invoke function
     fetchRpcUrl();
   }, []);
   
