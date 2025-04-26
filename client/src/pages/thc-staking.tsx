@@ -1,27 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useWallet } from '@solana/wallet-adapter-react';
-// Using the kebab-case component which has 'description' prop
 import PageHeader from '@/components/layout/PageHeader';
-import { StakePanel } from '@/components/staking/StakePanel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gem, Clock, Shield, Zap, AlertCircle } from 'lucide-react';
+import { Gem, Clock, Shield, Zap } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-import '@solana/wallet-adapter-react-ui/styles.css';
-
+// Create a simplified page without dependencies on Solana wallet
 const ThcStakingPage: React.FC = () => {
-  const { connected, publicKey } = useWallet();
-  const [error, setError] = useState<string | null>(null);
-  
-  // Debugging info
-  useEffect(() => {
-    console.log("ThcStakingPage mounted, wallet status:", { connected, publicKey: publicKey?.toString() });
-    
-    return () => {
-      console.log("ThcStakingPage unmounted");
-    };
-  }, [connected, publicKey]);
-  
   return (
     <div className="container mx-auto p-4">
       <Helmet>
@@ -33,18 +18,30 @@ const ThcStakingPage: React.FC = () => {
         description="Stake your THC tokens to earn passive rewards and participate in the Trade Hybrid ecosystem."
       />
       
-      {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4 mb-6 text-red-700 dark:text-red-400">
-          <div className="flex items-center">
-            <AlertCircle className="h-5 w-5 mr-2" />
-            <p>{error}</p>
-          </div>
-        </div>
-      )}
-      
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
         <div className="lg:col-span-2">
-          <StakePanel />
+          <Card className="w-full border-t-4 border-t-purple-600 dark:border-t-purple-400 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Gem className="h-5 w-5 text-purple-500" />
+                <span>THC Staking</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-6">
+                <Gem className="h-10 w-10 text-purple-500 mx-auto mb-3" />
+                <h3 className="text-lg font-medium mb-2">Connect Your Wallet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Connect your Solana wallet to start staking THC tokens and earning rewards.
+                </p>
+                <div className="flex justify-center">
+                  <Button className="bg-purple-600 hover:bg-purple-700">
+                    Connect Wallet
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
         
         <div className="lg:col-span-1 space-y-6">
