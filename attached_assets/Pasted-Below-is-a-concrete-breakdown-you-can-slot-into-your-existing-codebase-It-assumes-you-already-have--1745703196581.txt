@@ -1,0 +1,263 @@
+Below is a concrete breakdown you can slot into your existing codebase. It assumes you already have a Solana/Anchor project and a React/Next front-end with Phantom wallet integration. We’ll map out:
+	1.	On-chain program (Anchor)
+	2.	Client integration (TypeScript + web UI)
+	3.	Combining with your validator-panel code
+
+⸻
+
+1. On-chain Anchor Program
+
+A. Define State Accounts (lib.rs)
+
+use anchor_lang::prelude::*;
+use anchor_spl::token::{Mint, TokenAccount, Token, Transfer, MintTo};
+
+declare_id!("YourProgramId");
+
+#[program]
+pub mod thc_staking {
+    use super::*;
+
+    pub fn initialize_pool(
+        ctx: Context<InitializePool>,
+        reward_rate_per_second: u64,
+    ) -> ProgramResult {
+        let pool = &mut ctx.accounts.pool;
+        pool.authority = *ctx.accounts.authority.key;
+        pool.reward_mint = ctx.accounts.reward_mint.key();
+        pool.stake_vault = ctx.accounts.stake_vault.key();
+        pool.reward_vault = ctx.accounts.reward_vault.key();
+        pool.reward_rate_per_second = reward_rate_per_second;
+        pool.last_update = Clock::get()?.unix_timestamp as u64;
+        pool.acc_reward_per_share = 0;
+        Ok(())
+    }
+
+    pub fn stake_tokens(ctx: Context<StakeTokens>, amount: u64) -> ProgramResult {
+        let pool = &mut ctx.accounts.pool;
+        let user = &mut ctx.accounts.user_info;
+
+        // 1) update pool acc_reward_per_share and last_update
+        let now = Clock::get()?.unix_timestamp as u64;
+        let delta = now.checked_sub(pool.last_update).unwrap();
+        if pool.total_staked > 0 {
+            let reward = delta.checked_mul(pool.reward_rate_per_second).unwrap();
+            pool.acc_reward_per_share = pool.acc_reward_per_share
+                .checked_add( reward
+                    .checked_mul(1_000_000_000_000)
+                    .unwrap()
+                    .checked_div(pool.total_staked).unwrap()
+                ).unwrap();
+        }
+        pool.last_update = now;
+
+        // 2) settle user pending rewards
+        let pending = user.amount
+            .checked_mul(pool.acc_reward_per_share).unwrap()
+            .checked_div(1_000_000_000_000).unwrap()
+            .checked_sub(user.reward_debt).unwrap();
+
+        // mint rewards
+        if pending > 0 {
+            let cpi_accounts = MintTo {
+                mint: ctx.accounts.reward_mint.to_account_info(),
+                to: ctx.accounts.user_reward_ata.to_account_info(),
+                authority: ctx.accounts.pool_signer.to_account_info(),
+            };
+            let cpi_program = ctx.accounts.token_program.to_account_info();
+            let seeds = &[b"pool".as_ref(), &[ctx.accounts.pool.bump]];
+            let signer = &[&seeds[..]];
+            anchor_spl::token::mint_to(
+                CpiContext::new_with_signer(cpi_program, cpi_accounts, signer),
+                pending,
+            )?;
+        }
+
+        // 3) transfer staked tokens in
+        let cpi = CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.user_stake_ata.to_account_info(),
+                to: ctx.accounts.stake_vault.to_account_info(),
+                authority: ctx.accounts.user.to_account_info(),
+            },
+        );
+        anchor_spl::token::transfer(cpi, amount)?;
+
+        // 4) update user and pool totals
+        user.amount = user.amount.checked_add(amount).unwrap();
+        pool.total_staked = pool.total_staked.checked_add(amount).unwrap();
+        user.reward_debt = user.amount
+            .checked_mul(pool.acc_reward_per_share).unwrap()
+            .checked_div(1_000_000_000_000).unwrap();
+
+        Ok(())
+    }
+
+    // Similarly implement `unstake_tokens` and `claim_rewards` following the same pattern.
+}
+
+#[derive(Accounts)]
+#[instruction(reward_rate_per_second: u64)]
+pub struct InitializePool<'info> {
+    #[account(init, payer = authority, seeds = [b"pool"], bump, space = 8 + PoolConfig::LEN)]
+    pub pool: Account<'info, PoolConfig>,
+    #[account(mut)] pub authority: Signer<'info>,
+    pub reward_mint: Account<'info, Mint>,
+    #[account(init, payer=authority, token::mint=reward_mint, token::authority=pool_signer)]
+    pub reward_vault: Account<'info, TokenAccount>,
+    #[account(init, payer=authority, token::mint=stake_mint, token::authority=pool_signer)]
+    pub stake_vault: Account<'info, TokenAccount>,
+    pub stake_mint: Account<'info, Mint>,
+    /// CHECK: PDA authority for minting rewards
+    #[account(seeds = [b"pool"], bump)]
+    pub pool_signer: UncheckedAccount<'info>,
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>,
+}
+
+#[account]
+pub struct PoolConfig {
+    pub authority: Pubkey,
+    pub reward_mint: Pubkey,
+    pub stake_vault: Pubkey,
+    pub reward_vault: Pubkey,
+    pub reward_rate_per_second: u64,
+    pub total_staked: u64,
+    pub last_update: u64,
+    pub acc_reward_per_share: u128,
+    pub bump: u8,
+}
+impl PoolConfig {
+    const LEN: usize = 32 + 32 + 32 + 32 + 8 + 8 + 8 + 16 + 1;
+}
+
+// UserStakeInfo similarly defined...
+
+Slot this into your existing programs/thc_staking/src/lib.rs.
+
+⸻
+
+2. Client-Side Integration (TypeScript / React)
+
+A. Connecting Wallet & Anchor Provider
+
+import { AnchorProvider, Program, web3 } from "@project-serum/anchor";
+import idl from "./idl/thc_staking.json";
+
+const provider = AnchorProvider.env();           // expects your Phantom injected provider
+const program = new Program(idl as any, PROGRAM_ID, provider);
+
+B. Derive PDAs
+
+// static function to derive pool PDA
+async function getPoolPda() {
+  return await web3.PublicKey.findProgramAddress(
+    [Buffer.from("pool")],
+    PROGRAM_ID
+  );
+}
+
+// per-user info
+async function getUserInfoPda(userPubkey: PublicKey) {
+  return await web3.PublicKey.findProgramAddress(
+    [Buffer.from("user"), userPubkey.toBuffer()],
+    PROGRAM_ID
+  );
+}
+
+C. Stake Button Handler
+
+async function onStake(amount: number) {
+  const walletPubkey = provider.wallet.publicKey;
+  const [poolPda] = await getPoolPda();
+  const [userPda] = await getUserInfoPda(walletPubkey);
+
+  // fetch or create associated token accounts
+  const userStakingAta = await getAssociatedTokenAddress(STAKE_MINT, walletPubkey);
+  const userRewardAta  = await getAssociatedTokenAddress(REWARD_MINT, walletPubkey);
+
+  await program.rpc.stakeTokens(new BN(amount), {
+    accounts: {
+      pool: poolPda,
+      userInfo: userPda,
+      user: walletPubkey,
+      userStakeAta: userStakingAta,
+      stakeVault: STAKE_VAULT_PDA,
+      rewardMint: REWARD_MINT,
+      userRewardAta,
+      poolSigner: POOL_SIGNER_PDA,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      systemProgram: web3.SystemProgram.programId,
+      rent: web3.SYSVAR_RENT_PUBKEY,
+    },
+  });
+}
+
+Add a simple React form:
+
+<form onSubmit={e => { e.preventDefault(); onStake(+stakeInput); }}>
+  <input value={stakeInput} onChange={e => setStakeInput(e.target.value)} />
+  <button type="submit">Stake THC</button>
+</form>
+
+
+
+⸻
+
+3. Merging Into Your Validator-Panel Code
+	1.	Folder Structure
+
+/programs/thc_staking/           ← Anchor code
+/app/src/anchor/idl.json         ← compiled IDL
+/app/src/anchor/program.ts       ← provider + PDA helpers
+/app/src/components/StakePanel/  ← new React component
+
+
+	2.	Import & Init
+In your existing App.tsx (where you connect Phantom):
+
+import { AnchorProvider, Program } from "@project-serum/anchor";
+import idl from "./anchor/idl.json";
+import StakePanel from "./components/StakePanel";
+
+const provider = new AnchorProvider(connection, wallet, {});
+const program  = new Program(idl as any, PROGRAM_ID, provider);
+
+function App() {
+  return (
+    <>
+      <ValidatorDashboard … />
+      <StakePanel program={program} provider={provider}/>
+    </>
+  );
+}
+
+
+	3.	UI Placement
+	•	Slot <StakePanel/> beneath your “Connect Wallet / Validator” section.
+	•	Display user’s current staked THC & rewards by calling program.account.userInfo.fetch(userPda) on load.
+	4.	Styling & UX
+	•	Mirror your panel’s Cyberpunk-purple/aqua-blue theme.
+	•	Show real-time totals:
+
+const userInfo = await program.account.userInfo.fetch(userPda);
+setStakedAmount(userInfo.amount.toNumber());
+// calculate pending based on pool.acc_reward_per_share etc
+
+
+
+⸻
+
+Next Steps
+	1.	Copy the Anchor program into your monorepo and compile/deploy to devnet.
+	2.	Add the IDL to your front-end, wire up the React component.
+	3.	Test end-to-end:
+	•	Initialize pool,
+	•	Top-up rewards,
+	•	Stake via the UI,
+	•	Claim & unstake.
+	4.	Iterate on UX (show loading states, errors) and security (only allow authority to call init/top-up).
+
+With this skeleton in place, you’ll have a fully integrated “Stake THC” feature alongside your existing SOL validator panel. Let me know if you need any of the boilerplate or a live code sandbox!
