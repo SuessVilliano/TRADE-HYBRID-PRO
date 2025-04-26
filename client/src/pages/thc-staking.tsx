@@ -202,7 +202,7 @@ const ThcStakingPage: React.FC = () => {
                   variant="outline" 
                   size="sm" 
                   className="w-full mt-3" 
-                  onClick={() => window.open('https://solanabeach.io/validator/TradeHyb1d6CadLx4ZDfv9hd7ixRz9P8oRgfXQs6Afe', '_blank')}
+                  onClick={() => window.open('https://solscan.io/account/5Mp3EF1donYwLxhe5hs6HoWpAucZGLZ76NKRNztkjEej', '_blank')}
                 >
                   <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                   View Validator Online
@@ -351,12 +351,12 @@ const ThcStakingPage: React.FC = () => {
                 
                 <div className="grid grid-cols-2 gap-2 mt-4">
                   <div>
-                    <div className="text-sm font-medium">Identity</div>
-                    <div className="text-sm font-mono">TradeHyb1d6...6Afe</div>
+                    <div className="text-sm font-medium">Validator Account</div>
+                    <div className="text-sm font-mono">5Mp3EF1d...jEej</div>
                   </div>
                   <div>
-                    <div className="text-sm font-medium">Vote Account</div>
-                    <div className="text-sm font-mono">THvoteac...K7J2</div>
+                    <div className="text-sm font-medium">THC Token</div>
+                    <div className="text-sm font-mono">4kXPBvQt...BLy4</div>
                   </div>
                   <div>
                     <div className="text-sm font-medium">Root Slot</div>
@@ -368,15 +368,23 @@ const ThcStakingPage: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="mt-3">
+                <div className="grid grid-cols-2 gap-2 mt-3">
                   <Button 
                     variant="outline" 
-                    size="sm" 
-                    className="w-full" 
-                    onClick={() => window.open('https://solscan.io/account/TradeHyb1d6CadLx4ZDfv9hd7ixRz9P8oRgfXQs6Afe', '_blank')}
+                    size="sm"
+                    onClick={() => window.open('https://solscan.io/account/5Mp3EF1donYwLxhe5hs6HoWpAucZGLZ76NKRNztkjEej', '_blank')}
                   >
                     <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                    View on Solscan
+                    View Validator
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open('https://solscan.io/token/4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4', '_blank')}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                    View THC Token
                   </Button>
                 </div>
                 
