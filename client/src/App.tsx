@@ -1,3 +1,6 @@
+// Import polyfills first to ensure they're available
+import '@/lib/polyfills';
+
 import * as React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 const SimpleChartingDashboard = React.lazy(() => import('./pages/simple-charting'));
@@ -101,6 +104,9 @@ import InvestmentDetailsPage from './pages/InvestmentDetails';
 import NftMarketplacePage from './pages/nft-marketplace';
 import NftMarketplaceSimplePage from './pages/nft-marketplace-simple';
 import ThcStakingPage from './pages/thc-staking';
+import MatrixPage from './pages/matrix';
+import AcquirePage from './pages/acquire';
+import ValidatorDashboardPage from './pages/validator-dashboard';
 import MatrixVisualizationPage from './pages/matrix-visualization-demo';
 
 // Other Pages
@@ -259,7 +265,10 @@ const App: React.FC = () => {
                   <Route path="/nft-marketplace" element={<ProtectedRoute><NftMarketplacePage /></ProtectedRoute>} />
                   <Route path="/nft-marketplace/simple" element={<ProtectedRoute><NftMarketplaceSimplePage /></ProtectedRoute>} />
                   <Route path="/thc-staking" element={<ProtectedRoute><ThcStakingPage /></ProtectedRoute>} />
-                  <Route path="/matrix" element={<ProtectedRoute><MatrixVisualizationPage /></ProtectedRoute>} />
+                  <Route path="/matrix" element={<ProtectedRoute><MatrixPage /></ProtectedRoute>} />
+                  <Route path="/matrix/visualization" element={<ProtectedRoute><MatrixVisualizationPage /></ProtectedRoute>} />
+                  <Route path="/acquire" element={<ProtectedRoute><AcquirePage /></ProtectedRoute>} />
+                  <Route path="/validator-dashboard" element={<ProtectedRoute><ValidatorDashboardPage /></ProtectedRoute>} />
                   
                   {/* Other Pages */}
                   <Route path="/affiliate/*" element={<ProtectedRoute><AffiliatePage /></ProtectedRoute>} />
