@@ -3,6 +3,7 @@ import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import * as anchor from '@project-serum/anchor';
 import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from '@solana/spl-token';
+import { Buffer } from '@/lib/polyfills/buffer';
 
 // Program ID for the THC Staking program
 // Using a valid Solana system program ID as a placeholder (this works for testing)
