@@ -86,22 +86,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           return;
         }
         
-        // If not a demo user or contextually authenticated, check with the server
-        try {
-          // Try to refresh the user data from server
-          await Promise.race([
-            getCurrentUser(),
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Auth check timed out')), 5000)
-            )
-          ]);
-        } catch (error) {
-          console.error('Error fetching current user:', error);
-          // Don't set error here - just skip to login screen
-        } finally {
-          setCheckingDemo(false);
-          setIsCheckingAuth(false);
-        }
+        // IMPORTANT: We no longer automatically try to log in to fix the auto-login issue
+        // Instead, we just check if we're already authenticated and then finish the check
+        
+        // The user must explicitly log in now - we don't auto-redirect to login page
+        // This prevents the infinite authentication loop
+        setCheckingDemo(false);
+        setIsCheckingAuth(false);
       } catch (error) {
         console.error('Authentication check failed:', error);
         setCheckingDemo(false);
