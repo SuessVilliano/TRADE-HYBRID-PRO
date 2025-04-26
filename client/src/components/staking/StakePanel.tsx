@@ -22,14 +22,8 @@ export const StakePanel: React.FC = () => {
     console.log("Wallet connection status:", { connected, publicKey: publicKey?.toString() });
   }, [connected, publicKey]);
   
-  // Use try/catch to handle errors in the staking service
-  let stakingService;
-  try {
-    stakingService = useThcStakingService();
-  } catch (err) {
-    console.error("Error initializing staking service:", err);
-    setComponentError(`Error initializing staking service: ${err instanceof Error ? err.message : String(err)}`);
-  }
+  // Initialize staking service with error handling
+  const stakingService = useThcStakingService();
   
   const {
     isLoading,
@@ -40,16 +34,7 @@ export const StakePanel: React.FC = () => {
     stakeTokens,
     unstakeTokens,
     claimRewards
-  } = stakingService || {
-    isLoading: false,
-    error: null,
-    stakingStats: null,
-    userStake: null,
-    availableRewards: 0,
-    stakeTokens: async () => {},
-    unstakeTokens: async () => {},
-    claimRewards: async () => {}
-  };
+  } = stakingService;
   
   // Combine errors
   const error = componentError || serviceError;

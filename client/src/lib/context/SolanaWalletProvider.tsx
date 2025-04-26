@@ -22,21 +22,21 @@ interface SolanaWalletProviderProps {
 }
 
 export const SolanaWalletProvider: FC<SolanaWalletProviderProps> = ({ children }) => {
-  const [rpcEndpoint, setRpcEndpoint] = useState<string>('');
+  // Use a safe default to prevent white screen errors
+  const [rpcEndpoint, setRpcEndpoint] = useState<string>(clusterApiUrl('mainnet-beta'));
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   
-  // Set the network to use custom RPC URL if available, otherwise fall back to default mainnet
+  // Set the network to use custom RPC URL, with a fallback to default
   const endpoint = useMemo(() => {
-    // If we have a custom RPC URL from environment variables, use it
-    if (rpcEndpoint) {
-      return rpcEndpoint;
-    }
-    // Otherwise fall back to the default mainnet URL
-    return clusterApiUrl('mainnet-beta');
+    // Always return a valid endpoint to prevent connection errors
+    return rpcEndpoint;
   }, [rpcEndpoint]);
   
   // Fetch the RPC URL from environment variables on component mount
   useEffect(() => {
     const fetchRpcUrl = async () => {
+      setIsLoading(true);
       try {
         // Try to get the SOLANA_RPC_URL from the server
         const response = await fetch('/api/config/rpc-url');
@@ -47,12 +47,16 @@ export const SolanaWalletProvider: FC<SolanaWalletProviderProps> = ({ children }
           setRpcEndpoint(data.rpcUrl);
         } else {
           console.log('No custom RPC URL found, using default Solana endpoint');
-          setRpcEndpoint(clusterApiUrl('mainnet-beta'));
+          // Keep using the default we already set
         }
+        setError(null);
       } catch (error) {
         console.error('Error fetching RPC URL:', error);
         console.log('Falling back to default Solana endpoint due to error');
-        setRpcEndpoint(clusterApiUrl('mainnet-beta'));
+        setError('Failed to fetch Solana RPC URL, using default endpoint');
+        // Keep using the default we already set
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -64,15 +68,21 @@ export const SolanaWalletProvider: FC<SolanaWalletProviderProps> = ({ children }
   // Initialize the PhantomWalletAdapter
   const wallets = useMemo(
     () => {
-      const phantomAvailable = 
-        typeof window !== 'undefined' && 
-        'phantom' in window && 
-        (window as any).phantom?.solana !== undefined;
+      try {
+        const phantomAvailable = 
+          typeof window !== 'undefined' && 
+          'phantom' in window && 
+          (window as any).phantom?.solana !== undefined;
+          
+        console.log('Initializing wallets, Phantom available:', phantomAvailable);
         
-      console.log('Initializing wallets, Phantom available:', phantomAvailable);
-      
-      // Cast to Adapter[] to satisfy TypeScript
-      return [new PhantomWalletAdapter()] as Adapter[];
+        // Cast to Adapter[] to satisfy TypeScript
+        return [new PhantomWalletAdapter()] as Adapter[];
+      } catch (err) {
+        console.error('Error initializing phantom wallet:', err);
+        // Return empty array to prevent crashes
+        return [] as Adapter[];
+      }
     },
     []
   );

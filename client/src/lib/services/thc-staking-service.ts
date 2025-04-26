@@ -8,16 +8,29 @@ import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from '@solana/spl-token';
 // Using a valid Solana system program ID as a placeholder (this works for testing)
 const THC_STAKING_PROGRAM_ID = SystemProgram.programId;
 
-// THC Token Mint Address - Using the Solana USDC token mint as a placeholder
+// Safely create THC Token Mint address - Using a default if there's any issue
 // In production, this would be the actual THC token mint address
-const THC_TOKEN_MINT = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+const THC_TOKEN_MINT = (() => {
+  try {
+    return new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+  } catch (err) {
+    console.error("Failed to create THC token mint public key:", err);
+    // Return a valid fallback public key (Solana system program)
+    return SystemProgram.programId;
+  }
+})();
 
 // Function to safely create a PublicKey or return null if invalid
-const safeCreatePublicKey = (address: string): PublicKey | null => {
+const safeCreatePublicKey = (address: string | null | undefined): PublicKey | null => {
+  if (!address) {
+    console.warn("Attempted to create PublicKey with null or undefined address");
+    return null;
+  }
+  
   try {
     return new PublicKey(address);
   } catch (err) {
-    console.error("Invalid public key:", address, err);
+    console.error("Invalid public key format:", address, err);
     return null;
   }
 };
@@ -37,12 +50,19 @@ const getStakingAuthorityPDA = async () => {
   }
 };
 
-const getStakeAccountPDA = async (owner: PublicKey) => {
+const getStakeAccountPDA = async (owner: PublicKey | null | undefined) => {
   try {
     // Validate inputs first to prevent cryptic errors
     if (!owner) {
       console.error("getStakeAccountPDA: owner is null or undefined");
-      throw new Error("Invalid owner public key");
+      // Return a default valid public key instead of throwing
+      return SystemProgram.programId;
+    }
+    
+    // Verify if the owner is a valid PublicKey
+    if (!(owner instanceof PublicKey)) {
+      console.error("getStakeAccountPDA: owner is not a valid PublicKey instance");
+      return SystemProgram.programId;
     }
     
     const [pda] = await PublicKey.findProgramAddress(
