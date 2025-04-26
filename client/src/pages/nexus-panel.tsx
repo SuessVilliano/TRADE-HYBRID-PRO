@@ -25,6 +25,7 @@ import {
   Check,
   X
 } from 'lucide-react';
+import { ABATEVTradePanel } from '@/components/trade/abatev-trade-panel';
 import NexusStatusPanel from '@/components/trade/NexusStatusPanel';
 
 // Type for trade data
@@ -102,7 +103,7 @@ export default function NexusPanelPage() {
     // All checks passed
     return { 
       pass: true, 
-      message: 'Trade meets Nexus risk management criteria' 
+      message: 'Trade meets Nexus™ risk management criteria' 
     };
   };
   
@@ -159,7 +160,7 @@ export default function NexusPanelPage() {
       onAutoClose: (t) => {
         // After loading toast closes, show success toast
         toast.success('Trade executed successfully', {
-          description: `${tradeData.symbol} ${tradeData.side.toUpperCase()} order placed via Nexus smart routing`,
+          description: `${tradeData.symbol} ${tradeData.side.toUpperCase()} order placed via Nexus™ smart routing`,
           duration: 4000
         });
       }
@@ -172,7 +173,7 @@ export default function NexusPanelPage() {
         <div className="flex flex-col gap-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold">Nexus Smart Trade Panel</h1>
+              <h1 className="text-2xl font-bold">Nexus™ Smart Trade Panel</h1>
               <p className="text-slate-400">Intelligent Broker Aggregation & Smart Order Routing</p>
             </div>
             
@@ -230,7 +231,7 @@ export default function NexusPanelPage() {
                       <FileWarning className="h-12 w-12 mx-auto text-slate-500 mb-3" />
                       <h3 className="font-medium text-lg mb-2">No Trade Data Available</h3>
                       <p className="text-slate-400 text-sm mb-4">
-                        Select a trading signal from the Trading Signals panel and click "Trade with Nexus" to load trade data.
+                        Select a trading signal from the Trading Signals panel and click "Trade with Nexus™" to load trade data.
                       </p>
                       <Button variant="outline" size="sm" onClick={() => window.location.href = '/signals'}>
                         Go to Signals
@@ -317,7 +318,7 @@ export default function NexusPanelPage() {
                       
                       {/* Nexus Verification */}
                       <div>
-                        <h3 className="font-medium mb-3">Nexus Verification</h3>
+                        <h3 className="font-medium mb-3">Nexus™ Verification</h3>
                         <div className="bg-slate-850 border border-slate-700 rounded-md p-4">
                           <div className="flex items-center mb-3">
                             <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
@@ -428,10 +429,10 @@ export default function NexusPanelPage() {
                                 <SelectValue placeholder="Select strategy" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="optimal">Optimal Price (Default)</SelectItem>
-                                <SelectItem value="aggressive">Aggressive Fill</SelectItem>
-                                <SelectItem value="split">Smart Split</SelectItem>
-                                <SelectItem value="minimal-impact">Minimal Market Impact</SelectItem>
+                                <SelectItem value="best_price">Best Price (Nexus™ auto-route)</SelectItem>
+                                <SelectItem value="minimal_impact">Minimal Market Impact</SelectItem>
+                                <SelectItem value="fastest_fill">Fastest Fill</SelectItem>
+                                <SelectItem value="smart_split">Smart Split (Multi-venue)</SelectItem>
                               </SelectContent>
                             </Select>
                             <p className="text-xs text-slate-400 mt-1">Determines how orders are routed and executed</p>
@@ -439,24 +440,30 @@ export default function NexusPanelPage() {
                           
                           <div className="pt-2">
                             <div className="flex items-center justify-between mb-2">
-                              <Label>Available Liquidity</Label>
-                              <Badge variant="outline" className="text-xs">Aggregated</Badge>
+                              <Label>Available Routes</Label>
+                              <Badge variant="outline" className="text-xs">Connected</Badge>
                             </div>
                             
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between bg-slate-900 p-2 rounded-md">
-                                <span className="text-sm font-medium">Alpaca</span>
-                                <Badge variant="success" className="text-xs">Best Price</Badge>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between py-2 px-3 bg-slate-900 rounded-md">
+                                <div className="flex items-center">
+                                  <span className="text-sm font-medium">Alpaca Securities</span>
+                                </div>
+                                <Badge variant="default" className="bg-green-600 hover:bg-green-700">Best Price</Badge>
                               </div>
                               
-                              <div className="flex items-center justify-between bg-slate-900 p-2 rounded-md">
-                                <span className="text-sm font-medium">Interactive Brokers</span>
-                                <Badge variant="outline" className="text-xs">Connected</Badge>
+                              <div className="flex items-center justify-between py-2 px-3 bg-slate-900 rounded-md">
+                                <div className="flex items-center">
+                                  <span className="text-sm font-medium">Interactive Brokers</span>
+                                </div>
+                                <Badge variant="outline">Ready</Badge>
                               </div>
                               
-                              <div className="flex items-center justify-between bg-slate-900 p-2 rounded-md opacity-50">
-                                <span className="text-sm font-medium">TradingView</span>
-                                <Badge variant="outline" className="text-xs bg-slate-800">Disconnected</Badge>
+                              <div className="flex items-center justify-between py-2 px-3 bg-slate-900 rounded-md opacity-60">
+                                <div className="flex items-center">
+                                  <span className="text-sm font-medium">TradeStation</span>
+                                </div>
+                                <Badge variant="outline" className="bg-slate-800">Disconnected</Badge>
                               </div>
                             </div>
                           </div>
@@ -469,33 +476,35 @@ export default function NexusPanelPage() {
                 <TabsContent value="config" className="mt-4">
                   <Card className="bg-slate-800 border-slate-700">
                     <CardHeader>
-                      <CardTitle>Configuration</CardTitle>
-                      <CardDescription>Customize Nexus settings</CardDescription>
+                      <CardTitle className="text-base">Nexus™ Info</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="auto-check">Auto Verification</Label>
-                          <Switch id="auto-check" defaultChecked />
-                        </div>
-                        <p className="text-xs text-slate-400">Automatically verify trades against Nexus criteria</p>
-                      </div>
+                    <CardContent className="space-y-2 text-sm">
+                      <p className="text-slate-400">
+                        Nexus™ is our proprietary intelligent broker aggregation and smart order routing system that provides:
+                      </p>
+                      <ul className="list-disc pl-5 text-slate-400 space-y-1.5">
+                        <li>Best execution across multiple venues</li>
+                        <li>Price improvement through smart routing</li>
+                        <li>Advanced risk management checks</li>
+                        <li>Automatic verification of trade parameters</li>
+                        <li>Optimized execution strategies</li>
+                      </ul>
                       
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="smart-routing">Smart Routing</Label>
-                          <Switch id="smart-routing" defaultChecked />
+                      <div className="pt-4">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="auto-verification">Auto Trade Verification</Label>
+                            <Switch id="auto-verification" defaultChecked />
+                          </div>
+                          <p className="text-xs text-slate-500">Automatically verify all trades against risk management criteria</p>
                         </div>
-                        <p className="text-xs text-slate-400">Use AI to determine the optimal execution route</p>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <Label>Risk Tolerance</Label>
-                        <Slider defaultValue={[50]} max={100} step={1} className="py-4" />
-                        <div className="flex justify-between text-xs text-slate-400">
-                          <span>Conservative</span>
-                          <span>Balanced</span>
-                          <span>Aggressive</span>
+                        
+                        <div className="space-y-3 pt-4">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="smart-routing">Smart Order Routing</Label>
+                            <Switch id="smart-routing" defaultChecked />
+                          </div>
+                          <p className="text-xs text-slate-500">Route orders to the venue with the best execution quality</p>
                         </div>
                       </div>
                     </CardContent>
