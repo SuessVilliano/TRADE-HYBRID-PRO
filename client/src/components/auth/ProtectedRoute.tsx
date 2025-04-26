@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useSolanaAuth } from '../../lib/context/SolanaAuthProvider';
 import { useAuth } from '../../lib/context/AuthContext';
@@ -21,19 +21,53 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const [isCheckingAuth, setIsCheckingAuth] = useState<boolean>(true);
   const [authError, setAuthError] = useState<string | null>(null);
   
-  // Check for both server-side auth and demo user
+  // Use refs to prevent infinite render loops
+  const hasRun = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Set a timeout to reset auth state if it takes too long
   useEffect(() => {
+    // Set a timeout to avoid getting stuck on auth check
+    timeoutRef.current = setTimeout(() => {
+      if (isCheckingAuth || checkingDemo) {
+        console.log('Auth check timed out - forcing completion');
+        setCheckingDemo(false);
+        setIsCheckingAuth(false);
+        
+        // If we're in demo mode, try to proceed anyway
+        const demoUser = localStorage.getItem('demoUser');
+        if (demoUser) {
+          try {
+            setIsDemoUser(true);
+          } catch (e) {
+            console.error('Failed to enable demo mode after timeout:', e);
+          }
+        }
+      }
+    }, 5000); // 5 second timeout
+    
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+  
+  // Check for both server-side auth and demo user - only run once
+  useEffect(() => {
+    // Prevent multiple runs
+    if (hasRun.current) return;
+    hasRun.current = true;
+    
     const checkAuthentication = async () => {
       try {
-        setIsCheckingAuth(true);
-        
-        // Check for demo user in localStorage
+        // Check for demo user in localStorage first - fastest path
         const demoUser = localStorage.getItem('demoUser');
         if (demoUser) {
           try {
             const user = JSON.parse(demoUser);
-            // Only count as authenticated if the isAuthenticated flag is true
-            if (user.isAuthenticated === true) {
+            if (user.authenticated === true || user.isAuthenticated === true) {
+              console.log('Demo user found in localStorage, skipping server check');
               setIsDemoUser(true);
               setCheckingDemo(false);
               setIsCheckingAuth(false);
@@ -44,29 +78,41 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           }
         }
         
-        // If not a demo user, check with the server
-        try {
-          // Try to refresh the user data from server
-          await getCurrentUser();
-        } catch (error) {
-          console.error('Error fetching current user:', error);
-          setAuthError('Failed to verify authentication status');
+        // If we're already authenticated in context, skip the server check
+        if (contextAuthenticated) {
+          console.log('Already authenticated in context, skipping server check');
+          setCheckingDemo(false);
+          setIsCheckingAuth(false);
+          return;
         }
         
-        setCheckingDemo(false);
-        setIsCheckingAuth(false);
+        // If not a demo user or contextually authenticated, check with the server
+        try {
+          // Try to refresh the user data from server
+          await Promise.race([
+            getCurrentUser(),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Auth check timed out')), 5000)
+            )
+          ]);
+        } catch (error) {
+          console.error('Error fetching current user:', error);
+          // Don't set error here - just skip to login screen
+        } finally {
+          setCheckingDemo(false);
+          setIsCheckingAuth(false);
+        }
       } catch (error) {
         console.error('Authentication check failed:', error);
-        setAuthError('Failed to verify authentication status');
-        setIsCheckingAuth(false);
         setCheckingDemo(false);
+        setIsCheckingAuth(false);
       }
     };
     
     checkAuthentication();
-  }, [getCurrentUser]);
+  }, []); // Empty dependency array - only run once
   
-  // Log authentication information for debugging
+  // Log authentication information for debugging (with throttling)
   useEffect(() => {
     console.log('Protected Route Authentication Status:', {
       path: location.pathname,
@@ -76,24 +122,28 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       isChecking: isAuthenticating || checkingDemo || isCheckingAuth,
       authError
     });
-  }, [
-    location, 
-    solanaAuthenticated, 
-    contextAuthenticated, 
-    isDemoUser, 
-    isAuthenticating, 
-    checkingDemo, 
-    isCheckingAuth,
-    authError
-  ]);
+  }, [location.pathname, authError]); // Reduced dependencies to prevent loops
   
-  // Show loading state while checking authentication
-  if (isAuthenticating || checkingDemo || isCheckingAuth) {
+  // Determine if still checking (with 5 sec max wait time)
+  const stillChecking = (isAuthenticating || checkingDemo || isCheckingAuth);
+  
+  // Show loading state while checking authentication (5 sec max)
+  if (stillChecking) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto"></div>
           <p className="mt-4 text-lg text-gray-300">Verifying Authentication...</p>
+          <button 
+            onClick={() => {
+              setIsCheckingAuth(false);
+              setCheckingDemo(false);
+              window.location.href = '/login';
+            }}
+            className="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          >
+            Skip to Login
+          </button>
         </div>
       </div>
     );
