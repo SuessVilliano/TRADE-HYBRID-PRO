@@ -29,7 +29,9 @@ const ProfileDashboard: React.FC = () => {
   const userData = {
     name: currentUser?.username || "Demo Trader",
     accountType: currentUser?.membershipLevel || "Free",
-    joinDate: new Date(currentUser?.createdAt || Date.now()).toISOString().split('T')[0],
+    joinDate: currentUser?.membershipExpiresAt 
+      ? new Date(currentUser.membershipExpiresAt).toISOString().split('T')[0] 
+      : new Date().toISOString().split('T')[0],
     email: currentUser?.email || "user@example.com",
     walletAddress: currentUser?.walletAddress || null,
   };
