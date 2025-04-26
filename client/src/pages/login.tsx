@@ -131,13 +131,13 @@ export default function LoginPage() {
           <div className="relative h-16 mx-auto mb-4 flex items-center justify-center">
             <img 
               src="/images/trade_hybrid_logo.png" 
-              alt="TradeHybrid Logo" 
+              alt="Trade Hybrid Logo" 
               className="h-16 w-auto object-contain" 
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 console.log("Logo load error - using fallback");
                 target.onerror = null;
-                target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCAyMDAgNTAiPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMwMGZmYWE7c3RvcC1vcGFjaXR5OjEiIC8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojMDBhYWZmO3N0b3Atb3BhY2l0eToxIiAvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjx0ZXh0IHg9IjEwIiB5PSIzNSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0idXJsKCNncmFkaWVudCkiIHRleHQtYW5jaG9yPSJzdGFydCI+VHJhZGVIeWJyaWQ8L3RleHQ+PC9zdmc+';
+                target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCAyMDAgNTAiPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMwMGZmYWE7c3RvcC1vcGFjaXR5OjEiIC8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojMDBhYWZmO3N0b3Atb3BhY2l0eToxIiAvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjx0ZXh0IHg9IjEwIiB5PSIzNSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0idXJsKCNncmFkaWVudCkiIHRleHQtYW5jaG9yPSJzdGFydCI+VHJhZGUgSHlicmlkPC90ZXh0Pjwvc3ZnPg==';
               }}
             />
             
@@ -165,14 +165,14 @@ export default function LoginPage() {
                   fill="url(#thGradient)" 
                   textAnchor="start"
                 >
-                  TradeHybrid
+                  Trade Hybrid
                 </text>
               </svg>
             </div>
           </div>
           
           <h1 className="text-3xl font-bold text-white">
-            Welcome to TradeHybrid
+            Welcome to Trade Hybrid
           </h1>
           <p className="mt-2 text-gray-300">The future of decentralized trading</p>
         </div>

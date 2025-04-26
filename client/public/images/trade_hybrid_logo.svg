@@ -16,7 +16,7 @@
   
   <!-- Main Text with gradient -->
   <text x="50%" y="45" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="url(#gradient)" text-anchor="middle" filter="url(#glow)">
-    TradeHybrid
+    Trade Hybrid
   </text>
   
   <!-- Stylized trading chart line -->

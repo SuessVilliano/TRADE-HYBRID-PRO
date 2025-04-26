@@ -251,7 +251,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const demoUser: User = {
           id: 1,
           username: 'demo_user',
-          email: 'demo@tradehybrid.com',
+          email: 'demo@trade-hybrid.com',
           membershipLevel: 'demo',
           authenticated: true,
           membershipExpiresAt: '2030-01-01',
