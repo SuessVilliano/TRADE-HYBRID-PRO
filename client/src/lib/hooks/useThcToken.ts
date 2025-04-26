@@ -4,12 +4,12 @@ import * as web3 from '@solana/web3.js';
 import { PublicKey } from '@solana/web3.js';
 import {
   THC_TOKEN,
-  updateTokenPrice,
   calculateTokensFromUsd,
   formatUsdAmount,
   formatTokenAmount
 } from '../contracts/thc-token-info';
 import { useToast } from '@/components/ui/use-toast';
+import coinPriceService, { TokenPriceData, PriceHistoryPoint } from '../services/coin-price-service';
 
 // THC Token purchase status
 export type PurchaseStatus = 'idle' | 'preparing' | 'confirming' | 'processing' | 'success' | 'error';
@@ -23,6 +23,9 @@ export interface ThcTokenState {
   marketCap: number;
   tradingVolume24h: number;
   holderCount: number;
+  priceHistory: PriceHistoryPoint[];
+  isLoading: boolean;
+  lastUpdated: Date | null;
   
   // User data
   balance: number;
@@ -40,7 +43,7 @@ export interface ThcTokenState {
   updateUsdAmount: (amount: number) => void;
   updateTokenAmount: (amount: number) => void;
   purchaseTokens: () => Promise<boolean>;
-  refreshPrice: () => number;
+  refreshPrice: () => Promise<number>;
 }
 
 /**
@@ -88,10 +91,18 @@ export function useThcToken(): ThcTokenState {
     }
   }, [connected, publicKey]);
   
-  // Periodically update token price to simulate real market conditions
+  // Real token price history for chart
+  const [priceHistory, setPriceHistory] = useState<PriceHistoryPoint[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  
+  // Periodically update token price with real market data
   useEffect(() => {
     // Initial update
     refreshPrice();
+    
+    // Load initial price history
+    fetchPriceHistory();
     
     // Set up interval for price updates (every 30 seconds)
     const intervalId = setInterval(() => {
@@ -102,11 +113,24 @@ export function useThcToken(): ThcTokenState {
     return () => clearInterval(intervalId);
   }, []);
   
+  // Fetch price history data for chart
+  const fetchPriceHistory = useCallback(async () => {
+    try {
+      const history = await coinPriceService.fetchTokenPriceHistory(7);
+      setPriceHistory(history);
+      
+      // Also update THC_TOKEN's price history for components that use it directly
+      THC_TOKEN.priceHistory = history;
+    } catch (error) {
+      console.error('Failed to fetch price history:', error);
+    }
+  }, []);
+  
   // Update USD amount and calculate corresponding token amount
   const updateUsdAmount = useCallback((amount: number) => {
     setUsdAmount(amount);
-    setTokenAmount(calculateTokensFromUsd(amount));
-  }, []);
+    setTokenAmount(calculateTokensFromUsd(amount, price));
+  }, [price]);
   
   // Update token amount and calculate corresponding USD amount
   const updateTokenAmount = useCallback((amount: number) => {
@@ -117,24 +141,44 @@ export function useThcToken(): ThcTokenState {
     setUsdAmount(usdBeforeFee + fee);
   }, [price]);
   
-  // Refresh token price
-  const refreshPrice = useCallback(() => {
-    const newPrice = updateTokenPrice();
-    setPrice(newPrice);
-    setPriceChange24h(THC_TOKEN.priceChange24h);
-    setMarketCap(THC_TOKEN.marketCap);
-    
-    // Update trading volume with some random variation
-    const volumeChange = (Math.random() - 0.4) * 50000; // Slightly biased towards increase
-    setTradingVolume24h(prev => Math.max(100000, prev + volumeChange));
-    
-    // Update token amount based on new price if USD amount is set
-    if (usdAmount > 0) {
-      setTokenAmount(calculateTokensFromUsd(usdAmount));
+  // Refresh token price from API
+  const refreshPrice = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // Fetch real token price data from API
+      const tokenData = await coinPriceService.fetchTokenPrice();
+      
+      // Update state with real data
+      setPrice(tokenData.price);
+      setPriceChange24h(tokenData.priceChange24h);
+      setMarketCap(tokenData.marketCap);
+      setTradingVolume24h(tokenData.tradingVolume24h);
+      setLastUpdated(tokenData.lastUpdated);
+      
+      // Update cached values in THC_TOKEN for other components
+      THC_TOKEN.price = tokenData.price;
+      THC_TOKEN.priceChange24h = tokenData.priceChange24h;
+      THC_TOKEN.marketCap = tokenData.marketCap;
+      
+      // Update token amount based on new price if USD amount is set
+      if (usdAmount > 0) {
+        setTokenAmount(calculateTokensFromUsd(usdAmount, tokenData.price));
+      }
+      
+      // Refresh price history once every 5 minutes
+      if (!lastUpdated || 
+          (tokenData.lastUpdated.getTime() - (lastUpdated?.getTime() || 0)) > 5 * 60 * 1000) {
+        fetchPriceHistory();
+      }
+      
+      return tokenData.price;
+    } catch (error) {
+      console.error('Error refreshing token price:', error);
+      return price; // Return current price if refresh fails
+    } finally {
+      setIsLoading(false);
     }
-    
-    return newPrice;
-  }, [usdAmount]);
+  }, [usdAmount, price, lastUpdated, fetchPriceHistory]);
   
   // Purchase tokens function
   const purchaseTokens = useCallback(async () => {
@@ -248,6 +292,9 @@ export function useThcToken(): ThcTokenState {
     marketCap,
     tradingVolume24h,
     holderCount: THC_TOKEN.holderCount,
+    priceHistory,
+    isLoading,
+    lastUpdated,
     
     // User data
     balance,

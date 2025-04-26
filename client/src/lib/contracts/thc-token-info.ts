@@ -202,13 +202,17 @@ export function calculateTokenValue(tokenAmount: number): number {
  * Calculate the amount of THC tokens that can be purchased with a given USD amount
  * 
  * @param usdAmount Amount in USD
+ * @param tokenPrice Current token price (defaults to THC_TOKEN.price if not provided)
  * @returns Amount of THC tokens
  */
-export function calculateTokensFromUsd(usdAmount: number): number {
+export function calculateTokensFromUsd(usdAmount: number, tokenPrice?: number): number {
+  // Use provided price or fall back to THC_TOKEN.price
+  const price = tokenPrice !== undefined ? tokenPrice : THC_TOKEN.price;
+  
   // Calculate tokens before fee
   const fee = usdAmount * (THC_TOKEN.purchaseFee / 100);
   const netAmount = usdAmount - fee;
-  return netAmount / THC_TOKEN.price;
+  return netAmount / price;
 }
 
 /**

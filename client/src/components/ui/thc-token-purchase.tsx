@@ -169,10 +169,23 @@ export function ThcTokenPurchase({ className }: ThcTokenPurchaseProps) {
                 variant="ghost" 
                 size="icon" 
                 className="ml-1 text-slate-400 hover:text-white"
-                onClick={() => refreshPrice()}
+                onClick={() => {
+                  // Create the refresh animation effect
+                  const btn = document.getElementById('refresh-price-btn');
+                  if (btn) {
+                    btn.classList.add('animate-spin');
+                    setTimeout(() => btn.classList.remove('animate-spin'), 1000);
+                  }
+                  // Refresh price from API
+                  refreshPrice();
+                }}
               >
-                <RefreshCw className="h-4 w-4" />
+                <RefreshCw id="refresh-price-btn" className="h-4 w-4" />
               </Button>
+              <div className="ml-2 text-xs text-green-400 flex items-center">
+                <div className="w-2 h-2 rounded-full bg-green-500 mr-1 animate-pulse"></div> 
+                Live
+              </div>
             </div>
           </div>
           <CardDescription>
