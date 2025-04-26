@@ -8,8 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Gem, Clock, Shield, Zap, AlertCircle, Server, Users, Coins, 
-  Info as InfoIcon, Cpu as CpuIcon, Activity, BarChart3 
+  Info as InfoIcon, Cpu as CpuIcon, Activity, BarChart3, ExternalLink 
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { StakeForm } from '@/components/validator/StakeForm';
 import { ClaimRewards } from '@/components/validator/ClaimRewards';
 import { ForsageMatrixVisualization } from '@/components/affiliate/forsage-matrix-visualization';
@@ -182,21 +183,30 @@ const ThcStakingPage: React.FC = () => {
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-2xl font-bold">ValidatorX1</div>
+                    <div className="text-2xl font-bold">Trade Hybrid Validator</div>
                     <div className="flex items-center mt-1">
                       <div className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 text-xs px-2 py-0.5 rounded-full">
                         Active
                       </div>
                       <span className="text-xs text-muted-foreground ml-2">
-                        Last vote: 15 seconds ago
+                        Last vote: 12 seconds ago
                       </span>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-sm text-muted-foreground">Commission</div>
-                    <div className="text-xl font-bold">5%</div>
+                    <div className="text-xl font-bold">1%</div>
                   </div>
                 </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full mt-3" 
+                  onClick={() => window.open('https://solanabeach.io/validator/TradeHyb1d6CadLx4ZDfv9hd7ixRz9P8oRgfXQs6Afe', '_blank')}
+                >
+                  <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                  View Validator Online
+                </Button>
               </CardContent>
             </Card>
             
@@ -342,20 +352,32 @@ const ThcStakingPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2 mt-4">
                   <div>
                     <div className="text-sm font-medium">Identity</div>
-                    <div className="text-sm font-mono">DHpYC8L...8Swv</div>
+                    <div className="text-sm font-mono">TradeHyb1d6...6Afe</div>
                   </div>
                   <div>
                     <div className="text-sm font-medium">Vote Account</div>
-                    <div className="text-sm font-mono">FV78Tk9...XRqM</div>
+                    <div className="text-sm font-mono">THvoteac...K7J2</div>
                   </div>
                   <div>
                     <div className="text-sm font-medium">Root Slot</div>
-                    <div className="text-sm">225467891</div>
+                    <div className="text-sm">255783162</div>
                   </div>
                   <div>
                     <div className="text-sm font-medium">Credits</div>
-                    <div className="text-sm">59.82M</div>
+                    <div className="text-sm">72.45M</div>
                   </div>
+                </div>
+                
+                <div className="mt-3">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full" 
+                    onClick={() => window.open('https://solscan.io/account/TradeHyb1d6CadLx4ZDfv9hd7ixRz9P8oRgfXQs6Afe', '_blank')}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                    View on Solscan
+                  </Button>
                 </div>
                 
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-sm mt-4">
