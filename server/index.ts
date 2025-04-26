@@ -100,14 +100,24 @@ app.use((req, res, next) => {
 
   // Try to use port 5000 (workflow default) but fall back to others if needed
   const tryStartServer = (attemptPort: number, maxAttempts = 5, currentAttempt = 1) => {
+    // Fix for the port conflict - don't retry 5000 if we're explicitly trying 5050
+    if (attemptPort === 5050 && currentAttempt === 1) {
+      // We're being called from an exception handler - don't try port 5000 again
+      log(`serving on port ${attemptPort}`);
+      console.log(`Note: Using alternative port ${attemptPort} instead of default port 5000`);
+    }
+    
     // Simple approach: just try to listen on the port directly
     server.listen({
       port: attemptPort,
       host: "0.0.0.0",
     }, () => {
-      log(`serving on port ${attemptPort}`);
-      if (attemptPort !== 5000) {
-        console.log(`Note: Using alternative port ${attemptPort} instead of default port 5000`);
+      // Only log if we're not already handling the fallback to 5050
+      if (!(attemptPort === 5050 && currentAttempt === 1)) {
+        log(`serving on port ${attemptPort}`);
+        if (attemptPort !== 5000) {
+          console.log(`Note: Using alternative port ${attemptPort} instead of default port 5000`);
+        }
       }
     }).on('error', (error: any) => {
       if (error.code === 'EADDRINUSE') {
@@ -130,12 +140,17 @@ app.use((req, res, next) => {
   // Set up error handlers
   process.on('uncaughtException', (error: any) => {
     console.error('Uncaught Exception:', error);
-    // If the error is EADDRINUSE, the error handler in tryStartServer will handle it
-    // But we've seen cases where it bypasses that handler
+    
+    // If the error is EADDRINUSE, try alternative ports
     if (error.code === 'EADDRINUSE') {
-      // Try a fallback port directly
+      // Only log this once - when we detect a port conflict
       console.log('Caught EADDRINUSE at process level, trying fallback port 5050...');
+      
+      // Switch to port 5050 immediately - don't try 5000 again
       tryStartServer(5050);
+      
+      // Important: Return here rather than continuing after exception
+      return;
     } else {
       process.exit(1);
     }

@@ -1,11 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useWallet } from '@solana/wallet-adapter-react';
+// Using the kebab-case component which has 'description' prop
 import PageHeader from '@/components/layout/PageHeader';
-import StakePanel from '@/components/staking/StakePanel';
+import { StakePanel } from '@/components/staking/StakePanel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gem, Clock, Shield, Zap } from 'lucide-react';
+import { Gem, Clock, Shield, Zap, AlertCircle } from 'lucide-react';
+
+import '@solana/wallet-adapter-react-ui/styles.css';
 
 const ThcStakingPage: React.FC = () => {
+  const { connected, publicKey } = useWallet();
+  const [error, setError] = useState<string | null>(null);
+  
+  // Debugging info
+  useEffect(() => {
+    console.log("ThcStakingPage mounted, wallet status:", { connected, publicKey: publicKey?.toString() });
+    
+    return () => {
+      console.log("ThcStakingPage unmounted");
+    };
+  }, [connected, publicKey]);
+  
   return (
     <div className="container mx-auto p-4">
       <Helmet>
@@ -16,6 +32,15 @@ const ThcStakingPage: React.FC = () => {
         title="THC Token Staking"
         description="Stake your THC tokens to earn passive rewards and participate in the Trade Hybrid ecosystem."
       />
+      
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4 mb-6 text-red-700 dark:text-red-400">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            <p>{error}</p>
+          </div>
+        </div>
+      )}
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
         <div className="lg:col-span-2">

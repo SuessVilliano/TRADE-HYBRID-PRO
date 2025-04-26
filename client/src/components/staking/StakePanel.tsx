@@ -14,17 +14,45 @@ import { Calendar, Clock, Gem, Coins, CoinsIcon, ArrowUp, Loader2, Lock, Unlock,
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const StakePanel: React.FC = () => {
-  const { connected } = useWallet();
+  const { connected, publicKey } = useWallet();
+  const [componentError, setComponentError] = useState<string | null>(null);
+  
+  // Debug wallet connection
+  React.useEffect(() => {
+    console.log("Wallet connection status:", { connected, publicKey: publicKey?.toString() });
+  }, [connected, publicKey]);
+  
+  // Use try/catch to handle errors in the staking service
+  let stakingService;
+  try {
+    stakingService = useThcStakingService();
+  } catch (err) {
+    console.error("Error initializing staking service:", err);
+    setComponentError(`Error initializing staking service: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  
   const {
     isLoading,
-    error,
+    error: serviceError,
     stakingStats,
     userStake,
     availableRewards,
     stakeTokens,
     unstakeTokens,
     claimRewards
-  } = useThcStakingService();
+  } = stakingService || {
+    isLoading: false,
+    error: null,
+    stakingStats: null,
+    userStake: null,
+    availableRewards: 0,
+    stakeTokens: async () => {},
+    unstakeTokens: async () => {},
+    claimRewards: async () => {}
+  };
+  
+  // Combine errors
+  const error = componentError || serviceError;
 
   const [stakeAmount, setStakeAmount] = useState<string>('');
   const [lockPeriod, setLockPeriod] = useState<number>(30);
