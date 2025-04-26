@@ -323,6 +323,15 @@ export function useThcToken(): ThcTokenState {
     isLoading,
     lastUpdated,
     
+    // Raydium data
+    raydiumPrice,
+    raydiumPriceChange24h,
+    raydiumLiquidity,
+    raydiumVolume24h,
+    raydiumLpAddress,
+    raydiumLastUpdated,
+    dataSource,
+    
     // User data
     balance,
     pendingRewards,

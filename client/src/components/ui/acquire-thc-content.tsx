@@ -4,6 +4,7 @@ import { Button } from './button';
 import { Alert, AlertDescription, AlertTitle } from './alert';
 import { Badge } from './badge';
 import { ThcTokenPurchase } from './thc-token-purchase';
+import { THCTokenPriceComparison } from './thc-token-price-comparison';
 import {
   Rocket,
   Copy,
