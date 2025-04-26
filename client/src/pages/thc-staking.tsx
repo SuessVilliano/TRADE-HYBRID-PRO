@@ -89,6 +89,7 @@ import { MembershipTier } from '../lib/context/SolanaAuthProvider';
 
 // Import actual THCMembershipCard component
 import { THCMembershipCard } from '../components/ui/thc-membership-display';
+import { ThcTokenPurchase } from '../components/ui/thc-token-purchase';
 
 // Import actual SolanaAuth hook
 import { useSolanaAuth } from '../lib/context/SolanaAuthProvider';
