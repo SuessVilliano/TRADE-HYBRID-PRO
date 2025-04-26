@@ -6,7 +6,10 @@ import PageHeader from '@/components/layout/PageHeader';
 import { StakePanel } from '@/components/staking/StakePanel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Gem, Clock, Shield, Zap, AlertCircle, Server, Users, Coins, Info as InfoIcon } from 'lucide-react';
+import { 
+  Gem, Clock, Shield, Zap, AlertCircle, Server, Users, Coins, 
+  Info as InfoIcon, Cpu as CpuIcon, Activity, BarChart3 
+} from 'lucide-react';
 import { StakeForm } from '@/components/validator/StakeForm';
 import { ClaimRewards } from '@/components/validator/ClaimRewards';
 import { ForsageMatrixVisualization } from '@/components/affiliate/forsage-matrix-visualization';
@@ -168,47 +171,208 @@ const ThcStakingPage: React.FC = () => {
 
         {/* Validator Tab */}
         <TabsContent value="validator" className="mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center">
+                  <Server className="h-4 w-4 mr-2 text-green-500" />
+                  Validator Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold">ValidatorX1</div>
+                    <div className="flex items-center mt-1">
+                      <div className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 text-xs px-2 py-0.5 rounded-full">
+                        Active
+                      </div>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        Last vote: 15 seconds ago
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm text-muted-foreground">Commission</div>
+                    <div className="text-xl font-bold">5%</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center">
+                  <CpuIcon className="h-4 w-4 mr-2 text-purple-500" />
+                  Performance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm text-muted-foreground">Skip Rate</div>
+                    <div className="font-medium">1.2%</div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm text-muted-foreground">Uptime</div>
+                    <div className="font-medium">99.98%</div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm text-muted-foreground">Version</div>
+                    <div className="font-medium">1.14.18</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center">
+                  <Activity className="h-4 w-4 mr-2 text-blue-500" />
+                  Epoch Progress
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Current Epoch: 452</span>
+                    <span>78%</span>
+                  </div>
+                  <div className="bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                    <div className="bg-blue-500 h-full rounded-full" style={{ width: '78%' }}></div>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Last Epoch Uptime: 99.94%
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <StakeForm />
             <ClaimRewards />
           </div>
-          
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Server className="h-5 w-5 mr-2 text-blue-500" />
-                Trade Hybrid Validator
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="prose dark:prose-invert max-w-none">
-              <p>
-                Earn SOL staking rewards and THC token bonuses by staking with the Trade Hybrid validator node.
-                Our validator provides reliable operation with high uptime and competitive APY rates.
-              </p>
-              
-              <h4 className="flex items-center mt-4">
-                <Shield className="h-4 w-4 mr-2 text-blue-500" />
-                Dual Rewards Program
-              </h4>
-              <p>
-                When you stake SOL with our validator, you earn both standard SOL staking rewards
-                (~7.5% APY) and bonus THC tokens (5 THC per 100 SOL staked per month).
-              </p>
-              
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-sm">
-                <div className="font-medium mb-1 flex items-center">
-                  <InfoIcon className="h-4 w-4 mr-2 text-blue-500" />
-                  How It Works:
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <BarChart3 className="h-5 w-5 text-blue-500" />
+                  Stake Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <div>
+                      <div className="text-sm text-muted-foreground">Your Stake</div>
+                      <div className="text-2xl font-bold">78.30 SOL</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm text-muted-foreground">Validator's Stake</div>
+                      <div className="text-2xl font-bold">175,420.65 SOL</div>
+                    </div>
+                  </div>
+                  
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
+                    <div className="text-sm text-muted-foreground mb-2">Your Stake Accounts</div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center">
+                          <div className="truncate max-w-[100px] font-mono text-xs">
+                            Stake1...W8p2
+                          </div>
+                          <div className="ml-2 text-xs px-2 py-0.5 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 rounded-full">
+                            active
+                          </div>
+                        </div>
+                        <div className="font-medium">25.50 SOL</div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center">
+                          <div className="truncate max-w-[100px] font-mono text-xs">
+                            Stake2...K9q3
+                          </div>
+                          <div className="ml-2 text-xs px-2 py-0.5 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 rounded-full">
+                            active
+                          </div>
+                        </div>
+                        <div className="font-medium">42.80 SOL</div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center">
+                          <div className="truncate max-w-[100px] font-mono text-xs">
+                            Stake3...L7r5
+                          </div>
+                          <div className="ml-2 text-xs px-2 py-0.5 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 rounded-full">
+                            activating
+                          </div>
+                        </div>
+                        <div className="font-medium">10.00 SOL</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <ol className="list-decimal list-inside pl-2">
-                  <li>Stake SOL with our validator using the form above</li>
-                  <li>Your stake activates after 1-2 epochs (2-4 days)</li>
-                  <li>Earn standard SOL rewards from the Solana network</li>
-                  <li>Receive additional THC tokens as bonus rewards</li>
-                </ol>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Server className="h-5 w-5 mr-2 text-blue-500" />
+                  Trade Hybrid Validator Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="prose dark:prose-invert max-w-none">
+                <p>
+                  Earn SOL staking rewards and THC token bonuses by staking with the Trade Hybrid validator node.
+                  Our validator is operated by an experienced team with 24/7 monitoring and 99.98% uptime.
+                </p>
+                
+                <h4 className="flex items-center mt-4">
+                  <Shield className="h-4 w-4 mr-2 text-blue-500" />
+                  Dual Rewards Program
+                </h4>
+                <p>
+                  When you stake SOL with our validator, you earn both standard SOL staking rewards
+                  (~7.5% APY) and bonus THC tokens (5 THC per 100 SOL staked per month).
+                </p>
+                
+                <div className="grid grid-cols-2 gap-2 mt-4">
+                  <div>
+                    <div className="text-sm font-medium">Identity</div>
+                    <div className="text-sm font-mono">DHpYC8L...8Swv</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium">Vote Account</div>
+                    <div className="text-sm font-mono">FV78Tk9...XRqM</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium">Root Slot</div>
+                    <div className="text-sm">225467891</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium">Credits</div>
+                    <div className="text-sm">59.82M</div>
+                  </div>
+                </div>
+                
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-sm mt-4">
+                  <div className="font-medium mb-1 flex items-center">
+                    <InfoIcon className="h-4 w-4 mr-2 text-blue-500" />
+                    How It Works:
+                  </div>
+                  <ol className="list-decimal list-inside pl-2">
+                    <li>Stake SOL with our validator using the form above</li>
+                    <li>Your stake activates after 1-2 epochs (2-4 days)</li>
+                    <li>Earn standard SOL rewards from the Solana network</li>
+                    <li>Receive additional THC tokens as bonus rewards</li>
+                  </ol>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Matrix Tab */}
