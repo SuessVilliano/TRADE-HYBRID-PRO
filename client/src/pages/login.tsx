@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../lib/context/AuthContext";
 import { Alert, AlertDescription } from "../components/ui/alert";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2, HelpCircle, KeyRound, Info } from "lucide-react";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -12,22 +12,46 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loginStatus, setLoginStatus] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const loginTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Redirect if already authenticated
   React.useEffect(() => {
     if (auth.isAuthenticated) {
       navigate("/dashboard");
     }
+    
+    // Cleanup function to clear any timeouts when component unmounts
+    return () => {
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current);
+      }
+    };
   }, [auth.isAuthenticated, navigate]);
   
   // Function to handle Whop login
   const handleWhopLogin = async (whopId: string) => {
     try {
+      // Clear any existing timeouts
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current);
+      }
+      
       setIsLoggingIn(true);
       setLoginStatus(`Authenticating with ID: ${whopId}...`);
       
+      // Set a timeout to handle potential login hangs
+      loginTimeoutRef.current = setTimeout(() => {
+        setIsLoggingIn(false);
+        setLoginStatus("Login timed out. Please try again or use the forgot password option.");
+      }, 15000); // 15 seconds timeout
+      
       // Use the AuthContext to perform login
       const userData = await auth.login(whopId);
+      
+      // Clear the timeout since login succeeded
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current);
+      }
       
       console.log("Login successful with user data:", userData);
       setLoginStatus("Login successful! Redirecting...");
@@ -36,6 +60,11 @@ export default function LoginPage() {
       navigate("/dashboard");
       
     } catch (err) {
+      // Clear the timeout since login failed with an error
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current);
+      }
+      
       console.error("Login failed:", err);
       setLoginStatus("Login failed. Please check your ID and try again.");
     } finally {
@@ -53,11 +82,27 @@ export default function LoginPage() {
   // Handle demo login
   const handleDemoLogin = async () => {
     try {
+      // Clear any existing timeouts
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current);
+      }
+      
       setIsLoggingIn(true);
       setLoginStatus("Logging in with demo account...");
       
+      // Set a timeout to handle potential login hangs
+      loginTimeoutRef.current = setTimeout(() => {
+        setIsLoggingIn(false);
+        setLoginStatus("Demo login timed out. Please try again.");
+      }, 15000); // 15 seconds timeout
+      
       // Use the AuthContext to perform demo login
       const userData = await auth.loginWithDemo();
+      
+      // Clear the timeout since login succeeded
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current);
+      }
       
       console.log("Demo login successful with user data:", userData);
       setLoginStatus("Demo login successful! Redirecting...");
@@ -66,6 +111,11 @@ export default function LoginPage() {
       navigate("/dashboard");
       
     } catch (err) {
+      // Clear the timeout since login failed with an error
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current);
+      }
+      
       console.error("Demo login failed:", err);
       setLoginStatus("Demo login failed. Please try again.");
     } finally {
