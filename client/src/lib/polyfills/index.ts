@@ -10,10 +10,13 @@ export * from './process';
 
 // Apply global polyfills - These will affect the global scope
 // Only use this for compatibility with libraries that expect global objects
+import { Buffer } from './buffer';
+import { process } from './process';
+
 if (typeof window !== 'undefined') {
   // Add Buffer to window for libraries that expect it globally
-  (window as any).Buffer = window.Buffer || require('./buffer').Buffer;
+  (window as any).Buffer = window.Buffer || Buffer;
   
   // Add process to window for libraries that expect it globally
-  (window as any).process = window.process || require('./process').process;
+  (window as any).process = window.process || process;
 }
