@@ -323,6 +323,12 @@ import validatorRoutes from './routes/validator'; // Import for Solana validator
 import configRoutes from './api/config'; // Import for configuration API routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Add route to serve Solana RPC URL from environment variables
+  app.get("/api/config/rpc-url", (req: Request, res: Response) => {
+    const rpcUrl = process.env.SOLANA_RPC_URL || '';
+    console.log('Providing Solana RPC URL to client:', rpcUrl ? 'Custom URL available' : 'No custom URL');
+    res.json({ rpcUrl });
+  });
   // Market data routes
   app.get("/api/market/data", getMarketData);
   app.get("/api/market/price", getCurrentPrice);
