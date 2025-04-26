@@ -162,11 +162,40 @@ export function AIMarketAnalysis({ className }: AIMarketAnalysisProps) {
               value={symbol}
               onChange={(e) => setSymbol(e.target.value)}
             >
-              <option value="BTCUSDT">Bitcoin (BTCUSDT)</option>
-              <option value="ETHUSDT">Ethereum (ETHUSDT)</option>
-              <option value="SOLUSDT">Solana (SOLUSDT)</option>
-              <option value="BNBUSDT">Binance Coin (BNBUSDT)</option>
-              <option value="ADAUSDT">Cardano (ADAUSDT)</option>
+              <optgroup label="Cryptocurrency">
+                <option value="BTCUSDT">Bitcoin (BTCUSDT)</option>
+                <option value="ETHUSDT">Ethereum (ETHUSDT)</option>
+                <option value="SOLUSDT">Solana (SOLUSDT)</option>
+                <option value="BNBUSDT">Binance Coin (BNBUSDT)</option>
+                <option value="ADAUSDT">Cardano (ADAUSDT)</option>
+              </optgroup>
+              <optgroup label="Stocks">
+                <option value="AAPL">Apple Inc. (AAPL)</option>
+                <option value="MSFT">Microsoft Corporation (MSFT)</option>
+                <option value="GOOGL">Alphabet Inc. (GOOGL)</option>
+                <option value="AMZN">Amazon.com Inc. (AMZN)</option>
+                <option value="TSLA">Tesla Inc. (TSLA)</option>
+                <option value="NVDA">NVIDIA Corporation (NVDA)</option>
+                <option value="META">Meta Platforms Inc. (META)</option>
+              </optgroup>
+              <optgroup label="Forex">
+                <option value="EUR/USD">Euro/US Dollar (EUR/USD)</option>
+                <option value="GBP/USD">British Pound/US Dollar (GBP/USD)</option>
+                <option value="USD/JPY">US Dollar/Japanese Yen (USD/JPY)</option>
+                <option value="USD/CAD">US Dollar/Canadian Dollar (USD/CAD)</option>
+                <option value="AUD/USD">Australian Dollar/US Dollar (AUD/USD)</option>
+              </optgroup>
+              <optgroup label="Commodities">
+                <option value="XAUUSD">Gold (XAUUSD)</option>
+                <option value="XAGUSD">Silver (XAGUSD)</option>
+                <option value="CL=F">Crude Oil (CL=F)</option>
+                <option value="NG=F">Natural Gas (NG=F)</option>
+              </optgroup>
+              <optgroup label="ETFs">
+                <option value="SPY">SPDR S&P 500 ETF Trust (SPY)</option>
+                <option value="QQQ">Invesco QQQ Trust (QQQ)</option>
+                <option value="VTI">Vanguard Total Stock Market ETF (VTI)</option>
+              </optgroup>
             </select>
           </div>
           
@@ -283,6 +312,18 @@ export function AIMarketAnalysis({ className }: AIMarketAnalysisProps) {
                     `Ethereum (ETH) is showing strength above key moving averages with improving network metrics. Recent protocol updates have been well-received by the market, contributing to positive sentiment. Institutional interest remains steady with increased options activity.` :
                    symbol.includes('SOL') ?
                     `Solana (SOL) has been outperforming the broader market with strong momentum indicators. Development activity and user adoption metrics continue to show positive trends. The asset is currently testing key resistance levels after bouncing from well-established support.` :
+                   symbol.includes('AAPL') ?
+                    `Apple (AAPL) shows positive momentum following product launches and service growth. The stock is consolidating above key moving averages with institutional accumulation. Forward guidance and consumer demand metrics remain strong factors for near-term price movement.` :
+                   symbol.includes('MSFT') ?
+                    `Microsoft (MSFT) exhibits solid technical structure with continued cloud revenue growth. Enterprise adoption metrics remain strong and the stock is trading above key support levels. Recent AI investments are being positively reflected in analyst forecasts.` :
+                   symbol.includes('GOOGL') ?
+                    `Alphabet (GOOGL) is showing mixed signals with advertising revenue concerns balanced against AI advancements. The stock is consolidating after recent volatility with institutional positioning remaining net positive. Key technical levels are being closely monitored.` :
+                   symbol.includes('AMZN') ?
+                    `Amazon (AMZN) displays positive momentum with strong AWS growth and operational efficiencies. The stock is trading above key moving averages with technical indicators suggesting continued strength. Sector rotation patterns favor e-commerce leaders in the current environment.` :
+                   symbol.includes('EUR/USD') || symbol.includes('GBP/USD') || symbol.includes('USD/JPY') ?
+                    `This currency pair is currently being influenced by central bank policy divergence and macroeconomic data. Interest rate differentials and inflation expectations remain key drivers. Technical patterns show significant support/resistance levels that could determine near-term direction.` :
+                   symbol.includes('XAU') ?
+                    `Gold (XAU) is being influenced by inflation expectations, real yields, and geopolitical factors. Technical patterns show key support and resistance zones with momentum indicators providing mixed signals. Central bank purchasing remains a significant fundamental factor.` :
                     `This asset is displaying mixed signals with moderate momentum. Technical indicators suggest a cautious approach while monitoring key support and resistance levels. Recent volume patterns indicate increasing interest from market participants.`
                   }
                 </p>
@@ -313,7 +354,11 @@ export function AIMarketAnalysis({ className }: AIMarketAnalysisProps) {
                   <div>
                     <div className="text-xs text-slate-400">Volatility</div>
                     <div className="font-medium text-slate-300">
-                      {symbol.includes('BTC') || symbol.includes('ETH') ? 'Low' : 'Moderate'}
+                      {symbol.includes('BTC') || symbol.includes('ETH') || symbol.includes('MSFT') || symbol.includes('AAPL') ? 'Low' : 
+                       symbol.includes('TSLA') || symbol.includes('SOLUSDT') || symbol.includes('BNBUSDT') ? 'High' :
+                       symbol.includes('EUR/USD') || symbol.includes('GBP/USD') ? 'Very Low' :
+                       symbol.includes('CL=F') || symbol.includes('NG=F') ? 'Very High' :
+                       'Moderate'}
                     </div>
                   </div>
                   <div>
@@ -506,34 +551,162 @@ export function AIMarketAnalysis({ className }: AIMarketAnalysisProps) {
             <div className="bg-slate-700/50 p-3 rounded-md border border-slate-600">
               <h3 className="font-medium mb-3">Recent Events Impact</h3>
               <ul className="space-y-3">
-                <li className="flex items-start">
-                  <div className="h-5 w-5 bg-green-600/30 text-green-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">+</div>
-                  <div>
-                    <div className="text-sm font-medium">ETF Approval Speculation</div>
-                    <div className="text-xs text-slate-400">Increasing discussion around potential spot Bitcoin ETF approval</div>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <div className="h-5 w-5 bg-green-600/30 text-green-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">+</div>
-                  <div>
-                    <div className="text-sm font-medium">Institutional Adoption</div>
-                    <div className="text-xs text-slate-400">Major financial institutions continue to increase crypto exposure</div>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <div className="h-5 w-5 bg-red-600/30 text-red-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">-</div>
-                  <div>
-                    <div className="text-sm font-medium">Regulatory Uncertainty</div>
-                    <div className="text-xs text-slate-400">Ongoing concerns about potential regulation in key markets</div>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <div className="h-5 w-5 bg-yellow-600/30 text-yellow-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">~</div>
-                  <div>
-                    <div className="text-sm font-medium">Macroeconomic Factors</div>
-                    <div className="text-xs text-slate-400">Mixed signals from global economy affecting risk asset sentiment</div>
-                  </div>
-                </li>
+                {symbol.includes('BTC') || symbol.includes('ETH') || symbol.includes('SOL') ? (
+                  <>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-green-600/30 text-green-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">+</div>
+                      <div>
+                        <div className="text-sm font-medium">ETF Approval Speculation</div>
+                        <div className="text-xs text-slate-400">Increasing discussion around potential spot {symbol.includes('BTC') ? 'Bitcoin' : symbol.includes('ETH') ? 'Ethereum' : 'crypto'} ETF approval</div>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-green-600/30 text-green-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">+</div>
+                      <div>
+                        <div className="text-sm font-medium">Institutional Adoption</div>
+                        <div className="text-xs text-slate-400">Major financial institutions continue to increase crypto exposure</div>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-red-600/30 text-red-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">-</div>
+                      <div>
+                        <div className="text-sm font-medium">Regulatory Uncertainty</div>
+                        <div className="text-xs text-slate-400">Ongoing concerns about potential regulation in key markets</div>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-yellow-600/30 text-yellow-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">~</div>
+                      <div>
+                        <div className="text-sm font-medium">Macroeconomic Factors</div>
+                        <div className="text-xs text-slate-400">Mixed signals from global economy affecting risk asset sentiment</div>
+                      </div>
+                    </li>
+                  </>
+                ) : symbol.includes('AAPL') || symbol.includes('MSFT') || symbol.includes('GOOGL') || symbol.includes('AMZN') || symbol.includes('TSLA') || symbol.includes('NVDA') || symbol.includes('META') ? (
+                  <>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-green-600/30 text-green-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">+</div>
+                      <div>
+                        <div className="text-sm font-medium">Quarterly Earnings Outlook</div>
+                        <div className="text-xs text-slate-400">Analysts expect positive quarterly results impacting investor sentiment</div>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-green-600/30 text-green-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">+</div>
+                      <div>
+                        <div className="text-sm font-medium">Market Share Growth</div>
+                        <div className="text-xs text-slate-400">Reports indicate expanding market share in key business segments</div>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-red-600/30 text-red-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">-</div>
+                      <div>
+                        <div className="text-sm font-medium">Sector Rotation Risk</div>
+                        <div className="text-xs text-slate-400">Potential shift of institutional capital away from tech sector</div>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-yellow-600/30 text-yellow-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">~</div>
+                      <div>
+                        <div className="text-sm font-medium">Valuation Metrics</div>
+                        <div className="text-xs text-slate-400">P/E ratio and growth metrics approaching historical averages</div>
+                      </div>
+                    </li>
+                  </>
+                ) : symbol.includes('EUR/USD') || symbol.includes('GBP/USD') || symbol.includes('USD/JPY') || symbol.includes('USD/CAD') || symbol.includes('AUD/USD') ? (
+                  <>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-green-600/30 text-green-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">+</div>
+                      <div>
+                        <div className="text-sm font-medium">Interest Rate Differentials</div>
+                        <div className="text-xs text-slate-400">Widening interest rate expectations between central banks</div>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-green-600/30 text-green-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">+</div>
+                      <div>
+                        <div className="text-sm font-medium">Inflation Data Impact</div>
+                        <div className="text-xs text-slate-400">Recent inflation reports affecting currency strength expectations</div>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-red-600/30 text-red-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">-</div>
+                      <div>
+                        <div className="text-sm font-medium">Geopolitical Uncertainty</div>
+                        <div className="text-xs text-slate-400">Political developments creating headwinds for currency stability</div>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-yellow-600/30 text-yellow-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">~</div>
+                      <div>
+                        <div className="text-sm font-medium">Central Bank Guidance</div>
+                        <div className="text-xs text-slate-400">Recent central bank communications providing mixed signals</div>
+                      </div>
+                    </li>
+                  </>
+                ) : symbol.includes('XAU') || symbol.includes('XAG') || symbol.includes('CL=F') || symbol.includes('NG=F') ? (
+                  <>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-green-600/30 text-green-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">+</div>
+                      <div>
+                        <div className="text-sm font-medium">Supply Constraints</div>
+                        <div className="text-xs text-slate-400">Reports of production limitations or supply chain disruptions</div>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-green-600/30 text-green-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">+</div>
+                      <div>
+                        <div className="text-sm font-medium">{symbol.includes('XAU') || symbol.includes('XAG') ? 'Safe Haven Demand' : 'Seasonal Demand'}</div>
+                        <div className="text-xs text-slate-400">{symbol.includes('XAU') || symbol.includes('XAG') ? 'Increasing flows to precious metals amid market uncertainty' : 'Expected increase in consumption during peak season'}</div>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-red-600/30 text-red-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">-</div>
+                      <div>
+                        <div className="text-sm font-medium">Dollar Strength</div>
+                        <div className="text-xs text-slate-400">Strong USD creating headwind for commodity prices</div>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-yellow-600/30 text-yellow-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">~</div>
+                      <div>
+                        <div className="text-sm font-medium">Inventory Reports</div>
+                        <div className="text-xs text-slate-400">Mixed signals from recent inventory and storage data</div>
+                      </div>
+                    </li>
+                  </>
+                ) : (
+                  <>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-green-600/30 text-green-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">+</div>
+                      <div>
+                        <div className="text-sm font-medium">Positive Market Sentiment</div>
+                        <div className="text-xs text-slate-400">Overall bullish trend in the broader market</div>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-green-600/30 text-green-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">+</div>
+                      <div>
+                        <div className="text-sm font-medium">Strong Fundamentals</div>
+                        <div className="text-xs text-slate-400">Key metrics show positive fundamental outlook</div>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-red-600/30 text-red-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">-</div>
+                      <div>
+                        <div className="text-sm font-medium">Market Volatility</div>
+                        <div className="text-xs text-slate-400">Recent increased volatility creating uncertainty</div>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 bg-yellow-600/30 text-yellow-500 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 mr-2">~</div>
+                      <div>
+                        <div className="text-sm font-medium">Macroeconomic Factors</div>
+                        <div className="text-xs text-slate-400">Mixed signals from global economy affecting market sentiment</div>
+                      </div>
+                    </li>
+                  </>
+                )}
               </ul>
             </div>
           </div>
