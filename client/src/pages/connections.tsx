@@ -1,7 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 import PageHeader from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import ABATEVStatusPanel from '@/components/trade/ABATEVStatusPanel';
+import NexusStatusPanel from '@/components/trade/NexusStatusPanel';
 import TradingViewConnector from '@/components/trade/TradingViewConnector';
 import BrokerConnectionPanel from '@/components/trade/BrokerConnectionPanel';
 import { SUPPORTED_BROKERS } from '@/lib/constants';
@@ -24,9 +24,9 @@ export default function ConnectionsPage() {
           <TradingViewConnector />
         </div>
 
-        {/* ABATEV Status */}
+        {/* Nexus Status */}
         <div className="col-span-1">
-          <ABATEVStatusPanel />
+          <NexusStatusPanel />
         </div>
       </div>
 
@@ -79,16 +79,16 @@ export default function ConnectionsPage() {
               <li>Save your alert</li>
             </ol>
 
-            <h3>Using Advanced Broker Aggregation (ABATEV)</h3>
+            <h3>Using Advanced Broker Aggregation (Nexus)</h3>
             <p>
-              The ABATEV system provides advanced trade execution by comparing prices and execution speeds
-              across multiple brokers. To use ABATEV:
+              The Nexus system provides advanced trade execution by comparing prices and execution speeds
+              across multiple brokers. To use Nexus:
             </p>
             <ol>
               <li>Connect at least two supported brokers (e.g., Alpaca and Oanda)</li>
-              <li>Activate ABATEV using the connection panel above</li>
-              <li>When placing trades, select "Use ABATEV" for optimal routing</li>
-              <li>ABATEV will automatically choose the best broker for your specific trade</li>
+              <li>Activate Nexus using the connection panel above</li>
+              <li>When placing trades, select "Use Nexus" for optimal routing</li>
+              <li>Nexus will automatically choose the best broker for your specific trade</li>
             </ol>
 
             <h3>Broker API Credentials</h3>

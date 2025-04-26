@@ -98,26 +98,54 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Serve on port 5000 to match workflow configuration
-  const port = 5000;
-  process.on('uncaughtException', (error) => {
+  // Try to use port 5000 (workflow default) but fall back to others if needed
+  const tryStartServer = (attemptPort: number, maxAttempts = 5, currentAttempt = 1) => {
+    // Simple approach: just try to listen on the port directly
+    server.listen({
+      port: attemptPort,
+      host: "0.0.0.0",
+    }, () => {
+      log(`serving on port ${attemptPort}`);
+      if (attemptPort !== 5000) {
+        console.log(`Note: Using alternative port ${attemptPort} instead of default port 5000`);
+      }
+    }).on('error', (error: any) => {
+      if (error.code === 'EADDRINUSE') {
+        if (currentAttempt < maxAttempts) {
+          // Try the next port in sequence (with a small offset to avoid sequential conflicts)
+          const nextPort = attemptPort + 10;
+          console.log(`Port ${attemptPort} is in use, trying port ${nextPort}...`);
+          tryStartServer(nextPort, maxAttempts, currentAttempt + 1);
+        } else {
+          console.error(`Failed to find an available port after ${maxAttempts} attempts.`);
+          process.exit(1);
+        }
+      } else {
+        console.error('Server failed to start:', error);
+        process.exit(1);
+      }
+    });
+  };
+
+  // Set up error handlers
+  process.on('uncaughtException', (error: any) => {
     console.error('Uncaught Exception:', error);
-    process.exit(1);
+    // If the error is EADDRINUSE, the error handler in tryStartServer will handle it
+    // But we've seen cases where it bypasses that handler
+    if (error.code === 'EADDRINUSE') {
+      // Try a fallback port directly
+      console.log('Caught EADDRINUSE at process level, trying fallback port 5050...');
+      tryStartServer(5050);
+    } else {
+      process.exit(1);
+    }
   });
 
   process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   });
 
-
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  }).on('error', (error) => {
-    console.error('Server failed to start:', error);
-    process.exit(1);
-  });
+  // Try to start with preferred port
+  const preferredPort = parseInt(process.env.PORT || '5000');
+  tryStartServer(preferredPort);
 })();

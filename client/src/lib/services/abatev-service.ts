@@ -1,13 +1,14 @@
 /**
- * ABATEV Service 
- * (Advanced Broker Aggregation & Trade Execution View)
+ * Nexus™ Service 
+ * (Formerly ABATEV - Advanced Broker Aggregation & Trade Execution View)
  * 
- * Handles communication with the ABATEV API for optimized trade execution
- * across multiple brokers.
+ * Intelligent trade routing and execution optimization platform that
+ * aggregates market data, analyzes execution metrics, and optimizes trading
+ * across multiple brokers with AI-powered error healing.
  */
 
-// Define the ABATEV system status types
-interface ABATEVStatus {
+// Define the Nexus system status types
+interface NexusStatus {
   connected: boolean;
   enabled: boolean;
   activeConnections: string[];
@@ -18,6 +19,12 @@ interface ABATEVStatus {
   lastInitialized: string | null;
   success: boolean;
   message?: string;
+  // New fields based on Core Feature Enhancements
+  orderBookDepth?: number;
+  historicalFillRate?: number[];
+  apiReliabilityScore?: number;
+  feeSchedule?: any;
+  volatilityIndicators?: any;
 }
 
 // Define the toggle response
@@ -36,10 +43,37 @@ interface InitializeResponse {
   activeConnections: string[];
 }
 
+// Define broker execution metrics for Smart Order Routing
+interface BrokerExecutionMetrics {
+  broker: string;
+  price: number;
+  spread: number;
+  latency: number;
+  reliability: number;
+  orderBookDepth: number;
+  historicalFillRate: number;
+  fees: number;
+  volatilityScore: number;
+  anomalyScore?: number; // For anomaly detection
+  score: number; // Overall weighted score
+}
+
+// Define user-defined weighting profile
+interface ExecutionWeightingProfile {
+  name: string;
+  priceWeight: number;
+  speedWeight: number;
+  reliabilityWeight: number;
+  depthWeight: number;
+  fillRateWeight: number;
+  feesWeight: number;
+  volatilityWeight: number;
+}
+
 /**
- * Get the current status of the ABATEV system
+ * Get the current status of the Nexus system
  */
-export async function getABATEVStatus(): Promise<ABATEVStatus> {
+export async function getNexusStatus(): Promise<NexusStatus> {
   try {
     const response = await fetch('/api/abatev/status');
     
@@ -67,9 +101,9 @@ export async function getABATEVStatus(): Promise<ABATEVStatus> {
 }
 
 /**
- * Initialize the ABATEV system
+ * Initialize the TradeNexus system
  */
-export async function initializeABATEV(): Promise<InitializeResponse> {
+export async function initializeTradeNexus(): Promise<InitializeResponse> {
   try {
     const response = await fetch('/api/abatev/initialize', {
       method: 'POST',
@@ -97,9 +131,9 @@ export async function initializeABATEV(): Promise<InitializeResponse> {
 }
 
 /**
- * Toggle the ABATEV system on/off
+ * Toggle the TradeNexus system on/off
  */
-export async function toggleABATEV(enabled: boolean): Promise<ToggleResponse> {
+export async function toggleTradeNexus(enabled: boolean): Promise<ToggleResponse> {
   try {
     const response = await fetch('/api/abatev/toggle', {
       method: 'POST',
@@ -126,9 +160,9 @@ export async function toggleABATEV(enabled: boolean): Promise<ToggleResponse> {
 }
 
 /**
- * Execute a trade through the ABATEV system with optimal routing
+ * Execute a trade through the TradeNexus system with optimal routing and Smart Order Splitting
  */
-export async function executeTrade(tradeData: any): Promise<any> {
+export async function executeTradeWithOptimalRouting(tradeData: any): Promise<any> {
   try {
     const response = await fetch('/api/abatev/execute-trade', {
       method: 'POST',
@@ -145,20 +179,61 @@ export async function executeTrade(tradeData: any): Promise<any> {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error executing trade through ABATEV:', error);
+    console.error('Error executing trade through TradeNexus:', error);
     return {
       success: false,
-      message: 'Failed to execute trade through ABATEV system'
+      message: 'Failed to execute trade through TradeNexus system'
     };
   }
 }
 
 /**
- * Get the best available price for a symbol across all connected brokers
+ * Get the optimal execution metrics for a symbol across all connected brokers
+ * with order book depth and VWAP-based routing
  */
-export async function getBestPrice(symbol: string, side: 'buy' | 'sell'): Promise<any> {
+export async function getOptimalExecutionMetrics(
+  symbol: string, 
+  side: 'buy' | 'sell', 
+  profile?: ExecutionWeightingProfile
+): Promise<BrokerExecutionMetrics[]> {
   try {
-    const response = await fetch(`/api/abatev/best-price?symbol=${encodeURIComponent(symbol)}&side=${side}`);
+    const queryParams = new URLSearchParams({
+      symbol: symbol,
+      side: side,
+      ...(profile && { profile: JSON.stringify(profile) })
+    });
+    
+    const response = await fetch(`/api/tradenexus/optimal-execution?${queryParams.toString()}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.metrics || [];
+  } catch (error) {
+    console.error('Error getting optimal execution metrics from TradeNexus:', error);
+    return [];
+  }
+}
+
+/**
+ * Compare execution options with expanded metrics including order book depth,
+ * historical fill rates, API reliability, fee schedules, and volatility indicators
+ */
+export async function compareAdvancedExecutionOptions(
+  symbol: string,
+  orderSize?: number,
+  executionType?: 'market' | 'limit' | 'vwap'
+): Promise<any> {
+  try {
+    const queryParams = new URLSearchParams({
+      symbol,
+      ...(orderSize && { orderSize: orderSize.toString() }),
+      ...(executionType && { executionType })
+    });
+    
+    const response = await fetch(`/api/tradenexus/compare-advanced-execution?${queryParams.toString()}`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
@@ -167,58 +242,545 @@ export async function getBestPrice(symbol: string, side: 'buy' | 'sell'): Promis
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error getting best price from ABATEV:', error);
+    console.error('Error comparing advanced execution options in TradeNexus:', error);
     return {
       success: false,
-      message: 'Failed to retrieve best price from ABATEV system'
+      message: 'Failed to compare advanced execution options',
+      metrics: []
     };
   }
 }
 
 /**
- * Compare prices and execution speeds across all connected brokers
+ * Reset the TradeNexus system metrics and reconnect
  */
-export async function compareExecutionOptions(symbol: string): Promise<any> {
-  try {
-    const response = await fetch(`/api/abatev/compare-execution?symbol=${encodeURIComponent(symbol)}`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error comparing execution options:', error);
-    return {
-      success: false,
-      message: 'Failed to compare execution options'
-    };
-  }
-}
-
-/**
- * Reset the ABATEV system metrics and reconnect
- */
-export async function resetABATEV(): Promise<any> {
+export async function resetTradeNexus(): Promise<any> {
   try {
     // First toggle off
-    await toggleABATEV(false);
+    await toggleTradeNexus(false);
     
     // Then initialize
-    const initResult = await initializeABATEV();
+    const initResult = await initializeTradeNexus();
     
     if (initResult.success) {
       // Turn it back on if it was successful
-      return toggleABATEV(true);
+      return toggleTradeNexus(true);
     }
     
     return initResult;
   } catch (error) {
-    console.error('Error resetting ABATEV:', error);
+    console.error('Error resetting TradeNexus:', error);
     return {
       success: false,
-      message: 'Failed to reset ABATEV system'
+      message: 'Failed to reset TradeNexus system'
+    };
+  }
+}
+
+// ----- AI-Powered Error-Healing Module -----
+
+/**
+ * Interface for error classification
+ */
+interface ErrorClassification {
+  errorType: 'network' | 'data-format' | 'api-limit' | 'authentication' | 'unknown';
+  severity: 'low' | 'medium' | 'high';
+  timestamp: string;
+  errorMessage: string;
+  suggestedAction?: string;
+  autoResolvable: boolean;
+}
+
+/**
+ * Interface for self-healing patch
+ */
+interface SelfHealingPatch {
+  id: string;
+  timestamp: string;
+  component: string;
+  issue: string;
+  patchCode: string;
+  appliedStatus: 'pending' | 'applied' | 'rejected' | 'failed';
+  author: 'ai' | 'human';
+}
+
+/**
+ * Get error classifications from the log ingestion pipeline
+ */
+export async function getErrorClassifications(): Promise<ErrorClassification[]> {
+  try {
+    const response = await fetch('/api/tradenexus/error-classifications');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.classifications || [];
+  } catch (error) {
+    console.error('Error fetching error classifications:', error);
+    return [];
+  }
+}
+
+/**
+ * Get self-healing patches proposed by AI
+ */
+export async function getSelfHealingPatches(): Promise<SelfHealingPatch[]> {
+  try {
+    const response = await fetch('/api/tradenexus/self-healing-patches');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.patches || [];
+  } catch (error) {
+    console.error('Error fetching self-healing patches:', error);
+    return [];
+  }
+}
+
+/**
+ * Apply or reject a self-healing patch
+ */
+export async function processSelfHealingPatch(
+  patchId: string, 
+  action: 'apply' | 'reject'
+): Promise<{success: boolean, message: string}> {
+  try {
+    const response = await fetch('/api/tradenexus/process-patch', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ patchId, action })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return {
+      success: data.success,
+      message: data.message
+    };
+  } catch (error) {
+    console.error('Error processing self-healing patch:', error);
+    return {
+      success: false,
+      message: 'Failed to process self-healing patch'
+    };
+  }
+}
+
+/**
+ * Trigger fail-over to secondary broker in case of primary broker failure
+ */
+export async function triggerBrokerFailover(
+  primaryBrokerId: string,
+  symbol: string
+): Promise<{success: boolean, message: string, newBrokerId?: string}> {
+  try {
+    const response = await fetch('/api/tradenexus/broker-failover', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ primaryBrokerId, symbol })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return {
+      success: data.success,
+      message: data.message,
+      newBrokerId: data.newBrokerId
+    };
+  } catch (error) {
+    console.error('Error triggering broker failover:', error);
+    return {
+      success: false,
+      message: 'Failed to trigger broker failover'
+    };
+  }
+}
+
+// ----- Smart Order Routing & Splitting -----
+
+/**
+ * Interface for smart order routing
+ */
+interface SmartOrderRoutingRequest {
+  symbol: string;
+  side: 'buy' | 'sell';
+  quantity: number;
+  orderType: 'market' | 'limit' | 'vwap';
+  limitPrice?: number;
+  timeInForce?: 'day' | 'gtc' | 'ioc' | 'fok';
+  routingStrategy: 'bestPrice' | 'minLatency' | 'bestFill' | 'lowestFee' | 'optimal';
+  maxSlippage?: number;
+  splitOrder?: boolean;
+  avoidMarketImpact?: boolean;
+}
+
+/**
+ * Interface for order split result
+ */
+interface OrderSplitResult {
+  orderId: string;
+  brokerAllocations: Array<{
+    brokerId: string;
+    brokerName: string;
+    quantity: number;
+    percentage: number;
+    estimatedPrice: number;
+    estimatedFees: number;
+    routingReason: string;
+  }>;
+  totalQuantity: number;
+  estimatedAveragePrice: number;
+  estimatedTotalFees: number;
+  marketImpactReduction: number;
+  executionTimeEstimate: number;
+}
+
+/**
+ * Execute a smart order split across multiple brokers to minimize market impact
+ */
+export async function executeSmartOrderSplit(
+  request: SmartOrderRoutingRequest
+): Promise<OrderSplitResult> {
+  try {
+    const response = await fetch('/api/tradenexus/smart-order-split', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(request)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error executing smart order split:', error);
+    throw new Error('Failed to execute smart order split');
+  }
+}
+
+/**
+ * Get anomaly detection for prices across brokers
+ */
+export async function detectPriceAnomalies(
+  symbol: string
+): Promise<Array<{brokerId: string, anomalyScore: number, recommendedAction: string}>> {
+  try {
+    const response = await fetch(`/api/tradenexus/price-anomalies?symbol=${encodeURIComponent(symbol)}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.anomalies || [];
+  } catch (error) {
+    console.error('Error detecting price anomalies:', error);
+    return [];
+  }
+}
+
+// ----- Predictive Analytics Layer -----
+
+/**
+ * Interface for latency prediction
+ */
+interface LatencyPrediction {
+  brokerId: string;
+  brokerName: string;
+  currentLatency: number;
+  predictedLatency: number;
+  confidenceScore: number;
+  factors: Array<{factor: string, impact: number}>;
+  bestTimeToExecute: string;
+}
+
+/**
+ * Interface for slippage prediction
+ */
+interface SlippagePrediction {
+  symbol: string;
+  side: 'buy' | 'sell';
+  quantity: number;
+  predictedSlippage: number;
+  slippageRange: [number, number];
+  confidenceScore: number;
+  riskFactors: Array<{factor: string, risk: 'low' | 'medium' | 'high'}>;
+  historicalAverage: number;
+}
+
+/**
+ * Get latency forecasting based on time of day and network conditions
+ */
+export async function predictLatency(
+  brokerId: string
+): Promise<LatencyPrediction> {
+  try {
+    const response = await fetch(`/api/tradenexus/predict-latency?brokerId=${encodeURIComponent(brokerId)}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error predicting latency:', error);
+    throw new Error('Failed to predict latency');
+  }
+}
+
+/**
+ * Predict potential slippage for a trade based on historical data
+ */
+export async function predictSlippage(
+  symbol: string,
+  side: 'buy' | 'sell',
+  quantity: number
+): Promise<SlippagePrediction> {
+  try {
+    const queryParams = new URLSearchParams({
+      symbol,
+      side,
+      quantity: quantity.toString()
+    });
+    
+    const response = await fetch(`/api/tradenexus/predict-slippage?${queryParams.toString()}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error predicting slippage:', error);
+    throw new Error('Failed to predict slippage');
+  }
+}
+
+/**
+ * Check for potential market manipulation by analyzing spreads
+ */
+export async function detectMarketManipulation(
+  symbol: string
+): Promise<{detected: boolean, confidence: number, anomalies: any[], recommendation: string}> {
+  try {
+    const response = await fetch(`/api/tradenexus/detect-manipulation?symbol=${encodeURIComponent(symbol)}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error detecting market manipulation:', error);
+    return {
+      detected: false,
+      confidence: 0,
+      anomalies: [],
+      recommendation: 'Failed to perform market manipulation check'
+    };
+  }
+}
+
+// ----- User-Defined Weighting & Profiles -----
+
+/**
+ * Predefined execution profiles for different trading styles
+ */
+export const EXECUTION_PROFILES: Record<string, ExecutionWeightingProfile> = {
+  scalper: {
+    name: 'Scalper',
+    priceWeight: 60,
+    speedWeight: 90,
+    reliabilityWeight: 70,
+    depthWeight: 40,
+    fillRateWeight: 80,
+    feesWeight: 50,
+    volatilityWeight: 30
+  },
+  swingTrader: {
+    name: 'Swing Trader',
+    priceWeight: 80,
+    speedWeight: 40,
+    reliabilityWeight: 70,
+    depthWeight: 60,
+    fillRateWeight: 60,
+    feesWeight: 70,
+    volatilityWeight: 50
+  },
+  institutional: {
+    name: 'Institutional',
+    priceWeight: 60,
+    speedWeight: 50,
+    reliabilityWeight: 90,
+    depthWeight: 80,
+    fillRateWeight: 70,
+    feesWeight: 60,
+    volatilityWeight: 70
+  },
+  passive: {
+    name: 'Passive',
+    priceWeight: 90,
+    speedWeight: 20,
+    reliabilityWeight: 60,
+    depthWeight: 30,
+    fillRateWeight: 40,
+    feesWeight: 80,
+    volatilityWeight: 30
+  },
+  aggressive: {
+    name: 'Aggressive',
+    priceWeight: 40,
+    speedWeight: 90,
+    reliabilityWeight: 60,
+    depthWeight: 50,
+    fillRateWeight: 80,
+    feesWeight: 30,
+    volatilityWeight: 50
+  }
+};
+
+/**
+ * Save a custom execution profile
+ */
+export async function saveExecutionProfile(
+  profile: ExecutionWeightingProfile
+): Promise<{success: boolean, message: string}> {
+  try {
+    const response = await fetch('/api/tradenexus/save-profile', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(profile)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return {
+      success: data.success,
+      message: data.message
+    };
+  } catch (error) {
+    console.error('Error saving execution profile:', error);
+    return {
+      success: false,
+      message: 'Failed to save execution profile'
+    };
+  }
+}
+
+/**
+ * Get custom execution profiles
+ */
+export async function getCustomExecutionProfiles(): Promise<ExecutionWeightingProfile[]> {
+  try {
+    const response = await fetch('/api/tradenexus/custom-profiles');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.profiles || [];
+  } catch (error) {
+    console.error('Error fetching custom execution profiles:', error);
+    return [];
+  }
+}
+
+/**
+ * Delete a custom execution profile
+ */
+export async function deleteExecutionProfile(
+  profileName: string
+): Promise<{success: boolean, message: string}> {
+  try {
+    const response = await fetch('/api/tradenexus/delete-profile', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name: profileName })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return {
+      success: data.success,
+      message: data.message
+    };
+  } catch (error) {
+    console.error('Error deleting execution profile:', error);
+    return {
+      success: false,
+      message: 'Failed to delete execution profile'
+    };
+  }
+}
+
+/**
+ * Create a new execution simulation with custom weights
+ */
+export async function simulateExecution(
+  symbol: string,
+  quantity: number,
+  side: 'buy' | 'sell',
+  profile: ExecutionWeightingProfile
+): Promise<any> {
+  try {
+    const response = await fetch('/api/tradenexus/simulate-execution', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        symbol,
+        quantity,
+        side,
+        profile
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error simulating execution:', error);
+    return {
+      success: false,
+      message: 'Failed to simulate execution',
+      results: []
     };
   }
 }

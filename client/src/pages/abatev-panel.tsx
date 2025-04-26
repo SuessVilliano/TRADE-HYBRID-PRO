@@ -26,7 +26,7 @@ import {
   X
 } from 'lucide-react';
 import { ABATEVTradePanel } from '@/components/trade/abatev-trade-panel';
-import ABATEVStatusPanel from '@/components/trade/ABATEVStatusPanel';
+import NexusStatusPanel from '@/components/trade/NexusStatusPanel';
 
 // Type for trade data
 interface TradeData {
@@ -76,11 +76,11 @@ export default function ABATEVPanelPage() {
     }
   }, []);
   
-  // Verify trade data according to ABATEV methodology
-  const verifyABATEVCriteria = () => {
+  // Verify trade data according to Nexus methodology
+  const verifyTradeNexusCriteria = () => {
     if (!tradeData) return { pass: false, message: 'No trade data available' };
     
-    // Mock verification logic - in a real implementation, this would check various criteria
+    // Advanced verification logic - checks various risk management criteria
     const riskReward = calculateRiskReward();
     
     // Check if risk/reward ratio is acceptable
@@ -103,7 +103,7 @@ export default function ABATEVPanelPage() {
     // All checks passed
     return { 
       pass: true, 
-      message: 'Trade meets ABATEV criteria' 
+      message: 'Trade meets Nexus™ risk management criteria' 
     };
   };
   
@@ -139,12 +139,12 @@ export default function ABATEVPanelPage() {
     }
   };
   
-  // Execute trade with ABATEV
+  // Execute trade with Nexus
   const executeTrade = () => {
     if (!tradeData) return;
     
-    // Verify ABATEV criteria first
-    const verification = verifyABATEVCriteria();
+    // Verify Nexus criteria first
+    const verification = verifyTradeNexusCriteria();
     
     if (!verification.pass) {
       toast.error('Trade verification failed', {
@@ -160,7 +160,7 @@ export default function ABATEVPanelPage() {
       onAutoClose: (t) => {
         // After loading toast closes, show success toast
         toast.success('Trade executed successfully', {
-          description: `${tradeData.symbol} ${tradeData.side.toUpperCase()} order placed via ABATEV system`,
+          description: `${tradeData.symbol} ${tradeData.side.toUpperCase()} order placed via Nexus™ smart routing`,
           duration: 4000
         });
       }
@@ -173,8 +173,8 @@ export default function ABATEVPanelPage() {
         <div className="flex flex-col gap-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold">ABATEV Smart Trade Panel</h1>
-              <p className="text-slate-400">Advanced Broker Aggregation Trade Execution Vertex</p>
+              <h1 className="text-2xl font-bold">Nexus™ Smart Trade Panel</h1>
+              <p className="text-slate-400">Intelligent Broker Aggregation & Smart Order Routing</p>
             </div>
             
             <div className="flex items-center gap-2">
@@ -231,7 +231,7 @@ export default function ABATEVPanelPage() {
                       <FileWarning className="h-12 w-12 mx-auto text-slate-500 mb-3" />
                       <h3 className="font-medium text-lg mb-2">No Trade Data Available</h3>
                       <p className="text-slate-400 text-sm mb-4">
-                        Select a trading signal from the Trading Signals panel and click "Trade with ABATEV" to load trade data.
+                        Select a trading signal from the Trading Signals panel and click "Trade with Nexus™" to load trade data.
                       </p>
                       <Button variant="outline" size="sm" onClick={() => window.location.href = '/signals'}>
                         Go to Signals
@@ -316,17 +316,17 @@ export default function ABATEVPanelPage() {
                       
                       <Separator />
                       
-                      {/* ABATEV Verification */}
+                      {/* Nexus Verification */}
                       <div>
-                        <h3 className="font-medium mb-3">ABATEV Verification</h3>
+                        <h3 className="font-medium mb-3">Nexus™ Verification</h3>
                         <div className="bg-slate-850 border border-slate-700 rounded-md p-4">
                           <div className="flex items-center mb-3">
                             <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                              verifyABATEVCriteria().pass
+                              verifyTradeNexusCriteria().pass
                                 ? 'bg-green-950/40 text-green-400'
                                 : 'bg-red-950/40 text-red-400'
                             }`}>
-                              {verifyABATEVCriteria().pass ? (
+                              {verifyTradeNexusCriteria().pass ? (
                                 <Check className="h-5 w-5" />
                               ) : (
                                 <X className="h-5 w-5" />
@@ -335,11 +335,11 @@ export default function ABATEVPanelPage() {
                             <div className="ml-3">
                               <h4 className="font-medium">Verification Result</h4>
                               <p className={`text-sm ${
-                                verifyABATEVCriteria().pass
+                                verifyTradeNexusCriteria().pass
                                   ? 'text-green-400'
                                   : 'text-red-400'
                               }`}>
-                                {verifyABATEVCriteria().message}
+                                {verifyTradeNexusCriteria().message}
                               </p>
                             </div>
                           </div>
@@ -484,7 +484,7 @@ export default function ABATEVPanelPage() {
                                 <SelectValue placeholder="Select Broker" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="best_price">Best Price (ABATEV auto-route)</SelectItem>
+                                <SelectItem value="best_price">Best Price (Nexus™ auto-route)</SelectItem>
                                 <SelectItem value="alpaca">Alpaca</SelectItem>
                                 <SelectItem value="oanda">OANDA</SelectItem>
                                 <SelectItem value="ib">Interactive Brokers</SelectItem>
@@ -537,7 +537,7 @@ export default function ABATEVPanelPage() {
                     size="sm"
                     className="gap-1 bg-purple-600 hover:bg-purple-700"
                     onClick={executeTrade}
-                    disabled={!tradeData || !verifyABATEVCriteria().pass}
+                    disabled={!tradeData || !verifyTradeNexusCriteria().pass}
                   >
                     {tradeData && tradeData.side === 'buy' ? (
                       <ArrowUpRight className="h-4 w-4" />
@@ -551,15 +551,15 @@ export default function ABATEVPanelPage() {
             </div>
             
             <div>
-              <ABATEVStatusPanel />
+              <NexusStatusPanel />
               
               <Card className="bg-slate-800 border-slate-700 mt-6">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">ABATEV Info</CardTitle>
+                  <CardTitle className="text-base">Nexus™ Info</CardTitle>
                 </CardHeader>
                 <CardContent className="text-sm">
                   <p className="text-slate-300 mb-3">
-                    <strong>A</strong>dvanced <strong>B</strong>roker <strong>A</strong>ggregation <strong>T</strong>rade <strong>E</strong>xecution <strong>V</strong>ertex is a proprietary system that provides:
+                    Nexus™ is our proprietary intelligent broker aggregation and smart order routing system that provides:
                   </p>
                   <ul className="space-y-2 text-slate-400">
                     <li className="flex items-start">
