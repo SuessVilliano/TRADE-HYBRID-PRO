@@ -52,8 +52,8 @@ If you encounter issues:
 ## Support
 
 For additional help, contact Trade Hybrid support at:
-- support@tradehybrid.com
-- https://tradehybrid.com/support
+- support@tradehybrid.club
+- https://tradehybrid.club/support
 
 ## Security Notes
 
