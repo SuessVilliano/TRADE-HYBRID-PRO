@@ -91,14 +91,14 @@ export function THCTokenPriceComparison() {
         <div className="bg-gray-700/30 p-3 rounded-md border border-gray-600">
           <div className="flex items-center mb-1">
             <div className="w-6 h-6 mr-2 bg-blue-800/50 rounded-full flex items-center justify-center">
-              <img src="/images/birdeye-logo.png" alt="Birdeye" className="w-4 h-4" />
+              <img src="/images/birdeye-logo.svg" alt="Birdeye" className="w-4 h-4" />
             </div>
             <h4 className="text-sm font-medium text-gray-300">Birdeye Price</h4>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button className="ml-1">
-                    <InfoCircle className="h-3 w-3 text-gray-400" />
+                    <Info className="h-3 w-3 text-gray-400" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-gray-800 border-gray-700 text-white text-xs p-2">
@@ -122,14 +122,14 @@ export function THCTokenPriceComparison() {
         <div className="bg-gray-700/30 p-3 rounded-md border border-gray-600">
           <div className="flex items-center mb-1">
             <div className="w-6 h-6 mr-2 bg-purple-800/50 rounded-full flex items-center justify-center">
-              <img src="/images/raydium-logo.png" alt="Raydium" className="w-4 h-4" />
+              <img src="/images/raydium-logo.svg" alt="Raydium" className="w-4 h-4" />
             </div>
             <h4 className="text-sm font-medium text-gray-300">Raydium LP Price</h4>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button className="ml-1">
-                    <InfoCircle className="h-3 w-3 text-gray-400" />
+                    <Info className="h-3 w-3 text-gray-400" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-gray-800 border-gray-700 text-white text-xs p-2">
@@ -164,7 +164,7 @@ export function THCTokenPriceComparison() {
       {raydiumPrice && Math.abs((raydiumPrice - price) / price) > 0.03 && (
         <div className="bg-yellow-900/20 border border-yellow-800/50 rounded p-2 text-xs text-yellow-400">
           <div className="flex items-start">
-            <InfoCircle className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" />
+            <Info className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" />
             <div>
               Price differences between Birdeye and Raydium are normal and reflect real market conditions.
               Larger differences may indicate arbitrage opportunities or varying liquidity between markets.

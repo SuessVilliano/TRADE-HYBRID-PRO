@@ -65,6 +65,15 @@ export function useThcToken(): ThcTokenState {
   const [marketCap, setMarketCap] = useState(THC_TOKEN.marketCap);
   const [tradingVolume24h, setTradingVolume24h] = useState(THC_TOKEN.tradingVolume24h);
   
+  // Raydium data
+  const [raydiumPrice, setRaydiumPrice] = useState<number | undefined>(undefined);
+  const [raydiumPriceChange24h, setRaydiumPriceChange24h] = useState<number | undefined>(undefined);
+  const [raydiumLiquidity, setRaydiumLiquidity] = useState<number | undefined>(undefined); 
+  const [raydiumVolume24h, setRaydiumVolume24h] = useState<number | undefined>(undefined);
+  const [raydiumLpAddress, setRaydiumLpAddress] = useState<string | undefined>(undefined);
+  const [raydiumLastUpdated, setRaydiumLastUpdated] = useState<Date | undefined>(undefined);
+  const [dataSource, setDataSource] = useState<'birdeye' | 'raydium' | 'both' | 'fallback' | undefined>(undefined);
+  
   // User purchase data
   const [usdAmount, setUsdAmount] = useState(100); // Default $100
   const [tokenAmount, setTokenAmount] = useState(calculateTokensFromUsd(100));
@@ -157,12 +166,21 @@ export function useThcToken(): ThcTokenState {
       // Fetch real token price data from API
       const tokenData = await coinPriceService.fetchTokenPrice();
       
-      // Update state with real data
+      // Update state with real data from Birdeye
       setPrice(tokenData.price);
       setPriceChange24h(tokenData.priceChange24h);
       setMarketCap(tokenData.marketCap);
       setTradingVolume24h(tokenData.tradingVolume24h);
       setLastUpdated(tokenData.lastUpdated);
+      
+      // Update Raydium data if available
+      setRaydiumPrice(tokenData.raydiumPrice);
+      setRaydiumPriceChange24h(tokenData.raydiumPriceChange24h);
+      setRaydiumLiquidity(tokenData.raydiumLiquidity);
+      setRaydiumVolume24h(tokenData.raydiumVolume24h);
+      setRaydiumLpAddress(tokenData.raydiumLpAddress);
+      setRaydiumLastUpdated(tokenData.raydiumLastUpdated);
+      setDataSource(tokenData.dataSource);
       
       // Update cached values in THC_TOKEN for other components
       THC_TOKEN.price = tokenData.price;
