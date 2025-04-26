@@ -253,9 +253,9 @@ export function TradeSignals({ symbol = 'BTCUSDT' }: TradeSignalsProps) {
       });
   };
   
-  // Open ABATEV trade panel with signal data
-  const openAbatevTradePanel = (signal: TradeSignal) => {
-    // Format the data for ABATEV panel
+  // Open Nexus trade panel with signal data
+  const openNexusTradePanel = (signal: TradeSignal) => {
+    // Format the data for Nexus panel
     const tradeData = {
       symbol: signal.symbol,
       side: signal.type,
@@ -266,17 +266,17 @@ export function TradeSignals({ symbol = 'BTCUSDT' }: TradeSignalsProps) {
       provider: signal.provider || 'TradeHybrid AI'
     };
     
-    // Store data in localStorage for ABATEV panel to access
+    // Store data in localStorage for Nexus panel to access
     localStorage.setItem('abatev_trade_data', JSON.stringify(tradeData));
     
     // Notify user
     toast.success('Trade Prepared', {
-      description: `${signal.symbol} ${signal.type.toUpperCase()} trade sent to ABATEV Smart Trade Panel`,
+      description: `${signal.symbol} ${signal.type.toUpperCase()} trade sent to Nexus Smart Trade Panel`,
       duration: 3000
     });
     
-    // Redirect to ABATEV panel page
-    window.location.href = '/abatev';
+    // Redirect to Nexus panel page
+    window.location.href = '/nexus';
   };
   
   // Format date to relative time
@@ -501,9 +501,9 @@ export function TradeSignals({ symbol = 'BTCUSDT' }: TradeSignalsProps) {
                     variant="outline"
                     size="sm"
                     className="text-xs bg-blue-950/30 border-blue-800/50 hover:bg-blue-900/50 text-blue-300 flex-1 sm:flex-initial"
-                    onClick={() => openAbatevTradePanel(signal)}
+                    onClick={() => openNexusTradePanel(signal)}
                   >
-                    <ExternalLink className="h-3 w-3 mr-1" /> Trade with ABATEV
+                    <ExternalLink className="h-3 w-3 mr-1" /> Trade with Nexus
                   </Button>
                 </div>
               </div>

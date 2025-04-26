@@ -734,25 +734,25 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
       targetTakeProfit: targetTp // Optional specific take profit target
     };
     
-    // Store in local storage for ABATEV panel to access
+    // Store in local storage for Nexus panel to access
     localStorage.setItem('abatev_trade_data', JSON.stringify(tradeData));
     
     toast({
       title: "Trade Prepared",
-      description: `${signal.symbol} ${signal.side} trade sent to ABATEV panel.`,
+      description: `${signal.symbol} ${signal.side} trade sent to Nexus panel.`,
     });
     
     // Show loading screen before redirecting
     showLoading({ 
-      message: "Preparing ABATEV Smart Trade...", 
+      message: "Preparing Nexus Smart Trade...", 
       imageType: "thTower",
       duration: 1500 // Auto-hide after 1.5 seconds
     });
     
-    // Redirect to ABATEV panel
-    console.log("Opening ABATEV panel with:", tradeData);
+    // Redirect to Nexus panel
+    console.log("Opening Nexus panel with:", tradeData);
     setTimeout(() => {
-      window.location.href = '/abatev';
+      window.location.href = '/nexus';
     }, 800); // Slight delay to ensure loading screen is shown
   };
   
@@ -997,7 +997,7 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
                 <svg className="w-3 h-3 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
                 </svg>
-                Trade with ABATEV
+                Trade with Nexus
               </Button>
             </div>
           )}
