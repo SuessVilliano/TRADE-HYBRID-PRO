@@ -1,21 +1,25 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserContext, initialUserContext } from '../../../shared/models/UserContext';
+import { UserContext, initialUserContext } from '@/shared/models/UserContext';
 import { fetchUserData, updateUserData } from '../services/unified-user-service';
 
-interface UserDataContextType {
-  userData: UserContext;
-  isLoading: boolean;
+export interface UserDataContextType {
+  user: UserContext;
+  loading: boolean;
   error: string | null;
+  refreshUser: () => Promise<void>;
+  refreshWallet: () => Promise<void>;
   updateUserData: (partialData: Partial<UserContext>) => Promise<void>;
-  refreshData: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 export const UserDataContext = createContext<UserDataContextType>({
-  userData: initialUserContext,
-  isLoading: false,
+  user: initialUserContext,
+  loading: false,
   error: null,
+  refreshUser: async () => {},
+  refreshWallet: async () => {},
   updateUserData: async () => {},
-  refreshData: async () => {}
+  logout: async () => {}
 });
 
 export const useUserData = () => useContext(UserDataContext);
@@ -67,14 +71,56 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     loadUserData();
   }, []);
 
+  // Define wallet refresh function
+  const refreshWallet = async () => {
+    try {
+      setIsLoading(true);
+      // Get wallet data and update it
+      const walletData = userData.walletData || {};
+      // In a real implementation, this would fetch actual wallet data
+      // For now just update the refresh timestamp
+      const updatedWalletData = {
+        ...walletData,
+        lastRefreshed: new Date().toISOString()
+      };
+      
+      await handleUpdateUserData({
+        walletData: updatedWalletData
+      });
+    } catch (error) {
+      console.error('Error refreshing wallet:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Define logout function
+  const logout = async () => {
+    try {
+      setIsLoading(true);
+      // Clear user data
+      setUserData({
+        ...initialUserContext,
+        lastSynced: new Date()
+      });
+      // In a real implementation, this would call the backend to logout
+    } catch (error) {
+      console.error('Error logging out:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <UserDataContext.Provider
       value={{
-        userData,
-        isLoading,
+        user: userData,
+        loading: isLoading,
         error,
+        refreshUser: loadUserData,
+        refreshWallet,
         updateUserData: handleUpdateUserData,
-        refreshData: loadUserData
+        logout
       }}
     >
       {children}
