@@ -7,7 +7,10 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ConnectWalletButton } from './ConnectWalletButton';
 import { useUserData } from '@/lib/contexts/UserDataContext';
 import { useToast } from '@/components/ui/use-toast';
-import { truncateString } from '@/lib/utils/formatters';
+import { formatShortAddress } from '@/lib/utils/formatters';
+
+// Alias formatShortAddress as truncateString for compatibility
+const truncateString = formatShortAddress;
 
 /**
  * Enhanced Wallet Connect component that supports both Phantom and Web3Auth

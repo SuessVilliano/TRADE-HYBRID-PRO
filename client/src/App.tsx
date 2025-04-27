@@ -6,6 +6,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 const SimpleChartingDashboard = React.lazy(() => import('./pages/simple-charting'));
 const TestPage = React.lazy(() => import('./pages/test-page'));
 const TradingViewWidgetsTest = React.lazy(() => import('./pages/tradingview-widgets-test'));
+const UnifiedProfilePage = React.lazy(() => import('./pages/unified-profile'));
 import { AuthProvider } from './lib/context/AuthContext';
 import { SolanaAuthProvider } from './lib/context/SolanaAuthProvider';
 import { SolanaWalletProvider } from './lib/context/SolanaWalletProvider';
@@ -190,6 +191,7 @@ const App: React.FC = () => {
                   <Route path="/copy-trading" element={<ProtectedRoute><CopyTradingPage /></ProtectedRoute>} />
                   <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
+                  <Route path="/profile/unified" element={<React.Suspense fallback={<div>Loading profile...</div>}><ProtectedRoute><UnifiedProfilePage /></ProtectedRoute></React.Suspense>} />
                   <Route path="/settings" element={<ProtectedRoute><SettingsView /></ProtectedRoute>} />
                   <Route path="/notification-settings" element={<ProtectedRoute><NotificationSettingsPage /></ProtectedRoute>} />
                   <Route path="/webhook-settings" element={<ProtectedRoute><WebhookSettingsPage /></ProtectedRoute>} />
@@ -269,6 +271,14 @@ const App: React.FC = () => {
                   <Route path="/nft-marketplace" element={<ProtectedRoute><NftMarketplacePage /></ProtectedRoute>} />
                   <Route path="/nft-marketplace/simple" element={<ProtectedRoute><NftMarketplaceSimplePage /></ProtectedRoute>} />
                   <Route path="/thc-staking" element={<ProtectedRoute><ThcStakingPage /></ProtectedRoute>} />
+                  <Route path="/thc-staking/enhanced" element={<React.Suspense fallback={<div>Loading staking...</div>}>
+                    <ProtectedRoute>
+                      <div className="container max-w-4xl mx-auto px-4 py-8">
+                        <h1 className="text-3xl font-bold mb-6">THC Staking</h1>
+                        {React.createElement(React.lazy(() => import('./components/staking/EnhancedStakingPanel')))}
+                      </div>
+                    </ProtectedRoute>
+                  </React.Suspense>} />
                   <Route path="/matrix" element={<ProtectedRoute><MatrixPage /></ProtectedRoute>} />
                   <Route path="/matrix/visualization" element={<ProtectedRoute><MatrixVisualizationPage /></ProtectedRoute>} />
                   <Route path="/acquire" element={<ProtectedRoute><AcquirePage /></ProtectedRoute>} />

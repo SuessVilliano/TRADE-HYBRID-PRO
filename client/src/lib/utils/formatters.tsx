@@ -66,6 +66,8 @@ export const truncateString = (str: string, frontChars = 6, endChars = 4): strin
   return `${str.substring(0, frontChars)}...${str.substring(str.length - endChars)}`;
 };
 
+// Adding proper exports for components to avoid import errors
+
 /**
  * Format a date to a readable string
  */

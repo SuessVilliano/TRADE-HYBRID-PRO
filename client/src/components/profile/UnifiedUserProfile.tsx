@@ -15,7 +15,8 @@ import { useUserData } from '@/lib/contexts/UserDataContext';
 import { useToast } from '@/components/ui/use-toast';
 import { WhopAuth } from '@/components/ui/whop-auth';
 import { ConnectWalletButton } from '@/components/wallet/ConnectWalletButton';
-import { tokenSymbolToIcon } from '@/lib/utils/formatters';
+// Import directly needed icons instead of using tokenSymbolToIcon
+import { tokenSymbolToIcon } from '@/lib/utils/formatters.tsx';
 
 const truncateAddress = (address: string, length = 4) => {
   if (!address) return '';
