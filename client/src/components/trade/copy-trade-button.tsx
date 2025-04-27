@@ -14,6 +14,7 @@ export function CopyTradeButton({ signal, size = 'default' }: CopyTradeButtonPro
   
   const copySignalToTrade = async () => {
     setCopying(true);
+    console.log("Copy trade button clicked for signal:", signal);
     
     try {
       // Create a formatted string of the trade details to copy to clipboard
@@ -27,16 +28,25 @@ ${signal.notes ? `Notes: ${signal.notes}` : ''}
 ${signal.status === 'active' ? 'Status: ACTIVE' : ''}
       `.trim();
       
+      console.log("Trade details to copy:", tradeDetails);
+      
       // Try modern clipboard API first
       let copySucceeded = false;
       
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
+      // Check if running in a secure context (https or localhost)
+      const isSecureContext = window.isSecureContext;
+      console.log("Is secure context:", isSecureContext);
+      
+      if (isSecureContext && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        try {
           await navigator.clipboard.writeText(tradeDetails);
+          console.log("Clipboard API succeeded");
           copySucceeded = true;
+        } catch (clipboardError) {
+          console.warn('Clipboard API failed:', clipboardError);
         }
-      } catch (clipboardError) {
-        console.warn('Native clipboard API failed, trying fallback:', clipboardError);
+      } else {
+        console.warn('Clipboard API not available, trying fallback');
       }
       
       // Fallback method if the modern API failed or isn't available
@@ -44,12 +54,17 @@ ${signal.status === 'active' ? 'Status: ACTIVE' : ''}
         const textArea = document.createElement('textarea');
         textArea.value = tradeDetails;
         
-        // Make the textarea out of viewport
+        // Make the textarea visible but outside normal view
         textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
-        textArea.style.zIndex = '-1000';
-        textArea.style.opacity = '0';
+        textArea.style.left = '0';
+        textArea.style.top = '0';
+        textArea.style.width = '2em';
+        textArea.style.height = '2em';
+        textArea.style.padding = '0';
+        textArea.style.border = 'none';
+        textArea.style.outline = 'none';
+        textArea.style.boxShadow = 'none';
+        textArea.style.background = 'transparent';
         
         document.body.appendChild(textArea);
         textArea.focus();
@@ -57,6 +72,7 @@ ${signal.status === 'active' ? 'Status: ACTIVE' : ''}
         
         try {
           copySucceeded = document.execCommand('copy');
+          console.log("execCommand fallback succeeded:", copySucceeded);
         } catch (e) {
           console.error('Fallback copy method failed:', e);
         }
