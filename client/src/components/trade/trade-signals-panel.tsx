@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -7,6 +7,15 @@ import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { Separator } from '../ui/separator';
 import { Badge } from '../ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   AlertCircle, 
   ArrowUpRight, 
@@ -17,9 +26,31 @@ import {
   Filter, 
   RefreshCw,
   Search,
-  Zap
+  Zap,
+  BarChart3,
+  Settings,
+  ChevronDown,
+  FileText,
+  Book,
+  ArrowUp10,
+  TrendingUp
 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 import { tradeSignalService, TradeSignal } from '../../lib/services/trade-signal-service';
 import { CopyTradeButton } from './copy-trade-button';
@@ -291,42 +322,136 @@ export function TradeSignalsPanel() {
     }
   };
 
+  // Group signals by date for better organization
+  const groupedSignals = useMemo(() => {
+    const groups: Record<string, TradeSignal[]> = {};
+    
+    filteredSignals.forEach(signal => {
+      const date = new Date(signal.timestamp);
+      const dateKey = date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        year: 'numeric'
+      });
+      
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+      
+      groups[dateKey].push(signal);
+    });
+    
+    // Sort each group by timestamp (newest first)
+    Object.keys(groups).forEach(key => {
+      groups[key].sort((a, b) => 
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+    });
+    
+    return groups;
+  }, [filteredSignals]);
+  
+  // Get available market types from signals
+  const marketTypes = useMemo(() => {
+    const types = new Set<string>();
+    
+    signals.forEach(signal => {
+      // Extract market type based on symbol patterns
+      if (signal.symbol.endsWith('USDT') || signal.symbol.endsWith('USD')) {
+        types.add('Crypto');
+      } else if (signal.symbol.includes('/')) {
+        types.add('Forex');
+      } else if (['ES', 'NQ', 'CL', 'GC', 'SI'].some(code => signal.symbol.includes(code))) {
+        types.add('Futures');
+      } else if (signal.symbol.length <= 5 && !signal.symbol.includes('/')) {
+        types.add('Stocks');
+      }
+    });
+    
+    return Array.from(types);
+  }, [signals]);
+  
+  // Calculate success rate (for demo purposes)
+  const calculateSuccessRate = (source: string): number => {
+    // In a real implementation, this would come from actual trade outcomes
+    // For now, we'll generate a consistent pseudo-random value based on the source name
+    const sourceHash = source.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return 50 + (sourceHash % 35); // Range between 50-85%
+  };
+
   return (
     <Card className="w-full h-full">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Trading Signals</CardTitle>
-            <CardDescription>Latest market opportunities</CardDescription>
+            <CardTitle className="flex items-center">
+              <TrendingUp className="mr-2 h-5 w-5 text-blue-500" />
+              Trading Signals
+            </CardTitle>
+            <CardDescription>AI-powered market opportunities</CardDescription>
           </div>
           
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex items-center gap-1 px-2 py-1 h-8"
-              onClick={refreshSignals}
-            >
-              <RefreshCw size={14} />
-              Refresh
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-1 px-2 py-1 h-8"
+                    onClick={refreshSignals}
+                  >
+                    <RefreshCw size={14} />
+                    Refresh
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Refresh signals from all sources</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
             <Badge variant="outline" className="px-2 py-1">
               <Clock size={14} className="mr-1" />
               Real-time
             </Badge>
-            <Badge variant="outline" className="px-2 py-1">
-              {filteredSignals.length} signals
-            </Badge>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="h-8 w-8">
+                  <Settings size={14} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Signal Settings</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem>
+                    <BarChart3 className="mr-2 h-4 w-4" />
+                    <span>Advanced Analytics</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <FileText className="mr-2 h-4 w-4" />
+                    <span>Export Signals</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Book className="mr-2 h-4 w-4" />
+                    <span>Signal Documentation</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </CardHeader>
       
       <CardContent>
-        <Tabs defaultValue="all">
-          <TabsList className="grid grid-cols-3 mb-4">
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="grid grid-cols-4 mb-4">
             <TabsTrigger value="all">All Signals</TabsTrigger>
-            <TabsTrigger value="executed">Executed</TabsTrigger>
+            <TabsTrigger value="executed">My Trades</TabsTrigger>
             <TabsTrigger value="webhook">Webhooks</TabsTrigger>
+            <TabsTrigger value="nexus">Nexus™</TabsTrigger>
           </TabsList>
           
           <TabsContent value="all" className="space-y-4">
