@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
 
@@ -33,7 +35,7 @@ const ScrollBar = React.forwardRef<
       orientation === "vertical" &&
         "h-full w-2.5 border-l border-l-transparent p-[1px]",
       orientation === "horizontal" &&
-        "h-2.5 flex-col border-t border-t-transparent p-[1px]",
+        "h-2.5 border-t border-t-transparent p-[1px]",
       className
     )}
     {...props}
@@ -43,17 +45,4 @@ const ScrollBar = React.forwardRef<
 ))
 ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName
 
-// Adding a ScrollableContent component that includes fixed dimensions for better scrolling support
-const ScrollableContent = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, children, ...props }, ref) => (
-  <ScrollArea className={cn("h-[400px] max-h-[60vh] w-full", className)}>
-    <div ref={ref} className="p-1" {...props}>
-      {children}
-    </div>
-  </ScrollArea>
-))
-ScrollableContent.displayName = "ScrollableContent"
-
-export { ScrollArea, ScrollBar, ScrollableContent }
+export { ScrollArea, ScrollBar }

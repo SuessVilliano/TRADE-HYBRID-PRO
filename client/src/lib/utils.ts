@@ -9,6 +9,58 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Format a number as currency with the specified currency code
+ * @param amount The amount to format
+ * @param currencyCode The ISO currency code (e.g., USD, EUR)
+ * @param locale The locale to use for formatting (defaults to user's locale)
+ * @returns Formatted currency string
+ */
+export function formatCurrency(
+  amount: number,
+  currencyCode: string = 'USD',
+  locale: string = navigator.language
+): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: currencyCode,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount);
+}
+
+/**
+ * Format a number with thousands separators
+ * @param number The number to format
+ * @param locale The locale to use for formatting (defaults to user's locale)
+ * @returns Formatted number string
+ */
+export function formatNumber(
+  number: number,
+  locale: string = navigator.language
+): string {
+  return new Intl.NumberFormat(locale).format(number);
+}
+
+/**
+ * Format a percentage
+ * @param value The decimal value to format as percentage
+ * @param decimals Number of decimal places to show
+ * @param locale The locale to use for formatting (defaults to user's locale)
+ * @returns Formatted percentage string
+ */
+export function formatPercentage(
+  value: number,
+  decimals: number = 2,
+  locale: string = navigator.language
+): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'percent',
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  }).format(value / 100);
+}
+
+/**
  * Check if specified environment secrets are available
  * @param secrets List of secret keys to check
  * @returns True if all specified secrets are available
