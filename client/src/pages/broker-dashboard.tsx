@@ -413,6 +413,7 @@ export default function BrokerDashboard() {
                 <BrokerAccountInfo 
                   brokerId={activeBroker} 
                   onRefresh={handleRefresh}
+                  useDemo={useDemoAccount}
                 />
               </TabsContent>
               <TabsContent value="positions">

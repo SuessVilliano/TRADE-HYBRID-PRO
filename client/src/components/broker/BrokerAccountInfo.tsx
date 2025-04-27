@@ -129,7 +129,7 @@ const getDemoData = (brokerId: string): BrokerAccountData => {
   }
 };
 
-const BrokerAccountInfo: React.FC<BrokerAccountInfoProps> = ({ brokerId, onRefresh }) => {
+const BrokerAccountInfo: React.FC<BrokerAccountInfoProps> = ({ brokerId, onRefresh, useDemo = false }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accountData, setAccountData] = useState<BrokerAccountData | null>(null);
@@ -142,32 +142,105 @@ const BrokerAccountInfo: React.FC<BrokerAccountInfoProps> = ({ brokerId, onRefre
     setError(null);
     
     try {
-      // In production, this would be a real API call
-      // const response = await fetch(`/api/broker-accounts/${brokerId}`);
-      // if (!response.ok) throw new Error('Failed to fetch account data');
-      // const data = await response.json();
-      // setAccountData(data);
+      // Make API call to get broker account info
+      const queryParams = new URLSearchParams({
+        brokerId,
+        ...(useDemo !== undefined && { useDemo: useDemo.toString() })
+      });
       
-      // Using demo data for now
-      // This setTimeout simulates a network delay
-      setTimeout(() => {
+      const response = await fetch(`/api/nexus/broker-account-info?${queryParams.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch account data: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to fetch account data');
+      }
+      
+      // Process the account info into our component data format
+      if (result.accountInfo) {
+        // Convert from API format to our component's data format
+        const formattedData: BrokerAccountData = {
+          brokerName: result.accountInfo.brokerName || getBrokerName(brokerId),
+          accountId: result.accountInfo.accountId || 'Unknown',
+          accountType: result.accountInfo.accountType || (useDemo ? 'DEMO' : 'LIVE'),
+          cash: result.accountInfo.cash || result.accountInfo.balance || 0,
+          equity: result.accountInfo.equity || result.accountInfo.balance || 0,
+          marketValue: result.accountInfo.marketValue || result.accountInfo.longMarketValue || 0,
+          buyingPower: result.accountInfo.buyingPower || result.accountInfo.availableFunds || 0,
+          status: result.accountInfo.status || 'ACTIVE',
+          timestamp: new Date(result.accountInfo.timestamp || Date.now()),
+          currency: result.accountInfo.currency || 'USD',
+          positions: formatPositions(result.accountInfo.positions || []),
+          marginUsed: result.accountInfo.marginUsed,
+          marginAvailable: result.accountInfo.marginAvailable,
+          dayTradeCount: result.accountInfo.dayTradeCount
+        };
+        
+        setAccountData(formattedData);
+      } else if (useDemo) {
+        // If no data but using demo, fall back to demo data
         const demoData = getDemoData(brokerId);
         setAccountData(demoData);
-        setLoading(false);
-        setRefreshing(false);
-      }, 1000);
-      
+      } else {
+        throw new Error('No account data received');
+      }
     } catch (err) {
-      setError('Failed to load account data. Please try again.');
+      console.error('Error fetching broker account data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load account data. Please try again.');
+      
+      // If real API fails and we're in demo mode, use demo data as fallback
+      if (useDemo) {
+        const demoData = getDemoData(brokerId);
+        setAccountData(demoData);
+      }
+    } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
+  
+  // Helper function to format positions data
+  const formatPositions = (positionsData: any[]): BrokerAccountData['positions'] => {
+    return positionsData.map(pos => ({
+      symbol: pos.symbol || pos.instrument || 'Unknown',
+      quantity: pos.quantity || pos.position || pos.units || pos.volume || 0,
+      marketValue: pos.marketValue || pos.value || 0,
+      unrealizedPL: pos.unrealizedPL || pos.profit || 0, 
+      todayPL: pos.todayPL || pos.dailyPL || 0,
+      percentChange: pos.percentChange || pos.changePercent || 0
+    }));
+  };
+  
+  // Helper function to get broker name
+  const getBrokerName = (id: string): string => {
+    const brokerNames: Record<string, string> = {
+      'alpaca': 'Alpaca',
+      'oanda': 'Oanda',
+      'interactive_brokers': 'Interactive Brokers',
+      'tradier': 'Tradier',
+      'ninjatrader': 'NinjaTrader',
+      'tradovate': 'Tradovate',
+      'ig': 'IG',
+      'saxo_bank': 'Saxo Bank',
+      'ctrader': 'cTrader',
+      'match_trader': 'Match-Trader',
+      'meta_api': 'MetaAPI',
+      'td_ameritrade': 'TD Ameritrade',
+      'tradingview': 'TradingView',
+      'other': 'Broker'
+    };
+    
+    return brokerNames[id] || 'Broker';
+  };
 
-  // Initial data load
+  // Initial data load and reload when brokerId or useDemo changes
   useEffect(() => {
     fetchAccountData();
-  }, [brokerId]);
+  }, [brokerId, useDemo]);
 
   const handleRefresh = () => {
     fetchAccountData();
@@ -195,6 +268,11 @@ const BrokerAccountInfo: React.FC<BrokerAccountInfoProps> = ({ brokerId, onRefre
                 <>
                   <Briefcase className="inline-block mr-2 h-5 w-5" />
                   {accountData?.brokerName || 'Broker'} Account
+                  {useDemo && (
+                    <Badge variant="outline" className="ml-2 text-xs bg-yellow-100 dark:bg-yellow-900 border-yellow-300 dark:border-yellow-700">
+                      Demo
+                    </Badge>
+                  )}
                 </>
               )}
             </CardTitle>
