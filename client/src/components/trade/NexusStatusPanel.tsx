@@ -37,7 +37,7 @@ import {
   toggleTradeNexus, 
   resetTradeNexus,
   EXECUTION_PROFILES
-} from '@/lib/services/abatev-service';
+} from '@/lib/services/nexus-service';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 

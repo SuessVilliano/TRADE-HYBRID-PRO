@@ -103,7 +103,7 @@ export async function getNexusStatus(): Promise<NexusStatus> {
 /**
  * Initialize the Nexus system
  */
-export async function initializeNexus(): Promise<InitializeResponse> {
+export async function initializeTradeNexus(): Promise<InitializeResponse> {
   try {
     const response = await fetch('/api/nexus/initialize', {
       method: 'POST',
@@ -133,7 +133,7 @@ export async function initializeNexus(): Promise<InitializeResponse> {
 /**
  * Toggle the Nexus system on/off
  */
-export async function toggleNexus(enabled: boolean): Promise<ToggleResponse> {
+export async function toggleTradeNexus(enabled: boolean): Promise<ToggleResponse> {
   try {
     const response = await fetch('/api/nexus/toggle', {
       method: 'POST',
@@ -254,17 +254,17 @@ export async function compareAdvancedExecutionOptions(
 /**
  * Reset the Nexus system metrics and reconnect
  */
-export async function resetNexus(): Promise<any> {
+export async function resetTradeNexus(): Promise<any> {
   try {
     // First toggle off
-    await toggleNexus(false);
+    await toggleTradeNexus(false);
     
     // Then initialize
-    const initResult = await initializeNexus();
+    const initResult = await initializeTradeNexus();
     
     if (initResult.success) {
       // Turn it back on if it was successful
-      return toggleNexus(true);
+      return toggleTradeNexus(true);
     }
     
     return initResult;
@@ -660,3 +660,8 @@ export const EXECUTION_PROFILES: Record<string, ExecutionWeightingProfile> = {
     volatilityWeight: 50
   }
 };
+
+// Add backward compatibility aliases for the original non-Trade prefixed functions
+export const initializeNexus = initializeTradeNexus;
+export const toggleNexus = toggleTradeNexus;
+export const resetNexus = resetTradeNexus;
