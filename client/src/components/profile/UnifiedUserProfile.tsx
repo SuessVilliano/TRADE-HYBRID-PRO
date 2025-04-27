@@ -588,6 +588,15 @@ export const UnifiedUserProfile: React.FC = () => {
                             <LinkIcon className="mr-2 h-4 w-4" />
                             Connected Services
                           </Button>
+                          
+                          <Button 
+                            variant="outline" 
+                            className="w-full justify-start"
+                            onClick={() => window.location.href = '/affiliate-dashboard'}
+                          >
+                            <DollarSign className="mr-2 h-4 w-4 text-green-500" />
+                            Affiliate Matrix Dashboard
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>

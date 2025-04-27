@@ -347,7 +347,7 @@ export const MainSidebar: React.FC<{
             href="#" 
             icon={<Coins className="h-5 w-5" />} 
             label="Crypto" 
-            active={isActive("/thc-staking") || isActive("/nft-marketplace")}
+            active={isActive("/thc-staking") || isActive("/nft-marketplace") || isActive("/affiliate-dashboard")}
             expanded={expandedSections.crypto}
             onExpand={() => toggleSection('crypto')}
           >
@@ -363,6 +363,13 @@ export const MainSidebar: React.FC<{
               icon={<Wallet className="h-4 w-4" />} 
               label="NFT Marketplace" 
               active={isActive("/nft-marketplace")} 
+              onClick={mobile ? onClose : undefined}
+            />
+            <NavItem 
+              href="/affiliate-dashboard" 
+              icon={<DollarSign className="h-4 w-4" />} 
+              label="Affiliate Matrix" 
+              active={isActive("/affiliate-dashboard")} 
               onClick={mobile ? onClose : undefined}
             />
           </NavItem>

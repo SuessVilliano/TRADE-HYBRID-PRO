@@ -287,6 +287,7 @@ const App: React.FC = () => {
                   
                   {/* Other Pages */}
                   <Route path="/affiliate/*" element={<ProtectedRoute><AffiliatePage /></ProtectedRoute>} />
+                  <Route path="/affiliate-dashboard" element={<React.Suspense fallback={<div>Loading affiliate dashboard...</div>}><ProtectedRoute><AffiliateDashboardPage /></ProtectedRoute></React.Suspense>} />
                   <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
                   <Route path="/live-stream" element={<ProtectedRoute><LiveStreamPage /></ProtectedRoute>} />
                   <Route path="/social-network" element={<ProtectedRoute><SocialNetworkPage /></ProtectedRoute>} />
