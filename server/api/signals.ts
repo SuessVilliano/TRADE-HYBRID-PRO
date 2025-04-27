@@ -71,76 +71,11 @@ interface UserSignals {
   [userId: string]: SignalStorage;
 }
 
-// Global signals available to everyone
+// Global signals available to everyone - empty by default, filled by webhooks
 const globalSignals: SignalStorage = {
-  crypto: [
-    {
-      id: 'paradox-1-1743604123456',
-      Symbol: 'BTCUSDT',
-      Asset: 'BTCUSDT',
-      Direction: 'BUY',
-      'Entry Price': 68700,
-      'Stop Loss': 68100,
-      'Take Profit': 70000,
-      TP1: 70000,
-      Status: 'active',
-      Date: new Date().toISOString(),
-      Time: '15:30:00',
-      Provider: 'Paradox',
-      Notes: 'Strong momentum signal, follow BTC trend',
-    },
-    {
-      id: 'paradox-2-1743604123457',
-      Symbol: 'ETHUSDT',
-      Asset: 'ETHUSDT',
-      Direction: 'BUY',
-      'Entry Price': 3400,
-      'Stop Loss': 3300,
-      'Take Profit': 3600,
-      TP1: 3600,
-      Status: 'active',
-      Date: new Date().toISOString(),
-      Time: '14:45:00',
-      Provider: 'Paradox',
-      Notes: 'Follow BTC momentum',
-    }
-  ],
-  futures: [
-    {
-      id: 'hybrid-1-1743604123458',
-      Symbol: 'NQ1!',
-      Asset: 'NQ1!',
-      Direction: 'SELL',
-      'Entry Price': 20135.25,
-      'Stop Loss': 20152.36,
-      'Take Profit': 20101.04,
-      TP1: 20101.04,
-      TP2: 20083.93,
-      TP3: 20066.82,
-      Status: 'active',
-      Date: new Date().toISOString(),
-      Time: '10:15:00',
-      Provider: 'Hybrid',
-      Notes: 'Technical breakdown on 15min chart',
-    }
-  ],
-  forex: [
-    {
-      id: 'solaris-1-1743604123459',
-      Symbol: 'EURUSD',
-      Asset: 'EURUSD',
-      Direction: 'BUY',
-      'Entry Price': 1.15331,
-      'Stop Loss': 1.15228,
-      'Take Profit': 1.15846,
-      TP1: 1.15846,
-      Status: 'active',
-      Date: new Date().toISOString(),
-      Time: '08:30:00',
-      Provider: 'Solaris',
-      Notes: 'EURUSD alert - DO NOT RISK MORE THAN 0.25-1%',
-    }
-  ]
+  crypto: [],
+  futures: [],
+  forex: []
 };
 
 // User-specific signals storage
@@ -163,25 +98,8 @@ const initializeUserSignals = (userId: string): void => {
 // Function to process webhook signals and add them to the in-memory storage
 export const processWebhookSignal = (payload: any, userId?: string): void => {
   try {
-    // Extract market type from the channel name
+    // Define default values
     let marketType = 'crypto'; // Default
-    if (payload.channel_name) {
-      if (payload.channel_name.includes('forex')) {
-        marketType = 'forex';
-      } else if (payload.channel_name.includes('futures')) {
-        marketType = 'futures';
-      }
-    }
-    
-    // Support for market_type property from TradingView format
-    if (payload.market_type) {
-      marketType = payload.market_type.toLowerCase();
-    }
-    
-    // Parse the payload content
-    const content = payload.content || '';
-    
-    // Extract signal data from content or use metadata if available (for TradingView)
     let symbol = '';
     let direction = '';
     let entryPrice = 0;
@@ -190,47 +108,134 @@ export const processWebhookSignal = (payload: any, userId?: string): void => {
     let timeframe = '1d'; // Default timeframe
     let tp2 = undefined;
     let tp3 = undefined;
+    let provider = 'Unknown';
+    let notes = '';
     
-    // First check if there's a structured metadata object (from TradingView integration)
-    if (payload.metadata) {
-      const meta = payload.metadata;
-      symbol = meta.symbol || '';
-      direction = meta.action || '';
-      entryPrice = meta.levels?.entry || meta.price || 0;
-      stopLoss = meta.levels?.stopLoss || 0;
-      takeProfit = meta.levels?.takeProfit || 0;
+    console.log('Processing webhook payload:', JSON.stringify(payload).substring(0, 200));
+    
+    // 1. Extract market type - check multiple properties
+    if (payload.market_type) {
+      marketType = payload.market_type.toLowerCase();
+    } else if (payload.channel_name) {
+      if (payload.channel_name.includes('forex')) {
+        marketType = 'forex';
+      } else if (payload.channel_name.includes('futures')) {
+        marketType = 'futures';
+      }
+    } else if (payload.symbol) {
+      // Try to determine market type from symbol format
+      if (payload.symbol.includes('USD/') || payload.symbol.includes('EUR/')) {
+        marketType = 'forex';
+      } else if (payload.symbol.includes('!') || payload.symbol.includes('F1')) {
+        marketType = 'futures';
+      }
+    }
+    
+    // 2. Extract Provider information
+    provider = payload.source || payload.broker || payload.provider ||
+               (payload.channel_name && payload.channel_name.includes('forex')) ? 'Solaris' :
+               (payload.channel_name && payload.channel_name.includes('futures')) ? 'Hybrid' : 'Paradox';
+    
+    // 3. Extract payload content and data
+    const content = payload.content || '';
+    const data = payload.data || {};
+    
+    // 4. Extract signal data from multiple possible sources
+    
+    // 4.1 First try to use structured data if available
+    if (payload.metadata || payload.data) {
+      const meta = payload.metadata || payload.data;
+      symbol = meta.symbol || payload.symbol || '';
+      direction = meta.action || meta.direction || meta.side || '';
+      entryPrice = meta.entry || meta.entryPrice || meta.price || 
+                  (meta.levels && meta.levels.entry) || 0;
+      stopLoss = meta.sl || meta.stopLoss || 
+                (meta.levels && meta.levels.stopLoss) || 0;
+      takeProfit = meta.tp || meta.takeProfit || meta.target || 
+                  (meta.levels && meta.levels.takeProfit) || 0;
       timeframe = meta.timeframe || timeframe;
-    } else {
-      // Otherwise parse from text content
-      const symbolMatch = content.match(/Symbol: ([A-Za-z0-9!_/]+)/);
-      const directionMatch = content.includes('BUY ALERT') ? 'BUY' : 
-                           content.includes('SELL ALERT') ? 'SELL' : '';
-      const entryMatch = content.match(/Entry: ([0-9.]+)/);
-      const slMatch = content.match(/Stop Loss: ([0-9.]+)/);
-      const tpMatch = content.match(/Take Profit: ([0-9.]+)/);
+      notes = meta.notes || meta.signal || meta.message || '';
       
-      if (!symbolMatch || !directionMatch || !entryMatch || !slMatch || !tpMatch) {
-        console.error('Could not parse webhook signal:', content);
-        return;
+      // Check for additional take profits
+      if (meta.tp2 || meta.takeProfit2) tp2 = meta.tp2 || meta.takeProfit2;
+      if (meta.tp3 || meta.takeProfit3) tp3 = meta.tp3 || meta.takeProfit3;
+    }
+    
+    // 4.2 If we still don't have the key data, try to parse from content
+    if (!symbol || !direction || !entryPrice) {
+      // Parse symbol from content
+      const symbolMatch = content.match(/Symbol:?\s*([A-Za-z0-9!_/\-]+)/i) || 
+                         content.match(/\b([A-Z0-9]+\/[A-Z0-9]+|[A-Z0-9]{3,}[A-Z0-9]+|[A-Z0-9]{3,}!)\b/);
+      
+      // Parse direction from content
+      const directionMatch = content.match(/direction:?\s*(buy|sell)/i) ||
+                            content.match(/\b(buy|sell)\b\s*(signal|alert)/i) ||
+                            content.match(/(bullish|bearish)/i) ||
+                            content.includes('BUY ALERT') ? 'BUY' : 
+                            content.includes('SELL ALERT') ? 'SELL' : null;
+      
+      // Parse prices from content
+      const entryMatch = content.match(/entry:?\s*([0-9.]+)/i) || 
+                         content.match(/price:?\s*([0-9.]+)/i);
+      const slMatch = content.match(/stop:?\s*([0-9.]+)/i) || 
+                      content.match(/sl:?\s*([0-9.]+)/i) ||
+                      content.match(/stop\s*loss:?\s*([0-9.]+)/i);
+      const tpMatch = content.match(/target:?\s*([0-9.]+)/i) || 
+                      content.match(/tp:?\s*([0-9.]+)/i) ||
+                      content.match(/take\s*profit:?\s*([0-9.]+)/i);
+      
+      // Extract values if matches found
+      if (symbolMatch) symbol = symbolMatch[1];
+      
+      if (directionMatch) {
+        if (typeof directionMatch === 'string') {
+          direction = directionMatch;
+        } else if (directionMatch[1]) {
+          direction = directionMatch[1].toUpperCase();
+          // Convert bullish/bearish to buy/sell
+          if (direction.toLowerCase() === 'bullish') direction = 'BUY';
+          if (direction.toLowerCase() === 'bearish') direction = 'SELL';
+        }
       }
       
-      symbol = symbolMatch[1];
-      direction = directionMatch;
-      entryPrice = parseFloat(entryMatch[1]);
-      stopLoss = parseFloat(slMatch[1]);
-      takeProfit = parseFloat(tpMatch[1]);
+      if (entryMatch) entryPrice = parseFloat(entryMatch[1]);
+      if (slMatch) stopLoss = parseFloat(slMatch[1]);
+      if (tpMatch) takeProfit = parseFloat(tpMatch[1]);
       
       // Extract TP2 and TP3 for futures signals
-      const tp2Match = content.match(/TP2: ([0-9.]+)/);
-      const tp3Match = content.match(/TP3: ([0-9.]+)/);
+      const tp2Match = content.match(/tp2:?\s*([0-9.]+)/i);
+      const tp3Match = content.match(/tp3:?\s*([0-9.]+)/i);
       
       if (tp2Match) tp2 = parseFloat(tp2Match[1]);
       if (tp3Match) tp3 = parseFloat(tp3Match[1]);
+      
+      // Try to extract notes
+      const notesMatch = content.match(/notes:?\s*(.+?)(?:\r|\n|$)/i) ||
+                        content.match(/message:?\s*(.+?)(?:\r|\n|$)/i);
+      if (notesMatch) notes = notesMatch[1];
+    }
+    
+    // If we still don't have a direction, default to BUY
+    if (!direction) direction = 'BUY';
+    
+    // If we couldn't parse the content properly, log error and exit
+    if (!symbol || !entryPrice) {
+      console.error('Failed to extract required signal data from webhook:', 
+                  { symbol, direction, entryPrice, stopLoss, takeProfit });
+      return;
+    }
+    
+    // Generate a unique ID
+    const signalId = `${provider.toLowerCase()}-${symbol.toLowerCase()}-${Date.now()}`;
+    
+    // Set notes if not found
+    if (!notes) {
+      notes = `${direction} signal for ${symbol} from ${provider}`;
     }
     
     // Base signal properties
     const baseSignal: BaseSignal = {
-      id: `${marketType}-${Date.now()}`,
+      id: signalId,
       Symbol: symbol,
       Asset: symbol,
       Direction: direction.toUpperCase(),
@@ -241,9 +246,8 @@ export const processWebhookSignal = (payload: any, userId?: string): void => {
       Status: 'active',
       Date: new Date().toISOString(),
       Time: new Date().toTimeString().substring(0, 8),
-      Provider: userId ? 'Custom' : marketType === 'forex' ? 'Solaris' : 
-                marketType === 'futures' ? 'Hybrid' : 'Paradox',
-      Notes: `Signal received via webhook: ${content.substring(0, 50)}...`,
+      Provider: userId ? 'Custom' : provider,
+      Notes: notes.substring(0, 150),
     };
     
     // Determine where to store the signal - in user specific storage or global
@@ -413,135 +417,23 @@ router.get('/trading-signals', async (req, res) => {
         allowedProviders = ['Hybrid', 'Paradox', 'Solaris']; // Higher tiers get all
       }
       
-      // Apply the filters - ensure we have data for all users
-      if (signals.length === 0 || !signals.some(signal => allowedProviders.includes(signal.Provider))) {
-        // If no signals are available after filtering, add some demo signals
-        console.log('No signals available after filtering, providing demo signals');
-        signals = [
-          {
-            id: 'hybrid-demo-1',
-            Symbol: 'BTCUSDT',
-            Asset: 'BTCUSDT', 
-            Direction: 'BUY',
-            'Entry Price': 68500,
-            'Stop Loss': 67800,
-            'Take Profit': 70000,
-            TP1: 70000,
-            Status: 'active',
-            Date: new Date().toISOString(),
-            Time: '12:30:00',
-            Provider: 'Hybrid',
-            Notes: 'Demo signal for BTC showing strong support at current level'
-          },
-          {
-            id: 'paradox-demo-1',
-            Symbol: 'ETHUSDT',
-            Asset: 'ETHUSDT',
-            Direction: 'BUY',
-            'Entry Price': 3350,
-            'Stop Loss': 3250,
-            'Take Profit': 3550,
-            TP1: 3550,
-            Status: 'active',
-            Date: new Date().toISOString(),
-            Time: '13:15:00',
-            Provider: 'Paradox',
-            Notes: 'Demo signal for ETH following BTC momentum'
-          },
-          {
-            id: 'solaris-demo-1',
-            Symbol: 'SOLUSDT',
-            Asset: 'SOLUSDT',
-            Direction: 'BUY',
-            'Entry Price': 149.5,
-            'Stop Loss': 145.8,
-            'Take Profit': 158.0,
-            TP1: 158.0,
-            Status: 'active',
-            Date: new Date().toISOString(),
-            Time: '13:30:00',
-            Provider: 'Solaris',
-            Notes: 'Solaris signal for SOL with strong uptrend potential'
-          }
-        ].filter(signal => allowedProviders.includes(signal.Provider));
-      } else {
-        // Filter based on provider and limit
-        signals = signals
-          .filter(signal => allowedProviders.includes(signal.Provider))
-          .slice(0, signalLimit);
+      // Only use real signals, no fallback to demo signals
+      if (signals.length === 0) {
+        console.log('No signals available - returning empty array');
       }
+      
+      // Apply filters to the signals we have
+      // Filter based on provider and limit
+      signals = signals
+        .filter(signal => allowedProviders.includes(signal.Provider))
+        .slice(0, signalLimit);
       
       console.log(`Filtered to ${signals.length} signals based on membership level ${membershipLevel}`);
     }
     
-    // If this is a demo user, ensure they get a rich set of signals
-    if (isDemoUser && signals.length < 6) {
-      const demoSignals = [
-        {
-          id: 'hybrid-demo-2',
-          Symbol: 'ADAUSDT',
-          Asset: 'ADAUSDT',
-          Direction: 'BUY',
-          'Entry Price': 0.45,
-          'Stop Loss': 0.42,
-          'Take Profit': 0.52,
-          TP1: 0.52,
-          Status: 'active',
-          Date: new Date().toISOString(),
-          Time: '10:15:00',
-          Provider: 'Hybrid',
-          Notes: 'Bullish pattern forming on ADA, looks ready for a breakout'
-        },
-        {
-          id: 'paradox-demo-2',
-          Symbol: 'MATICUSDT',
-          Asset: 'MATICUSDT',
-          Direction: 'BUY',
-          'Entry Price': 0.71,
-          'Stop Loss': 0.68,
-          'Take Profit': 0.78,
-          TP1: 0.78,
-          Status: 'active',
-          Date: new Date().toISOString(),
-          Time: '11:30:00',
-          Provider: 'Paradox',
-          Notes: 'Momentum building with increased volume'
-        },
-        {
-          id: 'solaris-demo-2',
-          Symbol: 'EURUSD',
-          Asset: 'EURUSD',
-          Direction: 'SELL',
-          'Entry Price': 1.0785,
-          'Stop Loss': 1.0815,
-          'Take Profit': 1.0725,
-          TP1: 1.0725,
-          Status: 'active',
-          Date: new Date().toISOString(),
-          Time: '09:45:00',
-          Provider: 'Solaris',
-          Notes: 'Bearish trend continuation after resistance test'
-        },
-        {
-          id: 'hybrid-demo-3',
-          Symbol: 'AVAXUSDT',
-          Asset: 'AVAXUSDT',
-          Direction: 'BUY',
-          'Entry Price': 28.5,
-          'Stop Loss': 27.2,
-          'Take Profit': 31.5,
-          TP1: 31.5,
-          Status: 'active',
-          Date: new Date().toISOString(),
-          Time: '14:20:00',
-          Provider: 'Hybrid',
-          Notes: 'Bullish flag pattern on AVAX, technical breakout imminent'
-        }
-      ];
-      
-      // Add additional demo signals
-      signals = [...signals, ...demoSignals];
-      console.log(`Added ${demoSignals.length} additional demo signals for demo user`);
+    // Demo users now see the same real signals as other users
+    if (isDemoUser) {
+      console.log(`Demo user will see ${signals.length} real signals without additional demo data`);
     }
     
     // Return the signals

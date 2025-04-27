@@ -154,6 +154,33 @@ export function AiTradingSignals({
       }
     }
     
+    // Calculate confidence score based on real data like risk-reward ratio
+    // instead of random values
+    let confidenceScore = 85; // Base confidence
+    
+    // If we have price data, we can calculate a better confidence score
+    if (takeProfit1 && signal['Entry Price'] && signal['Stop Loss']) {
+      const entry = Number(signal['Entry Price']);
+      const stopLoss = Number(signal['Stop Loss']);
+      const takeProfit = takeProfit1;
+      
+      // Calculate risk-reward ratio for confidence adjustment
+      const riskAmount = Math.abs(entry - stopLoss);
+      const rewardAmount = Math.abs(takeProfit - entry);
+      
+      if (riskAmount > 0) {
+        const riskRewardRatio = rewardAmount / riskAmount;
+        
+        // Adjust confidence based on risk-reward ratio
+        // Better risk-reward = higher confidence
+        if (riskRewardRatio >= 3) confidenceScore = 95;
+        else if (riskRewardRatio >= 2) confidenceScore = 90;
+        else if (riskRewardRatio >= 1.5) confidenceScore = 85;
+        else if (riskRewardRatio >= 1) confidenceScore = 80;
+        else confidenceScore = 75;
+      }
+    }
+    
     return {
       id: signal.id || `signal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       symbol: signal.Symbol || signal.Asset || '',
@@ -164,7 +191,7 @@ export function AiTradingSignals({
       takeProfit2: takeProfit2,
       takeProfit3: takeProfit3,
       timeframe: timeframe,
-      confidence: signal.confidence || Math.floor(Math.random() * 15) + 80, // Generate a high confidence score if none provided
+      confidence: signal.confidence || confidenceScore, // Use calculated confidence score
       generatedAt: new Date(signal.Date || signal.Time || new Date()),
       expiresAt: new Date(new Date().getTime() + 24 * 60 * 60 * 1000), // 24 hours from now
       reason: signal.Notes || `${signal.Direction || 'TRADE'} signal for ${signal.Symbol || signal.Asset}`,

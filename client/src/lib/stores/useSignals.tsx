@@ -44,34 +44,51 @@ export const useSignals = create<SignalsState>((set, get) => ({
   fetchSignals: async () => {
     try {
       set({ loading: true, error: null });
+      console.log('Fetching real trading signals from API...');
       
-      // Fetch signals from the API
-      const response = await fetch('/api/signals');
+      // Fetch from the correct endpoint that serves webhook data
+      const response = await fetch('/api/signals/trading-signals?marketType=all');
       
       if (!response.ok) {
-        throw new Error('Failed to fetch signals');
+        throw new Error('Failed to fetch trading signals');
       }
       
-      let data = await response.json();
+      const responseData = await response.json();
+      console.log('Raw signals response:', responseData);
       
-      // Convert string timestamps to Date objects
-      data = data.map((signal: any) => ({
-        ...signal,
-        timestamp: new Date(signal.timestamp)
+      // Handle different response formats (direct array or {signals: []})
+      const rawSignals = Array.isArray(responseData) ? responseData : responseData.signals || [];
+      
+      // Transform the webhook signals format to our app format
+      const formattedSignals = rawSignals.map((signal: any) => ({
+        id: signal.id || `signal-${Date.now()}-${Math.random()}`,
+        symbol: signal.Symbol || signal.Asset || '',
+        type: (signal.Direction || '').toLowerCase(),
+        entry: signal['Entry Price'] || 0,
+        stopLoss: signal['Stop Loss'] || 0,
+        takeProfit: signal['Take Profit'] || signal.TP1 || 0,
+        timestamp: new Date(signal.Date || signal.Time || new Date()),
+        source: signal.Provider || 'Unknown',
+        risk: 1, // Default risk level
+        notes: signal.Notes || '',
+        timeframe: signal.Timeframe || '30m',
+        status: signal.Status || 'active'
       }));
       
+      console.log('Refreshed signals:', formattedSignals);
+      
       set({ 
-        signals: data, 
+        signals: formattedSignals, 
         loading: false,
         lastFetched: new Date()
       });
       
       // Add notification if enabled
-      if (data.length > 0 && window.Notification && Notification.permission === 'granted') {
+      if (formattedSignals.length > 0 && window.Notification && Notification.permission === 'granted') {
         try {
-          const latestSignal = data[0];
+          const latestSignal = formattedSignals[0];
           new Notification('New Trading Signal', {
-            body: `${latestSignal.action.toUpperCase()} ${latestSignal.symbol} at $${latestSignal.price}`,
+            body: `${latestSignal.type.toUpperCase()} ${latestSignal.symbol} at $${latestSignal.entry}`,
             icon: '/logo.png'
           });
         } catch (e) {
@@ -80,7 +97,7 @@ export const useSignals = create<SignalsState>((set, get) => ({
       }
       
     } catch (error) {
-      console.error('Error fetching signals:', error);
+      console.error('Error fetching trading signals:', error);
       set({ 
         loading: false, 
         error: error instanceof Error ? error.message : 'An unknown error occurred'
