@@ -136,8 +136,10 @@ export class MatrixContractService {
       // Callback for program account changes
       const accountChangedCallback: ProgramAccountChangeCallback = (accountInfo, context) => {
         try {
+          if (!this.matrixContract) return;
+          
           // Parse the account data to detect event type
-          const eventData = this.matrixContract?.parseAccountData(accountInfo.accountId, accountInfo.accountInfo.data);
+          const eventData = this.matrixContract.parseAccountData(accountInfo.accountId, accountInfo.accountInfo.data);
           
           if (eventData) {
             if (eventData.type === 'slot-purchase') {
@@ -396,9 +398,15 @@ export class MatrixContractService {
   }
 
   /**
-   * Get matrix data for a participant
+   * Get matrix data for a participant with caching and improved error handling
+   * @param walletAddress The participant's wallet address
+   * @param forceRefresh Force a refresh from the blockchain instead of using cache
+   * @returns Participant data or null if not found
    */
-  public async getParticipantData(walletAddress: string): Promise<Participant | null> {
+  public async getParticipantData(
+    walletAddress: string, 
+    forceRefresh: boolean = false
+  ): Promise<Participant | null> {
     try {
       if (!this.connection || !this.matrixContract) {
         await this.initialize();
@@ -408,17 +416,28 @@ export class MatrixContractService {
         throw new Error('Matrix contract service not initialized');
       }
       
+      // Check cache first
+      const cacheKey = walletAddress;
+      const cachedData = this.participantCache.get(cacheKey);
+      
+      if (!forceRefresh && cachedData && (Date.now() - cachedData.timestamp) < this.cacheExpiry) {
+        console.log(`Using cached participant data for ${walletAddress}`);
+        return cachedData.data;
+      }
+      
+      // Create a public key object from the address string
       const publicKey = new PublicKey(walletAddress);
       
-      // In a real implementation, this would query the blockchain
+      // In a real implementation, we would query the blockchain for the participant data
       // For now, we'll create a simulated participant based on wallet address
+      console.log(`Fetching participant data for ${walletAddress}`);
       
       // Calculate a deterministic value based on the wallet address
-      // to ensure the same wallet gets the same data
+      // to ensure the same wallet gets the same data each time
       const addressValue = parseInt(walletAddress.substring(1, 7), 16);
       const referralsCount = (addressValue % 5) + 1; // 1-5 referrals
       
-      // Generate slots based on the wallet address
+      // Generate slot data with proper structure
       const activeSlots: MatrixSlot[] = Array.from({ length: Math.min(5, addressValue % 7 + 1) }, (_, i) => {
         const slotNumber = i + 1;
         const level = Math.min(12, Math.floor(i / 2) + 1);
@@ -462,10 +481,74 @@ export class MatrixContractService {
         preferredCurrency: 'THC'
       };
       
+      // Store data in cache
+      this.participantCache.set(cacheKey, {
+        data: participant,
+        timestamp: Date.now()
+      });
+      
       return participant;
     } catch (error) {
       console.error('Error getting participant data:', error);
+      
+      // Provide more specific error information
+      if (error instanceof Error) {
+        if (error.message.includes('account not found')) {
+          console.log(`No participant data found for wallet ${walletAddress}`);
+          return null;
+        }
+        
+        if (error.message.includes('timeout') || error.message.includes('network')) {
+          // Network errors might be temporary, try to use cache even if expired
+          const cachedData = this.participantCache.get(walletAddress);
+          if (cachedData) {
+            console.log(`Using expired cache due to network error for ${walletAddress}`);
+            return cachedData.data;
+          }
+        }
+      }
+      
       return null;
+    }
+  }
+  
+  /**
+   * Get network statistics for the matrix
+   * This includes total participants, volume, etc.
+   */
+  public async getMatrixNetworkStats(): Promise<{
+    totalParticipants: number;
+    totalVolume: number;
+    totalEarnings: number;
+    totalSlots: number;
+    averageEarningsPerParticipant: number;
+  }> {
+    try {
+      if (!this.connection || !this.matrixContract) {
+        await this.initialize();
+      }
+      
+      // In a real implementation, this would come from the blockchain
+      // For now using simulated data
+      
+      return {
+        totalParticipants: 3214,
+        totalVolume: 1250000,
+        totalEarnings: 975000,
+        totalSlots: 8750,
+        averageEarningsPerParticipant: 303.36
+      };
+    } catch (error) {
+      console.error('Error getting matrix network stats:', error);
+      
+      // Provide default stats if error occurs
+      return {
+        totalParticipants: 0,
+        totalVolume: 0,
+        totalEarnings: 0,
+        totalSlots: 0,
+        averageEarningsPerParticipant: 0
+      };
     }
   }
 

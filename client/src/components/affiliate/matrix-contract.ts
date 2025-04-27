@@ -57,7 +57,6 @@ export const MATRIX_CONFIG = {
   spilloverMethod: 'balanced', // 'balanced' or 'first-available'
 };
 
-import { PublicKey } from '@solana/web3.js';
 
 
 export class MatrixContract {
@@ -68,8 +67,89 @@ export class MatrixContract {
 
   private readonly LEVELS = 3;
   private readonly SLOTS_PER_LEVEL = [2, 3, 4];
+  private readonly PROGRAM_ID = 'THCXGg8Lnk6EJNfNjMttECKVbMQZRhmsi9TmPrTrCw3h'; // THC token program ID
 
   constructor(private provider: any) {} // provider needs definition in real implementation
+  
+  /**
+   * Get the program ID for the matrix contract
+   * @returns Program ID as string
+   */
+  public getProgramId(): string {
+    return this.PROGRAM_ID;
+  }
+  
+  /**
+   * Parse account data from the chain
+   * This method would parse the raw binary data from a program account
+   * @param accountId The account public key
+   * @param data The account data buffer
+   * @returns Parsed event data or null
+   */
+  public parseAccountData(
+    accountId: PublicKey, 
+    data: Buffer
+  ): { type: string; data: any } | null {
+    try {
+      // In a real implementation, this would deserialize the account data
+      // based on a known structure from the program
+      
+      // For now, simulate successful parsing with mock data
+      // This helps the service to work without the real implementation
+      
+      // In the future, we would deserialize based on a byte structure:
+      // 1. First byte might be event type
+      // 2. Next 32 bytes might be public key
+      // 3. etc.
+      
+      // For demonstration, generate a random event type
+      const randomEventType = Math.random();
+      let eventType: string;
+      let eventData: any;
+      
+      if (randomEventType < 0.25) {
+        eventType = 'slot-purchase';
+        eventData = {
+          participantAddress: accountId.toString(),
+          level: Math.floor(Math.random() * 12) + 1,
+          amount: MATRIX_CONFIG.slotPrices[Math.floor(Math.random() * 12)],
+          timestamp: Date.now()
+        };
+      } else if (randomEventType < 0.5) {
+        eventType = 'matrix-completion';
+        eventData = {
+          participantAddress: accountId.toString(),
+          level: Math.floor(Math.random() * 12) + 1,
+          recycleCount: Math.floor(Math.random() * 3) + 1,
+          timestamp: Date.now()
+        };
+      } else if (randomEventType < 0.75) {
+        eventType = 'referral-added';
+        eventData = {
+          participantAddress: accountId.toString(),
+          referralAddress: new PublicKey(accountId).toString(),
+          level: Math.floor(Math.random() * 12) + 1,
+          timestamp: Date.now()
+        };
+      } else {
+        eventType = 'earnings-updated';
+        eventData = {
+          participantAddress: accountId.toString(),
+          oldEarnings: Math.random() * 1000,
+          newEarnings: Math.random() * 1000 + 1000,
+          timestamp: Date.now()
+        };
+      }
+      
+      return {
+        type: eventType,
+        data: eventData
+      };
+    } catch (error) {
+      console.error('Error parsing account data:', error);
+      return null;
+    }
+  }
 
   /**
    * Calculate which slots pass up vs pay direct
