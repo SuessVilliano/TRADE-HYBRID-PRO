@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { UserContext, initialUserContext, BrokerCredentials } from '../../../shared/models/UserContext';
+import { UserContext, initialUserContext, BrokerCredentials } from '@shared/models/UserContext';
 import { useUserStore } from '../stores/useUserStore';
 import { useSignals } from '../stores/useSignals';
 
@@ -40,6 +40,10 @@ export async function fetchUserData(): Promise<UserContext> {
       if (profileResponse.data.success) {
         // Update membership and basic data
         userData.membershipLevel = profileResponse.data.profile.membershipLevel || 'free';
+        userData.username = profileResponse.data.profile.username || '';
+        userData.email = profileResponse.data.profile.email || '';
+        userData.profileImage = profileResponse.data.profile.avatar || '';
+        userData.whopId = profileResponse.data.profile.whopId || userId;
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -50,8 +54,10 @@ export async function fetchUserData(): Promise<UserContext> {
       const walletResponse = await axios.get(`${API_BASE_URL}/users/${userId}/wallet`);
       userData.walletConnected = walletResponse.data.walletConnected || false;
       if (walletResponse.data.walletConnected) {
-        userData.walletProvider = 'phantom'; // Default to Phantom unless specified
+        userData.walletProvider = walletResponse.data.provider || 'phantom'; // Default to Phantom unless specified
         userData.walletData = walletResponse.data;
+        // Also set for backwards compatibility
+        userData.wallet = walletResponse.data;
       }
     } catch (error) {
       console.error('Error fetching wallet data:', error);
@@ -281,10 +287,21 @@ export async function connectBroker(
 /**
  * List available brokers for connection
  */
+interface BrokerInfo {
+  id: string;
+  name: string;
+  description: string;
+  logo_url: string;
+  requires_key: boolean;
+  requires_secret: boolean;
+  requires_passphrase: boolean;
+  supports_demo: boolean;
+}
+
 export async function listAvailableBrokers(): Promise<any[]> {
   try {
     const response = await axios.get(`${API_BASE_URL}/brokers/available`);
-    return response.data.map((b) => ({
+    return response.data.map((b: BrokerInfo) => ({
       id: b.id,
       name: b.name,
       description: b.description,

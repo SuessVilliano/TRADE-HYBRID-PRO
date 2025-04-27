@@ -195,6 +195,10 @@ export interface UserContext {
   favoriteSymbols: string[];
   preferences?: UserPreferences;
   lastSynced?: Date;
+  // Additional properties for compatibility with UnifiedUserProfile
+  profileImage?: string;
+  wallet?: WalletData;  // Alias for walletData for backwards compatibility
+  whopId?: string;      // Whop integration ID
 }
 
 // Initial user context state
@@ -207,4 +211,11 @@ export const initialUserContext: UserContext = {
   webhooks: [],
   aiAnalysis: {},
   favoriteSymbols: [],
+  profileImage: '',
+  wallet: {
+    walletConnected: false,
+    tokens: [],
+    nfts: []
+  },
+  whopId: ''
 };
