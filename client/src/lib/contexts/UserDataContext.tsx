@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserContext, initialUserContext } from '@/shared/models/UserContext';
+import { UserContext, initialUserContext } from '@shared/models/UserContext';
 import { fetchUserData, updateUserData } from '../services/unified-user-service';
 
 export interface UserDataContextType {
@@ -76,11 +76,19 @@ export const UserDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       setIsLoading(true);
       // Get wallet data and update it
-      const walletData = userData.walletData || {};
+      const walletData = userData.walletData || {
+        walletConnected: userData.walletConnected || false,
+        address: '',
+        provider: userData.walletProvider || '',
+        tokens: [],
+        nfts: []
+      };
+      
       // In a real implementation, this would fetch actual wallet data
       // For now just update the refresh timestamp
       const updatedWalletData = {
         ...walletData,
+        walletConnected: userData.walletConnected,
         lastRefreshed: new Date().toISOString()
       };
       
