@@ -1,221 +1,212 @@
 # Trade Hybrid Platform Overview
 
-## Introduction
-
-TradeHybrid is a cutting-edge decentralized trading platform that merges traditional financial markets with blockchain technology. The platform provides a comprehensive ecosystem for traders, investors, and crypto enthusiasts to access market insights, execute trades, and manage digital assets—all within a unified interface.
-
-## Core Technology Stack
-
-TradeHybrid is built using modern web technologies to ensure performance, security, and scalability:
-
-- **Frontend**: React with TypeScript, providing a responsive and type-safe user interface
-- **Styling**: Tailwind CSS for consistent, responsive design across devices
-- **Blockchain Integration**: Solana Web3.js for fast, low-cost transactions
-- **AI Intelligence**: OpenAI-powered market analysis and trading signals
-- **Data Storage**: PostgreSQL for efficient handling of trading models and user data
-- **Authentication**: Dual authentication system supporting both traditional login and Web3 wallet authentication
-
-## Platform Architecture
-
-### User Interface Layer
-
-The UI is organized into several main sections:
-
-1. **Trading Dashboard**: Customizable multi-widget layout with draggable components
-2. **Portfolio Management**: Asset allocation, performance tracking, and trade history
-3. **Signal Marketplace**: AI and expert trading signals with performance metrics
-4. **Learning Center**: Educational resources for different experience levels
-5. **Social Trading**: Community sharing and copy trading features
-
-### Middleware Layer
-
-1. **API Gateway**: Centralized entry point for frontend requests
-2. **Authentication Service**: Handles both traditional and Web3 authentication flows
-3. **Signal Processing Engine**: Collects, filters, and distributes trading signals
-4. **Market Data Service**: Aggregates data from multiple exchanges and providers
-5. **Notification System**: Real-time alerts for trades, signals, and account activities
-
-### Blockchain Layer
-
-1. **Wallet Integration**: Support for Phantom wallet and Web3Auth
-2. **Token System**: Native THC (TradeHybrid Coin) for platform utility
-3. **Smart Contracts**: For staking, rewards, and governance
-4. **NFT Marketplace**: For trading skill badges and exclusive signal access
-
-### Backend Services
-
-1. **Broker Connections**: Integration with multiple trading platforms (Alpaca, OANDA)
-2. **AI Analysis**: Market sentiment analysis and pattern recognition
-3. **User Management**: Profile, settings, and preference management
-4. **Analytics Engine**: Performance tracking and reporting
-
-## Key Features
-
-### Multi-Exchange Trading
-
-TradeHybrid connects to multiple exchanges and brokers, allowing users to:
-
-- Trade across asset classes (crypto, stocks, forex) from a single interface
-- Maintain consolidated position tracking across platforms
-- Execute signals on their preferred exchange
-- Compare execution prices and fees across exchanges
-
-### AI-Powered Signals
-
-Our proprietary AI system generates trading signals based on:
-
-- Technical analysis across multiple timeframes
-- Sentiment analysis of news and social media
-- On-chain data for crypto assets
-- Historical pattern recognition
-
-Each signal includes:
-- Entry price range
-- Stop-loss recommendations
-- Take-profit targets
-- Risk/reward ratio
-- Confidence score
-
-### Adaptive User Experience
-
-The platform adjusts to each user's experience level and preferences:
-
-- **Beginner Mode**: Simplified interface with educational tooltips
-- **Advanced Mode**: Full technical analysis tools and customization
-- **Expert Mode**: API access, advanced order types, and algorithm creation
-- **Custom Layouts**: Savable workspace configurations for different strategies
-
-### Blockchain Integration
-
-The Solana blockchain is leveraged for:
-
-- **Wallet Management**: Secure storage and transfer of digital assets
-- **Token Utility**: THC tokens for platform benefits and governance
-- **Staking System**: Earn passive income by staking THC or SOL
-- **Affiliate Program**: On-chain tracking of referrals and rewards
-- **Transparent History**: Immutable record of signal performance
-
-### Social Trading Features
-
-Users can engage with the trading community through:
-
-- Signal sharing with performance tracking
-- Discussion forums organized by asset class and strategy
-- Copy trading with customizable risk parameters
-- Trader leaderboards based on verifiable performance
-- Direct messaging with encryption for privacy
-
-## User Journeys
-
-### New Trader Journey
-
-1. **Onboarding**: Simplified registration with guided tour of basic features
-2. **Education**: Direct access to beginner resources and basic trading concepts
-3. **Practice**: Paper trading account with simulated signals
-4. **First Trade**: Guided process for executing first real trade
-5. **Progress Tracking**: Achievement system for completing educational modules
-
-### Experienced Trader Journey
-
-1. **Advanced Analysis**: Full suite of technical indicators and drawing tools
-2. **Strategy Development**: Backtesting tools and performance analytics
-3. **Signal Filtering**: Custom filters to match specific trading strategies
-4. **API Integration**: Direct connection to existing trading systems
-5. **Community Contribution**: Ability to publish signals and educational content
-
-### Crypto Enthusiast Journey
-
-1. **Wallet Integration**: Seamless connection with Phantom and other Solana wallets
-2. **Token Management**: Portfolio tracking for all Solana tokens and NFTs
-3. **Staking Hub**: Interface for staking THC and SOL with reward projections
-4. **Governance Participation**: Voting on platform development proposals
-5. **NFT Marketplace**: Trading and collecting THC-related digital assets
-
-## Technical Integrations
-
-### Exchange Connections
-
-TradeHybrid connects to various exchanges and brokers through secure API integrations:
-
-- **Cryptocurrency**: Direct exchange APIs with websocket for real-time data
-- **Traditional Markets**: 
-  - Alpaca API for stocks and ETFs
-  - OANDA API for forex and commodities
-- **Data Providers**: Multiple sources for price data, fundamentals, and news
-
-### AI/ML Implementation
-
-The AI system consists of several specialized models:
-
-- Time-series forecasting for price prediction
-- Natural language processing for news and social media analysis
-- Classification algorithms for pattern recognition
-- Anomaly detection for unusual market conditions
-- Reinforcement learning for strategy optimization
-
-### Security Infrastructure
-
-Security is implemented at multiple levels:
-
-- End-to-end encryption for all communications
-- Multi-factor authentication options
-- Key management with hardware security module support
-- Regular penetration testing and security audits
-- Cold storage options for digital assets
-
-## Business Model
-
-TradeHybrid employs a multi-faceted revenue model:
-
-1. **Subscription Tiers**: 
-   - Free: Basic features with limited signals
-   - Advanced: More signals and intermediate tools
-   - Premium: Full access to all signals and features
-   - Elite: Premium plus exclusive signals and priority support
-
-2. **Token Economy**:
-   - THC token utility for platform features
-   - Staking rewards from treasury allocation
-   - Trading fee discounts when paying with THC
-
-3. **Signal Marketplace**:
-   - Revenue share from expert signal providers
-   - Premium signal packages for specific markets
-   - Custom signal delivery for institutional clients
-
-4. **Affiliate Program**:
-   - Multi-level referral system with on-chain tracking
-   - Performance-based rewards for active referrers
-   - Special promotions for high-performing affiliates
-
-## Roadmap
-
-### Current Version (2.5.0)
-
-- Full desktop and mobile responsive interface
-- Solana wallet integration with Web3Auth support
-- Initial AI signal system with performance tracking
-- Basic trading dashboard with customizable widgets
-- Broker connections to Alpaca and OANDA
-
-### Near-Term Developments (3-6 months)
-
-- Advanced signal filtering and notification options
-- Enhanced social trading features with copy trading
-- Expanded educational content with interactive tutorials
-- Additional technical indicators and drawing tools
-- Mobile app release for iOS and Android
-
-### Long-Term Vision (6-12 months)
-
-- Decentralized governance system for platform decisions
-- Institutional-grade API access for algorithmic trading
-- Advanced portfolio optimization tools
-- Cross-chain asset support (Ethereum, Bitcoin, etc.)
-- Fiat on/off ramps for seamless trading
-
-## Conclusion
-
-TradeHybrid represents the convergence of traditional finance, blockchain technology, and artificial intelligence. By combining the best aspects of these domains, we're creating a platform that empowers traders with better information, more efficient execution, and a supportive community—all while leveraging the security and transparency of blockchain technology.
-
-The platform is designed for continuous evolution, with regular updates based on user feedback, market developments, and technological advancements. Our ultimate goal is to democratize access to sophisticated trading tools and strategies, making them available to traders of all experience levels worldwide.
+## Platform Description
+Trade Hybrid is a cutting-edge decentralized trading platform that transforms complex blockchain interactions into an intuitive, engaging user experience through AI-powered insights and gamified learning. The platform combines traditional trading infrastructure with blockchain technology, creating a unified experience for traders of all experience levels.
+
+## Core Components
+
+### 1. Frontend Interface
+- **React with TypeScript**: Core UI framework
+- **Tailwind CSS**: For responsive design
+- **Wallet Integration**: Multiple wallet support including Phantom and Web3Auth
+- **Interactive Dashboard**: Real-time market data visualization
+- **Profile Management**: User profile with wallet data, trading history, and learning progress
+
+### 2. Nexus Trading System (formerly ABATEV)
+- **Broker Aggregation**: Connects to multiple traditional and crypto brokers
+- **Trade Execution**: Automated execution of trades with multiple brokers
+- **Signal Processing**: Processes signals from various sources (TradingView, custom algorithms)
+- **Position Management**: Tracks and manages open positions across brokers
+- **Risk Management**: Enforces position size limits and stop-loss strategies
+
+### 3. AI Trading Signals
+- **OpenAI-powered Analysis**: Market analysis for multiple asset types
+- **Signal Generation**: Buy/sell signals with confidence ratings
+- **Market Sentiment Analysis**: Social media and news sentiment tracking
+- **Predictive Analytics**: Pattern recognition for potential market movements
+- **Custom Alert System**: Personalized alerts based on trading preferences
+
+### 4. Blockchain Integration
+- **Solana Web3.js**: Core blockchain integration
+- **THC Token**: Native utility token for platform features
+- **Multi-wallet Support**: Connect multiple wallets for different functions
+- **Token Tracking**: Real-time data from Birdeye and Raydium
+- **NFT Display**: View and manage NFT collections
+
+### 5. Staking System
+- **THC Token Staking**: Earn rewards through staking the platform's native token
+- **SOL Staking**: Validator integration for SOL staking
+- **Reward Distribution**: Automated reward distribution system
+- **Validator Management**: Monitoring and management of validator performance
+- **Commission Structure**: 1% validator commission with transparent reporting
+
+### 6. Learning Center
+- **Gamified Trading Education**: Interactive learning experiences
+- **Achievement System**: Unlock achievements for learning milestones
+- **Practice Trading**: Risk-free practice trading environment
+- **Knowledge Assessment**: Quizzes and challenges to test trading knowledge
+- **Community Insights**: Learn from experienced community members
+
+### 7. Trade Hybrid TV (TH TV)
+- **Live Trading Sessions**: Stream live trading analysis and sessions
+- **Educational Content**: Curated videos on trading strategies
+- **Market Updates**: Regular market update broadcasts
+- **Expert Interviews**: Interviews with trading and crypto experts
+- **HLS.js Implementation**: High-performance streaming technology
+
+### 8. Affiliate Matrix System
+- **Forsage-inspired Model**: Multi-level marketing structure
+- **Direct Crypto Payments**: Automated commission payments in crypto
+- **Slot Recycling**: Reinvestment mechanism for sustained growth
+- **Performance Tracking**: Track referral performance and earnings
+- **Visualization Tools**: Matrix position and network visualization
+
+### 9. Webhooks System
+- **TradingView Integration**: Process signals from TradingView alerts
+- **External System Notifications**: Integrate with external monitoring tools
+- **Custom Triggers**: Create custom action triggers based on events
+- **Notification Dispatch**: Send notifications across multiple channels
+- **Event Logging**: Comprehensive logging of all webhook interactions
+
+### 10. Authentication & Security
+- **Credential Challenge System**: Secure login process
+- **Whop ID Integration**: Master key for user data linkage
+- **Multi-factor Authentication**: Enhanced security options
+- **Wallet Signature Verification**: Verify ownership through signatures
+- **Session Management**: Secure session handling and expiration
+
+## Technical Infrastructure
+
+### Modular Architecture
+- **Service Separation**: Frontend, Nexus, Staking, Validator, Webhooks as separate services
+- **Docker Containerization**: Each service has its own container and configuration
+- **Independent Operation**: Services can run and scale independently
+- **Shared Data Layer**: PostgreSQL database for shared data
+- **Inter-service Communication**: API-based communication between services
+
+### Deployment Infrastructure
+- **Hetzner EX101 Server**: Dedicated server for backend services
+- **NGINX Reverse Proxy**: Route traffic to appropriate services
+- **Service Files**: Systemd service files for automatic service management
+- **Data Backups**: Automated backup systems for critical data
+- **Monitoring**: Performance and health monitoring for all services
+
+### Data Storage
+- **PostgreSQL Database**: Primary structured data storage
+- **Drizzle ORM**: Database schema management and migrations
+- **Blockchain State**: On-chain data for blockchain transactions
+- **Redis Caching**: High-performance caching for frequent requests
+- **File Storage**: Structured storage for documents and media
+
+## Key Integrations
+
+### Broker Integrations
+- **Alpaca**: US stocks and crypto trading
+- **Binance**: Cryptocurrency exchange
+- **MetaTrader**: Forex and CFD trading
+- **Interactive Brokers**: Global market access
+- **Custom Broker API**: Framework for adding additional brokers
+
+### Blockchain Integrations
+- **Solana**: Primary blockchain platform
+- **Birdeye**: Token price tracking and analytics
+- **Raydium**: DEX integration for token swaps
+- **Phantom Wallet**: Primary wallet integration
+- **Web3Auth**: Alternative wallet and authentication
+
+### External Services
+- **TradingView**: Signal source and chart integration
+- **OpenAI**: AI analysis and content generation
+- **Whop**: Subscription and payment platform
+- **Livestream Providers**: Integration for TH TV
+- **Social Media APIs**: For sentiment analysis and sharing
+
+## User Journey
+
+### Onboarding
+1. Registration with email or Whop ID
+2. Wallet connection (Phantom or Web3Auth)
+3. Profile setup and preferences
+4. Initial learning path assignment
+5. Introduction to platform features
+
+### Trading Experience
+1. Dashboard view of market data and portfolio
+2. AI signal review and analysis
+3. Trade execution through preferred broker
+4. Position monitoring and management
+5. Performance analytics and improvement suggestions
+
+### Learning Path
+1. Skill assessment and personalized learning plan
+2. Interactive lessons and practical exercises
+3. Knowledge quizzes and certification
+4. Community engagement and mentorship
+5. Achievement progression and rewards
+
+### Monetization
+1. THC token utility and value proposition
+2. Staking rewards and validator participation
+3. Affiliate matrix enrollment and team building
+4. Premium feature subscription options
+5. Trading fee structure and discounts
+
+## Development Roadmap
+
+### Phase 1: Core Infrastructure
+- Unified user data model and authentication
+- Modular service architecture implementation
+- Docker containerization and deployment setup
+- Database schema and migration framework
+- Basic API endpoints and service communication
+
+### Phase 2: User Experience
+- Dashboard design and implementation
+- Wallet connection and data display
+- Profile management and settings
+- Trading interface for signal viewing
+- Basic learning center functionality
+
+### Phase 3: Advanced Features
+- AI trading signal integration and display
+- Broker connection and trade execution
+- Staking interface and validator connection
+- Affiliate matrix visualization and management
+- TH TV integration and content delivery
+
+### Phase 4: Scaling and Optimization
+- Performance optimization and load testing
+- Enhanced security measures and auditing
+- Advanced analytics and reporting
+- Mobile responsiveness and potential app
+- Community features and social integration
+
+## Technical Challenges and Solutions
+
+### Challenge: Data Synchronization
+**Solution**: Implemented a centralized UserContext model with event-driven updates to ensure all services have access to the latest user data without constant database queries.
+
+### Challenge: Secure Broker Authentication
+**Solution**: Developed encrypted credential storage with per-user API keys and sandboxed environments for testing before live trading.
+
+### Challenge: Blockchain Integration Complexity
+**Solution**: Created abstraction layers for blockchain interactions to simplify frontend code and handle different wallet types consistently.
+
+### Challenge: AI Signal Accuracy
+**Solution**: Implemented confidence ratings and historical performance tracking for signals to build user trust and improve signal quality over time.
+
+### Challenge: System Scalability
+**Solution**: Designed modular architecture where each service can be independently scaled based on load, with shared resources managed through efficient caching.
+
+## Glossary of Terms
+
+- **THC**: Trade Hybrid Coin, the native utility token
+- **Nexus**: The unified trading system (formerly ABATEV)
+- **Matrix**: The affiliate marketing structure
+- **Validator**: Solana staking validator node
+- **AI Signals**: Automated trading recommendations
+- **TH TV**: Trade Hybrid Television streaming service
+- **Whop ID**: User identification from the Whop platform
+- **Position**: An open trade or investment
+- **Broker**: Third-party service executing trades
+- **Webhook**: Automated trigger for external events

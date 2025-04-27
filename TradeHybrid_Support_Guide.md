@@ -1,308 +1,281 @@
-# TradeHybrid Support Guide
-
-## Introduction
-
-This guide provides detailed troubleshooting steps for common user issues with TradeHybrid platform. It includes step-by-step resolution procedures, FAQs, and reference material for support staff.
-
-## Wallet Connection Issues
-
-### Issue: Black Screen After Wallet Connection
-
-**Symptoms:**
-- User connects wallet and sees a black screen
-- Console shows error related to "Buffer is not defined"
-
-**Resolution Steps:**
-1. Ask the user to refresh the page
-2. If the issue persists, clear browser cache and cookies
-3. Ensure the user has the latest version of the Phantom wallet extension
-4. Try an alternative browser (Chrome or Firefox recommended)
-
-**Root Cause:** 
-This is typically caused by a client-side JavaScript dependency conflict where Node.js Buffer API is not properly polyfilled in the browser environment.
-
-### Issue: Failed Wallet Connection
-
-**Symptoms:**
-- Error message "Unable to connect to wallet"
-- Wallet popup appears but connection never completes
-
-**Resolution Steps:**
-1. Verify the wallet is unlocked
-2. Check if the wallet has sufficient SOL for transaction fees (at least 0.01 SOL)
-3. Try the legacy connection method:
-   - Direct them to disconnect any current wallet connection
-   - Click "Connect Wallet" again and select Phantom
-   - If using mobile, suggest using the in-app browser of the Phantom app
-4. For persistent issues, suggest clearing browser permissions for the site and reconnecting
-
-**Root Cause:**
-Usually related to wallet extension state, permissions issues, or network connectivity problems.
-
-### Issue: RPC Connection Errors
-
-**Symptoms:**
-- Error messages about "Failed to fetch" or "Network error"
-- Transactions fail to process
-
-**Resolution Steps:**
-1. Verify the user's internet connection
-2. Suggest switching to a different network location
-3. Check [Solana network status](https://status.solana.com) for outages
-4. If the issue is widespread, escalate to engineering team to check our RPC provider
-
-**Root Cause:**
-May be caused by Solana network congestion, RPC endpoint limitations, or user's network issues.
-
-## Trading Signal Issues
-
-### Issue: No Signals Appearing
-
-**Symptoms:**
-- Signal list is empty
-- User reports "No signals found" message
-
-**Resolution Steps:**
-1. Verify user's membership tier (check `tokenMembership.tier` in their profile)
-2. For free tier users, explain that only 2 public signals are available
-3. For paid users:
-   - Check if signal filters are active (reset filters using the "Clear Filters" button)
-   - Verify the user's internet connection
-   - Try manually refreshing signals with the refresh button
-4. If the issue persists, check API status and escalate if needed
-
-**Root Cause:**
-Usually related to membership restrictions, active filters, or API connectivity issues.
-
-### Issue: Copy Trade Function Not Working
-
-**Symptoms:**
-- "Copy Trade" button doesn't respond
-- Copy action completes but nothing is copied to clipboard
-
-**Resolution Steps:**
-1. Confirm the user has granted clipboard permissions to the browser
-2. For iOS Safari users, explain clipboard limitations and suggest using the manual copy option
-3. Try using the "Copy" button in an expanded signal card instead of the quick action
-4. If using a secure browser, suggest disabling enhanced security features or using a different browser
-
-**Root Cause:**
-Browser security policies often restrict clipboard access unless specific permissions are granted.
-
-### Issue: Incorrect Signal Status
-
-**Symptoms:**
-- Signal shows as "active" when it should be completed or vice versa
-- Profit/loss calculation seems incorrect
-
-**Resolution Steps:**
-1. Verify if the user is looking at the correct timestamp for the signal
-2. Check if the signal was recently updated (within the last 5 minutes)
-3. Ask them to try refreshing the signal list
-4. For persistent issues, collect signal ID and user details and escalate to the signals team
-
-**Root Cause:**
-Signal status is usually updated every 5 minutes. Issues may occur due to caching or data synchronization delays.
-
-## Account and Billing Issues
-
-### Issue: Membership Benefits Not Active
-
-**Symptoms:**
-- User has purchased a higher tier but still sees limited features
-- Premium signals not visible after upgrade
-
-**Resolution Steps:**
-1. Verify the payment was successfully processed (check transaction hash if crypto payment)
-2. Check the user's current membership tier in the admin panel
-3. Ask them to sign out and sign back in to refresh their session
-4. For THC token purchases, verify the tokens were correctly received in our treasury wallet
-5. If all checks pass but issue persists, manually update their membership tier and escalate
-
-**Root Cause:**
-Usually related to payment processing delays or session caching issues.
-
-### Issue: THC Token Balance Not Updating
-
-**Symptoms:**
-- User has sent THC tokens but balance doesn't reflect the new amount
-- Staking rewards not appearing
-
-**Resolution Steps:**
-1. Verify the transaction on Solana Explorer using the tx hash
-2. Check if the transaction was sent to the correct wallet address
-3. For confirmed transactions not showing, ask them to refresh their wallet connection
-4. For staking rewards, explain the distribution schedule (daily at 00:00 UTC)
-
-**Root Cause:**
-Token balance synchronization happens at regular intervals and may not reflect immediately after transactions.
-
-## Performance Issues
-
-### Issue: Slow Chart Loading
-
-**Symptoms:**
-- Charts take a long time to render
-- Frequent timeouts when changing timeframes
-
-**Resolution Steps:**
-1. Suggest reducing the number of active indicators (limit to 3-5)
-2. Try using a simpler chart type (line chart instead of candlestick)
-3. For mobile users, recommend switching to WiFi if on cellular data
-4. Clear browser cache and reload
-
-**Technical Details:**
-Chart rendering is resource-intensive, especially with multiple indicators. Performance is impacted by:
-- Device processing power
-- Memory availability
-- Network connection quality
-- Number of active data subscriptions
-
-### Issue: Mobile App Crashes
-
-**Symptoms:**
-- App closes unexpectedly when opening certain pages
-- Freezes when changing chart settings
-
-**Resolution Steps:**
-1. Verify app version is latest (current: 2.5.0)
-2. Suggest force-closing the app and restarting
-3. Check device free storage (need minimum 500MB)
-4. For persistent issues, collect device information and app logs
-
-**Root Cause:**
-Most mobile crashes are related to memory limitations or unhandled edge cases in the mobile wrapper.
-
-## Data and Analytics Issues
-
-### Issue: Missing Historical Data
-
-**Symptoms:**
-- Gaps in chart history
-- Error message about "data not available"
-
-**Resolution Steps:**
-1. Verify the requested timeframe (explain that some assets have limited history)
-2. For crypto assets, we store maximum of 2 years of historical data
-3. For forex and stocks, data availability depends on the broker connection
-4. Suggest trying a different timeframe or data source
-
-**Root Cause:**
-Historical data availability varies by asset type, data provider, and timeframe.
-
-### Issue: Signal Performance Discrepancies
-
-**Symptoms:**
-- User reports different profit/loss than what's shown
-- Signal metrics don't match actual market movements
-
-**Resolution Steps:**
-1. Explain that signal performance is based on entry and exit at exact signal prices
-2. Actual execution may vary based on slippage, spreads, and execution timing
-3. For significant discrepancies, request screenshots and escalate to the signals team
-
-**Root Cause:**
-Signal performance calculation uses standardized metrics, which may differ from actual trading results due to execution factors.
-
-## Common User Questions
-
-### Q: How are trading signals generated?
-
-**Answer:** TradeHybrid signals come from three primary sources:
-1. AI algorithms analyzing market patterns and sentiment
-2. Professional traders partnered with TradeHybrid
-3. Aggregated community signals filtered by success rate
-
-Each signal includes a confidence rating and risk assessment based on historical performance.
-
-### Q: What happens if I lose connection during a trade?
-
-**Answer:** TradeHybrid operates primarily as a signal provider, not an execution platform. Your trades execute through your connected broker. If you lose connection:
-
-1. Orders already placed with your broker will still execute
-2. Pending orders in TradeHybrid that haven't been sent won't be executed
-3. Copy trading automation will pause until connection is restored
-
-We recommend setting appropriate stop losses with your broker for risk management.
-
-### Q: How do I reset my wallet connection?
-
-**Answer:** To reset your wallet connection:
-1. Go to Settings > Security > Wallet Connections
-2. Click "Disconnect Wallet"
-3. Clear site permissions in your wallet extension
-4. Refresh the page and reconnect
-
-This resolves most connection issues by establishing a fresh authentication session.
-
-### Q: Can I use multiple wallets with one account?
-
-**Answer:** Yes, TradeHybrid supports connecting multiple wallets to a single account:
-1. First, connect your primary wallet
-2. Go to Settings > Wallet Management > Add Additional Wallet
-3. Follow the connection process for the secondary wallet
-4. Verify both wallets appear in your wallet list
-
-Each wallet's assets will be displayed separately in your portfolio.
-
-## Technical Reference
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| SOLANA_RPC_URL | Custom Solana RPC endpoint | https://solana-mainnet.g.alchemy.com/v2/demo |
-| ALPACA_API_KEY | Alpaca broker API key | - |
-| ALPACA_API_SECRET | Alpaca broker API secret | - |
-| OANDA_API_KEY | OANDA broker API key | - |
-| OPENAI_API_KEY | OpenAI API key for market analysis | - |
-
-### Wallet Connection Process
-
-1. User initiates connection from UI
-2. System checks for wallet availability using both:
-   - Modern: `window.phantom?.solana`
-   - Legacy: `window.solana?.isPhantom`
-3. Connection request sent to available wallet
-4. Upon approval, signature request sent for authentication
-5. After successful signature, JWT token generated for session
-
-### Signal Status Lifecycle
-
-1. **Created**: Signal is first generated by source
-2. **Active**: Signal is currently valid and within trading parameters
-3. **Completed**: Signal has reached take profit or stop loss
-4. **Cancelled**: Signal was invalidated before completion
-5. **Expired**: Signal reached time limit without triggering
-
-Each status change triggers notifications and updates performance metrics.
-
-## Escalation Procedures
-
-### When to Escalate
-
-- User reports data loss or account security concerns
-- Payment processing issues involving more than $100
-- System-wide outages affecting multiple users
-- Bugs that prevent core functionality from working
-
-### How to Escalate
-
-1. Document the issue with:
-   - User ID and email
-   - Exact error messages
-   - Steps to reproduce
-   - Screenshots if available
-2. Create an escalation ticket in Zendesk with priority tag
-3. For urgent issues, use the #support-urgent Slack channel
-4. Follow up with the user with ticket number and ETA
-
-### After-Hours Support
-
-For issues requiring immediate attention outside regular hours:
-1. Check the on-call schedule in PagerDuty
-2. Contact the assigned engineer via the emergency contact system
-3. Use severity level "Critical" only for issues affecting:
-   - User fund security
-   - System-wide outages
-   - Data integrity problems
+# Trade Hybrid Support Guide
+
+## Common Issues and Troubleshooting
+
+### Wallet Connection Issues
+
+#### Phantom Wallet
+- **Issue**: Wallet doesn't connect or disconnects unexpectedly
+  - **Solution**: Refresh the browser and try connecting again
+  - **Solution**: Check that Phantom extension is up to date
+  - **Solution**: Try using a private/incognito window
+
+- **Issue**: Transaction signing fails
+  - **Solution**: Check wallet has sufficient SOL for gas fees
+  - **Solution**: Try reducing transaction complexity
+  - **Solution**: Check browser console for detailed error messages
+
+#### Web3Auth Integration
+- **Issue**: Social login fails to complete
+  - **Solution**: Clear browser cache and cookies
+  - **Solution**: Try an alternative social login provider
+  - **Solution**: Check for browser extensions blocking popups
+
+- **Issue**: Session doesn't persist between visits
+  - **Solution**: Check browser localStorage is enabled
+  - **Solution**: Ensure cookies are not being blocked
+  - **Solution**: Try a different browser
+
+### Trading Interface Problems
+
+#### Signal Display
+- **Issue**: AI signals not appearing
+  - **Solution**: Verify OpenAI API connection in admin panel
+  - **Solution**: Check for signal filters that might be hiding results
+  - **Solution**: Confirm user has sufficient THC balance for signal access
+
+- **Issue**: Signal details incomplete or incorrect
+  - **Solution**: Refresh the signals feed
+  - **Solution**: Verify TradingView webhook is configured correctly
+  - **Solution**: Check database connection for signal retrieval issues
+
+#### Broker Connections
+- **Issue**: Unable to connect to broker
+  - **Solution**: Verify API credentials are correctly entered
+  - **Solution**: Check broker service status
+  - **Solution**: Ensure firewall is not blocking API connections
+
+- **Issue**: Trade execution fails
+  - **Solution**: Check account has sufficient funds
+  - **Solution**: Verify symbol/asset is available for trading
+  - **Solution**: Review broker error message for specific issues
+
+### Staking System
+
+#### THC Staking
+- **Issue**: Staking transaction fails
+  - **Solution**: Ensure wallet has sufficient SOL for transaction fees
+  - **Solution**: Verify THC token balance is sufficient
+  - **Solution**: Check smart contract interaction in browser console
+
+- **Issue**: Rewards not appearing
+  - **Solution**: Confirm staking period has elapsed
+  - **Solution**: Check reward calculation parameters
+  - **Solution**: Verify reward distribution transaction on blockchain explorer
+
+#### SOL Staking
+- **Issue**: Cannot delegate to validator
+  - **Solution**: Ensure wallet has sufficient SOL (minimum + fees)
+  - **Solution**: Verify validator is active and accepting stakes
+  - **Solution**: Check for blockchain congestion affecting transactions
+
+- **Issue**: Unstaking delays
+  - **Solution**: Explain Solana's unstaking period (several epochs)
+  - **Solution**: Verify unstaking transaction was confirmed
+  - **Solution**: Check current epoch progress for expected completion
+
+### Affiliate Matrix System
+
+#### Matrix Registration
+- **Issue**: Cannot register in matrix
+  - **Solution**: Ensure prerequisite purchases are completed
+  - **Solution**: Verify wallet has sufficient funds
+  - **Solution**: Check smart contract interaction logs
+
+- **Issue**: Position not showing after purchase
+  - **Solution**: Wait for blockchain confirmation
+  - **Solution**: Refresh the matrix visualization
+  - **Solution**: Check transaction status on blockchain explorer
+
+#### Commission Payments
+- **Issue**: Commissions not received
+  - **Solution**: Verify referral was properly tracked
+  - **Solution**: Check commission payment transaction on blockchain
+  - **Solution**: Ensure minimum payout threshold was reached
+
+- **Issue**: Incorrect commission amount
+  - **Solution**: Review commission structure for specific level
+  - **Solution**: Verify purchase amount of downstream member
+  - **Solution**: Check for partial commissions due to recycling
+
+### Account Management
+
+#### Profile Settings
+- **Issue**: Cannot update profile information
+  - **Solution**: Check for input validation errors
+  - **Solution**: Verify database connection
+  - **Solution**: Clear browser cache and retry
+
+- **Issue**: Profile picture upload fails
+  - **Solution**: Check file size and format
+  - **Solution**: Verify storage permissions
+  - **Solution**: Try a different browser or device
+
+#### Authentication
+- **Issue**: Login loop or authentication failures
+  - **Solution**: Clear browser cookies and cache
+  - **Solution**: Reset password if using email authentication
+  - **Solution**: Check for clock synchronization issues (for signature verification)
+
+- **Issue**: Session expires too quickly
+  - **Solution**: Check session timeout settings
+  - **Solution**: Ensure "Remember Me" option is selected
+  - **Solution**: Verify no security settings are clearing cookies
+
+### Platform Performance
+
+#### Speed Issues
+- **Issue**: Slow dashboard loading
+  - **Solution**: Check internet connection speed
+  - **Solution**: Clear browser cache
+  - **Solution**: Disable unnecessary browser extensions
+
+- **Issue**: Trading interface lag
+  - **Solution**: Reduce number of open charts
+  - **Solution**: Close unused browser tabs
+  - **Solution**: Check for background processes consuming resources
+
+#### Data Display
+- **Issue**: Charts not loading correctly
+  - **Solution**: Verify TradingView widget connection
+  - **Solution**: Check browser console for JavaScript errors
+  - **Solution**: Try different chart timeframes or symbols
+
+- **Issue**: Missing portfolio data
+  - **Solution**: Refresh connected wallets
+  - **Solution**: Check blockchain API connection status
+  - **Solution**: Verify asset data source connections
+
+### Technical Requirements
+
+#### Browser Compatibility
+- **Recommended Browsers**:
+  - Chrome (version 90+)
+  - Firefox (version 88+)
+  - Brave (version 1.30+)
+  - Edge (version 90+)
+
+- **Known Issues**:
+  - Safari has limited Web3 wallet support
+  - Mobile browsers may have limited functionality
+  - IE is not supported
+
+#### System Requirements
+- **Minimum Requirements**:
+  - 4GB RAM
+  - Modern dual-core processor
+  - 10 Mbps internet connection
+  - 1280 x 720 screen resolution
+
+- **Recommended Requirements**:
+  - 8GB+ RAM
+  - Modern quad-core processor
+  - 50+ Mbps internet connection
+  - 1920 x 1080 or higher screen resolution
+
+#### Mobile Support
+- **Current Limitations**:
+  - Limited chart functionality on small screens
+  - Some features require desktop for full experience
+  - Wallet connections may be restricted on iOS
+
+- **Mobile-Optimized Features**:
+  - Portfolio monitoring
+  - Signal notifications
+  - Basic trading functions
+  - Learning content access
+
+## Common Error Codes
+
+### Authentication Errors
+- **ERR_AUTH_001**: Invalid credentials
+- **ERR_AUTH_002**: Session expired
+- **ERR_AUTH_003**: Wallet signature verification failed
+- **ERR_AUTH_004**: Account locked (too many failed attempts)
+- **ERR_AUTH_005**: Invalid wallet connection
+
+### Transaction Errors
+- **ERR_TX_001**: Insufficient funds
+- **ERR_TX_002**: Transaction rejected by blockchain
+- **ERR_TX_003**: Gas fee estimation failed
+- **ERR_TX_004**: Transaction timeout
+- **ERR_TX_005**: Slippage tolerance exceeded
+
+### Broker Errors
+- **ERR_BRK_001**: Invalid API credentials
+- **ERR_BRK_002**: Broker connection timeout
+- **ERR_BRK_003**: Order execution failed
+- **ERR_BRK_004**: Symbol not supported
+- **ERR_BRK_005**: Market closed for trading
+
+### System Errors
+- **ERR_SYS_001**: Database connection error
+- **ERR_SYS_002**: API rate limit exceeded
+- **ERR_SYS_003**: Service unavailable
+- **ERR_SYS_004**: Data synchronization error
+- **ERR_SYS_005**: Resource allocation error
+
+## Security Guidelines
+
+### Account Security
+- Enable multi-factor authentication when available
+- Use hardware wallets for large holdings
+- Never share private keys or seed phrases
+- Use unique passwords for platform accounts
+- Regularly check connected applications in wallet settings
+
+### Trading Security
+- Start with small positions to test execution
+- Verify broker details before connecting API keys
+- Use read-only API keys when possible
+- Set up email/SMS alerts for account activity
+- Regularly audit trading history for unauthorized activity
+
+### Phishing Prevention
+- Always verify you're on tradehybrid.club
+- Check for SSL certificate (lock icon in browser)
+- Be wary of emails requesting account information
+- Never click suspicious links claiming to be from Trade Hybrid
+- Official communication will never ask for private keys or passwords
+
+## Contact Support
+
+### Support Channels
+- **Email Support**: support@tradehybrid.club
+- **Live Chat**: Available on website during business hours
+- **Community Forum**: community.tradehybrid.club
+- **Telegram Group**: t.me/tradehybrid_official
+- **Discord Server**: discord.gg/tradehybrid
+
+### Information to Provide
+- Username or Whop ID
+- Browser and version
+- Operating system
+- Detailed description of issue
+- Screenshots of errors (if applicable)
+- Transaction IDs (for transaction issues)
+- Time and date issue occurred
+
+### Response Times
+- **Critical Issues**: 1-4 hours
+- **Account Access Issues**: 4-12 hours
+- **Trading Problems**: 4-12 hours
+- **General Questions**: 24-48 hours
+- **Feature Requests**: 3-5 business days
+
+## Platform Status
+
+### Status Monitoring
+- Check current platform status: status.tradehybrid.club
+- Subscribe to status updates via email or SMS
+- Follow @TH_Status on Twitter for real-time updates
+
+### Scheduled Maintenance
+- Routine maintenance: Tuesdays 2:00-4:00 AM UTC
+- Major updates: Announced 7 days in advance
+- Emergency maintenance: Announced as soon as possible
+
+### Known Issues
+- Refer to status page for current known issues
+- Check release notes for resolved issues
+- Review community forum for user-reported issues

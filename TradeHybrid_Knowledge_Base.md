@@ -1,154 +1,227 @@
-# TradeHybrid Knowledge Base
+# Trade Hybrid Knowledge Base
 
-## Platform Overview
+## System Architecture
 
-TradeHybrid is a decentralized trading platform that combines blockchain technology, AI-driven market insights, and adaptive user experience to revolutionize digital asset trading. The platform integrates traditional trading tools with blockchain capabilities to provide a comprehensive trading experience.
+### Service Breakdown
+- **Frontend**: React-based UI accessible at tradehybrid.club
+- **Nexus**: Trading system with broker integrations (formerly ABATEV)
+- **Staking**: THC and SOL staking service
+- **Validator**: Solana validator node service
+- **Webhooks**: External integration service for TradingView and other platforms
 
-### Core Components
+### Database Schema
+- **Users**: User profiles and authentication data
+- **Wallets**: Connected wallet information
+- **Transactions**: Platform transaction history
+- **Signals**: AI and TradingView trading signals
+- **Positions**: Open and closed trading positions
+- **Brokers**: Broker connection details
+- **Matrix**: Affiliate system structure
 
-- **Trading Dashboard**: A customizable interface with real-time market data, charts, and trading tools
-- **Signal System**: AI-powered trading signals with performance tracking and copy trading functionality
-- **Wallet Integration**: Support for Phantom wallet and Web3Auth for secure crypto transactions
-- **Token System**: THC (TradeHybrid Coin) for platform utility and staking rewards
-- **Learning Center**: Educational resources for traders of all experience levels
-- **Social Features**: Community interaction and trade sharing capabilities
+### API Structure
+- **REST APIs**: Primary communication method between services
+- **WebSockets**: Real-time updates for prices, signals, and chat
+- **GraphQL**: Used for complex data queries (planned)
 
-## User Account Management
+## Technical Specifications
 
-### Registration and Login
+### Validator Details
+- **Commission**: 1%
+- **Validator Account**: 5Mp3EF1donYwLxhe5hs6HoWpAucZGLZ76NKRNztkjEej
+- **THC Token Address**: 4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4
 
-- Users can register with email/password or connect directly with a Solana wallet
-- Web3Auth integration provides a seamless authentication experience
-- Multiple login methods supported (traditional credentials, wallet connection)
+### Wallet Connections
+- **Phantom Implementation**: Direct connection with Web3.js
+- **Web3Auth Implementation**: Social login fallback with custody solution
+- **Wallet Features**: View coins, NFTs, THC balance, transaction history
 
-### Account Tiers
+### Authentication Flow
+- **Initial Connection**: Choose wallet or Web3Auth
+- **Credential Challenge**: Sign message to prove ownership
+- **Session Management**: JWT-based with refresh token rotation
+- **Whop Integration**: Uses Whop ID as master user identifier
 
-1. **Basic** (Free): Limited signals, basic charting tools, educational content
-2. **Advanced**: More signals, advanced charting, educational content
-3. **Premium**: Full signal access, all platform features, premium education
-4. **Elite**: All features plus exclusive signals and priority support
+## User Interfaces
 
-### Wallet Connection
+### Dashboard
+- **Market Overview**: Current market conditions across asset classes
+- **Portfolio Summary**: Holdings, performance, open positions
+- **Signal Feeds**: Latest AI and human-generated trading signals
+- **Quick Actions**: Fast access to trading and staking functions
 
-- **Supported Wallets**: Phantom (primary), other Solana wallets through adapter
-- **Connection Methods**:
-  1. Modern method: `window.phantom.solana.connect()`
-  2. Legacy method: `window.solana.connect()` (for older browser extensions)
-- **Authentication**: Message signing for secure wallet authentication
+### Trading Interface
+- **Signal Details**: In-depth analysis of trading signals
+- **Broker Selection**: Choose broker for trade execution
+- **Position Sizing**: Risk management tools for proper sizing
+- **Execution Options**: Market, limit, stop orders
+- **Position Management**: Modify, close, or add to positions
 
-## Trading Features
+### Staking Interface
+- **THC Staking**: Stake THC for rewards
+- **SOL Staking**: Delegate SOL to platform validator
+- **Rewards Dashboard**: Track earnings from staking
+- **Unstaking Options**: Liquidity and withdrawal settings
+- **Compounding Tools**: Reinvest earnings automatically
 
-### Trading Dashboard
+### Wallet Interface
+- **Asset Display**: All coins and tokens with current values
+- **NFT Gallery**: Visual display of owned NFTs
+- **Transaction History**: Chronological list of wallet transactions
+- **Purchase Options**: Buy THC with other cryptocurrencies
+- **Connection Management**: Connect/disconnect wallets
 
-- Multiple chart types (candlestick, line, bar, etc.)
-- Technical indicators (Moving Averages, RSI, MACD, etc.)
-- Custom layouts and saved configurations
-- Multi-timeframe analysis
+### Affiliate Matrix
+- **Matrix Visualization**: Visual representation of network structure
+- **Earnings Tracker**: Commission earnings from downline
+- **Recruitment Tools**: Referral links and marketing materials
+- **Slot Management**: Purchase and recycling of matrix positions
+- **Payout History**: Record of all affiliate payments
 
-### Signal System
+## Trading System (Nexus)
 
-- **Signal Sources**: AI algorithms, professional traders, community
-- **Signal Types**: Buy/Sell signals with entry, stop-loss, and take-profit levels
-- **Time Frames**: Multiple time frames from minutes to daily charts
-- **Performance Tracking**: Success rates, average profits, historical performance
-- **Copy Trading**: Automatically copy signals with customizable risk management
+### Broker Integrations
+- **Alpaca**: Stocks and crypto trading
+- **Binance**: Cryptocurrency exchange
+- **MetaTrader**: Forex and CFD trading
+- **Interactive Brokers**: Global markets
+- **Manual Execution**: Fallback for unintegrated brokers
 
-### Signal Performance Visualization
+### Signal Processing
+- **TradingView Webhooks**: Direct signal integration
+- **AI Analysis**: OpenAI-powered market analysis
+- **Technical Indicators**: Automated indicator-based signals
+- **Social Sentiment**: Reddit, Twitter sentiment analysis
+- **Signal Rating**: Quality assessment of signal sources
 
-- Animated price charts showing signal performance
-- Statistical analysis of signal success rates
-- Filtering by signal type, source, and performance metrics
-- Real-time updates for active signals
+### Risk Management
+- **Position Sizing**: Based on account size and risk tolerance
+- **Stop-Loss Automation**: Automatic stop-loss placement
+- **Take-Profit Strategies**: Multiple take-profit targets
+- **Correlation Analysis**: Avoid overexposure to correlated assets
+- **Drawdown Protection**: Account protection measures
 
-## Wallet and Crypto Features
+## Token Economics
 
-### THC Token Utility
+### THC Token
+- **Utility**: Platform access, fee reduction, staking rewards
+- **Purchasing**: Available through platform with other cryptocurrencies
+- **Staking Rewards**: Earn passive income through staking
+- **Fee Structure**: Reduced trading fees for THC holders
+- **Value Drivers**: Platform growth, burning mechanisms, utility expansion
 
-- Platform currency for premium features
-- Staking rewards and governance
-- Trading fee discounts
-- Access to exclusive trading signals
+### Pricing Sources
+- **Birdeye Integration**: Primary price feed for Solana tokens
+- **Raydium Integration**: Secondary price verification
+- **Aggregated Pricing**: Combined data for accurate pricing
+- **Historical Charts**: Price history visualization
+- **Market Depth**: Order book visualization
 
-### Staking
+## Learning Center
 
-- Flexible staking options with varying lock periods
-- Tiered rewards based on staking amount and duration
-- Auto-compounding options for maximizing returns
+### Educational Content
+- **Trading Basics**: Fundamental trading concepts
+- **Technical Analysis**: Chart patterns and indicators
+- **Fundamental Analysis**: Economic factors affecting markets
+- **Risk Management**: Position sizing and risk control
+- **Psychology**: Trading mindset and emotional control
 
-### NFT Marketplace
+### Achievement System
+- **Progress Tracking**: Learning milestone tracking
+- **Skill Certification**: Verify and showcase trading knowledge
+- **Rewards**: THC token rewards for educational achievements
+- **Community Recognition**: Profile badges and leaderboards
+- **Practical Challenges**: Apply knowledge in simulated scenarios
 
-- Trading-related NFTs with utility on the platform
-- Exclusive signal access through NFT ownership
-- Collection and display in user profile
+## Streaming Service (TH TV)
 
-## Broker Connections
+### Content Types
+- **Live Trading**: Watch expert traders in real-time
+- **Market Analysis**: Regular market condition updates
+- **Educational Series**: Structured learning content
+- **Expert Interviews**: Insights from industry leaders
+- **Community Spotlights**: Successful community members
 
-### Supported Brokers
+### Technical Implementation
+- **HLS.js**: High-performance streaming library
+- **Content Delivery Network**: Optimized global streaming
+- **Adaptive Bitrate**: Quality adjustment based on connection
+- **Recording Archive**: Access to past broadcasts
+- **Interactive Features**: Live chat and Q&A
 
-- Alpaca (stocks, ETFs)
-- OANDA (forex)
-- Direct integration with crypto exchanges
+## Affiliate System
 
-### API Integration
+### Forsage Model Implementation
+- **Matrix Structure**: X3, X4, or custom matrix patterns
+- **Direct Payments**: Smart contract-based commission distribution
+- **Slot Recycling**: Re-entry mechanism for sustained growth
+- **Smart Contract Security**: Audited contract implementation
+- **Transparent Tracking**: Real-time earnings visibility
 
-- Secure API key storage and management
-- Real-time position synchronization
-- Automated trade execution from signals
+### Commission Structure
+- **Level 1**: Direct referral commission
+- **Level 2+**: Downstream commission structure
+- **Override Bonuses**: Leadership and performance bonuses
+- **THC Rewards**: Additional platform token rewards
+- **Payment Methods**: Multiple cryptocurrency payment options
 
-## Common Issues and Solutions
+## Development Standards
 
-### Wallet Connection Issues
+### Code Organization
+- **Component-Based Architecture**: Reusable UI components
+- **Service-Oriented Backend**: Independent microservices
+- **Shared Libraries**: Common code in shared packages
+- **State Management**: Context API and Redux where appropriate
+- **TypeScript**: Strong typing throughout the codebase
 
-- **Black Screen After Connection**: This is usually caused by browser compatibility issues with the Buffer module. Solution: Wait for the screen to reload or manually refresh the page.
-- **Connection Fails**: Ensure the wallet extension is installed and unlocked. Try using the legacy connection method if modern method fails.
-- **Wallet Shows Connected But App Doesn't Recognize**: Try disconnecting and reconnecting the wallet, or clearing browser cache.
+### Testing Framework
+- **Unit Tests**: Individual function and component testing
+- **Integration Tests**: Cross-component and service testing
+- **End-to-End Tests**: Complete user flow testing
+- **Performance Testing**: Load and stress testing
+- **Security Testing**: Vulnerability assessment
 
-### Signal-Related Issues
+### Deployment Process
+- **Docker Containers**: Containerized service deployment
+- **CI/CD Pipeline**: Automated testing and deployment
+- **Environment Management**: Dev, staging, production environments
+- **Rollback Procedures**: Emergency rollback protocols
+- **Monitoring**: Performance and error tracking
 
-- **No Signals Showing**: Check your membership tier - some signals are only available to higher-tier members.
-- **Copy Trading Not Working**: Ensure your broker API is correctly configured and has sufficient permissions.
-- **Signal Notifications Not Received**: Check notification settings in both the app and your device.
+## Security Measures
 
-### Performance and Data Issues
+### Data Protection
+- **Encryption**: Sensitive data encryption at rest and in transit
+- **API Security**: Rate limiting and authentication
+- **Input Validation**: Comprehensive validation against attacks
+- **Session Management**: Secure cookie handling and timeout policies
+- **Audit Logging**: Comprehensive activity logging
 
-- **Slow Chart Loading**: Reduce the number of indicators or switch to a simpler chart type.
-- **Missing Historical Data**: Some assets may have limited historical data available, especially newer cryptocurrencies.
-- **Price Discrepancies**: Minor differences may exist between data providers. For trading decisions, always refer to your broker's quoted prices.
+### Blockchain Security
+- **Wallet Isolation**: Separation of signing and viewing permissions
+- **Transaction Confirmation**: Multi-step verification for transactions
+- **Hardware Wallet Support**: Integration with secure hardware wallets
+- **Signature Verification**: Cryptographic verification of all transactions
+- **Smart Contract Audits**: Third-party security audits
 
-## Support Contact Information
+### Compliance
+- **KYC/AML**: Know Your Customer and Anti-Money Laundering procedures
+- **Regulatory Adherence**: Compliance with relevant financial regulations
+- **Privacy Policy**: Transparent data usage and protection policies
+- **Terms of Service**: Clear usage guidelines and limitations
+- **Dispute Resolution**: Formal process for resolving user issues
 
-- **Email Support**: support@tradehybrid.com
-- **Live Chat**: Available during trading hours (24/5 for forex, 9:30 AM - 4:00 PM ET for stocks)
-- **Community Forum**: community.tradehybrid.com for peer support
+## Maintenance and Support
 
-## Technical Information
+### Update Process
+- **Release Schedule**: Regular feature and security updates
+- **Deprecation Policy**: Clear timeline for feature changes
+- **Beta Testing**: Community involvement in testing
+- **Changelog**: Detailed documentation of changes
+- **Feature Requests**: User-driven development prioritization
 
-### System Requirements
-
-- **Web Browser**: Chrome 80+, Firefox 75+, Edge 80+, Safari 13+
-- **Mobile**: iOS 13+ or Android 8+
-- **Wallet Extensions**: Latest version of Phantom or compatible Solana wallet
-- **Internet**: Stable broadband connection (minimum 5 Mbps)
-
-### API Endpoints
-
-- Trading API: `/api/trading`
-- Signal API: `/api/signals`
-- Wallet API: `/api/wallet`
-- User Data API: `/api/user`
-- Education API: `/api/learning`
-
-## Release Information
-
-### Current Version
-
-- Version: 2.5.0
-- Release Date: April 2025
-
-### Recent Updates
-
-- Added animated signal performance visualization
-- Enhanced wallet connection with better fallback methods
-- Improved broker API integration with additional security features
-- New educational content in the learning center
-- Performance optimizations for chart rendering
+### Support Channels
+- **Help Center**: Comprehensive knowledge base
+- **Ticket System**: Issue tracking and resolution
+- **Community Forum**: Peer-to-peer assistance
+- **Live Chat**: Real-time support for critical issues
+- **Video Tutorials**: Visual guidance for common tasks
