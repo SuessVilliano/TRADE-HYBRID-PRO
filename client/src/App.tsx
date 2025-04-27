@@ -51,6 +51,7 @@ import { BrokerApiSettingsPage } from './pages/BrokerApiSettingsPage';
 import ConnectionsPage from './pages/connections';
 import ConnectionsSimplePage from './pages/connections-simple';
 import NinjaTraderConnectionPage from './pages/NinjaTraderConnectionPage';
+import BrokerDashboard from './pages/broker-dashboard';
 
 // Trading & Markets
 import AdvancedTradingDashboard from './pages/advanced-trading-dashboard';
@@ -195,6 +196,7 @@ const App: React.FC = () => {
                   <Route path="/webhook-logs" element={<ProtectedRoute><WebhookLogsPage /></ProtectedRoute>} />
                   <Route path="/broker-api-settings" element={<ProtectedRoute><BrokerApiSettingsPage /></ProtectedRoute>} />
                   <Route path="/ninjatrader-connection" element={<ProtectedRoute><NinjaTraderConnectionPage /></ProtectedRoute>} />
+                  <Route path="/broker-dashboard" element={<ProtectedRoute><BrokerDashboard /></ProtectedRoute>} />
                   <Route path="/trading-bots" element={<ProtectedRoute><BotsView /></ProtectedRoute>} />
                   {/* Redirect for backward compatibility */}
                   <Route path="/bots" element={<Navigate to="/trading-bots" replace />} />
