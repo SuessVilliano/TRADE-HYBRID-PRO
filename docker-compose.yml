@@ -1,0 +1,123 @@
+version: '3.8'
+
+services:
+  # Database service
+  postgres:
+    image: postgres:14
+    container_name: tradehybrid-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tradehybrid}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tradehybrid_password}
+      POSTGRES_DB: ${POSTGRES_DB:-tradehybrid}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - tradehybrid-network
+    restart: always
+
+  # Nexus service (broker aggregator)
+  nexus:
+    build:
+      context: ./nexus
+      dockerfile: Dockerfile
+    container_name: tradehybrid-nexus
+    depends_on:
+      - postgres
+    env_file:
+      - ./nexus/.env
+    ports:
+      - "4000:4000"
+    networks:
+      - tradehybrid-network
+    restart: always
+
+  # Webhook service (signal receiver)
+  webhooks:
+    build:
+      context: ./webhooks
+      dockerfile: Dockerfile
+    container_name: tradehybrid-webhooks
+    depends_on:
+      - postgres
+      - nexus
+    env_file:
+      - ./webhooks/.env
+    ports:
+      - "5000:5000"
+    networks:
+      - tradehybrid-network
+    restart: always
+
+  # Staking service
+  staking:
+    build:
+      context: ./staking
+      dockerfile: Dockerfile
+    container_name: tradehybrid-staking
+    depends_on:
+      - postgres
+    env_file:
+      - ./staking/.env
+    ports:
+      - "3500:3500"
+    networks:
+      - tradehybrid-network
+    restart: always
+
+  # Frontend service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: tradehybrid-frontend
+    depends_on:
+      - nexus
+      - webhooks
+      - staking
+    env_file:
+      - ./frontend/.env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./frontend/nginx/ssl:/etc/nginx/ssl
+      - ./frontend/nginx/config:/etc/nginx/conf.d
+    networks:
+      - tradehybrid-network
+    restart: always
+
+  # Monitoring stack
+  prometheus:
+    image: prom/prometheus
+    container_name: tradehybrid-prometheus
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - tradehybrid-network
+    restart: always
+
+  grafana:
+    image: grafana/grafana
+    container_name: tradehybrid-grafana
+    depends_on:
+      - prometheus
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - tradehybrid-network
+    restart: always
+
+networks:
+  tradehybrid-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:
