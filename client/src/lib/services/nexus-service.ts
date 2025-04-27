@@ -611,7 +611,7 @@ export async function detectMarketManipulation(
 /**
  * Get supported broker types from Nexus
  */
-export async function getSupportedBrokerTypes(): Promise<Array<{id: string, name: string, isSupported: boolean}>> {
+export async function getSupportedBrokerTypes(): Promise<Array<{id: string, name: string, isSupported: boolean, hasDemo: boolean}>> {
   try {
     const response = await fetch('/api/nexus/broker-types');
     
@@ -624,6 +624,84 @@ export async function getSupportedBrokerTypes(): Promise<Array<{id: string, name
   } catch (error) {
     console.error('Error getting supported broker types:', error);
     return [];
+  }
+}
+
+/**
+ * Interface for broker credentials
+ */
+export interface BrokerCredentials {
+  brokerId: string;
+  apiKey?: string;
+  apiSecret?: string;
+  accountId?: string;
+  username?: string;
+  password?: string;
+  token?: string;
+  useDemo?: boolean;
+  additionalParams?: Record<string, string>;
+}
+
+/**
+ * Test broker connection with provided credentials
+ */
+export async function testBrokerConnection(credentials: BrokerCredentials): Promise<{
+  success: boolean;
+  message: string;
+  accountInfo?: any;
+}> {
+  try {
+    const response = await fetch('/api/nexus/test-broker-connection', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(credentials)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error(`Error testing connection to ${credentials.brokerId}:`, error);
+    return {
+      success: false,
+      message: `Failed to test connection: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
+  }
+}
+
+/**
+ * Get account information from a connected broker
+ */
+export async function getBrokerAccountInfo(brokerId: string, useDemo?: boolean): Promise<{
+  success: boolean;
+  message: string;
+  accountInfo?: any;
+}> {
+  try {
+    const queryParams = new URLSearchParams({
+      brokerId,
+      ...(useDemo !== undefined && { useDemo: useDemo.toString() })
+    });
+    
+    const response = await fetch(`/api/nexus/broker-account-info?${queryParams.toString()}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error(`Error getting account info for ${brokerId}:`, error);
+    return {
+      success: false,
+      message: `Failed to retrieve account information: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
   }
 }
 

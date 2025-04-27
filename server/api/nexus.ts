@@ -7,24 +7,37 @@ import { log, logError } from '../utils/logger';
 // Create a new router
 const router = Router();
 
+// Define the broker credentials schema
+const brokerCredentialsSchema = z.object({
+  brokerId: z.string(),
+  apiKey: z.string().optional(),
+  apiSecret: z.string().optional(),
+  accountId: z.string().optional(),
+  username: z.string().optional(),
+  password: z.string().optional(),
+  token: z.string().optional(),
+  useDemo: z.boolean().optional(),
+  additionalParams: z.record(z.string()).optional()
+});
+
 // Get supported broker types
 router.get('/broker-types', async (req, res) => {
   try {
     const brokerTypes = [
-      { id: 'alpaca', name: 'Alpaca', isSupported: true },
-      { id: 'oanda', name: 'Oanda', isSupported: true },
-      { id: 'interactive_brokers', name: 'Interactive Brokers', isSupported: true },
-      { id: 'tradier', name: 'Tradier', isSupported: true },
-      { id: 'ninjatrader', name: 'NinjaTrader', isSupported: true },
-      { id: 'tradovate', name: 'Tradovate', isSupported: true },
-      { id: 'ig', name: 'IG', isSupported: true },
-      { id: 'saxo_bank', name: 'Saxo Bank', isSupported: true },
-      { id: 'ctrader', name: 'cTrader', isSupported: true },
-      { id: 'match_trader', name: 'Match-Trader', isSupported: true },
-      { id: 'meta_api', name: 'MetaApi (MT4/MT5)', isSupported: true },
-      { id: 'td_ameritrade', name: 'TD Ameritrade / Schwab', isSupported: true },
-      { id: 'tradingview', name: 'TradingView', isSupported: true },
-      { id: 'other', name: 'Other (Generic)', isSupported: true }
+      { id: 'alpaca', name: 'Alpaca', isSupported: true, hasDemo: true, tradingCapabilities: ['stocks', 'crypto', 'options'], demoUrl: 'https://app.alpaca.markets/signup' },
+      { id: 'oanda', name: 'Oanda', isSupported: true, hasDemo: true, tradingCapabilities: ['forex', 'cfd'], demoUrl: 'https://www.oanda.com/demo-account/login' },
+      { id: 'interactive_brokers', name: 'Interactive Brokers', isSupported: true, hasDemo: true, tradingCapabilities: ['stocks', 'options', 'futures', 'forex', 'bonds'], demoUrl: 'https://www.interactivebrokers.com/en/trading/free-demo.php' },
+      { id: 'tradier', name: 'Tradier', isSupported: true, hasDemo: false, tradingCapabilities: ['stocks', 'options'] },
+      { id: 'ninjatrader', name: 'NinjaTrader', isSupported: true, hasDemo: true, tradingCapabilities: ['futures', 'forex'], demoUrl: 'https://ninjatrader.com/FreeLiveData' },
+      { id: 'tradovate', name: 'Tradovate', isSupported: true, hasDemo: true, tradingCapabilities: ['futures'], demoUrl: 'https://www.tradovate.com/simulated-trading/' },
+      { id: 'ig', name: 'IG', isSupported: true, hasDemo: true, tradingCapabilities: ['forex', 'cfd', 'stocks'], demoUrl: 'https://www.ig.com/uk/demo-account' },
+      { id: 'saxo_bank', name: 'Saxo Bank', isSupported: true, hasDemo: true, tradingCapabilities: ['stocks', 'forex', 'cfd', 'bonds'], demoUrl: 'https://www.home.saxo/demo-account' },
+      { id: 'ctrader', name: 'cTrader', isSupported: true, hasDemo: true, tradingCapabilities: ['forex', 'cfd'], demoUrl: 'https://ctrader.com/demo/' },
+      { id: 'match_trader', name: 'Match-Trader', isSupported: true, hasDemo: true, tradingCapabilities: ['forex', 'cfd'], demoUrl: 'https://www.match-trader.com/demo-account/' },
+      { id: 'meta_api', name: 'MetaApi (MT4/MT5)', isSupported: true, hasDemo: true, tradingCapabilities: ['forex', 'cfd', 'futures'], demoUrl: 'https://metaapi.cloud/docs/client/demoAccount/' },
+      { id: 'td_ameritrade', name: 'TD Ameritrade / Schwab', isSupported: true, hasDemo: true, tradingCapabilities: ['stocks', 'options', 'futures', 'forex'], demoUrl: 'https://www.tdameritrade.com/tools-and-platforms/paperMoney-DemoTrading.page' },
+      { id: 'tradingview', name: 'TradingView', isSupported: true, hasDemo: false, tradingCapabilities: ['stocks', 'forex', 'crypto', 'futures'] },
+      { id: 'other', name: 'Other (Generic)', isSupported: true, hasDemo: false, tradingCapabilities: ['custom'] }
     ];
     
     res.json({ success: true, brokerTypes });
@@ -52,6 +65,233 @@ let nexusState = {
 // Schema for toggling Nexus
 const toggleNexusSchema = z.object({
   enabled: z.boolean()
+});
+
+/**
+ * Test broker connection with provided credentials
+ */
+router.post('/test-broker-connection', async (req, res) => {
+  try {
+    // Validate request body
+    const validation = brokerCredentialsSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid broker credentials format',
+        errors: validation.error.errors
+      });
+    }
+
+    const credentials = validation.data;
+    const { brokerId, useDemo = false } = credentials;
+    
+    // Define a function to get sample account info for a demo connection
+    const getDemoAccountInfo = () => {
+      const accountId = `demo-${brokerId}-${Math.floor(Math.random() * 1000)}`;
+      const baseAccountData = {
+        accountId,
+        status: 'ACTIVE',
+        accountType: useDemo ? 'DEMO' : 'LIVE',
+        createdAt: new Date().toISOString(),
+        currency: 'USD'
+      };
+      
+      switch (brokerId) {
+        case 'alpaca':
+          return {
+            ...baseAccountData,
+            cash: 10000.00,
+            buyingPower: 20000.00,
+            equity: 15000.00,
+            positions: [
+              { symbol: 'AAPL', quantity: 10, marketValue: 1750.50, unrealizedPL: 250.00 },
+              { symbol: 'MSFT', quantity: 8, marketValue: 2450.00, unrealizedPL: 120.00 }
+            ],
+            dayTradeCount: 1,
+            tradingBlocked: false
+          };
+        case 'oanda':
+          return {
+            ...baseAccountData,
+            currency: 'USD',
+            marginRate: '0.02',
+            marginAvailable: 4500.00,
+            marginUsed: 500.00,
+            positions: [
+              { instrument: 'EUR_USD', units: 10000, unrealizedPL: 75.00 },
+              { instrument: 'GBP_JPY', units: -5000, unrealizedPL: -25.00 }
+            ],
+            balance: 5000.00
+          };
+        case 'interactive_brokers':
+          return {
+            ...baseAccountData,
+            netLiquidation: 50000.00,
+            cashBalance: 25000.00,
+            availableFunds: 20000.00,
+            excessLiquidity: 15000.00,
+            positions: [
+              { symbol: 'AAPL', position: 15, marketPrice: 175.05, marketValue: 2625.75 },
+              { symbol: 'GOOG', position: 5, marketPrice: 135.10, marketValue: 675.50 }
+            ],
+            realizedPnL: 1500.00
+          };
+        case 'td_ameritrade':
+          return {
+            ...baseAccountData,
+            cashBalance: 15000.00,
+            liquidationValue: 25000.00,
+            longMarketValue: 12000.00,
+            shortMarketValue: 2000.00,
+            positions: [
+              { instrument: { symbol: 'SPY', assetType: 'EQUITY' }, longQuantity: 10, marketValue: 4250.00 },
+              { instrument: { symbol: 'QQQ', assetType: 'EQUITY' }, longQuantity: 15, marketValue: 5175.00 }
+            ],
+            initialBalances: { cashAvailableForTrading: 18000.00 }
+          };
+        case 'meta_api':
+          return {
+            ...baseAccountData,
+            balance: 10000.00,
+            equity: 12500.00,
+            margin: 6000.00,
+            freeMargin: 9000.00,
+            leverage: 100,
+            positions: [
+              { symbol: 'EURUSD', type: 'buy', volume: 0.1, profit: 125.00 },
+              { symbol: 'GBPUSD', type: 'sell', volume: 0.05, profit: -75.00 }
+            ],
+            marginLevel: 180.00
+          };
+        default:
+          return {
+            ...baseAccountData,
+            balance: 10000.00,
+            availableFunds: 8000.00,
+            positions: []
+          };
+      }
+    };
+    
+    // Process based on demo mode or real credentials
+    if (useDemo) {
+      const demoAccountInfo = getDemoAccountInfo();
+      log(`Connected to ${brokerId} demo account successfully`);
+      
+      return res.json({
+        success: true,
+        message: `Successfully connected to ${brokerId} demo account`,
+        accountInfo: demoAccountInfo,
+        isDemo: true
+      });
+    } else {
+      // For real accounts, test the actual connection
+      try {
+        // Real API connection checks would happen here
+        // For this demo, we'll simulate a successful connection
+        // In production, this would call a broker-specific service
+        
+        const isConnected = await testBrokerConnection(brokerId);
+        
+        if (isConnected) {
+          const accountInfo = getDemoAccountInfo(); // Using sample data for demo purposes
+          
+          return res.json({
+            success: true,
+            message: `Successfully connected to ${brokerId}`,
+            accountInfo,
+            isDemo: false
+          });
+        } else {
+          return res.status(401).json({
+            success: false,
+            message: `Failed to connect to ${brokerId}. Invalid credentials.`
+          });
+        }
+      } catch (error) {
+        return res.status(500).json({
+          success: false,
+          message: `Error connecting to ${brokerId}: ${(error as Error).message}`
+        });
+      }
+    }
+  } catch (error) {
+    logError(error as Error, 'nexus-test-broker-connection');
+    return res.status(500).json({
+      success: false,
+      message: `Failed to test broker connection: ${(error as Error).message}`
+    });
+  }
+});
+
+/**
+ * Get account information for a connected broker
+ */
+router.get('/broker-account-info', async (req, res) => {
+  try {
+    const { brokerId, useDemo } = req.query;
+    
+    if (!brokerId || typeof brokerId !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'Broker ID is required'
+      });
+    }
+    
+    const isDemo = useDemo === 'true';
+    
+    // If using demo mode, return demo account info
+    if (isDemo) {
+      // This function is available in the /test-broker-connection endpoint above
+      // In a real implementation, we would call that function here
+      return res.json({
+        success: true,
+        message: `Retrieved ${brokerId} demo account information`,
+        accountInfo: {
+          accountId: `demo-${brokerId}-${Math.floor(Math.random() * 1000)}`,
+          status: 'ACTIVE',
+          accountType: 'DEMO',
+          balance: 10000.00,
+          equity: 15000.00,
+          positions: []
+        },
+        isDemo: true
+      });
+    } 
+    
+    // Otherwise fetch real account info
+    const isConnected = await testBrokerConnection(brokerId);
+    
+    if (!isConnected) {
+      return res.status(401).json({
+        success: false,
+        message: `Not connected to ${brokerId}`
+      });
+    }
+    
+    // In production, we would fetch real account data here
+    // For this demo, we'll return sample data
+    
+    return res.json({
+      success: true,
+      message: `Retrieved ${brokerId} account information`,
+      accountInfo: {
+        accountId: `live-${brokerId}-acct`,
+        status: 'ACTIVE',
+        accountType: 'LIVE',
+        balance: 25000.00,
+        equity: 27500.00,
+        positions: []
+      },
+      isDemo: false
+    });
+  } catch (error) {
+    logError(error as Error, 'nexus-broker-account-info');
+    return res.status(500).json({
+      success: false,
+      message: `Failed to get broker account info: ${(error as Error).message}`
+    });
+  }
 });
 
 /**

@@ -4,10 +4,17 @@ import BrokerIntegrationDocs from '@/components/broker/BrokerIntegrationDocs';
 import BrokerAccountInfo from '@/components/broker/BrokerAccountInfo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, CircleHelp, Settings, RefreshCw } from 'lucide-react';
+import { Plus, CircleHelp, Settings, RefreshCw, ExternalLink, Gamepad2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { getSupportedBrokerTypes } from '@/lib/services/nexus-service';
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { 
+  getSupportedBrokerTypes, 
+  testBrokerConnection, 
+  getBrokerAccountInfo,
+  type BrokerCredentials
+} from '@/lib/services/nexus-service';
 
 export default function BrokerDashboard() {
   const [activeBroker, setActiveBroker] = useState<string>('alpaca');
