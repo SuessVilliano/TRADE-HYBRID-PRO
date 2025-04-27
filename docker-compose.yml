@@ -1,123 +1,123 @@
 version: '3.8'
 
 services:
-  # Database service
+  # PostgreSQL Database
   postgres:
-    image: postgres:14
+    image: postgres:15-alpine
     container_name: tradehybrid-postgres
+    restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-tradehybrid}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tradehybrid_password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tradehybridpassword}
       POSTGRES_DB: ${POSTGRES_DB:-tradehybrid}
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - tradehybrid-network
-    restart: always
-
-  # Nexus service (broker aggregator)
-  nexus:
-    build:
-      context: ./nexus
-      dockerfile: Dockerfile
-    container_name: tradehybrid-nexus
-    depends_on:
-      - postgres
-    env_file:
-      - ./nexus/.env
     ports:
-      - "4000:4000"
+      - "5432:5432"
     networks:
-      - tradehybrid-network
-    restart: always
+      - tradehybrid_network
 
-  # Webhook service (signal receiver)
-  webhooks:
-    build:
-      context: ./webhooks
-      dockerfile: Dockerfile
-    container_name: tradehybrid-webhooks
-    depends_on:
-      - postgres
-      - nexus
-    env_file:
-      - ./webhooks/.env
+  # Redis for caching and session storage
+  redis:
+    image: redis:alpine
+    container_name: tradehybrid-redis
+    restart: always
     ports:
-      - "5000:5000"
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
     networks:
-      - tradehybrid-network
-    restart: always
+      - tradehybrid_network
 
-  # Staking service
-  staking:
-    build:
-      context: ./staking
-      dockerfile: Dockerfile
-    container_name: tradehybrid-staking
-    depends_on:
-      - postgres
-    env_file:
-      - ./staking/.env
-    ports:
-      - "3500:3500"
-    networks:
-      - tradehybrid-network
-    restart: always
-
-  # Frontend service
+  # Frontend Service (React)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: tradehybrid-frontend
-    depends_on:
-      - nexus
-      - webhooks
-      - staking
-    env_file:
-      - ./frontend/.env
+    restart: always
     ports:
       - "80:80"
       - "443:443"
+    depends_on:
+      - webhooks
+      - nexus
+      - staking
     volumes:
       - ./frontend/nginx/ssl:/etc/nginx/ssl
-      - ./frontend/nginx/config:/etc/nginx/conf.d
     networks:
-      - tradehybrid-network
-    restart: always
+      - tradehybrid_network
 
-  # Monitoring stack
-  prometheus:
-    image: prom/prometheus
-    container_name: tradehybrid-prometheus
-    volumes:
-      - ./monitoring/prometheus:/etc/prometheus
-      - prometheus_data:/prometheus
-    ports:
-      - "9090:9090"
-    networks:
-      - tradehybrid-network
+  # Webhooks Service (Signal Receivers and WebSockets)
+  webhooks:
+    build:
+      context: ./webhooks
+      dockerfile: Dockerfile
+    container_name: tradehybrid-webhooks
     restart: always
-
-  grafana:
-    image: grafana/grafana
-    container_name: tradehybrid-grafana
     depends_on:
-      - prometheus
-    volumes:
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
-      - grafana_data:/var/lib/grafana
-    ports:
-      - "3000:3000"
+      - postgres
+      - redis
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=5000
+      - DATABASE_URL=postgres://${POSTGRES_USER:-tradehybrid}:${POSTGRES_PASSWORD:-tradehybridpassword}@postgres:5432/${POSTGRES_DB:-tradehybrid}
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - SOLANA_RPC_URL=${SOLANA_RPC_URL}
+      - WHOP_API_KEY=${WHOP_API_KEY}
+      - WHOP_APP_ID=${WHOP_APP_ID}
     networks:
-      - tradehybrid-network
+      - tradehybrid_network
+
+  # Nexus Service (Broker Aggregation)
+  nexus:
+    build:
+      context: ./nexus
+      dockerfile: Dockerfile
+    container_name: tradehybrid-nexus
     restart: always
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=4000
+      - DATABASE_URL=postgres://${POSTGRES_USER:-tradehybrid}:${POSTGRES_PASSWORD:-tradehybridpassword}@postgres:5432/${POSTGRES_DB:-tradehybrid}
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - ALPACA_API_KEY=${ALPACA_API_KEY}
+      - ALPACA_API_SECRET=${ALPACA_API_SECRET}
+    networks:
+      - tradehybrid_network
+
+  # Staking Service (THC and SOL Staking)
+  staking:
+    build:
+      context: ./staking
+      dockerfile: Dockerfile
+    container_name: tradehybrid-staking
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=3500
+      - DATABASE_URL=postgres://${POSTGRES_USER:-tradehybrid}:${POSTGRES_PASSWORD:-tradehybridpassword}@postgres:5432/${POSTGRES_DB:-tradehybrid}
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - SOLANA_RPC_URL=${SOLANA_RPC_URL}
+      - VALIDATOR_PUBLIC_KEY=5Mp3EF1donYwLxhe5hs6HoWpAucZGLZ76NKRNztkjEej
+      - THC_TOKEN_ADDRESS=4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4
+    networks:
+      - tradehybrid_network
 
 networks:
-  tradehybrid-network:
+  tradehybrid_network:
     driver: bridge
 
 volumes:
   postgres_data:
-  prometheus_data:
-  grafana_data:
+  redis_data:
