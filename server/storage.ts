@@ -80,6 +80,23 @@ export const storage = {
     }
   },
   
+  async getTradeSignalsByMarketType(marketType: string, limit = 100): Promise<TradeSignal[]> {
+    try {
+      // Query using SQL if metadata JSON needs to be checked
+      const queryResult = await sql`
+        SELECT * FROM trade_signals 
+        WHERE metadata->>'market_type' = ${marketType} 
+        ORDER BY timestamp DESC 
+        LIMIT ${limit}
+      `;
+      
+      return queryResult.rows as TradeSignal[];
+    } catch (error) {
+      console.error(`Error fetching trade signals for market type ${marketType}:`, error);
+      return [];
+    }
+  },
+  
   // CRUD operations
   async getUser(id: number): Promise<User | undefined> {
     return db.query.users.findFirst({

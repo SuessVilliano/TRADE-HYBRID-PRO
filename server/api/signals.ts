@@ -160,8 +160,13 @@ const initializeUserSignals = (userId: string): void => {
   }
 };
 
-// Function to process webhook signals and add them to the in-memory storage
-export const processWebhookSignal = (payload: any, userId?: string): void => {
+// Import storage to save webhook signals to database
+import { storage } from "../storage";
+import { signalProviderEnum } from "@shared/schema";
+
+// Function to process webhook signals and add them to storage systems 
+// (in-memory for immediate display and database for persistence)
+export const processWebhookSignal = async (payload: any, userId?: string): Promise<void> => {
   try {
     // Define default values
     let marketType = 'crypto'; // Default
@@ -315,6 +320,7 @@ export const processWebhookSignal = (payload: any, userId?: string): void => {
       Notes: notes.substring(0, 150),
     };
     
+    // 1. First, store in the in-memory storage for immediate access
     // Determine where to store the signal - in user specific storage or global
     let targetStorage: SignalStorage = globalSignals;
     
@@ -324,7 +330,7 @@ export const processWebhookSignal = (payload: any, userId?: string): void => {
       targetStorage = userSignals[userId];
     }
     
-    // Add market type specific properties
+    // Add market type specific properties to in-memory storage
     if (marketType === 'futures') {
       const futuresSignal: FuturesSignal = {
         ...baseSignal,
@@ -346,10 +352,53 @@ export const processWebhookSignal = (payload: any, userId?: string): void => {
       targetStorage.crypto.unshift(cryptoSignal);
     }
     
-    // Skip WebSocket broadcast for now as the dynamic require is causing issues
-    // We'll focus on making sure the webhook still processes signals correctly
+    // 2. Now, save to the database for persistence
     try {
-      // Simply log the event that would have been sent
+      // Determine provider enum value
+      let providerValue;
+      if (provider.toLowerCase().includes('paradox')) {
+        providerValue = 'paradox';
+      } else if (provider.toLowerCase().includes('solaris')) {
+        providerValue = 'solaris';
+      } else if (provider.toLowerCase().includes('hybrid')) {
+        providerValue = 'hybrid';
+      } else {
+        providerValue = 'custom';
+      }
+      
+      // Prepare the signal data for database storage
+      const dbSignal = {
+        id: signalId,
+        providerId: userId || providerValue,
+        symbol,
+        side: direction.toLowerCase() === 'buy' ? 'buy' : 'sell',
+        entryPrice,
+        stopLoss,
+        takeProfit,
+        description: notes,
+        timestamp: new Date(),
+        status: 'active',
+        metadata: {
+          market_type: marketType,
+          timeframe,
+          tp2,
+          tp3,
+          original_payload: JSON.stringify(payload).substring(0, 1000),
+          provider_name: provider,
+          user_id: userId
+        }
+      };
+      
+      // Save the signal to the database
+      const savedSignal = await storage.saveTradeSignal(dbSignal);
+      console.log("Saved signal to database:", savedSignal?.id);
+    } catch (error) {
+      console.error("Error saving signal to database:", error);
+    }
+    
+    // Try to broadcast the signal via WebSocket
+    try {
+      // Prepare the event that would be sent
       const event = {
         type: 'trading_signal',
         data: {
@@ -420,10 +469,10 @@ router.get('/trading-signals', async (req, res) => {
     
     console.log(`Fetching signals for user with membership level: ${membershipLevel}${isDemoUser ? ' (demo mode)' : ''}`);
     
-    // Get signals based on market type
+    // STEP 1: Get in-memory signals
     let signals: any[] = [];
     
-    // First get the global signals
+    // Get in-memory signals based on market type
     if (marketType === 'crypto') {
       signals = [...globalSignals.crypto];
     } else if (marketType === 'futures') {
@@ -458,6 +507,56 @@ router.get('/trading-signals', async (req, res) => {
           ...signals
         ];
       }
+    }
+    
+    // STEP 2: Get persistent signals from database
+    try {
+      // Get signals from the database
+      let dbSignals = [];
+      if (marketType !== 'all') {
+        dbSignals = await storage.getTradeSignalsByMarketType(marketType, 100);
+      } else {
+        dbSignals = await storage.getTradeSignals(100);
+      }
+      
+      console.log(`Found ${dbSignals.length} signals in database`);
+        
+      if (dbSignals.length > 0) {
+        // Convert database signals to our standard format
+        const convertedDbSignals = dbSignals.map(signal => ({
+          id: signal.id,
+          Symbol: signal.symbol,
+          Asset: signal.symbol,
+          Direction: signal.side.toUpperCase(),
+          'Entry Price': signal.entryPrice,
+          'Stop Loss': signal.stopLoss,
+          'Take Profit': signal.takeProfit,
+          TP1: signal.takeProfit,
+          // Get TP2/TP3 from metadata if available
+          ...(signal.metadata && signal.metadata.tp2 ? { TP2: signal.metadata.tp2 } : {}),
+          ...(signal.metadata && signal.metadata.tp3 ? { TP3: signal.metadata.tp3 } : {}),
+          Status: signal.status,
+          Date: signal.timestamp.toISOString(),
+          Time: signal.timestamp.toTimeString().substring(0, 8),
+          Provider: (signal.metadata && signal.metadata.provider_name) || 
+                   (signal.providerId === 'paradox' ? 'Paradox' :
+                    signal.providerId === 'solaris' ? 'Solaris' :
+                    signal.providerId === 'hybrid' ? 'Hybrid' : 'Custom'),
+          Notes: signal.description || `${signal.side.toUpperCase()} signal for ${signal.symbol}`
+        }));
+        
+        // Merge with in-memory signals, avoiding duplicates by ID
+        const existingIds = new Set(signals.map(s => s.id));
+        for (const dbSignal of convertedDbSignals) {
+          if (!existingIds.has(dbSignal.id)) {
+            signals.push(dbSignal);
+            existingIds.add(dbSignal.id);
+          }
+        }
+      }
+    } catch (dbError) {
+      console.error("Error getting signals from database:", dbError);
+      // Continue with in-memory signals if database retrieval fails
     }
     
     // Filter signals based on membership level if not demo mode
