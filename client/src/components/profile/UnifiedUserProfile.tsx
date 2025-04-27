@@ -166,7 +166,7 @@ export const UnifiedUserProfile: React.FC = () => {
             {/* Overview Tab */}
             <TabsContent value="overview">
               <div className="space-y-6">
-                {!user.authenticated && !user.wallet.walletConnected && (
+                {!user.authenticated && !user.wallet?.walletConnected && (
                   <Alert className="bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
                     <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                     <AlertTitle>Account Not Connected</AlertTitle>
@@ -217,21 +217,21 @@ export const UnifiedUserProfile: React.FC = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {user.wallet.walletConnected ? (
+                      {user.wallet?.walletConnected ? (
                         <div className="space-y-2">
                           <div className="flex items-center text-green-600 dark:text-green-400">
                             <CheckCircle className="h-5 w-5 mr-2" />
-                            <span className="font-medium">Connected via {user.wallet.provider}</span>
+                            <span className="font-medium">Connected via {user.wallet?.provider}</span>
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-muted-foreground">Address:</span>
                             <span className="font-mono text-sm flex items-center">
-                              {truncateAddress(user.wallet.address || '', 6)}
+                              {truncateAddress(user.wallet?.address || '', 6)}
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
                                 className="h-6 w-6 p-0 ml-1"
-                                onClick={() => copyToClipboard(user.wallet.address || '')}
+                                onClick={() => copyToClipboard(user.wallet?.address || '')}
                               >
                                 <Copy className="h-3 w-3" />
                               </Button>
@@ -239,18 +239,18 @@ export const UnifiedUserProfile: React.FC = () => {
                                 variant="ghost" 
                                 size="sm" 
                                 className="h-6 w-6 p-0 ml-1"
-                                onClick={() => viewOnExplorer(user.wallet.address || '')}
+                                onClick={() => viewOnExplorer(user.wallet?.address || '')}
                               >
                                 <ExternalLink className="h-3 w-3" />
                               </Button>
                             </span>
                           </div>
-                          {user.wallet.lastRefreshed && (
+                          {user.wallet?.lastRefreshed && (
                             <div className="flex items-center justify-between">
                               <span className="text-sm text-muted-foreground">Last updated:</span>
                               <span className="text-sm flex items-center">
                                 <Clock className="h-3 w-3 mr-1 text-muted-foreground" />
-                                {new Date(user.wallet.lastRefreshed).toLocaleString()}
+                                {new Date(user.wallet?.lastRefreshed).toLocaleString()}
                               </span>
                             </div>
                           )}
@@ -273,7 +273,7 @@ export const UnifiedUserProfile: React.FC = () => {
                 </div>
                 
                 {/* If wallet is connected, show balances */}
-                {user.wallet.walletConnected && (
+                {user.wallet?.walletConnected && (
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg flex items-center">
@@ -288,10 +288,10 @@ export const UnifiedUserProfile: React.FC = () => {
                             <Bitcoin className="h-4 w-4 mr-1" />
                             SOL Balance
                           </div>
-                          <div className="text-xl font-bold">{user.wallet.solBalance?.toFixed(4) || '0.00'} SOL</div>
-                          {user.wallet.balanceUsd && (
+                          <div className="text-xl font-bold">{user.wallet?.solBalance?.toFixed(4) || '0.00'} SOL</div>
+                          {user.wallet?.balanceUsd && (
                             <div className="text-sm text-muted-foreground">
-                              ${(user.wallet.solBalance || 0).toFixed(2)} USD
+                              ${(user.wallet?.solBalance || 0).toFixed(2)} USD
                             </div>
                           )}
                         </div>
@@ -301,11 +301,11 @@ export const UnifiedUserProfile: React.FC = () => {
                             <Gem className="h-4 w-4 mr-1 text-purple-500" />
                             THC Balance
                           </div>
-                          <div className="text-xl font-bold">{user.wallet.thcBalance?.toFixed(2) || '0.00'} THC</div>
-                          {user.wallet.isStaking && (
+                          <div className="text-xl font-bold">{user.wallet?.thcBalance?.toFixed(2) || '0.00'} THC</div>
+                          {user.wallet?.isStaking && (
                             <div className="text-sm text-purple-600 dark:text-purple-400 flex items-center mt-1">
                               <BarChart className="h-3 w-3 mr-1" />
-                              Staking {user.wallet.stakedAmount?.toFixed(2) || '0'} THC
+                              Staking {user.wallet?.stakedAmount?.toFixed(2) || '0'} THC
                             </div>
                           )}
                         </div>
@@ -315,9 +315,9 @@ export const UnifiedUserProfile: React.FC = () => {
                             <DollarSign className="h-4 w-4 mr-1" />
                             Total Value
                           </div>
-                          <div className="text-xl font-bold">${user.wallet.balanceUsd?.toFixed(2) || '0.00'}</div>
+                          <div className="text-xl font-bold">${user.wallet?.balanceUsd?.toFixed(2) || '0.00'}</div>
                           <div className="text-sm text-muted-foreground">
-                            {user.wallet.tokens?.length || 0} tokens
+                            {user.wallet?.tokens?.length || 0} tokens
                           </div>
                         </div>
                       </div>
@@ -329,7 +329,7 @@ export const UnifiedUserProfile: React.FC = () => {
             
             {/* Wallet Tab */}
             <TabsContent value="wallet">
-              {!user.wallet.walletConnected ? (
+              {!user.wallet?.walletConnected ? (
                 <div className="text-center py-12">
                   <Wallet className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-medium mb-2">No Wallet Connected</h3>
@@ -347,17 +347,17 @@ export const UnifiedUserProfile: React.FC = () => {
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg flex items-center">
                         <CoinsIcon className="h-4 w-4 mr-2 text-blue-500" />
-                        Tokens ({user.wallet.tokens?.length || 0})
+                        Tokens ({user.wallet?.tokens?.length || 0})
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {!user.wallet.tokens?.length ? (
+                      {!user.wallet?.tokens?.length ? (
                         <div className="text-center py-6 text-muted-foreground">
                           No tokens found in this wallet
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          {user.wallet.tokens.map((token, index) => (
+                          {user.wallet?.tokens?.map((token: any, index: number) => (
                             <div 
                               key={index} 
                               className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50"
@@ -405,17 +405,17 @@ export const UnifiedUserProfile: React.FC = () => {
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg flex items-center">
                         <LinkIcon className="h-4 w-4 mr-2 text-blue-500" />
-                        NFTs ({user.wallet.nfts?.length || 0})
+                        NFTs ({user.wallet?.nfts?.length || 0})
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {!user.wallet.nfts?.length ? (
+                      {!user.wallet?.nfts?.length ? (
                         <div className="text-center py-6 text-muted-foreground">
                           No NFTs found in this wallet
                         </div>
                       ) : (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                          {user.wallet.nfts.map((nft, index) => (
+                          {user.wallet?.nfts?.map((nft: any, index: number) => (
                             <div key={index} className="rounded-lg overflow-hidden border bg-muted/30">
                               {nft.image ? (
                                 <img 
@@ -457,27 +457,27 @@ export const UnifiedUserProfile: React.FC = () => {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      {user.wallet.isStaking ? (
+                      {user.wallet?.isStaking ? (
                         <div className="space-y-4">
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
                               <div className="text-sm text-muted-foreground mb-1">Amount Staked</div>
                               <div className="text-xl font-bold text-purple-600 dark:text-purple-400">
-                                {user.wallet.stakedAmount?.toFixed(2) || '0'} THC
+                                {user.wallet?.stakedAmount?.toFixed(2) || '0'} THC
                               </div>
                             </div>
                             
                             <div className="bg-muted/30 rounded-lg p-4">
                               <div className="text-sm text-muted-foreground mb-1">Staking Since</div>
                               <div className="text-base font-medium">
-                                {user.wallet.stakedSince ? new Date(user.wallet.stakedSince).toLocaleDateString() : 'N/A'}
+                                {user.wallet?.stakedSince ? new Date(user.wallet?.stakedSince).toLocaleDateString() : 'N/A'}
                               </div>
                             </div>
                             
                             <div className="bg-muted/30 rounded-lg p-4">
                               <div className="text-sm text-muted-foreground mb-1">Rewards Earned</div>
                               <div className="text-base font-medium">
-                                {user.wallet.stakingRewards?.toFixed(2) || '0'} THC
+                                {user.wallet?.stakingRewards?.toFixed(2) || '0'} THC
                               </div>
                             </div>
                           </div>
@@ -611,7 +611,7 @@ export const UnifiedUserProfile: React.FC = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="flex flex-wrap gap-2">
-                            {user.favoriteSymbols.map((symbol, index) => (
+                            {user.favoriteSymbols.map((symbol: string, index: number) => (
                               <Badge key={index} variant="secondary">
                                 {symbol}
                               </Badge>
