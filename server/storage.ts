@@ -36,6 +36,50 @@ export const storage = {
     tradeSignals: db.query.tradeSignals,
   },
   
+  // Trade Signal methods
+  async getTradeSignals(limit = 100, marketType?: string): Promise<TradeSignal[]> {
+    try {
+      const query = marketType 
+        ? { where: eq(tradeSignals.metadata.symbol_type, marketType) }
+        : {};
+      
+      return db.query.tradeSignals.findMany({
+        ...query,
+        orderBy: (signals, { desc }) => [desc(signals.timestamp)],
+        limit
+      });
+    } catch (error) {
+      console.error('Error fetching trade signals:', error);
+      return [];
+    }
+  },
+  
+  async saveTradeSignal(signal: Omit<TradeSignal, 'createdAt' | 'updatedAt'>): Promise<TradeSignal | null> {
+    try {
+      const [savedSignal] = await db.insert(tradeSignals)
+        .values(signal)
+        .returning();
+      
+      return savedSignal;
+    } catch (error) {
+      console.error('Error saving trade signal:', error);
+      return null;
+    }
+  },
+  
+  async getTradeSignalsBySymbol(symbol: string, limit = 20): Promise<TradeSignal[]> {
+    try {
+      return db.query.tradeSignals.findMany({
+        where: eq(tradeSignals.symbol, symbol),
+        orderBy: (signals, { desc }) => [desc(signals.timestamp)],
+        limit
+      });
+    } catch (error) {
+      console.error(`Error fetching trade signals for symbol ${symbol}:`, error);
+      return [];
+    }
+  },
+  
   // CRUD operations
   async getUser(id: number): Promise<User | undefined> {
     return db.query.users.findFirst({

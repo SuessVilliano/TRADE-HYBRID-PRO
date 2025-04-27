@@ -71,11 +71,76 @@ interface UserSignals {
   [userId: string]: SignalStorage;
 }
 
-// Global signals available to everyone - empty by default, filled by webhooks
+// Global signals available to everyone - include some initial demo data plus webhook data
 const globalSignals: SignalStorage = {
-  crypto: [],
-  futures: [],
-  forex: []
+  crypto: [
+    {
+      id: 'paradox-1-1743604123456',
+      Symbol: 'BTCUSDT',
+      Asset: 'BTCUSDT',
+      Direction: 'BUY',
+      'Entry Price': 68700,
+      'Stop Loss': 68100,
+      'Take Profit': 70000,
+      TP1: 70000,
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: '15:30:00',
+      Provider: 'Paradox',
+      Notes: 'Strong momentum signal, follow BTC trend',
+    },
+    {
+      id: 'paradox-2-1743604123457',
+      Symbol: 'ETHUSDT',
+      Asset: 'ETHUSDT',
+      Direction: 'BUY',
+      'Entry Price': 3400,
+      'Stop Loss': 3300,
+      'Take Profit': 3600,
+      TP1: 3600,
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: '14:45:00',
+      Provider: 'Paradox',
+      Notes: 'Follow BTC momentum',
+    }
+  ],
+  futures: [
+    {
+      id: 'hybrid-1-1743604123458',
+      Symbol: 'NQ1!',
+      Asset: 'NQ1!',
+      Direction: 'SELL',
+      'Entry Price': 20135.25,
+      'Stop Loss': 20152.36,
+      'Take Profit': 20101.04,
+      TP1: 20101.04,
+      TP2: 20083.93,
+      TP3: 20066.82,
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: '10:15:00',
+      Provider: 'Hybrid',
+      Notes: 'Technical breakdown on 15min chart',
+    }
+  ],
+  forex: [
+    {
+      id: 'solaris-1-1743604123459',
+      Symbol: 'EURUSD',
+      Asset: 'EURUSD',
+      Direction: 'BUY',
+      'Entry Price': 1.15331,
+      'Stop Loss': 1.15228,
+      'Take Profit': 1.15846,
+      TP1: 1.15846,
+      Status: 'active',
+      Date: new Date().toISOString(),
+      Time: '08:30:00',
+      Provider: 'Solaris',
+      Notes: 'EURUSD alert - DO NOT RISK MORE THAN 0.25-1%',
+    }
+  ]
 };
 
 // User-specific signals storage
