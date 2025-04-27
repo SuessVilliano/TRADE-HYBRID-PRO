@@ -122,7 +122,8 @@ export function TradeSignalsPanel() {
             source: provider || 'WebSocket',
             risk: 1,
             notes: signal.description || `${timeframe} timeframe alert`,
-            timeframe: timeframe
+            timeframe: timeframe,
+            status: 'active' // Set the status to active for all new signals
           };
           
           console.log('Created new signal from WebSocket:', newSignal);
