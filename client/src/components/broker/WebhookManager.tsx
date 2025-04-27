@@ -24,8 +24,16 @@ import { toast } from 'sonner';
 const brokerTypes = [
   { id: 'alpaca', name: 'Alpaca' },
   { id: 'oanda', name: 'Oanda' },
+  { id: 'interactive_brokers', name: 'Interactive Brokers' },
+  { id: 'tradier', name: 'Tradier' },
   { id: 'ninjatrader', name: 'NinjaTrader' },
   { id: 'tradovate', name: 'Tradovate' },
+  { id: 'ig', name: 'IG' },
+  { id: 'saxo_bank', name: 'Saxo Bank' },
+  { id: 'ctrader', name: 'cTrader' },
+  { id: 'match_trader', name: 'Match-Trader' },
+  { id: 'meta_api', name: 'MetaApi (MT4/MT5)' },
+  { id: 'td_ameritrade', name: 'TD Ameritrade / Schwab' },
   { id: 'tradingview', name: 'TradingView' },
   { id: 'other', name: 'Other (Generic)' }
 ];

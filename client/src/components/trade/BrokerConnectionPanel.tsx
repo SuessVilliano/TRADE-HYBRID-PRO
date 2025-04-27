@@ -49,13 +49,13 @@ interface Broker {
   }[];
 }
 
-// Mock broker data
+// Broker configuration data
 const BROKER_DETAILS: Record<string, Broker> = {
   'alpaca': {
     id: 'alpaca',
     name: 'Alpaca',
     icon: '/assets/icons/alpaca-logo.png',
-    description: 'Commission-free stock trading API for algorithmic trading.',
+    description: 'Commission-free API for stocks, options and crypto. Great for rapid dev and embeddable algo-execution.',
     apiEndpoint: 'https://api.alpaca.markets',
     documentationUrl: 'https://alpaca.markets/docs/api-documentation/',
     status: 'connected',
@@ -68,9 +68,9 @@ const BROKER_DETAILS: Record<string, Broker> = {
   },
   'oanda': {
     id: 'oanda',
-    name: 'Oanda',
+    name: 'OANDA',
     icon: '/assets/icons/oanda-logo.png',
-    description: 'Forex trading platform with advanced API access.',
+    description: 'v20 REST API to trade FX and CFDs. Well-maintained docs, demo/live endpoints, and real-time pricing.',
     apiEndpoint: 'https://api-fxtrade.oanda.com',
     documentationUrl: 'https://developer.oanda.com/rest-live-v20/introduction/',
     status: 'disconnected',
@@ -79,6 +79,36 @@ const BROKER_DETAILS: Record<string, Broker> = {
       { name: 'apiToken', label: 'API Token', type: 'password', required: true },
       { name: 'accountId', label: 'Account ID', type: 'text', required: true },
       { name: 'isPractice', label: 'Practice Account', type: 'toggle', required: false }
+    ]
+  },
+  'interactive_brokers': {
+    id: 'interactive_brokers',
+    name: 'Interactive Brokers',
+    icon: '/assets/icons/ibkr-logo.png',
+    description: 'Modern REST API plus WebSocket streaming for multi-asset trading (stocks, futures, FX, options).',
+    apiEndpoint: 'https://api.ibkr.com/v1/api',
+    documentationUrl: 'https://interactivebrokers.github.io/tws-api/',
+    status: 'disconnected',
+    isSupported: true,
+    credentialFields: [
+      { name: 'userId', label: 'User ID', type: 'text', required: true },
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { name: 'isPaper', label: 'Paper Trading', type: 'toggle', required: false }
+    ]
+  },
+  'tradier': {
+    id: 'tradier',
+    name: 'Tradier',
+    icon: '/assets/icons/tradier-logo.png',
+    description: 'Simple REST-based brokerage API for equity & options orders with just five required parameters.',
+    apiEndpoint: 'https://api.tradier.com/v1',
+    documentationUrl: 'https://documentation.tradier.com/',
+    status: 'disconnected',
+    isSupported: true,
+    credentialFields: [
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { name: 'accountId', label: 'Account ID', type: 'text', required: true },
+      { name: 'isSandbox', label: 'Sandbox Mode', type: 'toggle', required: false }
     ]
   },
   'ninjatrader': {
@@ -92,6 +122,96 @@ const BROKER_DETAILS: Record<string, Broker> = {
     credentialFields: [
       { name: 'endpoint', label: 'Webhook Endpoint', type: 'text', required: true },
       { name: 'apiKey', label: 'API Key', type: 'password', required: true }
+    ]
+  },
+  'ig': {
+    id: 'ig',
+    name: 'IG',
+    icon: '/assets/icons/ig-logo.png',
+    description: 'Popular forex/CFD broker with a REST API integrated into platforms like TradingView.',
+    apiEndpoint: 'https://api.ig.com/gateway/deal',
+    documentationUrl: 'https://labs.ig.com/rest-trading-api-reference',
+    status: 'disconnected',
+    isSupported: true,
+    credentialFields: [
+      { name: 'apiKey', label: 'API Key', type: 'text', required: true },
+      { name: 'username', label: 'Username', type: 'text', required: true },
+      { name: 'password', label: 'Password', type: 'password', required: true },
+      { name: 'isDemoAccount', label: 'Demo Account', type: 'toggle', required: false }
+    ]
+  },
+  'saxo_bank': {
+    id: 'saxo_bank',
+    name: 'Saxo Bank',
+    icon: '/assets/icons/saxo-logo.png',
+    description: 'Full OpenAPI (REST + streaming) for multi-asset trading with excellent docs and white-label support.',
+    apiEndpoint: 'https://gateway.saxobank.com/sim/openapi',
+    documentationUrl: 'https://www.developer.saxo/openapi/learn',
+    status: 'disconnected',
+    isSupported: true,
+    credentialFields: [
+      { name: 'apiKey', label: 'API Key', type: 'text', required: true },
+      { name: 'appKey', label: 'Application Key', type: 'text', required: true },
+      { name: 'accountKey', label: 'Account Key', type: 'text', required: true },
+      { name: 'isSimAccount', label: 'Simulation Account', type: 'toggle', required: false }
+    ]
+  },
+  'ctrader': {
+    id: 'ctrader',
+    name: 'cTrader',
+    icon: '/assets/icons/ctrader-logo.png',
+    description: '"Open API" uses Protobuf over TCP/WebSocket for high-performance market data and execution.',
+    documentationUrl: 'https://spotware.github.io/open-api-docs/',
+    status: 'disconnected',
+    isSupported: true,
+    credentialFields: [
+      { name: 'apiKey', label: 'API Key', type: 'text', required: true },
+      { name: 'apiSecret', label: 'API Secret', type: 'password', required: true },
+      { name: 'accountId', label: 'Account ID', type: 'text', required: true }
+    ]
+  },
+  'match_trader': {
+    id: 'match_trader',
+    name: 'Match-Trader',
+    icon: '/assets/icons/matchtrader-logo.png',
+    description: 'Broker API platform with REST and gRPC endpoints in a unified interface for any front-end.',
+    documentationUrl: 'https://matchtrader.io/api-documentation/',
+    status: 'disconnected',
+    isSupported: true,
+    credentialFields: [
+      { name: 'apiKey', label: 'API Key', type: 'text', required: true },
+      { name: 'secretKey', label: 'Secret Key', type: 'password', required: true },
+      { name: 'userId', label: 'User ID', type: 'text', required: true }
+    ]
+  },
+  'meta_api': {
+    id: 'meta_api',
+    name: 'MetaApi (MT4/MT5)',
+    icon: '/assets/icons/metaapi-logo.png',
+    description: 'Cloud-hosted WebSocket API to connect to any MT4/MT5 broker without running your own terminal.',
+    apiEndpoint: 'https://api.metaapi.cloud/api',
+    documentationUrl: 'https://metaapi.cloud/docs/client/',
+    status: 'disconnected',
+    isSupported: true,
+    credentialFields: [
+      { name: 'apiToken', label: 'API Token', type: 'password', required: true },
+      { name: 'accountId', label: 'Account ID', type: 'text', required: true },
+      { name: 'connectionType', label: 'Connection Type', type: 'text', required: true }
+    ]
+  },
+  'td_ameritrade': {
+    id: 'td_ameritrade',
+    name: 'TD Ameritrade / Schwab',
+    icon: '/assets/icons/tdameritrade-logo.png',
+    description: 'Robust REST + WebSocket APIs for equities, options, and real-time market data.',
+    apiEndpoint: 'https://api.tdameritrade.com/v1',
+    documentationUrl: 'https://developer.tdameritrade.com/apis',
+    status: 'disconnected',
+    isSupported: true,
+    credentialFields: [
+      { name: 'consumerKey', label: 'Consumer Key', type: 'text', required: true },
+      { name: 'refreshToken', label: 'Refresh Token', type: 'password', required: true },
+      { name: 'accountId', label: 'Account ID', type: 'text', required: true }
     ]
   },
   'tradingview': {
