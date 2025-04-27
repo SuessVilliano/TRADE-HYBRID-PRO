@@ -6,6 +6,7 @@ interface SignalsState {
   signals: TradingSignal[];
   activeSignal: TradingSignal | null;
   favoriteSymbols: string[];
+  notificationsEnabled: boolean;
   
   // Actions
   setSignals: (signals: TradingSignal[]) => void;
@@ -16,6 +17,7 @@ interface SignalsState {
   addFavoriteSymbol: (symbol: string) => void;
   removeFavoriteSymbol: (symbol: string) => void;
   clearAll: () => void;
+  setNotificationsEnabled: (enabled: boolean) => void;
 }
 
 /**

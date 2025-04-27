@@ -36,7 +36,7 @@ export function SettingsPopup({
     }
   };
   
-  const [activeTab, setActiveTab] = useState<'audio' | 'graphics' | 'accessibility' | 'account'>('audio');
+  const [activeTab, setActiveTab] = useState<'audio' | 'graphics' | 'accessibility' | 'account' | 'signals'>('audio');
   const { 
     isMuted, 
     toggleMute 
@@ -213,6 +213,7 @@ export function SettingsPopup({
                 <TabsTrigger value="audio">Audio</TabsTrigger>
                 <TabsTrigger value="graphics">Graphics</TabsTrigger>
                 <TabsTrigger value="accessibility">Accessibility</TabsTrigger>
+                <TabsTrigger value="signals">Signals</TabsTrigger>
                 <TabsTrigger value="account">Account</TabsTrigger>
               </TabsList>
             </div>
