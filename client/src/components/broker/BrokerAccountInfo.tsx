@@ -55,79 +55,7 @@ interface BrokerAccountInfoProps {
   useDemo?: boolean;
 }
 
-// Demo data for development - in production, this would be fetched from the API
-const getDemoData = (brokerId: string): BrokerAccountData => {
-  // This would be removed in production and replaced with real data
-  const now = new Date();
-  
-  const basicData = {
-    accountId: 'DEMO123456',
-    accountType: 'CASH',
-    status: 'ACTIVE',
-    timestamp: now,
-    currency: 'USD',
-    positions: Array(3).fill(null).map((_, i) => ({
-      symbol: ['AAPL', 'MSFT', 'AMZN'][i],
-      quantity: Math.floor(Math.random() * 10) + 1,
-      marketValue: Math.random() * 5000 + 1000,
-      unrealizedPL: (Math.random() * 200) - 100,
-      todayPL: (Math.random() * 100) - 50,
-      percentChange: (Math.random() * 5) - 2.5
-    }))
-  };
-  
-  if (brokerId === 'alpaca') {
-    return {
-      ...basicData,
-      brokerName: 'Alpaca',
-      cash: 5000.75,
-      equity: 12500.33,
-      marketValue: 7500.58,
-      buyingPower: 10000.00,
-      dayTradeCount: 1,
-      marginUsed: 2500.00,
-      marginAvailable: 7500.00,
-      positions: basicData.positions
-    };
-  } else if (brokerId === 'oanda') {
-    return {
-      ...basicData,
-      brokerName: 'Oanda',
-      cash: 3200.90,
-      equity: 4800.25,
-      marketValue: 1600.65,
-      buyingPower: 9600.00,
-      marginUsed: 800.00,
-      marginAvailable: 3000.00,
-      positions: basicData.positions.map(p => ({
-        ...p,
-        symbol: ['EUR_USD', 'GBP_JPY', 'USD_CAD'][basicData.positions.indexOf(p)]
-      }))
-    };
-  } else if (brokerId === 'interactive_brokers') {
-    return {
-      ...basicData,
-      brokerName: 'Interactive Brokers',
-      cash: 15000.50,
-      equity: 42500.25,
-      marketValue: 27500.75,
-      buyingPower: 30000.00,
-      marginUsed: 12500.00,
-      marginAvailable: 17500.00,
-      positions: basicData.positions
-    };
-  } else {
-    return {
-      ...basicData,
-      brokerName: 'Connected Broker',
-      cash: 10000.00,
-      equity: 15000.00,
-      marketValue: 5000.00,
-      buyingPower: 20000.00,
-      positions: basicData.positions
-    };
-  }
-};
+// No demo data - we will only use real API data
 
 const BrokerAccountInfo: React.FC<BrokerAccountInfoProps> = ({ brokerId, onRefresh, useDemo = false }) => {
   const [loading, setLoading] = useState(true);
@@ -181,22 +109,13 @@ const BrokerAccountInfo: React.FC<BrokerAccountInfoProps> = ({ brokerId, onRefre
         };
         
         setAccountData(formattedData);
-      } else if (useDemo) {
-        // If no data but using demo, fall back to demo data
-        const demoData = getDemoData(brokerId);
-        setAccountData(demoData);
       } else {
-        throw new Error('No account data received');
+        throw new Error('No account data received from broker API');
       }
     } catch (err) {
       console.error('Error fetching broker account data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load account data. Please try again.');
-      
-      // If real API fails and we're in demo mode, use demo data as fallback
-      if (useDemo) {
-        const demoData = getDemoData(brokerId);
-        setAccountData(demoData);
-      }
+      setError(err instanceof Error ? err.message : 'Failed to load account data. Please check your broker connection and try again.');
+      setAccountData(null);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -312,157 +231,209 @@ const BrokerAccountInfo: React.FC<BrokerAccountInfoProps> = ({ brokerId, onRefre
         <CardContent className="pb-0">
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
+            <AlertTitle>Connection Error</AlertTitle>
+            <AlertDescription>
+              {error}
+              {error.includes("No account data") && (
+                <div className="mt-2">
+                  <p className="font-medium">Possible solutions:</p>
+                  <ul className="list-disc pl-5 mt-1">
+                    <li>Make sure your broker account is properly connected</li>
+                    <li>Check that your API credentials are correct</li>
+                    <li>Ensure you have the appropriate permissions set on your API keys</li>
+                    <li>Try toggling between Live and Demo accounts if available</li>
+                  </ul>
+                </div>
+              )}
+            </AlertDescription>
           </Alert>
         </CardContent>
       )}
 
       <CardContent className="pb-0">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {/* Account Value */}
-          <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md">
-            <div className="text-sm text-muted-foreground mb-1 flex items-center">
-              <TrendingUp className="h-4 w-4 mr-1" />
-              Account Value
-            </div>
-            {loading ? (
+        {loading ? (
+          // Loading state
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {/* Account Value */}
+            <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md">
+              <div className="text-sm text-muted-foreground mb-1 flex items-center">
+                <TrendingUp className="h-4 w-4 mr-1" />
+                Account Value
+              </div>
               <Skeleton className="h-6 w-24" />
-            ) : (
-              <div className="text-xl font-semibold">
-                {formatCurrency(accountData?.equity || 0, accountData?.currency || 'USD')}
+            </div>
+
+            {/* Cash Balance */}
+            <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md">
+              <div className="text-sm text-muted-foreground mb-1 flex items-center">
+                <CreditCard className="h-4 w-4 mr-1" />
+                Cash Balance
+              </div>
+              <Skeleton className="h-6 w-24" />
+            </div>
+
+            {/* Buying Power */}
+            <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md">
+              <div className="text-sm text-muted-foreground mb-1 flex items-center">
+                <Coins className="h-4 w-4 mr-1" />
+                Buying Power
+              </div>
+              <Skeleton className="h-6 w-24" />
+            </div>
+
+            {/* Portfolio Value */}
+            <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md">
+              <div className="text-sm text-muted-foreground mb-1 flex items-center">
+                <BarChart2 className="h-4 w-4 mr-1" />
+                Portfolio Value
+              </div>
+              <Skeleton className="h-6 w-24" />
+            </div>
+          </div>
+        ) : !accountData ? (
+          // No account data state
+          <div className="text-center py-12">
+            <AlertTriangle className="h-12 w-12 mx-auto text-amber-400 mb-4" />
+            <h3 className="text-lg font-medium mb-2">No Account Data Available</h3>
+            <p className="text-muted-foreground max-w-md mx-auto mb-4">
+              Please connect your broker account to view your portfolio information.
+              Make sure your API credentials are correctly set up.
+            </p>
+            <div className="text-sm text-muted-foreground">
+              <p className="mb-1">Account data will display:</p>
+              <div className="flex flex-wrap justify-center gap-2 mt-2">
+                <Badge variant="outline">Account Balance</Badge>
+                <Badge variant="outline">Open Positions</Badge>
+                <Badge variant="outline">Portfolio Value</Badge>
+                <Badge variant="outline">Buying Power</Badge>
+              </div>
+            </div>
+          </div>
+        ) : (
+          // Account data loaded
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {/* Account Value */}
+              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md">
+                <div className="text-sm text-muted-foreground mb-1 flex items-center">
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                  Account Value
+                </div>
+                <div className="text-xl font-semibold">
+                  {formatCurrency(accountData.equity, accountData.currency)}
+                </div>
+              </div>
+
+              {/* Cash Balance */}
+              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md">
+                <div className="text-sm text-muted-foreground mb-1 flex items-center">
+                  <CreditCard className="h-4 w-4 mr-1" />
+                  Cash Balance
+                </div>
+                <div className="text-xl font-semibold">
+                  {formatCurrency(accountData.cash, accountData.currency)}
+                </div>
+              </div>
+
+              {/* Buying Power */}
+              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md">
+                <div className="text-sm text-muted-foreground mb-1 flex items-center">
+                  <Coins className="h-4 w-4 mr-1" />
+                  Buying Power
+                </div>
+                <div className="text-xl font-semibold">
+                  {formatCurrency(accountData.buyingPower, accountData.currency)}
+                </div>
+              </div>
+
+              {/* Portfolio Value */}
+              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md">
+                <div className="text-sm text-muted-foreground mb-1 flex items-center">
+                  <BarChart2 className="h-4 w-4 mr-1" />
+                  Portfolio Value
+                </div>
+                <div className="text-xl font-semibold">
+                  {formatCurrency(accountData.marketValue, accountData.currency)}
+                </div>
+              </div>
+            </div>
+
+            {/* Margin Usage if available */}
+            {accountData.marginUsed && (
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <div className="text-sm text-muted-foreground flex items-center">
+                    <DollarSign className="h-4 w-4 mr-1" />
+                    Margin Usage
+                  </div>
+                  <div className="text-sm font-medium">
+                    {formatCurrency(accountData.marginUsed, accountData.currency)} / 
+                    {formatCurrency((accountData.marginUsed) + (accountData.marginAvailable || 0), accountData.currency)}
+                  </div>
+                </div>
+                <Progress 
+                  value={marginUsagePercentage} 
+                  className="h-2"
+                  indicatorClassName={
+                    marginUsagePercentage > 80 
+                      ? "bg-red-600" 
+                      : marginUsagePercentage > 50 
+                        ? "bg-yellow-500" 
+                        : undefined
+                  }
+                />
               </div>
             )}
-          </div>
 
-          {/* Cash Balance */}
-          <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md">
-            <div className="text-sm text-muted-foreground mb-1 flex items-center">
-              <CreditCard className="h-4 w-4 mr-1" />
-              Cash Balance
+            {/* Positions */}
+            <div>
+              <h3 className="text-sm font-medium mb-3 flex items-center">
+                <Briefcase className="h-4 w-4 mr-1" />
+                Positions ({accountData.positions.length})
+              </h3>
+              
+              {accountData.positions.length > 0 ? (
+                <div className="space-y-2">
+                  {accountData.positions.map((position, idx) => (
+                    <div key={idx} className="border rounded-md p-3">
+                      <div className="flex justify-between items-center">
+                        <div className="font-medium">{position.symbol}</div>
+                        <Badge variant={position.unrealizedPL >= 0 ? 'default' : 'destructive'}>
+                          {position.unrealizedPL >= 0 ? '+' : ''}{formatCurrency(position.unrealizedPL, accountData.currency)}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Qty: </span>
+                          {formatNumber(position.quantity)}
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Value: </span>
+                          {formatCurrency(position.marketValue, accountData.currency)}
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Today: </span>
+                          <span className={position.todayPL >= 0 ? 'text-green-600' : 'text-red-600'}>
+                            {position.todayPL >= 0 ? '+' : ''}{formatCurrency(position.todayPL, accountData.currency)}
+                            {' '}({position.percentChange >= 0 ? '+' : ''}{position.percentChange.toFixed(2)}%)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center border rounded-md py-8 px-4">
+                  <Briefcase className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <h3 className="font-medium">No Open Positions</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    When you open positions, they will appear here
+                  </p>
+                </div>
+              )}
             </div>
-            {loading ? (
-              <Skeleton className="h-6 w-24" />
-            ) : (
-              <div className="text-xl font-semibold">
-                {formatCurrency(accountData?.cash || 0, accountData?.currency || 'USD')}
-              </div>
-            )}
-          </div>
-
-          {/* Buying Power */}
-          <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md">
-            <div className="text-sm text-muted-foreground mb-1 flex items-center">
-              <Coins className="h-4 w-4 mr-1" />
-              Buying Power
-            </div>
-            {loading ? (
-              <Skeleton className="h-6 w-24" />
-            ) : (
-              <div className="text-xl font-semibold">
-                {formatCurrency(accountData?.buyingPower || 0, accountData?.currency || 'USD')}
-              </div>
-            )}
-          </div>
-
-          {/* Portfolio Value */}
-          <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md">
-            <div className="text-sm text-muted-foreground mb-1 flex items-center">
-              <BarChart2 className="h-4 w-4 mr-1" />
-              Portfolio Value
-            </div>
-            {loading ? (
-              <Skeleton className="h-6 w-24" />
-            ) : (
-              <div className="text-xl font-semibold">
-                {formatCurrency(accountData?.marketValue || 0, accountData?.currency || 'USD')}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Margin Usage if available */}
-        {accountData?.marginUsed && (
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <div className="text-sm text-muted-foreground flex items-center">
-                <DollarSign className="h-4 w-4 mr-1" />
-                Margin Usage
-              </div>
-              <div className="text-sm font-medium">
-                {formatCurrency(accountData.marginUsed || 0, accountData.currency)} / 
-                {formatCurrency((accountData.marginUsed || 0) + (accountData.marginAvailable || 0), accountData.currency)}
-              </div>
-            </div>
-            <Progress 
-              value={marginUsagePercentage} 
-              className="h-2"
-              indicatorClassName={
-                marginUsagePercentage > 80 
-                  ? "bg-red-600" 
-                  : marginUsagePercentage > 50 
-                    ? "bg-yellow-500" 
-                    : undefined
-              }
-            />
-          </div>
+          </>
         )}
-
-        {/* Positions */}
-        <div>
-          <h3 className="text-sm font-medium mb-3 flex items-center">
-            <Briefcase className="h-4 w-4 mr-1" />
-            Positions ({loading ? '-' : accountData?.positions.length})
-          </h3>
-          
-          {loading ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="border rounded-md p-3">
-                  <Skeleton className="h-6 w-full" />
-                </div>
-              ))}
-            </div>
-          ) : accountData && accountData.positions.length > 0 ? (
-            <div className="space-y-2">
-              {accountData.positions.map((position, idx) => (
-                <div key={idx} className="border rounded-md p-3">
-                  <div className="flex justify-between items-center">
-                    <div className="font-medium">{position.symbol}</div>
-                    <Badge variant={position.unrealizedPL >= 0 ? 'default' : 'destructive'}>
-                      {position.unrealizedPL >= 0 ? '+' : ''}{formatCurrency(position.unrealizedPL, accountData.currency)}
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Qty: </span>
-                      {formatNumber(position.quantity)}
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Value: </span>
-                      {formatCurrency(position.marketValue, accountData.currency)}
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Today: </span>
-                      <span className={position.todayPL >= 0 ? 'text-green-600' : 'text-red-600'}>
-                        {position.todayPL >= 0 ? '+' : ''}{formatCurrency(position.todayPL, accountData.currency)}
-                        {' '}({position.percentChange >= 0 ? '+' : ''}{position.percentChange.toFixed(2)}%)
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center border rounded-md py-8 px-4">
-              <Briefcase className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-              <h3 className="font-medium">No Open Positions</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                When you open positions, they will appear here
-              </p>
-            </div>
-          )}
-        </div>
       </CardContent>
 
       <CardFooter className="pt-4 text-xs text-muted-foreground flex items-center justify-between">
