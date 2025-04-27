@@ -54,9 +54,18 @@ const BrokerIntegrationDocs: React.FC = () => {
                 <li>Create an API key/secret pair from your broker's developer portal</li>
                 <li>Configure appropriate permissions (read, trade, etc.)</li>
                 <li>Enter your credentials in Trade Hybrid's broker settings</li>
+                <li>Choose between demo/paper trading or live trading account</li>
                 <li>Test the connection to ensure everything is working</li>
                 <li>Start trading through the Nexus system</li>
               </ol>
+              
+              <Alert className="mb-4 border-blue-500">
+                <InfoIcon className="h-4 w-4 mr-2" />
+                <AlertTitle>Demo Account Support</AlertTitle>
+                <AlertDescription>
+                  Most brokers offer demo or paper trading accounts for practice. We recommend starting with a demo account to test your strategies before using real funds. Toggle the demo account option when connecting your broker.
+                </AlertDescription>
+              </Alert>
               
               <h4 className="text-md font-semibold mb-2">Security Practices:</h4>
               <ul className="ml-6 list-disc mb-4 space-y-2">

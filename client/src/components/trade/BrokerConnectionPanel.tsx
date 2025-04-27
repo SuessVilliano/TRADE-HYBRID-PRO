@@ -301,38 +301,93 @@ const BrokerConnectionPanel: React.FC<BrokerConnectionPanelProps> = ({ brokerId 
   const handleConnect = async () => {
     setIsTesting(true);
     
-    // Simulate API connection test
-    setTimeout(() => {
-      // Success for Alpaca, failure for others (for demo)
-      const success = brokerId === 'alpaca';
+    try {
+      // Get the useDemo value if it exists
+      const useDemo = formData.isPaper || formData.isPractice || formData.isDemoAccount || 
+                      formData.isSimAccount || formData.isSandbox || false;
       
-      if (success) {
+      // Prepare the credentials object for the API
+      const credentials = {
+        brokerId,
+        useDemo,
+        ...formData,
+        // Clean up redundant demo mode flags
+        isPaper: undefined,
+        isPractice: undefined,
+        isDemoAccount: undefined,
+        isSimAccount: undefined,
+        isSandbox: undefined
+      };
+      
+      // Send the connection request to the API
+      const response = await fetch('/api/nexus/test-broker-connection', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
         setIsConnected(true);
         toast({
           title: "Connection Successful",
-          description: `Connected to ${broker.name} successfully.`,
+          description: `Connected to ${broker.name} ${useDemo ? 'demo' : ''} account successfully.`,
           variant: "default",
         });
+        setIsDialogOpen(false);
       } else {
         toast({
           title: "Connection Failed",
-          description: `Could not connect to ${broker.name}. Please check your credentials.`,
+          description: result.message || `Could not connect to ${broker.name}. Please check your credentials.`,
           variant: "destructive",
         });
       }
-      
+    } catch (error) {
+      console.error('Error connecting to broker:', error);
+      toast({
+        title: "Connection Error",
+        description: `An error occurred while connecting to ${broker.name}. Please try again.`,
+        variant: "destructive",
+      });
+    } finally {
       setIsTesting(false);
-      setIsDialogOpen(false);
-    }, 1500);
+    }
   };
 
-  const handleDisconnect = () => {
-    setIsConnected(false);
-    toast({
-      title: "Disconnected",
-      description: `Disconnected from ${broker.name}.`,
-      variant: "default",
-    });
+  const handleDisconnect = async () => {
+    setIsTesting(true);
+    
+    try {
+      // Currently, the server-side doesn't have a dedicated disconnect endpoint
+      // We'll implement a client-side disconnect for now
+      
+      // In a full implementation, you would call an API endpoint like:
+      // const response = await fetch(`/api/nexus/disconnect-broker/${brokerId}`, {
+      //   method: 'POST',
+      // });
+      // const result = await response.json();
+      
+      // For now, simulate successful disconnect
+      setIsConnected(false);
+      toast({
+        title: "Disconnected",
+        description: `Disconnected from ${broker.name}.`,
+        variant: "default",
+      });
+      
+    } catch (error) {
+      console.error('Error disconnecting from broker:', error);
+      toast({
+        title: "Disconnect Error",
+        description: `An error occurred while disconnecting from ${broker.name}.`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsTesting(false);
+    }
   };
 
   return (
@@ -410,8 +465,9 @@ const BrokerConnectionPanel: React.FC<BrokerConnectionPanelProps> = ({ brokerId 
               variant="destructive" 
               size="sm" 
               onClick={handleDisconnect}
+              disabled={isTesting}
             >
-              Disconnect
+              {isTesting ? 'Disconnecting...' : 'Disconnect'}
             </Button>
           ) : (
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
