@@ -1,65 +1,162 @@
-# Nexus - Broker Aggregation Service
+# Trade Hybrid Nexus Service
 
-## Overview
+The Trade Hybrid Nexus service (formerly ABATEV) aggregates multiple brokers and provides a unified interface for trade execution, position management, and portfolio analysis.
 
-Nexus (formerly ABATEV) is the core trading engine of the Trade Hybrid platform, providing:
-- Multi-broker connectivity
-- Intelligent trade routing
-- Order execution optimization
-- Trading analytics
+## Features
 
-## Architecture
+- Broker aggregation (Alpaca, Interactive Brokers, etc.)
+- Unified trade execution
+- Position management
+- Portfolio analysis
+- Risk assessment
+- Self-healing mechanisms
+- Trade performance analytics
+- API integration with multiple trading platforms
 
-The Nexus service is designed as a modular system with these components:
+## Setup Instructions
 
-- **Broker Connectors**: Adapters for each supported broker
-- **Trade Router**: Intelligent routing of orders to the optimal broker
-- **Execution Engine**: Order placement and management
-- **Analytics Engine**: Performance tracking and optimization
+### Prerequisites
 
-## Supported Brokers
+- Node.js 18 or higher
+- PostgreSQL database
+- Redis instance
+- Broker API credentials
 
-Nexus supports connections to the following brokers:
+### Installation
 
-- Alpaca
-- OANDA
-- Tradier
-- cTrader
-- Match-Trader
-- MetaTrader 4/5 (via Bridge)
-- Custom broker integrations
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-organization/tradehybrid.git
+   cd tradehybrid/nexus
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   nano .env
+   ```
+
+4. Start the service:
+   ```bash
+   npm start
+   ```
+
+### Docker Deployment
+
+To deploy using Docker:
+
+```bash
+docker build -t tradehybrid-nexus .
+docker run -p 4000:4000 --env-file .env tradehybrid-nexus
+```
 
 ## API Endpoints
 
-Nexus exposes a RESTful API on port 4000:
+### Brokers
 
-- `/api/v1/brokers` - List available brokers
-- `/api/v1/connect` - Connect to a broker
-- `/api/v1/accounts` - Manage trading accounts
-- `/api/v1/orders` - Place and manage orders
-- `/api/v1/positions` - View and manage open positions
-- `/api/v1/history` - Trading history
-- `/api/v1/signals` - Access trading signals
+- `GET /brokers`: List all supported brokers
+- `GET /brokers/:id`: Get details for a specific broker
+- `POST /brokers/connect`: Connect a new broker account
+- `DELETE /brokers/:id/disconnect`: Disconnect a broker account
 
-## Database
+### Trading
 
-Nexus uses the shared PostgreSQL database with the `nexus` schema for:
-- Broker connection details
-- User preferences
-- Order history
-- Performance metrics
+- `POST /execute`: Execute a trade across selected brokers
+- `GET /positions`: Get all open positions
+- `GET /positions/:id`: Get details for a specific position
+- `POST /positions/:id/close`: Close a specific position
 
-## Configuration
+### Analytics
 
-The service is configured via environment variables:
+- `GET /performance`: Get performance metrics for all trades
+- `GET /performance/:broker`: Get performance metrics by broker
+- `GET /performance/:symbol`: Get performance metrics by symbol
+- `GET /risk`: Get risk assessment for current portfolio
 
-- `NEXUS_PORT`: API port (default: 4000)
-- `NEXUS_LOG_LEVEL`: Logging verbosity
-- `NEXUS_DB_CONNECTION`: Database connection string
+### Admin
 
-## Integration
+- `POST /admin/sync`: Force synchronization with brokers
+- `GET /admin/health`: Check broker connection health
+- `POST /admin/reset`: Reset connection to a specific broker
 
-Nexus integrates with:
-- Webhook service (for signals)
-- Frontend dashboard
-- Authentication service
+## Supported Brokers
+
+The Nexus service currently supports the following brokers:
+
+1. **Alpaca Markets**
+   - Stocks and ETFs
+   - Paper trading support
+   - Commission-free trading
+
+2. **Interactive Brokers** (coming soon)
+   - Global market access
+   - Multi-currency support
+   - Advanced order types
+
+3. **TD Ameritrade** (coming soon)
+   - Options trading
+   - Futures trading
+   - Forex trading
+
+4. **Binance** (coming soon)
+   - Cryptocurrency trading
+   - Futures and options
+   - Margin trading
+
+## Architecture
+
+The Nexus service consists of several components:
+
+1. **API Server**: Handles all broker requests
+2. **Broker Connectors**: Interfaces with individual broker APIs
+3. **Trade Execution Engine**: Routes and executes trades
+4. **Position Manager**: Tracks and manages positions
+5. **Analytics Engine**: Calculates performance metrics
+6. **Risk Assessment**: Evaluates portfolio risk
+
+## Security Considerations
+
+- All broker API keys are stored securely as environment variables
+- API keys are never stored in the database in plain text
+- JWT authentication for all endpoints
+- Rate limiting is implemented
+- Regular security audits
+
+## Error Handling
+
+The service includes robust error handling:
+
+- Automatic retry on transient errors
+- Circuit breakers for broker API outages
+- Detailed error logging
+- Self-healing mechanisms
+
+## Monitoring
+
+The service includes monitoring endpoints:
+
+- `GET /health`: Service health check
+- `GET /metrics`: Service metrics for monitoring systems
+- `GET /status`: Broker connection status
+
+## Support
+
+For Nexus-related support, contact:
+- Email: nexus@tradehybrid.club
+- Discord: #nexus-support
+
+## Roadmap
+
+Planned enhancements:
+
+- Additional broker integrations
+- Advanced order types
+- Algorithmic trading capabilities
+- AI-powered trade recommendations
+- Enhanced risk management features
+- Multi-asset portfolio optimization

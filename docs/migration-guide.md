@@ -1,267 +1,276 @@
-# Trade Hybrid Migration Guide
+# Trade Hybrid Platform Migration Guide
 
-This document provides step-by-step instructions for migrating the Trade Hybrid platform from the current unified codebase to the new modular architecture on a Hetzner EX101 dedicated server.
+This document provides step-by-step instructions for migrating the Trade Hybrid platform to the Hetzner EX101 dedicated server.
 
-## Overview
+## Table of Contents
 
-The migration will be completed in phases:
+1. [Server Preparation](#1-server-preparation)
+2. [Clone Repository](#2-clone-repository)
+3. [Environment Setup](#3-environment-setup)
+4. [Docker Deployment](#4-docker-deployment)
+5. [Systemd Service Installation](#5-systemd-service-installation)
+6. [SSL Configuration](#6-ssl-configuration)
+7. [DNS Configuration](#7-dns-configuration)
+8. [Database Migration](#8-database-migration)
+9. [Post-Migration Verification](#9-post-migration-verification)
 
-1. **Preparation Phase**: Setting up the new server and environments
-2. **Service Migration Phase**: Moving services one by one
-3. **Testing Phase**: Ensuring all services work correctly
-4. **Cutover Phase**: Switching production traffic to the new server
+## 1. Server Preparation
 
-## Preparation Phase
+### Hetzner EX101 Specifications
 
-### 1. Server Setup
+- CPU: Intel Xeon E5-1650 v2 (6 cores, 12 threads)
+- RAM: 64 GB DDR3
+- Storage: 2 x 480GB SSD with RAID 1
+- Network: 1 Gbps connection
+- Location: Helsinki data center
+
+### Initial Server Setup
 
 ```bash
-# Log into the Hetzner EX101 server
-ssh root@<server-ip>
-
-# Create a deployment user
-adduser deploy
-usermod -aG sudo deploy
-su - deploy
+# Update the system
+apt update && apt upgrade -y
 
 # Install essential tools
-sudo apt update
-sudo apt install -y git curl build-essential nginx certbot python3-certbot-nginx
+apt install -y curl wget git build-essential htop tmux vim ufw
+
+# Setup firewall
+ufw allow 22/tcp
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw allow 5000/tcp  # Webhooks service
+ufw allow 4000/tcp  # Nexus service
+ufw allow 3500/tcp  # Staking service
+ufw enable
+
+# Install Docker and Docker Compose
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+curl -L "https://github.com/docker/compose/releases/download/v2.18.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+# Create deploy user
+adduser deploy
+usermod -aG sudo deploy
+usermod -aG docker deploy
+
+# Setup SSH key authentication for deploy user
+mkdir -p /home/deploy/.ssh
+cat >> /home/deploy/.ssh/authorized_keys << 'EOL'
+# Paste your public SSH key here
+EOL
+chown -R deploy:deploy /home/deploy/.ssh
+chmod 700 /home/deploy/.ssh
+chmod 600 /home/deploy/.ssh/authorized_keys
+
+# Disable password authentication
+sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+systemctl restart sshd
 ```
 
-### 2. Install Node.js
+## 2. Clone Repository
 
 ```bash
-# Install Node.js 18.x
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt-get install -y nodejs
+# Switch to deploy user
+su - deploy
 
-# Install PM2 globally
-sudo npm install -g pm2
-```
-
-### 3. Install PostgreSQL
-
-```bash
-# Install PostgreSQL 14
-sudo apt install -y postgresql-14 postgresql-contrib-14
-
-# Create database and user
-sudo -u postgres psql -c "CREATE USER tradehybrid WITH PASSWORD 'secure_password';"
-sudo -u postgres psql -c "CREATE DATABASE tradehybrid OWNER tradehybrid;"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE tradehybrid TO tradehybrid;"
-```
-
-### 4. Clone Repository
-
-```bash
-# Clone the repository
-git clone https://github.com/tradehybrid/platform.git /var/www/tradehybrid
+# Create application directory
+mkdir -p /var/www/tradehybrid
 cd /var/www/tradehybrid
 
-# Install dependencies
-npm install
+# Clone repository
+git clone https://github.com/your-organization/tradehybrid.git .
 ```
 
-## Service Migration Phase
+## 3. Environment Setup
 
-### 1. Validator Setup
+Create environment files for each service component based on the provided `.env.example` files:
 
 ```bash
-# Navigate to validator directory
-cd /var/www/tradehybrid/validator
-
-# Copy environment template
+# Copy example files
 cp .env.example .env
+cp nexus/.env.example nexus/.env
+cp webhooks/.env.example webhooks/.env
+cp staking/.env.example staking/.env
+cp validator/.env.example validator/.env
 
-# Edit environment variables
+# Edit the files to set proper values
 nano .env
-
-# Run the setup script
-bash setup_scripts/install_validator.sh
+nano nexus/.env
+nano webhooks/.env
+nano staking/.env
+nano validator/.env
 ```
 
-### 2. Nexus Migration
+Required environment variables to update:
+- Database credentials
+- JWT secret
+- API keys (Alpaca, Whop, etc.)
+- Solana RPC URL
+- Validator identity information
+
+## 4. Docker Deployment
+
+Deploy the services using Docker Compose:
 
 ```bash
-# Navigate to nexus directory
-cd /var/www/tradehybrid/nexus
+# Build and start all services
+docker-compose up -d
 
-# Copy environment template
-cp .env.example .env
+# Check container status
+docker-compose ps
 
-# Edit environment variables
-nano .env
-
-# Start the service
-pm2 start ecosystem.config.js --only tradehybrid-nexus
+# View logs for specific services
+docker-compose logs -f frontend
+docker-compose logs -f webhooks
+docker-compose logs -f nexus
+docker-compose logs -f staking
 ```
 
-### 3. Webhook Service Migration
+## 5. Systemd Service Installation
+
+Alternatively, deploy services using systemd for direct host execution:
 
 ```bash
-# Navigate to webhooks directory
-cd /var/www/tradehybrid/webhooks
+# Copy service files to systemd
+sudo cp nexus/nexus.service /etc/systemd/system/
+sudo cp webhooks/webhooks.service /etc/systemd/system/
+sudo cp staking/staking.service /etc/systemd/system/
 
-# Copy environment template
-cp .env.example .env
+# Reload systemd
+sudo systemctl daemon-reload
 
-# Edit environment variables
-nano .env
+# Enable and start services
+sudo systemctl enable nexus.service
+sudo systemctl enable webhooks.service
+sudo systemctl enable staking.service
 
-# Start the service
-pm2 start ecosystem.config.js --only tradehybrid-webhooks
+sudo systemctl start nexus.service
+sudo systemctl start webhooks.service
+sudo systemctl start staking.service
+
+# Check service status
+sudo systemctl status nexus.service
+sudo systemctl status webhooks.service
+sudo systemctl status staking.service
 ```
 
-### 4. Staking Service Migration
+## 6. SSL Configuration
+
+Configure SSL certificates using Let's Encrypt:
 
 ```bash
-# Navigate to staking directory
-cd /var/www/tradehybrid/staking
+# Install Certbot
+sudo apt install -y certbot python3-certbot-nginx
 
-# Copy environment template
-cp .env.example .env
+# Obtain certificates for main domain and subdomains
+sudo certbot --nginx -d tradehybrid.club -d www.tradehybrid.club -d api.tradehybrid.club -d nexus.tradehybrid.club -d stake.tradehybrid.club
 
-# Edit environment variables
-nano .env
+# Copy certificates to nginx SSL directory
+sudo mkdir -p /etc/nginx/ssl
+sudo cp /etc/letsencrypt/live/tradehybrid.club/fullchain.pem /etc/nginx/ssl/tradehybrid.crt
+sudo cp /etc/letsencrypt/live/tradehybrid.club/privkey.pem /etc/nginx/ssl/tradehybrid.key
 
-# Start the service
-pm2 start ecosystem.config.js --only tradehybrid-staking
+# Set up auto-renewal
+sudo certbot renew --dry-run
 ```
 
-### 5. Frontend Deployment
+## 7. DNS Configuration
+
+Configure DNS records for the domain:
+
+1. A Record: `tradehybrid.club` → Hetzner server IP
+2. A Record: `www.tradehybrid.club` → Hetzner server IP
+3. A Record: `api.tradehybrid.club` → Hetzner server IP
+4. A Record: `nexus.tradehybrid.club` → Hetzner server IP
+5. A Record: `stake.tradehybrid.club` → Hetzner server IP
+
+## 8. Database Migration
+
+Migrate the existing database to the new server:
 
 ```bash
-# Navigate to frontend directory
-cd /var/www/tradehybrid/frontend
+# On the old server, export the database
+pg_dump -U <username> <database_name> > tradehybrid_db_backup.sql
 
-# Copy environment template
-cp .env.example .env
+# Transfer the backup file to the new server
+scp tradehybrid_db_backup.sql deploy@<new_server_ip>:/tmp/
 
-# Edit environment variables
-nano .env
+# On the new server, import the database
+psql -U tradehybrid -d tradehybrid < /tmp/tradehybrid_db_backup.sql
 
-# Build the frontend
-npm run build
+# Verify the migration
+docker-compose exec postgres psql -U tradehybrid -d tradehybrid -c "SELECT COUNT(*) FROM trade_signals;"
+```
 
-# Configure Nginx
-sudo cp nginx/tradehybrid.conf /etc/nginx/sites-available/tradehybrid
-sudo ln -s /etc/nginx/sites-available/tradehybrid /etc/nginx/sites-enabled/
+## 9. Post-Migration Verification
+
+Verify that all services are running correctly:
+
+1. Check frontend website at `https://tradehybrid.club`
+2. Test API endpoints at `https://api.tradehybrid.club/api/health`
+3. Verify Nexus service at `https://nexus.tradehybrid.club/health`
+4. Check Staking service at `https://stake.tradehybrid.club/health`
+5. Verify WebSocket connections
+6. Test authentication flows
+7. Verify trading signals display
+8. Check THC staking functionality
+9. Test Solana wallet connections
+10. Verify Whop integration
+
+## Troubleshooting
+
+### Service Not Starting
+
+Check the service logs:
+
+```bash
+# For Docker deployment
+docker-compose logs <service_name>
+
+# For systemd deployment
+sudo journalctl -u <service_name>.service -f
+```
+
+### Database Connection Issues
+
+Verify database credentials and connection:
+
+```bash
+# Test PostgreSQL connection
+psql -h localhost -U tradehybrid -d tradehybrid -c "SELECT 1;"
+
+# Check if PostgreSQL is running
+sudo systemctl status postgresql
+```
+
+### SSL Certificate Issues
+
+Verify SSL certificates:
+
+```bash
+# Check certificate validity
+sudo certbot certificates
+
+# Test SSL configuration
+curl -vI https://tradehybrid.club
+```
+
+### Nginx Configuration Issues
+
+Check Nginx configuration:
+
+```bash
+# Test Nginx configuration
 sudo nginx -t
+
+# Restart Nginx
 sudo systemctl restart nginx
-```
-
-## Setting Up SSL Certificates
-
-```bash
-# Set up SSL certificates with Let's Encrypt
-sudo certbot --nginx -d tradehybrid.club -d www.tradehybrid.club -d nexus.tradehybrid.club -d stake.tradehybrid.club -d signals.tradehybrid.club
-```
-
-## Data Migration
-
-### 1. Database Migration
-
-```bash
-# On the old server, dump the database
-pg_dump -U postgres tradehybrid > tradehybrid_dump.sql
-
-# Transfer the dump file to the new server
-scp tradehybrid_dump.sql deploy@<new-server-ip>:/tmp/
-
-# On the new server, restore the database
-psql -U tradehybrid tradehybrid < /tmp/tradehybrid_dump.sql
-```
-
-### 2. Environment Variables Migration
-
-Make sure to transfer all necessary environment variables from the old server to the new server, especially API keys and service credentials.
-
-## Testing Phase
-
-### 1. Service Health Checks
-
-```bash
-# Check if all services are running
-pm2 status
-
-# Check Nexus API
-curl http://localhost:4000/api/v1/health
-
-# Check Webhook API
-curl http://localhost:5000/api/health
-
-# Check Staking API
-curl http://localhost:3500/api/health
-```
-
-### 2. End-to-End Testing
-
-1. Test wallet connection
-2. Test THC staking
-3. Test trading signals
-4. Test broker connections
-5. Test user authentication
-
-## Cutover Phase
-
-### 1. DNS Updates
-
-Update DNS records to point to the new server:
-
-```
-tradehybrid.club -> <new-server-ip>
-www.tradehybrid.club -> <new-server-ip>
-nexus.tradehybrid.club -> <new-server-ip>
-stake.tradehybrid.club -> <new-server-ip>
-signals.tradehybrid.club -> <new-server-ip>
-```
-
-### 2. Monitoring Setup
-
-```bash
-# Set up PM2 monitoring
-pm2 install pm2-logrotate
-pm2 install pm2-server-monit
-pm2 save
-
-# Configure Prometheus and Grafana
-# (Follow instructions in monitoring/README.md)
-```
-
-### 3. Backup Configuration
-
-```bash
-# Set up automatic database backups
-# Create backup script
-cat > /var/www/tradehybrid/scripts/backup-db.sh << 'EOF'
-#!/bin/bash
-BACKUP_DIR="/var/backups/tradehybrid"
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-mkdir -p $BACKUP_DIR
-pg_dump -U tradehybrid tradehybrid | gzip > "$BACKUP_DIR/tradehybrid_$TIMESTAMP.sql.gz"
-# Keep only last 7 days of backups
-find $BACKUP_DIR -name "tradehybrid_*.sql.gz" -mtime +7 -delete
-EOF
-
-# Make it executable
-chmod +x /var/www/tradehybrid/scripts/backup-db.sh
-
-# Add to crontab
-(crontab -l 2>/dev/null; echo "0 2 * * * /var/www/tradehybrid/scripts/backup-db.sh") | crontab -
 ```
 
 ## Rollback Plan
 
-In case of issues during migration, have a rollback plan ready:
+In case of migration issues, follow these steps to roll back:
 
-1. Keep the old server running during migration
-2. Maintain backup DNS records pointing to the old server
-3. Document all configuration changes to quickly revert if needed
-
-## Post-Migration Tasks
-
-1. Monitor all services for at least 72 hours
-2. Fine-tune resource allocation based on usage patterns
-3. Set up regular maintenance schedule
-4. Update documentation to reflect the new architecture
+1. Revert DNS changes to point back to the old server
+2. Keep the old server running until all issues are resolved
+3. Document encountered issues and solutions for the next migration attempt

@@ -1,151 +1,278 @@
 # Trade Hybrid Platform Architecture
 
-## Overview
+This document outlines the architecture of the Trade Hybrid platform, a cutting-edge decentralized trading platform that leverages blockchain technology, AI-driven market insights, and an adaptive user experience.
 
-The Trade Hybrid platform is a comprehensive cryptocurrency trading and financial services ecosystem comprising multiple independent but interconnected services. This document outlines the architecture, component interactions, and deployment strategies.
+## System Overview
 
-## System Components
+The Trade Hybrid platform consists of multiple interconnected services that work together to provide a comprehensive trading experience. Each service is designed to be independently deployable and scalable.
 
-### 1. Solana Validator (`/validator`)
-- **Purpose**: Core validator for staking SOL
-- **Port**: 8899 (RPC), 8900 (WebSocket)
-- **Dependencies**: Solana CLI tools (1.16.x+)
-- **Stability Requirements**: Must run stable, full-time, minimal interference
+![Architecture Diagram](architecture-diagram.png)
 
-### 2. THC Staking Program (`/staking`)
-- **Purpose**: Smart contract service for staking Trade Hybrid Coin (THC)
-- **Port**: 3500 (API)
-- **Dependencies**: 
-  - Solana Web3.js (^1.74.0)
-  - @project-serum/anchor (^0.26.0)
-  - Node.js (18.x+)
+## Service Components
 
-### 3. Nexus - Broker Aggregator (`/nexus`)
-- **Purpose**: Connect to and aggregate various trading brokers, selecting optimal execution paths
-- **Port**: 4000 (API)
-- **Dependencies**:
-  - Node.js (18.x+)
-  - Express.js
-  - PostgreSQL database
-- **Supported Brokers**:
-  - Alpaca
-  - OANDA
-  - Tradier
-  - cTrader
-  - Match-Trader
-  - Others as integrated
+### 1. Frontend Service
 
-### 4. Webhook Server (`/webhooks`)
-- **Purpose**: Accept and process webhook signals from various sources
-- **Port**: 5000 (API)
-- **Dependencies**:
-  - Node.js (18.x+)
-  - Express.js
-  - PostgreSQL database (shared with Nexus)
-- **Signal Sources**:
-  - AI signal generators
-  - TradingView bots
-  - Custom models
-  - User-created signals
+**Purpose**: Provides the user interface for the Trade Hybrid platform.
 
-### 5. Frontend Web App (`/frontend`)
-- **Purpose**: User interface for all platform services
-- **Port**: 3000 (development), 80/443 (production)
-- **Dependencies**:
-  - React (18.x+)
-  - TypeScript
-  - Vite.js
-  - Tailwind CSS
-- **Features**:
-  - Validator dashboard
-  - Staking dashboard
-  - Nexus user dashboard
-  - Account linking interfaces
+**Technology Stack**:
+- React with TypeScript
+- Tailwind CSS for styling
+- @solana/wallet-adapter for wallet connections
+- Web3Auth integration
+- React Three Fiber for 3D visualizations
+- HLS.js for TH TV livestream viewing
 
-## Architecture Diagram
+**Key Features**:
+- Responsive design for multiple device types
+- Wallet connection (Phantom, Web3Auth)
+- Trading signals display
+- Broker integration interfaces
+- THC token staking interfaces
+- User profile management
+- Matrix contract visualization
 
-```
-                           ┌────────────────────┐
-                           │   Trade Hybrid UI  │
-                           │    (Frontend)      │
-                           └─────────┬──────────┘
-                                     │
-                                     ▼
-                ┌────────────────────┬────────────────────┐
-                │                    │                    │
-                ▼                    ▼                    ▼
-    ┌───────────────────┐  ┌──────────────────┐  ┌─────────────────┐
-    │  Staking Service  │  │  Nexus Service   │  │ Webhook Service │
-    │     (3500)        │  │     (4000)       │  │     (5000)      │
-    └────────┬──────────┘  └────────┬─────────┘  └────────┬────────┘
-             │                      │                     │
-             ▼                      ▼                     │
-    ┌───────────────────┐  ┌──────────────────┐          │
-    │ Solana Validator  │  │ Trading Brokers  │          │
-    │  (8899/8900)      │  │                  │          │
-    └───────────────────┘  └──────────────────┘          │
-                                     ▲                    │
-                                     │                    │
-                                     └────────────────────┘
-                                    Signal Processing
-```
+**Deployment**:
+- Nginx server for static file serving
+- SSL termination
+- Reverse proxy to backend services
 
-## Deployment Strategy
+### 2. Webhooks Service
 
-### Phase 1: Backend Migration
-- Move backend services to Hetzner EX101 server
-- Priority order: Validator, Staking, Nexus, Webhooks
-- Frontend remains on Replit for ongoing development
+**Purpose**: Handles incoming webhooks from trading platforms and provides real-time data via WebSockets.
 
-### Phase 2: Frontend Integration
-- Complete frontend development on Replit
-- Prepare for frontend migration to production server
-- Implement proper subdomain routing
+**Technology Stack**:
+- Node.js with Express
+- WebSocket server
+- PostgreSQL for data persistence
+- Redis for caching
 
-### Phase 3: Full Production Deployment
-- Migrate frontend to Hetzner server
-- Configure subdomains:
-  - validator.tradehybrid.club
-  - stake.tradehybrid.club
-  - nexus.tradehybrid.club
-  - signals.tradehybrid.club
+**Key Features**:
+- TradingView webhook integration
+- Cash Cow signal integration
+- Real-time market data broadcasting
+- Authentication middleware
+- Rate limiting
+- User session management
+- WebSocket multiplayer capabilities
 
-## Environment Configuration
+**API Endpoints**:
+- `/api/webhooks/tradingview`: Receives trading signals from TradingView
+- `/api/signals/trading-signals`: Returns trading signals for the authenticated user
+- `/api/auth/*`: Authentication endpoints
+- WebSocket endpoint for real-time updates
 
-Each service requires specific environment variables to operate. Templates are provided in each service directory as `.env.example` files.
+### 3. Nexus Service (formerly ABATEV)
 
-Key environment categories:
-- API keys (Broker APIs, Web3 services)
-- Solana network configuration (Mainnet vs Devnet)
-- Database connections
-- Service-specific settings
-- Monitoring parameters
+**Purpose**: Aggregates multiple brokers and provides a unified interface for trade execution.
 
-## Process Management
+**Technology Stack**:
+- Node.js with Express
+- PostgreSQL for data persistence
+- Redis for caching
 
-Services will be deployed as independent processes using PM2 or Docker containers:
+**Key Features**:
+- Broker integration (Alpaca, Interactive Brokers, etc.)
+- Trade execution
+- Position management
+- Portfolio analysis
+- Risk assessment
+- Self-healing mechanisms
+- Trade performance analytics
 
-- PM2 configuration in `ecosystem.config.js`
-- Docker configuration with individual `Dockerfile` and orchestration via `docker-compose.yml`
+**API Endpoints**:
+- `/brokers`: Lists available brokers
+- `/execute`: Executes trades across selected brokers
+- `/positions`: Manages open positions
+- `/performance`: Provides trade performance metrics
 
-## Security Considerations
+### 4. Staking Service
 
-- Private keys and sensitive credentials stored using environment variables
-- Network security through firewalls and SSH key authentication
-- Regular backup strategy for database and validator state
-- Monitoring and alert systems configured for each service
+**Purpose**: Manages staking operations for THC tokens and SOL.
+
+**Technology Stack**:
+- Node.js with Express
+- @solana/web3.js for blockchain interaction
+- @project-serum/anchor for smart contract interaction
+- PostgreSQL for data persistence
+
+**Key Features**:
+- THC token staking
+- SOL staking through validator
+- Rewards calculation and distribution
+- Validator monitoring
+- Staking analytics
+
+**API Endpoints**:
+- `/stake`: For staking tokens
+- `/unstake`: For unstaking tokens
+- `/rewards`: For checking and claiming rewards
+- `/validator`: For validator information
+
+### 5. Validator Service
+
+**Purpose**: Manages the Solana validator node.
+
+**Technology Stack**:
+- Solana validator software
+- Node.js monitoring scripts
+- PostgreSQL for data persistence
+
+**Key Features**:
+- Validator node management
+- Stake account monitoring
+- Commission management (1%)
+- Performance analytics
+- Health monitoring
+
+## Data Flow
+
+1. **User Authentication**:
+   - Users authenticate via Whop, Phantom wallet, or Web3Auth
+   - Authentication status is maintained across all services
+   - Whop ID serves as the master key connecting user data
+
+2. **Trading Signals**:
+   - External platforms send signals via webhooks
+   - Webhooks service processes and stores signals
+   - Signals are filtered based on user membership level
+   - Frontend displays signals in real-time
+
+3. **Trade Execution**:
+   - User initiates trade via frontend
+   - Request is sent to Nexus service
+   - Nexus service routes the trade to appropriate broker(s)
+   - Execution results are returned to frontend
+   - Position is tracked and monitored
+
+4. **Staking**:
+   - User initiates staking via frontend
+   - Request is sent to Staking service
+   - Staking service interacts with Solana blockchain
+   - Staking positions are tracked and rewards calculated
+   - User can claim rewards or unstake tokens
+
+5. **Matrix Contract**:
+   - User participates in affiliate matrix system
+   - Matrix contract service handles slot allocation
+   - Payments are processed directly via crypto transactions
+   - Real-time event listeners track matrix changes
 
 ## Database Schema
 
-Shared PostgreSQL database with schemas separated by service:
-- `staking`: THC staking data
-- `nexus`: Broker connections and trade routing
-- `webhooks`: Signal history and routing logic
-- `users`: User account data
+The platform uses PostgreSQL for data persistence with the following key schemas:
+
+1. **Users**:
+   - Stores user information, preferences, and membership levels
+   - Connected to Whop ID for authentication
+
+2. **Trading Signals**:
+   - Stores signals from various sources
+   - Includes metadata for filtering and display
+
+3. **Broker Connections**:
+   - Stores broker API credentials and connection status
+   - Maps users to their broker connections
+
+4. **Staking Records**:
+   - Tracks staking positions and rewards
+   - Links to on-chain transactions
+
+5. **Matrix Participation**:
+   - Tracks user positions in the affiliate matrix
+   - Records earnings and recycling events
+
+## Security Considerations
+
+1. **API Security**:
+   - JWT-based authentication
+   - Rate limiting on all endpoints
+   - Input validation and sanitization
+   - CORS configuration
+
+2. **Credential Management**:
+   - Broker API keys stored securely in environment variables
+   - No credentials in code repositories
+   - Regular credential rotation
+
+3. **Blockchain Security**:
+   - Secure key management for validator
+   - Transaction verification and validation
+   - Withdrawal limits and time locks
+
+4. **Network Security**:
+   - SSL/TLS for all connections
+   - Firewall configuration
+   - Regular security audits
+
+## Scaling Strategy
+
+The modular architecture allows for independent scaling of each service:
+
+1. **Horizontal Scaling**:
+   - Each service can be scaled independently
+   - Load balancers for high-traffic services
+
+2. **Database Scaling**:
+   - Read replicas for high-read scenarios
+   - Sharding for large data sets
+
+3. **Caching Strategy**:
+   - Redis used for caching frequently accessed data
+   - Reduces database load and improves response times
 
 ## Monitoring and Logging
 
-- Centralizing logging with structured JSON format
-- Prometheus metrics exposed from each service
-- Grafana dashboards for monitoring
-- Alerting via Slack/Telegram for critical issues
+1. **Centralized Logging**:
+   - Winston for log generation
+   - Logs stored in structured format
+   - Log rotation and archiving
+
+2. **Performance Monitoring**:
+   - Service health checks
+   - Response time monitoring
+   - Error rate tracking
+
+3. **Alerts**:
+   - Critical error notifications
+   - Performance degradation alerts
+   - Service downtime alerts
+
+## Disaster Recovery
+
+1. **Backup Strategy**:
+   - Regular database backups
+   - Configuration backups
+   - Code repository mirroring
+
+2. **Recovery Procedures**:
+   - Database restoration
+   - Service redeployment
+   - DNS failover
+
+## Future Architecture Enhancements
+
+1. **Microservices Expansion**:
+   - Further decomposition of services for better isolation
+   - Service mesh implementation
+
+2. **AI Integration**:
+   - Enhanced signal analysis
+   - Predictive analytics
+   - User behavior modeling
+
+3. **Blockchain Integration**:
+   - Multi-chain support
+   - DeFi integration
+   - Cross-chain asset management
+
+## Technology Stack Summary
+
+- **Frontend**: React, TypeScript, Tailwind CSS, Three.js
+- **Backend**: Node.js, Express, WebSockets
+- **Database**: PostgreSQL, Redis
+- **Blockchain**: Solana, SPL Tokens
+- **Infrastructure**: Docker, Nginx, Systemd
+- **Deployment**: Hetzner EX101 Server, Docker Compose
+- **Security**: SSL/TLS, JWT, Rate Limiting
+- **Monitoring**: Health Checks, Logging
+- **Authentication**: Whop, Phantom Wallet, Web3Auth
