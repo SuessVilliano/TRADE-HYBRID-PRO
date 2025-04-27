@@ -95,16 +95,65 @@ export interface AIAnalysis {
   prediction: string;
 }
 
+// Token data for wallet
+export interface TokenData {
+  mint: string;
+  symbol: string;
+  name?: string;
+  amount: number;
+  decimals: number;
+  usdValue?: number;
+  price?: number;
+  logoURI?: string;
+  change24h?: number;
+  source?: string; // 'birdeye', 'raydium', etc.
+}
+
+// NFT data for wallet
+export interface NFTData {
+  mint: string;
+  name: string;
+  symbol?: string;
+  image?: string;
+  collection?: string;
+  attributes?: Record<string, any>[];
+  lastSalePrice?: number; 
+  rarity?: string;
+  floorPrice?: number;
+}
+
+// Transaction data for wallet history
+export interface TransactionData {
+  signature: string;
+  blockTime: number;
+  slot: number;
+  type: 'transfer' | 'swap' | 'stake' | 'unstake' | 'mint' | 'burn' | 'unknown';
+  status: 'confirmed' | 'failed';
+  tokenAmount?: number;
+  tokenSymbol?: string;
+  tokenMint?: string;
+  fee?: number;
+  from?: string;
+  to?: string;
+  usdValue?: number;
+}
+
 // Wallet data from blockchain
 export interface WalletData {
   walletConnected: boolean;
   address?: string;
-  provider?: string;
-  balance?: number;
-  tokens?: any[];
-  nfts?: any[];
-  transactions?: any[];
-  stakedAmount?: number;
+  provider?: string; // 'phantom', 'web3auth', etc.
+  balanceUsd?: number; // Total wallet balance in USD
+  solBalance?: number; // SOL balance
+  thcBalance?: number; // THC token balance
+  tokens?: TokenData[]; // All tokens in wallet
+  nfts?: NFTData[]; // All NFTs in wallet
+  transactions?: TransactionData[]; // Recent transactions
+  isStaking?: boolean; // Whether user is staking
+  stakedAmount?: number; // Total staked amount
+  stakedSince?: string; // Date when staking started
+  stakingRewards?: number; // Accrued staking rewards
+  lastRefreshed?: string; // Last time wallet data was refreshed
 }
 
 // User preferences for platform customization
