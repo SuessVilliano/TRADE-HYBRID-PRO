@@ -1,6 +1,21 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { TradingSignal } from '../../../shared/models/UserContext';
+
+// Define the TradingSignal interface based on how it's currently used in the app
+export interface TradingSignal {
+  id: string;
+  symbol: string;
+  type?: string;
+  entry?: number;
+  stopLoss?: number;
+  takeProfit?: number;
+  timestamp: string;
+  source: string;
+  risk?: number;
+  notes?: string;
+  timeframe?: string;
+  status?: string;
+}
 
 interface SignalsState {
   signals: TradingSignal[];
@@ -35,6 +50,12 @@ export const useSignals = create<SignalsState>()(
       signals: [],
       activeSignal: null,
       favoriteSymbols: [],
+      notificationsEnabled: true,
+      
+      // Set notifications enabled state
+      setNotificationsEnabled: (enabled) => {
+        set({ notificationsEnabled: enabled });
+      },
       
       // Set all signals
       setSignals: (signals) => {

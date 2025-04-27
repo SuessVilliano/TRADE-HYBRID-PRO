@@ -570,6 +570,67 @@ export function SettingsPopup({
                 </div>
               </TabsContent>
               
+              <TabsContent value="signals" className="p-6 m-0">
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-medium">Signal Settings</h3>
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        onClick={() => useSignals().setNotificationsEnabled(!useSignals().notificationsEnabled)}
+                      >
+                        {useSignals().notificationsEnabled ? (
+                          <>Notifications On</>
+                        ) : (
+                          <>Notifications Off</>
+                        )}
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-4 mb-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Signal Notifications</p>
+                          <p className="text-sm text-muted-foreground">
+                            Receive in-app notifications for new trading signals
+                          </p>
+                        </div>
+                        <Switch 
+                          checked={useSignals().notificationsEnabled} 
+                          onCheckedChange={(checked) => useSignals().setNotificationsEnabled(checked)}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Sound Alerts</p>
+                          <p className="text-sm text-muted-foreground">
+                            Play sound when new signals arrive
+                          </p>
+                        </div>
+                        <Switch defaultChecked={true} />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Auto-Copy to Clipboard</p>
+                          <p className="text-sm text-muted-foreground">
+                            Automatically copy signal details
+                          </p>
+                        </div>
+                        <Switch defaultChecked={false} />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mb-6">
+                    <h3 className="text-lg font-medium mb-4">Signal Test Tools</h3>
+                    <SignalTestButtons className="mt-2" />
+                  </div>
+                </div>
+              </TabsContent>
+              
               <TabsContent value="account" className="p-6 m-0">
                 <div className="space-y-6">
                   <div>
