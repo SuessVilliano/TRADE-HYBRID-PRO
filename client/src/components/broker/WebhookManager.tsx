@@ -13,9 +13,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from "../ui/badge";
 import { Progress } from "../ui/progress";
 
-// Missing components - would need to be defined:
-// Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetTrigger,
-// Tooltip, TooltipContent, TooltipProvider, TooltipTrigger
+// Import Sheet and Tooltip components
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetTrigger } from "../ui/sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+
 import { Copy, ChevronsUpDown, AlertCircle, Check, Cog, Lock, RefreshCw, Clipboard, Loader2, X, 
   ChartBar, Activity, BarChart4, Zap, Terminal, Network, Eye, History, LineChart } from 'lucide-react';
 import { toast } from 'sonner';

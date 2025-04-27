@@ -6,13 +6,52 @@ import crypto from 'crypto';
 
 // Types for broker credentials
 export interface BrokerCredentials {
+  // Common credential fields
   apiKey?: string;
   secretKey?: string;
   accessToken?: string;
+  refreshToken?: string;
   username?: string;
   password?: string;
   passphrase?: string;
   accountId?: string;
+  
+  // Specific broker types additional fields
+  // Alpaca specific
+  isPaper?: boolean;
+  
+  // Oanda specific
+  apiToken?: string;
+  isPractice?: boolean;
+  
+  // Interactive Brokers specific
+  userId?: string;
+  
+  // Saxo Bank specific
+  appKey?: string;
+  accountKey?: string;
+  isSimAccount?: boolean;
+  
+  // cTrader specific
+  apiSecret?: string;
+  
+  // TD Ameritrade specific
+  consumerKey?: string;
+  
+  // Tradier specific
+  isSandbox?: boolean;
+  
+  // IG specific
+  isDemoAccount?: boolean;
+  
+  // MetaApi specific
+  connectionType?: string;
+  
+  // Additional options for various brokers
+  endpoint?: string;
+  region?: string;
+  subAccountName?: string;
+  metadata?: Record<string, any>;
 }
 
 /**
