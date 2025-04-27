@@ -608,6 +608,25 @@ export async function detectMarketManipulation(
 /**
  * Predefined execution profiles for different trading styles
  */
+/**
+ * Get supported broker types from Nexus
+ */
+export async function getSupportedBrokerTypes(): Promise<Array<{id: string, name: string, isSupported: boolean}>> {
+  try {
+    const response = await fetch('/api/nexus/broker-types');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.brokerTypes || [];
+  } catch (error) {
+    console.error('Error getting supported broker types:', error);
+    return [];
+  }
+}
+
 export const EXECUTION_PROFILES: Record<string, ExecutionWeightingProfile> = {
   scalper: {
     name: 'Scalper',

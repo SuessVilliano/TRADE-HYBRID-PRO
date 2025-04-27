@@ -408,15 +408,15 @@ export class BrokerConnectionService {
       if (updates.credentials) {
         const { apiKey, secretKey, passphrase, accessToken, username, password, accountId } = updates.credentials;
         
-        if (apiKey && existingConnection.broker_type.requires_key) {
+        if (apiKey && (existingConnection.broker_type as any).requires_key) {
           updateData.encryptedKey = encryptionService.encrypt(apiKey);
         }
         
-        if (secretKey && existingConnection.broker_type.requires_secret) {
+        if (secretKey && (existingConnection.broker_type as any).requires_secret) {
           updateData.encryptedSecret = encryptionService.encrypt(secretKey);
         }
         
-        if (passphrase && existingConnection.broker_type.requires_passphrase) {
+        if (passphrase && (existingConnection.broker_type as any).requires_passphrase) {
           updateData.encryptedPassphrase = encryptionService.encrypt(passphrase);
         }
         
