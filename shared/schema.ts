@@ -678,3 +678,6 @@ export const insertInvestmentPerformanceSchema = createInsertSchema(investmentPe
 export type InvestmentPerformance = typeof investmentPerformance.$inferSelect;
 export type CompanyRevenue = typeof companyRevenue.$inferSelect;
 export type FeeSetting = typeof feeSettings.$inferSelect;
+
+// Import wallet-related schemas to ensure they're included in the DB
+import "./wallet-schema";

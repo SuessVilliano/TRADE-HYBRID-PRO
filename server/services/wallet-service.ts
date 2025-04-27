@@ -1,5 +1,6 @@
 import { db } from '../db';
-import { users, wallets, transactions, nfts } from '../../shared/schema';
+import { users } from '../../shared/schema';
+import { wallets, transactions, nfts, staking, tokenPrices } from '../../shared/wallet-schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
@@ -60,17 +61,30 @@ class WalletService {
         const walletNfts = await db.query.nfts.findMany({
           where: eq(nfts.walletId, wallet.id)
         });
+
+        // Get staking information
+        const stakingInfo = await db.query.staking.findFirst({
+          where: and(
+            eq(staking.walletId, wallet.id),
+            eq(staking.status, 'active')
+          )
+        });
         
         // Include both cached and fresh data
         return {
           walletConnected: true,
           address: user.walletAddress,
-          provider: user.walletProvider || 'unknown',
-          cachedBalance: wallet.balance,
+          provider: wallet.provider || 'unknown',
+          cachedBalanceUsd: wallet.balanceUsd,
           cachedSolBalance: wallet.solBalance,
+          cachedThcBalance: wallet.thcBalance,
           cachedTokens: wallet.tokens || [],
           cachedNfts: walletNfts,
           cachedTransactions: walletTransactions,
+          isStaking: wallet.isStaking,
+          stakedAmount: wallet.stakedAmount,
+          stakedSince: wallet.stakedSince,
+          stakingInfo: stakingInfo,
           lastUpdated: wallet.updatedAt,
           ...(await this.fetchOnChainWalletData(user.walletAddress))
         };
@@ -83,12 +97,15 @@ class WalletService {
       const [newWallet] = await db.insert(wallets).values({
         userId,
         address: user.walletAddress,
-        balance: onChainData.balance || 0,
+        provider: 'unknown', // Will be updated when user connects wallet
+        balanceUsd: onChainData.balance || 0,
         solBalance: onChainData.solBalance || 0,
+        thcBalance: onChainData.thcTokenHolding || 0,
         tokens: onChainData.tokens || [],
         isStaking: onChainData.isStaking || false,
         stakedAmount: onChainData.stakedAmount || 0,
         stakedSince: onChainData.stakedSince,
+        lastRefreshed: new Date(),
         createdAt: new Date(),
         updatedAt: new Date()
       }).returning();
@@ -306,12 +323,14 @@ class WalletService {
       if (wallet) {
         // Update wallet data
         await db.update(wallets).set({
-          balance: onChainData.balance || 0,
+          balanceUsd: onChainData.balance || 0,
           solBalance: onChainData.solBalance || 0,
+          thcBalance: onChainData.thcTokenHolding || 0,
           tokens: onChainData.tokens || [],
           isStaking: onChainData.isStaking || false,
           stakedAmount: onChainData.stakedAmount || 0,
           stakedSince: onChainData.stakedSince,
+          lastRefreshed: new Date(),
           updatedAt: new Date()
         }).where(eq(wallets.id, wallet.id));
         
@@ -326,12 +345,15 @@ class WalletService {
         const [newWallet] = await db.insert(wallets).values({
           userId,
           address: user.walletAddress,
-          balance: onChainData.balance || 0,
+          provider: 'unknown', // Will be updated when user connects wallet
+          balanceUsd: onChainData.balance || 0,
           solBalance: onChainData.solBalance || 0,
+          thcBalance: onChainData.thcTokenHolding || 0,
           tokens: onChainData.tokens || [],
           isStaking: onChainData.isStaking || false,
           stakedAmount: onChainData.stakedAmount || 0,
           stakedSince: onChainData.stakedSince,
+          lastRefreshed: new Date(),
           createdAt: new Date(),
           updatedAt: new Date()
         }).returning();
