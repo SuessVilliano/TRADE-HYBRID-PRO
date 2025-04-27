@@ -363,7 +363,7 @@ export async function saveJournalEntry(entry: Record<string, any>): Promise<bool
 /**
  * Calculate signal confidence score based on risk-reward ratio
  */
-function calculateConfidence(signal: any): number {
+function calculateConfidence(signal: Record<string, any>): number {
   try {
     // If confidence is already provided, use it
     if (typeof signal.confidence === 'number') {

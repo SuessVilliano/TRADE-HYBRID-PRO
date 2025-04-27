@@ -547,6 +547,8 @@ router.get('/trading-signals', async (req, res) => {
           dbSignals = await storage.getTradeSignals(100);
         }
         
+        // Ensure dbSignals is an array before trying to access length
+        dbSignals = dbSignals || [];
         console.log(`Found ${dbSignals.length} signals in database`);
           
         if (dbSignals.length > 0) {
