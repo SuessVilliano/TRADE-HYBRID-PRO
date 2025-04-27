@@ -511,48 +511,98 @@ router.get('/trading-signals', async (req, res) => {
     
     // STEP 2: Get persistent signals from database
     try {
-      // Get signals from the database
-      let dbSignals = [];
-      if (marketType !== 'all') {
-        dbSignals = await storage.getTradeSignalsByMarketType(marketType, 100);
-      } else {
-        dbSignals = await storage.getTradeSignals(100);
+      // Check if the trade_signals table exists - it's created at app start
+      // but might not be available in the first run after a deployment
+      let tableExists = false;
+      try {
+        // Run a query to check if the table exists
+        const tablesQuery = `
+          SELECT EXISTS (
+            SELECT FROM pg_tables 
+            WHERE schemaname = 'public' 
+            AND tablename = 'trade_signals'
+          );
+        `;
+        const result = await storage.sql.query(tablesQuery);
+        tableExists = result.rows[0]?.exists === true;
+      } catch (checkError) {
+        console.error('Error checking if trade_signals table exists:', checkError);
+        tableExists = false;
       }
       
-      console.log(`Found ${dbSignals.length} signals in database`);
+      let dbSignals = [];
+      
+      if (tableExists) {
+        // Get signals from the database
+        if (marketType !== 'all') {
+          try {
+            dbSignals = await storage.getTradeSignalsByMarketType(marketType, 100);
+          } catch (error) {
+            console.warn(`Failed to get signals by market type ${marketType}, trying all signals`);
+            dbSignals = await storage.getTradeSignals(100);
+          }
+        } else {
+          dbSignals = await storage.getTradeSignals(100);
+        }
         
-      if (dbSignals.length > 0) {
-        // Convert database signals to our standard format
-        const convertedDbSignals = dbSignals.map(signal => ({
-          id: signal.id,
-          Symbol: signal.symbol,
-          Asset: signal.symbol,
-          Direction: signal.side.toUpperCase(),
-          'Entry Price': signal.entryPrice,
-          'Stop Loss': signal.stopLoss,
-          'Take Profit': signal.takeProfit,
-          TP1: signal.takeProfit,
-          // Get TP2/TP3 from metadata if available
-          ...(signal.metadata && signal.metadata.tp2 ? { TP2: signal.metadata.tp2 } : {}),
-          ...(signal.metadata && signal.metadata.tp3 ? { TP3: signal.metadata.tp3 } : {}),
-          Status: signal.status,
-          Date: signal.timestamp.toISOString(),
-          Time: signal.timestamp.toTimeString().substring(0, 8),
-          Provider: (signal.metadata && signal.metadata.provider_name) || 
-                   (signal.providerId === 'paradox' ? 'Paradox' :
-                    signal.providerId === 'solaris' ? 'Solaris' :
-                    signal.providerId === 'hybrid' ? 'Hybrid' : 'Custom'),
-          Notes: signal.description || `${signal.side.toUpperCase()} signal for ${signal.symbol}`
-        }));
-        
-        // Merge with in-memory signals, avoiding duplicates by ID
-        const existingIds = new Set(signals.map(s => s.id));
-        for (const dbSignal of convertedDbSignals) {
-          if (!existingIds.has(dbSignal.id)) {
-            signals.push(dbSignal);
-            existingIds.add(dbSignal.id);
+        console.log(`Found ${dbSignals.length} signals in database`);
+          
+        if (dbSignals.length > 0) {
+          // Convert database signals to our standard format
+          const convertedDbSignals = dbSignals.map(signal => {
+            try {
+              // Handle cases where metadata might be a string or null
+              let metadata = {};
+              if (signal.metadata) {
+                if (typeof signal.metadata === 'string') {
+                  try {
+                    metadata = JSON.parse(signal.metadata);
+                  } catch (e) {
+                    metadata = {};
+                  }
+                } else {
+                  metadata = signal.metadata;
+                }
+              }
+
+              return {
+                id: signal.id,
+                Symbol: signal.symbol,
+                Asset: signal.symbol,
+                Direction: signal.side.toUpperCase(),
+                'Entry Price': signal.entryPrice,
+                'Stop Loss': signal.stopLoss,
+                'Take Profit': signal.takeProfit,
+                TP1: signal.takeProfit,
+                // Get TP2/TP3 from metadata if available
+                ...(metadata.tp2 ? { TP2: metadata.tp2 } : {}),
+                ...(metadata.tp3 ? { TP3: metadata.tp3 } : {}),
+                Status: signal.status,
+                Date: signal.timestamp.toISOString(),
+                Time: signal.timestamp.toTimeString().substring(0, 8),
+                Provider: (metadata.provider_name) || 
+                        (signal.providerId === 'paradox' ? 'Paradox' :
+                          signal.providerId === 'solaris' ? 'Solaris' :
+                          signal.providerId === 'hybrid' ? 'Hybrid' : 'Custom'),
+                Notes: signal.description || `${signal.side.toUpperCase()} signal for ${signal.symbol}`
+              };
+            } catch (formatError) {
+              console.error('Error formatting signal:', formatError, signal);
+              return null;
+            }
+          }).filter(Boolean); // Remove any null entries
+          
+          // Merge with in-memory signals, avoiding duplicates by ID
+          const existingIds = new Set(signals.map(s => s.id));
+          for (const dbSignal of convertedDbSignals) {
+            if (!existingIds.has(dbSignal.id)) {
+              signals.push(dbSignal);
+              existingIds.add(dbSignal.id);
+            }
           }
         }
+      } else {
+        console.log('trade_signals table does not exist yet - using only in-memory signals');
       }
     } catch (dbError) {
       console.error("Error getting signals from database:", dbError);
