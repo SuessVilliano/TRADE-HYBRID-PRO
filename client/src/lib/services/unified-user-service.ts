@@ -259,8 +259,8 @@ export async function connectBroker(
       throw new Error(verifyResponse.data.message || 'Invalid broker credentials');
     }
     
-    const accountInfo = verifyResponse.data.accountInfo;
-    const accountId = accountInfo.accountId;
+    const accountInfo = verifyResponse.data.accountInfo || {};
+    const accountId = accountInfo.accountId || accountInfo.id;
     
     // Register the broker connection
     const response = await axios.post(`${API_BASE_URL}/users/${userId}/brokers`, {
@@ -284,7 +284,7 @@ export async function connectBroker(
 export async function listAvailableBrokers(): Promise<any[]> {
   try {
     const response = await axios.get(`${API_BASE_URL}/brokers/available`);
-    return response.data.map((b: any) => ({
+    return response.data.map((b) => ({
       id: b.id,
       name: b.name,
       description: b.description,
@@ -323,7 +323,7 @@ export async function disconnectBroker(brokerId: string, isDemo: boolean): Promi
 /**
  * Save a trading signal
  */
-export async function saveSignal(signal: any): Promise<boolean> {
+export async function saveSignal(signal: Record<string, any>): Promise<boolean> {
   try {
     const userId = useUserStore.getState().user?.id;
     
@@ -343,7 +343,7 @@ export async function saveSignal(signal: any): Promise<boolean> {
 /**
  * Save a journal entry
  */
-export async function saveJournalEntry(entry: any): Promise<boolean> {
+export async function saveJournalEntry(entry: Record<string, any>): Promise<boolean> {
   try {
     const userId = useUserStore.getState().user?.id;
     

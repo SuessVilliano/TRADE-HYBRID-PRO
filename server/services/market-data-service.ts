@@ -171,7 +171,8 @@ export async function getMarketData(symbol: string, preferredSource?: string): P
           break;
         }
       } catch (error) {
-        errors.push(`${source.name}: ${error.message}`);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        errors.push(`${source.name}: ${errorMessage}`);
         continue;
       }
     }
@@ -180,7 +181,7 @@ export async function getMarketData(symbol: string, preferredSource?: string): P
       // If we couldn't get data from any source, try our database for any cached data
       const oldData = await db.query.marketData.findFirst({
         where: eq(schema.marketData.symbol, symbol),
-        orderBy: [{ updatedAt: 'desc' }]
+        orderBy: [desc(schema.marketData.updatedAt)]
       });
       
       if (oldData) {
