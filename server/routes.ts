@@ -319,6 +319,7 @@ import fixAlpacaRoutes from './routes/fix-alpaca'; // Import for Alpaca fixed cr
 import testAlpacaAuthRoutes from './routes/test-alpaca-auth'; // Import for direct Alpaca auth test
 import testCredentialsRoutes from './routes/test-credentials'; // Import for API credential testing routes
 import abatevRoutes from './api/abatev'; // Import for ABATEV integration routes
+import nexusRoutes from './api/nexus'; // Import for Nexus integration routes (replaces ABATEV)
 import validatorRoutes from './routes/validator'; // Import for Solana validator routes
 import configRoutes from './api/config'; // Import for configuration API routes
 
@@ -905,7 +906,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/test-credentials", testCredentialsRoutes);
   
   // ABATEV integration routes
-  app.use("/api/abatev", abatevRoutes);
+  app.use("/api/abatev", abatevRoutes); // Legacy route kept for backward compatibility
+  app.use("/api/nexus", nexusRoutes); // New Nexus routes (replacement for ABATEV)
   
   // Solana validator routes
   app.use("/api/validator", validatorRoutes);
