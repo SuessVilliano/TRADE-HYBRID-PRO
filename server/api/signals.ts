@@ -515,16 +515,18 @@ router.get('/trading-signals', async (req, res) => {
       // but might not be available in the first run after a deployment
       let tableExists = false;
       try {
-        // Run a query to check if the table exists
-        const tablesQuery = `
-          SELECT EXISTS (
+        // Import the database connection from the db.ts file
+        const { db } = await import('../db');
+        
+        // Use the db to check if the table exists
+        const result = await db.execute(
+          `SELECT EXISTS (
             SELECT FROM pg_tables 
             WHERE schemaname = 'public' 
             AND tablename = 'trade_signals'
-          );
-        `;
-        const result = await storage.sql.query(tablesQuery);
-        tableExists = result.rows[0]?.exists === true;
+          );`
+        );
+        tableExists = result[0]?.exists === true;
       } catch (checkError) {
         console.error('Error checking if trade_signals table exists:', checkError);
         tableExists = false;
