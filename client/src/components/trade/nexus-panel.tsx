@@ -319,7 +319,7 @@ export function NexusPanel({ defaultSymbol = 'BTC/USD' }: NexusPanelProps) {
         };
         
         // Save to localStorage for ABATEV panel to use
-        localStorage.setItem('abatev_trade_data', JSON.stringify({
+        localStorage.setItem('nexus_trade_data', JSON.stringify({
           symbol,
           side: tradeType,
           entryPrice: parseFloat(entryPrice),

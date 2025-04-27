@@ -267,7 +267,7 @@ export function TradeSignals({ symbol = 'BTCUSDT' }: TradeSignalsProps) {
     };
     
     // Store data in localStorage for Nexus panel to access
-    localStorage.setItem('abatev_trade_data', JSON.stringify(tradeData));
+    localStorage.setItem('nexus_trade_data', JSON.stringify(tradeData));
     
     // Notify user
     toast.success('Trade Prepared', {

@@ -51,7 +51,8 @@ export default function ABATEVPanelPage() {
   // Load trade data from localStorage if available
   useEffect(() => {
     try {
-      const storedData = localStorage.getItem('abatev_trade_data');
+      // Support both legacy 'abatev_trade_data' and new 'nexus_trade_data' keys for backward compatibility
+      const storedData = localStorage.getItem('nexus_trade_data') || localStorage.getItem('abatev_trade_data');
       if (storedData) {
         const parsedData = JSON.parse(storedData);
         
@@ -525,7 +526,10 @@ export default function ABATEVPanelPage() {
                     variant="outline"
                     size="sm"
                     className="gap-1"
-                    onClick={() => localStorage.removeItem('abatev_trade_data')}
+                    onClick={() => {
+                        localStorage.removeItem('abatev_trade_data');
+                        localStorage.removeItem('nexus_trade_data');
+                    }}
                     disabled={!tradeData}
                   >
                     <X className="h-4 w-4" />

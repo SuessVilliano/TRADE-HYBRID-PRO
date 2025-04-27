@@ -735,7 +735,7 @@ function SignalCard({ signal, compact = false }: SignalCardProps) {
     };
     
     // Store in local storage for Nexus panel to access
-    localStorage.setItem('abatev_trade_data', JSON.stringify(tradeData));
+    localStorage.setItem('nexus_trade_data', JSON.stringify(tradeData));
     
     toast({
       title: "Trade Prepared",
