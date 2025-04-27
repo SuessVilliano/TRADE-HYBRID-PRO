@@ -7,6 +7,14 @@ export const BrokerType = {
   NINJATRADER: 'ninjatrader',
   TRADOVATE: 'tradovate',
   TRADINGVIEW: 'tradingview',
+  INTERACTIVE_BROKERS: 'interactive_brokers',
+  TRADIER: 'tradier',
+  SAXO_BANK: 'saxo_bank',
+  CTRADER: 'ctrader',
+  MATCH_TRADER: 'match_trader',
+  META_API: 'meta_api',
+  TD_AMERITRADE: 'td_ameritrade',
+  IG: 'ig',
   OTHER: 'other'
 } as const;
 

@@ -1,0 +1,53 @@
+Here’s a shortlist of “plug-and-play” brokers and trading engines—each offers a well-documented, developer-friendly API (REST/WebSocket/Protobuf) so you can embed live order routing directly into ABATEV:
+
+⸻
+
+Alpaca
+
+A US-based broker with free, paper-trade sandbox and REST + WebSocket APIs for stocks, options and crypto. Great for rapid dev and embeddable algo-execution.  ￼
+
+Interactive Brokers (IBKR)
+
+Offers a modern REST API plus WebSocket streaming for multi-asset trading (stocks, futures, FX, options). Broad market access and production-ready SDKs.  ￼
+
+Tradier
+
+Simple REST-based brokerage API (no FIXML). Place equity & options orders with just five required parameters—ideal for straightforward integration.  ￼ ￼
+
+OANDA
+
+v20 REST API to trade FX and CFDs. Well-maintained docs, demo/live endpoints, and real-time pricing.  ￼
+
+IG
+
+Popular forex/CFD broker with a REST API that’s already integrated into platforms like TradingView. Highly reliable execution and global liquidity.  ￼
+
+Saxo Bank
+
+FIX API for ultra-low-latency and a full OpenAPI (REST + streaming) for multi-asset trading (stocks, FX, CFDs, ETFs). Excellent docs and white-label support.  ￼ ￼
+
+cTrader
+
+“Open API” uses Protobuf over TCP/WebSocket for very high-performance market data and execution. Broadly adopted in the FX/CFD space.  ￼
+
+Match-Trader
+
+Broker API platform exposing REST and gRPC endpoints in a single unified interface—secure, scalable, and easy to plug into any front-end.  ￼
+
+MetaApi (MetaTrader)
+
+Cloud-hosted WebSocket API that speaks to any MT4/MT5 broker. You don’t need to run your own terminal—just open a socket and trade.  ￼ ￼
+
+TD Ameritrade / Schwab
+
+Robust REST + WebSocket APIs for equities, options (and real-time market data). Free to use with an account, with popular community wrappers like tda-api.  ￼ ￼
+
+⸻
+
+Next Steps
+	1.	Pick 2–3 to prototype: e.g. Alpaca for stocks, OANDA for FX, MetaApi for MetaTrader brokers.
+	2.	Wire up your existing ABATEV microservice: swap in their REST/WebSocket endpoints and map your weighting engine to each feed.
+	3.	Test order routing: validate end-to-end (quote → execute → confirm) in a sandbox.
+	4.	Iterate & expand: once stable, roll out the rest, expose unified settings in your UI so traders can pick their preferred brokers on-the-fly.
+
+That mix will give you a broad multi-asset coverage and a truly aggregator-style flow—maximizing liquidity, minimizing slippage, and opening ABATEV to every major retail and institutional venue.
