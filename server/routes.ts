@@ -322,6 +322,8 @@ import abatevRoutes from './api/abatev'; // Import for ABATEV integration routes
 import nexusRoutes from './api/nexus'; // Import for Nexus integration routes (replaces ABATEV)
 import validatorRoutes from './routes/validator'; // Import for Solana validator routes
 import configRoutes from './api/config'; // Import for configuration API routes
+import authApiRoutes from './api/auth'; // Import for our new auth API routes
+import walletApiRoutes from './api/wallet'; // Import for our new wallet API routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Add route to serve Solana RPC URL from environment variables
@@ -914,6 +916,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register configuration routes
   app.use("/api/config", configRoutes);
+  
+  // Add our new authentication and wallet API routes
+  app.use("/api/auth", authApiRoutes);
+  app.use("/api/wallet", walletApiRoutes);
 
   // News route using multiple sources
   app.get("/api/rss-feeds/news", async (req, res) => {
