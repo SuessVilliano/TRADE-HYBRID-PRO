@@ -1,0 +1,19 @@
+[Unit]
+Description=Trade Hybrid Staking Service
+After=network.target postgresql.service
+
+[Service]
+User=deploy
+Group=deploy
+WorkingDirectory=/var/www/tradehybrid/staking
+ExecStart=/usr/bin/node /var/www/tradehybrid/staking/index.js
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=tradehybrid-staking
+Environment=NODE_ENV=production
+Environment=PORT=3500
+
+[Install]
+WantedBy=multi-user.target
