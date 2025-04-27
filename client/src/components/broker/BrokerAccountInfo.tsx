@@ -52,6 +52,7 @@ interface BrokerAccountData {
 interface BrokerAccountInfoProps {
   brokerId: string;
   onRefresh?: () => void;
+  useDemo?: boolean;
 }
 
 // Demo data for development - in production, this would be fetched from the API

@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { 
   getSupportedBrokerTypes, 
-  testBrokerConnection, 
+  testBrokerConnection as testBrokerApi, 
   getBrokerAccountInfo,
   type BrokerCredentials
 } from '@/lib/services/nexus-service';
@@ -19,12 +19,26 @@ import {
 export default function BrokerDashboard() {
   const [activeBroker, setActiveBroker] = useState<string>('alpaca');
   const [isLoading, setIsLoading] = useState(false);
-  const [brokerTypes, setBrokerTypes] = useState<{ id: string; name: string; isSupported: boolean }[]>([
-    { id: 'alpaca', name: 'Alpaca', isSupported: true },
-    { id: 'oanda', name: 'Oanda', isSupported: true },
-    { id: 'interactive_brokers', name: 'Interactive Brokers', isSupported: true },
+  const [useDemoAccount, setUseDemoAccount] = useState(true);
+  const [brokerTypes, setBrokerTypes] = useState<{ 
+    id: string; 
+    name: string; 
+    isSupported: boolean;
+    hasDemo?: boolean;
+    tradingCapabilities?: string[];
+    demoUrl?: string;
+  }[]>([
+    { id: 'alpaca', name: 'Alpaca', isSupported: true, hasDemo: true },
+    { id: 'oanda', name: 'Oanda', isSupported: true, hasDemo: true },
+    { id: 'interactive_brokers', name: 'Interactive Brokers', isSupported: true, hasDemo: true },
   ]);
   const [showDocsDialog, setShowDocsDialog] = useState(false);
+  const [showConnectDialog, setShowConnectDialog] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<{
+    isConnected: boolean;
+    message: string;
+    accountInfo?: any;
+  } | null>(null);
 
   // Function to load broker types from API
   const loadBrokerTypes = async () => {
@@ -47,13 +61,88 @@ export default function BrokerDashboard() {
     setActiveBroker(brokerId);
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsLoading(true);
-    // Simulate refresh delay
-    setTimeout(() => {
+    try {
+      const result = await getBrokerAccountInfo(activeBroker, useDemoAccount);
+      if (result.success) {
+        setConnectionStatus({
+          isConnected: true,
+          message: result.message,
+          accountInfo: result.accountInfo
+        });
+      } else {
+        setConnectionStatus({
+          isConnected: false,
+          message: result.message || 'Failed to connect to broker'
+        });
+      }
+    } catch (error) {
+      console.error('Error refreshing broker data:', error);
+      setConnectionStatus({
+        isConnected: false,
+        message: error instanceof Error ? error.message : 'Unknown error occurred'
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
+  
+  const testConnection = async (credentials: BrokerCredentials): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const result = await testBrokerApi(credentials);
+      setConnectionStatus({
+        isConnected: result.success,
+        message: result.message,
+        accountInfo: result.accountInfo
+      });
+      return result.success;
+    } catch (error) {
+      console.error('Error testing broker connection:', error);
+      setConnectionStatus({
+        isConnected: false,
+        message: error instanceof Error ? error.message : 'Unknown error occurred'
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Form state for broker connection
+  const [formData, setFormData] = useState<BrokerCredentials>({
+    brokerId: activeBroker,
+    useDemo: useDemoAccount
+  });
+  
+  // Update form data when active broker changes
+  React.useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      brokerId: activeBroker,
+      useDemo: useDemoAccount
+    }));
+  }, [activeBroker, useDemoAccount]);
+  
+  // Handle form input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+  
+  // Find the active broker data
+  const activeBrokerData = brokerTypes.find(b => b.id === activeBroker);
+  
+  // Effect to auto-refresh when changing broker or demo status
+  React.useEffect(() => {
+    if (activeBroker) {
+      handleRefresh();
+    }
+  }, [activeBroker, useDemoAccount]);
 
   return (
     <div className="container mx-auto p-4 md:p-6">
@@ -82,10 +171,191 @@ export default function BrokerDashboard() {
               </div>
             </DialogContent>
           </Dialog>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Connect Broker
-          </Button>
+          <Dialog open={showConnectDialog} onOpenChange={setShowConnectDialog}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Connect Broker
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Connect Broker</DialogTitle>
+                <DialogDescription>
+                  Enter your broker API credentials to connect with Trade Hybrid
+                </DialogDescription>
+              </DialogHeader>
+              <form className="space-y-4" onSubmit={(e) => {
+                e.preventDefault();
+                testConnection(formData);
+              }}>
+                {/* Demo Account Toggle */}
+                {activeBrokerData?.hasDemo && (
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Switch 
+                      id="demoAccount" 
+                      name="useDemo"
+                      checked={formData.useDemo}
+                      onCheckedChange={(checked) => {
+                        setFormData(prev => ({...prev, useDemo: checked}));
+                      }}
+                    />
+                    <Label htmlFor="demoAccount" className="cursor-pointer">Use Demo Account</Label>
+                    
+                    {formData.useDemo && activeBrokerData?.demoUrl && (
+                      <a 
+                        href={activeBrokerData.demoUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="ml-auto text-sm text-blue-500 flex items-center"
+                      >
+                        Get Demo <ExternalLink className="ml-1 h-3 w-3" />
+                      </a>
+                    )}
+                  </div>
+                )}
+                
+                {/* Based on broker type, show different fields */}
+                {activeBroker === 'alpaca' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="apiKey">API Key</Label>
+                      <input
+                        type="text"
+                        id="apiKey"
+                        name="apiKey"
+                        value={formData.apiKey || ''}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border rounded"
+                        placeholder="Your Alpaca API Key"
+                        required={!formData.useDemo}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="apiSecret">API Secret</Label>
+                      <input
+                        type="password"
+                        id="apiSecret"
+                        name="apiSecret"
+                        value={formData.apiSecret || ''}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border rounded"
+                        placeholder="Your Alpaca API Secret"
+                        required={!formData.useDemo}
+                      />
+                    </div>
+                  </>
+                )}
+                
+                {activeBroker === 'oanda' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="token">API Token</Label>
+                      <input
+                        type="text"
+                        id="token"
+                        name="token"
+                        value={formData.token || ''}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border rounded"
+                        placeholder="Your Oanda API Token"
+                        required={!formData.useDemo}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="accountId">Account ID</Label>
+                      <input
+                        type="text"
+                        id="accountId"
+                        name="accountId"
+                        value={formData.accountId || ''}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border rounded"
+                        placeholder="Your Oanda Account ID"
+                        required={!formData.useDemo}
+                      />
+                    </div>
+                  </>
+                )}
+                
+                {/* Generic fields for other brokers */}
+                {!['alpaca', 'oanda'].includes(activeBroker) && (
+                  <div className="space-y-2">
+                    <Label>API Credentials</Label>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Enter the credentials for your {activeBrokerData?.name || ''} account
+                    </p>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="apiKey">API Key / Client ID</Label>
+                      <input
+                        type="text"
+                        id="apiKey"
+                        name="apiKey"
+                        value={formData.apiKey || ''}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border rounded"
+                        placeholder="API Key or Client ID"
+                        required={!formData.useDemo}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="apiSecret">API Secret / Access Token</Label>
+                      <input
+                        type="password"
+                        id="apiSecret"
+                        name="apiSecret"
+                        value={formData.apiSecret || ''}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border rounded"
+                        placeholder="API Secret or Access Token"
+                        required={!formData.useDemo}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="accountId">Account ID (Optional)</Label>
+                      <input
+                        type="text"
+                        id="accountId"
+                        name="accountId"
+                        value={formData.accountId || ''}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border rounded"
+                        placeholder="Account ID if required"
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                <div className="pt-4 flex justify-between">
+                  <Button type="button" variant="outline" onClick={() => setShowConnectDialog(false)}>
+                    Cancel
+                  </Button>
+                  
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                        Connecting...
+                      </>
+                    ) : formData.useDemo ? (
+                      <>
+                        <Gamepad2 className="mr-2 h-4 w-4" />
+                        Connect to Demo
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Connect Broker
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -110,6 +380,18 @@ export default function BrokerDashboard() {
                     ))}
                   </SelectContent>
                 </Select>
+                {activeBrokerData?.hasDemo && (
+                  <div className="flex items-center gap-2">
+                    <Switch 
+                      id="accountDemoMode" 
+                      checked={useDemoAccount}
+                      onCheckedChange={setUseDemoAccount}
+                    />
+                    <Label htmlFor="accountDemoMode" className="text-sm cursor-pointer whitespace-nowrap">
+                      Demo Mode
+                    </Label>
+                  </div>
+                )}
                 <Button variant="outline" size="icon">
                   <Settings className="h-4 w-4" />
                 </Button>
