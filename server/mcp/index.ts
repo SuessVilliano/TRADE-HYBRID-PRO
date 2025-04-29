@@ -9,12 +9,16 @@ import { Server } from 'http';
 import { Express, Request, Response, NextFunction } from 'express';
 import { MCPServer } from './core/mcp-server';
 import { MCPConfig, MCPMessageType } from './config/mcp-config';
+import { TimeInterval } from './data/market-data-interface';
 import { registerSignalProcessors } from './processors/signal-processor';
 import { registerNotificationProcessors } from './processors/notification-processor';
 import { registerTradeProcessor } from './processors/trade-execution-processor';
 import { handleTradingViewWebhook } from './handlers/tradingview-webhook-handler-express';
 import { initializeBrokerConnectionService } from './adapters/broker-connection-service';
 import { initializeMarketDataManager } from './data/market-data-manager';
+import { initializeSignalService } from './services/signal-service';
+import { initializeSmartSignalRouter } from './processors/smart-signal-router';
+import { initializeMarketInsightsService } from './services/market-insights-service';
 
 // Singleton MCP server instance
 let mcpServer: MCPServer | null = null;
@@ -36,12 +40,17 @@ export function initializeMCPServer(): MCPServer {
     registerTradeProcessor(mcpServer);
     
     // Initialize broker connection service
-    initializeBrokerConnectionService(mcpServer);
+    mcpServer.brokerConnectionService = initializeBrokerConnectionService(mcpServer);
     
     // Initialize market data manager
-    initializeMarketDataManager(mcpServer);
+    mcpServer.marketDataManager = initializeMarketDataManager(mcpServer);
     
-    console.log('[MCP] MCP Server initialized successfully');
+    // Initialize enhanced services
+    mcpServer.signalService = initializeSignalService(mcpServer);
+    mcpServer.smartSignalRouter = initializeSmartSignalRouter(mcpServer);
+    mcpServer.marketInsightsService = initializeMarketInsightsService(mcpServer);
+    
+    console.log('[MCP] MCP Server initialized successfully with all services');
   }
   
   return mcpServer;
@@ -138,13 +147,196 @@ export function registerMCPRoutes(app: Express, server: Server): void {
     }
   });
   
+  // Enhanced signals endpoint
+  app.get('/api/mcp/signals', async (req: Request, res: Response) => {
+    try {
+      const { source, timeframe } = req.query;
+      
+      // Get signal service
+      const signalService = mcp.signalService;
+      if (!signalService) {
+        return res.status(500).json({ error: 'Signal service not initialized' });
+      }
+      
+      // Fetch signals with automatic retry
+      const signals = await signalService.fetchSignals(
+        source as string | undefined,
+        timeframe as string | undefined
+      );
+      
+      res.json({
+        status: 'success',
+        count: signals.length,
+        source: source || 'all',
+        timeframe: timeframe || 'all',
+        signals
+      });
+    } catch (error) {
+      console.error('Error fetching signals:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch signals',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Technical analysis endpoint
+  app.get('/api/mcp/analysis/technical', async (req: Request, res: Response) => {
+    try {
+      const { symbol, timeframe, refresh } = req.query;
+      
+      if (!symbol) {
+        return res.status(400).json({ 
+          error: 'Missing required parameters',
+          requiredParams: ['symbol']
+        });
+      }
+      
+      // Get market insights service
+      const insightsService = mcp.marketInsightsService;
+      if (!insightsService) {
+        return res.status(500).json({ error: 'Market insights service not initialized' });
+      }
+      
+      // Get technical analysis
+      const analysis = await insightsService.getTechnicalAnalysis(
+        symbol as string,
+        (timeframe as TimeInterval) || TimeInterval.ONE_HOUR,
+        refresh === 'true'
+      );
+      
+      res.json({
+        status: 'success',
+        analysis
+      });
+    } catch (error) {
+      console.error('Error generating technical analysis:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate technical analysis',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Market sentiment endpoint
+  app.get('/api/mcp/analysis/sentiment', async (req: Request, res: Response) => {
+    try {
+      const { symbol, refresh } = req.query;
+      
+      // Get market insights service
+      const insightsService = mcp.marketInsightsService;
+      if (!insightsService) {
+        return res.status(500).json({ error: 'Market insights service not initialized' });
+      }
+      
+      // Get sentiment analysis
+      const sentiment = await insightsService.getMarketSentiment(
+        symbol as string | undefined,
+        refresh === 'true'
+      );
+      
+      res.json({
+        status: 'success',
+        sentiment
+      });
+    } catch (error) {
+      console.error('Error generating market sentiment:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate market sentiment',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Volatility analysis endpoint
+  app.get('/api/mcp/analysis/volatility', async (req: Request, res: Response) => {
+    try {
+      const { symbol, timeframe, refresh } = req.query;
+      
+      if (!symbol) {
+        return res.status(400).json({ 
+          error: 'Missing required parameters',
+          requiredParams: ['symbol']
+        });
+      }
+      
+      // Get market insights service
+      const insightsService = mcp.marketInsightsService;
+      if (!insightsService) {
+        return res.status(500).json({ error: 'Market insights service not initialized' });
+      }
+      
+      // Get volatility analysis
+      const volatility = await insightsService.getVolatilityAnalysis(
+        symbol as string,
+        (timeframe as TimeInterval) || TimeInterval.ONE_DAY,
+        refresh === 'true'
+      );
+      
+      res.json({
+        status: 'success',
+        volatility
+      });
+    } catch (error) {
+      console.error('Error generating volatility analysis:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate volatility analysis',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Smart signal routing endpoint
+  app.post('/api/mcp/signals/route', async (req: Request, res: Response) => {
+    try {
+      const { signalId, userId, strategy } = req.body;
+      
+      if (!signalId || !userId) {
+        return res.status(400).json({ 
+          error: 'Missing required parameters',
+          requiredParams: ['signalId', 'userId']
+        });
+      }
+      
+      // Get signal service & router
+      const signalService = mcp.signalService;
+      const signalRouter = mcp.smartSignalRouter;
+      
+      if (!signalService || !signalRouter) {
+        return res.status(500).json({ error: 'Signal services not initialized' });
+      }
+      
+      // Get signal
+      const signals = await signalService.getActiveSignals();
+      const signal = signals.find(s => s.id === signalId);
+      
+      if (!signal) {
+        return res.status(404).json({ error: `Signal not found: ${signalId}` });
+      }
+      
+      // Route the signal
+      const result = await signalRouter.routeSignal(signal, userId, strategy || 'auto');
+      
+      res.json({
+        status: 'success',
+        routing: result
+      });
+    } catch (error) {
+      console.error('Error routing signal:', error);
+      res.status(500).json({ 
+        error: 'Failed to route signal',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
   // Error handling middleware
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     console.error('[MCP] Error in MCP route:', err);
     res.status(500).json({ error: 'Internal server error in MCP subsystem' });
   });
   
-  console.log('[MCP] MCP routes registered');
+  console.log('[MCP] MCP routes registered with enhanced endpoints');
 }
 
 /**

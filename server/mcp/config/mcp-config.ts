@@ -10,6 +10,7 @@
 export enum MCPMessageType {
   NEW_SIGNAL = 'new_signal',
   SIGNAL_UPDATE = 'signal_update',
+  SIGNAL_STATUS_UPDATE = 'signal_status_update',
   NOTIFICATION = 'notification',
   SYSTEM_EVENT = 'system_event',
   USER_ACTION = 'user_action',
