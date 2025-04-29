@@ -105,16 +105,16 @@ interface ErrorInsightsData {
 // Simplified API client for webhook operations
 const webhookApi = {
   getWebhooks: async (): Promise<WebhookConfig[]> => {
-    const response = await fetch('/api/webhooks');
+    const response = await fetch('/api/user-webhooks');
     if (!response.ok) {
       throw new Error('Failed to fetch webhooks');
     }
     const data = await response.json();
-    return data.webhooks;
+    return data.webhooks || [];
   },
   
   createWebhook: async (webhook: Partial<WebhookConfig>): Promise<WebhookConfig> => {
-    const response = await fetch('/api/webhooks', {
+    const response = await fetch('/api/user-webhooks', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -131,7 +131,7 @@ const webhookApi = {
   },
   
   updateWebhook: async (id: string, updates: Partial<WebhookConfig>): Promise<WebhookConfig> => {
-    const response = await fetch(`/api/webhooks/${id}`, {
+    const response = await fetch(`/api/user-webhooks/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -148,7 +148,7 @@ const webhookApi = {
   },
   
   deleteWebhook: async (id: string): Promise<void> => {
-    const response = await fetch(`/api/webhooks/${id}`, {
+    const response = await fetch(`/api/user-webhooks/${id}`, {
       method: 'DELETE'
     });
     
@@ -159,7 +159,7 @@ const webhookApi = {
   
   // Get performance metrics for a webhook
   getWebhookPerformance: async (id: string): Promise<any> => {
-    const response = await fetch(`/api/webhooks/${id}/performance`);
+    const response = await fetch(`/api/user-webhooks/${id}/status`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch webhook performance metrics');
@@ -170,7 +170,7 @@ const webhookApi = {
   
   // Get error insights for a webhook
   getWebhookErrorInsights: async (id: string): Promise<any> => {
-    const response = await fetch(`/api/webhooks/${id}/error-insights`);
+    const response = await fetch(`/api/user-webhooks/status`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch webhook error insights');
@@ -181,15 +181,9 @@ const webhookApi = {
   
   // Test a webhook with sample data
   testWebhook: async (id: string): Promise<any> => {
-    const response = await fetch(`/api/webhooks/${id}/test`, {
-      method: 'POST'
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to test webhook');
-    }
-    
-    return await response.json();
+    // For now, testing is handled directly in the component
+    // as we need the custom URL for the webhook
+    return { success: true, message: 'Test mode active' };
   }
 };
 
@@ -1111,13 +1105,30 @@ export const WebhookManager: React.FC = () => {
   const handleCreateWebhook = async (webhook: Partial<WebhookConfig>) => {
     try {
       setIsLoading(true);
-      const newWebhook = await webhookApi.createWebhook(webhook);
-      setWebhooks(prev => [...prev, newWebhook]);
-      setShowForm(false);
-      toast.success('Webhook created successfully');
-    } catch (err) {
+      console.log('Creating webhook with data:', webhook);
+      
+      // For the server endpoint, we just need the name (broker configs are set server-side)
+      const simplifiedWebhook = {
+        name: webhook.name
+      };
+      
+      const response = await webhookApi.createWebhook(simplifiedWebhook);
+      
+      if (response && response.webhook) {
+        // Add the new webhook to our list
+        setWebhooks(prev => [...prev, response.webhook]);
+        setShowForm(false);
+        toast.success('Webhook created successfully', {
+          description: `Your webhook "${response.webhook.name}" has been created. You can now use it to receive trading signals.`
+        });
+      } else {
+        throw new Error('Invalid server response');
+      }
+    } catch (err: any) {
       console.error('Error creating webhook:', err);
-      toast.error('Failed to create webhook. Please try again.');
+      toast.error('Failed to create webhook', {
+        description: err.message || 'Please try again.'
+      });
     } finally {
       setIsLoading(false);
     }
