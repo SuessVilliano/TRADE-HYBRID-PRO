@@ -11,6 +11,10 @@ import { createTradeHybridAdapter } from './tradehybrid-broker-adapter';
 import { createTradovateAdapter } from './tradovate-broker-adapter';
 import { createNinjaTraderAdapter } from './ninjatrader-broker-adapter';
 import { createInteractiveBrokersAdapter } from './interactive-brokers-adapter';
+import { createOandaAdapter } from './oanda-broker-adapter';
+import { createBinanceAdapter } from './binance-broker-adapter';
+import { createCTraderAdapter } from './ctrader-broker-adapter';
+import { createMatchTraderAdapter } from './matchtrader-broker-adapter';
 import { MCPServer } from '../core/mcp-server';
 import { TradeExecutionProcessor } from '../processors/trade-execution-processor';
 
@@ -91,6 +95,57 @@ export class BrokerConnectionService {
       if (ibkrSessionId) {
         // Create Interactive Brokers connection
         await this.registerInteractiveBrokersBroker(ibkrSessionId);
+      }
+      
+      // Check for Oanda credentials
+      const oandaApiToken = process.env.OANDA_API_TOKEN;
+      const oandaAccountId = process.env.OANDA_ACCOUNT_ID;
+      
+      if (oandaApiToken) {
+        // Create Oanda connection
+        await this.registerOandaBroker(oandaApiToken, oandaAccountId, true);
+      }
+      
+      // Check for Binance US credentials
+      const binanceApiKey = process.env.BINANCE_API_KEY;
+      const binanceApiSecret = process.env.BINANCE_API_SECRET;
+      const binanceUsGlobal = process.env.BINANCE_US_GLOBAL as 'us' | 'global' || 'us';
+      
+      if (binanceApiKey && binanceApiSecret) {
+        // Create Binance connection
+        await this.registerBinanceBroker(binanceApiKey, binanceApiSecret, binanceUsGlobal);
+      }
+      
+      // Check for cTrader credentials
+      const cTraderClientId = process.env.CTRADER_CLIENT_ID;
+      const cTraderClientSecret = process.env.CTRADER_CLIENT_SECRET;
+      const cTraderAccessToken = process.env.CTRADER_ACCESS_TOKEN;
+      const cTraderRefreshToken = process.env.CTRADER_REFRESH_TOKEN;
+      const cTraderAccountId = process.env.CTRADER_ACCOUNT_ID;
+      
+      if (cTraderClientId && cTraderClientSecret) {
+        // Create cTrader connection
+        await this.registerCTraderBroker(
+          cTraderClientId,
+          cTraderClientSecret,
+          cTraderAccessToken,
+          cTraderRefreshToken,
+          cTraderAccountId
+        );
+      }
+      
+      // Check for Match Trader credentials
+      const matchTraderApiKey = process.env.MATCHTRADER_API_KEY;
+      const matchTraderUsername = process.env.MATCHTRADER_USERNAME;
+      const matchTraderPassword = process.env.MATCHTRADER_PASSWORD;
+      
+      if (matchTraderApiKey && matchTraderUsername && matchTraderPassword) {
+        // Create Match Trader connection
+        await this.registerMatchTraderBroker(
+          matchTraderApiKey,
+          matchTraderUsername,
+          matchTraderPassword
+        );
       }
       
       // Register TradeHybrid as the default internal broker
@@ -316,6 +371,167 @@ export class BrokerConnectionService {
       return true;
     } catch (error) {
       console.error('Error registering Interactive Brokers broker:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Register an Oanda broker connection
+   */
+  public async registerOandaBroker(
+    apiToken: string,
+    accountId?: string,
+    demo: boolean = true
+  ): Promise<boolean> {
+    try {
+      // Create adapter
+      const oandaAdapter = createOandaAdapter(apiToken, accountId, demo);
+      
+      // Test connection
+      const connected = await oandaAdapter.testConnection();
+      if (!connected) {
+        console.error('Failed to connect to Oanda broker');
+        return false;
+      }
+      
+      // Register with service
+      this.brokers.set('oanda', oandaAdapter);
+      
+      // Register with trade processor
+      if (this.tradeProcessor) {
+        this.tradeProcessor.registerBroker('oanda', oandaAdapter);
+      }
+      
+      console.log('Oanda broker registered successfully');
+      return true;
+    } catch (error) {
+      console.error('Error registering Oanda broker:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Register a Binance broker connection
+   */
+  public async registerBinanceBroker(
+    apiKey: string,
+    apiSecret: string,
+    usGlobal: 'us' | 'global' = 'us'
+  ): Promise<boolean> {
+    try {
+      // Create adapter
+      const binanceAdapter = createBinanceAdapter(apiKey, apiSecret, usGlobal);
+      
+      // Test connection
+      const connected = await binanceAdapter.testConnection();
+      if (!connected) {
+        console.error('Failed to connect to Binance broker');
+        return false;
+      }
+      
+      // Register with service
+      this.brokers.set(usGlobal === 'us' ? 'binance_us' : 'binance', binanceAdapter);
+      
+      // Register with trade processor
+      if (this.tradeProcessor) {
+        this.tradeProcessor.registerBroker(
+          usGlobal === 'us' ? 'binance_us' : 'binance', 
+          binanceAdapter
+        );
+      }
+      
+      console.log(`Binance ${usGlobal.toUpperCase()} broker registered successfully`);
+      return true;
+    } catch (error) {
+      console.error('Error registering Binance broker:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Register a cTrader broker connection
+   */
+  public async registerCTraderBroker(
+    clientId: string,
+    clientSecret: string,
+    accessToken?: string,
+    refreshToken?: string,
+    accountId?: string,
+    cTraderUrl?: string
+  ): Promise<boolean> {
+    try {
+      // Create adapter
+      const cTraderAdapter = createCTraderAdapter(
+        clientId, 
+        clientSecret, 
+        accessToken, 
+        refreshToken, 
+        accountId, 
+        cTraderUrl
+      );
+      
+      // Test connection
+      const connected = await cTraderAdapter.testConnection();
+      if (!connected) {
+        console.error('Failed to connect to cTrader broker');
+        return false;
+      }
+      
+      // Register with service
+      this.brokers.set('ctrader', cTraderAdapter);
+      
+      // Register with trade processor
+      if (this.tradeProcessor) {
+        this.tradeProcessor.registerBroker('ctrader', cTraderAdapter);
+      }
+      
+      console.log('cTrader broker registered successfully');
+      return true;
+    } catch (error) {
+      console.error('Error registering cTrader broker:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Register a Match Trader broker connection
+   */
+  public async registerMatchTraderBroker(
+    apiKey: string,
+    username: string,
+    password: string,
+    baseUrl?: string,
+    brokerId?: string
+  ): Promise<boolean> {
+    try {
+      // Create adapter
+      const matchTraderAdapter = createMatchTraderAdapter(
+        apiKey,
+        username,
+        password,
+        baseUrl,
+        brokerId
+      );
+      
+      // Test connection
+      const connected = await matchTraderAdapter.testConnection();
+      if (!connected) {
+        console.error('Failed to connect to Match Trader broker');
+        return false;
+      }
+      
+      // Register with service
+      this.brokers.set(brokerId || 'matchtrader', matchTraderAdapter);
+      
+      // Register with trade processor
+      if (this.tradeProcessor) {
+        this.tradeProcessor.registerBroker(brokerId || 'matchtrader', matchTraderAdapter);
+      }
+      
+      console.log(`Match Trader broker registered successfully (${brokerId || 'matchtrader'})`);
+      return true;
+    } catch (error) {
+      console.error('Error registering Match Trader broker:', error);
       return false;
     }
   }
