@@ -8,6 +8,9 @@
 import { BrokerConnection } from './broker-interface';
 import { createAlpacaAdapter } from './alpaca-broker-adapter';
 import { createTradeHybridAdapter } from './tradehybrid-broker-adapter';
+import { createTradovateAdapter } from './tradovate-broker-adapter';
+import { createNinjaTraderAdapter } from './ninjatrader-broker-adapter';
+import { createInteractiveBrokersAdapter } from './interactive-brokers-adapter';
 import { MCPServer } from '../core/mcp-server';
 import { TradeExecutionProcessor } from '../processors/trade-execution-processor';
 
@@ -62,6 +65,32 @@ export class BrokerConnectionService {
       if (alpacaApiKey && alpacaApiSecret) {
         // Create Alpaca connection
         await this.registerAlpacaBroker(alpacaApiKey, alpacaApiSecret, true);
+      }
+      
+      // Check for Tradovate credentials
+      const tradovateUsername = process.env.TRADOVATE_USERNAME;
+      const tradovatePassword = process.env.TRADOVATE_PASSWORD;
+      
+      if (tradovateUsername && tradovatePassword) {
+        // Create Tradovate connection
+        await this.registerTradovateBroker(tradovateUsername, tradovatePassword, true);
+      }
+      
+      // Check for NinjaTrader credentials
+      const ninjaTraderToken = process.env.NINJATRADER_TOKEN;
+      const ninjaTraderMachineID = process.env.NINJATRADER_MACHINE_ID;
+      
+      if (ninjaTraderToken && ninjaTraderMachineID) {
+        // Create NinjaTrader connection
+        await this.registerNinjaTraderBroker(ninjaTraderToken, ninjaTraderMachineID);
+      }
+      
+      // Check for Interactive Brokers credentials
+      const ibkrSessionId = process.env.IBKR_SESSION_ID;
+      
+      if (ibkrSessionId) {
+        // Create Interactive Brokers connection
+        await this.registerInteractiveBrokersBroker(ibkrSessionId);
       }
       
       // Register TradeHybrid as the default internal broker
@@ -182,6 +211,111 @@ export class BrokerConnectionService {
       return await broker.testConnection();
     } catch (error) {
       console.error(`Error testing broker connection ${brokerId}:`, error);
+      return false;
+    }
+  }
+  
+  /**
+   * Register a Tradovate broker connection
+   */
+  public async registerTradovateBroker(
+    username: string,
+    password: string,
+    demo: boolean = true
+  ): Promise<boolean> {
+    try {
+      // Create adapter
+      const tradovateAdapter = createTradovateAdapter(username, password, demo);
+      
+      // Test connection
+      const connected = await tradovateAdapter.testConnection();
+      if (!connected) {
+        console.error('Failed to connect to Tradovate broker');
+        return false;
+      }
+      
+      // Register with service
+      this.brokers.set('tradovate', tradovateAdapter);
+      
+      // Register with trade processor
+      if (this.tradeProcessor) {
+        this.tradeProcessor.registerBroker('tradovate', tradovateAdapter);
+      }
+      
+      console.log('Tradovate broker registered successfully');
+      return true;
+    } catch (error) {
+      console.error('Error registering Tradovate broker:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Register a NinjaTrader broker connection
+   */
+  public async registerNinjaTraderBroker(
+    connectionToken: string,
+    machineID: string,
+    serverUrl?: string
+  ): Promise<boolean> {
+    try {
+      // Create adapter
+      const ninjaTraderAdapter = createNinjaTraderAdapter(connectionToken, machineID, serverUrl);
+      
+      // Test connection
+      const connected = await ninjaTraderAdapter.testConnection();
+      if (!connected) {
+        console.error('Failed to connect to NinjaTrader broker');
+        return false;
+      }
+      
+      // Register with service
+      this.brokers.set('ninjatrader', ninjaTraderAdapter);
+      
+      // Register with trade processor
+      if (this.tradeProcessor) {
+        this.tradeProcessor.registerBroker('ninjatrader', ninjaTraderAdapter);
+      }
+      
+      console.log('NinjaTrader broker registered successfully');
+      return true;
+    } catch (error) {
+      console.error('Error registering NinjaTrader broker:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Register an Interactive Brokers connection
+   */
+  public async registerInteractiveBrokersBroker(
+    sessionId: string,
+    clientPortalUrl?: string,
+    demo?: boolean
+  ): Promise<boolean> {
+    try {
+      // Create adapter
+      const ibkrAdapter = createInteractiveBrokersAdapter(sessionId, clientPortalUrl, demo);
+      
+      // Test connection
+      const connected = await ibkrAdapter.testConnection();
+      if (!connected) {
+        console.error('Failed to connect to Interactive Brokers');
+        return false;
+      }
+      
+      // Register with service
+      this.brokers.set('ibkr', ibkrAdapter);
+      
+      // Register with trade processor
+      if (this.tradeProcessor) {
+        this.tradeProcessor.registerBroker('ibkr', ibkrAdapter);
+      }
+      
+      console.log('Interactive Brokers broker registered successfully');
+      return true;
+    } catch (error) {
+      console.error('Error registering Interactive Brokers broker:', error);
       return false;
     }
   }
