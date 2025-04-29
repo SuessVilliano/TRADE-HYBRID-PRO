@@ -1,25 +1,21 @@
 /**
  * Enhanced Market Data Service
  * 
- * Provides a unified interface for accessing market data from various providers
- * with support for failover between providers if one fails.
+ * Service that combines multiple data providers to deliver reliable market data
+ * with automatic failover and standardized responses across providers.
  */
 
 import { 
   CandleData, 
-  TickData, 
-  MarketDataResult,
-  MarketDataRequestOptions
+  TickData 
 } from '../mcp/data/market-data-interface';
-
 import { 
   getRapidAPIService, 
-  resetRapidAPIService 
+  RAPIDAPI_PROVIDERS 
 } from './rapidapi-service';
-
 import { 
-  selectBestProviderForSymbol, 
-  mapSymbolForProvider, 
+  selectBestProviderForSymbol,
+  mapSymbolForProvider,
   convertIntervalForProvider,
   convertTwelveDataToCandles,
   convertBinanceKlinesToCandles,
@@ -28,388 +24,331 @@ import {
   convertBinanceTickerToTick
 } from '../lib/rapidapi-adapters';
 
-// Enhanced Market Data Service configuration
-interface EnhancedMarketDataConfig {
+// Provider list in order of preference
+const DEFAULT_PROVIDER_PREFERENCE = ['twelve_data', 'binance', 'alpha_vantage', 'yh_finance'];
+
+// Result object for service responses
+interface MarketDataResult<T> {
+  status: 'success' | 'error';
+  message?: string;
+  data: T;
+  provider?: string;
+}
+
+// Configuration options for the market data service
+interface EnhancedMarketDataOptions {
   rapidApiKey?: string;
   preferredProvider?: string;
+  providerPreference?: string[];
   maxRetries?: number;
   timeout?: number;
 }
 
-/**
- * Enhanced Market Data Service
- * Provides access to market data with automatic failover between providers
- */
+// The Enhanced Market Data Service class
 class EnhancedMarketDataService {
-  private config: EnhancedMarketDataConfig;
-  private fallbackProviders: { [type: string]: string[] } = {
-    crypto: ['binance', 'twelve_data', 'coinranking', 'alpha_vantage'],
-    stocks: ['twelve_data', 'yh_finance', 'alpha_vantage'],
-    forex: ['twelve_data', 'alpha_vantage']
-  };
-
-  constructor(config: EnhancedMarketDataConfig = {}) {
-    this.config = {
-      rapidApiKey: config.rapidApiKey,
-      preferredProvider: config.preferredProvider,
-      maxRetries: config.maxRetries || 2,
-      timeout: config.timeout || 30000
+  private options: EnhancedMarketDataOptions;
+  private rapidApiKey: string | undefined;
+  
+  constructor(options: EnhancedMarketDataOptions = {}) {
+    this.options = {
+      maxRetries: 2,
+      timeout: 10000,
+      providerPreference: DEFAULT_PROVIDER_PREFERENCE,
+      ...options
     };
-
-    console.log('Enhanced Market Data Service initialized');
+    
+    this.rapidApiKey = options.rapidApiKey;
   }
-
+  
   /**
    * Get historical candle data for a symbol
    * @param symbol Symbol to get data for
-   * @param interval Time interval (e.g., '1h', '1d')
-   * @param limit Maximum number of candles to return
-   * @returns Promise with candle data
+   * @param interval Timeframe interval (e.g. '1h', '1d')
+   * @param limit Number of candles to return
+   * @returns Promise with standardized candle data or error
    */
   async getCandles(
     symbol: string,
     interval: string,
     limit: number = 100
   ): Promise<MarketDataResult<CandleData[]>> {
-    // Ensure we have a RapidAPI key
-    if (!this.config.rapidApiKey) {
-      return {
-        data: [],
-        provider: 'none',
-        symbol,
-        status: 'error',
-        message: 'RapidAPI key is required for market data'
-      };
-    }
-
-    // Determine the best provider for this symbol
-    let provider = this.config.preferredProvider || selectBestProviderForSymbol(symbol, 'candles');
-    let providers = this.getProvidersForSymbol(symbol);
-    let attempts = 0;
-    let error: any = null;
-
-    // Try each provider until we get a successful response or run out of providers
-    while (attempts < Math.min(providers.length, this.config.maxRetries || 2)) {
+    // Get preferred provider (or determine best provider for the symbol)
+    const providers = this.getProviderSequence(symbol, 'candles');
+    let lastError: any = null;
+    
+    // Try each provider in sequence
+    for (const provider of providers) {
       try {
-        console.log(`Fetching ${symbol} candles with provider: ${provider}`);
+        if (!this.rapidApiKey) {
+          return {
+            status: 'error',
+            message: 'RapidAPI key is required but not provided',
+            data: []
+          };
+        }
         
-        // Map the symbol to the format expected by the provider
+        // Map symbol and interval to provider-specific format
         const mappedSymbol = mapSymbolForProvider(symbol, provider);
-        
-        // Convert the interval to the format expected by the provider
         const mappedInterval = convertIntervalForProvider(interval, provider);
         
-        // Get the RapidAPI service
-        const rapidApiService = getRapidAPIService(this.config.rapidApiKey);
+        // Get RapidAPI service
+        const rapidApiService = getRapidAPIService(this.rapidApiKey);
         
-        // Make the request to the appropriate provider endpoint
-        let data;
         switch (provider) {
-          case 'twelve_data':
-            data = await rapidApiService.makeRequest('twelve_data', '/time_series', {
-              symbol: mappedSymbol,
-              interval: mappedInterval,
-              outputsize: limit
-            });
-            return {
-              data: convertTwelveDataToCandles(data, symbol, interval),
+          case 'twelve_data': {
+            // Fetch data from Twelve Data
+            const response = await rapidApiService.makeRequest(
               provider,
-              symbol,
-              status: 'success'
-            };
-            
-          case 'binance':
-            data = await rapidApiService.makeRequest('binance', '/klines', {
-              symbol: mappedSymbol,
-              interval: mappedInterval,
-              limit
-            });
-            return {
-              data: convertBinanceKlinesToCandles(data, symbol, interval),
-              provider,
-              symbol,
-              status: 'success'
-            };
-            
-          case 'alpha_vantage':
-            data = await rapidApiService.makeRequest('alpha_vantage', '/query', {
-              function: 'TIME_SERIES_DAILY',
-              symbol: mappedSymbol,
-              outputsize: limit > 100 ? 'full' : 'compact'
-            });
-            return {
-              data: convertAlphaVantageToCandles(data, symbol, interval),
-              provider,
-              symbol,
-              status: 'success'
-            };
-            
-          case 'yh_finance':
-            // Yahoo Finance charts endpoint
-            data = await rapidApiService.makeRequest('yh_finance', `/stock/v3/get-chart`, {
-              symbol: mappedSymbol,
-              interval: mappedInterval,
-              range: '1mo',
-              region: 'US'
-            });
-            
-            // Convert Yahoo Finance format to our standard format
-            if (data && data.chart && data.chart.result && data.chart.result.length > 0) {
-              const result = data.chart.result[0];
-              const timestamps = result.timestamp;
-              const quotes = result.indicators.quote[0];
-              const candles: CandleData[] = [];
-              
-              for (let i = 0; i < timestamps.length; i++) {
-                candles.push({
-                  timestamp: timestamps[i] * 1000, // Convert to milliseconds
-                  open: quotes.open[i],
-                  high: quotes.high[i],
-                  low: quotes.low[i],
-                  close: quotes.close[i],
-                  volume: quotes.volume[i],
-                  symbol,
-                  interval
-                });
+              '/time_series',
+              {
+                symbol: mappedSymbol,
+                interval: mappedInterval,
+                outputsize: limit
               }
-              
-              return {
-                data: candles,
-                provider,
-                symbol,
-                status: 'success'
-              };
+            );
+            
+            // Convert to standard format
+            const candles = convertTwelveDataToCandles(response, symbol, interval);
+            
+            return {
+              status: 'success',
+              data: candles,
+              provider
+            };
+          }
+          
+          case 'binance': {
+            // Check if this is a crypto symbol
+            if (!mappedSymbol.includes('USDT') && !mappedSymbol.includes('BTC')) {
+              // Skip to next provider for non-crypto
+              continue;
             }
             
-            break;
+            // Fetch data from Binance
+            const response = await rapidApiService.makeRequest(
+              provider,
+              '/klines',
+              {
+                symbol: mappedSymbol,
+                interval: mappedInterval,
+                limit
+              }
+            );
+            
+            // Convert to standard format
+            const candles = convertBinanceKlinesToCandles(response, symbol, interval);
+            
+            return {
+              status: 'success',
+              data: candles,
+              provider
+            };
+          }
+          
+          case 'alpha_vantage': {
+            // Determine which function to use based on asset type
+            let timeSeriesFunction = 'TIME_SERIES_DAILY';
+            if (interval !== '1d') {
+              timeSeriesFunction = 'TIME_SERIES_INTRADAY';
+            }
+            
+            // Fetch data from Alpha Vantage
+            const response = await rapidApiService.makeRequest(
+              provider,
+              '/query',
+              {
+                function: timeSeriesFunction,
+                symbol: mappedSymbol,
+                interval: mappedInterval,
+                outputsize: 'compact'
+              }
+            );
+            
+            // Convert to standard format
+            const candles = convertAlphaVantageToCandles(response, symbol, interval);
+            
+            return {
+              status: 'success',
+              data: candles,
+              provider
+            };
+          }
           
           default:
-            throw new Error(`Unsupported provider: ${provider}`);
+            // Skip unknown providers
+            continue;
         }
-      } catch (err) {
-        console.error(`Error fetching candles from ${provider}:`, err);
-        error = err;
-        
-        // Try the next provider
-        provider = providers[++attempts];
+      } catch (error) {
+        console.error(`Error fetching candles from ${provider}:`, error);
+        lastError = error;
+        // Continue to next provider
       }
     }
-
+    
     // If we get here, all providers failed
     return {
-      data: [],
-      provider,
-      symbol,
       status: 'error',
-      message: `Failed to fetch candles after ${attempts} attempts`,
-      error
+      message: lastError ? `Failed to fetch candles: ${lastError.message}` : 'All providers failed',
+      data: [],
+      provider: providers[0] // Just indicate we started with this provider
     };
   }
-
+  
   /**
    * Get current price quote for a symbol
    * @param symbol Symbol to get quote for
-   * @returns Promise with tick data
+   * @returns Promise with standardized tick data or error
    */
   async getQuote(symbol: string): Promise<MarketDataResult<TickData | null>> {
-    // Ensure we have a RapidAPI key
-    if (!this.config.rapidApiKey) {
-      return {
-        data: null,
-        provider: 'none',
-        symbol,
-        status: 'error',
-        message: 'RapidAPI key is required for market data'
-      };
-    }
-
-    // Determine the best provider for this symbol
-    let provider = this.config.preferredProvider || selectBestProviderForSymbol(symbol, 'quote');
-    let providers = this.getProvidersForSymbol(symbol);
-    let attempts = 0;
-    let error: any = null;
-
-    // Try each provider until we get a successful response or run out of providers
-    while (attempts < Math.min(providers.length, this.config.maxRetries || 2)) {
+    // Get preferred provider (or determine best provider for the symbol)
+    const providers = this.getProviderSequence(symbol, 'quote');
+    let lastError: any = null;
+    
+    // Try each provider in sequence
+    for (const provider of providers) {
       try {
-        console.log(`Fetching ${symbol} quote with provider: ${provider}`);
+        if (!this.rapidApiKey) {
+          return {
+            status: 'error',
+            message: 'RapidAPI key is required but not provided',
+            data: null
+          };
+        }
         
-        // Map the symbol to the format expected by the provider
+        // Map symbol to provider-specific format
         const mappedSymbol = mapSymbolForProvider(symbol, provider);
         
-        // Get the RapidAPI service
-        const rapidApiService = getRapidAPIService(this.config.rapidApiKey);
+        // Get RapidAPI service
+        const rapidApiService = getRapidAPIService(this.rapidApiKey);
         
-        // Make the request to the appropriate provider endpoint
-        let data;
         switch (provider) {
-          case 'twelve_data':
-            data = await rapidApiService.makeRequest('twelve_data', '/quote', {
-              symbol: mappedSymbol
-            });
+          case 'twelve_data': {
+            // Fetch quote from Twelve Data
+            const response = await rapidApiService.makeRequest(
+              provider,
+              '/quote',
+              {
+                symbol: mappedSymbol
+              }
+            );
             
-            const tickData = convertTwelveDataQuoteToTick(data, symbol);
-            if (tickData) {
+            // Convert to standard format
+            const tick = convertTwelveDataQuoteToTick(response, symbol);
+            
+            if (tick) {
               return {
-                data: tickData,
-                provider,
-                symbol,
-                status: 'success'
+                status: 'success',
+                data: tick,
+                provider
               };
             }
+            // If null, continue to next provider
             break;
+          }
+          
+          case 'binance': {
+            // Check if this is a crypto symbol
+            if (!mappedSymbol.includes('USDT') && !mappedSymbol.includes('BTC')) {
+              // Skip to next provider for non-crypto
+              continue;
+            }
             
-          case 'binance':
-            data = await rapidApiService.makeRequest('binance', '/ticker/24hr', {
-              symbol: mappedSymbol
-            });
+            // Fetch quote from Binance
+            const response = await rapidApiService.makeRequest(
+              provider,
+              '/ticker/24hr',
+              {
+                symbol: mappedSymbol
+              }
+            );
             
-            const binanceTickData = convertBinanceTickerToTick(data, symbol);
-            if (binanceTickData) {
+            // Convert to standard format
+            const tick = convertBinanceTickerToTick(response, symbol);
+            
+            if (tick) {
               return {
-                data: binanceTickData,
-                provider,
-                symbol,
-                status: 'success'
+                status: 'success',
+                data: tick,
+                provider
               };
             }
+            // If null, continue to next provider
             break;
-            
-          case 'alpha_vantage':
-            data = await rapidApiService.makeRequest('alpha_vantage', '/query', {
-              function: 'GLOBAL_QUOTE',
-              symbol: mappedSymbol
-            });
-            
-            if (data && data['Global Quote']) {
-              const quote = data['Global Quote'];
-              const tickData: TickData = {
-                timestamp: Date.now(),
-                price: parseFloat(quote['05. price']),
-                symbol,
-                volume: parseFloat(quote['06. volume'])
-              };
-              
-              return {
-                data: tickData,
-                provider,
-                symbol,
-                status: 'success'
-              };
-            }
-            break;
-            
-          case 'yh_finance':
-            data = await rapidApiService.makeRequest('yh_finance', '/market/v2/get-quotes', {
-              region: 'US',
-              symbols: mappedSymbol
-            });
-            
-            if (data && data.quoteResponse && data.quoteResponse.result && data.quoteResponse.result.length > 0) {
-              const quote = data.quoteResponse.result[0];
-              const tickData: TickData = {
-                timestamp: Date.now(),
-                price: quote.regularMarketPrice,
-                bid: quote.bid,
-                ask: quote.ask,
-                symbol,
-                volume: quote.regularMarketVolume
-              };
-              
-              return {
-                data: tickData,
-                provider,
-                symbol,
-                status: 'success'
-              };
-            }
-            break;
+          }
           
           default:
-            throw new Error(`Unsupported provider: ${provider}`);
+            // Skip unknown providers
+            continue;
         }
-      } catch (err) {
-        console.error(`Error fetching quote from ${provider}:`, err);
-        error = err;
-        
-        // Try the next provider
-        provider = providers[++attempts];
+      } catch (error) {
+        console.error(`Error fetching quote from ${provider}:`, error);
+        lastError = error;
+        // Continue to next provider
       }
     }
-
+    
     // If we get here, all providers failed
     return {
-      data: null,
-      provider,
-      symbol,
       status: 'error',
-      message: `Failed to fetch quote after ${attempts} attempts`,
-      error
+      message: lastError ? `Failed to fetch quote: ${lastError.message}` : 'All providers failed',
+      data: null,
+      provider: providers[0] // Just indicate we started with this provider
     };
   }
-
+  
   /**
-   * Get providers that can handle this symbol
-   * @param symbol Symbol to get providers for
+   * Get an array of providers to try, in order
+   * @param symbol Symbol to get data for
+   * @param dataType Type of data (candles, quote, etc.)
    * @returns Array of provider IDs
    */
-  private getProvidersForSymbol(symbol: string): string[] {
-    // Normalize symbol and detect asset type
-    const upperSymbol = symbol.toUpperCase();
-    let assetType = 'stocks'; // Default assumption
+  private getProviderSequence(symbol: string, dataType: string): string[] {
+    const preferredProvider = this.options.preferredProvider;
     
-    // Check for crypto
-    if (
-      upperSymbol.endsWith('BTC') ||
-      upperSymbol.endsWith('ETH') ||
-      upperSymbol.endsWith('USDT') ||
-      upperSymbol.includes('BITCOIN') ||
-      upperSymbol.includes('BNB')
-    ) {
-      assetType = 'crypto';
+    // Start with preferred provider if specified
+    if (preferredProvider && RAPIDAPI_PROVIDERS[preferredProvider]) {
+      // Start with preferred, then add the rest
+      const providers = [preferredProvider];
+      
+      // Add the remaining providers from the preference list
+      for (const provider of (this.options.providerPreference || DEFAULT_PROVIDER_PREFERENCE)) {
+        if (provider !== preferredProvider) {
+          providers.push(provider);
+        }
+      }
+      
+      return providers;
     }
     
-    // Check for forex
-    else if (
-      /^[A-Z]{3}\/[A-Z]{3}$/.test(upperSymbol) || // Format: EUR/USD
-      /^[A-Z]{3}_[A-Z]{3}$/.test(upperSymbol) || // Format: EUR_USD
-      (
-        /^[A-Z]{6}$/.test(upperSymbol) && // Format: EURUSD
-        ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'NZD'].some(
-          currency => upperSymbol.includes(currency)
-        )
-      )
-    ) {
-      assetType = 'forex';
+    // Otherwise, select best provider for this symbol
+    const bestProvider = selectBestProviderForSymbol(symbol, dataType);
+    
+    // Start with best, then add the rest
+    const providers = [bestProvider];
+    
+    // Add the remaining providers from the preference list
+    for (const provider of (this.options.providerPreference || DEFAULT_PROVIDER_PREFERENCE)) {
+      if (provider !== bestProvider) {
+        providers.push(provider);
+      }
     }
     
-    return this.fallbackProviders[assetType] || this.fallbackProviders.stocks;
+    return providers;
   }
 }
 
-// Singleton instance
-let enhancedMarketDataServiceInstance: EnhancedMarketDataService | null = null;
+// Service factory function
+let serviceInstance: EnhancedMarketDataService | null = null;
 
-/**
- * Get or create the Enhanced Market Data Service instance
- * @param config Service configuration
- * @returns Enhanced Market Data Service instance
- */
-export function getEnhancedMarketDataService(config: EnhancedMarketDataConfig = {}): EnhancedMarketDataService {
-  if (!enhancedMarketDataServiceInstance) {
-    enhancedMarketDataServiceInstance = new EnhancedMarketDataService(config);
-  } else if (config.rapidApiKey) {
-    // If the API key changes, reset the instance
-    enhancedMarketDataServiceInstance = new EnhancedMarketDataService(config);
+export function getEnhancedMarketDataService(options: EnhancedMarketDataOptions = {}): EnhancedMarketDataService {
+  if (!serviceInstance || options.rapidApiKey) {
+    serviceInstance = new EnhancedMarketDataService(options);
   }
   
-  return enhancedMarketDataServiceInstance;
+  return serviceInstance;
 }
 
-/**
- * Reset the Enhanced Market Data Service instance
- */
+// Reset service instance (for testing)
 export function resetEnhancedMarketDataService(): void {
-  enhancedMarketDataServiceInstance = null;
-  resetRapidAPIService();
+  serviceInstance = null;
 }
