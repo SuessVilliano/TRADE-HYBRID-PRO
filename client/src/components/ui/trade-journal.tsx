@@ -10,6 +10,7 @@ import { ScrollArea } from './scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
 import { useToast } from '@/components/ui/use-toast';
+import journalService, { JournalEntry as JournalEntryType } from '../../lib/services/journal-service';
 import { 
   Download, 
   Upload, 

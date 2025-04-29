@@ -7,6 +7,7 @@ import { getLeaderboard, getTrader } from "./api/leaderboard";
 import { getBots, getBot, createBot, updateBot, deleteBot, runBot, stopBot } from "./api/bots";
 import notificationsRouter from "./api/notifications";
 import mcpTestRoutes from "./routes/mcp-test-routes";
+import journalRouter from "./api/journal";
 
 // We'll create separate functions to directly use our signals-api
 const getSignals = (req: any, res: any) => {
@@ -936,6 +937,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add our new authentication and wallet API routes
   app.use("/api/auth", authApiRoutes);
   app.use("/api/wallet", walletApiRoutes);
+  app.use("/api/journal", journalRouter);
 
   // News route using multiple sources
   app.get("/api/rss-feeds/news", async (req, res) => {
