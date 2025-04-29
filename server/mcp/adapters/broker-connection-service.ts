@@ -15,6 +15,7 @@ import { createOandaAdapter } from './oanda-broker-adapter';
 import { createBinanceAdapter } from './binance-broker-adapter';
 import { createCTraderAdapter } from './ctrader-broker-adapter';
 import { createMatchTraderAdapter } from './matchtrader-broker-adapter';
+import { createMT4Adapter, createMT5Adapter, MetaTraderVersion } from './metatrader-broker-adapter';
 import { MCPServer } from '../core/mcp-server';
 import { TradeExecutionProcessor } from '../processors/trade-execution-processor';
 
@@ -145,6 +146,38 @@ export class BrokerConnectionService {
           matchTraderApiKey,
           matchTraderUsername,
           matchTraderPassword
+        );
+      }
+      
+      // Check for MetaTrader 4 credentials
+      const mt4ApiToken = process.env.MT4_API_TOKEN;
+      const mt4AccountNumber = process.env.MT4_ACCOUNT_NUMBER;
+      const mt4Password = process.env.MT4_PASSWORD;
+      const mt4Server = process.env.MT4_SERVER;
+      
+      if (mt4ApiToken && mt4AccountNumber && mt4Password && mt4Server) {
+        // Create MetaTrader 4 connection
+        await this.registerMetaTrader4Broker(
+          mt4ApiToken,
+          mt4AccountNumber,
+          mt4Password,
+          mt4Server
+        );
+      }
+      
+      // Check for MetaTrader 5 credentials
+      const mt5ApiToken = process.env.MT5_API_TOKEN;
+      const mt5AccountNumber = process.env.MT5_ACCOUNT_NUMBER;
+      const mt5Password = process.env.MT5_PASSWORD;
+      const mt5Server = process.env.MT5_SERVER;
+      
+      if (mt5ApiToken && mt5AccountNumber && mt5Password && mt5Server) {
+        // Create MetaTrader 5 connection
+        await this.registerMetaTrader5Broker(
+          mt5ApiToken,
+          mt5AccountNumber,
+          mt5Password,
+          mt5Server
         );
       }
       
@@ -532,6 +565,92 @@ export class BrokerConnectionService {
       return true;
     } catch (error) {
       console.error('Error registering Match Trader broker:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Register a MetaTrader 4 broker connection
+   */
+  public async registerMetaTrader4Broker(
+    apiToken: string,
+    accountNumber: string,
+    password: string,
+    server: string,
+    baseUrl?: string
+  ): Promise<boolean> {
+    try {
+      // Create adapter
+      const mt4Adapter = createMT4Adapter(
+        apiToken,
+        accountNumber,
+        password,
+        server,
+        baseUrl
+      );
+      
+      // Test connection
+      const connected = await mt4Adapter.testConnection();
+      if (!connected) {
+        console.error('Failed to connect to MetaTrader 4 broker');
+        return false;
+      }
+      
+      // Register with service
+      this.brokers.set('mt4', mt4Adapter);
+      
+      // Register with trade processor
+      if (this.tradeProcessor) {
+        this.tradeProcessor.registerBroker('mt4', mt4Adapter);
+      }
+      
+      console.log('MetaTrader 4 broker registered successfully');
+      return true;
+    } catch (error) {
+      console.error('Error registering MetaTrader 4 broker:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Register a MetaTrader 5 broker connection
+   */
+  public async registerMetaTrader5Broker(
+    apiToken: string,
+    accountNumber: string,
+    password: string,
+    server: string,
+    baseUrl?: string
+  ): Promise<boolean> {
+    try {
+      // Create adapter
+      const mt5Adapter = createMT5Adapter(
+        apiToken,
+        accountNumber,
+        password,
+        server,
+        baseUrl
+      );
+      
+      // Test connection
+      const connected = await mt5Adapter.testConnection();
+      if (!connected) {
+        console.error('Failed to connect to MetaTrader 5 broker');
+        return false;
+      }
+      
+      // Register with service
+      this.brokers.set('mt5', mt5Adapter);
+      
+      // Register with trade processor
+      if (this.tradeProcessor) {
+        this.tradeProcessor.registerBroker('mt5', mt5Adapter);
+      }
+      
+      console.log('MetaTrader 5 broker registered successfully');
+      return true;
+    } catch (error) {
+      console.error('Error registering MetaTrader 5 broker:', error);
       return false;
     }
   }

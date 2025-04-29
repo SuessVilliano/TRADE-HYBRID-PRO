@@ -14,6 +14,7 @@ import { registerNotificationProcessors } from './processors/notification-proces
 import { registerTradeProcessor } from './processors/trade-execution-processor';
 import { handleTradingViewWebhook } from './handlers/tradingview-webhook-handler-express';
 import { initializeBrokerConnectionService } from './adapters/broker-connection-service';
+import { initializeMarketDataManager } from './data/market-data-manager';
 
 // Singleton MCP server instance
 let mcpServer: MCPServer | null = null;
@@ -36,6 +37,9 @@ export function initializeMCPServer(): MCPServer {
     
     // Initialize broker connection service
     initializeBrokerConnectionService(mcpServer);
+    
+    // Initialize market data manager
+    initializeMarketDataManager(mcpServer);
     
     console.log('[MCP] MCP Server initialized successfully');
   }
@@ -84,6 +88,51 @@ export function registerMCPRoutes(app: Express, server: Server): void {
       console.error('Error fetching broker account info:', error);
       res.status(500).json({ 
         error: 'Failed to fetch broker account information',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Market data historical candles endpoint
+  app.get('/api/mcp/market-data/candles', async (req: Request, res: Response) => {
+    try {
+      const { symbol, interval, from, to, provider } = req.query;
+      
+      if (!symbol || !interval || !from || !to) {
+        return res.status(400).json({ 
+          error: 'Missing required parameters',
+          requiredParams: ['symbol', 'interval', 'from', 'to']
+        });
+      }
+      
+      // Get market data service
+      const marketDataManager = mcp.marketDataManager;
+      if (!marketDataManager) {
+        return res.status(500).json({ error: 'Market data manager not initialized' });
+      }
+      
+      // Get historical candles
+      const candles = await marketDataManager.getHistoricalCandles(
+        symbol as string,
+        interval as TimeInterval,
+        new Date(from as string),
+        new Date(to as string),
+        provider as string | undefined
+      );
+      
+      res.json({
+        status: 'success',
+        symbol,
+        interval,
+        from,
+        to,
+        provider: provider || 'auto',
+        candles
+      });
+    } catch (error) {
+      console.error('Error fetching market data:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch market data',
         message: error instanceof Error ? error.message : String(error)
       });
     }
