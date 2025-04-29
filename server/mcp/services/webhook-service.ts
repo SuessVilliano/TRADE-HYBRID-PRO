@@ -38,17 +38,25 @@ export class WebhookService {
     return WebhookService.instance;
   }
   
+  // Track if we've already sent an initialization message to Discord
+  private static hasInitializedBefore: boolean = false;
+  
   /**
    * Initialize the service
    */
   public async initialize(): Promise<void> {
     try {
-      // Test Discord webhook
-      await this.testDiscordWebhook();
+      // Only test Discord webhook if this is the first time initializing
+      if (!WebhookService.hasInitializedBefore) {
+        await this.testDiscordWebhook();
+        WebhookService.hasInitializedBefore = true;
+      } else {
+        console.log('Webhook Service already initialized before, skipping Discord test message');
+      }
       
       this.initialized = true;
       this.errorCount = 0;
-      console.log('Webhook Service fully initialized and tested');
+      console.log('Webhook Service fully initialized');
     } catch (error) {
       console.error('Error initializing Webhook Service:', error);
       this.initialized = false;
@@ -59,9 +67,11 @@ export class WebhookService {
   
   /**
    * Test Discord webhook with a simple message
+   * Only sends the initialization message once per server session
    */
   private async testDiscordWebhook(): Promise<boolean> {
     try {
+      console.log('Sending first-time initialization message to Discord');
       const testMessage = {
         content: null,
         embeds: [
