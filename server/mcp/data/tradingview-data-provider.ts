@@ -11,10 +11,24 @@ import {
   CandleData, 
   TickData, 
   OrderBookData,
-  TimeInterval,
   HistoricalDataRequest,
   MarketDataSubscription
 } from './market-data-interface';
+
+// Define enums to match the old version that was expected
+enum TimeInterval {
+  ONE_MINUTE = '1m',
+  THREE_MINUTES = '3m',
+  FIVE_MINUTES = '5m',
+  FIFTEEN_MINUTES = '15m',
+  THIRTY_MINUTES = '30m',
+  ONE_HOUR = '1h',
+  TWO_HOURS = '2h',
+  FOUR_HOURS = '4h',
+  ONE_DAY = '1d',
+  ONE_WEEK = '1w',
+  ONE_MONTH = '1M'
+}
 
 import crypto from 'crypto';
 

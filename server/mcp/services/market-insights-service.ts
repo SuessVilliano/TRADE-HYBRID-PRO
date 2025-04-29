@@ -6,7 +6,21 @@
  */
 
 import { MCPServer } from '../core/mcp-server';
-import { TimeInterval } from '../data/market-data-interface';
+// Import interfaces but define TimeInterval locally since it was removed from the interface file
+import { CandleData } from '../data/market-data-interface';
+
+// Define TimeInterval enum to match what was previously expected
+enum TimeInterval {
+  ONE_MINUTE = '1m',
+  FIVE_MINUTES = '5m',
+  FIFTEEN_MINUTES = '15m',
+  THIRTY_MINUTES = '30m',
+  ONE_HOUR = '1h',
+  FOUR_HOURS = '4h',
+  ONE_DAY = '1d',
+  ONE_WEEK = '1w',
+  ONE_MONTH = '1M'
+}
 
 export class MarketInsightsService {
   private static instance: MarketInsightsService;

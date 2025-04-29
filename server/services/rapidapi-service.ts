@@ -1,232 +1,142 @@
-import axios from 'axios';
+/**
+ * RapidAPI Service
+ * Provides unified access to market data providers through RapidAPI
+ */
 
-// RapidAPI providers and their endpoints
+import axios, { AxiosResponse } from 'axios';
+
 export const RAPIDAPI_PROVIDERS = {
   twelve_data: {
     host: 'twelve-data1.p.rapidapi.com',
     baseUrl: 'https://twelve-data1.p.rapidapi.com',
-    endpoints: {
-      quote: '/quote',
-      time_series: '/time_series',
-      price: '/price',
-      mutual_funds_ratings: '/mutual_funds/world/ratings',
-      forex_pairs: '/forex_pairs',
-      stocks_list: '/stocks/list'
-    }
+    description: 'Financial market data for stocks, forex, and cryptocurrencies',
+    supportedMarkets: ['stocks', 'forex', 'crypto']
   },
   binance: {
     host: 'binance43.p.rapidapi.com',
     baseUrl: 'https://binance43.p.rapidapi.com',
-    endpoints: {
-      ticker24hr: '/ticker/24hr',
-      klines: '/klines'
-    }
+    description: 'Cryptocurrency exchange data',
+    supportedMarkets: ['crypto']
   },
   coinranking: {
     host: 'coinranking1.p.rapidapi.com',
     baseUrl: 'https://coinranking1.p.rapidapi.com',
-    endpoints: {
-      stats: '/stats',
-      coins: '/coins'
-    }
-  },
-  fidelity: {
-    host: 'fidelity-investments.p.rapidapi.com',
-    baseUrl: 'https://fidelity-investments.p.rapidapi.com',
-    endpoints: {
-      auto_complete: '/auto-complete'
-    }
-  },
-  real_time_news: {
-    host: 'real-time-news-data.p.rapidapi.com',
-    baseUrl: 'https://real-time-news-data.p.rapidapi.com',
-    endpoints: {
-      topic_news_by_section: '/topic-news-by-section'
-    }
+    description: 'Cryptocurrency prices, markets, and data',
+    supportedMarkets: ['crypto']
   },
   yh_finance: {
     host: 'yh-finance.p.rapidapi.com',
     baseUrl: 'https://yh-finance.p.rapidapi.com',
-    endpoints: {
-      esg_scores: '/stock/get-esg-scores',
-      quote: '/stock/v2/get-summary'
-    }
-  },
-  quotient: {
-    host: 'quotient.p.rapidapi.com',
-    baseUrl: 'https://quotient.p.rapidapi.com',
-    endpoints: {
-      options_prices: '/options/prices'
-    }
+    description: 'Real-time stock data and news',
+    supportedMarkets: ['stocks', 'etfs', 'indices']
   },
   alpha_vantage: {
     host: 'alpha-vantage.p.rapidapi.com',
     baseUrl: 'https://alpha-vantage.p.rapidapi.com',
-    endpoints: {
-      query: '/query'
-    }
-  },
-  stock_options: {
-    host: 'stock-and-options-trading-data-provider.p.rapidapi.com',
-    baseUrl: 'https://stock-and-options-trading-data-provider.p.rapidapi.com',
-    endpoints: {
-      options: '/options'
-    }
-  },
-  iex: {
-    host: 'investors-exchange-iex-trading.p.rapidapi.com',
-    baseUrl: 'https://investors-exchange-iex-trading.p.rapidapi.com',
-    endpoints: {
-      short_interest: '/stock/{symbol}/short-interest'
-    }
+    description: 'Realtime and historical stock data APIs',
+    supportedMarkets: ['stocks', 'forex', 'crypto']
   },
   tradingview: {
     host: 'trading-view.p.rapidapi.com',
     baseUrl: 'https://trading-view.p.rapidapi.com',
-    endpoints: {
-      market_movers: '/market/get-movers'
-    }
+    description: 'Market movers and trading data',
+    supportedMarkets: ['stocks', 'forex', 'crypto', 'futures']
   }
 };
 
+/**
+ * RapidAPI Service for accessing market data providers
+ */
 export class RapidAPIService {
   private apiKey: string;
+  private clients: Record<string, ReturnType<typeof axios.create>> = {};
 
+  /**
+   * Create a new RapidAPI service
+   * @param apiKey RapidAPI key
+   */
   constructor(apiKey: string) {
     this.apiKey = apiKey;
+    console.log('Initializing RapidAPI service...');
+    
+    // Initialize clients for each provider
+    for (const [provider, config] of Object.entries(RAPIDAPI_PROVIDERS)) {
+      this.clients[provider] = axios.create({
+        baseURL: config.baseUrl,
+        headers: {
+          'x-rapidapi-host': config.host,
+          'x-rapidapi-key': this.apiKey
+        }
+      });
+    }
   }
 
-  // Generic method to make request to any RapidAPI endpoint
-  async makeRequest(
-    provider: keyof typeof RAPIDAPI_PROVIDERS,
+  /**
+   * Make a request to a specific RapidAPI provider
+   * @param provider Provider ID (e.g., 'twelve_data', 'binance')
+   * @param endpoint API endpoint (e.g., '/quote', '/time_series')
+   * @param params Request parameters
+   * @returns Promise with response data
+   */
+  async makeRequest<T = any>(
+    provider: keyof typeof RAPIDAPI_PROVIDERS | string,
     endpoint: string,
-    params: Record<string, any> = {},
-    method: 'GET' | 'POST' = 'GET'
-  ): Promise<any> {
-    const providerInfo = RAPIDAPI_PROVIDERS[provider];
+    params: Record<string, any> = {}
+  ): Promise<T> {
+    const providerKey = provider as keyof typeof RAPIDAPI_PROVIDERS;
     
-    if (!providerInfo) {
-      throw new Error(`Unsupported RapidAPI provider: ${provider}`);
+    if (!this.clients[providerKey]) {
+      throw new Error(`Provider ${provider} not supported by RapidAPI service`);
     }
 
-    const baseUrl = providerInfo.baseUrl;
-    const host = providerInfo.host;
-    
-    let url = `${baseUrl}${endpoint}`;
-
-    // Replace path parameters in URL
-    Object.keys(params).forEach(key => {
-      if (url.includes(`{${key}}`)) {
-        url = url.replace(`{${key}}`, params[key]);
-        delete params[key]; // Remove the path parameter from query params
-      }
-    });
-
-    const requestConfig = {
-      method,
-      url,
-      params: method === 'GET' ? params : undefined,
-      data: method === 'POST' ? params : undefined,
-      headers: {
-        'x-rapidapi-host': host,
-        'x-rapidapi-key': this.apiKey
-      }
-    };
-
     try {
-      const response = await axios(requestConfig);
+      // Make sure the endpoint starts with a slash
+      const formattedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+      
+      // Make the request
+      const response: AxiosResponse<T> = await this.clients[providerKey].get(formattedEndpoint, { params });
+      
       return response.data;
     } catch (error) {
-      console.error(`RapidAPI request failed for ${provider}:`, error);
+      console.error(`Error making RapidAPI request to ${provider}${endpoint}:`, error);
       throw error;
     }
   }
 
-  // Helper methods for common requests
-
-  // Twelve Data API
-  async getTwelveDataQuote(symbol: string): Promise<any> {
-    return this.makeRequest('twelve_data', RAPIDAPI_PROVIDERS.twelve_data.endpoints.quote, { symbol });
-  }
-
-  async getTwelveDataTimeSeries(symbol: string, interval: string, outputsize: number = 30): Promise<any> {
-    return this.makeRequest('twelve_data', RAPIDAPI_PROVIDERS.twelve_data.endpoints.time_series, {
-      symbol,
-      interval,
-      outputsize
-    });
-  }
-
-  // Binance API
-  async getBinanceTicker24hr(symbol?: string): Promise<any> {
-    return this.makeRequest('binance', RAPIDAPI_PROVIDERS.binance.endpoints.ticker24hr, { symbol });
-  }
-
-  async getBinanceKlines(symbol: string, interval: string, limit: number = 500): Promise<any> {
-    return this.makeRequest('binance', RAPIDAPI_PROVIDERS.binance.endpoints.klines, {
-      symbol,
-      interval,
-      limit
-    });
-  }
-
-  // Coinranking API
-  async getCoinrankingStats(referenceCurrencyUuid: string = 'yhjMzLPhuIDl'): Promise<any> {
-    return this.makeRequest('coinranking', RAPIDAPI_PROVIDERS.coinranking.endpoints.stats, {
-      referenceCurrencyUuid
-    });
-  }
-
-  async getCoinrankingCoins(referenceCurrencyUuid: string = 'yhjMzLPhuIDl', limit: number = 50): Promise<any> {
-    return this.makeRequest('coinranking', RAPIDAPI_PROVIDERS.coinranking.endpoints.coins, {
-      referenceCurrencyUuid,
-      limit
-    });
-  }
-
-  // Yahoo Finance API
-  async getYahooFinanceQuote(symbol: string, region: string = 'US'): Promise<any> {
-    return this.makeRequest('yh_finance', RAPIDAPI_PROVIDERS.yh_finance.endpoints.quote, {
-      symbol,
-      region
-    });
-  }
-
-  // Alpha Vantage API
-  async getAlphaVantageTimeSeries(symbol: string, outputsize: string = 'compact'): Promise<any> {
-    return this.makeRequest('alpha_vantage', RAPIDAPI_PROVIDERS.alpha_vantage.endpoints.query, {
-      function: 'TIME_SERIES_DAILY',
-      symbol,
-      outputsize,
-      datatype: 'json'
-    });
-  }
-
-  // Trading View API
-  async getTradingViewMarketMovers(exchange: string = 'US', name: string = 'volume_gainers'): Promise<any> {
-    return this.makeRequest('tradingview', RAPIDAPI_PROVIDERS.tradingview.endpoints.market_movers, {
-      exchange,
-      name,
-      locale: 'en'
-    });
+  /**
+   * Get a list of all supported providers
+   * @returns Array of provider information
+   */
+  getProviders() {
+    return Object.entries(RAPIDAPI_PROVIDERS).map(([id, config]) => ({
+      id,
+      name: id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+      host: config.host,
+      baseUrl: config.baseUrl,
+      description: config.description,
+      supportedMarkets: config.supportedMarkets
+    }));
   }
 }
 
-// Create a singleton instance
-let rapidAPIServiceInstance: RapidAPIService | null = null;
+// Singleton instance
+let rapidApiServiceInstance: RapidAPIService | null = null;
 
-// Get or create the RapidAPI service instance
-export function getRapidAPIService(apiKey?: string): RapidAPIService {
-  if (!rapidAPIServiceInstance && apiKey) {
-    rapidAPIServiceInstance = new RapidAPIService(apiKey);
-  } else if (!rapidAPIServiceInstance && !apiKey) {
-    throw new Error('RapidAPI key is required to initialize the service');
+/**
+ * Get or create the RapidAPI service instance
+ * @param apiKey RapidAPI key
+ * @returns RapidAPI service instance
+ */
+export function getRapidAPIService(apiKey: string): RapidAPIService {
+  if (!rapidApiServiceInstance && apiKey) {
+    rapidApiServiceInstance = new RapidAPIService(apiKey);
   }
-  
-  return rapidAPIServiceInstance as RapidAPIService;
+  return rapidApiServiceInstance as RapidAPIService;
 }
 
-// Reset the service instance (useful for testing or changing API keys)
+/**
+ * Reset the RapidAPI service instance
+ */
 export function resetRapidAPIService(): void {
-  rapidAPIServiceInstance = null;
+  rapidApiServiceInstance = null;
 }

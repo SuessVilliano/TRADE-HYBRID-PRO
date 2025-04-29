@@ -9,7 +9,26 @@ import { Server } from 'http';
 import { Express, Request, Response, NextFunction } from 'express';
 import { MCPServer } from './core/mcp-server';
 import { MCPConfig, MCPMessageType } from './config/mcp-config';
-import { TimeInterval } from './data/market-data-interface';
+// Import from market-data-interface but define TimeInterval locally
+import { 
+  CandleData, 
+  TickData, 
+  MarketDataResult
+} from './data/market-data-interface';
+
+// Define TimeInterval enum to match what was previously expected
+enum TimeInterval {
+  ONE_MINUTE = '1m',
+  FIVE_MINUTES = '5m',
+  FIFTEEN_MINUTES = '15m',
+  THIRTY_MINUTES = '30m',
+  ONE_HOUR = '1h',
+  TWO_HOURS = '2h',
+  FOUR_HOURS = '4h',
+  ONE_DAY = '1d',
+  ONE_WEEK = '1w',
+  ONE_MONTH = '1M'
+}
 import { registerSignalProcessors } from './processors/signal-processor';
 import { registerNotificationProcessors } from './processors/notification-processor';
 import { registerTradeProcessor } from './processors/trade-execution-processor';
