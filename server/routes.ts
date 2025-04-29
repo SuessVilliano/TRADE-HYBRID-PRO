@@ -482,6 +482,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User webhook route for custom integrations
   app.post("/api/webhooks/user/:token", receiveUserWebhook); // Custom user webhooks
   
+  // Shortened URL format for better UX
+  app.post("/api/w/:token", receiveUserWebhook); // Shortened version for custom webhooks
+  app.post("/api/w/tv/:token", processTradingViewWebhook); // Shortened version for TradingView
+  
   // Shortened webhook URL route - /wh/ prefix for cleaner, shorter URLs
   app.post("/wh/:token", async (req, res) => {
     if (!req.params.token) {
