@@ -19,7 +19,7 @@ import {
   handlePythonMCPWebhook,
   handleTradeExecutionWebhook,
   handleTradeClosedWebhook
-} from './handlers/tradingview-discord-handler';
+} from './handlers/tradingview-discord-handler-fixed';
 import { initializeBrokerConnectionService } from './adapters/broker-connection-service';
 import { initializeMarketDataManager } from './data/market-data-manager';
 import { initializeSignalService } from './services/signal-service';

@@ -11,9 +11,9 @@
  * node scripts/integrate-python-mcp.js [--test]
  */
 
-const axios = require('axios');
-const express = require('express');
-const bodyParser = require('body-parser');
+import axios from 'axios';
+import express from 'express';
+import bodyParser from 'body-parser';
 
 // Configuration
 const PYTHON_MCP_URL = process.env.PYTHON_MCP_URL || 'http://localhost:8000';

@@ -7,7 +7,7 @@
  * - Run this script with Node.js: node scripts/test-discord-webhook.js
  */
 
-const axios = require('axios');
+import axios from 'axios';
 
 async function main() {
   try {
