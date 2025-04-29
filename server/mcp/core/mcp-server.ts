@@ -1,47 +1,52 @@
+import { QueueManager } from '../queues/queue-manager';
+import { SignalProcessor } from '../processors/signal-processor';
+import { NotificationProcessor } from '../processors/notification-processor';
+import { HandlerRegistry } from '../handlers/handler-registry';
+import { TradingViewWebhookHandler } from '../handlers/tradingview-webhook-handler';
+import { Server as HttpServer } from 'http';
+import WebSocket, { Server as WebSocketServer } from 'ws';
+
 /**
- * MCP Server - Core Module
+ * MCPServer (Message Control Plane Server)
  * 
- * The Message Control Plane (MCP) server acts as a central message bus and processing
- * hub for all trading-related activities in the Trade Hybrid platform.
- * 
- * This module provides the core server functionality, managing message queues,
- * processors, and state synchronization.
+ * Core server component for the Trade Hybrid MCP architecture
+ * Manages message processors, handlers, and WebSocket connections
  */
-
-import { EventEmitter } from 'events';
-import { MCPConfig, MCPMessageType, MCPPriority } from '../config/mcp-config';
-import { createQueue, MCPQueue } from '../queues/queue-manager';
-
-export interface MCPMessage {
-  id: string;
-  type: MCPMessageType;
-  priority: MCPPriority;
-  payload: any;
-  timestamp: number;
-  source?: string;
-  target?: string;
-  metadata?: Record<string, any>;
-}
-
-export class MCPServer extends EventEmitter {
+export class MCPServer {
   private static instance: MCPServer;
-  private queues: Map<string, MCPQueue> = new Map();
-  private processors: Map<string, Function> = new Map();
-  private running: boolean = false;
-  private lastMessageId: number = 0;
-  
-  // Global state storage
-  private signalState: Map<string, any> = new Map();
-  private userState: Map<string, any> = new Map();
-  private marketState: Map<string, any> = new Map();
-  
+
+  private queueManager: QueueManager;
+  private processors: Map<string, any> = new Map();
+  private handlerRegistry: HandlerRegistry;
+  private wss: WebSocketServer | null = null;
+  private startTime: number = Date.now();
+  private clients: Map<string, WebSocket> = new Map();
+  private userIdToClientId: Map<string, string> = new Map();
+
   private constructor() {
-    super();
-    this.initializeQueues();
+    // Initialize queue manager
+    this.queueManager = new QueueManager();
+
+    // Initialize processors
+    const signalProcessor = new SignalProcessor(this.queueManager.getQueue('signals'));
+    const notificationProcessor = new NotificationProcessor(this.queueManager.getQueue('notifications'));
+    
+    this.processors.set('signal', signalProcessor);
+    this.processors.set('notification', notificationProcessor);
+
+    // Initialize handler registry
+    this.handlerRegistry = new HandlerRegistry();
+    
+    // Register handlers
+    const tradingViewHandler = new TradingViewWebhookHandler(signalProcessor);
+    this.handlerRegistry.registerHandler('tradingview', tradingViewHandler);
+
+    console.log('MCP Server initialized with processors:', 
+      Array.from(this.processors.keys()).join(', '));
   }
-  
+
   /**
-   * Get the singleton instance of the MCP server
+   * Get the singleton instance of MCPServer
    */
   public static getInstance(): MCPServer {
     if (!MCPServer.instance) {
@@ -49,283 +54,214 @@ export class MCPServer extends EventEmitter {
     }
     return MCPServer.instance;
   }
-  
+
   /**
-   * Initialize all message queues
+   * Initialize WebSocket server for real-time communication
    */
-  private initializeQueues(): void {
-    // Create a queue for each configured queue type
-    for (const [queueType, queueConfig] of Object.entries(MCPConfig.queues)) {
-      const queue = createQueue(queueConfig.name, queueConfig.maxSize);
-      this.queues.set(queueConfig.name, queue);
-      console.log(`Initialized MCP queue: ${queueConfig.name}`);
+  public initializeWebSocketServer(httpServer: HttpServer): void {
+    if (this.wss) {
+      return; // Already initialized
     }
-  }
-  
-  /**
-   * Start the MCP server
-   */
-  public start(): void {
-    if (this.running) {
-      console.log('MCP server is already running');
-      return;
-    }
+
+    this.wss = new WebSocketServer({ server: httpServer });
     
-    this.running = true;
-    console.log('Starting MCP server...');
-    
-    // Start queue processors
-    for (const [queueName, queueConfig] of Object.entries(MCPConfig.queues)) {
-      this.startQueueProcessor(queueName, queueConfig.processingInterval);
-    }
-    
-    // Start state persistence
-    this.startStatePersistence();
-    
-    console.log('MCP server started successfully');
-    this.emit('started');
-  }
-  
-  /**
-   * Stop the MCP server
-   */
-  public stop(): void {
-    if (!this.running) {
-      console.log('MCP server is not running');
-      return;
-    }
-    
-    this.running = false;
-    console.log('Stopping MCP server...');
-    
-    // Perform cleanup...
-    
-    console.log('MCP server stopped successfully');
-    this.emit('stopped');
-  }
-  
-  /**
-   * Publish a message to a specific queue
-   */
-  public publish(queueName: string, message: Omit<MCPMessage, 'id' | 'timestamp'>): string {
-    const queue = this.queues.get(queueName);
-    if (!queue) {
-      console.error(`Queue not found: ${queueName}`);
-      return '';
-    }
-    
-    const id = this.generateMessageId();
-    const fullMessage: MCPMessage = {
-      ...message,
-      id,
-      timestamp: Date.now()
-    };
-    
-    queue.enqueue(fullMessage);
-    this.emit('message_published', { queueName, message: fullMessage });
-    
-    return id;
-  }
-  
-  /**
-   * Register a processor function for a specific message type
-   */
-  public registerProcessor(messageType: MCPMessageType, processor: Function): void {
-    this.processors.set(messageType, processor);
-    console.log(`Registered processor for message type: ${messageType}`);
-  }
-  
-  /**
-   * Start a queue processor
-   */
-  private startQueueProcessor(queueName: string, interval: number): void {
-    const queue = this.queues.get(queueName);
-    if (!queue) {
-      console.error(`Cannot start processor for unknown queue: ${queueName}`);
-      return;
-    }
-    
-    console.log(`Starting processor for queue: ${queueName}`);
-    
-    const processInterval = setInterval(() => {
-      if (!this.running) {
-        clearInterval(processInterval);
-        return;
-      }
+    this.wss.on('connection', (ws: WebSocket) => {
+      const clientId = this.generateId();
+      this.clients.set(clientId, ws);
       
-      const message = queue.dequeue();
-      if (message) {
-        this.processMessage(message).catch(err => {
-          console.error(`Error processing message ${message.id}:`, err);
-          // Could implement retry logic here
-        });
-      }
-    }, interval);
+      console.log(`MCP WebSocket client connected. Total clients: ${this.clients.size}`);
+      
+      // Send welcome message
+      ws.send(JSON.stringify({
+        type: 'mcp_connection',
+        data: {
+          clientId,
+          message: 'Connected to MCP Server',
+          timestamp: new Date().toISOString()
+        }
+      }));
+      
+      // Handle messages from client
+      ws.on('message', (message: string) => {
+        try {
+          const data = JSON.parse(message);
+          
+          // Client authentication message
+          if (data.type === 'auth' && data.userId) {
+            this.userIdToClientId.set(data.userId, clientId);
+            console.log(`MCP client ${clientId} authenticated as user ${data.userId}`);
+          }
+        } catch (error) {
+          console.error('Error processing WebSocket message:', error);
+        }
+      });
+      
+      // Handle client disconnect
+      ws.on('close', () => {
+        this.clients.delete(clientId);
+        
+        // Clean up user mapping
+        for (const [userId, cId] of this.userIdToClientId.entries()) {
+          if (cId === clientId) {
+            this.userIdToClientId.delete(userId);
+            break;
+          }
+        }
+        
+        console.log(`MCP WebSocket client disconnected. Remaining clients: ${this.clients.size}`);
+      });
+    });
+    
+    console.log('MCP WebSocket server initialized');
   }
-  
+
   /**
-   * Process a single message
+   * Get processor by ID
    */
-  private async processMessage(message: MCPMessage): Promise<void> {
-    const processor = this.processors.get(message.type);
-    if (!processor) {
-      console.warn(`No processor registered for message type: ${message.type}`);
-      return;
-    }
+  public getProcessor(id: string): any {
+    return this.processors.get(id);
+  }
+
+  /**
+   * Get all registered processors
+   */
+  public getProcessors(): any[] {
+    return Array.from(this.processors.values());
+  }
+
+  /**
+   * Get queue statistics
+   */
+  public getQueueStats(): any {
+    return this.queueManager.getStats();
+  }
+
+  /**
+   * Get handler count
+   */
+  public getHandlerCount(): number {
+    return this.handlerRegistry.getHandlerCount();
+  }
+
+  /**
+   * Get client count
+   */
+  public getClientCount(): number {
+    return this.clients.size;
+  }
+
+  /**
+   * Get server start time
+   */
+  public getStartTime(): number {
+    return this.startTime;
+  }
+
+  /**
+   * Broadcast message to all connected WebSocket clients
+   */
+  public broadcastToAllClients(message: any): void {
+    if (!this.wss) return;
+    
+    const messageString = typeof message === 'string' 
+      ? message 
+      : JSON.stringify(message);
+    
+    let deliveredCount = 0;
+    
+    this.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(messageString);
+        deliveredCount++;
+      }
+    });
+    
+    console.log(`MCP broadcast message delivered to ${deliveredCount}/${this.clients.size} clients`);
+  }
+
+  /**
+   * Send message to a specific user
+   */
+  public sendToUser(userId: string, message: any): boolean {
+    const clientId = this.userIdToClientId.get(userId);
+    if (!clientId) return false;
+    
+    const client = this.clients.get(clientId);
+    if (!client || client.readyState !== WebSocket.OPEN) return false;
+    
+    const messageString = typeof message === 'string' 
+      ? message 
+      : JSON.stringify(message);
+    
+    client.send(messageString);
+    return true;
+  }
+
+  /**
+   * Generate a unique ID
+   */
+  private generateId(): string {
+    return Math.random().toString(36).substring(2, 15) + 
+           Math.random().toString(36).substring(2, 15);
+  }
+
+  /**
+   * Sync MCP state with database
+   * This ensures all active signals and user states are loaded
+   */
+  public async syncWithDatabase(): Promise<void> {
+    console.log('Syncing MCP state with database');
     
     try {
-      const result = await processor(message);
-      this.emit('message_processed', { message, result });
+      // Get signal processor
+      const signalProcessor = this.getProcessor('signal') as SignalProcessor;
+      if (signalProcessor) {
+        await signalProcessor.loadActiveSignalsFromDatabase();
+      }
+      
+      // Additional sync operations can be added here as needed
+      
+      console.log('MCP state sync completed');
     } catch (error) {
-      console.error(`Error in processor for ${message.type}:`, error);
-      this.emit('message_processing_error', { message, error });
-      throw error;
+      console.error('Error syncing MCP state with database:', error);
     }
   }
-  
+
   /**
-   * Start the state persistence timers
+   * Periodic persistence of state to database
+   * This ensures that any in-memory state changes are saved to the database
    */
-  private startStatePersistence(): void {
-    // Persist signal state
-    setInterval(() => {
-      if (!this.running) return;
-      this.persistSignalState();
-    }, MCPConfig.persistence.signalStateInterval);
-    
-    // Persist user state
-    setInterval(() => {
-      if (!this.running) return;
-      this.persistUserState();
-    }, MCPConfig.persistence.userStateInterval);
-    
-    // Sync with database
-    setInterval(() => {
-      if (!this.running) return;
-      this.syncWithDatabase();
-    }, MCPConfig.persistence.databaseSyncInterval);
-  }
-  
-  /**
-   * Persist signal state to database
-   */
-  private persistSignalState(): void {
-    console.log(`Persisting signal state for ${this.signalState.size} signals`);
-    // Implementation will connect to storage module
-  }
-  
-  /**
-   * Persist user state to database
-   */
-  private persistUserState(): void {
-    console.log(`Persisting user state for ${this.userState.size} users`);
-    // Implementation will connect to storage module
-  }
-  
-  /**
-   * Sync with database for any external changes
-   */
-  private syncWithDatabase(): void {
-    console.log('Syncing MCP state with database');
-    // Implementation will connect to storage module
-  }
-  
-  /**
-   * Generate a unique message ID
-   */
-  private generateMessageId(): string {
-    this.lastMessageId++;
-    return `msg_${Date.now()}_${this.lastMessageId}`;
-  }
-  
-  /**
-   * Update signal state
-   */
-  public updateSignalState(signalId: string, state: any): void {
-    this.signalState.set(signalId, {
-      ...this.signalState.get(signalId),
-      ...state,
-      lastUpdated: Date.now()
-    });
-  }
-  
-  /**
-   * Get signal state
-   */
-  public getSignalState(signalId: string): any {
-    return this.signalState.get(signalId);
-  }
-  
-  /**
-   * Update user state
-   */
-  public updateUserState(userId: string, state: any): void {
-    this.userState.set(userId, {
-      ...this.userState.get(userId),
-      ...state,
-      lastUpdated: Date.now()
-    });
-  }
-  
-  /**
-   * Get user state
-   */
-  public getUserState(userId: string): any {
-    return this.userState.get(userId);
-  }
-  
-  /**
-   * Update market state
-   */
-  public updateMarketState(symbol: string, state: any): void {
-    this.marketState.set(symbol, {
-      ...this.marketState.get(symbol),
-      ...state,
-      lastUpdated: Date.now()
-    });
-  }
-  
-  /**
-   * Get market state
-   */
-  public getMarketState(symbol: string): any {
-    return this.marketState.get(symbol);
-  }
-  
-  /**
-   * Get all signals in a particular state
-   */
-  public getSignalsByState(state: string): any[] {
-    const results: any[] = [];
-    this.signalState.forEach((signal) => {
-      if (signal.status === state) {
-        results.push(signal);
+  public async persistState(): Promise<void> {
+    try {
+      // Get signal processor
+      const signalProcessor = this.getProcessor('signal') as SignalProcessor;
+      if (signalProcessor) {
+        await signalProcessor.persistSignalsToDB();
       }
-    });
-    return results;
+      
+      // Persist other state as needed
+      
+    } catch (error) {
+      console.error('Error persisting MCP state to database:', error);
+    }
   }
-  
+
   /**
-   * Get server status information
+   * Initialize periodic tasks
    */
-  public getStatus(): any {
-    const queueStats: Record<string, any> = {};
+  public initializePeriodicTasks(): void {
+    // Sync with database every 30 minutes
+    setInterval(() => {
+      this.syncWithDatabase().catch(err => 
+        console.error('Error in periodic database sync:', err)
+      );
+    }, 30 * 60 * 1000);
     
-    this.queues.forEach((queue, name) => {
-      queueStats[name] = {
-        size: queue.size(),
-        maxSize: queue.getMaxSize()
-      };
-    });
-    
-    return {
-      running: this.running,
-      queues: queueStats,
-      signals: this.signalState.size,
-      users: this.userState.size,
-      markets: this.marketState.size,
-      uptime: process.uptime(),
-      memoryUsage: process.memoryUsage()
-    };
+    // Persist state to database every 5 minutes
+    setInterval(() => {
+      this.persistState().catch(err => 
+        console.error('Error in periodic state persistence:', err)
+      );
+    }, 5 * 60 * 1000);
   }
 }

@@ -1,221 +1,279 @@
+import { Queue } from '../queues/queue-manager';
+import { db, sql } from '../../../server/db';
+import { tradeSignals } from '../../../shared/schema';
+import { eq } from 'drizzle-orm';
+
 /**
- * Signal Processor for MCP Server
+ * SignalProcessor
  * 
- * Handles all signal-related messages in the MCP server, including:
- * - New signals from TradingView and other sources
- * - Signal status updates
- * - Signal analysis results
+ * Processes trading signals from various sources
  */
-
-import { MCPMessage, MCPServer } from '../core/mcp-server';
-import { MCPMessageType, MCPPriority } from '../config/mcp-config';
-import { storage } from '../../storage';
-
-// Type definitions for signals
-export interface TradeSignal {
-  id: string;
-  symbol: string;
-  direction: 'buy' | 'sell';
-  entryPrice: number;
-  stopLoss?: number;
-  takeProfit?: number;
-  timestamp: Date;
-  provider: string;
-  timeframe: string;
-  status: 'active' | 'completed' | 'cancelled' | 'sl_hit' | 'tp_hit';
-  notes?: string;
-  metadata?: Record<string, any>;
-}
-
-interface SignalAnalysisResult {
-  signalId: string;
-  confidence: number;
-  riskLevel: 'low' | 'medium' | 'high';
-  analysis: string;
-  recommendedActions?: string[];
-}
-
-/**
- * Process a new signal message
- */
-export async function processNewSignal(message: MCPMessage, mcpServer?: MCPServer): Promise<TradeSignal> {
-  console.log('Processing new signal:', message.payload.symbol);
+export class SignalProcessor {
+  private queue: Queue;
+  private activeSignals: Map<string, any> = new Map();
   
-  // Extract signal data from the message
-  const { 
-    symbol, 
-    direction, 
-    entryPrice, 
-    stopLoss,
-    takeProfit,
-    provider,
-    timeframe, 
-    notes = '',
-    metadata = {} 
-  } = message.payload;
+  constructor(queue: Queue) {
+    this.queue = queue;
+    
+    // Start processing loop
+    this.startProcessingLoop();
+    
+    console.log('Signal Processor initialized');
+  }
   
-  // Create a new signal object
-  const signal: TradeSignal = {
-    id: `sig_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-    symbol,
-    direction,
-    entryPrice,
-    stopLoss,
-    takeProfit,
-    timestamp: new Date(),
-    provider,
-    timeframe,
-    status: 'active',
-    notes,
-    metadata: {
-      ...metadata,
-      source: message.source || 'unknown',
-      mcpMessageId: message.id
+  /**
+   * Process a trading signal message
+   */
+  public async processMessage(message: any): Promise<void> {
+    // Add to queue for processing
+    this.queue.enqueue(message);
+  }
+  
+  /**
+   * Start the background processing loop
+   */
+  private startProcessingLoop(): void {
+    setInterval(() => {
+      this.processNextSignal()
+        .catch(err => console.error('Error processing signal:', err));
+    }, 100); // Process every 100ms
+  }
+  
+  /**
+   * Process the next signal in the queue
+   */
+  private async processNextSignal(): Promise<void> {
+    const message = this.queue.dequeue();
+    if (!message) return; // No messages to process
+    
+    try {
+      // Process the signal
+      await this.handleSignal(message);
+    } catch (error) {
+      console.error('Error handling signal:', error);
+      this.queue.recordError();
     }
-  };
+  }
   
-  // Store the signal in the database
-  try {
-    // Convert to storage format
-    const dbSignal = {
-      id: signal.id,
-      providerId: provider,
-      symbol,
-      side: direction.toLowerCase(),
-      entryPrice,
-      stopLoss,
-      takeProfit,
-      description: notes,
-      timestamp: signal.timestamp,
-      status: 'active',
-      metadata: {
-        market_type: metadata.marketType || 'crypto',
-        timeframe,
-        provider_name: provider,
-        original_payload: JSON.stringify(message.payload).substring(0, 1000)
+  /**
+   * Handle a trading signal
+   */
+  private async handleSignal(signal: any): Promise<void> {
+    console.log(`Processing signal ${signal.id} for ${signal.symbol}`);
+    
+    // Store in active signals
+    this.activeSignals.set(signal.id, signal);
+    
+    try {
+      // Save to database
+      await this.saveSignalToDB(signal);
+      
+      // Broadcast signal to connected clients via WebSocket
+      this.broadcastSignal(signal);
+    } catch (error) {
+      console.error('Error saving or broadcasting signal:', error);
+    }
+  }
+  
+  /**
+   * Save a signal to the database
+   */
+  private async saveSignalToDB(signal: any): Promise<void> {
+    try {
+      // Insert into tradeSignals table
+      await db.insert(tradeSignals).values({
+        id: signal.id,
+        providerId: signal.providerId,
+        symbol: signal.symbol,
+        side: signal.side,
+        entryPrice: signal.entryPrice,
+        stopLoss: signal.stopLoss,
+        takeProfit: signal.takeProfit,
+        description: signal.description,
+        timestamp: signal.timestamp,
+        status: signal.status,
+        metadata: signal.metadata
+      });
+      
+      console.log(`Signal ${signal.id} saved to database`);
+    } catch (error) {
+      console.error('Error saving signal to database:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Broadcast a signal to connected clients
+   */
+  private broadcastSignal(signal: any): void {
+    // Import dynamically to avoid circular dependency
+    const { MCPServer } = require('../core/mcp-server');
+    const mcpServer = MCPServer.getInstance();
+    
+    // Create broadcast message
+    const broadcastMessage = {
+      type: 'trading_signal',
+      data: {
+        id: signal.id,
+        providerId: signal.providerId,
+        symbol: signal.symbol,
+        side: signal.side,
+        entryPrice: signal.entryPrice,
+        stopLoss: signal.stopLoss,
+        takeProfit: signal.takeProfit,
+        description: signal.description,
+        timestamp: signal.timestamp,
+        status: signal.status,
+        marketType: signal.metadata?.market_type || 'unknown',
+        timeframe: signal.metadata?.timeframe || 'unknown',
+        providerName: signal.metadata?.provider_name || signal.providerId
       }
     };
     
-    await storage.saveTradeSignal(dbSignal);
-    console.log(`Signal ${signal.id} saved to database`);
-  } catch (error) {
-    console.error('Error saving signal to database:', error);
+    // Broadcast to all clients
+    mcpServer.broadcastToAllClients(broadcastMessage);
+    console.log(`Signal ${signal.id} broadcasted to all clients`);
   }
   
-  // Queue for analysis
-  queueSignalForAnalysis(signal);
-  
-  // Publish notification for WebSocket broadcast
-  if (mcpServer) {
-    mcpServer.publish('notifications', {
-      type: MCPMessageType.SIGNAL_NOTIFICATION,
-      priority: MCPPriority.HIGH,
-      payload: {
-        signalId: signal.id,
-        symbol,
-        provider,
-        direction,
-        entry: entryPrice,
-        timeframe
+  /**
+   * Update a signal's status
+   */
+  public async updateSignalStatus(
+    signalId: string, 
+    status: string, 
+    pnl: number = 0
+  ): Promise<boolean> {
+    // Check if signal exists
+    if (!this.activeSignals.has(signalId)) {
+      console.log(`Signal ${signalId} not found in active signals`);
+      
+      // Try to load from database
+      try {
+        const signalFromDB = await db.select().from(tradeSignals).where(eq(tradeSignals.id, signalId)).limit(1);
+        
+        if (signalFromDB && signalFromDB.length > 0) {
+          this.activeSignals.set(signalId, signalFromDB[0]);
+        } else {
+          console.log(`Signal ${signalId} not found in database`);
+          return false;
+        }
+      } catch (error) {
+        console.error('Error loading signal from database:', error);
+        return false;
       }
-    });
-    console.log(`Signal notification queued for broadcast: ${signal.id}`);
-  } else {
-    console.warn('No MCPServer instance provided, skipping notification broadcast');
-  }
-  
-  // Return the created signal
-  return signal;
-}
-
-/**
- * Process a signal update message
- */
-export async function processSignalUpdate(message: MCPMessage, mcpServer?: MCPServer): Promise<TradeSignal | null> {
-  const { signalId, status, pnl, notes, metadata } = message.payload;
-  
-  console.log(`Updating signal ${signalId} to status: ${status}`);
-  
-  // Retrieve the current signal from the database
-  // TODO: Implement actual database retrieval
-  const signal: TradeSignal = {
-    id: signalId,
-    symbol: '',
-    direction: 'buy',
-    entryPrice: 0,
-    timestamp: new Date(),
-    provider: '',
-    timeframe: '',
-    status: 'active'
-  };
-  
-  // Update the signal
-  signal.status = status;
-  if (notes) signal.notes = notes;
-  if (metadata) signal.metadata = { ...signal.metadata, ...metadata };
-  
-  // TODO: Update the signal in the database
-  
-  // Publish status update notification for WebSocket broadcast
-  if (mcpServer && (status === 'completed' || status === 'sl_hit' || status === 'tp_hit' || status === 'cancelled')) {
-    mcpServer.publish('notifications', {
-      type: MCPMessageType.SIGNAL_NOTIFICATION,
-      priority: MCPPriority.HIGH,
-      payload: {
-        signalId,
-        status,
-        symbol: signal.symbol,
-        provider: signal.provider,
-        profit: pnl
+    }
+    
+    // Get signal
+    const signal = this.activeSignals.get(signalId);
+    
+    // Update signal status
+    signal.status = status;
+    
+    // If signal is closed, calculate PnL
+    if (status === 'closed' || status === 'tp_hit' || status === 'sl_hit') {
+      signal.closedAt = new Date();
+      signal.pnl = pnl;
+      
+      // For tp_hit and sl_hit, set appropriate close price
+      if (status === 'tp_hit') {
+        signal.closePrice = signal.takeProfit;
+      } else if (status === 'sl_hit') {
+        signal.closePrice = signal.stopLoss;
       }
-    });
-    console.log(`Signal status update notification queued for broadcast: ${signalId} -> ${status}`);
+    }
+    
+    // Update in database
+    try {
+      await db.update(tradeSignals)
+        .set({
+          status,
+          pnl: pnl || null,
+          closedAt: (status === 'closed' || status === 'tp_hit' || status === 'sl_hit') ? new Date() : null,
+          closePrice: status === 'tp_hit' ? signal.takeProfit : (status === 'sl_hit' ? signal.stopLoss : null)
+        })
+        .where(eq(tradeSignals.id, signalId));
+      
+      console.log(`Signal ${signalId} status updated to ${status}`);
+      
+      // Broadcast status update
+      this.broadcastStatusUpdate(signal);
+      
+      return true;
+    } catch (error) {
+      console.error('Error updating signal status in database:', error);
+      return false;
+    }
   }
   
-  console.log(`Signal ${signalId} updated to status: ${status}`);
+  /**
+   * Broadcast a status update to connected clients
+   */
+  private broadcastStatusUpdate(signal: any): void {
+    // Import dynamically to avoid circular dependency
+    const { MCPServer } = require('../core/mcp-server');
+    const mcpServer = MCPServer.getInstance();
+    
+    // Create broadcast message
+    const broadcastMessage = {
+      type: 'signal_status_update',
+      data: {
+        id: signal.id,
+        status: signal.status,
+        pnl: signal.pnl,
+        closedAt: signal.closedAt,
+        closePrice: signal.closePrice
+      }
+    };
+    
+    // Broadcast to all clients
+    mcpServer.broadcastToAllClients(broadcastMessage);
+    console.log(`Signal ${signal.id} status update broadcasted to all clients`);
+  }
   
-  return signal;
-}
-
-/**
- * Process a signal analysis result message
- */
-export async function processSignalAnalysis(message: MCPMessage): Promise<SignalAnalysisResult> {
-  const analysis: SignalAnalysisResult = message.payload;
-  console.log(`Received analysis for signal ${analysis.signalId} with confidence: ${analysis.confidence}%`);
+  /**
+   * Get all active signals
+   */
+  public getActiveSignals(): Map<string, any> {
+    return this.activeSignals;
+  }
   
-  // TODO: Update the signal in the database with the analysis results
+  /**
+   * Get a signal by ID
+   */
+  public getSignalById(id: string): any {
+    return this.activeSignals.get(id);
+  }
   
-  return analysis;
-}
-
-/**
- * Queue a signal for AI analysis
- */
-function queueSignalForAnalysis(signal: TradeSignal): void {
-  // This would actually queue a message in the MCP server
-  console.log(`Queuing signal ${signal.id} for AI analysis`);
+  /**
+   * Load active signals from database
+   */
+  public async loadActiveSignalsFromDatabase(): Promise<void> {
+    try {
+      // Load active signals from database
+      const activeSignalsFromDB = await db.select()
+        .from(tradeSignals)
+        .where(eq(tradeSignals.status, 'active'));
+      
+      // Add to active signals map
+      for (const signal of activeSignalsFromDB) {
+        this.activeSignals.set(signal.id, signal);
+      }
+      
+      console.log(`Loaded ${activeSignalsFromDB.length} active signals from database`);
+    } catch (error) {
+      console.error('Error loading active signals from database:', error);
+    }
+  }
   
-  // In a real implementation, we would:
-  // 1. Send a message to the trade-analysis queue
-  // 2. The AI analysis processor would pick it up
-  // 3. Results would be saved back to the signal
-}
-
-/**
- * Register all signal-related processors with the MCP server
- */
-export function registerSignalProcessors(mcpServer: MCPServer): void {
-  // Bind the MCPServer instance to the processor functions
-  mcpServer.registerProcessor(MCPMessageType.NEW_SIGNAL, (message: MCPMessage) => 
-    processNewSignal(message, mcpServer)
-  );
-  mcpServer.registerProcessor(MCPMessageType.UPDATE_SIGNAL, (message: MCPMessage) => 
-    processSignalUpdate(message, mcpServer)
-  );
-  mcpServer.registerProcessor(MCPMessageType.SIGNAL_ANALYZED, (message: MCPMessage) => 
-    processSignalAnalysis(message, mcpServer)
-  );
-  
-  console.log('Signal processors registered with MCP server');
+  /**
+   * Persist all signal states to database
+   */
+  public async persistSignalsToDB(): Promise<void> {
+    console.log(`Persisting signal state for ${this.activeSignals.size} signals`);
+    
+    // In a real implementation, we might selectively update only
+    // signals that have changed since last persistence
+    // For this implementation, we rely on the individual operations
+    // to handle database persistence
+  }
 }

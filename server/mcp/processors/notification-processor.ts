@@ -1,235 +1,115 @@
+import { Queue } from '../queues/queue-manager';
+
 /**
- * Notification Processor for MCP Server
+ * NotificationProcessor
  * 
- * Handles all notification-related messages in the MCP server, including:
- * - Signal notifications to WebSocket clients
- * - Trade notifications
- * - System notifications
+ * Processes and broadcasts notifications to clients
  */
-
-import { MCPMessage, MCPServer } from '../core/mcp-server';
-import { MCPMessageType, MCPPriority } from '../config/mcp-config';
-import { MultiplayerServer } from '../../multiplayer';
-
-/**
- * Register notification processors with the MCP server
- */
-export function registerNotificationProcessors(mcpServer: MCPServer): void {
-  mcpServer.registerProcessor(MCPMessageType.SIGNAL_NOTIFICATION, (message: MCPMessage) => 
-    handleSignalNotification(message, mcpServer)
-  );
+export class NotificationProcessor {
+  private queue: Queue;
   
-  mcpServer.registerProcessor(MCPMessageType.TRADE_NOTIFICATION, (message: MCPMessage) => 
-    handleTradeNotification(message, mcpServer)
-  );
-  
-  mcpServer.registerProcessor(MCPMessageType.SYSTEM_NOTIFICATION, (message: MCPMessage) => 
-    handleSystemNotification(message, mcpServer)
-  );
-  
-  console.log('[MCP] Notification processors registered');
-}
-
-/**
- * Handle a signal notification
- */
-export async function handleSignalNotification(message: MCPMessage, mcpServer: MCPServer): Promise<void> {
-  const { signalId, symbol, provider, direction, entry, status, profit } = message.payload;
-  
-  console.log(`[MCP] Processing signal notification for ${signalId || symbol}`);
-  
-  try {
-    // Get the multiplayer server instance
-    if (!MultiplayerServer.instance) {
-      console.error('[MCP] Cannot send notification: MultiplayerServer instance not available');
-      return;
-    }
+  constructor(queue: Queue) {
+    this.queue = queue;
     
-    // If it's a status update notification
-    if (status) {
-      // Get the signal state from MCP
-      const signalState = mcpServer.getSignalState(signalId);
-      if (!signalState) {
-        console.warn(`[MCP] Signal ${signalId} not found for notification`);
-        return;
-      }
-      
-      // Create WebSocket message for signal status update
-      const wsMessage = {
-        type: 'trading_signal_update',
-        data: {
-          signalId,
-          status,
-          profit: profit !== undefined ? profit : signalState.profit,
-          symbol: signalState.symbol,
-          provider: signalState.provider
-        }
-      };
-      
-      // Get connected user IDs
-      const userIds = MultiplayerServer.instance.getUserIds?.();
-      if (userIds && userIds.length > 0) {
-        console.log(`[MCP] Broadcasting signal update to ${userIds.length} connected users`);
-        userIds.forEach(userId => {
-          MultiplayerServer.instance.sendToUser(userId, wsMessage);
-        });
-      } else {
-        console.warn('[MCP] No connected users for signal update notification');
-      }
-      
-      return;
-    }
+    // Start processing loop
+    this.startProcessingLoop();
     
-    // Determine timeframe based on provider
-    let timeframe = message.payload.timeframe || '1d';
-    if (provider) {
-      const providerName = provider.toLowerCase();
-      if (providerName.includes('hybrid')) {
-        timeframe = '10m';
-      } else if (providerName.includes('paradox')) {
-        timeframe = '30m';
-      } else if (providerName.includes('solaris')) {
-        timeframe = '5m';
-      }
-    }
-    
-    // Get the signal state from MCP if available
-    const signalState = signalId ? mcpServer.getSignalState(signalId) : null;
-    
-    // Create the client signal format
-    const clientSignal = {
-      symbol: symbol || (signalState?.symbol),
-      side: direction?.toLowerCase() || (signalState?.type),
-      action: direction?.toLowerCase() || (signalState?.type),
-      entryPrice: entry || (signalState?.entry),
-      entry: entry || (signalState?.entry),
-      takeProfit: signalState?.takeProfit,
-      stopLoss: signalState?.stopLoss,
-      timeframe: timeframe,
-      description: signalState?.notes || `${direction} signal for ${symbol} from ${provider}`
-    };
-    
-    // Create WebSocket message
-    const wsMessage = {
-      type: 'trading_signal',
-      data: {
-        signal: clientSignal,
-        provider: provider || signalState?.provider || 'system'
-      }
-    };
-    
-    // Get connected user IDs
-    const userIds = MultiplayerServer.instance.getUserIds?.();
-    if (userIds && userIds.length > 0) {
-      console.log(`[MCP] Broadcasting signal to ${userIds.length} connected users`);
-      userIds.forEach(userId => {
-        MultiplayerServer.instance.sendToUser(userId, wsMessage);
-      });
-    } else {
-      console.warn('[MCP] No connected users for signal notification');
-    }
-    
-    console.log(`[MCP] Signal notification processed successfully`);
-  } catch (error) {
-    console.error(`[MCP] Error processing signal notification:`, error);
+    console.log('Notification Processor initialized');
   }
-}
-
-/**
- * Handle a trade notification
- */
-export async function handleTradeNotification(message: MCPMessage, mcpServer: MCPServer): Promise<void> {
-  const { userId, tradeId, action, symbol, price } = message.payload;
   
-  console.log(`[MCP] Processing trade notification for user ${userId}`);
-  
-  try {
-    // Get the multiplayer server instance
-    if (!MultiplayerServer.instance) {
-      console.error('[MCP] Cannot send notification: MultiplayerServer instance not available');
-      return;
-    }
-    
-    // Create WebSocket message
-    const wsMessage = {
-      type: 'trade_notification',
-      data: {
-        tradeId,
-        action,
-        symbol,
-        price,
-        timestamp: Date.now()
-      }
-    };
-    
-    // If specific user targeted, send only to them
-    if (userId) {
-      MultiplayerServer.instance.sendToUser(userId, wsMessage);
-      console.log(`[MCP] Trade notification sent to user ${userId}`);
-    } else {
-      // Otherwise broadcast to all connected users
-      const userIds = MultiplayerServer.instance.getUserIds?.();
-      if (userIds && userIds.length > 0) {
-        console.log(`[MCP] Broadcasting trade notification to ${userIds.length} connected users`);
-        userIds.forEach(userId => {
-          MultiplayerServer.instance.sendToUser(userId, wsMessage);
-        });
-      } else {
-        console.warn('[MCP] No connected users for trade notification');
-      }
-    }
-    
-    console.log(`[MCP] Trade notification processed successfully`);
-  } catch (error) {
-    console.error(`[MCP] Error processing trade notification:`, error);
+  /**
+   * Process a notification message
+   */
+  public async processMessage(message: any): Promise<void> {
+    // Add to queue for processing
+    this.queue.enqueue(message);
   }
-}
-
-/**
- * Handle a system notification
- */
-export async function handleSystemNotification(message: MCPMessage, mcpServer: MCPServer): Promise<void> {
-  const { title, message: notificationMessage, level, userId } = message.payload;
   
-  console.log(`[MCP] Processing system notification: ${title}`);
+  /**
+   * Get processor ID
+   */
+  public getId(): string {
+    return 'notification';
+  }
   
-  try {
-    // Get the multiplayer server instance
-    if (!MultiplayerServer.instance) {
-      console.error('[MCP] Cannot send notification: MultiplayerServer instance not available');
-      return;
-    }
+  /**
+   * Start the background processing loop
+   */
+  private startProcessingLoop(): void {
+    setInterval(() => {
+      this.processNextNotification()
+        .catch(err => console.error('Error processing notification:', err));
+    }, 100); // Process every 100ms
+  }
+  
+  /**
+   * Process the next notification in the queue
+   */
+  private async processNextNotification(): Promise<void> {
+    const message = this.queue.dequeue();
+    if (!message) return; // No messages to process
     
-    // Create WebSocket message
-    const wsMessage = {
-      type: 'system_notification',
+    try {
+      // Process the notification
+      await this.handleNotification(message);
+    } catch (error) {
+      console.error('Error handling notification:', error);
+      this.queue.recordError();
+    }
+  }
+  
+  /**
+   * Handle a notification
+   */
+  private async handleNotification(notification: any): Promise<void> {
+    console.log(`Processing notification: ${notification.title}`);
+    
+    try {
+      // Store notification in database if needed
+      // For system-critical notifications, we might want to persist them
+      if (notification.level === 'critical' || notification.persist === true) {
+        await this.saveNotificationToDB(notification);
+      }
+      
+      // Broadcast notification to connected clients via WebSocket
+      this.broadcastNotification(notification);
+    } catch (error) {
+      console.error('Error processing notification:', error);
+    }
+  }
+  
+  /**
+   * Save a notification to the database
+   */
+  private async saveNotificationToDB(notification: any): Promise<void> {
+    // In a production implementation, this would save to the database
+    // For this prototype, we'll just log
+    console.log(`Would save notification to DB: ${notification.title}`);
+  }
+  
+  /**
+   * Broadcast a notification to connected clients
+   */
+  private broadcastNotification(notification: any): void {
+    // Import dynamically to avoid circular dependency
+    const { MCPServer } = require('../core/mcp-server');
+    const mcpServer = MCPServer.getInstance();
+    
+    // Create broadcast message
+    const broadcastMessage = {
+      type: 'notification',
       data: {
-        title,
-        message: notificationMessage,
-        level: level || 'info',
-        timestamp: Date.now()
+        title: notification.title,
+        message: notification.message,
+        level: notification.level || 'info',
+        type: notification.type || 'system',
+        timestamp: new Date().toISOString(),
+        metadata: notification.metadata || {}
       }
     };
     
-    // If specific user targeted, send only to them
-    if (userId) {
-      MultiplayerServer.instance.sendToUser(userId, wsMessage);
-      console.log(`[MCP] System notification sent to user ${userId}`);
-    } else {
-      // Otherwise broadcast to all connected users
-      const userIds = MultiplayerServer.instance.getUserIds?.();
-      if (userIds && userIds.length > 0) {
-        console.log(`[MCP] Broadcasting system notification to ${userIds.length} connected users`);
-        userIds.forEach(userId => {
-          MultiplayerServer.instance.sendToUser(userId, wsMessage);
-        });
-      } else {
-        console.warn('[MCP] No connected users for system notification');
-      }
-    }
-    
-    console.log(`[MCP] System notification processed successfully`);
-  } catch (error) {
-    console.error(`[MCP] Error processing system notification:`, error);
+    // Broadcast to all clients
+    mcpServer.broadcastToAllClients(broadcastMessage);
+    console.log(`Notification "${notification.title}" broadcasted to all clients`);
   }
 }
