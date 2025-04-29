@@ -31,7 +31,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
       for (const [brokerId, broker] of brokers.entries()) {
         brokerStatuses[brokerId] = {
           connected: broker.isConnected(),
-          status: broker.getConnectionStatus()
+          status: broker.isConnected() ? 'connected' : 'disconnected'
         };
       }
       
