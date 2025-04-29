@@ -31,6 +31,7 @@ export class MCPServer {
   public smartSignalRouter: any;
   public marketInsightsService: any;
   public userProfileService: any;
+  public webhookService: any;
 
   private constructor() {
     // Initialize queue manager

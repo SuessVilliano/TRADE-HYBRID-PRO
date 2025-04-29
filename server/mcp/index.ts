@@ -14,12 +14,19 @@ import { registerSignalProcessors } from './processors/signal-processor';
 import { registerNotificationProcessors } from './processors/notification-processor';
 import { registerTradeProcessor } from './processors/trade-execution-processor';
 import { handleTradingViewWebhook } from './handlers/tradingview-webhook-handler-express';
+import { 
+  handleTradingViewDiscordWebhook,
+  handlePythonMCPWebhook,
+  handleTradeExecutionWebhook,
+  handleTradeClosedWebhook
+} from './handlers/tradingview-discord-handler';
 import { initializeBrokerConnectionService } from './adapters/broker-connection-service';
 import { initializeMarketDataManager } from './data/market-data-manager';
 import { initializeSignalService } from './services/signal-service';
 import { initializeSmartSignalRouter } from './processors/smart-signal-router';
 import { initializeMarketInsightsService } from './services/market-insights-service';
 import { initializeUserProfileService } from './services/user-profile-service';
+import { initializeWebhookService } from './services/webhook-service';
 
 // Singleton MCP server instance
 let mcpServer: MCPServer | null = null;
@@ -51,6 +58,7 @@ export function initializeMCPServer(): MCPServer {
     mcpServer.smartSignalRouter = initializeSmartSignalRouter(mcpServer);
     mcpServer.marketInsightsService = initializeMarketInsightsService(mcpServer);
     mcpServer.userProfileService = initializeUserProfileService(mcpServer);
+    mcpServer.webhookService = initializeWebhookService(mcpServer);
     
     console.log('[MCP] MCP Server initialized successfully with all services');
   }
@@ -67,6 +75,26 @@ export function registerMCPRoutes(app: Express, server: Server): void {
   // TradingView webhook endpoint
   app.post(MCPConfig.integrations.tradingView.webhookPath, (req: Request, res: Response) => {
     handleTradingViewWebhook(req, res, mcp);
+  });
+  
+  // TradingView Discord webhook endpoint
+  app.post('/api/webhooks/tradingview-discord', (req: Request, res: Response) => {
+    handleTradingViewDiscordWebhook(req, res, mcp);
+  });
+  
+  // Python MCP webhook endpoint
+  app.post('/api/webhooks/python-mcp', (req: Request, res: Response) => {
+    handlePythonMCPWebhook(req, res, mcp);
+  });
+  
+  // Trade execution webhook endpoint
+  app.post('/api/webhooks/trade-execution', (req: Request, res: Response) => {
+    handleTradeExecutionWebhook(req, res, mcp);
+  });
+  
+  // Trade closed webhook endpoint
+  app.post('/api/webhooks/trade-closed', (req: Request, res: Response) => {
+    handleTradeClosedWebhook(req, res, mcp);
   });
   
   // MCP status endpoint
@@ -843,6 +871,169 @@ export function registerMCPRoutes(app: Express, server: Server): void {
       console.error('Error updating trade for user:', error);
       res.status(500).json({ 
         error: 'Failed to update trade',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Discord webhook endpoints
+  
+  // Send signal notification to Discord
+  app.post('/api/mcp/webhook/signal', async (req: Request, res: Response) => {
+    try {
+      const signal = req.body;
+      
+      if (!signal.symbol || !signal.type) {
+        return res.status(400).json({ 
+          error: 'Missing required signal parameters',
+          requiredParams: ['symbol', 'type']
+        });
+      }
+      
+      // Get webhook service
+      const webhookService = mcp.webhookService;
+      if (!webhookService) {
+        return res.status(500).json({ error: 'Webhook service not initialized' });
+      }
+      
+      // Send signal alert
+      const result = await webhookService.sendSignalAlert(signal);
+      
+      res.json({
+        status: result ? 'success' : 'error',
+        message: result ? 'Signal notification sent to Discord' : 'Failed to send signal notification'
+      });
+    } catch (error) {
+      console.error('Error sending signal webhook:', error);
+      res.status(500).json({ 
+        error: 'Failed to send signal webhook',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Send trade execution notification to Discord
+  app.post('/api/mcp/webhook/trade-execution', async (req: Request, res: Response) => {
+    try {
+      const trade = req.body;
+      
+      if (!trade.symbol || !trade.type || !trade.entryPrice) {
+        return res.status(400).json({ 
+          error: 'Missing required trade parameters',
+          requiredParams: ['symbol', 'type', 'entryPrice']
+        });
+      }
+      
+      // Get webhook service
+      const webhookService = mcp.webhookService;
+      if (!webhookService) {
+        return res.status(500).json({ error: 'Webhook service not initialized' });
+      }
+      
+      // Send trade execution alert
+      const result = await webhookService.sendTradeExecutionAlert(trade);
+      
+      res.json({
+        status: result ? 'success' : 'error',
+        message: result ? 'Trade execution notification sent to Discord' : 'Failed to send trade execution notification'
+      });
+    } catch (error) {
+      console.error('Error sending trade execution webhook:', error);
+      res.status(500).json({ 
+        error: 'Failed to send trade execution webhook',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Send trade closed notification to Discord
+  app.post('/api/mcp/webhook/trade-closed', async (req: Request, res: Response) => {
+    try {
+      const trade = req.body;
+      
+      if (!trade.symbol || !trade.type || !trade.entryPrice || !trade.exitPrice) {
+        return res.status(400).json({ 
+          error: 'Missing required trade closure parameters',
+          requiredParams: ['symbol', 'type', 'entryPrice', 'exitPrice']
+        });
+      }
+      
+      // Get webhook service
+      const webhookService = mcp.webhookService;
+      if (!webhookService) {
+        return res.status(500).json({ error: 'Webhook service not initialized' });
+      }
+      
+      // Send trade closed alert
+      const result = await webhookService.sendTradeClosedAlert(trade);
+      
+      res.json({
+        status: result ? 'success' : 'error',
+        message: result ? 'Trade closed notification sent to Discord' : 'Failed to send trade closed notification'
+      });
+    } catch (error) {
+      console.error('Error sending trade closed webhook:', error);
+      res.status(500).json({ 
+        error: 'Failed to send trade closed webhook',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Send custom message to Discord
+  app.post('/api/mcp/webhook/custom', async (req: Request, res: Response) => {
+    try {
+      const { title, message, color } = req.body;
+      
+      if (!title || !message) {
+        return res.status(400).json({ 
+          error: 'Missing required parameters',
+          requiredParams: ['title', 'message']
+        });
+      }
+      
+      // Get webhook service
+      const webhookService = mcp.webhookService;
+      if (!webhookService) {
+        return res.status(500).json({ error: 'Webhook service not initialized' });
+      }
+      
+      // Send custom message
+      const result = await webhookService.sendCustomMessage(title, message, color);
+      
+      res.json({
+        status: result ? 'success' : 'error',
+        message: result ? 'Custom message sent to Discord' : 'Failed to send custom message'
+      });
+    } catch (error) {
+      console.error('Error sending custom webhook:', error);
+      res.status(500).json({ 
+        error: 'Failed to send custom webhook',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Get webhook status
+  app.get('/api/mcp/webhook/status', (req: Request, res: Response) => {
+    try {
+      // Get webhook service
+      const webhookService = mcp.webhookService;
+      if (!webhookService) {
+        return res.status(500).json({ error: 'Webhook service not initialized' });
+      }
+      
+      // Get status
+      const status = webhookService.getStatus();
+      
+      res.json({
+        status: 'success',
+        webhookStatus: status
+      });
+    } catch (error) {
+      console.error('Error checking webhook status:', error);
+      res.status(500).json({ 
+        error: 'Failed to check webhook status',
         message: error instanceof Error ? error.message : String(error)
       });
     }

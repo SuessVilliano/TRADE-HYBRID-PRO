@@ -1,0 +1,279 @@
+Excellent — I’ll walk you through setting it up directly on Replit right now, no ZIP needed.
+This will get your live MCP Signal Server running with logging + win rate tracking.
+
+⸻
+
+STEP-BY-STEP: SETUP TRADEHYBRID MCP SERVER ON REPLIT
+
+1. Create a new Replit project
+	•	Go to https://replit.com
+	•	Click “+ Create Repl”
+	•	Choose Python (not Flask)
+
+⸻
+
+2. Replace the default code with the files below:
+
+a. main.py
+
+from fastapi import FastAPI, Request
+from trade_manager import TradeManager
+from data_fetcher import fetch_all_prices
+import uvicorn
+
+app = FastAPI()
+tm = TradeManager()
+
+@app.post("/trade-signal")
+async def trade_signal(request: Request):
+    data = await request.json()
+    result = await tm.add_trade(data)
+    return result
+
+@app.get("/refresh-data")
+async def refresh_data():
+    prices = await fetch_all_prices()
+    return prices
+
+@app.get("/current-prices")
+async def current_prices():
+    return tm.latest_prices
+
+@app.get("/active-trades")
+async def active_trades():
+    return tm.get_active_trades()
+
+@app.post("/cancel-trade")
+async def cancel_trade(request: Request):
+    data = await request.json()
+    return tm.cancel_trade(data["symbol"])
+
+@app.get("/trade-stats")
+async def trade_stats():
+    return tm.get_trade_stats()
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+
+
+⸻
+
+b. trade_manager.py
+
+import asyncio, json
+from datetime import datetime, timedelta
+from data_fetcher import fetch_price
+from config import get_provider
+
+class TradeManager:
+    def __init__(self):
+        self.trades = {}  # symbol -> trade
+        self.results = [] # closed trades
+        self.latest_prices = {}
+        self.load()
+
+    async def add_trade(self, trade):
+        symbol = trade["symbol"]
+        trade["created_at"] = datetime.utcnow().isoformat()
+        trade["expires_at"] = (datetime.utcnow() + timedelta(minutes=trade.get("max_lifespan_minutes", 240))).isoformat()
+        trade["provider"] = trade.get("provider") or get_provider(symbol)
+        trade["status"] = "open"
+        self.trades[symbol] = trade
+        asyncio.create_task(self.monitor_trade(symbol))
+        self.save()
+        return {"status": "tracking", "trade": trade}
+
+    async def monitor_trade(self, symbol):
+        while symbol in self.trades:
+            trade = self.trades[symbol]
+            now = datetime.utcnow()
+            if now > datetime.fromisoformat(trade["expires_at"]):
+                trade["status"] = "expired"
+                self.close_trade(symbol, trade)
+                break
+
+            price = await fetch_price(symbol)
+            if price:
+                self.latest_prices[symbol] = price
+                if self.check_hit(trade, price):
+                    self.close_trade(symbol, trade)
+                    break
+            await asyncio.sleep(60)
+
+    def check_hit(self, trade, price):
+        dir = trade["direction"]
+        entry = trade["entry_price"]
+        sl = trade["stop_loss"]
+        tps = [trade.get(f"take_profit_{i}") for i in range(1, 4)]
+        hit = None
+
+        if dir == "buy":
+            if price <= sl:
+                hit = "stop_loss"
+            for i, tp in enumerate(tps, 1):
+                if tp and price >= tp:
+                    hit = f"take_profit_{i}"
+        else:
+            if price >= sl:
+                hit = "stop_loss"
+            for i, tp in enumerate(tps, 1):
+                if tp and price <= tp:
+                    hit = f"take_profit_{i}"
+
+        if hit:
+            trade["hit"] = hit
+            trade["status"] = "closed"
+            return True
+        return False
+
+    def close_trade(self, symbol, trade):
+        self.results.append(trade)
+        self.trades.pop(symbol, None)
+        self.save()
+
+    def cancel_trade(self, symbol):
+        trade = self.trades.pop(symbol, None)
+        if trade:
+            trade["status"] = "cancelled"
+            self.results.append(trade)
+            self.save()
+            return {"status": "cancelled", "trade": trade}
+        return {"error": "not found"}
+
+    def get_active_trades(self):
+        return self.trades
+
+    def get_trade_stats(self):
+        total = len(self.results)
+        wins = sum(1 for r in self.results if r.get("hit", "").startswith("take_profit"))
+        losses = sum(1 for r in self.results if r.get("hit") == "stop_loss")
+        providers = {}
+        for r in self.results:
+            p = r["provider"]
+            if p not in providers:
+                providers[p] = {"wins": 0, "losses": 0}
+            if r.get("hit", "").startswith("take_profit"):
+                providers[p]["wins"] += 1
+            elif r.get("hit") == "stop_loss":
+                providers[p]["losses"] += 1
+        return {
+            "total": total,
+            "wins": wins,
+            "losses": losses,
+            "by_provider": providers
+        }
+
+    def save(self):
+        with open("db.json", "w") as f:
+            json.dump({"active": self.trades, "results": self.results}, f)
+
+    def load(self):
+        try:
+            with open("db.json", "r") as f:
+                data = json.load(f)
+                self.trades = data.get("active", {})
+                self.results = data.get("results", [])
+        except:
+            pass
+
+
+
+⸻
+
+c. data_fetcher.py
+
+import httpx
+
+SYMBOL_MAP = {
+    "BTC/USD": "bitcoin",
+    "ETH/USD": "ethereum",
+    "SOL/USD": "solana"
+}
+
+async def fetch_price(symbol):
+    if symbol in SYMBOL_MAP:
+        return await fetch_coingecko_price(SYMBOL_MAP[symbol])
+    else:
+        return await fetch_twelvedata_price(symbol)
+
+async def fetch_coingecko_price(name):
+    try:
+        url = f"https://api.coingecko.com/api/v3/simple/price?ids={name}&vs_currencies=usd"
+        async with httpx.AsyncClient() as client:
+            r = await client.get(url)
+            return r.json()[name]["usd"]
+    except:
+        return None
+
+async def fetch_twelvedata_price(symbol):
+    try:
+        url = f"https://api.twelvedata.com/price?symbol={symbol.replace('/', '')}&apikey=demo"
+        async with httpx.AsyncClient() as client:
+            r = await client.get(url)
+            return float(r.json().get("price"))
+    except:
+        return None
+
+async def fetch_all_prices():
+    pairs = ["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD", "USD/JPY", "XAU/USD", "NQ1!"]
+    prices = {}
+    for p in pairs:
+        prices[p] = await fetch_price(p)
+    return prices
+
+
+
+⸻
+
+d. config.py
+
+def get_provider(symbol):
+    if "BTC" in symbol or "ETH" in symbol or "SOL" in symbol:
+        return "Paradox AI"
+    elif any(fx in symbol for fx in ["EUR", "GBP", "JPY", "USD"]):
+        return "Solaris AI"
+    elif "NQ" in symbol or "SPX" in symbol or "MQ" in symbol:
+        return "Hybrid AI"
+    return "TradeHybrid AI"
+
+
+
+⸻
+
+e. requirements.txt
+
+fastapi
+uvicorn
+httpx
+
+
+
+⸻
+
+3. Run the App in Replit
+	•	Click the “Shell” tab.
+	•	Run:
+
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+
+
+⸻
+
+4. Test It!
+	•	Open browser: https://<your-repl-url>.replit.app/docs
+	•	Use the Swagger UI to post trades, check prices, and view /trade-stats.
+
+⸻
+
+Next Steps:
+	•	Add Discord/Slack alerts?
+	•	Webhook listener for TradeMU/TradingView?
+	•	Frontend page to view signals?
+
+Let me know — and once it runs clean on Replit, I’ll help you push next features.
+
+You’re now tracking signals with win rates, provider stats, and smart refresh cycles.
+Try it, and tell me how it runs!
