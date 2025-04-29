@@ -23,6 +23,13 @@ export class MCPServer {
   private startTime: number = Date.now();
   private clients: Map<string, WebSocket> = new Map();
   private userIdToClientId: Map<string, string> = new Map();
+  
+  // Service references
+  public brokerConnectionService: any;
+  public marketDataManager: any;
+  public signalService: any;
+  public smartSignalRouter: any;
+  public marketInsightsService: any;
 
   private constructor() {
     // Initialize queue manager
