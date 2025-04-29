@@ -1,11 +1,12 @@
-import { SignalProcessor } from '../processors/signal-processor';
-import { v4 as uuidv4 } from 'uuid';
-
 /**
- * TradingViewWebhookHandler
+ * TradingView Webhook Handler
  * 
- * Handles incoming webhook messages from TradingView
+ * Processes incoming webhook requests from TradingView alerts
  */
+
+import crypto from 'crypto';
+import { SignalProcessor } from '../processors/signal-processor';
+
 export class TradingViewWebhookHandler {
   private signalProcessor: SignalProcessor;
   
@@ -15,75 +16,107 @@ export class TradingViewWebhookHandler {
   }
   
   /**
-   * Handle a webhook message from TradingView
+   * Handle an incoming webhook payload from TradingView
    */
   public async handleWebhook(payload: any): Promise<boolean> {
-    console.log('Received TradingView webhook:', payload);
-    
     try {
-      // Generate a unique ID for this signal
-      const signalId = uuidv4();
-      
-      // Determine market type based on symbol
-      let marketType = 'unknown';
-      if (payload.symbol?.includes('USD')) {
-        marketType = 'crypto';
-      } else if (['EUR', 'GBP', 'JPY', 'AUD', 'NZD', 'CAD', 'CHF'].some(
-        currency => payload.symbol?.includes(currency))) {
-        marketType = 'forex';
-      } else if (payload.symbol?.includes('!')) {
-        marketType = 'futures';
-      } else if (payload.symbol?.includes(':')) {
-        marketType = 'stocks';
-      }
-      
-      // Determine provider based on passphrase or other identifiers
-      let providerId = 'tradingview';
-      let providerName = 'TradingView';
-      let timeframe = '15m'; // Default
-      
-      // If payload contains specific provider info, use it
-      if (payload.passphrase === 'hybrid-ai') {
-        providerId = 'hybrid';
-        providerName = 'Hybrid AI';
-        timeframe = '10m';
-      } else if (payload.passphrase === 'paradox-signals') {
-        providerId = 'paradox';
-        providerName = 'Paradox AI';
-        timeframe = '30m';
-      } else if (payload.passphrase === 'solaris-signals') {
-        providerId = 'solaris';
-        providerName = 'Solaris AI';
-        timeframe = '5m';
-      }
-      
-      // Convert payload to signal format
-      const signal = {
-        id: signalId,
-        providerId,
-        symbol: payload.symbol,
-        side: payload.side || payload.direction || 'buy',
-        entryPrice: payload.entry || payload.price || 0,
-        stopLoss: payload.stop || payload.stopLoss || 0,
-        takeProfit: payload.target || payload.takeProfit || 0,
-        description: payload.description || `${payload.side || 'Signal'} alert for ${payload.symbol}`,
-        timestamp: new Date(),
-        status: 'active',
-        metadata: {
-          market_type: marketType,
-          timeframe,
-          provider_name: providerName,
-          original_payload: JSON.stringify(payload)
-        }
-      };
+      // Parse the incoming payload
+      const signal = this.parseTradingViewPayload(payload);
       
       // Process the signal
-      await this.signalProcessor.processMessage(signal);
+      await this.signalProcessor.processMessage({
+        id: signal.id,
+        type: 'trading_signal',
+        priority: 1,
+        signal: signal,
+        timestamp: new Date().toISOString()
+      });
       
       return true;
     } catch (error) {
       console.error('Error handling TradingView webhook:', error);
       return false;
     }
+  }
+  
+  /**
+   * Parse TradingView webhook payload into a structured signal
+   */
+  private parseTradingViewPayload(payload: any): any {
+    // Ensure we have a properly structured payload
+    const data = typeof payload === 'string' ? JSON.parse(payload) : payload;
+    
+    // Extract required fields from the TradingView format
+    const symbol = data.symbol || data.ticker || '';
+    const direction = (data.side || data.action || '').toLowerCase();
+    const entryPrice = parseFloat(data.price || data.close || 0);
+    
+    // Normalize direction to our platform format
+    let normalizedDirection = 'buy';
+    if (direction.includes('sell') || direction.includes('short')) {
+      normalizedDirection = 'sell';
+    }
+    
+    // Determine asset type based on symbol
+    const assetType = this.determineAssetType(symbol);
+    
+    // Parse price values with full precision - don't lose decimals
+    const parsePrice = (value: any): number | null => {
+      if (!value) return null;
+      
+      // Ensure we get the full precision for the value
+      const parsed = typeof value === 'string' ? parseFloat(value) : value;
+      return parsed || null;
+    };
+    
+    // Map to our standardized format
+    const signal = {
+      id: crypto.randomUUID(),
+      providerId: data.provider || 'TradingView',
+      symbol: symbol,
+      side: normalizedDirection as 'buy' | 'sell',
+      entryPrice: parsePrice(data.entry || data.Entry || data['Entry Price'] || entryPrice),
+      stopLoss: parsePrice(data.sl || data['Stop Loss'] || data.stop_loss || 0),
+      takeProfit: parsePrice(data.tp || data['Take Profit'] || data.take_profit || 0),
+      description: data.notes || data.message || `TradingView Alert for ${symbol}`,
+      timestamp: new Date().toISOString(),
+      status: 'active',
+      metadata: {
+        market_type: assetType,
+        timeframe: data.timeframe || '1d',
+        provider_name: data.provider || 'TradingView'
+      }
+    };
+    
+    console.log(`[MCP] Parsed TradingView signal: ${JSON.stringify(signal)}`);
+    return signal;
+  }
+  
+  /**
+   * Determine the asset type based on the symbol
+   */
+  private determineAssetType(symbol: string): string {
+    symbol = symbol.toUpperCase();
+    
+    // Check for common forex pairs
+    if (/^(EUR|USD|GBP|JPY|AUD|NZD|CAD|CHF)[A-Z]{3}$/.test(symbol)) {
+      return 'forex';
+    }
+    
+    // Check for common crypto tickers
+    if (symbol.includes('BTC') || symbol.includes('ETH') || 
+        symbol.includes('USDT') || symbol.includes('BNB') ||
+        symbol.endsWith('PERP')) {
+      return 'crypto';
+    }
+    
+    // Check for futures symbols
+    if (symbol.includes('F') || symbol.endsWith('F') || 
+        symbol.includes('_F') || /\d{4}/.test(symbol)) {
+      return 'futures';
+    }
+    
+    // Default to stocks
+    return 'stocks';
   }
 }

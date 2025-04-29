@@ -1,26 +1,119 @@
 /**
- * QueueManager
+ * Queue Manager for MCP
  * 
- * Manages message queues for the MCP architecture
+ * Manages message queues for different types of messages in the MCP system
+ */
+
+/**
+ * Queue class for handling message queues
+ */
+export class Queue {
+  private name: string;
+  private messages: any[] = [];
+  private maxSize: number;
+  private errorCount: number = 0;
+  private processedCount: number = 0;
+  
+  constructor(name: string, maxSize: number = 1000) {
+    this.name = name;
+    this.maxSize = maxSize;
+    console.log(`Queue ${name} initialized with max size ${maxSize}`);
+  }
+  
+  /**
+   * Add a message to the queue
+   */
+  public enqueue(message: any): boolean {
+    // Check if queue is full
+    if (this.messages.length >= this.maxSize) {
+      console.warn(`Queue ${this.name} is full, dropping oldest message`);
+      this.messages.shift(); // Remove oldest message
+    }
+    
+    // Add the message
+    this.messages.push(message);
+    return true;
+  }
+  
+  /**
+   * Get and remove the next message from the queue
+   */
+  public dequeue(): any {
+    if (this.messages.length === 0) {
+      return null;
+    }
+    
+    const message = this.messages.shift();
+    this.processedCount++;
+    return message;
+  }
+  
+  /**
+   * Peek at the next message without removing it
+   */
+  public peek(): any {
+    if (this.messages.length === 0) {
+      return null;
+    }
+    
+    return this.messages[0];
+  }
+  
+  /**
+   * Get the number of messages in the queue
+   */
+  public size(): number {
+    return this.messages.length;
+  }
+  
+  /**
+   * Record an error in processing
+   */
+  public recordError(): void {
+    this.errorCount++;
+  }
+  
+  /**
+   * Get queue statistics
+   */
+  public getStats(): any {
+    return {
+      name: this.name,
+      size: this.messages.length,
+      maxSize: this.maxSize,
+      errorCount: this.errorCount,
+      processedCount: this.processedCount
+    };
+  }
+  
+  /**
+   * Clear all messages from the queue
+   */
+  public clear(): void {
+    this.messages = [];
+  }
+}
+
+/**
+ * QueueManager class for managing multiple queues
  */
 export class QueueManager {
   private queues: Map<string, Queue> = new Map();
   
-  constructor() {
-    // Initialize standard queues
-    this.createQueue('signals', 100); // Higher priority for trading signals
-    this.createQueue('notifications', 50); // Medium priority for notifications
-    this.createQueue('tasks', 10); // Lower priority for background tasks
+  constructor(queueNames: string[] = ['signals', 'notifications', 'tasks']) {
+    // Initialize default queues
+    for (const name of queueNames) {
+      this.createQueue(name);
+    }
     
-    console.log('Queue Manager initialized with queues:', 
-      Array.from(this.queues.keys()).join(', '));
+    console.log(`Queue Manager initialized with queues: ${queueNames.join(', ')}`);
   }
   
   /**
-   * Create a new queue with the specified priority
+   * Create a new queue
    */
-  public createQueue(name: string, priority: number): Queue {
-    const queue = new Queue(name, priority);
+  public createQueue(name: string, maxSize: number = 1000): Queue {
+    const queue = new Queue(name, maxSize);
     this.queues.set(name, queue);
     return queue;
   }
@@ -28,119 +121,20 @@ export class QueueManager {
   /**
    * Get a queue by name
    */
-  public getQueue(name: string): Queue {
-    if (!this.queues.has(name)) {
-      this.createQueue(name, 10); // Default priority
-    }
-    return this.queues.get(name)!;
+  public getQueue(name: string): Queue | undefined {
+    return this.queues.get(name);
   }
   
   /**
-   * Get statistics about all queues
+   * Get statistics for all queues
    */
-  public getStats(): any {
-    const stats: any = {};
-    this.queues.forEach((queue, name) => {
-      stats[name] = {
-        size: queue.size(),
-        priority: queue.getPriority(),
-        processedCount: queue.getProcessedCount(),
-        errorCount: queue.getErrorCount()
-      };
+  public getStats(): any[] {
+    const stats: any[] = [];
+    
+    this.queues.forEach(queue => {
+      stats.push(queue.getStats());
     });
+    
     return stats;
-  }
-}
-
-/**
- * Queue
- * 
- * A simple queue implementation for the MCP architecture
- */
-export class Queue {
-  private name: string;
-  private priority: number;
-  private items: any[] = [];
-  private processedCount: number = 0;
-  private errorCount: number = 0;
-  
-  constructor(name: string, priority: number) {
-    this.name = name;
-    this.priority = priority;
-  }
-  
-  /**
-   * Add an item to the queue
-   */
-  public enqueue(item: any): void {
-    this.items.push(item);
-    console.log(`Queued item in ${this.name}. Queue size: ${this.items.length}`);
-  }
-  
-  /**
-   * Remove and return the next item from the queue
-   */
-  public dequeue(): any | null {
-    if (this.items.length === 0) return null;
-    const item = this.items.shift();
-    this.processedCount++;
-    return item;
-  }
-  
-  /**
-   * Peek at the next item without removing it
-   */
-  public peek(): any | null {
-    if (this.items.length === 0) return null;
-    return this.items[0];
-  }
-  
-  /**
-   * Get the size of the queue
-   */
-  public size(): number {
-    return this.items.length;
-  }
-  
-  /**
-   * Get the priority of the queue
-   */
-  public getPriority(): number {
-    return this.priority;
-  }
-  
-  /**
-   * Get the name of the queue
-   */
-  public getName(): string {
-    return this.name;
-  }
-  
-  /**
-   * Get the number of items processed by this queue
-   */
-  public getProcessedCount(): number {
-    return this.processedCount;
-  }
-  
-  /**
-   * Record an error with processing an item
-   */
-  public recordError(): void {
-    this.errorCount++;
-  }
-  
-  /**
-   * Get the number of errors encountered
-   */
-  public getErrorCount(): number {
-    return this.errorCount;
-  }
-  
-  /**
-   * Clear all items from the queue
-   */
-  public clear(): void {
-    this.items = [];
   }
 }
