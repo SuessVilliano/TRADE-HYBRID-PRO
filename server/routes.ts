@@ -323,6 +323,7 @@ import testCredentialsRoutes from './routes/test-credentials'; // Import for API
 import abatevRoutes from './api/abatev'; // Import for ABATEV integration routes
 import nexusRoutes from './api/nexus'; // Import for Nexus integration routes (replaces ABATEV)
 import validatorRoutes from './routes/validator'; // Import for Solana validator routes
+import solanaTokenApiRoutes from './routes/solana-token-api'; // Import for Solana token API routes
 import configRoutes from './api/config'; // Import for configuration API routes
 import authApiRoutes from './api/auth'; // Import for our new auth API routes
 import walletApiRoutes from './api/wallet'; // Import for our new wallet API routes
@@ -925,6 +926,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Solana validator routes
   app.use("/api/validator", validatorRoutes);
+  
+  // Solana token API routes
+  app.use("/api/solana", solanaTokenApiRoutes);
   
   // Register configuration routes
   app.use("/api/config", configRoutes);

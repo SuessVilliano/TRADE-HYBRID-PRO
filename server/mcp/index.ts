@@ -27,6 +27,8 @@ import { initializeSmartSignalRouter } from './processors/smart-signal-router';
 import { initializeMarketInsightsService } from './services/market-insights-service';
 import { initializeUserProfileService } from './services/user-profile-service';
 import { initializeWebhookService } from './services/webhook-service';
+import { SolanaBlockchainService } from './services/solana-blockchain-service';
+import { THCTokenService } from './services/thc-token-service';
 
 // Singleton MCP server instance
 let mcpServer: MCPServer | null = null;
@@ -59,6 +61,36 @@ export function initializeMCPServer(): MCPServer {
     mcpServer.marketInsightsService = initializeMarketInsightsService(mcpServer);
     mcpServer.userProfileService = initializeUserProfileService(mcpServer);
     mcpServer.webhookService = initializeWebhookService(mcpServer);
+    
+    // Initialize Solana blockchain services
+    console.log('[MCP] Initializing Solana blockchain services...');
+    try {
+      // Initialize Solana blockchain service
+      const solanaService = SolanaBlockchainService.getInstance();
+      solanaService.initialize().then(success => {
+        if (success) {
+          console.log('[MCP] Solana blockchain service initialized successfully');
+          
+          // Initialize THC token service
+          const thcTokenService = THCTokenService.getInstance();
+          thcTokenService.initialize().then(success => {
+            if (success) {
+              console.log('[MCP] THC token service initialized successfully');
+            } else {
+              console.warn('[MCP] THC token service initialization failed');
+            }
+          }).catch(err => {
+            console.error('[MCP] Error initializing THC token service:', err);
+          });
+        } else {
+          console.warn('[MCP] Solana blockchain service initialization failed');
+        }
+      }).catch(err => {
+        console.error('[MCP] Error initializing Solana blockchain service:', err);
+      });
+    } catch (error) {
+      console.error('[MCP] Error setting up Solana blockchain services:', error);
+    }
     
     console.log('[MCP] MCP Server initialized successfully with all services');
   }
@@ -1034,6 +1066,62 @@ export function registerMCPRoutes(app: Express, server: Server): void {
       console.error('Error checking webhook status:', error);
       res.status(500).json({ 
         error: 'Failed to check webhook status',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // THC Token Info endpoint
+  app.get('/api/mcp/token/thc', async (req: Request, res: Response) => {
+    try {
+      // Get THC token service
+      const thcTokenService = THCTokenService.getInstance();
+      
+      // Initialize if needed
+      await thcTokenService.initialize();
+      
+      // Get token info and stats
+      const tokenInfo = await thcTokenService.getTokenInfo();
+      const tokenStats = await thcTokenService.getTokenStats();
+      
+      res.json({
+        status: 'success',
+        token: {
+          ...tokenInfo,
+          stats: tokenStats
+        },
+        timestamp: new Date()
+      });
+    } catch (error) {
+      console.error('Error getting THC token information:', error);
+      res.status(500).json({ 
+        error: 'Failed to get THC token information',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // THC Token Staking Info endpoint
+  app.get('/api/mcp/token/thc/staking', async (req: Request, res: Response) => {
+    try {
+      // Get THC token service
+      const thcTokenService = THCTokenService.getInstance();
+      
+      // Initialize if needed
+      await thcTokenService.initialize();
+      
+      // Get staking info
+      const stakingInfo = await thcTokenService.getStakingInfo();
+      
+      res.json({
+        status: 'success',
+        staking: stakingInfo,
+        timestamp: new Date()
+      });
+    } catch (error) {
+      console.error('Error getting THC staking information:', error);
+      res.status(500).json({ 
+        error: 'Failed to get THC staking information',
         message: error instanceof Error ? error.message : String(error)
       });
     }
