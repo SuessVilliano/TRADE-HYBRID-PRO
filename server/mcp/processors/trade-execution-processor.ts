@@ -7,20 +7,12 @@
 
 import { Queue } from '../queues/queue-manager';
 import { db } from '../../../server/db';
-import { users, copyTradeLogs } from '../../../shared/schema';
+import { copyTradeLogs } from '../../../shared/schema';
 import { eq, and } from 'drizzle-orm';
 import crypto from 'crypto';
+import { BrokerConnection, TradeParams } from '../adapters/broker-interface';
 
-// Import broker interfaces
-// Note: These will need to be properly implemented for each broker
-interface BrokerConnection {
-  isConnected: () => boolean;
-  connect: () => Promise<boolean>;
-  disconnect: () => Promise<void>;
-  executeMarketOrder: (params: any) => Promise<any>;
-  getAccountInfo: () => Promise<any>;
-  getBrokerName: () => string;
-}
+// We import BrokerConnection from broker-interface.ts
 
 /**
  * TradeExecutionProcessor
@@ -167,9 +159,9 @@ export class TradeExecutionProcessor {
         
         try {
           // Prepare order parameters
-          const orderParams = {
+          const orderParams: TradeParams = {
             symbol: signal.symbol,
-            side: signal.side,
+            side: signal.side as 'buy' | 'sell',
             type: 'market',
             quantity: positionSize,
             stopLoss: signal.stopLoss,

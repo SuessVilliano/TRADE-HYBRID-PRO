@@ -11,7 +11,9 @@ import { MCPServer } from './core/mcp-server';
 import { MCPConfig, MCPMessageType } from './config/mcp-config';
 import { registerSignalProcessors } from './processors/signal-processor';
 import { registerNotificationProcessors } from './processors/notification-processor';
+import { registerTradeProcessor } from './processors/trade-execution-processor';
 import { handleTradingViewWebhook } from './handlers/tradingview-webhook-handler-express';
+import { initializeBrokerConnectionService } from './adapters/broker-connection-service';
 
 // Singleton MCP server instance
 let mcpServer: MCPServer | null = null;
@@ -30,6 +32,10 @@ export function initializeMCPServer(): MCPServer {
     // Register processors
     registerSignalProcessors(mcpServer);
     registerNotificationProcessors(mcpServer);
+    registerTradeProcessor(mcpServer);
+    
+    // Initialize broker connection service
+    initializeBrokerConnectionService(mcpServer);
     
     console.log('[MCP] MCP Server initialized successfully');
   }
@@ -54,6 +60,33 @@ export function registerMCPRoutes(app: Express, server: Server): void {
       status: 'running',
       stats: mcp.getStatus()
     });
+  });
+  
+  // Broker account info endpoint
+  app.get('/api/mcp/brokers/:brokerId/account', async (req: Request, res: Response) => {
+    try {
+      const brokerId = req.params.brokerId;
+      
+      // Get broker connection service
+      const brokerService = mcp.brokerConnectionService;
+      if (!brokerService) {
+        return res.status(500).json({ error: 'Broker connection service not initialized' });
+      }
+      
+      // Get account info
+      const accountInfo = await brokerService.getAccountInfo(brokerId);
+      
+      res.json({
+        status: 'success',
+        accountInfo
+      });
+    } catch (error) {
+      console.error('Error fetching broker account info:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch broker account information',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
   });
   
   // Error handling middleware
