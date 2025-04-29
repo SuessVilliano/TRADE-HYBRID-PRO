@@ -7,6 +7,8 @@ import { brokerConnectionService } from "./lib/services/broker-connection-servic
 import { userIdentityService } from "./lib/services/user-identity-service";
 import { updateApiCredentials } from "./update-env";
 import apiRouter from "./routes/index";
+// Import MCP (Message Control Plane) server
+import { registerMCPRoutes, initializeMCPServer, shutdownMCPServer } from "./mcp";
 // Using mock prop firm service instead of the actual one for development
 // import { propFirmService } from "./lib/services/prop-firm-service";
 
@@ -78,6 +80,10 @@ app.use((req, res, next) => {
   app.use('/api', apiRouter);
   
   const server = await registerRoutes(app);
+  
+  // Initialize and register MCP routes
+  registerMCPRoutes(app, server);
+  console.log('MCP server routes registered');
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -185,12 +191,26 @@ app.use((req, res, next) => {
     // If we still couldn't start the server at all
     if (!activeServerPort) {
       console.error('Server failed to start:', error);
+      shutdownMCPServer(); // Gracefully shutdown MCP server
       process.exit(1);
     }
   });
 
   process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  });
+  
+  // Gracefully shutdown on process termination
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM signal received. Shutting down gracefully...');
+    shutdownMCPServer();
+    process.exit(0);
+  });
+  
+  process.on('SIGINT', () => {
+    console.log('SIGINT signal received. Shutting down gracefully...');
+    shutdownMCPServer();
+    process.exit(0);
   });
 
   // Function to delay execution (useful for waiting for ports to be released)
