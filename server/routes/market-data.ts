@@ -4,7 +4,21 @@ import { getAlpacaClient } from '../services/alpaca-service';
 import { getOandaClient } from '../services/oanda-service';
 import { getEnhancedMarketDataService } from '../services/enhanced-market-data-service';
 import { RAPIDAPI_PROVIDERS } from '../services/rapidapi-service';
-import { CandleData, TickData, TimeInterval } from '../mcp/data/market-data-interface';
+import { CandleData, TickData } from '../mcp/data/market-data-interface';
+
+// Define TimeInterval enum to match what was previously expected
+enum TimeInterval {
+  ONE_MINUTE = '1m',
+  FIVE_MINUTES = '5m',
+  FIFTEEN_MINUTES = '15m',
+  THIRTY_MINUTES = '30m',
+  ONE_HOUR = '1h',
+  TWO_HOURS = '2h',
+  FOUR_HOURS = '4h',
+  ONE_DAY = '1d',
+  ONE_WEEK = '1w',
+  ONE_MONTH = '1M'
+}
 
 const router = express.Router();
 

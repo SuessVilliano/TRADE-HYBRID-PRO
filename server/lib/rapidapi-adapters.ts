@@ -1,29 +1,21 @@
 /**
- * RapidAPI Adapter Functions
+ * RapidAPI Adapters
  * 
- * This module provides adapter functions to normalize data from 
- * different RapidAPI providers into our standard format
+ * Adapters to convert between different RapidAPI provider formats
+ * and our standard formats for candles, ticks, etc.
  */
 
 import { CandleData, TickData } from '../mcp/data/market-data-interface';
 
-// Map of asset types to providers that support them
-const PROVIDER_ASSET_MAP = {
-  stocks: ['twelve_data', 'alpha_vantage', 'yh_finance', 'tradingview'],
-  forex: ['twelve_data', 'alpha_vantage', 'tradingview'],
-  crypto: ['binance', 'twelve_data', 'coinranking', 'alpha_vantage']
-};
-
 /**
- * Select the best provider for a given symbol and data type
+ * Select the best provider for a symbol based on asset type
+ * @param symbol Symbol to get provider for
+ * @param dataType Type of data requested (candles, quote, etc.)
+ * @returns Provider ID
  */
-export function selectBestProviderForSymbol(
-  symbol: string,
-  dataType: 'quote' | 'candles'
-): string {
+export function selectBestProviderForSymbol(symbol: string, dataType: string): string {
   // Normalize symbol and detect asset type
   const upperSymbol = symbol.toUpperCase();
-  let assetType = 'stocks'; // Default assumption
   
   // Check for crypto
   if (
@@ -33,11 +25,11 @@ export function selectBestProviderForSymbol(
     upperSymbol.includes('BITCOIN') ||
     upperSymbol.includes('BNB')
   ) {
-    assetType = 'crypto';
+    return dataType === 'candles' ? 'binance' : 'binance';
   }
   
   // Check for forex
-  else if (
+  if (
     /^[A-Z]{3}\/[A-Z]{3}$/.test(upperSymbol) || // Format: EUR/USD
     /^[A-Z]{3}_[A-Z]{3}$/.test(upperSymbol) || // Format: EUR_USD
     (
@@ -47,211 +39,255 @@ export function selectBestProviderForSymbol(
       )
     )
   ) {
-    assetType = 'forex';
+    return 'twelve_data';
   }
   
-  // Select provider based on asset type and data type
-  if (assetType === 'crypto') {
-    if (
-      upperSymbol.endsWith('USDT') || 
-      upperSymbol.endsWith('BTC') || 
-      upperSymbol.endsWith('ETH')
-    ) {
-      return 'binance'; // Binance is best for common crypto pairs
-    }
-    return 'twelve_data'; // Fallback to Twelve Data for other crypto
-  } else if (assetType === 'forex') {
-    return 'twelve_data'; // Twelve Data is good for forex
-  } else {
-    // For stocks and general cases
-    return dataType === 'quote' ? 'twelve_data' : 'yh_finance';
-  }
+  // Default to Twelve Data for stocks
+  return 'twelve_data';
 }
 
 /**
- * Map a symbol to the format expected by a specific provider
+ * Map symbol to format expected by provider
+ * @param symbol Original symbol
+ * @param provider Provider ID
+ * @returns Mapped symbol
  */
 export function mapSymbolForProvider(symbol: string, provider: string): string {
-  const upperSymbol = symbol.toUpperCase();
+  // Extract the ticker symbol from formats like BINANCE:BTCUSDT
+  const parts = symbol.split(':');
+  const baseSymbol = parts.length > 1 ? parts[1] : symbol;
   
-  // Handle special cases for different providers
   switch (provider) {
     case 'binance':
-      // For Binance, just return the symbol as is (e.g., BTCUSDT)
-      return upperSymbol;
-    
+      // Add USDT suffix for BTC, ETH, etc. if not present
+      if (
+        ['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'DOGE', 'AVAX'].includes(baseSymbol) &&
+        !baseSymbol.includes('USDT')
+      ) {
+        return `${baseSymbol}USDT`;
+      }
+      return baseSymbol;
+      
     case 'twelve_data':
-      // For forex pairs, Twelve Data uses the slash format (e.g., EUR/USD)
-      if (/^[A-Z]{3}_[A-Z]{3}$/.test(upperSymbol)) {
-        return upperSymbol.replace('_', '/');
+      // Handle forex pairs
+      if (
+        /^[A-Z]{3}\/[A-Z]{3}$/.test(baseSymbol) || // Format: EUR/USD
+        /^[A-Z]{3}_[A-Z]{3}$/.test(baseSymbol)    // Format: EUR_USD
+      ) {
+        // Convert to EUR/USD format if needed
+        if (baseSymbol.includes('_')) {
+          return baseSymbol.replace('_', '/');
+        }
+        return baseSymbol;
       }
-      // If it's a 6-character forex pair without separator (e.g., EURUSD)
-      else if (/^[A-Z]{6}$/.test(upperSymbol) && 
-               ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'NZD'].some(
-                 currency => upperSymbol.includes(currency)
-               )) {
-        return `${upperSymbol.substring(0, 3)}/${upperSymbol.substring(3, 6)}`;
+      
+      // Handle traditional forex format (EURUSD -> EUR/USD)
+      if (
+        /^[A-Z]{6}$/.test(baseSymbol) && 
+        ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'NZD'].some(
+          currency => baseSymbol.includes(currency)
+        )
+      ) {
+        return `${baseSymbol.substring(0, 3)}/${baseSymbol.substring(3, 6)}`;
       }
-      return upperSymbol;
-    
-    case 'yh_finance':
-      // Yahoo Finance uses regular stock symbols
-      return upperSymbol;
-    
+      
+      return baseSymbol;
+      
     case 'alpha_vantage':
-      // For forex pairs, Alpha Vantage uses special format
-      if (/^[A-Z]{3}\/[A-Z]{3}$/.test(upperSymbol) || /^[A-Z]{3}_[A-Z]{3}$/.test(upperSymbol)) {
-        const [base, quote] = upperSymbol.includes('/') 
-          ? upperSymbol.split('/') 
-          : upperSymbol.split('_');
-        return `${base}${quote}`;
+      // Alpha Vantage doesn't support some crypto symbols directly
+      if (baseSymbol.endsWith('USDT')) {
+        return baseSymbol.replace('USDT', '-USD');
       }
-      return upperSymbol;
-    
+      
+      // Handle forex pairs
+      if (
+        /^[A-Z]{3}\/[A-Z]{3}$/.test(baseSymbol) || // Format: EUR/USD
+        /^[A-Z]{3}_[A-Z]{3}$/.test(baseSymbol)    // Format: EUR_USD
+      ) {
+        // Convert to EUR/USD format if needed
+        if (baseSymbol.includes('_')) {
+          return baseSymbol.replace('_', '/');
+        }
+        return baseSymbol;
+      }
+      
+      return baseSymbol;
+      
+    case 'yh_finance':
+      // Yahoo Finance expects crypto symbols in BTC-USD format
+      if (
+        ['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'DOGE', 'AVAX'].includes(baseSymbol) ||
+        baseSymbol.endsWith('USDT')
+      ) {
+        return baseSymbol.replace('USDT', '-USD');
+      }
+      
+      return baseSymbol;
+      
     default:
-      return upperSymbol;
+      return baseSymbol;
   }
 }
 
 /**
- * Convert interval string to provider-specific format
+ * Convert interval to format expected by provider
+ * @param interval Original interval (e.g., '1h', '1d')
+ * @param provider Provider ID
+ * @returns Mapped interval
  */
 export function convertIntervalForProvider(interval: string, provider: string): string {
+  const lowerInterval = interval.toLowerCase();
+  
   switch (provider) {
     case 'binance':
-      // Binance uses: 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M
-      return interval;
-    
+      // Binance already uses the 1h, 1d format
+      return lowerInterval;
+      
     case 'twelve_data':
-      // Twelve Data uses: 1min, 5min, 15min, 30min, 45min, 1h, 2h, 4h, 1day, 1week, 1month
-      if (interval === '1m') return '1min';
-      if (interval === '5m') return '5min';
-      if (interval === '15m') return '15min';
-      if (interval === '30m') return '30min';
-      if (interval === '1h') return '1h';
-      if (interval === '4h') return '4h';
-      if (interval === '1d') return '1day';
-      if (interval === '1w') return '1week';
-      if (interval === '1M') return '1month';
-      return interval;
-    
+      // Convert our internal format to Twelve Data format
+      switch (lowerInterval) {
+        case '1m': return '1min';
+        case '5m': return '5min';
+        case '15m': return '15min';
+        case '30m': return '30min';
+        case '1h': return '1h';
+        case '2h': return '2h';
+        case '4h': return '4h';
+        case '1d': return '1day';
+        case '1w': return '1week';
+        case '1M': return '1month';
+        default: return '1h';
+      }
+      
     case 'alpha_vantage':
-      // Alpha Vantage uses: 1min, 5min, 15min, 30min, 60min, daily, weekly, monthly
-      if (interval === '1m') return '1min';
-      if (interval === '5m') return '5min';
-      if (interval === '15m') return '15min';
-      if (interval === '30m') return '30min';
-      if (interval === '1h') return '60min';
-      if (interval === '1d') return 'daily';
-      if (interval === '1w') return 'weekly';
-      if (interval === '1M') return 'monthly';
-      return interval;
-    
+      // Convert our internal format to Alpha Vantage format
+      switch (lowerInterval) {
+        case '1m': return '1min';
+        case '5m': return '5min';
+        case '15m': return '15min';
+        case '30m': return '30min';
+        case '1h': return '60min';
+        case '1d': return 'daily';
+        case '1w': return 'weekly';
+        case '1M': return 'monthly';
+        default: return 'daily';
+      }
+      
     case 'yh_finance':
-      // Yahoo Finance uses: 1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo
-      if (interval === '1h') return '60m';
-      if (interval === '1d') return '1d';
-      if (interval === '1w') return '1wk';
-      if (interval === '1M') return '1mo';
-      return interval;
-    
+      // Convert our internal format to Yahoo Finance format
+      switch (lowerInterval) {
+        case '1m': return '1m';
+        case '5m': return '5m';
+        case '15m': return '15m';
+        case '30m': return '30m';
+        case '1h': return '1h';
+        case '1d': return '1d';
+        case '1w': return '1wk';
+        case '1M': return '1mo';
+        default: return '1d';
+      }
+      
     default:
-      return interval;
+      return lowerInterval;
   }
 }
 
 /**
- * Convert Twelve Data time series to our standard CandleData format
+ * Convert Twelve Data time_series response to CandleData[]
+ * @param data Raw Twelve Data response
+ * @param symbol Original symbol
+ * @param interval Original interval
+ * @returns Array of standardized candle data
  */
-export function convertTwelveDataToCandles(
-  data: any,
-  symbol: string,
-  interval: string
-): CandleData[] {
+export function convertTwelveDataToCandles(data: any, symbol: string, interval: string): CandleData[] {
   if (!data || !data.values || !Array.isArray(data.values)) {
-    console.error('Invalid Twelve Data time series format:', data);
     return [];
   }
   
-  return data.values.map((candle: any) => ({
-    timestamp: new Date(candle.datetime).getTime(),
-    open: parseFloat(candle.open),
-    high: parseFloat(candle.high),
-    low: parseFloat(candle.low),
-    close: parseFloat(candle.close),
-    volume: parseFloat(candle.volume) || 0,
+  return data.values.map((item: any) => ({
+    timestamp: new Date(item.datetime).getTime(),
+    open: parseFloat(item.open),
+    high: parseFloat(item.high),
+    low: parseFloat(item.low),
+    close: parseFloat(item.close),
+    volume: parseInt(item.volume, 10),
     symbol,
     interval
   }));
 }
 
 /**
- * Convert Binance klines to our standard CandleData format
+ * Convert Binance klines response to CandleData[]
+ * @param data Raw Binance response
+ * @param symbol Original symbol
+ * @param interval Original interval
+ * @returns Array of standardized candle data
  */
-export function convertBinanceKlinesToCandles(
-  data: any,
-  symbol: string,
-  interval: string
-): CandleData[] {
+export function convertBinanceKlinesToCandles(data: any, symbol: string, interval: string): CandleData[] {
   if (!data || !Array.isArray(data)) {
-    console.error('Invalid Binance klines format:', data);
     return [];
   }
   
-  return data.map((candle: any) => ({
-    timestamp: candle[0], // Open time
-    open: parseFloat(candle[1]),
-    high: parseFloat(candle[2]),
-    low: parseFloat(candle[3]),
-    close: parseFloat(candle[4]),
-    volume: parseFloat(candle[5]),
+  return data.map((kline: any) => ({
+    timestamp: kline[0], // First element is open time
+    open: parseFloat(kline[1]),
+    high: parseFloat(kline[2]),
+    low: parseFloat(kline[3]),
+    close: parseFloat(kline[4]),
+    volume: parseFloat(kline[5]),
     symbol,
     interval
   }));
 }
 
 /**
- * Convert Alpha Vantage time series to our standard CandleData format
+ * Convert Alpha Vantage response to CandleData[]
+ * @param data Raw Alpha Vantage response
+ * @param symbol Original symbol
+ * @param interval Original interval
+ * @returns Array of standardized candle data
  */
-export function convertAlphaVantageToCandles(
-  data: any,
-  symbol: string,
-  interval: string
-): CandleData[] {
+export function convertAlphaVantageToCandles(data: any, symbol: string, interval: string): CandleData[] {
   if (!data || !data['Time Series (Daily)']) {
-    console.error('Invalid Alpha Vantage time series format:', data);
     return [];
   }
   
-  const timeSeriesKey = 'Time Series (Daily)';
-  const timeSeriesData = data[timeSeriesKey];
+  const timeSeries = data['Time Series (Daily)'];
+  const candles: CandleData[] = [];
   
-  return Object.entries(timeSeriesData).map(([date, values]: [string, any]) => ({
-    timestamp: new Date(date).getTime(),
-    open: parseFloat(values['1. open']),
-    high: parseFloat(values['2. high']),
-    low: parseFloat(values['3. low']),
-    close: parseFloat(values['4. close']),
-    volume: parseFloat(values['5. volume']),
-    symbol,
-    interval
-  }));
+  for (const date in timeSeries) {
+    if (Object.prototype.hasOwnProperty.call(timeSeries, date)) {
+      const item = timeSeries[date];
+      candles.push({
+        timestamp: new Date(date).getTime(),
+        open: parseFloat(item['1. open']),
+        high: parseFloat(item['2. high']),
+        low: parseFloat(item['3. low']),
+        close: parseFloat(item['4. close']),
+        volume: parseInt(item['5. volume'], 10),
+        symbol,
+        interval
+      });
+    }
+  }
+  
+  // Sort by timestamp in descending order (newest first)
+  return candles.sort((a, b) => b.timestamp - a.timestamp);
 }
 
 /**
- * Convert Twelve Data quote to our standard TickData format
+ * Convert Twelve Data quote response to TickData
+ * @param data Raw Twelve Data response
+ * @param symbol Original symbol
+ * @returns Standardized tick data or null if invalid
  */
-export function convertTwelveDataQuoteToTick(
-  data: any,
-  symbol: string
-): TickData | null {
+export function convertTwelveDataQuoteToTick(data: any, symbol: string): TickData | null {
   if (!data || !data.price) {
-    console.error('Invalid Twelve Data quote format:', data);
     return null;
   }
   
   return {
-    timestamp: data.timestamp ? new Date(data.timestamp).getTime() : Date.now(),
+    timestamp: new Date(data.timestamp * 1000).getTime(), // Convert to milliseconds
     price: parseFloat(data.price),
     bid: data.bid ? parseFloat(data.bid) : undefined,
     ask: data.ask ? parseFloat(data.ask) : undefined,
@@ -260,23 +296,22 @@ export function convertTwelveDataQuoteToTick(
 }
 
 /**
- * Convert Binance ticker to our standard TickData format
+ * Convert Binance ticker response to TickData
+ * @param data Raw Binance response
+ * @param symbol Original symbol
+ * @returns Standardized tick data or null if invalid
  */
-export function convertBinanceTickerToTick(
-  data: any,
-  symbol: string
-): TickData | null {
+export function convertBinanceTickerToTick(data: any, symbol: string): TickData | null {
   if (!data || !data.lastPrice) {
-    console.error('Invalid Binance ticker format:', data);
     return null;
   }
   
   return {
     timestamp: Date.now(),
     price: parseFloat(data.lastPrice),
-    bid: parseFloat(data.bidPrice),
-    ask: parseFloat(data.askPrice),
-    volume: parseFloat(data.volume),
-    symbol
+    bid: data.bidPrice ? parseFloat(data.bidPrice) : undefined,
+    ask: data.askPrice ? parseFloat(data.askPrice) : undefined,
+    symbol,
+    volume: parseFloat(data.volume)
   };
 }
