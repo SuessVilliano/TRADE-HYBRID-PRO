@@ -6,13 +6,28 @@
 
 import crypto from 'crypto';
 import { SignalProcessor } from '../processors/signal-processor';
+import { MessageHandler } from './handler-registry';
 
-export class TradingViewWebhookHandler {
+export class TradingViewWebhookHandler implements MessageHandler {
   private signalProcessor: SignalProcessor;
   
   constructor(signalProcessor: SignalProcessor) {
     this.signalProcessor = signalProcessor;
     console.log('TradingView Webhook Handler initialized');
+  }
+  
+  /**
+   * Handle a message (implements MessageHandler interface)
+   */
+  public async handleMessage(message: any): Promise<void> {
+    await this.handleWebhook(message);
+  }
+  
+  /**
+   * Get handler ID (implements MessageHandler interface)
+   */
+  public getId(): string {
+    return 'tradingview';
   }
   
   /**

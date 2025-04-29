@@ -29,8 +29,18 @@ export class MCPServer {
     this.queueManager = new QueueManager();
 
     // Initialize processors
-    const signalProcessor = new SignalProcessor(this.queueManager.getQueue('signals'));
-    const notificationProcessor = new NotificationProcessor(this.queueManager.getQueue('notifications'));
+    const signalsQueue = this.queueManager.getQueue('signals');
+    const notificationsQueue = this.queueManager.getQueue('notifications');
+    
+    if (!signalsQueue || !notificationsQueue) {
+      console.error('Failed to get required queues');
+      // Create the queues if they don't exist
+      const signalsQueue = this.queueManager.createQueue('signals');
+      const notificationsQueue = this.queueManager.createQueue('notifications');
+    }
+    
+    const signalProcessor = new SignalProcessor(signalsQueue || this.queueManager.createQueue('signals'));
+    const notificationProcessor = new NotificationProcessor(notificationsQueue || this.queueManager.createQueue('notifications'));
     
     this.processors.set('signal', signalProcessor);
     this.processors.set('notification', notificationProcessor);
@@ -40,7 +50,7 @@ export class MCPServer {
     
     // Register handlers
     const tradingViewHandler = new TradingViewWebhookHandler(signalProcessor);
-    this.handlerRegistry.registerHandler('tradingview', tradingViewHandler);
+    this.handlerRegistry.registerHandler(tradingViewHandler);
 
     console.log('MCP Server initialized with processors:', 
       Array.from(this.processors.keys()).join(', '));

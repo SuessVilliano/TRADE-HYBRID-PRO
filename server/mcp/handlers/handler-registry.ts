@@ -4,7 +4,7 @@
  * Manages message handlers for different types of messages in the MCP system
  */
 
-interface MessageHandler {
+export interface MessageHandler {
   handleMessage(message: any): Promise<void>;
   getId(): string;
 }
@@ -20,9 +20,17 @@ export class HandlerRegistry {
    * Register a handler
    */
   public registerHandler(handler: MessageHandler): void {
-    const id = handler.getId();
-    this.handlers.set(id, handler);
-    console.log(`Handler registered: ${id}`);
+    try {
+      const id = handler.getId();
+      this.handlers.set(id, handler);
+      console.log(`Handler registered: ${id}`);
+    } catch (error) {
+      // Fallback to a default ID if getId() is not available
+      console.error(`Error getting handler ID: ${error}, using default ID`);
+      const defaultId = `handler-${this.handlers.size + 1}`;
+      this.handlers.set(defaultId, handler);
+      console.log(`Handler registered with default ID: ${defaultId}`);
+    }
   }
   
   /**
