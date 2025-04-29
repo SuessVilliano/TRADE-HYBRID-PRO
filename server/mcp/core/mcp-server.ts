@@ -4,7 +4,8 @@ import { NotificationProcessor } from '../processors/notification-processor';
 import { HandlerRegistry } from '../handlers/handler-registry';
 import { TradingViewWebhookHandler } from '../handlers/tradingview-webhook-handler';
 import { Server as HttpServer } from 'http';
-import WebSocket, { Server as WebSocketServer } from 'ws';
+import WebSocket from 'ws';
+import { WebSocketServer } from 'ws';
 
 /**
  * MCPServer (Message Control Plane Server)
@@ -177,6 +178,66 @@ export class MCPServer {
     });
     
     console.log(`MCP broadcast message delivered to ${deliveredCount}/${this.clients.size} clients`);
+  }
+  
+  /**
+   * Start the MCP server
+   */
+  public start(): void {
+    console.log('[MCP] Starting server');
+    this.initializePeriodicTasks();
+    console.log('[MCP] Server started successfully');
+  }
+  
+  /**
+   * Stop the MCP server
+   */
+  public stop(): void {
+    console.log('[MCP] Stopping server');
+    
+    // Clean up WebSocket connections
+    if (this.wss) {
+      this.wss.close();
+      this.wss = null;
+    }
+    
+    // Clear clients
+    this.clients.clear();
+    this.userIdToClientId.clear();
+    
+    console.log('[MCP] Server stopped successfully');
+  }
+  
+  /**
+   * Get server status
+   */
+  public getStatus(): any {
+    return {
+      uptime: Date.now() - this.startTime,
+      clients: this.clients.size,
+      queues: this.queueManager.getStats(),
+      handlers: this.handlerRegistry.getHandlerCount(),
+      processors: Array.from(this.processors.keys())
+    };
+  }
+  
+  /**
+   * Publish a message to a queue
+   */
+  public publish(queueName: string, message: any): boolean {
+    try {
+      const queue = this.queueManager.getQueue(queueName);
+      if (!queue) {
+        console.error(`[MCP] Queue not found: ${queueName}`);
+        return false;
+      }
+      
+      queue.enqueue(message);
+      return true;
+    } catch (error) {
+      console.error(`[MCP] Error publishing message to ${queueName}:`, error);
+      return false;
+    }
   }
 
   /**

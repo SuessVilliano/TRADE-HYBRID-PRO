@@ -83,10 +83,20 @@ Trade Hybrid is a cutting-edge decentralized trading platform that transforms co
 - **Independent Operation**: Services can run and scale independently
 - **Shared Data Layer**: PostgreSQL database for shared data
 - **Inter-service Communication**: API-based communication between services
+- **Message Control Plane (MCP)**: Centralized message processing architecture
+
+### Messaging Architecture
+- **MCP Core**: Centralized messaging hub for all platform communications
+- **Queue Manager**: Manages prioritized message queues for different types of data
+- **Signal Processor**: Processes and tracks trading signals throughout their lifecycle
+- **Notification Processor**: Handles system notifications to users
+- **WebSocket Server**: Provides real-time updates to connected clients
+- **Handler Registry**: Routes incoming messages to appropriate processors
 
 ### Deployment Infrastructure
 - **Hetzner EX101 Server**: Dedicated server for backend services
-- **NGINX Reverse Proxy**: Route traffic to appropriate services
+- **NGINX Reverse Proxy**: Route traffic to appropriate services with WebSocket support
+- **PM2 Process Manager**: Manages Node.js services including MCP components
 - **Service Files**: Systemd service files for automatic service management
 - **Data Backups**: Automated backup systems for critical data
 - **Monitoring**: Performance and health monitoring for all services
@@ -183,6 +193,9 @@ Trade Hybrid is a cutting-edge decentralized trading platform that transforms co
 
 ## Technical Challenges and Solutions
 
+### Challenge: Real-time Data Processing
+**Solution**: Implemented the Message Control Plane (MCP) architecture with queue management and WebSocket broadcasting to handle high volumes of trading signals and notifications in real-time.
+
 ### Challenge: Data Synchronization
 **Solution**: Implemented a centralized UserContext model with event-driven updates to ensure all services have access to the latest user data without constant database queries.
 
@@ -210,3 +223,8 @@ Trade Hybrid is a cutting-edge decentralized trading platform that transforms co
 - **Position**: An open trade or investment
 - **Broker**: Third-party service executing trades
 - **Webhook**: Automated trigger for external events
+- **MCP**: Message Control Plane, the centralized messaging architecture
+- **Signal Processor**: Component that processes and tracks trading signals
+- **Queue Manager**: System for organizing and prioritizing messages
+- **Handler Registry**: Routes incoming messages to appropriate processors
+- **WebSocket**: Protocol for real-time communication between client and server

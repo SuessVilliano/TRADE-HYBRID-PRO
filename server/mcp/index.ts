@@ -11,7 +11,7 @@ import { MCPServer } from './core/mcp-server';
 import { MCPConfig, MCPMessageType } from './config/mcp-config';
 import { registerSignalProcessors } from './processors/signal-processor';
 import { registerNotificationProcessors } from './processors/notification-processor';
-import { handleTradingViewWebhook } from './handlers/tradingview-webhook-handler';
+import { handleTradingViewWebhook } from './handlers/tradingview-webhook-handler-express';
 
 // Singleton MCP server instance
 let mcpServer: MCPServer | null = null;

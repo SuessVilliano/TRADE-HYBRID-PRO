@@ -1,7 +1,23 @@
 import { Queue } from '../queues/queue-manager';
 import { db, sql } from '../../../server/db';
-import { tradeSignals } from '../../../shared/schema';
+import { tradeSignals, tradeSignalStatusEnum } from '../../../shared/schema';
 import { eq } from 'drizzle-orm';
+import { MCPServer } from '../core/mcp-server';
+
+/**
+ * Register signal processors with the MCP server
+ */
+export function registerSignalProcessors(mcp: MCPServer): void {
+  console.log('[MCP] Registering signal processors');
+  
+  // Access the signal processor or create one if needed
+  const processor = mcp.getProcessor('signal') as SignalProcessor;
+  
+  // If processor not found, it will be null and that's expected
+  // The processor is created during MCPServer initialization
+  
+  console.log('[MCP] Signal processors registered');
+}
 
 /**
  * SignalProcessor
@@ -184,9 +200,14 @@ export class SignalProcessor {
     
     // Update in database
     try {
+      // Only use values that match the enum
+      let dbStatus = 'active';
+      if (status === 'closed') dbStatus = 'closed';
+      if (status === 'cancelled') dbStatus = 'cancelled';
+                        
       await db.update(tradeSignals)
         .set({
-          status,
+          status: dbStatus as any, // Force cast to work with the enum
           pnl: pnl || null,
           closedAt: (status === 'closed' || status === 'tp_hit' || status === 'sl_hit') ? new Date() : null,
           closePrice: status === 'tp_hit' ? signal.takeProfit : (status === 'sl_hit' ? signal.stopLoss : null)

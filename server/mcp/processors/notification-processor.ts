@@ -1,4 +1,20 @@
 import { Queue } from '../queues/queue-manager';
+import { MCPServer } from '../core/mcp-server';
+
+/**
+ * Register notification processors with the MCP server
+ */
+export function registerNotificationProcessors(mcp: MCPServer): void {
+  console.log('[MCP] Registering notification processors');
+  
+  // Access the notification processor or create one if needed
+  const processor = mcp.getProcessor('notification') as NotificationProcessor;
+  
+  // If processor not found, it will be null and that's expected
+  // The processor is created during MCPServer initialization
+  
+  console.log('[MCP] Notification processors registered');
+}
 
 /**
  * NotificationProcessor

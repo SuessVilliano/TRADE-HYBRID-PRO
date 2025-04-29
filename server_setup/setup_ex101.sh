@@ -1,6 +1,7 @@
 #!/bin/bash
 # Trade Hybrid Pro - EX101 Server Setup Script
 # This script sets up the basic infrastructure for the Trade Hybrid Pro platform on an EX101 server
+# Updated to include MCP (Message Control Plane) architecture
 
 # Exit on any error
 set -e
@@ -27,6 +28,8 @@ ufw allow 8899/tcp  # Solana validator
 ufw allow 8900/tcp  # Solana validator gossip
 ufw allow 8001/tcp  # Solana validator gossip port range start
 ufw allow 8010/tcp  # Solana validator gossip port range end
+ufw allow 4000/tcp  # MCP WebSocket server
+ufw allow 5000/tcp  # Main API server
 ufw --force enable
 
 # Install Node.js
@@ -35,6 +38,7 @@ curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 apt install -y nodejs
 npm install -g npm@latest
 npm install -g pm2
+npm install -g wscat  # For WebSocket testing
 
 # Install PostgreSQL
 echo "Installing PostgreSQL..."
@@ -108,6 +112,26 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
+    }
+    
+    # MCP WebSocket Server
+    location /mcp/ws {
+        proxy_pass http://localhost:4000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_read_timeout 86400;
+    }
+
+    # MCP API endpoints
+    location /api/mcp/ {
+        proxy_pass http://localhost:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
     }
 
     # Add additional locations as needed
@@ -191,6 +215,23 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 8004
+      }
+    },
+    {
+      name: 'tradehybrid-mcp',
+      script: 'server/mcp-standalone.js',
+      cwd: '/opt/tradehybrid-pro',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      env: {
+        NODE_ENV: 'production',
+        MCP_WEBSOCKET_PORT: 4000,
+        MCP_QUEUE_SIZE: 1000,
+        MCP_PERSISTENCE_INTERVAL: 300000,
+        MCP_SYNC_INTERVAL: 1800000,
+        SIGNAL_PROCESSOR_UPDATE_INTERVAL: 60000
       }
     }
   ]

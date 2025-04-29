@@ -1,6 +1,6 @@
 # Trade Hybrid Platform Migration Guide
 
-This document provides step-by-step instructions for migrating the Trade Hybrid platform to the Hetzner EX101 dedicated server.
+This document provides step-by-step instructions for migrating the Trade Hybrid platform to the Hetzner EX101 dedicated server, including the new MCP (Message Control Plane) architecture.
 
 ## Table of Contents
 
@@ -12,7 +12,8 @@ This document provides step-by-step instructions for migrating the Trade Hybrid 
 6. [SSL Configuration](#6-ssl-configuration)
 7. [DNS Configuration](#7-dns-configuration)
 8. [Database Migration](#8-database-migration)
-9. [Post-Migration Verification](#9-post-migration-verification)
+9. [MCP Setup](#9-mcp-setup)
+10. [Post-Migration Verification](#10-post-migration-verification)
 
 ## 1. Server Preparation
 
@@ -202,7 +203,117 @@ psql -U tradehybrid -d tradehybrid < /tmp/tradehybrid_db_backup.sql
 docker-compose exec postgres psql -U tradehybrid -d tradehybrid -c "SELECT COUNT(*) FROM trade_signals;"
 ```
 
-## 9. Post-Migration Verification
+## 9. MCP Setup
+
+The Message Control Plane (MCP) is the central messaging system that replaces the previous webhook-based architecture while maintaining backward compatibility.
+
+### Configure MCP Environment
+
+```bash
+# Add MCP-specific environment variables to .env
+cat >> .env << 'EOL'
+
+# MCP Configuration
+MCP_ENABLED=true
+MCP_WEBSOCKET_PORT=4000
+MCP_QUEUE_SIZE=1000
+MCP_PERSISTENCE_INTERVAL=300000
+MCP_SYNC_INTERVAL=1800000
+
+# MCP Signal Processors
+SIGNAL_PROCESSOR_UPDATE_INTERVAL=60000
+SIGNAL_SOLARIS_TIMEFRAME=5m
+SIGNAL_HYBRID_TIMEFRAME=10m
+SIGNAL_PARADOX_TIMEFRAME=30m
+EOL
+```
+
+### Configure Nginx for WebSocket Support
+
+Add WebSocket proxy configuration to Nginx:
+
+```bash
+# Add to your Nginx site configuration
+sudo nano /etc/nginx/sites-available/tradehybrid.club
+
+# Add WebSocket location block
+cat >> /etc/nginx/sites-available/tradehybrid.club << 'EOL'
+# WebSocket proxy for MCP
+location /mcp/ws {
+    proxy_pass http://localhost:4000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_read_timeout 86400;
+}
+
+# MCP API endpoints
+location /api/mcp/ {
+    proxy_pass http://localhost:5000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+}
+EOL
+
+# Reload Nginx
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+### Open Firewall Ports for MCP
+
+```bash
+# Allow WebSocket port
+sudo ufw allow 4000/tcp
+```
+
+### Configure PM2 for MCP Services
+
+Create a dedicated PM2 ecosystem file for MCP:
+
+```bash
+# Create PM2 ecosystem file
+cat > ecosystem.mcp.config.js << 'EOL'
+module.exports = {
+  apps: [
+    {
+      name: 'trade-hybrid-mcp',
+      script: 'server/mcp-standalone.js',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      env: {
+        NODE_ENV: 'production'
+      }
+    }
+  ]
+};
+EOL
+
+# Start MCP with PM2
+pm2 start ecosystem.mcp.config.js
+pm2 save
+```
+
+### Verify MCP Installation
+
+```bash
+# Check MCP status
+curl http://localhost:5000/api/mcp/status
+
+# Test WebSocket connection
+npm install -g wscat
+wscat -c ws://localhost:4000
+```
+
+For more detailed MCP setup instructions, refer to [MCP Deployment Guide](mcp-deployment-guide.md).
+
+## 10. Post-Migration Verification
 
 Verify that all services are running correctly:
 
