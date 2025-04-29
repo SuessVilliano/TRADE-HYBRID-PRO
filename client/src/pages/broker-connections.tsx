@@ -33,13 +33,13 @@ import { useToast } from '../components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../components/ui/accordion';
 
-// Mock interfaces
+// Interface for broker data
 interface Broker {
   id: string;
   name: string;
   logo: string;
   description: string;
-  category: 'crypto' | 'stocks' | 'forex' | 'futures';
+  category: 'crypto' | 'stocks' | 'forex' | 'futures' | 'multi';
   markets: string[];
   connectionStatus: 'connected' | 'disconnected' | 'error';
   lastUpdated?: Date;
@@ -64,111 +64,189 @@ interface Broker {
 
 const BrokerConnectionsView: React.FC = () => {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [selectedBroker, setSelectedBroker] = useState<string | null>(null);
   const [activeBrokers, setActiveBrokers] = useState<string[]>([]);
+  const [brokers, setBrokers] = useState<Broker[]>([]);
   
-  // Mock Broker List
-  const brokers: Broker[] = [
-    {
-      id: 'alpaca',
-      name: 'Alpaca',
-      logo: '/broker-logos/alpaca.svg',
-      description: 'Commission-free API-first stock brokerage for developers and traders',
-      category: 'stocks',
-      markets: ['US Stocks', 'ETFs', 'Options'],
-      connectionStatus: 'connected',
-      lastUpdated: new Date(),
-      apiUrl: 'https://alpaca.markets/docs/api-documentation/',
-      documentationUrl: 'https://alpaca.markets/docs/',
-      supportsSimulation: true,
-      supportsLiveTrading: true,
-      userCredentials: {
-        apiKey: '***********',
-        apiSecret: '***********',
-      },
-      connectedAccount: {
-        accountId: 'ALPCA123456',
-        accountType: 'demo',
-        balance: 25000,
-        currency: 'USD',
-        positionCount: 3,
-        orderCount: 5,
-      },
-    },
-    {
-      id: 'binance',
-      name: 'Binance',
-      logo: '/broker-logos/binance.svg',
-      description: 'The world\'s largest crypto exchange by trading volume',
-      category: 'crypto',
-      markets: ['Crypto Spot', 'Futures', 'Options'],
-      connectionStatus: 'disconnected',
-      apiUrl: 'https://binance-docs.github.io/apidocs/',
-      documentationUrl: 'https://binance.com/en/support',
-      supportsSimulation: false,
-      supportsLiveTrading: true,
-    },
-    {
-      id: 'oanda',
-      name: 'OANDA',
-      logo: '/broker-logos/oanda.svg',
-      description: 'Forex and CFD trading, currency data and analytics',
-      category: 'forex',
-      markets: ['Forex', 'Commodities', 'Indices'],
-      connectionStatus: 'disconnected',
-      apiUrl: 'https://developer.oanda.com/',
-      documentationUrl: 'https://www.oanda.com/us-en/trading/platform/api-trading/',
-      supportsSimulation: true,
-      supportsLiveTrading: true,
-    },
-    {
-      id: 'tradier',
-      name: 'Tradier',
-      logo: '/broker-logos/tradier.svg',
-      description: 'API-first brokerage services for traders and developers',
-      category: 'stocks',
-      markets: ['US Stocks', 'Options'],
-      connectionStatus: 'disconnected',
-      apiUrl: 'https://documentation.tradier.com/',
-      documentationUrl: 'https://tradier.com/products/brokerage',
-      supportsSimulation: false,
-      supportsLiveTrading: true,
-    },
-    {
-      id: 'interactive_brokers',
-      name: 'Interactive Brokers',
-      logo: '/broker-logos/ibkr.svg',
-      description: 'Professional-grade global trading platform',
-      category: 'stocks',
-      markets: ['Global Stocks', 'Options', 'Futures', 'Forex'],
-      connectionStatus: 'disconnected',
-      apiUrl: 'https://interactivebrokers.github.io/tws-api/',
-      documentationUrl: 'https://www.interactivebrokers.com/en/index.php?f=5041',
-      supportsSimulation: true,
-      supportsLiveTrading: true,
-    },
-    {
-      id: 'tradovate',
-      name: 'Tradovate',
-      logo: '/broker-logos/tradovate.svg',
-      description: 'Modern platform for futures trading',
-      category: 'futures',
-      markets: ['Futures'],
-      connectionStatus: 'error',
-      apiUrl: 'https://api.tradovate.com/',
-      documentationUrl: 'https://tradovate.github.io/example-api-js/',
-      supportsSimulation: true,
-      supportsLiveTrading: true,
-    },
-  ];
+  // Fetch real broker data
+  useEffect(() => {
+    fetchBrokerData();
+  }, []);
+  
+  const fetchBrokerData = async () => {
+    setLoading(true);
+    try {
+      // Fetch broker status info
+      const statusResponse = await fetch('/api/broker-status');
+      const statusData = await statusResponse.json();
+      
+      if (!statusData || statusData.status === 'error') {
+        throw new Error('Failed to get broker status data');
+      }
+      
+      // Fetch broker account info
+      const accountResponse = await fetch('/api/broker-account');
+      const accountData = await accountResponse.json();
+      
+      if (!accountData || accountData.status === 'error') {
+        throw new Error('Failed to get broker account data');
+      }
+      
+      // Available brokers based on our system configuration
+      const availableBrokers: Broker[] = [
+        {
+          id: 'alpaca',
+          name: 'Alpaca',
+          logo: '/broker-logos/alpaca.svg',
+          description: 'Commission-free API-first stock brokerage for developers and traders',
+          category: 'stocks',
+          markets: ['US Stocks', 'ETFs', 'Options'],
+          connectionStatus: statusData.brokers?.alpaca?.connected ? 'connected' : 'disconnected',
+          lastUpdated: new Date(),
+          apiUrl: 'https://alpaca.markets/docs/api-documentation/',
+          documentationUrl: 'https://alpaca.markets/docs/',
+          supportsSimulation: true,
+          supportsLiveTrading: true,
+        },
+        {
+          id: 'oanda',
+          name: 'OANDA',
+          logo: '/broker-logos/oanda.svg',
+          description: 'Forex and CFD trading, currency data and analytics',
+          category: 'forex',
+          markets: ['Forex', 'Commodities', 'Indices'],
+          connectionStatus: statusData.brokers?.oanda?.connected ? 'connected' : 'disconnected',
+          lastUpdated: new Date(),
+          apiUrl: 'https://developer.oanda.com/',
+          documentationUrl: 'https://www.oanda.com/us-en/trading/platform/api-trading/',
+          supportsSimulation: true,
+          supportsLiveTrading: true,
+        },
+        {
+          id: 'tradehybrid_system',
+          name: 'Trade Hybrid',
+          logo: '/logo.png',
+          description: 'Platform trading account for executing trades across multiple markets',
+          category: 'multi',
+          markets: ['Forex', 'Crypto', 'Stocks', 'Futures'],
+          connectionStatus: 'connected', // System account is always connected
+          lastUpdated: new Date(),
+          apiUrl: 'https://tradehybrid.club/docs',
+          documentationUrl: 'https://tradehybrid.club/docs',
+          supportsSimulation: true,
+          supportsLiveTrading: true,
+        },
+      ];
+      
+      // Now we need to merge real account data with our predefined broker info
+      const enrichedBrokers = availableBrokers.map(broker => {
+        // Find this broker's account data if it exists
+        const brokerAccountData = accountData.brokers?.find(
+          (b: any) => b.brokerId === broker.id && b.connected
+        );
+        
+        if (brokerAccountData?.accountInfo) {
+          // Add real account data to the broker object
+          return {
+            ...broker,
+            connectedAccount: {
+              accountId: brokerAccountData.accountInfo.accountId || brokerAccountData.accountInfo.id || 'Unknown',
+              accountType: brokerAccountData.accountInfo.accountType || 'live',
+              balance: brokerAccountData.accountInfo.equity || 
+                      brokerAccountData.accountInfo.balance || 
+                      brokerAccountData.accountInfo.cash || 0,
+              currency: brokerAccountData.accountInfo.currency || 'USD',
+              positionCount: (brokerAccountData.accountInfo.positions || []).length,
+              orderCount: (brokerAccountData.accountInfo.orders || []).length || 0,
+            }
+          };
+        }
+        
+        return broker;
+      });
+      
+      console.log('Using real broker data:', enrichedBrokers);
+      setBrokers(enrichedBrokers);
+      
+      // Update active brokers list based on connection status
+      setActiveBrokers(
+        enrichedBrokers
+          .filter(broker => broker.connectionStatus === 'connected')
+          .map(broker => broker.id)
+      );
+      
+    } catch (error) {
+      console.error('Error fetching broker data:', error);
+      toast({
+        title: "Error Loading Brokers",
+        description: "Failed to load broker information. Using default settings.",
+        variant: "destructive",
+      });
+      
+      // Fallback to using predefined broker list without real account data
+      const fallbackBrokers: Broker[] = [
+        {
+          id: 'alpaca',
+          name: 'Alpaca',
+          logo: '/broker-logos/alpaca.svg',
+          description: 'Commission-free API-first stock brokerage for developers and traders',
+          category: 'stocks',
+          markets: ['US Stocks', 'ETFs', 'Options'],
+          connectionStatus: 'connected',
+          lastUpdated: new Date(),
+          apiUrl: 'https://alpaca.markets/docs/api-documentation/',
+          documentationUrl: 'https://alpaca.markets/docs/',
+          supportsSimulation: true,
+          supportsLiveTrading: true,
+        },
+        {
+          id: 'oanda',
+          name: 'OANDA',
+          logo: '/broker-logos/oanda.svg',
+          description: 'Forex and CFD trading, currency data and analytics',
+          category: 'forex',
+          markets: ['Forex', 'Commodities', 'Indices'],
+          connectionStatus: 'disconnected',
+          lastUpdated: new Date(),
+          apiUrl: 'https://developer.oanda.com/',
+          documentationUrl: 'https://www.oanda.com/us-en/trading/platform/api-trading/',
+          supportsSimulation: true,
+          supportsLiveTrading: true,
+        },
+        {
+          id: 'tradehybrid_system',
+          name: 'Trade Hybrid',
+          logo: '/logo.png',
+          description: 'Platform trading account for executing trades',
+          category: 'multi',
+          markets: ['Forex', 'Crypto', 'Stocks', 'Futures'],
+          connectionStatus: 'connected',
+          lastUpdated: new Date(),
+          apiUrl: 'https://tradehybrid.club/docs',
+          documentationUrl: 'https://tradehybrid.club/docs',
+          supportsSimulation: true,
+          supportsLiveTrading: true,
+        }
+      ];
+      
+      setBrokers(fallbackBrokers);
+      setActiveBrokers(['alpaca', 'tradehybrid_system']);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter brokers by category
   const getBrokersByCategory = (category: string) => {
     if (category === 'all') {
       return brokers;
     }
-    return brokers.filter(broker => broker.category === category);
+    return brokers.filter(broker => broker.category === category || 
+                         (category === 'tradfi' && 
+                          (broker.category === 'stocks' || 
+                           broker.category === 'forex' || 
+                           broker.category === 'futures')));
   };
 
   // Connect to a broker
@@ -179,13 +257,28 @@ const BrokerConnectionsView: React.FC = () => {
       // In a real application, this would make an API call to connect to the broker
       console.log(`Connecting to broker: ${brokerId}`, credentials);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Make API call to connect the broker
+      const response = await fetch(`/api/broker-connect/${brokerId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to connect broker');
+      }
       
       // Update the active brokers list
       if (!activeBrokers.includes(brokerId)) {
         setActiveBrokers([...activeBrokers, brokerId]);
       }
+      
+      // Refresh data to get updated broker info
+      fetchBrokerData();
       
       toast({
         title: "Broker Connected",
@@ -211,11 +304,21 @@ const BrokerConnectionsView: React.FC = () => {
       // In a real application, this would make an API call to disconnect from the broker
       console.log(`Disconnecting from broker: ${brokerId}`);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`/api/broker-disconnect/${brokerId}`, {
+        method: 'POST',
+      });
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to disconnect broker');
+      }
       
       // Update the active brokers list
       setActiveBrokers(activeBrokers.filter(id => id !== brokerId));
+      
+      // Refresh data to get updated broker info
+      fetchBrokerData();
       
       toast({
         title: "Broker Disconnected",
@@ -240,8 +343,14 @@ const BrokerConnectionsView: React.FC = () => {
       // In a real application, this would make an API call to refresh broker data
       console.log(`Refreshing data for broker: ${brokerId}`);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`/api/broker-account/${brokerId}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to refresh broker data: ${response.statusText}`);
+      }
+      
+      // Refresh all broker data
+      fetchBrokerData();
       
       toast({
         title: "Data Refreshed",
@@ -258,17 +367,11 @@ const BrokerConnectionsView: React.FC = () => {
     }
   };
 
-  // Mock API key input for connecting
+  // Handle connect button click
   const handleConnectClick = (brokerId: string) => {
     setSelectedBroker(brokerId);
     // In a real application, this would open a modal for API key input
   };
-
-  // For demo purposes
-  useEffect(() => {
-    // Mark Alpaca as active by default for the demo
-    setActiveBrokers(['alpaca']);
-  }, []);
   
   // Render broker logo with fallback to Globe icon
   const renderBrokerLogo = (broker: Broker, size: 'sm' | 'md' = 'sm') => {
@@ -318,7 +421,37 @@ const BrokerConnectionsView: React.FC = () => {
         
         {/* Connected Brokers Tab */}
         <TabsContent value="connected" className="space-y-6">
-          {brokers.filter(broker => broker.connectionStatus === 'connected').length > 0 ? (
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[1, 2].map(i => (
+                <Card key={i} className="overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
+                        <div>
+                          <div className="h-6 w-24 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mt-1"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : brokers.filter(broker => broker.connectionStatus === 'connected').length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {brokers
                 .filter(broker => broker.connectionStatus === 'connected')
@@ -352,7 +485,7 @@ const BrokerConnectionsView: React.FC = () => {
                     </CardHeader>
                     
                     <CardContent className="pb-3">
-                      {broker.connectedAccount && (
+                      {broker.connectedAccount ? (
                         <div className="space-y-3">
                           <div className="grid grid-cols-2 gap-2">
                             <div className="bg-muted rounded-lg p-2">
@@ -390,337 +523,373 @@ const BrokerConnectionsView: React.FC = () => {
                             </Button>
                           </div>
                         </div>
+                      ) : (
+                        <div className="text-center py-4">
+                          <p className="text-muted-foreground">Account info not available</p>
+                        </div>
                       )}
                     </CardContent>
                     
-                    <CardFooter className="flex justify-between pt-0">
-                      <Button variant="ghost" className="text-destructive hover:text-destructive" onClick={() => disconnectBroker(broker.id)}>
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Disconnect
+                    <CardFooter className="border-t pt-3 pb-3 flex justify-between">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => refreshBrokerData(broker.id)}
+                      >
+                        <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                        Refresh
                       </Button>
                       
-                      <Button variant="ghost" asChild>
-                        <a href={broker.documentationUrl} target="_blank" rel="noopener noreferrer">
-                          Documentation
-                          <ExternalLink className="h-4 w-4 ml-2" />
-                        </a>
-                      </Button>
+                      {broker.id !== 'tradehybrid_system' && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                          onClick={() => disconnectBroker(broker.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-1" />
+                          Disconnect
+                        </Button>
+                      )}
                     </CardFooter>
                   </Card>
                 ))}
             </div>
           ) : (
-            <div className="text-center py-12 bg-muted/30 rounded-lg">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-4">
-                <Link className="h-6 w-6 text-primary" />
+            <div className="text-center py-8 border rounded-lg">
+              <div className="max-w-md mx-auto">
+                <Globe className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-xl font-medium mb-2">No Connected Brokers</h3>
+                <p className="text-muted-foreground mb-6">
+                  Connect to your brokers to view your account information and trade directly from Trade Hybrid
+                </p>
+                <Button onClick={() => window.location.href = '#all-brokers'}>
+                  Browse Available Brokers
+                </Button>
               </div>
-              <h3 className="text-xl font-semibold mb-2">No Connected Brokers</h3>
-              <p className="text-muted-foreground max-w-md mx-auto mb-6">
-                Connect to your preferred brokers to enable trading directly from Trade Hybrid.
-                You can connect to supported brokers using API keys.
-              </p>
-              <Button onClick={() => setSelectedBroker('alpaca')}>
-                Connect Your First Broker
-              </Button>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* All Brokers Tab */}
+        <TabsContent value="all" id="all-brokers" className="space-y-6">
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[1, 2, 3].map(i => (
+                <Card key={i}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
+                      <div className="h-5 w-24 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pb-3">
+                    <div className="h-4 w-full bg-gray-200 rounded animate-pulse mb-2"></div>
+                    <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse"></div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {getBrokersByCategory('all').map(broker => (
+                <Card key={broker.id}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        {renderBrokerLogo(broker)}
+                        <CardTitle className="text-base">{broker.name}</CardTitle>
+                      </div>
+                      {broker.connectionStatus === 'connected' && (
+                        <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Connected
+                        </Badge>
+                      )}
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="pb-2">
+                    <p className="text-sm text-muted-foreground mb-3">{broker.description}</p>
+                    
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {broker.markets.map(market => (
+                        <Badge key={market} variant="secondary" className="text-xs">{market}</Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                  
+                  <CardFooter className="border-t pt-3 pb-3 flex justify-between">
+                    {broker.connectionStatus === 'connected' ? (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => refreshBrokerData(broker.id)}
+                        >
+                          <Activity className="h-3.5 w-3.5 mr-1" />
+                          Account
+                        </Button>
+                        
+                        {broker.id !== 'tradehybrid_system' && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                            onClick={() => disconnectBroker(broker.id)}
+                          >
+                            Disconnect
+                          </Button>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => window.open(broker.documentationUrl, '_blank')}
+                        >
+                          <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                          Docs
+                        </Button>
+                        
+                        <Button 
+                          size="sm"
+                          onClick={() => handleConnectClick(broker.id)}
+                        >
+                          Connect
+                        </Button>
+                      </>
+                    )}
+                  </CardFooter>
+                </Card>
+              ))}
             </div>
           )}
         </TabsContent>
         
-        {/* All Brokers Tab */}
-        <TabsContent value="all">
+        {/* Crypto Brokers Tab */}
+        <TabsContent value="crypto" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {getBrokersByCategory('all').map(broker => (
-              <Card key={broker.id}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      {renderBrokerLogo(broker)}
-                      <CardTitle className="text-lg">{broker.name}</CardTitle>
-                    </div>
-                    <Badge variant={
-                      broker.connectionStatus === 'connected' ? 'outline' :
-                      broker.connectionStatus === 'error' ? 'destructive' : 'secondary'
-                    } className={broker.connectionStatus === 'connected' ? 'bg-green-500/10 text-green-600 border-green-200' : ''}>
-                      {broker.connectionStatus === 'connected' ? 'Connected' : 
-                       broker.connectionStatus === 'error' ? 'Error' : 'Not Connected'}
-                    </Badge>
-                  </div>
-                  <CardDescription className="mt-2">
-                    {broker.description}
-                  </CardDescription>
-                </CardHeader>
-                
-                <CardContent className="pb-3">
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap gap-1">
-                      {broker.markets.map(market => (
-                        <Badge key={market} variant="secondary" className="bg-muted">
-                          {market}
+            {getBrokersByCategory('crypto').length > 0 ? (
+              getBrokersByCategory('crypto').map(broker => (
+                <Card key={broker.id}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        {renderBrokerLogo(broker)}
+                        <CardTitle className="text-base">{broker.name}</CardTitle>
+                      </div>
+                      {broker.connectionStatus === 'connected' && (
+                        <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200">
+                          Connected
                         </Badge>
-                      ))}
+                      )}
                     </div>
+                  </CardHeader>
+                  
+                  <CardContent className="pb-2">
+                    <p className="text-sm text-muted-foreground mb-3">{broker.description}</p>
                     
-                    <div className="flex items-center space-x-4 text-sm">
-                      {broker.supportsSimulation && (
-                        <div className="flex items-center text-muted-foreground">
-                          <Play className="h-3 w-3 mr-1" />
-                          Paper Trading
-                        </div>
-                      )}
-                      
-                      {broker.supportsLiveTrading && (
-                        <div className="flex items-center text-muted-foreground">
-                          <Wallet className="h-3 w-3 mr-1" />
-                          Live Trading
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-                
-                <CardFooter className="flex justify-between pt-0">
-                  <Button 
-                    variant={broker.connectionStatus === 'connected' ? 'outline' : 'default'}
-                    className={broker.connectionStatus === 'connected' ? 'text-destructive hover:text-destructive' : ''}
-                    onClick={() => broker.connectionStatus === 'connected' 
-                      ? disconnectBroker(broker.id) 
-                      : handleConnectClick(broker.id)
-                    }
-                  >
-                    {broker.connectionStatus === 'connected' ? (
-                      <>
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Disconnect
-                      </>
-                    ) : (
-                      <>
-                        <Link className="h-4 w-4 mr-2" />
-                        Connect
-                      </>
-                    )}
-                  </Button>
-                  
-                  <Button variant="ghost" size="sm" asChild>
-                    <a href={broker.documentationUrl} target="_blank" rel="noopener noreferrer">
-                      Docs
-                      <ExternalLink className="h-3 w-3 ml-1" />
-                    </a>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-        
-        {/* Crypto Tab */}
-        <TabsContent value="crypto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {getBrokersByCategory('crypto').map(broker => (
-              <Card key={broker.id}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      {renderBrokerLogo(broker)}
-                      <CardTitle className="text-lg">{broker.name}</CardTitle>
-                    </div>
-                    <Badge variant={
-                      broker.connectionStatus === 'connected' ? 'outline' :
-                      broker.connectionStatus === 'error' ? 'destructive' : 'secondary'
-                    } className={broker.connectionStatus === 'connected' ? 'bg-green-500/10 text-green-600 border-green-200' : ''}>
-                      {broker.connectionStatus === 'connected' ? 'Connected' : 
-                       broker.connectionStatus === 'error' ? 'Error' : 'Not Connected'}
-                    </Badge>
-                  </div>
-                  <CardDescription className="mt-2">
-                    {broker.description}
-                  </CardDescription>
-                </CardHeader>
-                
-                <CardContent className="pb-3">
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1 mb-3">
                       {broker.markets.map(market => (
-                        <Badge key={market} variant="secondary" className="bg-muted">
-                          {market}
-                        </Badge>
+                        <Badge key={market} variant="secondary" className="text-xs">{market}</Badge>
                       ))}
                     </div>
-                  </div>
-                </CardContent>
-                
-                <CardFooter className="flex justify-between pt-0">
-                  <Button 
-                    variant={broker.connectionStatus === 'connected' ? 'outline' : 'default'}
-                    className={broker.connectionStatus === 'connected' ? 'text-destructive hover:text-destructive' : ''}
-                    onClick={() => broker.connectionStatus === 'connected' 
-                      ? disconnectBroker(broker.id) 
-                      : handleConnectClick(broker.id)
-                    }
-                  >
+                  </CardContent>
+                  
+                  <CardFooter className="border-t pt-3 pb-3 flex justify-between">
                     {broker.connectionStatus === 'connected' ? (
                       <>
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Disconnect
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => refreshBrokerData(broker.id)}
+                        >
+                          <Activity className="h-3.5 w-3.5 mr-1" />
+                          Account
+                        </Button>
+                        
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                          onClick={() => disconnectBroker(broker.id)}
+                        >
+                          Disconnect
+                        </Button>
                       </>
                     ) : (
                       <>
-                        <Link className="h-4 w-4 mr-2" />
-                        Connect
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => window.open(broker.documentationUrl, '_blank')}
+                        >
+                          <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                          Docs
+                        </Button>
+                        
+                        <Button 
+                          size="sm"
+                          onClick={() => handleConnectClick(broker.id)}
+                        >
+                          Connect
+                        </Button>
                       </>
                     )}
-                  </Button>
-                  
-                  <Button variant="ghost" size="sm" asChild>
-                    <a href={broker.documentationUrl} target="_blank" rel="noopener noreferrer">
-                      Docs
-                      <ExternalLink className="h-3 w-3 ml-1" />
-                    </a>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
+                  </CardFooter>
+                </Card>
+              ))
+            ) : (
+              <div className="col-span-3 text-center py-8 border rounded-lg">
+                <div className="max-w-md mx-auto">
+                  <Globe className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-xl font-medium mb-2">No Crypto Brokers Available</h3>
+                  <p className="text-muted-foreground mb-4">
+                    We don't have any crypto brokers configured for your account yet.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </TabsContent>
         
         {/* Traditional Markets Tab */}
-        <TabsContent value="tradfi">
+        <TabsContent value="tradfi" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {brokers.filter(broker => 
-              broker.category === 'stocks' || 
-              broker.category === 'forex' || 
-              broker.category === 'futures'
-            ).map(broker => (
-              <Card key={broker.id}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      {renderBrokerLogo(broker)}
-                      <CardTitle className="text-lg">{broker.name}</CardTitle>
-                    </div>
-                    <Badge variant={
-                      broker.connectionStatus === 'connected' ? 'outline' :
-                      broker.connectionStatus === 'error' ? 'destructive' : 'secondary'
-                    } className={broker.connectionStatus === 'connected' ? 'bg-green-500/10 text-green-600 border-green-200' : ''}>
-                      {broker.connectionStatus === 'connected' ? 'Connected' : 
-                       broker.connectionStatus === 'error' ? 'Error' : 'Not Connected'}
-                    </Badge>
-                  </div>
-                  <CardDescription className="mt-2">
-                    {broker.description}
-                  </CardDescription>
-                </CardHeader>
-                
-                <CardContent className="pb-3">
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap gap-1">
-                      {broker.markets.map(market => (
-                        <Badge key={market} variant="secondary" className="bg-muted">
-                          {market}
+            {getBrokersByCategory('tradfi').length > 0 ? (
+              getBrokersByCategory('tradfi').map(broker => (
+                <Card key={broker.id}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        {renderBrokerLogo(broker)}
+                        <CardTitle className="text-base">{broker.name}</CardTitle>
+                      </div>
+                      {broker.connectionStatus === 'connected' && (
+                        <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200">
+                          Connected
                         </Badge>
+                      )}
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="pb-2">
+                    <p className="text-sm text-muted-foreground mb-3">{broker.description}</p>
+                    
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {broker.markets.map(market => (
+                        <Badge key={market} variant="secondary" className="text-xs">{market}</Badge>
                       ))}
                     </div>
-                  </div>
-                </CardContent>
-                
-                <CardFooter className="flex justify-between pt-0">
-                  <Button 
-                    variant={broker.connectionStatus === 'connected' ? 'outline' : 'default'}
-                    className={broker.connectionStatus === 'connected' ? 'text-destructive hover:text-destructive' : ''}
-                    onClick={() => broker.connectionStatus === 'connected' 
-                      ? disconnectBroker(broker.id) 
-                      : handleConnectClick(broker.id)
-                    }
-                  >
+                  </CardContent>
+                  
+                  <CardFooter className="border-t pt-3 pb-3 flex justify-between">
                     {broker.connectionStatus === 'connected' ? (
                       <>
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Disconnect
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => refreshBrokerData(broker.id)}
+                        >
+                          <Activity className="h-3.5 w-3.5 mr-1" />
+                          Account
+                        </Button>
+                        
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                          onClick={() => disconnectBroker(broker.id)}
+                        >
+                          Disconnect
+                        </Button>
                       </>
                     ) : (
                       <>
-                        <Link className="h-4 w-4 mr-2" />
-                        Connect
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => window.open(broker.documentationUrl, '_blank')}
+                        >
+                          <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                          Docs
+                        </Button>
+                        
+                        <Button 
+                          size="sm"
+                          onClick={() => handleConnectClick(broker.id)}
+                        >
+                          Connect
+                        </Button>
                       </>
                     )}
-                  </Button>
-                  
-                  <Button variant="ghost" size="sm" asChild>
-                    <a href={broker.documentationUrl} target="_blank" rel="noopener noreferrer">
-                      Docs
-                      <ExternalLink className="h-3 w-3 ml-1" />
-                    </a>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
+                  </CardFooter>
+                </Card>
+              ))
+            ) : (
+              <div className="col-span-3 text-center py-8 border rounded-lg">
+                <div className="max-w-md mx-auto">
+                  <Globe className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-xl font-medium mb-2">No Traditional Brokers Available</h3>
+                  <p className="text-muted-foreground mb-4">
+                    We don't have any traditional market brokers configured for your account yet.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </TabsContent>
-        
-        {/* API Key Connection Modal */}
-        {selectedBroker && (
-          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-            <Card className="w-full max-w-md mx-auto">
-              <CardHeader>
-                <div className="flex items-center space-x-3">
-                  {renderBrokerLogo(brokers.find(b => b.id === selectedBroker) as Broker, 'md')}
-                  <div>
-                    <CardTitle>Connect to {brokers.find(b => b.id === selectedBroker)?.name}</CardTitle>
-                    <CardDescription>
-                      Enter your API credentials to connect
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-1">
-                  <label htmlFor="apiKey" className="text-sm font-medium">
-                    API Key
-                  </label>
-                  <input
-                    type="text"
-                    id="apiKey"
-                    className="w-full p-2 rounded-md border border-input bg-background"
-                    placeholder="Enter your API key"
-                  />
-                </div>
-                
-                <div className="space-y-1">
-                  <label htmlFor="apiSecret" className="text-sm font-medium">
-                    API Secret
-                  </label>
-                  <input
-                    type="password"
-                    id="apiSecret"
-                    className="w-full p-2 rounded-md border border-input bg-background"
-                    placeholder="Enter your API secret"
-                  />
-                </div>
-                
-                <div className="space-y-1">
-                  <label className="text-sm font-medium flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      className="rounded border-input"
-                    />
-                    <span>Enable Demo/Paper Trading</span>
-                  </label>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="outline" onClick={() => setSelectedBroker(null)}>
-                  Cancel
-                </Button>
-                <Button onClick={() => connectToBroker(selectedBroker, {
-                  apiKey: 'demo-key',
-                  apiSecret: 'demo-secret'
-                })}>
-                  Connect
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
-        )}
       </Tabs>
+      
+      {/* Broker Connection Features */}
+      <div className="mt-12 border-t pt-8">
+        <h2 className="text-2xl font-bold mb-6">Broker Integration Features</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Shield className="h-5 w-5 mr-2 text-blue-500" />
+                Secure API Access
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Your API keys are encrypted and securely stored. We never share your keys with third parties.
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Activity className="h-5 w-5 mr-2 text-green-500" />
+                Real-Time Data
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Get real-time account data, portfolio information, and market updates from your connected brokers.
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Link className="h-5 w-5 mr-2 text-purple-500" />
+                Unified Experience
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Manage all your trading accounts from a single interface. One platform for all your financial needs.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </Container>
   );
 };

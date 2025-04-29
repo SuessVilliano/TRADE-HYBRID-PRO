@@ -70,13 +70,8 @@ const BrokerAccountInfo: React.FC<BrokerAccountInfoProps> = ({ brokerId, onRefre
     setError(null);
     
     try {
-      // Make API call to get broker account info
-      const queryParams = new URLSearchParams({
-        brokerId,
-        ...(useDemo !== undefined && { useDemo: useDemo.toString() })
-      });
-      
-      const response = await fetch(`/api/nexus/broker-account-info?${queryParams.toString()}`);
+      // Make API call to get broker account info using our new broker-account endpoint
+      const response = await fetch(`/api/broker-account/${brokerId}`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch account data: ${response.statusText}`);
@@ -84,30 +79,31 @@ const BrokerAccountInfo: React.FC<BrokerAccountInfoProps> = ({ brokerId, onRefre
       
       const result = await response.json();
       
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to fetch account data');
+      if (result.status !== 'success') {
+        throw new Error(result.error || 'Failed to fetch account data');
       }
       
       // Process the account info into our component data format
       if (result.accountInfo) {
-        // Convert from API format to our component's data format
+        // Map the raw account info to our component's data structure
         const formattedData: BrokerAccountData = {
-          brokerName: result.accountInfo.brokerName || getBrokerName(brokerId),
-          accountId: result.accountInfo.accountId || 'Unknown',
+          brokerName: getBrokerName(brokerId),
+          accountId: result.accountInfo.accountId || result.accountInfo.id || 'Unknown',
           accountType: result.accountInfo.accountType || (useDemo ? 'DEMO' : 'LIVE'),
           cash: result.accountInfo.cash || result.accountInfo.balance || 0,
           equity: result.accountInfo.equity || result.accountInfo.balance || 0,
-          marketValue: result.accountInfo.marketValue || result.accountInfo.longMarketValue || 0,
+          marketValue: result.accountInfo.marketValue || result.accountInfo.portfolioValue || 0,
           buyingPower: result.accountInfo.buyingPower || result.accountInfo.availableFunds || 0,
           status: result.accountInfo.status || 'ACTIVE',
-          timestamp: new Date(result.accountInfo.timestamp || Date.now()),
+          timestamp: new Date(result.timestamp || Date.now()),
           currency: result.accountInfo.currency || 'USD',
           positions: formatPositions(result.accountInfo.positions || []),
           marginUsed: result.accountInfo.marginUsed,
           marginAvailable: result.accountInfo.marginAvailable,
-          dayTradeCount: result.accountInfo.dayTradeCount
+          dayTradeCount: result.accountInfo.dayTradeCount || result.accountInfo.daytradeCount
         };
         
+        console.log('Real broker account data loaded:', formattedData);
         setAccountData(formattedData);
       } else {
         throw new Error('No account data received from broker API');

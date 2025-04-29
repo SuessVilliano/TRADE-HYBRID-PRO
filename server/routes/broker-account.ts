@@ -10,8 +10,8 @@ const getMcpBrokerService = () => {
     // Get the MCP server instance
     const mcp = MCPServer.getInstance();
     
-    // Get the broker connection service
-    return mcp.getService('broker-connection');
+    // Get the broker connection service from the MCP instance
+    return mcp.brokerConnectionService;
   } catch (error) {
     console.error('Error getting broker connection service:', error);
     return null;
@@ -40,12 +40,12 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
     for (const [brokerId, broker] of brokers.entries()) {
       brokerDetailsPromises.push(
         broker.getAccountInfo()
-          .then(accountInfo => ({
+          .then((accountInfo: any) => ({
             brokerId,
             connected: true,
             accountInfo
           }))
-          .catch(error => ({
+          .catch((error: Error) => ({
             brokerId,
             connected: false,
             error: error.message
