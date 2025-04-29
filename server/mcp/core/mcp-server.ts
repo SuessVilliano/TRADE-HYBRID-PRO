@@ -30,6 +30,7 @@ export class MCPServer {
   public signalService: any;
   public smartSignalRouter: any;
   public marketInsightsService: any;
+  public userProfileService: any;
 
   private constructor() {
     // Initialize queue manager

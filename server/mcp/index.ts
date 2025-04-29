@@ -19,6 +19,7 @@ import { initializeMarketDataManager } from './data/market-data-manager';
 import { initializeSignalService } from './services/signal-service';
 import { initializeSmartSignalRouter } from './processors/smart-signal-router';
 import { initializeMarketInsightsService } from './services/market-insights-service';
+import { initializeUserProfileService } from './services/user-profile-service';
 
 // Singleton MCP server instance
 let mcpServer: MCPServer | null = null;
@@ -49,6 +50,7 @@ export function initializeMCPServer(): MCPServer {
     mcpServer.signalService = initializeSignalService(mcpServer);
     mcpServer.smartSignalRouter = initializeSmartSignalRouter(mcpServer);
     mcpServer.marketInsightsService = initializeMarketInsightsService(mcpServer);
+    mcpServer.userProfileService = initializeUserProfileService(mcpServer);
     
     console.log('[MCP] MCP Server initialized successfully with all services');
   }
@@ -330,6 +332,522 @@ export function registerMCPRoutes(app: Express, server: Server): void {
     }
   });
   
+  // User profile endpoints
+  
+  // Get user profile
+  app.get('/api/mcp/user/:userId/profile', async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.userId;
+      
+      // Get user profile service
+      const userProfileService = mcp.userProfileService;
+      if (!userProfileService) {
+        return res.status(500).json({ error: 'User profile service not initialized' });
+      }
+      
+      // Get user profile
+      const profile = await userProfileService.getUserProfile(userId);
+      
+      if (!profile) {
+        return res.status(404).json({ error: `User profile not found: ${userId}` });
+      }
+      
+      res.json({
+        status: 'success',
+        profile
+      });
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch user profile',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Update user profile
+  app.patch('/api/mcp/user/:userId/profile', async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.userId;
+      const updates = req.body;
+      
+      // Get user profile service
+      const userProfileService = mcp.userProfileService;
+      if (!userProfileService) {
+        return res.status(500).json({ error: 'User profile service not initialized' });
+      }
+      
+      // Update user profile
+      const updatedProfile = await userProfileService.updateUserProfile(userId, updates);
+      
+      res.json({
+        status: 'success',
+        profile: updatedProfile
+      });
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      res.status(500).json({ 
+        error: 'Failed to update user profile',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Get user broker connections
+  app.get('/api/mcp/user/:userId/broker-connections', async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.userId;
+      
+      // Get user profile service
+      const userProfileService = mcp.userProfileService;
+      if (!userProfileService) {
+        return res.status(500).json({ error: 'User profile service not initialized' });
+      }
+      
+      // Get broker connections
+      const connections = await userProfileService.getUserBrokerConnections(userId);
+      const connectionsArray = Array.from(connections.entries()).map(([brokerId, connection]) => ({
+        brokerId,
+        ...connection
+      }));
+      
+      res.json({
+        status: 'success',
+        count: connectionsArray.length,
+        connections: connectionsArray
+      });
+    } catch (error) {
+      console.error('Error fetching user broker connections:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch user broker connections',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Add broker connection for user
+  app.post('/api/mcp/user/:userId/broker-connections', async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.userId;
+      const { brokerId, credentials } = req.body;
+      
+      if (!brokerId || !credentials) {
+        return res.status(400).json({ 
+          error: 'Missing required parameters',
+          requiredParams: ['brokerId', 'credentials']
+        });
+      }
+      
+      // Get user profile service
+      const userProfileService = mcp.userProfileService;
+      if (!userProfileService) {
+        return res.status(500).json({ error: 'User profile service not initialized' });
+      }
+      
+      // Get broker service
+      const brokerService = mcp.brokerConnectionService;
+      if (!brokerService) {
+        return res.status(500).json({ error: 'Broker connection service not initialized' });
+      }
+      
+      // Create broker connection
+      const connection = await brokerService.createBrokerConnection(brokerId, credentials);
+      
+      // Add to user profile
+      const result = await userProfileService.addUserBrokerConnection(
+        userId, 
+        brokerId, 
+        connection
+      );
+      
+      res.json({
+        status: 'success',
+        result
+      });
+    } catch (error) {
+      console.error('Error adding broker connection for user:', error);
+      res.status(500).json({ 
+        error: 'Failed to add broker connection',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Remove broker connection for user
+  app.delete('/api/mcp/user/:userId/broker-connections/:brokerId', async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.userId;
+      const brokerId = req.params.brokerId;
+      
+      // Get user profile service
+      const userProfileService = mcp.userProfileService;
+      if (!userProfileService) {
+        return res.status(500).json({ error: 'User profile service not initialized' });
+      }
+      
+      // Remove broker connection
+      const result = await userProfileService.removeUserBrokerConnection(userId, brokerId);
+      
+      res.json({
+        status: 'success',
+        result
+      });
+    } catch (error) {
+      console.error('Error removing broker connection for user:', error);
+      res.status(500).json({ 
+        error: 'Failed to remove broker connection',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Get user signals
+  app.get('/api/mcp/user/:userId/signals', async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.userId;
+      
+      // Get user profile service
+      const userProfileService = mcp.userProfileService;
+      if (!userProfileService) {
+        return res.status(500).json({ error: 'User profile service not initialized' });
+      }
+      
+      // Get signals
+      const signals = await userProfileService.getUserSignals(userId);
+      
+      res.json({
+        status: 'success',
+        count: signals.length,
+        signals
+      });
+    } catch (error) {
+      console.error('Error fetching user signals:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch user signals',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Add custom signal for user
+  app.post('/api/mcp/user/:userId/signals', async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.userId;
+      const signal = req.body;
+      
+      if (!signal.symbol || !signal.type) {
+        return res.status(400).json({ 
+          error: 'Missing required signal parameters',
+          requiredParams: ['symbol', 'type']
+        });
+      }
+      
+      // Get user profile service
+      const userProfileService = mcp.userProfileService;
+      if (!userProfileService) {
+        return res.status(500).json({ error: 'User profile service not initialized' });
+      }
+      
+      // Add signal
+      const result = await userProfileService.addUserSignal(userId, signal);
+      
+      res.json({
+        status: 'success',
+        result,
+        signalId: signal.id
+      });
+    } catch (error) {
+      console.error('Error adding signal for user:', error);
+      res.status(500).json({ 
+        error: 'Failed to add signal',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Remove custom signal for user
+  app.delete('/api/mcp/user/:userId/signals/:signalId', async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.userId;
+      const signalId = req.params.signalId;
+      
+      // Get user profile service
+      const userProfileService = mcp.userProfileService;
+      if (!userProfileService) {
+        return res.status(500).json({ error: 'User profile service not initialized' });
+      }
+      
+      // Remove signal
+      const result = await userProfileService.removeUserSignal(userId, signalId);
+      
+      res.json({
+        status: 'success',
+        result
+      });
+    } catch (error) {
+      console.error('Error removing signal for user:', error);
+      res.status(500).json({ 
+        error: 'Failed to remove signal',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Get user journal entries
+  app.get('/api/mcp/user/:userId/journal-entries', async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.userId;
+      
+      // Get user profile service
+      const userProfileService = mcp.userProfileService;
+      if (!userProfileService) {
+        return res.status(500).json({ error: 'User profile service not initialized' });
+      }
+      
+      // Get journal entries
+      const entries = await userProfileService.getUserJournalEntries(userId);
+      
+      res.json({
+        status: 'success',
+        count: entries.length,
+        entries
+      });
+    } catch (error) {
+      console.error('Error fetching user journal entries:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch user journal entries',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Add journal entry for user
+  app.post('/api/mcp/user/:userId/journal-entries', async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.userId;
+      const entry = req.body;
+      
+      if (!entry.title || !entry.content) {
+        return res.status(400).json({ 
+          error: 'Missing required journal entry parameters',
+          requiredParams: ['title', 'content']
+        });
+      }
+      
+      // Get user profile service
+      const userProfileService = mcp.userProfileService;
+      if (!userProfileService) {
+        return res.status(500).json({ error: 'User profile service not initialized' });
+      }
+      
+      // Add entry
+      const result = await userProfileService.addUserJournalEntry(userId, {
+        ...entry,
+        userId,
+        dateCreated: entry.dateCreated || new Date().toISOString()
+      });
+      
+      res.json({
+        status: 'success',
+        result,
+        entryId: entry.id
+      });
+    } catch (error) {
+      console.error('Error adding journal entry for user:', error);
+      res.status(500).json({ 
+        error: 'Failed to add journal entry',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Update journal entry for user
+  app.patch('/api/mcp/user/:userId/journal-entries/:entryId', async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.userId;
+      const entryId = req.params.entryId;
+      const updates = req.body;
+      
+      // Get user profile service
+      const userProfileService = mcp.userProfileService;
+      if (!userProfileService) {
+        return res.status(500).json({ error: 'User profile service not initialized' });
+      }
+      
+      // Update entry
+      const result = await userProfileService.updateUserJournalEntry(userId, entryId, updates);
+      
+      res.json({
+        status: 'success',
+        result
+      });
+    } catch (error) {
+      console.error('Error updating journal entry for user:', error);
+      res.status(500).json({ 
+        error: 'Failed to update journal entry',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Get user wallet info
+  app.get('/api/mcp/user/:userId/wallet', async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.userId;
+      
+      // Get user profile service
+      const userProfileService = mcp.userProfileService;
+      if (!userProfileService) {
+        return res.status(500).json({ error: 'User profile service not initialized' });
+      }
+      
+      // Get wallet
+      const wallet = await userProfileService.getUserWallet(userId);
+      
+      if (!wallet) {
+        return res.status(404).json({ error: `User wallet not found: ${userId}` });
+      }
+      
+      res.json({
+        status: 'success',
+        wallet
+      });
+    } catch (error) {
+      console.error('Error fetching user wallet:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch user wallet',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Update user wallet info
+  app.patch('/api/mcp/user/:userId/wallet', async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.userId;
+      const updates = req.body;
+      
+      // Get user profile service
+      const userProfileService = mcp.userProfileService;
+      if (!userProfileService) {
+        return res.status(500).json({ error: 'User profile service not initialized' });
+      }
+      
+      // Update wallet
+      const updatedWallet = await userProfileService.updateUserWallet(userId, updates);
+      
+      res.json({
+        status: 'success',
+        wallet: updatedWallet
+      });
+    } catch (error) {
+      console.error('Error updating user wallet:', error);
+      res.status(500).json({ 
+        error: 'Failed to update user wallet',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Get user trade history
+  app.get('/api/mcp/user/:userId/trades', async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.userId;
+      
+      // Get user profile service
+      const userProfileService = mcp.userProfileService;
+      if (!userProfileService) {
+        return res.status(500).json({ error: 'User profile service not initialized' });
+      }
+      
+      // Get trades
+      const trades = await userProfileService.getUserTrades(userId);
+      
+      res.json({
+        status: 'success',
+        count: trades.length,
+        trades
+      });
+    } catch (error) {
+      console.error('Error fetching user trades:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch user trades',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Add trade record for user
+  app.post('/api/mcp/user/:userId/trades', async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.userId;
+      const trade = req.body;
+      
+      if (!trade.symbol || !trade.type || !trade.entryPrice) {
+        return res.status(400).json({ 
+          error: 'Missing required trade record parameters',
+          requiredParams: ['symbol', 'type', 'entryPrice']
+        });
+      }
+      
+      // Get user profile service
+      const userProfileService = mcp.userProfileService;
+      if (!userProfileService) {
+        return res.status(500).json({ error: 'User profile service not initialized' });
+      }
+      
+      // Add trade
+      const result = await userProfileService.addUserTrade(userId, {
+        ...trade,
+        userId,
+        entryDate: trade.entryDate || new Date().toISOString(),
+        status: trade.status || 'open',
+        profitLoss: trade.profitLoss || 0
+      });
+      
+      res.json({
+        status: 'success',
+        result,
+        tradeId: trade.id
+      });
+    } catch (error) {
+      console.error('Error adding trade for user:', error);
+      res.status(500).json({ 
+        error: 'Failed to add trade',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Update trade record for user
+  app.patch('/api/mcp/user/:userId/trades/:tradeId', async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.userId;
+      const tradeId = req.params.tradeId;
+      const updates = req.body;
+      
+      // Get user profile service
+      const userProfileService = mcp.userProfileService;
+      if (!userProfileService) {
+        return res.status(500).json({ error: 'User profile service not initialized' });
+      }
+      
+      // Update trade
+      const result = await userProfileService.updateUserTrade(userId, tradeId, updates);
+      
+      res.json({
+        status: 'success',
+        result
+      });
+    } catch (error) {
+      console.error('Error updating trade for user:', error);
+      res.status(500).json({ 
+        error: 'Failed to update trade',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // Error handling middleware
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     console.error('[MCP] Error in MCP route:', err);
