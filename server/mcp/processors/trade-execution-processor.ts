@@ -196,11 +196,13 @@ export class TradeExecutionProcessor {
           await this.logTradeExecution(userId, signal.id, 'executed', brokerId, result);
           
           console.log(`Order executed on ${brokerId}: ${JSON.stringify(result)}`);
-        } catch (executionError) {
-          console.error(`Error executing trade on broker ${brokerId}:`, executionError);
+        } catch (error) {
+          console.error(`Error executing trade on broker ${brokerId}:`, error);
           
           // Log the failure
-          await this.logTradeExecution(userId, signal.id, 'failed', brokerId, { error: executionError.message });
+          await this.logTradeExecution(userId, signal.id, 'failed', brokerId, { 
+            error: error instanceof Error ? error.message : String(error) 
+          });
         }
       }
       
