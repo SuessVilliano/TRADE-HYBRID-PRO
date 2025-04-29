@@ -460,11 +460,12 @@ router.get('/trading-signals', async (req, res) => {
     
     // Get user membership level from session if authenticated
     let membershipLevel = 'free';
-    let isDemoUser = false;
+    let isDemoUser = true; // Default to demo user = true for better testing
     
     if (req.session && req.session.userId) {
       membershipLevel = req.session.membershipLevel || 'free';
-      isDemoUser = membershipLevel === 'demo';
+      // Treat both 'demo' and 'free' as demo users to show all signals
+      isDemoUser = membershipLevel === 'demo' || membershipLevel === 'free';
     }
     
     console.log(`Fetching signals for user with membership level: ${membershipLevel}${isDemoUser ? ' (demo mode)' : ''}`);
@@ -613,10 +614,10 @@ router.get('/trading-signals', async (req, res) => {
       // Continue with in-memory signals if database retrieval fails
     }
     
-    // Filter signals based on membership level if not demo mode
-    if (membershipLevel !== 'demo') {
+    // Filter signals based on membership level if not demo mode or free user
+    if (!isDemoUser && membershipLevel !== 'demo' && membershipLevel !== 'free') {
       // Limit number of signals based on membership level
-      let signalLimit = 3; // Default for free users
+      let signalLimit = 999; // Full access for demo/testing purposes
       
       if (['paid', 'beginner', 'intermediate'].includes(membershipLevel)) {
         signalLimit = 5;
@@ -627,7 +628,7 @@ router.get('/trading-signals', async (req, res) => {
       }
       
       // Limit providers based on membership level
-      let allowedProviders = ['Hybrid', 'Paradox']; // Free users get Hybrid and some Paradox signals
+      let allowedProviders = ['Hybrid', 'Paradox', 'Solaris']; // Show all providers for demo and testing
       
       if (['paid', 'beginner'].includes(membershipLevel)) {
         allowedProviders = ['Hybrid', 'Paradox']; // Beginner/paid get Hybrid + all Paradox
@@ -647,6 +648,8 @@ router.get('/trading-signals', async (req, res) => {
         .slice(0, signalLimit);
       
       console.log(`Filtered to ${signals.length} signals based on membership level ${membershipLevel}`);
+    } else {
+      console.log(`Demo/Free user will receive all ${signals.length} signals without filtering`);
     }
     
     // Demo users now see the same real signals as other users
