@@ -92,6 +92,7 @@ import TradingToolsPage from './pages/trading-tools';
 import EmbeddedBrowserPage from './pages/embedded-browser-page';
 import ABATEVPanelPage from './pages/abatev-panel';
 import NexusPanelPage from './pages/nexus-panel';
+import MarketDataPage from './pages/MarketDataPage';
 
 // Prop Firm
 import PropFirmDashboardPage from './pages/PropFirmDashboard';
@@ -253,6 +254,7 @@ const App: React.FC = () => {
                   <Route path="/voice-trade" element={<ProtectedRoute><VoiceTradeDemoPage /></ProtectedRoute>} />
                   <Route path="/smart-trade-explainer" element={<ProtectedRoute><SmartTradeExplainer /></ProtectedRoute>} />
                   <Route path="/api-demo" element={<ProtectedRoute><ApiDemoPage /></ProtectedRoute>} />
+                  <Route path="/market-data" element={<ProtectedRoute><MarketDataPage /></ProtectedRoute>} />
                   <Route path="/web-browser" element={<EmbeddedBrowserPage />} />
                   <Route path="/abatev" element={<ProtectedRoute><ABATEVPanelPage /></ProtectedRoute>} />
                   <Route path="/nexus" element={<ProtectedRoute><NexusPanelPage /></ProtectedRoute>} />

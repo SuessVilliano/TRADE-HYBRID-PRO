@@ -311,7 +311,7 @@ import feeSettingsRoutes from './api/fee-settings'; // Import for fee settings r
 import companyRevenueRoutes from './api/company-revenue'; // Import for company revenue routes
 import signalSubscriptionsRoutes from './api/signal-subscriptions'; // Import for signal subscriptions routes
 import oandaMarketRoutes from './routes/oanda-market'; // Import for Oanda market data routes
-import marketDataRoutes from './routes/market-data'; // Import for unified market data routes
+import marketDataRoutes from './routes/market-data-fixed'; // Import for unified market data routes
 import marketDataStatusRoutes from './routes/market-data-status'; // Import for market data status route
 import brokerStatusRoutes from './routes/broker-status'; // Import for broker status routes
 import brokerAccountRoutes from './routes/broker-account'; // Import for broker account details routes
