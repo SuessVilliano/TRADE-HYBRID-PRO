@@ -934,6 +934,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API Credential Manager test routes
   app.use("/api/test-credentials", testCredentialsRoutes);
   
+  // Enhanced Market Data test routes
+  app.use("/api/test-enhanced-market-data", testEnhancedMarketDataRoutes);
+  
   // ABATEV integration routes
   app.use("/api/abatev", abatevRoutes); // Legacy route kept for backward compatibility
   app.use("/api/nexus", nexusRoutes); // New Nexus routes (replacement for ABATEV)
