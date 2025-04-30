@@ -4,8 +4,8 @@ import { useCallback, useEffect } from 'react';
 const REFERRAL_KEY = 'thc_referral_id';
 const REFERRAL_PARAM = 'ref';
 const REFERRAL_EXPIRY_DAYS = 30;
-// Default domain for affiliate links
-const DEFAULT_DOMAIN = 'https://pro.tradehybrid.club';
+// Default domain for affiliate links - use current domain to ensure it works in any environment
+const DEFAULT_DOMAIN = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : '';
 
 /**
  * Utility for tracking and managing affiliate referrals
