@@ -321,35 +321,100 @@ export class MatrixContractService {
           
           // If this is a transfer to the company wallet, it might be a slot purchase
           if (tx.receiver === companyWallet) {
-            // Check memo field for slot information
+            // Check if amount matches a slot price
+            let matchedSlotNumber = -1;
+            const txAmount = parseFloat(tx.amount);
+            
+            // First check if the memo contains explicit slot information
             if (txDetails.memo) {
               const memo = txDetails.memo.toLowerCase();
               
-              // Look for slot purchase pattern in memo, e.g. "slot:3" or "purchase-slot-3"
-              const slotMatch = memo.match(/slot[-:]?(\d+)/i) || memo.match(/purchase[-:]?slot[-:]?(\d+)/i);
+              // Look for slot purchase patterns in memo
+              // Format 1: "slot:3" or "purchase-slot-3"
+              const slotMatch = memo.match(/slot[-:]?(\d+)/i) || 
+                               memo.match(/purchase[-:]?slot[-:]?(\d+)/i) ||
+                               memo.match(/buy[-:]?slot[-:]?(\d+)/i);
               
               if (slotMatch && slotMatch[1]) {
-                const slotNumber = parseInt(slotMatch[1], 10);
+                matchedSlotNumber = parseInt(slotMatch[1], 10);
+              }
+              // Format 2: "matrix level 5" or "level:5"
+              else {
+                const levelMatch = memo.match(/matrix[-\s]?level[-:\s]?(\d+)/i) || 
+                                  memo.match(/level[-:\s]?(\d+)/i);
                 
-                if (slotNumber >= 1 && slotNumber <= 12 && !processedSlots.has(slotNumber)) {
-                  processedSlots.add(slotNumber);
-                  
-                  const price = MATRIX_CONFIG.slotPrices[slotNumber - 1];
-                  
-                  slots.push({
-                    id: `slot-${slotNumber}-${tx.txHash.substring(0, 8)}`,
-                    slotNumber,
-                    price,
-                    currency: 'THC',
-                    purchaseDate: tx.blockTime ? tx.blockTime * 1000 : Date.now(),
-                    isActive: true,
-                    earningsFromSlot: 0,
-                    referrals: []
-                  });
-                  
-                  console.log(`Found slot purchase transaction for slot ${slotNumber}`);
+                if (levelMatch && levelMatch[1]) {
+                  matchedSlotNumber = parseInt(levelMatch[1], 10);
                 }
               }
+            }
+            
+            // If no slot info in memo, try to match by amount
+            if (matchedSlotNumber === -1 && !isNaN(txAmount)) {
+              for (let i = 0; i < MATRIX_CONFIG.slotPrices.length; i++) {
+                const price = MATRIX_CONFIG.slotPrices[i];
+                
+                // Check if transaction amount is within 1% of a slot price (to account for fees)
+                if (Math.abs(txAmount - price) / price < 0.01) {
+                  matchedSlotNumber = i + 1; // +1 because slot numbers are 1-based
+                  break;
+                }
+              }
+            }
+            
+            // If we identified a valid slot number and haven't processed it yet
+            if (matchedSlotNumber >= 1 && matchedSlotNumber <= 12 && !processedSlots.has(matchedSlotNumber)) {
+              processedSlots.add(matchedSlotNumber);
+              
+              const price = MATRIX_CONFIG.slotPrices[matchedSlotNumber - 1];
+              
+              // Create the slot entry
+              const newSlot: MatrixSlot = {
+                id: `slot-${matchedSlotNumber}-${tx.txHash.substring(0, 8)}`,
+                slotNumber: matchedSlotNumber,
+                price,
+                currency: 'THC', // Default to THC, but could be derived from tx data
+                purchaseDate: tx.blockTime ? tx.blockTime * 1000 : Date.now(),
+                isActive: true,
+                earningsFromSlot: 0,
+                referrals: []
+              };
+              
+              // Check for referrer info in transaction
+              if (txDetails.memo) {
+                const memo = txDetails.memo.toLowerCase();
+                
+                // Check various referrer patterns in memo
+                const referrerPatterns = [
+                  /ref(?:errer)?[-:\s]([a-zA-Z0-9]{32,44})/i,  // referrer:address
+                  /ref(?:erral)?[-:\s]from[-:\s]([a-zA-Z0-9]{32,44})/i,  // referral from address
+                  /via[-:\s]([a-zA-Z0-9]{32,44})/i,  // via:address
+                  /referred[-:\s]by[-:\s]([a-zA-Z0-9]{32,44})/i  // referred by address
+                ];
+                
+                for (const pattern of referrerPatterns) {
+                  const match = memo.match(pattern);
+                  if (match && match[1]) {
+                    // Found a referrer for this slot purchase
+                    const referrerAddress = match[1];
+                    
+                    // Update referral map
+                    this.referralMap.set(walletAddress, referrerAddress);
+                    
+                    // Update direct referrals cache
+                    const directReferrals = this.directReferralsCache.get(referrerAddress) || [];
+                    if (!directReferrals.includes(walletAddress)) {
+                      directReferrals.push(walletAddress);
+                      this.directReferralsCache.set(referrerAddress, directReferrals);
+                    }
+                    
+                    break;
+                  }
+                }
+              }
+              
+              slots.push(newSlot);
+              console.log(`Found slot purchase transaction for slot ${matchedSlotNumber}`);
             }
           }
           // If this is a transfer from the company wallet, it might be earnings
@@ -358,24 +423,59 @@ export class MatrixContractService {
             if (txDetails.memo) {
               const memo = txDetails.memo.toLowerCase();
               
-              // Look for earnings pattern in memo, e.g. "earnings:3" or "slot-3-earnings"
-              const earningsMatch = memo.match(/earnings[-:]?slot[-:]?(\d+)/i) || 
-                                    memo.match(/slot[-:]?(\d+)[-:]?earnings/i);
+              // Look for various earnings patterns in memo
+              const earningsPatterns = [
+                /earnings[-:\s]?slot[-:\s]?(\d+)/i,   // earnings:slot:3
+                /slot[-:\s]?(\d+)[-:\s]?earnings/i,   // slot-3-earnings
+                /commission[-:\s]?slot[-:\s]?(\d+)/i, // commission:slot:3
+                /slot[-:\s]?(\d+)[-:\s]?commission/i, // slot-3-commission
+                /matrix[-:\s]?level[-:\s]?(\d+)[-:\s]?(?:earnings|commission)/i,  // matrix level 3 earnings
+                /(?:earnings|commission)[-:\s]?(?:for|from)[-:\s]?(?:level|slot)[-:\s]?(\d+)/i  // earnings from level 3
+              ];
               
-              if (earningsMatch && earningsMatch[1]) {
-                const slotNumber = parseInt(earningsMatch[1], 10);
+              let matchedSlotNumber = -1;
+              
+              // Try to match any of the earnings patterns
+              for (const pattern of earningsPatterns) {
+                const match = memo.match(pattern);
+                if (match && match[1]) {
+                  matchedSlotNumber = parseInt(match[1], 10);
+                  break;
+                }
+              }
+              
+              // If no explicit slot match, try to determine from the amount
+              if (matchedSlotNumber === -1) {
+                const txAmount = parseFloat(tx.amount);
                 
+                if (!isNaN(txAmount) && txAmount > 0) {
+                  // Calculate expected commission amounts for each slot
+                  for (let i = 0; i < MATRIX_CONFIG.slotPrices.length; i++) {
+                    const slotPrice = MATRIX_CONFIG.slotPrices[i];
+                    const directCommission = slotPrice * MATRIX_CONFIG.commissionDistribution.directReferrer;
+                    
+                    // Check if amount matches a typical commission amount (within 5%)
+                    if (Math.abs(txAmount - directCommission) / directCommission < 0.05) {
+                      matchedSlotNumber = i + 1; // +1 because slot numbers are 1-based
+                      break;
+                    }
+                  }
+                }
+              }
+              
+              // If we identified a valid slot number
+              if (matchedSlotNumber >= 1 && matchedSlotNumber <= 12) {
                 // Find matching slot or create a new one
-                let slot = slots.find(s => s.slotNumber === slotNumber);
+                let slot = slots.find(s => s.slotNumber === matchedSlotNumber);
                 
                 if (!slot) {
                   // This is earnings for a slot we haven't seen purchase transaction for
                   // Create the slot entry
-                  const price = MATRIX_CONFIG.slotPrices[slotNumber - 1];
+                  const price = MATRIX_CONFIG.slotPrices[matchedSlotNumber - 1];
                   
                   slot = {
-                    id: `slot-${slotNumber}-earnings-${tx.txHash.substring(0, 8)}`,
-                    slotNumber,
+                    id: `slot-${matchedSlotNumber}-earnings-${tx.txHash.substring(0, 8)}`,
+                    slotNumber: matchedSlotNumber,
                     price,
                     currency: 'THC',
                     purchaseDate: tx.blockTime ? tx.blockTime * 1000 : Date.now(),
@@ -385,31 +485,79 @@ export class MatrixContractService {
                   };
                   
                   slots.push(slot);
-                  processedSlots.add(slotNumber);
+                  processedSlots.add(matchedSlotNumber);
                 }
                 
-                // Extract amount from transaction
+                // Add earnings to the slot
                 const amountValue = parseFloat(tx.amount);
                 if (!isNaN(amountValue) && amountValue > 0) {
                   slot.earningsFromSlot += amountValue;
                   
-                  // Check if there's referral information in the memo
-                  const referrerMatch = memo.match(/referrer[-:]?([a-zA-Z0-9]+)/i);
+                  // Try to identify the referral source from the memo
+                  const referrerPatterns = [
+                    /ref(?:errer)?[-:\s]([a-zA-Z0-9]{32,44})/i,
+                    /commission[-:\s]from[-:\s]([a-zA-Z0-9]{32,44})/i,
+                    /earnings[-:\s]via[-:\s]([a-zA-Z0-9]{32,44})/i,
+                    /referred[-:\s]by[-:\s]([a-zA-Z0-9]{32,44})/i
+                  ];
                   
-                  if (referrerMatch && referrerMatch[1]) {
-                    const referrerAddress = referrerMatch[1];
-                    
-                    // Add to slot referrals
-                    slot.referrals.push({
-                      address: referrerAddress,
-                      slotFilled: slot.referrals.length + 1,
-                      earnings: amountValue,
-                      date: tx.blockTime ? tx.blockTime * 1000 : Date.now()
-                    });
+                  let referrerAddress = null;
+                  
+                  for (const pattern of referrerPatterns) {
+                    const match = memo.match(pattern);
+                    if (match && match[1]) {
+                      referrerAddress = match[1];
+                      break;
+                    }
                   }
+                  
+                  // If we couldn't identify a referrer from the memo, look in the transaction logs
+                  if (!referrerAddress && txDetails.logs) {
+                    // Analyze logs for patterns indicating the source of the commission
+                    for (const log of txDetails.logs) {
+                      // Look for specific program invocations or transfer instructions
+                      // that might indicate the source of the referral
+                      if (log.includes('Transfer') && log.includes('From:')) {
+                        const transferMatch = log.match(/From: ([a-zA-Z0-9]{32,44})/);
+                        if (transferMatch && transferMatch[1] && transferMatch[1] !== companyWallet) {
+                          referrerAddress = transferMatch[1];
+                          break;
+                        }
+                      }
+                    }
+                  }
+                  
+                  // Add the referral information to the slot
+                  if (referrerAddress) {
+                    // Check if we already have this referrer in the slot
+                    const existingReferral = slot.referrals.find(r => r.address === referrerAddress);
+                    
+                    if (existingReferral) {
+                      // Update existing referral
+                      existingReferral.earnings += amountValue;
+                    } else {
+                      // Add new referral
+                      slot.referrals.push({
+                        address: referrerAddress,
+                        slotFilled: slot.referrals.length + 1,
+                        earnings: amountValue,
+                        date: tx.blockTime ? tx.blockTime * 1000 : Date.now()
+                      });
+                      
+                      // Also update our referral maps
+                      this.referralMap.set(referrerAddress, walletAddress);
+                      
+                      // Update direct referrals cache
+                      const directReferrals = this.directReferralsCache.get(walletAddress) || [];
+                      if (!directReferrals.includes(referrerAddress)) {
+                        directReferrals.push(referrerAddress);
+                        this.directReferralsCache.set(walletAddress, directReferrals);
+                      }
+                    }
+                  }
+                  
+                  console.log(`Found earnings transaction for slot ${matchedSlotNumber}: ${amountValue} THC`);
                 }
-                
-                console.log(`Found earnings transaction for slot ${slotNumber}: ${amountValue} THC`);
               }
             }
           }
@@ -419,52 +567,117 @@ export class MatrixContractService {
         }
       }
       
-      // If no slots were found from real transactions, check if we can infer some from token balances
+      // If no slots were found from real transactions, try to identify potential slots
+      // by analyzing other transaction data and wallet activity
       if (slots.length === 0) {
-        const walletInfo = await this.solanaService.getWalletInfo(walletAddress);
+        console.log(`No slot transactions found directly, checking for additional evidence`);
         
-        // Look for THC token balance
-        const thcBalance = walletInfo.tokenBalances.find(tb => 
-          tb.token.address === MATRIX_CONFIG.thcTokenAddress);
-        
-        if (thcBalance) {
-          const balance = parseFloat(thcBalance.balance) / (10 ** thcBalance.token.decimals);
+        try {
+          // Get all transaction history for this wallet, not just token transfers
+          const allTransactions = await this.solanaService.getRecentTransactions(walletAddress, 50);
           
-          // Determine potential slots based on balance thresholds
-          // Simple heuristic: higher balance = higher level matrix slots
-          if (balance >= MATRIX_CONFIG.slotPrices[0]) {
-            // Create at least one basic slot if there's a balance
+          // Check if any transactions involve the company wallet
+          let hasInteractedWithCompany = false;
+          let oldestInteraction = 0;
+          
+          for (const tx of allTransactions) {
+            if (tx.from === companyWallet || tx.to === companyWallet || 
+                tx.signers?.includes(companyWallet) || tx.signers?.includes(walletAddress)) {
+              hasInteractedWithCompany = true;
+              if (tx.blockTime && (!oldestInteraction || tx.blockTime < oldestInteraction)) {
+                oldestInteraction = tx.blockTime;
+              }
+            }
+          }
+          
+          // If there's interaction with the company wallet, they likely have at least slot 1
+          if (hasInteractedWithCompany) {
+            console.log(`Found evidence of interaction with company wallet, inferring basic slot`);
+            
             const slotNumber = 1;
             const price = MATRIX_CONFIG.slotPrices[slotNumber - 1];
+            const purchaseDate = oldestInteraction ? oldestInteraction * 1000 : Date.now() - (30 * 24 * 60 * 60 * 1000);
             
             slots.push({
               id: `slot-${slotNumber}-inferred-${walletAddress.substring(0, 8)}`,
               slotNumber,
               price,
               currency: 'THC',
-              purchaseDate: Date.now() - (7 * 24 * 60 * 60 * 1000), // A week ago
+              purchaseDate,
               isActive: true,
               earningsFromSlot: 0,
               referrals: []
             });
+          }
+        } catch (txError) {
+          console.warn(`Error analyzing general transactions:`, txError);
+        }
+        
+        // If still no slots found, check token balances as a last resort
+        if (slots.length === 0) {
+          try {
+            console.log(`Checking token balances for evidence of matrix participation`);
             
-            // If balance is high enough for higher slots, add more
-            if (balance >= MATRIX_CONFIG.slotPrices[1]) {
-              const slotNumber = 2;
+            const walletInfo = await this.solanaService.getWalletInfo(walletAddress);
+            
+            // Look for THC token balance
+            const thcBalance = walletInfo.tokenBalances.find(tb => 
+              tb.token.address === MATRIX_CONFIG.thcTokenAddress);
+            
+            // Look for transaction volume
+            let transactionVolume = 0;
+            if (walletInfo.stats && walletInfo.stats.transactionVolume) {
+              transactionVolume = walletInfo.stats.transactionVolume;
+            }
+            
+            // Check if user has sufficient balance or transaction volume to suggest matrix participation
+            const hasBalance = thcBalance && parseFloat(thcBalance.balance) / (10 ** thcBalance.token.decimals) >= MATRIX_CONFIG.slotPrices[0];
+            const hasVolume = transactionVolume > 0;
+            
+            if (hasBalance || hasVolume) {
+              console.log(`Found evidence of THC token activity, inferring basic slot`);
+              
+              // Create the most basic slot as a starting point
+              const slotNumber = 1;
               const price = MATRIX_CONFIG.slotPrices[slotNumber - 1];
               
               slots.push({
-                id: `slot-${slotNumber}-inferred-${walletAddress.substring(0, 8)}`,
+                id: `slot-${slotNumber}-token-evidence-${walletAddress.substring(0, 8)}`,
                 slotNumber,
                 price,
                 currency: 'THC',
-                purchaseDate: Date.now() - (5 * 24 * 60 * 60 * 1000), // 5 days ago
+                purchaseDate: Date.now() - (30 * 24 * 60 * 60 * 1000), // Default to a month ago
                 isActive: true,
                 earningsFromSlot: 0,
                 referrals: []
               });
             }
+          } catch (walletError) {
+            console.warn(`Error checking wallet info:`, walletError);
           }
+        }
+      }
+      
+      // If we still have no information, check our referral map
+      // If this wallet is a referrer for others, they must have at least one slot
+      if (slots.length === 0 && this.directReferralsCache.has(walletAddress)) {
+        const referrals = this.directReferralsCache.get(walletAddress);
+        if (referrals && referrals.length > 0) {
+          console.log(`Wallet ${walletAddress} has ${referrals.length} referrals but no detected slots, inferring slot 1`);
+          
+          const slotNumber = 1;
+          const price = MATRIX_CONFIG.slotPrices[slotNumber - 1];
+          
+          slots.push({
+            id: `slot-${slotNumber}-referred-${walletAddress.substring(0, 8)}`,
+            slotNumber,
+            price,
+            currency: 'THC',
+            purchaseDate: Date.now() - (45 * 24 * 60 * 60 * 1000), // Default to 45 days ago (before referrals)
+            isActive: true,
+            earningsFromSlot: referrals.length * price * 0.1, // Rough estimate based on referrals
+            referrals: []
+          });
         }
       }
       
