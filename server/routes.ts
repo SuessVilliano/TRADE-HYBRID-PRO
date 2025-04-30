@@ -337,6 +337,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Providing Solana RPC URL to client:', rpcUrl ? 'Custom URL available' : 'No custom URL');
     res.json({ rpcUrl });
   });
+  
+  // Register matrix contract API routes
+  app.use('/api/matrix', matrixRouter);
   // Market data routes
   app.get("/api/market/data", getMarketData);
   app.get("/api/market/price", getCurrentPrice);

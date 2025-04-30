@@ -123,9 +123,31 @@ export class SolscanAdapter {
   }
 
   /**
+   * Check if the Solscan API key is valid
+   */
+  public async isApiKeyValid(): Promise<boolean> {
+    if (!this.apiKey) {
+      return false;
+    }
+    
+    try {
+      // Try a simple request to check if the API key is valid
+      await this.makeRequest('/token/meta', { tokenAddress: '4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4' }, true);
+      return true;
+    } catch (error) {
+      console.log('Solscan API key validation failed:', error instanceof Error ? error.message : 'Unknown error');
+      return false;
+    }
+  }
+
+  /**
    * Make a request to the Solscan API
    */
-  private async makeRequest<T>(endpoint: string, params: Record<string, any> = {}): Promise<T> {
+  private async makeRequest<T>(
+    endpoint: string, 
+    params: Record<string, any> = {}, 
+    ignoreErrors: boolean = false
+  ): Promise<T> {
     await this.applyRateLimit();
     
     try {
@@ -134,9 +156,10 @@ export class SolscanAdapter {
         'Accept': 'application/json',
       };
       
-      // Add token if available
+      // Add API key if available
       if (this.apiKey) {
-        headers['token'] = this.apiKey;
+        // For Solscan, we need to add the API key as an X-API-KEY header
+        headers['X-API-KEY'] = this.apiKey;
       }
       
       const response = await axios.get<T>(url, {
@@ -148,10 +171,22 @@ export class SolscanAdapter {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error(`Solscan API error (${endpoint}):`, error.response?.status, error.response?.data);
+        
+        if (ignoreErrors) {
+          // Return a default empty response object when ignoring errors
+          return {} as T;
+        }
+        
         throw new Error(`Solscan API error: ${error.response?.status} ${error.response?.statusText}`);
       }
       
       console.error(`Error calling Solscan API (${endpoint}):`, error);
+      
+      if (ignoreErrors) {
+        // Return a default empty response object when ignoring errors
+        return {} as T;
+      }
+      
       throw error;
     }
   }

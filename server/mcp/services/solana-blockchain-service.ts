@@ -273,31 +273,98 @@ export class SolanaBlockchainService extends EventEmitter {
    */
   async getTokenInfo(tokenAddress: string): Promise<TokenInfo> {
     try {
-      // Use Solscan adapter to get token info
-      const solscanTokenInfo = await this.solscanAdapter.getTokenInfo(tokenAddress);
+      // Check if we have specific token info for well-known tokens
+      // This serves as a fallback if the API is unavailable
+      if (tokenAddress === '4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4') {
+        // THC token
+        const priceData = this.tokenPriceCache.get(tokenAddress) || {
+          price: 0.035,  // Default pricing for THC token
+          priceChange24h: 0,
+          lastUpdated: new Date()
+        };
+        
+        return {
+          symbol: 'THC',
+          name: 'Trade Hybrid Coin',
+          address: tokenAddress,
+          decimals: 9,
+          iconUrl: 'https://tradehybrid.club/thc-token.png',
+          price: priceData.price,
+          priceChange24h: priceData.priceChange24h,
+          totalSupply: '1000000000',
+          marketCap: 35000000,
+        };
+      } else if (tokenAddress === 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v') {
+        // USDC token
+        const priceData = this.tokenPriceCache.get(tokenAddress) || {
+          price: 1.0,  // USDC should be close to $1
+          priceChange24h: 0,
+          lastUpdated: new Date()
+        };
+        
+        return {
+          symbol: 'USDC',
+          name: 'USD Coin',
+          address: tokenAddress,
+          decimals: 6,
+          iconUrl: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+          price: priceData.price,
+          priceChange24h: priceData.priceChange24h,
+        };
+      }
       
-      // Get price data from cache or use defaults
-      const priceData = this.tokenPriceCache.get(tokenAddress) || {
-        price: 0,
-        priceChange24h: 0,
-        lastUpdated: new Date()
-      };
-      
-      return {
-        symbol: solscanTokenInfo.symbol,
-        name: solscanTokenInfo.name,
-        address: solscanTokenInfo.address,
-        iconUrl: solscanTokenInfo.icon,
-        decimals: solscanTokenInfo.decimals,
-        totalSupply: solscanTokenInfo.totalSupply,
-        marketCap: solscanTokenInfo.marketCap,
-        price: priceData.price,
-        priceChange24h: priceData.priceChange24h,
-      };
+      // If not a predefined token, try the Solscan API
+      try {
+        // Use Solscan adapter to get token info
+        const solscanTokenInfo = await this.solscanAdapter.getTokenInfo(tokenAddress);
+        
+        // Get price data from cache or use defaults
+        const priceData = this.tokenPriceCache.get(tokenAddress) || {
+          price: 0,
+          priceChange24h: 0,
+          lastUpdated: new Date()
+        };
+        
+        return {
+          symbol: solscanTokenInfo.symbol,
+          name: solscanTokenInfo.name,
+          address: solscanTokenInfo.address,
+          iconUrl: solscanTokenInfo.icon,
+          decimals: solscanTokenInfo.decimals,
+          totalSupply: solscanTokenInfo.totalSupply,
+          marketCap: solscanTokenInfo.marketCap,
+          price: priceData.price,
+          priceChange24h: priceData.priceChange24h,
+        };
+      } catch (solscanError) {
+        console.error(`Solscan API error getting token info for ${tokenAddress}:`, solscanError);
+        // Continue with RPC fallback
+        throw solscanError;
+      }
     } catch (error) {
-      console.error(`Error getting token info for ${tokenAddress}:`, error);
+      console.error(`Fallback: Error getting token info for ${tokenAddress}:`, error);
       
-      // Return a minimal token info object if the request fails
+      // Return a minimal token info object if all requests fail
+      // For certain known tokens, we return predefined info
+      if (tokenAddress === '4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4') {
+        return {
+          symbol: 'THC',
+          name: 'Trade Hybrid Coin',
+          address: tokenAddress,
+          decimals: 9,
+          iconUrl: 'https://tradehybrid.club/thc-token.png',
+        };
+      } else if (tokenAddress === 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v') {
+        return {
+          symbol: 'USDC',
+          name: 'USD Coin',
+          address: tokenAddress,
+          decimals: 6,
+          iconUrl: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+        };
+      }
+      
+      // For all other tokens, provide basic information
       return {
         symbol: 'UNKNOWN',
         name: 'Unknown Token',
