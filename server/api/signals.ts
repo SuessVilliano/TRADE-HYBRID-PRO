@@ -547,7 +547,8 @@ router.get('/trading-signals', async (req, res) => {
     const demoMode = req.query.demo === 'true';
     
     // Check if we should enrich the signals with current market data
-    const enrichData = req.query.enrich !== 'false'; // Default to true
+    // Default is now FALSE to save API calls - only enrich when explicitly requested
+    const enrichData = req.query.enrich === 'true'; // Default to false to save API calls
     
     // If in demo mode, just return all available signals immediately
     if (demoMode) {
@@ -767,10 +768,11 @@ router.get('/trading-signals', async (req, res) => {
           symbolsToPriceCheck.add(symbol);
         });
         
-        // Get current prices for all symbols
+        // Get current prices for all symbols - use safe method that prioritizes cache
         const pricePromises: Promise<any>[] = Array.from(symbolsToPriceCheck).map(async (symbol) => {
           try {
-            const priceData = await enhancedMarketDataService.getLatestPrice(symbol);
+            // Use getLatestPriceSafe method which prioritizes cache and avoids API calls unless forced
+            const priceData = await enhancedMarketDataService.getLatestPriceSafe(symbol);
             return { symbol, priceData };
           } catch (error) {
             console.error(`Error fetching price for ${symbol}:`, error);

@@ -42,17 +42,21 @@ class TradeSignalService {
     const settings = userSettingsService.getSettings();
     this.notificationsEnabled = settings.notifications.signalAlerts;
     
-    // Set up periodic refresh of signals (every 60 seconds)
-    if (typeof window !== 'undefined') {
-      setInterval(() => this.fetchRealSignals(), 60000);
-    }
+    // Removed automatic polling to reduce API calls
+    // Users can now manually refresh signals by clicking refresh buttons
+    // or by taking actions that specifically require fresh data
   }
   
-  // Fetch real signals from the API
-  async fetchRealSignals(): Promise<void> {
+  // Fetch real signals from the API - with option to enrich with current market data
+  async fetchRealSignals(enrichWithMarketData: boolean = false): Promise<void> {
     try {
       console.log('Fetching real trading signals from API...');
-      const response = await fetch('/api/signals/trading-signals');
+      // Add the enrich parameter to the URL query only when specifically requested
+      const endpoint = enrichWithMarketData 
+        ? '/api/signals/trading-signals?enrich=true' 
+        : '/api/signals/trading-signals';
+      
+      const response = await fetch(endpoint);
       
       if (!response.ok) {
         throw new Error(`Error fetching signals: ${response.status}`);

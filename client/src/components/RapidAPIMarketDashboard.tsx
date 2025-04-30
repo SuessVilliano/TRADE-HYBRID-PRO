@@ -67,15 +67,16 @@ const RapidAPIMarketDashboard: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState<'chart' | 'quote'>('chart');
   const [rapidApiKey, setRapidApiKey] = useState<string>('');
   
-  // Fetch providers on component mount
+  // Load saved API key on component mount, but don't fetch providers automatically
   useEffect(() => {
-    fetchProviders();
-    
     // Check if we have a saved API key
     const savedKey = localStorage.getItem('rapidapi_key');
     if (savedKey) {
       setRapidApiKey(savedKey);
     }
+    
+    // We'll load providers only when the user explicitly requests them
+    // This helps reduce API calls until needed
   }, []);
   
   // Fetch available market data providers
@@ -103,6 +104,11 @@ const RapidAPIMarketDashboard: React.FC = () => {
     }
     
     try {
+      // Only fetch providers if we don't have them yet and a provider is needed
+      if (providers.length === 0) {
+        await fetchProviders();
+      }
+      
       if (selectedTab === 'chart') {
         await fetchChartData(data);
       } else {

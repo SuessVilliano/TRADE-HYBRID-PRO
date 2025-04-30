@@ -27,14 +27,12 @@ export default function TradingSignals({ className }: TradingSignalsProps) {
   const [expandedSignalId, setExpandedSignalId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetch real signals from the API
+    // Fetch real signals from the API only on initial load
+    // No automatic polling to reduce API calls
     fetchLiveSignals();
-
-    // Set up an interval to refresh signals every 60 seconds
-    const intervalId = setInterval(fetchLiveSignals, 60000);
     
-    // Clean up interval on component unmount
-    return () => clearInterval(intervalId);
+    // No interval setup to save on API calls
+    // Users can manually refresh by clicking the Refresh button
   }, []);
 
   const fetchLiveSignals = async () => {
