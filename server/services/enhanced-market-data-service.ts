@@ -27,7 +27,8 @@ class EnhancedMarketDataService {
   private priceCache: Map<string, { price: number, timestamp: number }> = new Map();
   private candleCache: Map<string, { candles: any[], timestamp: number }> = new Map();
   private searchCache: Map<string, { results: any[], timestamp: number }> = new Map();
-  private readonly CACHE_TTL = 60 * 1000; // 1 minute cache TTL
+  private readonly CACHE_TTL = 15 * 60 * 1000; // 15 minute cache TTL to reduce API calls
+  private readonly AUTO_REFRESH_MODE = false; // Disable auto-refresh by default
   
   private constructor() {
     console.log('Enhanced Market Data Service initialized');
@@ -190,6 +191,37 @@ class EnhancedMarketDataService {
     this.candleCache.clear();
     this.searchCache.clear();
     console.log('Enhanced Market Data: All caches cleared');
+  }
+  
+  /**
+   * Get latest price with non-throwing behavior - returns cached value or null
+   * Use this for non-critical UI elements where fallback to empty state is acceptable
+   * 
+   * @param symbol The symbol to get data for
+   * @returns The standardized price data or null if no data available
+   */
+  public async getLatestPriceSafe(symbol: string): Promise<any | null> {
+    try {
+      // Check cache first
+      const cached = this.priceCache.get(symbol);
+      
+      if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+        console.log(`Enhanced Market Data: Using cached price for ${symbol}`);
+        return { price: cached.price, symbol };
+      }
+      
+      // If not in AUTO_REFRESH_MODE, return null instead of making API calls
+      if (!this.AUTO_REFRESH_MODE) {
+        console.log(`Enhanced Market Data: Skipping API call for ${symbol} (AUTO_REFRESH_MODE disabled)`);
+        return null;
+      }
+      
+      // If AUTO_REFRESH_MODE is enabled, try to get fresh data
+      return await this.getLatestPrice(symbol);
+    } catch (error) {
+      console.error(`Enhanced Market Data: Error in getLatestPriceSafe for ${symbol}:`, error);
+      return null;
+    }
   }
 }
 
