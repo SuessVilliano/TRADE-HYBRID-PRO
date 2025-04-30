@@ -75,7 +75,8 @@ export class MatrixContractService {
   private directReferralsCache: Map<string, string[]> = new Map(); // wallet -> direct referrals
   
   constructor(private connection: Connection) {
-    this.solanaService = new SolanaBlockchainService(connection);
+    // Use the singleton instance to ensure we have the same configuration
+    this.solanaService = SolanaBlockchainService.getInstance();
     this.loadReferralData();
   }
   
