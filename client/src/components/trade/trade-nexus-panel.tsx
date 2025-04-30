@@ -564,19 +564,25 @@ export function TradeNexusPanel({ defaultSymbol = 'BTC/USD' }: TradeNexusPanelPr
                   <div>
                     <Label htmlFor="symbol">Symbol</Label>
                     <div className="relative mt-1">
-                      <select 
+                      <input
                         id="symbol"
+                        list="symbol-options"
                         className="w-full h-10 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         value={symbol}
                         onChange={(e) => setSymbol(e.target.value)}
-                      >
-                        {TRADING_SYMBOLS.map((s) => (
-                          <option key={s} value={s}>{s}</option>
+                        placeholder="Enter any symbol..."
+                      />
+                      <datalist id="symbol-options">
+                        {ALL_TRADING_SYMBOLS.map((sym) => (
+                          <option key={sym} value={sym}>{sym}</option>
                         ))}
-                      </select>
-                      <div className="absolute right-3 top-2.5 pointer-events-none">
-                        <ArrowUpDown className="h-4 w-4 text-slate-400" />
+                      </datalist>
+                      <div className="absolute right-3 top-3 text-xs text-gray-400 pointer-events-none">
+                        Type any symbol
                       </div>
+                    </div>
+                    <div className="mt-1 text-xs text-gray-400">
+                      Enter any symbol supported by your connected brokers
                     </div>
                   </div>
                   

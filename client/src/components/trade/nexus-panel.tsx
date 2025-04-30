@@ -613,19 +613,30 @@ export function NexusPanel({ defaultSymbol = 'BTC/USD' }: NexusPanelProps) {
               </div>
             
               <div className="grid grid-cols-2 gap-4 mb-4">
-                {/* Symbol */}
+                {/* Symbol with custom input option */}
                 <div className="col-span-1">
                   <Label htmlFor="symbol">Symbol</Label>
-                  <select
-                    id="symbol"
-                    className="w-full p-2 border rounded bg-background"
-                    value={symbol}
-                    onChange={(e) => setSymbol(e.target.value)}
-                  >
-                    {TRADING_SYMBOLS.map((sym) => (
-                      <option key={sym} value={sym}>{sym}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <input
+                      id="symbol"
+                      list="symbol-options"
+                      className="w-full p-2 border rounded bg-background"
+                      value={symbol}
+                      onChange={(e) => setSymbol(e.target.value)}
+                      placeholder="Enter any symbol..."
+                    />
+                    <datalist id="symbol-options">
+                      {ALL_TRADING_SYMBOLS.map((sym) => (
+                        <option key={sym} value={sym}>{sym}</option>
+                      ))}
+                    </datalist>
+                    <div className="absolute right-2 top-2 text-xs text-gray-400 pointer-events-none">
+                      Type any symbol
+                    </div>
+                  </div>
+                  <div className="mt-1 text-xs text-gray-400">
+                    Enter any symbol supported by your connected brokers
+                  </div>
                 </div>
                 
                 {/* Trade Type */}
