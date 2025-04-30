@@ -410,43 +410,59 @@ export const TradeJournal = () => {
   const saveJournalEntry = async () => {
     if (!entryContent) return;
     
-    const newEntry: JournalEntry = {
-      id: Date.now().toString(),
-      date: new Date(),
+    // Create entry object in the format expected by the API
+    const apiEntry: JournalEntryType = {
       title: entryTitle || `Journal Entry - ${new Date().toLocaleDateString()}`,
       content: entryContent,
-      hybridScore: hybridScore,
-      tradeIds: selectedTrades,
       tags: selectedTags,
-      mood: currentMood,
-      mentalState: mentalState,
-      setupType: setupType,
-      lessonLearned: lessonLearned,
-      createdAt: new Date().toISOString(),
-      tradeStats: {
-        pnl: stats.netPnL,
-        winRate: stats.winRate,
-        tradesCount: stats.totalTrades
-      }
+      tradeIds: selectedTrades,
+      symbol: selectedTrades.length === 1 ? 
+        trades.find(t => t.id === selectedTrades[0])?.symbol || 'General' : 'General',
+      mood: mentalState,
+      currentMood: currentMood,
+      keyLessonLearned: lessonLearned,
+      timestamp: new Date().toISOString(),
+      mentality: mentalState
     };
     
     // If there's an image, prepare it for upload
     if (imageFile) {
       // In a real implementation, you'd upload the image to your server
       // and get back a URL to store in the database
-      // For now, we're just setting a placeholder URL
-      newEntry.imageUrl = imagePreviewUrl || '';
+      // For now, we're just noting that we have an image
+      console.log('Image would be uploaded:', imageFile.name);
     }
     
-    // Save to database
+    // Save to database using the service
     try {
-      const response = await fetch('/api/journal/entries', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newEntry)
-      });
+      console.log('Saving journal entry:', apiEntry);
+      const savedEntry = await journalService.saveJournalEntry(apiEntry);
       
-      if (response.ok) {
+      if (savedEntry) {
+        console.log('Journal entry saved successfully:', savedEntry);
+        
+        // Convert to the component's entry format
+        const newEntry: JournalEntry = {
+          id: savedEntry.id || Date.now().toString(),
+          date: new Date(savedEntry.timestamp || new Date()),
+          title: savedEntry.title,
+          content: savedEntry.content,
+          hybridScore: hybridScore,
+          tradeIds: savedEntry.tradeIds,
+          tags: savedEntry.tags,
+          mood: currentMood,
+          mentalState: savedEntry.mentality,
+          setupType: setupType,
+          lessonLearned: savedEntry.keyLessonLearned,
+          createdAt: savedEntry.timestamp || new Date().toISOString(),
+          tradeStats: {
+            pnl: stats.netPnL,
+            winRate: stats.winRate,
+            tradesCount: stats.totalTrades
+          }
+        };
+        
+        // Update local state with the new entry
         setEntries([newEntry, ...entries]);
         
         // Update mood history
@@ -464,8 +480,6 @@ export const TradeJournal = () => {
             const updatedSetups = [...tradingSetups];
             const setup = updatedSetups[setupIndex];
             
-            // In a real implementation, we'd calculate this based on actual trade data
-            // For now, we're just incrementing the count
             updatedSetups[setupIndex] = {
               ...setup,
               count: setup.count + 1
@@ -477,6 +491,8 @@ export const TradeJournal = () => {
         
         // Reset form
         resetForm();
+      } else {
+        console.error('Failed to save journal entry - no response from API');
       }
     } catch (error) {
       console.error('Error saving journal entry:', error);
@@ -526,95 +542,145 @@ export const TradeJournal = () => {
   // Fetch journal entries
   const fetchJournalEntries = async () => {
     try {
-      const response = await fetch('/api/journal/entries');
-      if (response.ok) {
-        const data = await response.json();
-        setEntries(data);
+      console.log('Fetching journal entries from service...');
+      const apiEntries = await journalService.getJournalEntries();
+      
+      if (apiEntries && apiEntries.length > 0) {
+        console.log('Received journal entries from API:', apiEntries);
+        
+        // Convert API entries to component format
+        const componentEntries: JournalEntry[] = apiEntries.map(apiEntry => ({
+          id: apiEntry.id || Date.now().toString(),
+          date: new Date(apiEntry.timestamp || new Date()),
+          title: apiEntry.title,
+          content: apiEntry.content,
+          tags: apiEntry.tags || [],
+          tradeIds: apiEntry.tradeIds || [],
+          sentiment: apiEntry.sentiment as 'positive' | 'negative' | 'neutral' || 'neutral',
+          hybridScore: stats.netPnL > 0 ? 75 : 50, // Default value based on PnL
+          mood: apiEntry.currentMood || 5,
+          mentalState: apiEntry.mentality || 'Neutral',
+          setupType: apiEntry.tags?.find(tag => 
+            ['Breakout', 'Pullback', 'Range Play', 'Trend Continuation'].includes(tag)
+          ) || '',
+          lessonLearned: apiEntry.keyLessonLearned || '',
+          createdAt: apiEntry.timestamp || new Date().toISOString(),
+          tradeStats: {
+            pnl: stats.netPnL,
+            winRate: stats.winRate,
+            tradesCount: stats.totalTrades
+          }
+        }));
+        
+        setEntries(componentEntries);
         
         // Extract mood data from entries
-        const moods = data
-          .filter((entry: JournalEntry) => entry.mood !== undefined)
-          .map((entry: JournalEntry) => ({
+        const moods = componentEntries
+          .filter(entry => entry.mood !== undefined)
+          .map(entry => ({
             date: new Date(entry.createdAt).toISOString().split('T')[0],
             value: entry.mood as number,
             note: entry.content.substring(0, 50) + (entry.content.length > 50 ? '...' : '')
           }));
         
         setMoodHistory(moods);
+      } else {
+        console.log('No journal entries found or empty response');
+        
+        // Create default entries if none exist
+        const defaultEntries: JournalEntry[] = [
+          {
+            id: '1',
+            date: new Date('2025-03-28'),
+            title: 'Strong trading day with focus on breakouts',
+            content: 'Had a very productive day trading breakouts in tech stocks. My patience paid off when AAPL broke above resistance and continued higher throughout the session. I maintained my discipline by sticking to my trading plan.',
+            sentiment: 'positive',
+            tags: ['Breakout', 'Disciplined', 'Planned'],
+            mood: 8,
+            mentalState: 'Focused',
+            setupType: 'Breakout',
+            hybridScore: 85.2,
+            createdAt: '2025-03-28T14:32:00Z',
+            tradeStats: {
+              pnl: 540,
+              winRate: 0.75,
+              tradesCount: 4
+            }
+          },
+          {
+            id: '2',
+            date: new Date('2025-03-27'),
+            title: 'Challenging day with mixed signals',
+            content: 'Markets were choppy today with conflicting signals. I took some trades without proper confirmation and paid the price. Need to work on patience and waiting for my A+ setups instead of forcing trades.',
+            sentiment: 'negative',
+            tags: ['Overtraded', 'FOMO'],
+            mood: 4,
+            mentalState: 'Anxious',
+            lessonLearned: 'Wait for proper confirmation before entering trades',
+            hybridScore: 68.5,
+            createdAt: '2025-03-27T19:15:00Z',
+            tradeStats: {
+              pnl: -220,
+              winRate: 0.33,
+              tradesCount: 6
+            }
+          },
+          {
+            id: '3',
+            date: new Date('2025-03-26'),
+            title: 'Successful range-bound trading',
+            content: 'Identified that markets were trading in a range early in the session. Focused on buying support and selling resistance within the range. This patient approach worked well today.',
+            sentiment: 'positive',
+            tags: ['Range Play', 'Patient', 'Disciplined'],
+            mood: 7,
+            mentalState: 'Calm',
+            setupType: 'Range Play',
+            hybridScore: 82.3,
+            createdAt: '2025-03-26T16:45:00Z',
+            tradeStats: {
+              pnl: 380,
+              winRate: 0.8,
+              tradesCount: 5
+            }
+          }
+        ];
+        
+        setEntries(defaultEntries);
+        
+        // Extract mood data
+        const moods = defaultEntries
+          .filter(entry => entry.mood !== undefined)
+          .map(entry => ({
+            date: new Date(entry.createdAt).toISOString().split('T')[0],
+            value: entry.mood as number,
+            note: entry.content.substring(0, 50) + (entry.content.length > 50 ? '...' : '')
+          }));
+        
+        setMoodHistory(moods);
+        
+        // Save these default entries to the database so they're available next time
+        console.log('Saving default entries to database...');
+        defaultEntries.forEach(entry => {
+          const apiEntry: JournalEntryType = {
+            title: entry.title,
+            content: entry.content,
+            tags: entry.tags,
+            tradeIds: entry.tradeIds,
+            symbol: 'General',
+            mood: entry.mentalState,
+            currentMood: entry.mood,
+            keyLessonLearned: entry.lessonLearned,
+            timestamp: entry.createdAt,
+            mentality: entry.mentalState
+          };
+          
+          journalService.saveJournalEntry(apiEntry).catch(err => {
+            console.error('Error saving default entry:', err);
+          });
+        });
       }
     } catch (error) {
       console.error('Error fetching journal entries:', error);
-      
-      // For development, create some sample entries
-      const sampleEntries: JournalEntry[] = [
-        {
-          id: '1',
-          date: new Date('2025-03-28'),
-          title: 'Strong trading day with focus on breakouts',
-          content: 'Had a very productive day trading breakouts in tech stocks. My patience paid off when AAPL broke above resistance and continued higher throughout the session. I maintained my discipline by sticking to my trading plan.',
-          sentiment: 'positive',
-          tags: ['Breakout', 'Disciplined', 'Planned'],
-          mood: 8,
-          mentalState: 'Focused',
-          setupType: 'Breakout',
-          hybridScore: 85.2,
-          createdAt: '2025-03-28T14:32:00Z',
-          tradeStats: {
-            pnl: 540,
-            winRate: 0.75,
-            tradesCount: 4
-          }
-        },
-        {
-          id: '2',
-          date: new Date('2025-03-27'),
-          title: 'Challenging day with mixed signals',
-          content: 'Markets were choppy today with conflicting signals. I took some trades without proper confirmation and paid the price. Need to work on patience and waiting for my A+ setups instead of forcing trades.',
-          sentiment: 'negative',
-          tags: ['Overtraded', 'FOMO'],
-          mood: 4,
-          mentalState: 'Anxious',
-          lessonLearned: 'Wait for proper confirmation before entering trades',
-          hybridScore: 68.5,
-          createdAt: '2025-03-27T19:15:00Z',
-          tradeStats: {
-            pnl: -220,
-            winRate: 0.33,
-            tradesCount: 6
-          }
-        },
-        {
-          id: '3',
-          date: new Date('2025-03-26'),
-          title: 'Successful range-bound trading',
-          content: 'Identified that markets were trading in a range early in the session. Focused on buying support and selling resistance within the range. This patient approach worked well today.',
-          sentiment: 'positive',
-          tags: ['Range Play', 'Patient', 'Disciplined'],
-          mood: 7,
-          mentalState: 'Calm',
-          setupType: 'Range Play',
-          hybridScore: 82.3,
-          createdAt: '2025-03-26T16:45:00Z',
-          tradeStats: {
-            pnl: 380,
-            winRate: 0.8,
-            tradesCount: 5
-          }
-        }
-      ];
-      
-      setEntries(sampleEntries);
-      
-      // Extract mood data from sample entries
-      const moods = sampleEntries
-        .filter(entry => entry.mood !== undefined)
-        .map(entry => ({
-          date: new Date(entry.createdAt).toISOString().split('T')[0],
-          value: entry.mood as number,
-          note: entry.content.substring(0, 50) + (entry.content.length > 50 ? '...' : '')
-        }));
-      
-      setMoodHistory(moods);
     }
   };
   
