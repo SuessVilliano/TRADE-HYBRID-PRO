@@ -91,6 +91,14 @@ export class SolscanAdapter {
       console.warn('SOLSCAN_API_KEY is not set in environment variables. API requests may be rate limited.');
     }
   }
+  
+  /**
+   * Set a new API key
+   */
+  public setApiKey(apiKey: string): void {
+    this.apiKey = apiKey;
+    console.log('Solscan API key updated');
+  }
 
   /**
    * Initialize the adapter

@@ -9,6 +9,7 @@ import notificationsRouter from "./api/notifications";
 import mcpTestRoutes from "./routes/mcp-test-routes";
 import journalRouter from "./api/journal";
 import matrixRouter from "./api/matrix";
+import solscanRouter from "./api/solscan-keys";
 
 // We'll create separate functions to directly use our signals-api
 const getSignals = (req: any, res: any) => {
@@ -340,6 +341,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register matrix contract API routes
   app.use('/api/matrix', matrixRouter);
+  
+  // Register Solscan API key management routes
+  app.use('/api/solscan', solscanRouter);
   // Market data routes
   app.get("/api/market/data", getMarketData);
   app.get("/api/market/price", getCurrentPrice);
