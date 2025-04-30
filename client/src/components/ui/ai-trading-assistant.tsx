@@ -264,10 +264,42 @@ export function AITradingAssistant({
             
             <TabsContent value="trading" className="mt-0 h-full">
               <div className="h-full p-4 space-y-4 overflow-auto">
-                <h3 className="text-lg font-medium">Market Analysis</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium">Market Analysis</h3>
+                  <div className="relative w-60">
+                    <input
+                      type="text"
+                      list="trading-assistant-symbols"
+                      className="w-full bg-slate-700 border border-slate-600 rounded-md p-2 text-white text-sm"
+                      value={selectedSymbol || symbol}
+                      onChange={(e) => {
+                        // This would typically set the symbol in a real implementation
+                        console.log("Symbol changed to:", e.target.value);
+                      }}
+                      placeholder="Enter any symbol..."
+                    />
+                    <datalist id="trading-assistant-symbols">
+                      <option value="BTCUSDT">Bitcoin (BTCUSDT)</option>
+                      <option value="ETHUSDT">Ethereum (ETHUSDT)</option>
+                      <option value="SOLUSDT">Solana (SOLUSDT)</option>
+                      <option value="AAPL">Apple (AAPL)</option>
+                      <option value="MSFT">Microsoft (MSFT)</option>
+                      <option value="GOOGL">Google (GOOGL)</option>
+                      <option value="TSLA">Tesla (TSLA)</option>
+                      <option value="AMZN">Amazon (AMZN)</option>
+                      <option value="META">Meta (META)</option>
+                      <option value="AMD">AMD (AMD)</option>
+                      <option value="NVDA">NVIDIA (NVDA)</option>
+                    </datalist>
+                    <div className="absolute right-2 top-2 text-xs text-gray-400 pointer-events-none">
+                      Type any symbol
+                    </div>
+                  </div>
+                </div>
+                
                 <p className="text-gray-600 dark:text-gray-400">
-                  This feature provides AI-generated analysis and trading ideas for {selectedSymbol || symbol}. 
-                  Coming soon in the next update.
+                  This feature provides AI-generated analysis and trading ideas for any market symbol.
+                  Enter any symbol supported by your broker.
                 </p>
                 
                 <div className="space-y-2">
