@@ -330,6 +330,7 @@ import solanaTokenApiRoutes from './routes/solana-token-api'; // Import for Sola
 import configRoutes from './api/config'; // Import for configuration API routes
 import authApiRoutes from './api/auth'; // Import for our new auth API routes
 import walletApiRoutes from './api/wallet'; // Import for our new wallet API routes
+import enhancedMarketDataRoutes from './api/market-data'; // Import for enhanced market data API routes
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Add route to serve Solana RPC URL from environment variables
