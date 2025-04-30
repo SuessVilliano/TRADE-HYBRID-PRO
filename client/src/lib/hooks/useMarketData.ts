@@ -29,7 +29,10 @@ interface MarketDataHook {
   symbol: string;
   setSymbol: (symbol: string) => void;
   currentPrice: number | null;
-  placeOrder: (tradeSuggestion: TradeSuggestion) => Promise<boolean>;
+  placeOrder: (tradeSuggestion: TradeSuggestion) => Promise<{success: boolean, message: string, orderId?: string}>;
+  refreshData: () => Promise<void>;
+  setAutoRefresh: (enabled: boolean) => void;
+  autoRefreshEnabled: boolean;
 }
 
 export const useMarketData = (): MarketDataHook => {
@@ -38,6 +41,89 @@ export const useMarketData = (): MarketDataHook => {
   const [error, setError] = useState<string | null>(null);
   const [symbol, setSymbol] = useState<string>('BINANCE:SOLUSDT');
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+  const [autoRefreshEnabled, setAutoRefresh] = useState<boolean>(false); // Default to disabled to reduce API calls
+
+  // Manually refresh market data (for on-demand updates)
+  const refreshData = useCallback(async (): Promise<void> => {
+    if (loading) return; // Skip if already loading
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      console.log(`Manual refresh of market data for ${symbol}`);
+      
+      // Extract the ticker symbol from formats like BINANCE:BTCUSDT or BTCUSD
+      const cleanSymbol = symbol.includes(':') ? symbol.split(':')[1] : symbol;
+      
+      // Use the appropriate API endpoint with use_cache param
+      const response = await axios.get(`/api/market-data/history`, {
+        params: {
+          symbol: cleanSymbol,
+          interval: '1h',
+          limit: 100,
+          use_cache: 'prefer' // Use cache if available, but refresh if older than TTL
+        }
+      });
+      
+      if (response.data && Array.isArray(response.data.bars)) {
+        // Transform the API response into our MarketData format
+        const realData: MarketData[] = response.data.bars.map((bar: any) => ({
+          open: parseFloat(bar.o),
+          high: parseFloat(bar.h),
+          low: parseFloat(bar.l),
+          close: parseFloat(bar.c),
+          volume: parseFloat(bar.v || '0'), // Some forex data might not have volume
+          timestamp: new Date(bar.t).getTime()
+        }));
+        
+        setMarketData(realData);
+        
+        // Set current price from the latest candle
+        if (realData.length > 0) {
+          setCurrentPrice(realData[realData.length - 1].close);
+        }
+        
+      } else {
+        throw new Error('Invalid data format received from API');
+      }
+    } catch (err) {
+      console.error('Error refreshing market data:', err);
+      
+      // Provide a more specific error message based on the type of error
+      let errorMessage = 'Failed to refresh market data. ';
+      
+      if (axios.isAxiosError(err)) {
+        if (err.response) {
+          // The request was made and the server responded with an error status
+          if (err.response.status === 429) {
+            errorMessage += 'Rate limit exceeded. Please try again in a few minutes.';
+          } else if (err.response.status === 401 || err.response.status === 403) {
+            errorMessage += 'Authentication failed. Please check your API credentials.';
+          } else if (err.response.status === 404) {
+            errorMessage += 'The requested data was not found. The symbol may be invalid.';
+          } else if (err.response.status >= 500) {
+            errorMessage += 'The server encountered an error. Please try again later.';
+          } else {
+            errorMessage += `Error code: ${err.response.status}. ${err.response.statusText || ''}`;
+          }
+        } else if (err.request) {
+          // The request was made but no response was received
+          errorMessage += 'No response received from API. Please check your internet connection.';
+        } else {
+          // Something happened in setting up the request
+          errorMessage += err.message;
+        }
+      } else {
+        // Not an Axios error
+        errorMessage += String(err);
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [symbol, loading]);
 
   // Function to determine if a symbol is forex
   const isForexSymbol = useCallback((symbolStr: string): boolean => {
@@ -143,15 +229,20 @@ export const useMarketData = (): MarketDataHook => {
     
     fetchData();
     
-    // Set up a real-time data refresh interval (5 seconds)
+    // Set up a real-time data refresh interval - now 30 seconds instead of 5 seconds
+    // Only runs if auto-refresh is enabled
     const interval = setInterval(async () => {
-      if (loading) return; // Skip updates if we're already loading data
+      // Skip updates if we're already loading data or auto-refresh is disabled
+      if (loading || !autoRefreshEnabled) return;
       
       try {
         // Fetch just the latest price for real-time updates
         const cleanSymbol = symbol.includes(':') ? symbol.split(':')[1] : symbol;
         const quoteResponse = await axios.get(`/api/market-data/quote`, {
-          params: { symbol: cleanSymbol }
+          params: { 
+            symbol: cleanSymbol,
+            use_cache: 'true' // Prefer cached data to reduce API calls
+          }
         });
         
         if (quoteResponse.data && quoteResponse.data.price) {
@@ -186,10 +277,10 @@ export const useMarketData = (): MarketDataHook => {
         console.error('Error updating real-time price:', err);
         // Don't set error state for background updates to avoid UI disruption
       }
-    }, 5000);
+    }, 30000); // Changed from 5000ms (5s) to 30000ms (30s) to reduce API calls
     
     return () => clearInterval(interval);
-  }, [symbol, isForexSymbol, loading, marketData]);
+  }, [symbol, isForexSymbol, loading, marketData, autoRefreshEnabled]); // Added autoRefreshEnabled to dependencies
 
   // Function to place a trade order
   const placeOrder = async (tradeSuggestion: TradeSuggestion): Promise<{success: boolean, message: string, orderId?: string}> => {
@@ -277,6 +368,9 @@ export const useMarketData = (): MarketDataHook => {
     symbol,
     setSymbol,
     currentPrice,
-    placeOrder
+    placeOrder,
+    refreshData,
+    setAutoRefresh,
+    autoRefreshEnabled
   };
 };
