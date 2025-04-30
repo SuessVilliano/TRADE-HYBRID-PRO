@@ -8,6 +8,7 @@ import { getBots, getBot, createBot, updateBot, deleteBot, runBot, stopBot } fro
 import notificationsRouter from "./api/notifications";
 import mcpTestRoutes from "./routes/mcp-test-routes";
 import journalRouter from "./api/journal";
+import matrixRouter from "./api/matrix";
 
 // We'll create separate functions to directly use our signals-api
 const getSignals = (req: any, res: any) => {
