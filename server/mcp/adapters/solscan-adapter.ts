@@ -99,6 +99,24 @@ export class SolscanAdapter {
     this.apiKey = apiKey;
     console.log('Solscan API key updated');
   }
+  
+  /**
+   * Update API key and test if it works
+   */
+  public async updateApiKey(apiKey: string): Promise<boolean> {
+    this.apiKey = apiKey;
+    console.log('Solscan API key updated');
+    
+    // Test if the API key works
+    try {
+      // Make a simple request to test the API key
+      await this.getNetworkStatus();
+      return true;
+    } catch (error) {
+      console.error('Error testing new Solscan API key:', error);
+      return false;
+    }
+  }
 
   /**
    * Initialize the adapter

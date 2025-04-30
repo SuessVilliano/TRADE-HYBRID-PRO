@@ -75,6 +75,8 @@ export class SolanaBlockchainService extends EventEmitter {
   private tokenPriceCache: Map<string, TokenPriceData> = new Map();
   private tokenInfoCache: Map<string, TokenInfo> = new Map();
   private useFallbackMethods: boolean = false;
+  private cachingEnabled: boolean = true;
+  private solscanApiAvailable: boolean = false;
   private static instance: SolanaBlockchainService;
 
   // Singleton pattern
@@ -493,5 +495,250 @@ export class SolanaBlockchainService extends EventEmitter {
       console.error('Error getting Solana network status:', error);
       throw error;
     }
+  }
+
+  /**
+   * Force the THC token info to update
+   */
+  async forceUpdateTHCTokenInfo(): Promise<void> {
+    try {
+      // Only use Solscan if it's available and we're not in fallback mode
+      if (!this.useFallbackMethods && !this.solscanApiAvailable) {
+        try {
+          // Test Solscan API first
+          await this.solscanAdapter.getNetworkStatus();
+          this.solscanApiAvailable = true;
+        } catch (error) {
+          console.warn('Solscan API is not available for token update:', error);
+          this.solscanApiAvailable = false;
+        }
+      }
+      
+      if (this.solscanApiAvailable) {
+        try {
+          // Use Solscan to get token info
+          const tokenInfo = await this.solscanAdapter.getTHCTokenInfo();
+          
+          // Cache token info
+          this.tokenInfoCache.set('4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4', {
+            symbol: tokenInfo.symbol,
+            name: tokenInfo.name,
+            address: tokenInfo.address,
+            decimals: tokenInfo.decimals,
+            iconUrl: tokenInfo.icon,
+            totalSupply: tokenInfo.totalSupply,
+            marketCap: tokenInfo.marketCap,
+            price: tokenInfo.marketCap ? (tokenInfo.marketCap / Number(tokenInfo.totalSupply)) : 0.035,
+            priceChange24h: 0
+          });
+          
+          // Update price cache
+          this.tokenPriceCache.set('4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4', {
+            price: tokenInfo.marketCap ? (tokenInfo.marketCap / Number(tokenInfo.totalSupply)) : 0.035,
+            priceChange24h: 0,
+            lastUpdated: new Date()
+          });
+          
+          // Emit token price update event
+          this.emit('tokenPriceUpdated', {
+            tokenAddress: '4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4',
+            price: tokenInfo.marketCap ? (tokenInfo.marketCap / Number(tokenInfo.totalSupply)) : 0.035
+          });
+          
+          console.log('THC token info updated from Solscan API');
+        } catch (error) {
+          console.error('Error updating token info from Solscan:', error);
+          this.solscanApiAvailable = false;
+          this.useFallbackMethods = true;
+          
+          // Fall through to use fallback values
+          this.updateFromFallbackValues();
+        }
+      } else {
+        // Use fallback values
+        this.updateFromFallbackValues();
+      }
+    } catch (error) {
+      console.error('Error forcing THC token info update:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Update token info from fallback values
+   */
+  private updateFromFallbackValues(): void {
+    // Use cached/default values
+    const basePrice = 0.035; // Base price for THC token
+    const totalSupply = 1000000000; // 1 billion tokens
+    const marketCap = basePrice * totalSupply;
+    
+    // Update token info cache with default values
+    this.tokenInfoCache.set('4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4', {
+      symbol: 'THC',
+      name: 'Trade Hybrid Coin',
+      address: '4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4',
+      decimals: 9,
+      iconUrl: 'https://tradehybrid.club/thc-token.png',
+      totalSupply: totalSupply.toString(),
+      marketCap: marketCap,
+      price: basePrice,
+      priceChange24h: 0
+    });
+    
+    // Update price cache
+    this.tokenPriceCache.set('4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4', {
+      price: basePrice,
+      priceChange24h: 0,
+      lastUpdated: new Date()
+    });
+    
+    // Emit token price update event
+    this.emit('tokenPriceUpdated', {
+      tokenAddress: '4kXPBvQthvpes9TC7h6tXsYxWPUbYWpocBMVUG3eBLy4',
+      price: basePrice
+    });
+    
+    console.log('THC token info updated from fallback values');
+  }
+  
+  /**
+   * Check the status of the Solscan API
+   */
+  async getSolscanAPIStatus(): Promise<{working: boolean, message: string, useFallbackMode: boolean}> {
+    try {
+      // Test Solscan API with a basic request
+      try {
+        await this.solscanAdapter.getNetworkStatus();
+        this.solscanApiAvailable = true;
+        
+        return {
+          working: true,
+          message: 'Solscan API is working properly',
+          useFallbackMode: this.useFallbackMethods
+        };
+      } catch (error: any) {
+        this.solscanApiAvailable = false;
+        
+        // Automatically enable fallback mode
+        this.useFallbackMethods = true;
+        
+        return {
+          working: false,
+          message: error.message || 'Solscan API is not working',
+          useFallbackMode: this.useFallbackMethods
+        };
+      }
+    } catch (error: any) {
+      console.error('Error checking Solscan API status:', error);
+      return {
+        working: false,
+        message: error.message || 'Error checking Solscan API status',
+        useFallbackMode: true
+      };
+    }
+  }
+  
+  /**
+   * Update the Solscan API key
+   */
+  async updateSolscanApiKey(apiKey: string): Promise<{success: boolean, message: string, apiWorking?: boolean}> {
+    try {
+      // Update the API key in the Solscan adapter
+      await this.solscanAdapter.updateApiKey(apiKey);
+      
+      // Test if the API key works
+      try {
+        // Try to make a request with the new key
+        await this.solscanAdapter.getNetworkStatus();
+        
+        // Mark API as available
+        this.solscanApiAvailable = true;
+        
+        // Disable fallback methods if key works
+        this.useFallbackMethods = false;
+        
+        // Try to update THC token info with the new key
+        try {
+          await this.forceUpdateTHCTokenInfo();
+        } catch (tokenError) {
+          console.warn('Error updating THC token info with new API key:', tokenError);
+        }
+        
+        return {
+          success: true,
+          message: 'Solscan API key updated and working properly',
+          apiWorking: true
+        };
+      } catch (apiError: any) {
+        // API key doesn't work, keep fallback mode enabled
+        this.solscanApiAvailable = false;
+        this.useFallbackMethods = true;
+        
+        return {
+          success: true, // We still updated the key even if it doesn't work
+          message: `Solscan API key updated but not working: ${apiError.message}`,
+          apiWorking: false
+        };
+      }
+    } catch (error: any) {
+      console.error('Error updating Solscan API key:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to update Solscan API key'
+      };
+    }
+  }
+  
+  /**
+   * Get the current service settings
+   */
+  async getServiceSettings(): Promise<{
+    useFallbackMethods: boolean,
+    solscanApiAvailable: boolean,
+    cachingEnabled: boolean,
+    initialized: boolean,
+    fallbackRpcUrl: string
+  }> {
+    return {
+      useFallbackMethods: this.useFallbackMethods,
+      solscanApiAvailable: this.solscanApiAvailable,
+      cachingEnabled: this.cachingEnabled,
+      initialized: this.initialized,
+      fallbackRpcUrl: process.env.SOLANA_RPC_URL || ''
+    };
+  }
+  
+  /**
+   * Set fallback mode
+   */
+  async setFallbackMode(enable: boolean): Promise<{
+    useFallbackMethods: boolean,
+    solscanApiAvailable: boolean
+  }> {
+    // If enabling fallback mode, just set it
+    if (enable) {
+      this.useFallbackMethods = true;
+      return {
+        useFallbackMethods: this.useFallbackMethods,
+        solscanApiAvailable: this.solscanApiAvailable
+      };
+    }
+    
+    // If disabling fallback mode, test if Solscan API is available
+    try {
+      await this.solscanAdapter.getNetworkStatus();
+      this.solscanApiAvailable = true;
+      this.useFallbackMethods = false;
+    } catch (error) {
+      console.warn('Cannot disable fallback mode as Solscan API is not available:', error);
+      this.solscanApiAvailable = false;
+      this.useFallbackMethods = true;
+    }
+    
+    return {
+      useFallbackMethods: this.useFallbackMethods,
+      solscanApiAvailable: this.solscanApiAvailable
+    };
   }
 }

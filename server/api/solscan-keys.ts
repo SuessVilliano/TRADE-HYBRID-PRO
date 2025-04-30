@@ -1,105 +1,155 @@
-/**
- * API Routes for Solscan API Keys
- * 
- * This file provides endpoints to check and set the Solscan API key.
- */
+import { Router, Request, Response } from 'express';
+import { SolanaBlockchainService } from '../mcp/services/solana-blockchain-service';
 
-import express, { Request, Response } from 'express';
-import { SolscanAdapter } from '../mcp/adapters/solscan-adapter';
-import dotenv from 'dotenv';
-import fs from 'fs';
-import path from 'path';
+const router = Router();
 
-const router = express.Router();
-
-// Initialize the Solscan adapter
-const solscanAdapter = new SolscanAdapter(process.env.SOLSCAN_API_KEY || '');
-
-/**
- * Check if the current Solscan API key is valid
- * GET /api/solscan/check
- */
-router.get('/check', async (req: Request, res: Response) => {
+// Get current Solscan API status
+router.get('/status', async (req: Request, res: Response) => {
   try {
-    const isValid = await solscanAdapter.isApiKeyValid();
+    // Get the Solana blockchain service instance
+    const solanaService = SolanaBlockchainService.getInstance();
     
-    res.json({
-      hasKey: !!process.env.SOLSCAN_API_KEY,
-      isValid
+    // Check the status of the Solscan API by testing a basic request
+    const apiStatus = await solanaService.getSolscanAPIStatus();
+    
+    return res.json({
+      success: true,
+      status: apiStatus.working ? 'working' : 'not working',
+      message: apiStatus.message,
+      useFallbackMode: apiStatus.useFallbackMode
     });
-  } catch (error) {
-    console.error('Error checking Solscan API key:', error);
-    res.status(500).json({ error: 'Failed to check Solscan API key' });
+  } catch (error: any) {
+    console.error('Error checking Solscan API status:', error);
+    return res.status(500).json({
+      success: false,
+      status: 'error',
+      message: error.message || 'An error occurred checking Solscan API status'
+    });
   }
 });
 
-/**
- * Set a new Solscan API key
- * POST /api/solscan/key
- */
-router.post('/key', async (req: Request, res: Response) => {
+// Update Solscan API key
+router.post('/update-key', async (req: Request, res: Response) => {
   try {
     const { apiKey } = req.body;
     
     if (!apiKey) {
-      return res.status(400).json({ error: 'API key is required' });
-    }
-    
-    // Create a temporary adapter with the new key to check its validity
-    const tempAdapter = new SolscanAdapter(apiKey);
-    const isValid = await tempAdapter.isApiKeyValid();
-    
-    if (!isValid) {
-      return res.status(400).json({ error: 'Invalid API key' });
-    }
-    
-    // Update the environment variable
-    process.env.SOLSCAN_API_KEY = apiKey;
-    
-    // Update the .env file
-    try {
-      const envPath = path.resolve(process.cwd(), '.env');
-      let envContent = '';
-      
-      // Read the current .env file
-      if (fs.existsSync(envPath)) {
-        envContent = fs.readFileSync(envPath, 'utf8');
-      }
-      
-      // Check if SOLSCAN_API_KEY exists in the .env file
-      if (envContent.includes('SOLSCAN_API_KEY=')) {
-        // Replace the existing key
-        envContent = envContent.replace(
-          /SOLSCAN_API_KEY=.*/,
-          `SOLSCAN_API_KEY=${apiKey}`
-        );
-      } else {
-        // Add the key to the .env file
-        envContent += `\nSOLSCAN_API_KEY=${apiKey}`;
-      }
-      
-      // Write the updated .env file
-      fs.writeFileSync(envPath, envContent);
-      
-      // Reload environment variables
-      dotenv.config();
-      
-      console.log('Solscan API key updated successfully');
-      
-      // Update the global solscanAdapter
-      solscanAdapter.setApiKey(apiKey);
-      
-      return res.json({ 
-        success: true, 
-        message: 'Solscan API key updated successfully' 
+      return res.status(400).json({
+        success: false,
+        message: 'API key is required'
       });
-    } catch (fileError) {
-      console.error('Error updating .env file:', fileError);
-      return res.status(500).json({ error: 'Failed to update .env file' });
     }
-  } catch (error) {
-    console.error('Error setting Solscan API key:', error);
-    res.status(500).json({ error: 'Failed to set Solscan API key' });
+    
+    // Get the Solana blockchain service instance
+    const solanaService = SolanaBlockchainService.getInstance();
+    
+    // Update the API key
+    const updateResult = await solanaService.updateSolscanApiKey(apiKey);
+    
+    if (updateResult.success) {
+      return res.json({
+        success: true,
+        message: 'Solscan API key updated successfully',
+        status: updateResult.apiWorking ? 'working' : 'not working'
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: updateResult.message || 'Failed to update Solscan API key'
+      });
+    }
+  } catch (error: any) {
+    console.error('Error updating Solscan API key:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'An error occurred updating Solscan API key'
+    });
+  }
+});
+
+// Get current settings for the SolanaBlockchainService
+router.get('/settings', async (req: Request, res: Response) => {
+  try {
+    // Get the Solana blockchain service instance
+    const solanaService = SolanaBlockchainService.getInstance();
+    
+    // Get the current settings
+    const settings = await solanaService.getServiceSettings();
+    
+    return res.json({
+      success: true,
+      settings: {
+        useFallbackMethods: settings.useFallbackMethods,
+        solscanApiAvailable: settings.solscanApiAvailable,
+        cachingEnabled: settings.cachingEnabled,
+        initialized: settings.initialized,
+        fallbackRpcUrl: settings.fallbackRpcUrl ? "Available" : "Not configured"
+      }
+    });
+  } catch (error: any) {
+    console.error('Error getting Solana service settings:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'An error occurred getting Solana service settings'
+    });
+  }
+});
+
+// Force refresh of cached THC token data
+router.post('/refresh-token-cache', async (req: Request, res: Response) => {
+  try {
+    // Get the Solana blockchain service instance
+    const solanaService = SolanaBlockchainService.getInstance();
+    
+    // Force update of THC token info
+    await solanaService.forceUpdateTHCTokenInfo();
+    
+    // Get the current token info
+    const tokenInfo = await solanaService.getTHCTokenInfo();
+    
+    return res.json({
+      success: true,
+      message: 'THC token info refreshed successfully',
+      tokenInfo
+    });
+  } catch (error: any) {
+    console.error('Error refreshing THC token info:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'An error occurred refreshing THC token info'
+    });
+  }
+});
+
+// Toggle fallback mode
+router.post('/toggle-fallback', async (req: Request, res: Response) => {
+  try {
+    const { enableFallback } = req.body;
+    
+    if (enableFallback === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'enableFallback parameter is required'
+      });
+    }
+    
+    // Get the Solana blockchain service instance
+    const solanaService = SolanaBlockchainService.getInstance();
+    
+    // Set fallback mode
+    const result = await solanaService.setFallbackMode(enableFallback === true);
+    
+    return res.json({
+      success: true,
+      message: `Fallback mode ${enableFallback ? 'enabled' : 'disabled'} successfully`,
+      currentSettings: result
+    });
+  } catch (error: any) {
+    console.error('Error toggling fallback mode:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'An error occurred toggling fallback mode'
+    });
   }
 });
 
