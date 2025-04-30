@@ -36,6 +36,21 @@ export class MarketDataManager {
   private constructor(mcp: MCPServer) {
     this.mcp = mcp;
     console.log('Market Data Manager initialized');
+    
+    // Auto-register RapidAPI provider if API key is available
+    if (process.env.RAPID_API_KEY) {
+      this.registerRapidAPIProvider(process.env.RAPID_API_KEY)
+        .then(success => {
+          if (success) {
+            console.log('RapidAPI provider automatically registered on startup');
+          } else {
+            console.warn('Failed to auto-register RapidAPI provider');
+          }
+        })
+        .catch(error => {
+          console.error('Error during RapidAPI provider auto-registration:', error);
+        });
+    }
   }
   
   /**
@@ -92,10 +107,13 @@ export class MarketDataManager {
       }
       
       // Check for RapidAPI credentials
-      const rapidApiKey = process.env.RAPIDAPI_KEY || '39b9c246b0msh8981e7993ba7354p1804d6jsn4711338b7ff9'; // Default from attached documentation
+      const rapidApiKey = process.env.RAPID_API_KEY;
       
       if (rapidApiKey) {
+        console.log('Found RAPID_API_KEY, registering RapidAPI provider');
         await this.registerRapidAPIProvider(rapidApiKey);
+      } else {
+        console.log('No RAPID_API_KEY found, skipping RapidAPI provider registration');
       }
       
       console.log('Default market data providers registered');
