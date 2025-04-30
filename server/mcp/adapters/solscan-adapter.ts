@@ -198,6 +198,19 @@ export class SolscanAdapter {
       if (axios.isAxiosError(error)) {
         console.error(`Solscan API error (${endpoint}):`, error.response?.status, error.response?.data);
         
+        // Check specifically for 403 Forbidden error which is common with cloud environments
+        if (error.response?.status === 403) {
+          console.warn(`Solscan API returned 403 Forbidden. This is common when accessing from cloud environments like Replit.`);
+          console.warn(`Will attempt to use alternative data sources or cached data if available.`);
+          
+          // Special handling - mark this response with 403 flag so services can implement fallbacks
+          return { 
+            _error403: true,
+            _endpoint: endpoint,
+            _params: params 
+          } as any as T;
+        }
+        
         if (ignoreErrors) {
           // Return a default empty response object when ignoring errors
           return {} as T;

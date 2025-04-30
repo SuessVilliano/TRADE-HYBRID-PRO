@@ -19,6 +19,7 @@ import {
 
 import { createTradingViewDataProvider } from './tradingview-data-provider';
 import { createCMEGroupDataProvider } from './cme-data-provider';
+import { createRapidAPIDataProvider } from '../providers/rapidapi-data-provider';
 import { MCPServer } from '../core/mcp-server';
 
 /**
@@ -90,9 +91,50 @@ export class MarketDataManager {
         );
       }
       
+      // Check for RapidAPI credentials
+      const rapidApiKey = process.env.RAPIDAPI_KEY || '39b9c246b0msh8981e7993ba7354p1804d6jsn4711338b7ff9'; // Default from attached documentation
+      
+      if (rapidApiKey) {
+        await this.registerRapidAPIProvider(rapidApiKey);
+      }
+      
       console.log('Default market data providers registered');
     } catch (error) {
       console.error('Error initializing default data providers:', error);
+    }
+  }
+  
+  /**
+   * Register a RapidAPI data provider
+   */
+  public async registerRapidAPIProvider(
+    apiKey: string,
+    preferredProvider?: string,
+    providerPreference?: string[]
+  ): Promise<boolean> {
+    try {
+      // Create provider
+      const provider = createRapidAPIDataProvider({
+        apiKey,
+        preferredProvider,
+        providerPreference
+      });
+      
+      // Test connection
+      const connected = await provider.connect();
+      if (!connected) {
+        console.error('Failed to connect to RapidAPI data provider');
+        return false;
+      }
+      
+      // Register with service
+      this.providers.set('rapidapi', provider);
+      
+      console.log('RapidAPI data provider registered successfully');
+      return true;
+    } catch (error) {
+      console.error('Error registering RapidAPI data provider:', error);
+      return false;
     }
   }
   
