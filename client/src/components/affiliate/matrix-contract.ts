@@ -80,6 +80,85 @@ export class MatrixContract {
   }
   
   /**
+   * Get a user's matrix data including active slots, direct referrals, and earnings
+   * @param walletAddress User's wallet address
+   * @returns Participant data or throws an error if fetching fails
+   */
+  public async getUserMatrix(walletAddress: PublicKey): Promise<Participant> {
+    try {
+      // In a real implementation, this would query the blockchain or backend API
+      // For now, we generate mock data for the UI to display
+      
+      // Generate 1-5 random active slots
+      const numSlots = Math.floor(Math.random() * 5) + 1;
+      const activeSlots: MatrixSlot[] = [];
+      
+      let totalEarnings = 0;
+      let totalSlotsValue = 0;
+      
+      for (let i = 0; i < numSlots; i++) {
+        const slotNumber = Math.floor(Math.random() * 12) + 1;
+        const price = MATRIX_CONFIG.slotPrices[slotNumber - 1];
+        const currency = MATRIX_CONFIG.supportedCurrencies[Math.floor(Math.random() * MATRIX_CONFIG.supportedCurrencies.length)] as 'THC' | 'SOL' | 'USDC';
+        
+        // Generate 0-3 referrals for each slot
+        const numReferrals = Math.floor(Math.random() * 4);
+        const referrals = [];
+        
+        let slotEarnings = 0;
+        
+        for (let j = 0; j < numReferrals; j++) {
+          const earnings = Math.random() * price * 0.5; // Random earnings up to 50% of slot price
+          slotEarnings += earnings;
+          
+          referrals.push({
+            address: new PublicKey(Keypair.generate().publicKey),
+            slotFilled: j + 1,
+            earnings,
+            date: Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000) // Random date in the last 30 days
+          });
+        }
+        
+        totalEarnings += slotEarnings;
+        totalSlotsValue += price;
+        
+        activeSlots.push({
+          id: `slot-${slotNumber}-${Date.now()}`,
+          slotNumber,
+          price,
+          currency,
+          purchaseDate: Date.now() - Math.floor(Math.random() * 60 * 24 * 60 * 60 * 1000), // Random date in the last 60 days
+          isActive: true,
+          earningsFromSlot: slotEarnings,
+          referrals
+        });
+      }
+      
+      // Generate 0-10 direct referrals
+      const numDirectReferrals = Math.floor(Math.random() * 11);
+      const directReferrals: PublicKey[] = [];
+      
+      for (let i = 0; i < numDirectReferrals; i++) {
+        directReferrals.push(new PublicKey(Keypair.generate().publicKey));
+      }
+      
+      return {
+        address: walletAddress,
+        referrer: Math.random() > 0.3 ? new PublicKey(Keypair.generate().publicKey) : null, // 70% chance of having a referrer
+        registrationTime: Date.now() - Math.floor(Math.random() * 90 * 24 * 60 * 60 * 1000), // Random registration in the last 90 days
+        activeSlots,
+        directReferrals,
+        totalEarnings,
+        totalSlotsValue,
+        preferredCurrency: 'THC' as 'THC' | 'SOL' | 'USDC'
+      };
+    } catch (error) {
+      console.error('Error fetching user matrix data:', error);
+      throw new Error('Failed to fetch matrix data. Please try again later.');
+    }
+  }
+  
+  /**
    * Parse account data from the chain
    * This method would parse the raw binary data from a program account
    * @param accountId The account public key
@@ -293,6 +372,95 @@ export class MatrixContract {
     //Simplified placement logic - replace with more robust algorithm
     let position = "1_1"; // Default to level 1, slot 1
     return position;
+  }
+  
+  /**
+   * Purchase a new slot in the matrix
+   * @param wallet User's wallet for signing the transaction
+   * @param slotNumber The slot number to purchase (1-12)
+   * @param currency The currency to use for payment (THC, SOL, USDC)
+   * @returns Transaction signature
+   */
+  public async purchaseSlot(
+    wallet: { publicKey: PublicKey; signTransaction: any },
+    slotNumber: number,
+    currency: 'THC' | 'SOL' | 'USDC'
+  ): Promise<string> {
+    if (slotNumber < 1 || slotNumber > 12) {
+      throw new Error('Invalid slot number. Must be between 1 and 12.');
+    }
+    
+    if (!MATRIX_CONFIG.supportedCurrencies.includes(currency)) {
+      throw new Error(`Unsupported currency: ${currency}. Supported currencies: ${MATRIX_CONFIG.supportedCurrencies.join(', ')}`);
+    }
+    
+    const slotPrice = MATRIX_CONFIG.slotPrices[slotNumber - 1];
+    console.log(`Purchasing slot ${slotNumber} for ${slotPrice} ${currency}...`);
+    
+    // In a real implementation, this would:
+    // 1. Create a transaction to transfer tokens from the user to the matrix contract
+    // 2. Have the user sign the transaction
+    // 3. Send the transaction to the blockchain
+    // 4. Process the purchase internally (update the matrix state)
+    
+    // For demo purposes, simulate a delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Return a simulated transaction signature
+    return `matrix-purchase-${wallet.publicKey.toString().substring(0, 8)}-${slotNumber}-${Date.now()}`;
+  }
+  
+  /**
+   * Recycle a slot in the matrix to create a new position
+   * @param wallet User's wallet for signing the transaction
+   * @param slotNumber The slot number to recycle (1-12)
+   * @returns Transaction signature
+   */
+  public async recycleSlot(
+    wallet: { publicKey: PublicKey; signTransaction: any },
+    slotNumber: number
+  ): Promise<string> {
+    if (slotNumber < 1 || slotNumber > 12) {
+      throw new Error('Invalid slot number. Must be between 1 and 12.');
+    }
+    
+    console.log(`Recycling slot ${slotNumber}...`);
+    
+    // In a real implementation, this would:
+    // 1. Create a transaction to recycle the slot
+    // 2. Have the user sign the transaction
+    // 3. Send the transaction to the blockchain
+    // 4. Process the recycling internally (update the matrix state)
+    
+    // For demo purposes, simulate a delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Return a simulated transaction signature
+    return `matrix-recycle-${wallet.publicKey.toString().substring(0, 8)}-${slotNumber}-${Date.now()}`;
+  }
+  
+  /**
+   * Claim available commissions from the matrix
+   * @param wallet User's wallet for signing the transaction
+   * @returns Transaction signature
+   */
+  public async claimCommissions(
+    wallet: { publicKey: PublicKey; signTransaction: any }
+  ): Promise<string> {
+    console.log(`Claiming commissions for ${wallet.publicKey.toString().substring(0, 8)}...`);
+    
+    // In a real implementation, this would:
+    // 1. Calculate available commissions
+    // 2. Create a transaction to transfer tokens from the matrix contract to the user
+    // 3. Have the user sign the transaction
+    // 4. Send the transaction to the blockchain
+    // 5. Update the user's earnings record
+    
+    // For demo purposes, simulate a delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Return a simulated transaction signature
+    return `matrix-claim-${wallet.publicKey.toString().substring(0, 8)}-${Date.now()}`;
   }
 }
 
