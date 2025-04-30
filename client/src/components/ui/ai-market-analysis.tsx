@@ -156,47 +156,84 @@ export function AIMarketAnalysis({ className }: AIMarketAnalysisProps) {
       <div className="p-4 border-b border-slate-700">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm mb-1 text-slate-400">Select Asset</label>
-            <select 
-              className="w-full bg-slate-700 border border-slate-600 rounded-md p-2 text-white"
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value)}
-            >
-              <optgroup label="Cryptocurrency">
-                <option value="BTCUSDT">Bitcoin (BTCUSDT)</option>
-                <option value="ETHUSDT">Ethereum (ETHUSDT)</option>
-                <option value="SOLUSDT">Solana (SOLUSDT)</option>
-                <option value="BNBUSDT">Binance Coin (BNBUSDT)</option>
-                <option value="ADAUSDT">Cardano (ADAUSDT)</option>
-              </optgroup>
-              <optgroup label="Stocks">
-                <option value="AAPL">Apple Inc. (AAPL)</option>
-                <option value="MSFT">Microsoft Corporation (MSFT)</option>
-                <option value="GOOGL">Alphabet Inc. (GOOGL)</option>
-                <option value="AMZN">Amazon.com Inc. (AMZN)</option>
-                <option value="TSLA">Tesla Inc. (TSLA)</option>
-                <option value="NVDA">NVIDIA Corporation (NVDA)</option>
-                <option value="META">Meta Platforms Inc. (META)</option>
-              </optgroup>
-              <optgroup label="Forex">
-                <option value="EUR/USD">Euro/US Dollar (EUR/USD)</option>
-                <option value="GBP/USD">British Pound/US Dollar (GBP/USD)</option>
-                <option value="USD/JPY">US Dollar/Japanese Yen (USD/JPY)</option>
-                <option value="USD/CAD">US Dollar/Canadian Dollar (USD/CAD)</option>
-                <option value="AUD/USD">Australian Dollar/US Dollar (AUD/USD)</option>
-              </optgroup>
-              <optgroup label="Commodities">
-                <option value="XAUUSD">Gold (XAUUSD)</option>
-                <option value="XAGUSD">Silver (XAGUSD)</option>
-                <option value="CL=F">Crude Oil (CL=F)</option>
-                <option value="NG=F">Natural Gas (NG=F)</option>
-              </optgroup>
-              <optgroup label="ETFs">
-                <option value="SPY">SPDR S&P 500 ETF Trust (SPY)</option>
-                <option value="QQQ">Invesco QQQ Trust (QQQ)</option>
-                <option value="VTI">Vanguard Total Stock Market ETF (VTI)</option>
-              </optgroup>
-            </select>
+            <label className="block text-sm mb-1 text-slate-400">Enter Any Asset</label>
+            <div className="relative">
+              <input
+                list="market-analysis-symbols"
+                className="w-full bg-slate-700 border border-slate-600 rounded-md p-2 text-white"
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
+                placeholder="Enter any symbol..."
+              />
+              <datalist id="market-analysis-symbols">
+                <optgroup label="Cryptocurrency">
+                  <option value="BTCUSDT">Bitcoin (BTCUSDT)</option>
+                  <option value="ETHUSDT">Ethereum (ETHUSDT)</option>
+                  <option value="SOLUSDT">Solana (SOLUSDT)</option>
+                  <option value="BNBUSDT">Binance Coin (BNBUSDT)</option>
+                  <option value="ADAUSDT">Cardano (ADAUSDT)</option>
+                  <option value="DOGEUSDT">Dogecoin (DOGEUSDT)</option>
+                  <option value="DOTUSDT">Polkadot (DOTUSDT)</option>
+                  <option value="LINKUSDT">Chainlink (LINKUSDT)</option>
+                  <option value="AVAXUSDT">Avalanche (AVAXUSDT)</option>
+                  <option value="MATICUSDT">Polygon (MATICUSDT)</option>
+                </optgroup>
+                <optgroup label="Stocks">
+                  <option value="AAPL">Apple Inc. (AAPL)</option>
+                  <option value="MSFT">Microsoft Corporation (MSFT)</option>
+                  <option value="GOOGL">Alphabet Inc. (GOOGL)</option>
+                  <option value="AMZN">Amazon.com Inc. (AMZN)</option>
+                  <option value="TSLA">Tesla Inc. (TSLA)</option>
+                  <option value="NVDA">NVIDIA Corporation (NVDA)</option>
+                  <option value="META">Meta Platforms Inc. (META)</option>
+                  <option value="JPM">JPMorgan Chase (JPM)</option>
+                  <option value="V">Visa (V)</option>
+                  <option value="WMT">Walmart (WMT)</option>
+                  <option value="DIS">Disney (DIS)</option>
+                  <option value="PFE">Pfizer (PFE)</option>
+                  <option value="AMD">AMD (AMD)</option>
+                  <option value="NFLX">Netflix (NFLX)</option>
+                  <option value="BABA">Alibaba (BABA)</option>
+                </optgroup>
+                <optgroup label="Forex">
+                  <option value="EUR/USD">Euro/US Dollar (EUR/USD)</option>
+                  <option value="GBP/USD">British Pound/US Dollar (GBP/USD)</option>
+                  <option value="USD/JPY">US Dollar/Japanese Yen (USD/JPY)</option>
+                  <option value="USD/CAD">US Dollar/Canadian Dollar (USD/CAD)</option>
+                  <option value="AUD/USD">Australian Dollar/US Dollar (AUD/USD)</option>
+                  <option value="NZD/USD">New Zealand Dollar/US Dollar (NZD/USD)</option>
+                  <option value="USD/CHF">US Dollar/Swiss Franc (USD/CHF)</option>
+                  <option value="EUR/GBP">Euro/British Pound (EUR/GBP)</option>
+                  <option value="USD/CNY">US Dollar/Chinese Yuan (USD/CNY)</option>
+                </optgroup>
+                <optgroup label="Commodities">
+                  <option value="XAUUSD">Gold (XAUUSD)</option>
+                  <option value="XAGUSD">Silver (XAGUSD)</option>
+                  <option value="CL=F">Crude Oil (CL=F)</option>
+                  <option value="NG=F">Natural Gas (NG=F)</option>
+                  <option value="HG=F">Copper (HG=F)</option>
+                  <option value="ZC=F">Corn (ZC=F)</option>
+                  <option value="ZW=F">Wheat (ZW=F)</option>
+                  <option value="ZS=F">Soybeans (ZS=F)</option>
+                </optgroup>
+                <optgroup label="ETFs">
+                  <option value="SPY">SPDR S&P 500 ETF Trust (SPY)</option>
+                  <option value="QQQ">Invesco QQQ Trust (QQQ)</option>
+                  <option value="VTI">Vanguard Total Stock Market ETF (VTI)</option>
+                  <option value="IWM">iShares Russell 2000 ETF (IWM)</option>
+                  <option value="EEM">iShares MSCI Emerging Markets ETF (EEM)</option>
+                  <option value="GLD">SPDR Gold Shares (GLD)</option>
+                  <option value="VEA">Vanguard FTSE Developed Markets ETF (VEA)</option>
+                  <option value="SHY">iShares 1-3 Year Treasury Bond ETF (SHY)</option>
+                </optgroup>
+              </datalist>
+              <div className="absolute right-2 top-2 text-xs text-gray-400 pointer-events-none">
+                Type any symbol
+              </div>
+            </div>
+            <div className="mt-1 text-xs text-slate-400">
+              Enter any market symbol for AI analysis
+            </div>
           </div>
           
           <div>
