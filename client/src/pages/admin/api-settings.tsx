@@ -2,7 +2,7 @@ import React from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { PageTitle } from '@/components/common/PageTitle';
 import { Card, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui';
-import SolscanApiSettings from '@/components/admin/SolscanApiSettings';
+import { SolscanSettings } from '@/components/admin/SolscanSettings';
 
 const ApiSettingsPage: React.FC = () => {
   return (
@@ -19,7 +19,9 @@ const ApiSettingsPage: React.FC = () => {
             </TabsList>
             
             <TabsContent value="solscan">
-              <SolscanApiSettings />
+              <div className="p-6">
+                <SolscanSettings />
+              </div>
             </TabsContent>
             
             <TabsContent value="rapidapi">
