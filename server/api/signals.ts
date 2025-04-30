@@ -1,8 +1,11 @@
 import { Router } from 'express';
 // Note: We're no longer using the Google Sheets service, but keeping the SIGNAL_SOURCES reference for compatibility
 import { SIGNAL_SOURCES } from './sheets-service';
+import { getEnhancedMarketDataService } from '../services/enhanced-market-data-service';
 
 const router = Router();
+// Get enhanced market data service instance
+const enhancedMarketDataService = getEnhancedMarketDataService();
 
 // Get signal sources (names only - for dropdown selection)
 router.get('/sources', (req, res) => {
@@ -543,6 +546,9 @@ router.get('/trading-signals', async (req, res) => {
     // Check if we're in demo mode
     const demoMode = req.query.demo === 'true';
     
+    // Check if we should enrich the signals with current market data
+    const enrichData = req.query.enrich !== 'false'; // Default to true
+    
     // If in demo mode, just return all available signals immediately
     if (demoMode) {
       console.log('Returning all signals for demo mode');
@@ -746,6 +752,73 @@ router.get('/trading-signals', async (req, res) => {
     // Demo users now see the same real signals as other users
     if (isDemoUser) {
       console.log(`Demo user will see ${signals.length} real signals without additional demo data`);
+    }
+    
+    // STEP 3: Enrich signals with current market data if requested
+    if (enrichData && signals.length > 0) {
+      try {
+        console.log("Enriching signals with current market data");
+        const symbolsToPriceCheck = new Set<string>();
+        
+        // Collect unique symbols to check
+        signals.forEach(signal => {
+          // Normalize symbol format
+          let symbol = signal.Symbol.replace(/USDT$/, "USD"); // Convert BTCUSDT -> BTCUSD for price API
+          symbolsToPriceCheck.add(symbol);
+        });
+        
+        // Get current prices for all symbols
+        const pricePromises: Promise<any>[] = Array.from(symbolsToPriceCheck).map(async (symbol) => {
+          try {
+            const priceData = await enhancedMarketDataService.getLatestPrice(symbol);
+            return { symbol, priceData };
+          } catch (error) {
+            console.error(`Error fetching price for ${symbol}:`, error);
+            return { symbol, priceData: null };
+          }
+        });
+        
+        // Wait for all price requests to complete
+        const priceResults = await Promise.all(pricePromises);
+        
+        // Build a map of symbol -> current price
+        const currentPrices = new Map<string, any>();
+        priceResults.forEach(result => {
+          if (result.priceData) {
+            currentPrices.set(result.symbol, result.priceData);
+          }
+        });
+        
+        // Enrich signals with current data
+        signals = signals.map(signal => {
+          // Normalize symbol format
+          const normalizedSymbol = signal.Symbol.replace(/USDT$/, "USD");
+          const priceData = currentPrices.get(normalizedSymbol);
+          
+          if (priceData) {
+            return {
+              ...signal,
+              // Add current market data
+              CurrentPrice: priceData.price,
+              PriceTimestamp: priceData.timestamp,
+              PriceChange: priceData.change,
+              // Calculate PnL if position is active
+              ...(signal.Status === 'active' ? {
+                CurrentPnL: signal.Direction === 'BUY' ? 
+                  ((priceData.price - signal['Entry Price']) / signal['Entry Price'] * 100).toFixed(2) : 
+                  ((signal['Entry Price'] - priceData.price) / signal['Entry Price'] * 100).toFixed(2)
+              } : {})
+            };
+          }
+          
+          return signal;
+        });
+        
+        console.log(`Enriched ${signals.filter(s => s.CurrentPrice).length} signals with current price data`);
+      } catch (enrichError) {
+        console.error('Error enriching signals with market data:', enrichError);
+        // Continue with original signals if enrichment fails
+      }
     }
     
     // Return the signals
