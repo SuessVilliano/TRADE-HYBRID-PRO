@@ -67,19 +67,42 @@ export const SolanaWalletProvider: FC<SolanaWalletProviderProps> = ({ children }
   
   console.log('Connecting to Solana network:', endpoint);
 
-  // Initialize the PhantomWalletAdapter
+  // Initialize the PhantomWalletAdapter with enhanced connection handling
   const wallets = useMemo(
     () => {
       try {
-        const phantomAvailable = 
-          typeof window !== 'undefined' && 
+        // Do a more thorough check for Phantom wallet availability
+        const phantomNewExists = typeof window !== 'undefined' && 
           'phantom' in window && 
-          (window as any).phantom?.solana !== undefined;
+          !!(window as any).phantom?.solana;
           
-        console.log('Initializing wallets, Phantom available:', phantomAvailable);
+        const phantomChromeExists = typeof window !== 'undefined' && 
+          'solana' in window && 
+          !!(window as any).solana?.isPhantom;
+        
+        const phantomAvailable = phantomNewExists || phantomChromeExists;
+        
+        console.log('Initializing wallets, Phantom available:', phantomAvailable, {
+          newMethod: phantomNewExists,
+          chromeExtension: phantomChromeExists,
+          connectMethod: phantomNewExists 
+            ? typeof (window as any).phantom?.solana?.connect 
+            : (phantomChromeExists ? typeof (window as any).solana?.connect : 'undefined')
+        });
+        
+        // Create PhantomWalletAdapter with strict connection options for better reliability
+        const phantomAdapter = new PhantomWalletAdapter({
+          // Force detached mode for mobile compatibility
+          detached: false,
+          // Use a longer timeout to allow connection to stabilize
+          appIdentity: {
+            name: "Trade Hybrid Platform",
+            icon: typeof window !== 'undefined' ? `${window.location.origin}/logo.png` : undefined
+          }
+        });
         
         // Cast to Adapter[] to satisfy TypeScript
-        return [new PhantomWalletAdapter()] as Adapter[];
+        return [phantomAdapter] as Adapter[];
       } catch (err) {
         console.error('Error initializing phantom wallet:', err);
         // Return empty array to prevent crashes

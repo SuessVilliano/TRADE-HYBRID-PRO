@@ -70,6 +70,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({ symbol, timeframe =
           console.log(`Initializing TradingView widget with ID: ${chartId} for symbol: ${formattedSymbol}`);
           
           try {
+            // Use a lightweight version to avoid loading issues in Replit environment
             // Create new widget with more resilient settings - use as any to avoid TS errors
             const widget = new ((window as any).TradingView).widget({
               width: '100%',
@@ -90,19 +91,24 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({ symbol, timeframe =
               show_popup_button: true,
               popup_width: '1000',
               popup_height: '650',
+              // Reduced studies to improve performance
               studies: [
-                "RSI@tv-basicstudies",
-                "MASimple@tv-basicstudies",
-                "VWAP@tv-basicstudies"
+                "RSI@tv-basicstudies"
               ],
               enabled_features: [
-                "use_localstorage_for_settings",
-                "chart_property_page_trading",
-                "chart_property_page_style",
-                "property_pages"
+                "use_localstorage_for_settings"
               ],
               disabled_features: [
-                "header_symbol_search"
+                "header_symbol_search",
+                "left_toolbar",
+                "header_indicators",
+                "header_compare",
+                "header_undo_redo",
+                "header_settings",
+                "header_chart_type",
+                "create_volume_indicator_by_default",
+                "display_market_status",
+                "control_bar"
               ],
               loading_screen: { 
                 backgroundColor: "#1E293B", 
