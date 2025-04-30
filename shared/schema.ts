@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, real, jsonb, pgEnum, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, real, jsonb, pgEnum, uuid, bigint } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -279,6 +279,55 @@ export const userLearningJournal = pgTable("user_learning_journal", {
 export const tradeSignalStatusEnum = pgEnum('trade_signal_status', ['active', 'closed', 'cancelled']);
 export const tradeSignalSideEnum = pgEnum('trade_signal_side', ['buy', 'sell']);
 export const signalProviderEnum = pgEnum('signal_provider', ['paradox', 'solaris', 'hybrid', 'custom']);
+
+// Matrix Currency Enum
+export const matrixCurrencyEnum = pgEnum('matrix_currency', ['THC', 'SOL', 'USDC']);
+
+// Matrix Referrals table
+export const matrixReferrals = pgTable("matrix_referrals", {
+  id: serial("id").primaryKey(),
+  wallet: text("wallet").notNull(), // The wallet address
+  referrer: text("referrer").notNull(), // The referrer's wallet address
+  timestamp: text("timestamp").notNull().default(String(Date.now())), // When the referral relationship was established
+  confirmed: boolean("confirmed").default(true),
+  blockHeight: integer("block_height"), // The block height when this referral was set
+  transactionHash: text("transaction_hash"), // The transaction hash that established this referral
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Matrix Slots table
+export const matrixSlots = pgTable("matrix_slots", {
+  id: serial("id").primaryKey(),
+  slotId: text("slot_id").notNull(), // A unique ID for the slot
+  wallet: text("wallet").notNull(), // The wallet address that owns this slot
+  slotNumber: integer("slot_number").notNull(), // Slot number (1-12)
+  price: real("price").notNull(), // Price paid for slot
+  currency: matrixCurrencyEnum("currency").notNull().default('THC'), // Currency used for purchase
+  purchaseDate: text("purchase_date").notNull().default(String(Date.now())), // When the slot was purchased
+  isActive: boolean("is_active").notNull().default(true), // Whether the slot is active
+  earningsFromSlot: real("earnings_from_slot").notNull().default(0), // Total earnings from this slot
+  referrals: jsonb("referrals").default([]), // Array of referrals attached to this slot
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Matrix Registration Times table
+export const matrixRegistrationTimes = pgTable("matrix_registration_times", {
+  id: serial("id").primaryKey(),
+  wallet: text("wallet").notNull().unique(), // The wallet address
+  timestamp: text("timestamp").notNull().default(String(Date.now())), // The registration timestamp
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Matrix Direct Referrals table (for caching purposes)
+export const matrixDirectReferrals = pgTable("matrix_direct_referrals", {
+  id: serial("id").primaryKey(),
+  wallet: text("wallet").notNull(), // The referrer's wallet address
+  referredWallet: text("referred_wallet").notNull(), // The wallet that was referred
+  timestamp: text("timestamp").notNull().default(String(Date.now())), // When the referral relationship was established
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
 
 // Trade signals table
 export const tradeSignals = pgTable("trade_signals", {

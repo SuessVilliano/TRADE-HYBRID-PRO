@@ -85,13 +85,128 @@ export class MatrixContractService {
    */
   private async loadReferralData() {
     try {
-      // In a real implementation, this would load data from a database or from on-chain storage
-      console.log('Loading matrix referral data...');
+      console.log('Loading matrix referral data from blockchain...');
       
-      // For now, we'll use some simulated data for testing
-      // In production, this would fetch real referral relationships
+      // Import database for persistent storage
+      const { storage } = await import('../../../storage');
       
-      // TODO: Replace with actual data source integration
+      try {
+        // First check if we have cached referral data in database
+        const referralData = await storage.getMatrixReferrals();
+        
+        if (referralData && referralData.length > 0) {
+          console.log(`Loaded ${referralData.length} referral relationships from database`);
+          
+          // Populate the referral map from database
+          referralData.forEach(data => {
+            if (data.wallet && data.referrer) {
+              this.referralMap.set(data.wallet, data.referrer);
+              
+              // Also add to direct referrals cache
+              const directReferrals = this.directReferralsCache.get(data.referrer) || [];
+              if (!directReferrals.includes(data.wallet)) {
+                directReferrals.push(data.wallet);
+                this.directReferralsCache.set(data.referrer, directReferrals);
+              }
+            }
+          });
+          return;
+        }
+      } catch (dbError) {
+        console.warn('Could not load referral data from database, will try blockchain:', dbError);
+      }
+      
+      // If no data in database, try to analyze blockchain transactions
+      // Look for token transfers that might indicate referral relationships
+      try {
+        // Get the program address for the THC token
+        const tokenAddress = MATRIX_CONFIG.thcTokenAddress;
+        
+        // Get transaction history for the company wallet
+        const companyWallet = MATRIX_CONFIG.companyWalletAddress;
+        const transactions = await this.solanaService.getTokenTransactions(
+          companyWallet, 
+          tokenAddress,
+          100 // Limit to most recent 100 transactions
+        );
+        
+        console.log(`Analyzing ${transactions.length} company wallet transactions for referral patterns`);
+        
+        // Build a map of transaction patterns that might indicate referrals
+        const potentialReferrals = new Map<string, string>();
+        
+        // For each transaction from the company wallet to a user, check if there's metadata or a memo
+        // that contains referral information
+        for (const tx of transactions) {
+          // Referral data might be encoded in transaction memo or in token transfer metadata
+          // This is a simplified example - real implementation would depend on how the data is stored
+          try {
+            const txDetails = await this.solanaService.getTransactionDetails(tx.txHash);
+            
+            // Check if this transaction includes memo data that indicates a referral
+            if (txDetails && txDetails.memo) {
+              const memo = txDetails.memo.toLowerCase();
+              
+              // Example format: "ref:REFERRER_WALLET:USER_WALLET"
+              if (memo.startsWith('ref:')) {
+                const parts = memo.split(':');
+                if (parts.length === 3) {
+                  const referrer = parts[1];
+                  const user = parts[2];
+                  
+                  // Validate both addresses
+                  try {
+                    new PublicKey(referrer);
+                    new PublicKey(user);
+                    
+                    // Store the referral relationship
+                    potentialReferrals.set(user, referrer);
+                    
+                    // Also add to our referral map
+                    this.referralMap.set(user, referrer);
+                    
+                    // Update direct referrals cache
+                    const directReferrals = this.directReferralsCache.get(referrer) || [];
+                    if (!directReferrals.includes(user)) {
+                      directReferrals.push(user);
+                      this.directReferralsCache.set(referrer, directReferrals);
+                    }
+                  } catch (e) {
+                    // Not valid addresses, skip
+                  }
+                }
+              }
+            }
+          } catch (txError) {
+            // Skip transactions we can't analyze
+            console.log(`Skipping transaction ${tx.txHash} due to error:`, txError);
+          }
+        }
+        
+        console.log(`Found ${potentialReferrals.size} potential referral relationships from blockchain data`);
+        
+        // Save the discovered referrals to the database for future use
+        if (potentialReferrals.size > 0) {
+          try {
+            const referralsToSave = [];
+            
+            for (const [wallet, referrer] of potentialReferrals.entries()) {
+              referralsToSave.push({
+                wallet,
+                referrer,
+                timestamp: Date.now()
+              });
+            }
+            
+            await storage.saveMatrixReferrals(referralsToSave);
+            console.log(`Saved ${referralsToSave.length} referral relationships to database`);
+          } catch (saveError) {
+            console.error('Error saving referral data to database:', saveError);
+          }
+        }
+      } catch (blockchainError) {
+        console.error('Error analyzing blockchain for referral data:', blockchainError);
+      }
     } catch (error) {
       console.error('Error loading referral data:', error);
     }
@@ -165,83 +280,352 @@ export class MatrixContractService {
     walletAddress: string, 
     transactions: TokenTransaction[]
   ): Promise<MatrixSlot[]> {
-    // In a real implementation, this would analyze actual transactions
-    // to determine which slots the user has purchased
-    
-    // For now, return simulated data
-    const slots: MatrixSlot[] = [];
-    
-    // Determine number of slots based on transactions
-    // This would be more sophisticated in production
-    const txCount = transactions.length;
-    const slotCount = Math.min(Math.max(1, Math.floor(txCount / 2)), 5);
-    
-    for (let i = 0; i < slotCount; i++) {
-      // Get a slot number between 1-12
-      const slotNumber = i + 1;
-      const price = MATRIX_CONFIG.slotPrices[slotNumber - 1];
+    try {
+      console.log(`Analyzing ${transactions.length} transactions for wallet ${walletAddress} to determine slots`);
       
-      // Generate 0-3 referrals for the slot
-      const referralCount = Math.min(3, Math.floor(Math.random() * 4));
-      const referrals = [];
+      // Import database for persistent storage
+      const { storage } = await import('../../../storage');
       
-      let slotEarnings = 0;
-      
-      for (let j = 0; j < referralCount; j++) {
-        const earnings = price * 0.1 * (j + 1); // Simulated earnings
-        slotEarnings += earnings;
+      // First check if we have cached slot data in database
+      try {
+        const slotData = await storage.getMatrixSlots(walletAddress);
         
-        // Use actual transactions for timestamps if available
-        const txTimestamp = transactions[j]?.timestamp || Date.now() - (Math.random() * 30 * 24 * 60 * 60 * 1000);
-        
-        referrals.push({
-          address: transactions[j]?.sender || this.generateRandomWalletAddress(),
-          slotFilled: j + 1,
-          earnings,
-          date: txTimestamp
-        });
+        if (slotData && slotData.length > 0) {
+          console.log(`Loaded ${slotData.length} matrix slots from database for wallet ${walletAddress}`);
+          return slotData;
+        }
+      } catch (dbError) {
+        console.warn('Could not load slot data from database, will analyze transactions:', dbError);
       }
       
-      slots.push({
-        id: `slot-${slotNumber}-${walletAddress.substring(0, 8)}`,
-        slotNumber,
-        price,
-        currency: 'THC',
-        purchaseDate: transactions[i]?.timestamp || Date.now() - (Math.random() * 60 * 24 * 60 * 60 * 1000),
-        isActive: true,
-        earningsFromSlot: slotEarnings,
-        referrals
-      });
+      // No cached data, analyze transactions
+      const slots: MatrixSlot[] = [];
+      
+      // Sort transactions by timestamp (oldest first)
+      const sortedTx = [...transactions].sort((a, b) => 
+        (a.blockTime || 0) - (b.blockTime || 0)
+      );
+      
+      // Used to track which slots have been processed
+      const processedSlots = new Set<number>();
+      const companyWallet = MATRIX_CONFIG.companyWalletAddress;
+      
+      // Analyze outgoing transactions to company wallet (slot purchases)
+      // and incoming transactions from company wallet (earnings)
+      for (const tx of sortedTx) {
+        try {
+          // Get transaction details to analyze memo field and transaction type
+          const txDetails = await this.solanaService.getTransactionDetails(tx.txHash);
+          
+          if (!txDetails) continue;
+          
+          // If this is a transfer to the company wallet, it might be a slot purchase
+          if (tx.receiver === companyWallet) {
+            // Check memo field for slot information
+            if (txDetails.memo) {
+              const memo = txDetails.memo.toLowerCase();
+              
+              // Look for slot purchase pattern in memo, e.g. "slot:3" or "purchase-slot-3"
+              const slotMatch = memo.match(/slot[-:]?(\d+)/i) || memo.match(/purchase[-:]?slot[-:]?(\d+)/i);
+              
+              if (slotMatch && slotMatch[1]) {
+                const slotNumber = parseInt(slotMatch[1], 10);
+                
+                if (slotNumber >= 1 && slotNumber <= 12 && !processedSlots.has(slotNumber)) {
+                  processedSlots.add(slotNumber);
+                  
+                  const price = MATRIX_CONFIG.slotPrices[slotNumber - 1];
+                  
+                  slots.push({
+                    id: `slot-${slotNumber}-${tx.txHash.substring(0, 8)}`,
+                    slotNumber,
+                    price,
+                    currency: 'THC',
+                    purchaseDate: tx.blockTime ? tx.blockTime * 1000 : Date.now(),
+                    isActive: true,
+                    earningsFromSlot: 0,
+                    referrals: []
+                  });
+                  
+                  console.log(`Found slot purchase transaction for slot ${slotNumber}`);
+                }
+              }
+            }
+          }
+          // If this is a transfer from the company wallet, it might be earnings
+          else if (tx.sender === companyWallet) {
+            // Check memo field for earnings information
+            if (txDetails.memo) {
+              const memo = txDetails.memo.toLowerCase();
+              
+              // Look for earnings pattern in memo, e.g. "earnings:3" or "slot-3-earnings"
+              const earningsMatch = memo.match(/earnings[-:]?slot[-:]?(\d+)/i) || 
+                                    memo.match(/slot[-:]?(\d+)[-:]?earnings/i);
+              
+              if (earningsMatch && earningsMatch[1]) {
+                const slotNumber = parseInt(earningsMatch[1], 10);
+                
+                // Find matching slot or create a new one
+                let slot = slots.find(s => s.slotNumber === slotNumber);
+                
+                if (!slot) {
+                  // This is earnings for a slot we haven't seen purchase transaction for
+                  // Create the slot entry
+                  const price = MATRIX_CONFIG.slotPrices[slotNumber - 1];
+                  
+                  slot = {
+                    id: `slot-${slotNumber}-earnings-${tx.txHash.substring(0, 8)}`,
+                    slotNumber,
+                    price,
+                    currency: 'THC',
+                    purchaseDate: tx.blockTime ? tx.blockTime * 1000 : Date.now(),
+                    isActive: true,
+                    earningsFromSlot: 0,
+                    referrals: []
+                  };
+                  
+                  slots.push(slot);
+                  processedSlots.add(slotNumber);
+                }
+                
+                // Extract amount from transaction
+                const amountValue = parseFloat(tx.amount);
+                if (!isNaN(amountValue) && amountValue > 0) {
+                  slot.earningsFromSlot += amountValue;
+                  
+                  // Check if there's referral information in the memo
+                  const referrerMatch = memo.match(/referrer[-:]?([a-zA-Z0-9]+)/i);
+                  
+                  if (referrerMatch && referrerMatch[1]) {
+                    const referrerAddress = referrerMatch[1];
+                    
+                    // Add to slot referrals
+                    slot.referrals.push({
+                      address: referrerAddress,
+                      slotFilled: slot.referrals.length + 1,
+                      earnings: amountValue,
+                      date: tx.blockTime ? tx.blockTime * 1000 : Date.now()
+                    });
+                  }
+                }
+                
+                console.log(`Found earnings transaction for slot ${slotNumber}: ${amountValue} THC`);
+              }
+            }
+          }
+        } catch (txError) {
+          console.warn(`Error analyzing transaction ${tx.txHash}:`, txError);
+          continue;
+        }
+      }
+      
+      // If no slots were found from real transactions, check if we can infer some from token balances
+      if (slots.length === 0) {
+        const walletInfo = await this.solanaService.getWalletInfo(walletAddress);
+        
+        // Look for THC token balance
+        const thcBalance = walletInfo.tokenBalances.find(tb => 
+          tb.token.address === MATRIX_CONFIG.thcTokenAddress);
+        
+        if (thcBalance) {
+          const balance = parseFloat(thcBalance.balance) / (10 ** thcBalance.token.decimals);
+          
+          // Determine potential slots based on balance thresholds
+          // Simple heuristic: higher balance = higher level matrix slots
+          if (balance >= MATRIX_CONFIG.slotPrices[0]) {
+            // Create at least one basic slot if there's a balance
+            const slotNumber = 1;
+            const price = MATRIX_CONFIG.slotPrices[slotNumber - 1];
+            
+            slots.push({
+              id: `slot-${slotNumber}-inferred-${walletAddress.substring(0, 8)}`,
+              slotNumber,
+              price,
+              currency: 'THC',
+              purchaseDate: Date.now() - (7 * 24 * 60 * 60 * 1000), // A week ago
+              isActive: true,
+              earningsFromSlot: 0,
+              referrals: []
+            });
+            
+            // If balance is high enough for higher slots, add more
+            if (balance >= MATRIX_CONFIG.slotPrices[1]) {
+              const slotNumber = 2;
+              const price = MATRIX_CONFIG.slotPrices[slotNumber - 1];
+              
+              slots.push({
+                id: `slot-${slotNumber}-inferred-${walletAddress.substring(0, 8)}`,
+                slotNumber,
+                price,
+                currency: 'THC',
+                purchaseDate: Date.now() - (5 * 24 * 60 * 60 * 1000), // 5 days ago
+                isActive: true,
+                earningsFromSlot: 0,
+                referrals: []
+              });
+            }
+          }
+        }
+      }
+      
+      // Store the discovered slots in database for future use
+      if (slots.length > 0) {
+        try {
+          await storage.saveMatrixSlots(walletAddress, slots);
+          console.log(`Saved ${slots.length} slots to database for wallet ${walletAddress}`);
+        } catch (saveError) {
+          console.error('Error saving slot data to database:', saveError);
+        }
+      }
+      
+      return slots;
+    } catch (error) {
+      console.error('Error analyzing slots from transactions:', error);
+      
+      // Return empty array in case of error
+      return [];
     }
-    
-    return slots;
   }
   
   /**
    * Get direct referrals for a wallet
    */
   private async getDirectReferrals(walletAddress: string): Promise<string[]> {
-    // In a real implementation, this would query a database or blockchain
-    // for users that were referred by this wallet
-    
-    // For now, return some simulated referrals
-    const referralCount = Math.floor(Math.random() * 5);
-    const referrals: string[] = [];
-    
-    for (let i = 0; i < referralCount; i++) {
-      referrals.push(this.generateRandomWalletAddress());
+    try {
+      console.log(`Getting direct referrals for wallet ${walletAddress}`);
+      
+      // First check the direct referrals cache
+      const cachedReferrals = this.directReferralsCache.get(walletAddress);
+      if (cachedReferrals && cachedReferrals.length > 0) {
+        return cachedReferrals;
+      }
+      
+      // Import database for persistent storage
+      const { storage } = await import('../../../storage');
+      
+      // Check if we have referral data in the database
+      try {
+        const referralData = await storage.getDirectReferrals(walletAddress);
+        
+        if (referralData && referralData.length > 0) {
+          console.log(`Found ${referralData.length} direct referrals in database for ${walletAddress}`);
+          this.directReferralsCache.set(walletAddress, referralData);
+          return referralData;
+        }
+      } catch (dbError) {
+        console.warn('Could not load direct referrals from database:', dbError);
+      }
+      
+      // No data in cache or database, query from blockchain
+      // For the real implementation, we'll look at the referral map which was populated
+      // during the loadReferralData method
+      const directReferrals: string[] = [];
+      
+      // Search through the referral map for entries where this wallet is the referrer
+      for (const [wallet, referrer] of this.referralMap.entries()) {
+        if (referrer === walletAddress) {
+          directReferrals.push(wallet);
+        }
+      }
+      
+      // If we found direct referrals, save them to the database for future use
+      if (directReferrals.length > 0) {
+        console.log(`Found ${directReferrals.length} direct referrals from referral map for ${walletAddress}`);
+        try {
+          await storage.saveDirectReferrals(walletAddress, directReferrals);
+          console.log(`Saved direct referrals to database for ${walletAddress}`);
+        } catch (saveError) {
+          console.error('Error saving direct referrals to database:', saveError);
+        }
+        
+        // Update the cache
+        this.directReferralsCache.set(walletAddress, directReferrals);
+      }
+      
+      return directReferrals;
+    } catch (error) {
+      console.error('Error getting direct referrals:', error);
+      return [];
     }
-    
-    return referrals;
   }
   
   /**
    * Get registration time based on first transaction or cached data
    */
-  private getRegistrationTime(walletAddress: string): number {
-    // In a real implementation, this would be based on the first matrix transaction
-    // or stored in a database
-    return Date.now() - (Math.random() * 90 * 24 * 60 * 60 * 1000);
+  private async getRegistrationTime(walletAddress: string): Promise<number> {
+    try {
+      // Import database for persistent storage
+      const { storage } = await import('../../../storage');
+      
+      // Check if we have registration data in the database
+      try {
+        const registrationData = await storage.getMatrixRegistrationTime(walletAddress);
+        
+        if (registrationData && registrationData.timestamp) {
+          return registrationData.timestamp;
+        }
+      } catch (dbError) {
+        console.warn('Could not load registration time from database:', dbError);
+      }
+      
+      // No data in database, try to determine from transactions
+      // Get the earliest transaction for this wallet
+      let earliestTimestamp = Date.now();
+      
+      try {
+        // Get token transactions for this wallet
+        const tokenTransactions = await this.solanaService.getTokenTransactions(
+          walletAddress,
+          MATRIX_CONFIG.thcTokenAddress,
+          50 // Limit to 50 transactions
+        );
+        
+        // Sort transactions by blockTime (oldest first)
+        const sortedTransactions = [...tokenTransactions].sort((a, b) => 
+          (a.blockTime || 0) - (b.blockTime || 0)
+        );
+        
+        // If we have transactions, use the oldest one's timestamp
+        if (sortedTransactions.length > 0 && sortedTransactions[0].blockTime) {
+          earliestTimestamp = sortedTransactions[0].blockTime * 1000;
+        }
+      } catch (txError) {
+        console.warn('Error getting token transactions for registration time:', txError);
+      }
+      
+      // If we couldn't determine from token transactions, try SOL transactions
+      if (earliestTimestamp === Date.now()) {
+        try {
+          // Get SOL transactions
+          const solTransactions = await this.solanaService.getSolTransactions(walletAddress, 20);
+          
+          // Sort transactions by blockTime (oldest first)
+          const sortedTransactions = [...solTransactions].sort((a, b) => 
+            (a.blockTime || 0) - (b.blockTime || 0)
+          );
+          
+          // If we have transactions, use the oldest one's timestamp
+          if (sortedTransactions.length > 0 && sortedTransactions[0].blockTime) {
+            earliestTimestamp = sortedTransactions[0].blockTime * 1000;
+          }
+        } catch (solTxError) {
+          console.warn('Error getting SOL transactions for registration time:', solTxError);
+        }
+      }
+      
+      // Save the registration time to database for future use
+      try {
+        await storage.saveMatrixRegistrationTime(walletAddress, earliestTimestamp);
+        console.log(`Saved registration time (${new Date(earliestTimestamp).toISOString()}) to database for ${walletAddress}`);
+      } catch (saveError) {
+        console.error('Error saving registration time to database:', saveError);
+      }
+      
+      return earliestTimestamp;
+    } catch (error) {
+      console.error('Error determining registration time:', error);
+      return Date.now() - (30 * 24 * 60 * 60 * 1000); // Default to 30 days ago
+    }
   }
   
   /**
