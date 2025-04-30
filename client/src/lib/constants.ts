@@ -92,13 +92,36 @@ export const ORDER_SIDES = [
   { value: 'sell', label: 'Sell' }
 ];
 
-// Popular symbols by market type
+// Popular symbols by market type (expanded to include more options for each broker)
 export const POPULAR_SYMBOLS = {
-  stocks: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'JPM', 'BAC', 'WMT'],
-  forex: ['EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD', 'USD/CAD', 'USD/CHF', 'NZD/USD', 'EUR/GBP', 'EUR/JPY', 'GBP/JPY'],
-  crypto: ['BTC/USD', 'ETH/USD', 'SOL/USD', 'XRP/USD', 'ADA/USD', 'DOT/USD', 'DOGE/USD', 'AVAX/USD', 'LINK/USD', 'MATIC/USD'],
-  futures: ['ES', 'NQ', 'YM', 'RTY', 'CL', 'GC', 'SI', 'ZB', 'ZN', 'ZS'],
-  options: ['SPY', 'QQQ', 'IWM', 'GLD', 'SLV', 'USO', 'XLF', 'XLE', 'EEM', 'FXI']
+  stocks: [
+    'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'JPM', 'BAC', 'WMT', 
+    'NFLX', 'DIS', 'PYPL', 'ADBE', 'INTC', 'CRM', 'AMD', 'COST', 'PEP', 'KO',
+    'PFE', 'T', 'CSCO', 'VZ', 'NKE', 'CMCSA', 'ABT', 'PG', 'TMO', 'AVGO',
+    'ACN', 'DHR', 'QCOM', 'TXN', 'UNH', 'HON', 'NEE', 'LIN', 'ORCL', 'PM',
+    'IBM', 'RTX', 'BA', 'GS', 'MS', 'C', 'BLK', 'AXP', 'V', 'MA'
+  ],
+  forex: [
+    'EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD', 'USD/CAD', 'USD/CHF', 'NZD/USD', 'EUR/GBP', 'EUR/JPY', 'GBP/JPY',
+    'AUD/JPY', 'EUR/AUD', 'EUR/CAD', 'EUR/CHF', 'USD/MXN', 'USD/ZAR', 'USD/TRY', 'USD/CNH', 'USD/SGD', 'USD/HKD',
+    'EUR/NZD', 'GBP/AUD', 'GBP/CAD', 'GBP/CHF', 'GBP/NZD', 'AUD/CAD', 'AUD/CHF', 'AUD/NZD', 'CAD/JPY', 'CHF/JPY'
+  ],
+  crypto: [
+    'BTC/USD', 'ETH/USD', 'SOL/USD', 'XRP/USD', 'ADA/USD', 'DOT/USD', 'DOGE/USD', 'AVAX/USD', 'LINK/USD', 'MATIC/USD',
+    'BNB/USD', 'UNI/USD', 'LTC/USD', 'SHIB/USD', 'XLM/USD', 'BCH/USD', 'ALGO/USD', 'ATOM/USD', 'XTZ/USD', 'EOS/USD',
+    'FIL/USD', 'AAVE/USD', 'GRT/USD', 'MKR/USD', 'YFI/USD', 'COMP/USD', 'SNX/USD', 'CRV/USD', 'SUSHI/USD', 'BAT/USD',
+    'BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT', 'ADAUSDT', 'DOTUSDT', 'DOGEUSDT', 'AVAXUSDT', 'LINKUSDT', 'MATICUSDT'
+  ],
+  futures: [
+    'ES', 'NQ', 'YM', 'RTY', 'CL', 'GC', 'SI', 'ZB', 'ZN', 'ZS',
+    'ZC', 'ZW', 'LE', 'HE', 'ZL', 'ZM', 'KC', 'CT', 'CC', 'SB',
+    'NG', 'HO', 'RB', 'HG', 'PA', 'PL', 'BTC', 'ETH', '6E', '6J'
+  ],
+  options: [
+    'SPY', 'QQQ', 'IWM', 'GLD', 'SLV', 'USO', 'XLF', 'XLE', 'EEM', 'FXI',
+    'VXX', 'TLT', 'HYG', 'XLU', 'XLK', 'XLV', 'XLP', 'XLI', 'XLC', 'XLB',
+    'UVXY', 'EWZ', 'EFA', 'TQQQ', 'SPXU', 'SQQQ', 'TNA', 'TZA', 'ARKK', 'ARKG'
+  ]
 };
 
 // All trading symbols - flattened list of popular symbols
