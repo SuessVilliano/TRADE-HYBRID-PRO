@@ -294,4 +294,22 @@ export class SolscanAdapter {
     // Trade Hybrid validator address is hardcoded as 5Mp3EF1donYxLxhe5hs6HoWpAucZGLZ76NKRNztkjEej
     return await this.getValidatorInfo('5Mp3EF1donYxLxhe5hs6HoWpAucZGLZ76NKRNztkjEej');
   }
+
+  /**
+   * Get Solana network status from Solscan API
+   * This is used to test if the API is accessible
+   */
+  async getNetworkStatus(): Promise<{blockHeight: number, currentSlot: number}> {
+    try {
+      // Use a simple endpoint to check if Solscan API is working
+      const result = await this.makeRequest<{blockHeight: number, currentSlot: number}>(
+        '/block/last'
+      );
+      
+      return result;
+    } catch (error) {
+      console.error('Error getting network status from Solscan:', error);
+      throw error;
+    }
+  }
 }
