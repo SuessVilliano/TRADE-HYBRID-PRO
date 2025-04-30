@@ -35,6 +35,14 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({ symbol, timeframe =
     container.current.innerHTML = '';
     
     try {
+      // Safely handle empty or undefined symbols
+      if (!symbol) {
+        console.warn('Empty or undefined symbol provided to TradingView chart');
+        setError('Invalid symbol. Please select a valid trading pair.');
+        setLoading(false);
+        return;
+      }
+      
       // Format symbol correctly
       let formattedSymbol = symbol;
       
