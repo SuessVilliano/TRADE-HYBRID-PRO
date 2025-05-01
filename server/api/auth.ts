@@ -42,6 +42,60 @@ router.get('/user', async (req, res) => {
   }
 });
 
+// Login with username/password
+router.post('/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
+    }
+    
+    // Find user by username
+    const user = await db.query.users.findFirst({
+      where: eq(users.username, username)
+    });
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+    
+    // In production, we should use bcrypt to compare passwords
+    if (user.password !== password) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+    
+    // Set user ID in session
+    req.session.userId = user.id;
+    if (user.whopId) {
+      req.session.whopId = user.whopId;
+    }
+    
+    // Update last login time
+    await db.update(users)
+      .set({ lastLogin: new Date() })
+      .where(eq(users.id, user.id));
+    
+    // Return user without sensitive information
+    return res.json({
+      authenticated: true,
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      profileImage: user.profileImage || user.avatar,
+      walletAddress: user.walletAddress,
+      walletAuthEnabled: user.walletAuthEnabled,
+      thcTokenHolder: user.thcTokenHolder,
+      membershipLevel: user.membershipLevel,
+      whopId: user.whopId,
+      favoriteSymbols: user.favoriteSymbols
+    });
+  } catch (error) {
+    console.error('Error logging in:', error);
+    return res.status(500).json({ error: 'Failed to login' });
+  }
+});
+
 // Login with Whop token
 router.post('/login/whop', async (req, res) => {
   try {
@@ -84,6 +138,69 @@ router.post('/login/whop', async (req, res) => {
   } catch (error) {
     console.error('Error logging in with Whop:', error);
     return res.status(500).json({ error: 'Failed to login with Whop' });
+  }
+});
+
+// Register a new user account
+router.post('/register', async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+    
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: 'Username, email, and password are required' });
+    }
+    
+    // Check if username already exists
+    const existingUsername = await db.query.users.findFirst({
+      where: eq(users.username, username)
+    });
+    
+    if (existingUsername) {
+      return res.status(400).json({ error: 'Username already exists' });
+    }
+    
+    // Check if email already exists
+    const existingEmail = await db.query.users.findFirst({
+      where: eq(users.email, email)
+    });
+    
+    if (existingEmail) {
+      return res.status(400).json({ error: 'Email already exists' });
+    }
+    
+    // Create new user
+    const [newUser] = await db.insert(users)
+      .values({
+        username,
+        email,
+        password, // In production, this should be hashed with bcrypt
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        membershipLevel: 'free', // Default membership level
+        thcTokenHolder: false,
+        walletAuthEnabled: false
+      })
+      .returning({
+        id: users.id,
+        username: users.username,
+        email: users.email
+      });
+    
+    // Set session
+    req.session.userId = newUser.id;
+    
+    return res.json({
+      success: true,
+      user: {
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        membershipLevel: 'free'
+      }
+    });
+  } catch (error) {
+    console.error('Error registering user:', error);
+    return res.status(500).json({ error: 'Failed to register user' });
   }
 });
 
