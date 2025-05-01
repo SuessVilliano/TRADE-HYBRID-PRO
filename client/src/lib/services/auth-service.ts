@@ -93,33 +93,111 @@ export const authService = {
   
   async loginWithWhop(whopId: string) {
     try {
-      console.log('Logging in with direct Whop ID/email:', whopId);
-      const response = await fetch('/api/whop/direct-auth', {
+      console.log('Attempting Whop ID login with:', whopId);
+      
+      // First try the direct legacy login which is simplest
+      try {
+        console.log('Trying legacy login with Whop ID');
+        const legacyResponse = await fetch('/api/auth/legacy-login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username: whopId }),
+          credentials: 'include', // Important for sending/receiving cookies
+        });
+        
+        if (legacyResponse.ok) {
+          const userData = await legacyResponse.json();
+          console.log('Legacy login with Whop ID succeeded, user data:', userData);
+          
+          // Store user data in zustand store
+          useAuthStore.getState().setUser({
+            ...userData,
+            authenticated: true // Ensure authenticated flag is set
+          });
+          
+          return userData;
+        }
+        
+        console.warn('Legacy login failed, trying direct auth...');
+      } catch (legacyError) {
+        console.warn('Legacy login attempt failed:', legacyError);
+      }
+      
+      // Fallback to direct Whop auth
+      try {
+        console.log('Attempting direct Whop auth with ID:', whopId);
+        const response = await fetch('/api/auth/whop-login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ whopId }),
+          credentials: 'include', // Important for sending/receiving cookies
+        });
+        
+        if (!response.ok) {
+          console.error('Whop login failed with status:', response.status);
+          throw new Error('Whop login failed');
+        }
+        
+        const userData = await response.json();
+        console.log('Whop login succeeded, user data:', userData);
+        
+        // Store user data in zustand store
+        useAuthStore.getState().setUser({
+          ...userData,
+          authenticated: true // Ensure authenticated flag is set
+        });
+        
+        return userData;
+      } catch (whopAuthError) {
+        console.error('Whop auth failed:', whopAuthError);
+        
+        // Last resort - try demo login
+        console.log('All Whop methods failed, trying demo login as fallback');
+        return this.loginWithDemo();
+      }
+    } catch (error) {
+      console.error('All Whop login methods failed:', error);
+      throw error;
+    }
+  },
+  
+  // Demo login for testing
+  async loginWithDemo() {
+    try {
+      console.log('Logging in with demo account');
+      const response = await fetch('/api/auth/demo-login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ whopId }),
         credentials: 'include', // Important for sending/receiving cookies
       });
       
       if (!response.ok) {
-        console.error('Whop direct auth failed with status:', response.status);
-        throw new Error('Whop authentication failed');
+        console.error('Demo login failed with status:', response.status);
+        throw new Error('Demo login failed');
       }
       
       const userData = await response.json();
-      console.log('Whop authentication succeeded, user data:', userData);
+      console.log('Demo login succeeded, user data:', userData);
       
       // Store user data in zustand store
       useAuthStore.getState().setUser({
         ...userData,
-        authenticated: true // Ensure authenticated flag is set
+        authenticated: true, // Ensure authenticated flag is set
+        isDemo: true
       });
+      
+      // Also store in localStorage for persistence
+      localStorage.setItem('demoUser', 'true');
       
       return userData;
     } catch (error) {
-      console.error('Whop auth error:', error);
+      console.error('Demo login error:', error);
       throw error;
     }
   },

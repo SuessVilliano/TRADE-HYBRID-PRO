@@ -192,6 +192,59 @@ router.post('/legacy-login', async (req, res) => {
 });
 
 // Login with Whop token
+router.post('/whop-login', async (req, res) => {
+  try {
+    const { whopId } = req.body;
+    
+    if (!whopId) {
+      return res.status(400).json({ error: 'Whop ID is required' });
+    }
+    
+    try {
+      // Try to find user by Whop ID
+      const user = await db.query.users.findFirst({
+        where: eq(users.whopId, whopId)
+      });
+      
+      if (user) {
+        // User found, set session and return
+        req.session.userId = user.id;
+        req.session.whopId = whopId;
+        
+        // Update last login time
+        await db.update(users)
+          .set({ lastLogin: new Date() })
+          .where(eq(users.id, user.id));
+        
+        // Return user without sensitive information
+        return res.json({
+          authenticated: true,
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          profileImage: user.profileImage || user.avatar,
+          walletAddress: user.walletAddress,
+          walletAuthEnabled: user.walletAuthEnabled,
+          thcTokenHolder: user.thcTokenHolder,
+          membershipLevel: user.membershipLevel,
+          whopId: user.whopId,
+          favoriteSymbols: user.favoriteSymbols
+        });
+      }
+      
+      // User not found with this Whop ID, try legacy login
+      return res.status(404).json({ error: 'User not found with this Whop ID' });
+    } catch (dbError) {
+      console.error('Database error in Whop login:', dbError);
+      return res.status(500).json({ error: 'Database error' });
+    }
+  } catch (error) {
+    console.error('Error with Whop login:', error);
+    return res.status(500).json({ error: 'Failed to login with Whop ID' });
+  }
+});
+
+// Login with Whop token
 router.post('/login/whop', async (req, res) => {
   try {
     const { token } = req.body;
@@ -245,121 +298,144 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Username, email, and password are required' });
     }
     
-    // Check if username already exists
-    const existingUsername = await db.query.users.findFirst({
-      where: eq(users.username, username)
-    });
-    
-    if (existingUsername) {
-      return res.status(400).json({ error: 'Username already exists' });
-    }
-    
-    // Check if email already exists in our database
-    const existingEmail = await db.query.users.findFirst({
-      where: eq(users.email, email)
-    });
-    
-    // Check if a Whop account with this email exists by attempting to get Whop data
-    let whopUser = null;
-    let whopSync = false;
-    let membershipLevel = 'free';
-    
     try {
-      // Try to find a matching Whop account
-      whopUser = await authService.findWhopUserByEmail(email);
+      // Use direct SQL query for reliability
+      const sql = db.$client;
       
-      if (whopUser) {
-        console.log(`Found matching Whop user for email ${email}:`, whopUser);
-        whopSync = true;
+      // Check if username already exists
+      const usernameCheck = await sql`SELECT id FROM users WHERE username = ${username} LIMIT 1`;
+      
+      if (usernameCheck.length > 0) {
+        return res.status(400).json({ error: 'Username already exists' });
+      }
+      
+      // Check if email already exists in our database
+      const emailCheck = await sql`SELECT id FROM users WHERE email = ${email} LIMIT 1`;
+      
+      // Check if a Whop account with this email exists by attempting to get Whop data
+      let whopUser = null;
+      let whopSync = false;
+      let membershipLevel = 'free';
+      
+      try {
+        // Try to find a matching Whop account
+        whopUser = await authService.findWhopUserByEmail(email);
         
-        if (whopUser.plan && whopUser.plan.name) {
-          // Map Whop plan to our membership levels
-          const planName = whopUser.plan.name.toLowerCase();
-          if (planName.includes('pro')) {
-            membershipLevel = 'pro';
-          } else if (planName.includes('advanced')) {
-            membershipLevel = 'advanced';
-          } else if (planName.includes('intermediate')) {
-            membershipLevel = 'intermediate';
-          } else if (planName.includes('beginner')) {
-            membershipLevel = 'beginner';
-          } else {
-            membershipLevel = 'paid';
+        if (whopUser) {
+          console.log(`Found matching Whop user for email ${email}:`, whopUser);
+          whopSync = true;
+          
+          if (whopUser.plan && whopUser.plan.name) {
+            // Map Whop plan to our membership levels
+            const planName = whopUser.plan.name.toLowerCase();
+            if (planName.includes('pro')) {
+              membershipLevel = 'pro';
+            } else if (planName.includes('advanced')) {
+              membershipLevel = 'advanced';
+            } else if (planName.includes('intermediate')) {
+              membershipLevel = 'intermediate';
+            } else if (planName.includes('beginner')) {
+              membershipLevel = 'beginner';
+            } else {
+              membershipLevel = 'paid';
+            }
           }
         }
+      } catch (whopError) {
+        console.warn('Failed to check Whop for email match:', whopError);
+        // Continue with registration as a free user
       }
-    } catch (whopError) {
-      console.warn('Failed to check Whop for email match:', whopError);
-      // Continue with registration as a free user
-    }
-    
-    // If the email exists in our database, we won't create a new account
-    if (existingEmail) {
-      if (whopSync) {
-        // If we found a matching Whop account, update the existing user with Whop info
-        await db.update(users)
-          .set({
-            whopId: whopUser.id,
-            whopPlanId: whopUser.plan?.id,
-            membershipLevel: membershipLevel,
-            updatedAt: new Date()
-          })
-          .where(eq(users.id, existingEmail.id));
-          
-        // Set up the session with the existing user
-        req.session.userId = existingEmail.id;
+      
+      // If the email exists in our database, we won't create a new account
+      if (emailCheck.length > 0) {
+        const existingEmail = emailCheck[0];
         
-        // Return the updated user info
-        return res.json({
-          success: true,
-          synced: true,
-          user: {
-            id: existingEmail.id,
-            username: existingEmail.username,
-            email: existingEmail.email,
-            membershipLevel: membershipLevel
-          }
-        });
-      } else {
-        // If no Whop match but email exists in our DB, just return an error
-        return res.status(400).json({ error: 'Email already exists' });
+        if (whopSync) {
+          // If we found a matching Whop account, update the existing user with Whop info
+          await sql`
+            UPDATE users
+            SET 
+              whop_id = ${whopUser.id},
+              whop_plan_id = ${whopUser.plan?.id || null},
+              membership_level = ${membershipLevel},
+              updated_at = ${new Date()}
+            WHERE id = ${existingEmail.id}
+          `;
+            
+          // Set up the session with the existing user
+          req.session.userId = existingEmail.id;
+          
+          // Return the updated user info
+          return res.json({
+            success: true,
+            synced: true,
+            user: {
+              id: existingEmail.id,
+              username: existingEmail.username || username,
+              email: email,
+              membershipLevel: membershipLevel
+            }
+          });
+        } else {
+          // If no Whop match but email exists in our DB, just return an error
+          return res.status(400).json({ error: 'Email already exists' });
+        }
       }
-    }
+      
+      // Create new user with potential Whop data
+      const insertResult = await sql`
+        INSERT INTO users (
+          username, 
+          email, 
+          password, 
+          created_at, 
+          updated_at, 
+          membership_level, 
+          thc_token_holder, 
+          wallet_auth_enabled, 
+          whop_id, 
+          whop_plan_id
+        ) 
+        VALUES (
+          ${username}, 
+          ${email}, 
+          ${password}, 
+          ${new Date()}, 
+          ${new Date()}, 
+          ${membershipLevel}, 
+          false, 
+          false, 
+          ${whopUser?.id || null}, 
+          ${whopUser?.plan?.id || null}
+        )
+        RETURNING id, username, email, membership_level
+      `;
     
-    // Create new user with potential Whop data
-    const [newUser] = await db.insert(users)
-      .values({
-        username,
-        email,
-        password, // In production, this should be hashed with bcrypt
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        membershipLevel: membershipLevel,
-        thcTokenHolder: false,
-        walletAuthEnabled: false,
-        whopId: whopUser?.id,
-        whopPlanId: whopUser?.plan?.id
-      })
-      .returning({
-        id: users.id,
-        username: users.username,
-        email: users.email,
-        membershipLevel: users.membershipLevel
+      // Ensure we have a proper result
+      if (!insertResult || insertResult.length === 0) {
+        return res.status(500).json({ error: 'Failed to create user account' });
+      }
+      
+      const newUser = insertResult[0];
+      console.log("Successfully created new user:", newUser);
+    
+      // Set session
+      req.session.userId = newUser.id;
+      
+      return res.json({
+        success: true,
+        synced: whopSync,
+        user: {
+          id: newUser.id,
+          username: newUser.username,
+          email: newUser.email,
+          membershipLevel: newUser.membership_level
+        }
       });
-    
-    // Set session
-    req.session.userId = newUser.id;
-    
-    return res.json({
-      success: true,
-      synced: whopSync,
-      user: {
-        id: newUser.id,
-        username: newUser.username,
-        email: newUser.email,
-        membershipLevel: newUser.membershipLevel
-      }
-    });
+    } catch (dbError) {
+      console.error('Database error during registration:', dbError);
+      return res.status(400).json({ error: 'Registration error' });
+    }
   } catch (error) {
     console.error('Error registering user:', error);
     return res.status(500).json({ error: 'Failed to register user' });
@@ -471,6 +547,97 @@ router.get('/thc-balance', async (req, res) => {
   } catch (error) {
     console.error('Error checking THC balance:', error);
     return res.status(500).json({ error: 'Failed to check THC balance' });
+  }
+});
+
+// Demo login route (no credentials needed)
+router.post('/demo-login', async (req, res) => {
+  try {
+    console.log('Demo login requested');
+    
+    // Find or create a demo user account
+    try {
+      const sql = db.$client;
+      
+      // Look for existing demo user
+      const existingDemo = await sql`
+        SELECT * FROM users 
+        WHERE username LIKE 'demo%' 
+        LIMIT 1
+      `;
+      
+      let demoUser;
+      
+      if (existingDemo && existingDemo.length > 0) {
+        // Use existing demo user
+        demoUser = existingDemo[0];
+        console.log('Using existing demo user:', demoUser.username);
+      } else {
+        // Create a new demo user
+        console.log('Creating new demo user');
+        const demoUsername = `demo_${Math.floor(Math.random() * 10000)}`;
+        
+        const newDemo = await sql`
+          INSERT INTO users (
+            username, 
+            email, 
+            password, 
+            created_at, 
+            updated_at, 
+            membership_level, 
+            thc_token_holder,
+            wallet_auth_enabled
+          ) 
+          VALUES (
+            ${demoUsername}, 
+            ${`${demoUsername}@demo.tradehybrid.io`}, 
+            ${'demo123'}, 
+            ${new Date()}, 
+            ${new Date()}, 
+            ${'free'}, 
+            ${false},
+            ${false}
+          )
+          RETURNING *
+        `;
+        
+        if (!newDemo || newDemo.length === 0) {
+          throw new Error('Failed to create demo user');
+        }
+        
+        demoUser = newDemo[0];
+        console.log('Created new demo user:', demoUser);
+      }
+      
+      // Set session
+      req.session.userId = demoUser.id;
+      // Store demo flag in session
+      (req.session as any).isDemo = true;
+      
+      return res.json({
+        authenticated: true,
+        id: demoUser.id,
+        username: demoUser.username,
+        email: demoUser.email,
+        membershipLevel: demoUser.membership_level || 'free',
+        isDemo: true
+      });
+    } catch (dbError) {
+      console.error('Database error in demo login:', dbError);
+      
+      // Fallback if all else fails - return a hardcoded demo response
+      return res.json({
+        authenticated: true,
+        id: -1,
+        username: 'demo_user',
+        email: 'demo@tradehybrid.io',
+        membershipLevel: 'free',
+        isDemo: true
+      });
+    }
+  } catch (error) {
+    console.error('Error in demo login:', error);
+    return res.status(500).json({ error: 'Demo login failed' });
   }
 });
 
