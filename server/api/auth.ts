@@ -51,9 +51,11 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Username and password are required' });
     }
     
-    // Find user by username
+    // Find user by username or email (support login with either)
     const user = await db.query.users.findFirst({
       where: eq(users.username, username)
+    }) || await db.query.users.findFirst({
+      where: eq(users.email, username)
     });
     
     if (!user) {
@@ -92,6 +94,99 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Error logging in:', error);
+    return res.status(500).json({ error: 'Failed to login' });
+  }
+});
+
+// Legacy login route for compatibility (no password required)
+router.post('/legacy-login', async (req, res) => {
+  try {
+    const { username } = req.body;
+    
+    if (!username) {
+      return res.status(400).json({ error: 'Username or Whop ID is required' });
+    }
+    
+    // Check if this is a Whop ID
+    if (username.length > 20) {
+      // Attempt to find user with this Whop ID
+      const user = await db.query.users.findFirst({
+        where: eq(users.whopId, username)
+      });
+      
+      if (user) {
+        // Set user ID in session
+        req.session.userId = user.id;
+        req.session.whopId = user.whopId;
+        
+        // Update last login time
+        await db.update(users)
+          .set({ lastLogin: new Date() })
+          .where(eq(users.id, user.id));
+        
+        // Return user without sensitive information
+        return res.json({
+          authenticated: true,
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          profileImage: user.profileImage || user.avatar,
+          walletAddress: user.walletAddress,
+          walletAuthEnabled: user.walletAuthEnabled,
+          thcTokenHolder: user.thcTokenHolder,
+          membershipLevel: user.membershipLevel,
+          whopId: user.whopId,
+          favoriteSymbols: user.favoriteSymbols
+        });
+      }
+    }
+    
+    // Try to find the user by username
+    let user = await db.query.users.findFirst({
+      where: eq(users.username, username)
+    });
+    
+    // If not found by username, try email
+    if (!user) {
+      user = await db.query.users.findFirst({
+        where: eq(users.email, username)
+      });
+    }
+    
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+    
+    // For the legacy route, we don't check the password
+    // This is for backward compatibility with older clients
+    
+    // Set user ID in session
+    req.session.userId = user.id;
+    if (user.whopId) {
+      req.session.whopId = user.whopId;
+    }
+    
+    // Update last login time
+    await db.update(users)
+      .set({ lastLogin: new Date() })
+      .where(eq(users.id, user.id));
+    
+    // Return user without sensitive information
+    return res.json({
+      authenticated: true,
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      profileImage: user.profileImage || user.avatar,
+      walletAddress: user.walletAddress,
+      walletAuthEnabled: user.walletAuthEnabled,
+      thcTokenHolder: user.thcTokenHolder,
+      membershipLevel: user.membershipLevel,
+      whopId: user.whopId,
+      favoriteSymbols: user.favoriteSymbols
+    });
+  } catch (error) {
+    console.error('Error with legacy login:', error);
     return res.status(500).json({ error: 'Failed to login' });
   }
 });
