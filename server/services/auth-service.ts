@@ -170,6 +170,62 @@ class AuthService {
   }
   
   /**
+   * Find a Whop user by email address
+   */
+  async findWhopUserByEmail(email: string): Promise<WhopUser | null> {
+    try {
+      if (!this.whopApiKey || !email) return null;
+      
+      // Try to search for user by email in Whop
+      const response = await axios.get(`${this.whopApiUrl}/users/search`, {
+        headers: {
+          'Authorization': `Bearer ${this.whopApiKey}`,
+          'Accept': 'application/json'
+        },
+        params: {
+          email: email
+        }
+      });
+      
+      if (response.status !== 200 || !response.data || !response.data.length) {
+        console.log(`No Whop user found with email: ${email}`);
+        return null;
+      }
+      
+      // Get the first matching user
+      const matchingUser = response.data[0];
+      
+      // Get the user's membership details
+      try {
+        const membershipResponse = await axios.get(`${this.whopApiUrl}/users/${matchingUser.id}/memberships`, {
+          headers: {
+            'Authorization': `Bearer ${this.whopApiKey}`,
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (membershipResponse.status === 200 && membershipResponse.data && membershipResponse.data.length > 0) {
+          // Use the first active membership's plan
+          const activeMembership = membershipResponse.data.find((m: any) => m.status === 'active');
+          if (activeMembership) {
+            matchingUser.plan = {
+              id: activeMembership.plan.id,
+              name: activeMembership.plan.name
+            };
+          }
+        }
+      } catch (membershipError) {
+        console.warn(`Failed to get membership details for Whop user ${matchingUser.id}:`, membershipError);
+      }
+      
+      return matchingUser as WhopUser;
+    } catch (error) {
+      console.error('Error finding Whop user by email:', error);
+      return null;
+    }
+  }
+  
+  /**
    * Check if a user has access to a specific feature
    */
   async hasFeatureAccess(userId: number, feature: string): Promise<boolean> {

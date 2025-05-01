@@ -2,16 +2,28 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../lib/context/AuthContext";
 import { Alert, AlertDescription } from "../components/ui/alert";
-import { AlertCircle, Loader2, HelpCircle, KeyRound, Info } from "lucide-react";
+import { AlertCircle, Loader2, HelpCircle, KeyRound, UserPlus, LogIn } from "lucide-react";
+import { authService } from "../lib/services/auth-service";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const auth = useAuth();
   
+  // Login states
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loginStatus, setLoginStatus] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  
+  // Registration states
+  const [showRegistration, setShowRegistration] = useState(false);
+  const [regUsername, setRegUsername] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [registrationStatus, setRegistrationStatus] = useState<string | null>(null);
+  const [isRegistering, setIsRegistering] = useState(false);
+  
   const loginTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Redirect if already authenticated
@@ -28,7 +40,54 @@ export default function LoginPage() {
     };
   }, [auth.isAuthenticated, navigate]);
   
-  // Function to handle Whop login
+  // Handle direct username/password login
+  const handleDirectLogin = async () => {
+    try {
+      // Clear any existing timeouts
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current);
+      }
+      
+      setIsLoggingIn(true);
+      setLoginStatus("Authenticating...");
+      
+      // Set a timeout to handle potential login hangs
+      loginTimeoutRef.current = setTimeout(() => {
+        setIsLoggingIn(false);
+        setLoginStatus("Login timed out. Please try again later.");
+      }, 15000); // 15 seconds timeout
+      
+      // Call the auth service directly
+      const userData = await authService.login(username, password);
+      
+      // Clear the timeout since login succeeded
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current);
+      }
+      
+      console.log("Login successful with user data:", userData);
+      setLoginStatus("Login successful! Redirecting...");
+      
+      // Update auth context
+      auth.getCurrentUser();
+      
+      // Navigate to dashboard
+      navigate("/dashboard");
+      
+    } catch (err) {
+      // Clear the timeout since login failed with an error
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current);
+      }
+      
+      console.error("Login failed:", err);
+      setLoginStatus("Login failed. Please check your credentials and try again.");
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+  
+  // Handle Whop login
   const handleWhopLogin = async (whopId: string) => {
     try {
       // Clear any existing timeouts
@@ -37,7 +96,7 @@ export default function LoginPage() {
       }
       
       setIsLoggingIn(true);
-      setLoginStatus(`Authenticating with ID: ${whopId}...`);
+      setLoginStatus(`Authenticating with Whop ID: ${whopId}...`);
       
       // Set a timeout to handle potential login hangs
       loginTimeoutRef.current = setTimeout(() => {
@@ -69,13 +128,6 @@ export default function LoginPage() {
       setLoginStatus("Login failed. Please check your ID and try again.");
     } finally {
       setIsLoggingIn(false);
-    }
-  };
-  
-  // Handle credential login
-  const handleLogin = () => {
-    if (username) {
-      handleWhopLogin(username);
     }
   };
   
@@ -120,6 +172,55 @@ export default function LoginPage() {
       setLoginStatus("Demo login failed. Please try again.");
     } finally {
       setIsLoggingIn(false);
+    }
+  };
+  
+  // Handle registration
+  const handleRegistration = async () => {
+    // Validate form
+    if (!regUsername || !regEmail || !regPassword || !confirmPassword) {
+      setRegistrationStatus("All fields are required");
+      return;
+    }
+    
+    if (regPassword !== confirmPassword) {
+      setRegistrationStatus("Passwords do not match");
+      return;
+    }
+    
+    if (regPassword.length < 6) {
+      setRegistrationStatus("Password must be at least 6 characters");
+      return;
+    }
+    
+    try {
+      setIsRegistering(true);
+      setRegistrationStatus("Creating your account...");
+      
+      // Call register API
+      const result = await authService.register(regUsername, regEmail, regPassword);
+      
+      console.log("Registration successful:", result);
+      
+      if (result.synced) {
+        setRegistrationStatus("Account created and synced with your Whop membership! Redirecting...");
+      } else {
+        setRegistrationStatus("Account created successfully! Redirecting...");
+      }
+      
+      // Update auth context
+      auth.getCurrentUser();
+      
+      // Navigate to dashboard after a brief delay to show the success message
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1500);
+      
+    } catch (err: any) {
+      console.error("Registration failed:", err);
+      setRegistrationStatus(err.message || "Registration failed. Please try again.");
+    } finally {
+      setIsRegistering(false);
     }
   };
   
@@ -177,151 +278,290 @@ export default function LoginPage() {
           <p className="mt-2 text-gray-300">The future of decentralized trading</p>
         </div>
         
-        <div className="space-y-6 mt-8">
-          {/* Credential Login Form */}
-          <form className="space-y-4">
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-white mb-1">
-                Username
-              </label>
-              <input
-                type="text"
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full p-2.5 bg-gray-700 border border-gray-600 text-white rounded-lg"
-                placeholder="Enter your username"
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-white mb-1">
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-2.5 bg-gray-700 border border-gray-600 text-white rounded-lg"
-                placeholder="Enter your password"
-              />
-            </div>
-            
-            <button
-              type="button"
-              className="w-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-800 font-medium rounded-lg px-5 py-2.5 text-white flex items-center justify-center"
-              disabled={!username || isLoggingIn}
-              onClick={handleLogin}
-            >
-              {isLoggingIn ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing In...
-                </>
-              ) : (
-                "Login with Whop ID"
-              )}
-            </button>
-          </form>
-          
-          <div className="flex items-center justify-center">
-            <div className="border-b w-1/3 border-gray-600"></div>
-            <div className="px-2 text-gray-400">or</div>
-            <div className="border-b w-1/3 border-gray-600"></div>
-          </div>
-          
-          {/* Quick Access Button */}
+        {/* Tabs for Login and Register */}
+        <div className="mb-6 flex">
           <button
-            onClick={handleDemoLogin}
-            disabled={isLoggingIn}
-            className="w-full bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-800 font-medium rounded-lg px-5 py-3 text-white flex items-center justify-center"
+            onClick={() => setShowRegistration(false)}
+            className={`flex-1 py-3 text-center font-medium focus:outline-none ${
+              !showRegistration ? "border-b-2 border-blue-500 text-white" : "text-gray-400"
+            }`}
           >
-            {isLoggingIn ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing In...
-              </>
-            ) : (
-              <>
-                <svg
-                  className="w-5 h-5 mr-2"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                  <path
-                    fillRule="evenodd"
-                    d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                    clipRule="evenodd"
-                  ></path>
-                </svg>
-                Demo Login (Quick Access)
-              </>
-            )}
+            <LogIn className="inline-block w-4 h-4 mr-2" />
+            Login
           </button>
-          
-          {/* Forgot Password Link */}
-          <div className="flex justify-end mt-2">
-            <a 
-              href="https://whop.com/forgot-password" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-sm text-blue-400 hover:text-blue-300 flex items-center"
-            >
-              <KeyRound className="h-3 w-3 mr-1" />
-              Forgot Password?
-            </a>
-          </div>
-          
-          {loginStatus && (
-            <Alert variant={loginStatus.includes("failed") ? "destructive" : "default"} 
-                  className={`mt-4 ${loginStatus.includes("failed") ? "bg-red-900/20 border-red-800" : "bg-blue-900/20 border-blue-800"}`}>
-              {loginStatus.includes("failed") ? (
-                <AlertCircle className="h-4 w-4 mr-2" />
-              ) : (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          <button
+            onClick={() => setShowRegistration(true)}
+            className={`flex-1 py-3 text-center font-medium focus:outline-none ${
+              showRegistration ? "border-b-2 border-blue-500 text-white" : "text-gray-400"
+            }`}
+          >
+            <UserPlus className="inline-block w-4 h-4 mr-2" />
+            Register
+          </button>
+        </div>
+        
+        <div className="space-y-6">
+          {!showRegistration ? (
+            // Login Form
+            <>
+              <form className="space-y-4">
+                <div>
+                  <label htmlFor="username" className="block text-sm font-medium text-white mb-1">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    id="username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full p-2.5 bg-gray-700 border border-gray-600 text-white rounded-lg"
+                    placeholder="Enter your username"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-white mb-1">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full p-2.5 bg-gray-700 border border-gray-600 text-white rounded-lg"
+                    placeholder="Enter your password"
+                  />
+                </div>
+                
+                <button
+                  type="button"
+                  className="w-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-800 font-medium rounded-lg px-5 py-2.5 text-white flex items-center justify-center"
+                  disabled={!username || !password || isLoggingIn}
+                  onClick={handleDirectLogin}
+                >
+                  {isLoggingIn ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing In...
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className="mr-2 h-4 w-4" />
+                      Login
+                    </>
+                  )}
+                </button>
+                
+                {/* Whop ID Login Option */}
+                <div className="flex items-center justify-center my-3">
+                  <div className="border-b w-1/3 border-gray-600"></div>
+                  <div className="px-2 text-gray-400 text-sm">Whop ID Login</div>
+                  <div className="border-b w-1/3 border-gray-600"></div>
+                </div>
+                
+                <button
+                  type="button"
+                  className="w-full bg-purple-600 hover:bg-purple-700 focus:ring-4 focus:ring-purple-800 font-medium rounded-lg px-5 py-2.5 text-white flex items-center justify-center"
+                  disabled={!username || isLoggingIn}
+                  onClick={() => username && handleWhopLogin(username)}
+                >
+                  {isLoggingIn ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing In...
+                    </>
+                  ) : (
+                    "Login with Whop ID"
+                  )}
+                </button>
+              </form>
+              
+              <div className="flex items-center justify-center">
+                <div className="border-b w-1/3 border-gray-600"></div>
+                <div className="px-2 text-gray-400">or</div>
+                <div className="border-b w-1/3 border-gray-600"></div>
+              </div>
+              
+              {/* Quick Access Button */}
+              <button
+                onClick={handleDemoLogin}
+                disabled={isLoggingIn}
+                className="w-full bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-800 font-medium rounded-lg px-5 py-3 text-white flex items-center justify-center"
+              >
+                {isLoggingIn ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing In...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+                      <path
+                        fillRule="evenodd"
+                        d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                        clipRule="evenodd"
+                      ></path>
+                    </svg>
+                    Demo Login (Quick Access)
+                  </>
+                )}
+              </button>
+              
+              {/* Forgot Password Link */}
+              <div className="flex justify-end mt-2">
+                <a 
+                  href="#" 
+                  className="text-sm text-blue-400 hover:text-blue-300 flex items-center"
+                >
+                  <KeyRound className="h-3 w-3 mr-1" />
+                  Forgot Password?
+                </a>
+              </div>
+              
+              {loginStatus && (
+                <Alert variant={loginStatus.includes("failed") ? "destructive" : "default"} 
+                      className={`mt-4 ${loginStatus.includes("failed") ? "bg-red-900/20 border-red-800" : "bg-blue-900/20 border-blue-800"}`}>
+                  {loginStatus.includes("failed") ? (
+                    <AlertCircle className="h-4 w-4 mr-2" />
+                  ) : (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  )}
+                  <AlertDescription>
+                    {loginStatus}
+                  </AlertDescription>
+                </Alert>
               )}
-              <AlertDescription>
-                {loginStatus}
-              </AlertDescription>
-            </Alert>
+            </>
+          ) : (
+            // Registration Form
+            <>
+              <form className="space-y-4">
+                <div>
+                  <label htmlFor="reg-username" className="block text-sm font-medium text-white mb-1">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    id="reg-username"
+                    value={regUsername}
+                    onChange={(e) => setRegUsername(e.target.value)}
+                    className="w-full p-2.5 bg-gray-700 border border-gray-600 text-white rounded-lg"
+                    placeholder="Choose a username"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="reg-email" className="block text-sm font-medium text-white mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    id="reg-email"
+                    value={regEmail}
+                    onChange={(e) => setRegEmail(e.target.value)}
+                    className="w-full p-2.5 bg-gray-700 border border-gray-600 text-white rounded-lg"
+                    placeholder="Enter your email"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    If your email matches a Whop membership, we'll automatically sync your account benefits
+                  </p>
+                </div>
+                
+                <div>
+                  <label htmlFor="reg-password" className="block text-sm font-medium text-white mb-1">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    id="reg-password"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    className="w-full p-2.5 bg-gray-700 border border-gray-600 text-white rounded-lg"
+                    placeholder="Create a password"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="reg-confirm-password" className="block text-sm font-medium text-white mb-1">
+                    Confirm Password
+                  </label>
+                  <input
+                    type="password"
+                    id="reg-confirm-password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full p-2.5 bg-gray-700 border border-gray-600 text-white rounded-lg"
+                    placeholder="Confirm your password"
+                  />
+                </div>
+                
+                <button
+                  type="button"
+                  className="w-full bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-800 font-medium rounded-lg px-5 py-2.5 text-white flex items-center justify-center"
+                  disabled={isRegistering}
+                  onClick={handleRegistration}
+                >
+                  {isRegistering ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating Account...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Create Account
+                    </>
+                  )}
+                </button>
+              </form>
+              
+              {registrationStatus && (
+                <Alert variant={registrationStatus.includes("failed") || registrationStatus.includes("error") ? "destructive" : "default"} 
+                      className={`mt-4 ${registrationStatus.includes("failed") || registrationStatus.includes("error") ? "bg-red-900/20 border-red-800" : "bg-blue-900/20 border-blue-800"}`}>
+                  {registrationStatus.includes("failed") || registrationStatus.includes("error") ? (
+                    <AlertCircle className="h-4 w-4 mr-2" />
+                  ) : registrationStatus.includes("success") ? (
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                  ) : (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  )}
+                  <AlertDescription>
+                    {registrationStatus}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </>
           )}
           
-          {/* Need Help / Troubleshooting */}
+          {/* Help Section */}
           <div className="mt-6 p-3 bg-gray-700/50 rounded-lg border border-gray-600">
             <div className="flex items-start gap-2">
               <HelpCircle className="h-5 w-5 text-blue-400 mt-0.5" />
               <div>
-                <h4 className="text-sm font-medium text-white">Need help logging in?</h4>
+                <h4 className="text-sm font-medium text-white">Need help?</h4>
                 <p className="text-xs text-gray-300 mt-1">
-                  If you're having trouble accessing your account, please try:
+                  {showRegistration ? 
+                    "Create an account to access Trade Hybrid. If you have a Whop membership, use the same email to automatically receive your benefits." : 
+                    "You can log in with your username and password, or use your Whop ID if you have a membership."}
                 </p>
-                <ul className="list-disc text-xs text-gray-300 pl-4 mt-1 space-y-1">
-                  <li>Verify you're using the correct Whop ID or email</li>
-                  <li>Use the 'Forgot Password' link to reset your password</li>
-                  <li>
-                    <a 
-                      href="https://whop.com/help" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-400 hover:text-blue-300"
+                {!showRegistration && (
+                  <p className="text-xs text-gray-300 mt-2">
+                    Don't have an account? <button 
+                      onClick={() => setShowRegistration(true)}
+                      className="text-blue-400 hover:text-blue-300 underline"
                     >
-                      Visit Whop Support
-                    </a>
-                  </li>
-                </ul>
+                      Create one now
+                    </button>
+                  </p>
+                )}
               </div>
             </div>
-          </div>
-          
-          <div className="text-xs text-gray-400 mt-4">
-            <p>For testing purposes:</p>
-            <ul className="list-disc pl-5 mt-1">
-              <li>Use "demo" to log in as a demo user</li>
-              <li>Or enter your Whop ID to use your membership</li>
-            </ul>
           </div>
         </div>
       </div>

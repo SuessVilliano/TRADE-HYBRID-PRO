@@ -2,15 +2,15 @@
 import { useAuthStore } from '../stores/useAuthStore';
 
 export const authService = {
-  async login(whopId: string) {
+  async login(username: string, password: string) {
     try {
-      console.log('Logging in with Whop ID:', whopId);
+      console.log('Logging in with username/password');
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ whopId }),
+        body: JSON.stringify({ username, password }),
         credentials: 'include', // Important for sending/receiving cookies
       });
       
@@ -28,6 +28,37 @@ export const authService = {
       return userData;
     } catch (error) {
       console.error('Login error:', error);
+      throw error;
+    }
+  },
+  
+  async register(username: string, email: string, password: string) {
+    try {
+      console.log('Registering new user account');
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, email, password }),
+        credentials: 'include', // Important for sending/receiving cookies
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Registration failed:', errorData);
+        throw new Error(errorData.error || 'Registration failed');
+      }
+      
+      const userData = await response.json();
+      console.log('Registration succeeded, user data:', userData);
+      
+      // Store user data in zustand store
+      useAuthStore.getState().setUser(userData.user);
+      
+      return userData;
+    } catch (error) {
+      console.error('Registration error:', error);
       throw error;
     }
   },

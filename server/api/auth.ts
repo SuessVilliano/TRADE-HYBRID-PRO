@@ -159,16 +159,79 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Username already exists' });
     }
     
-    // Check if email already exists
+    // Check if email already exists in our database
     const existingEmail = await db.query.users.findFirst({
       where: eq(users.email, email)
     });
     
-    if (existingEmail) {
-      return res.status(400).json({ error: 'Email already exists' });
+    // Check if a Whop account with this email exists by attempting to get Whop data
+    let whopUser = null;
+    let whopSync = false;
+    let membershipLevel = 'free';
+    
+    try {
+      // Try to find a matching Whop account
+      whopUser = await authService.findWhopUserByEmail(email);
+      
+      if (whopUser) {
+        console.log(`Found matching Whop user for email ${email}:`, whopUser);
+        whopSync = true;
+        
+        if (whopUser.plan && whopUser.plan.name) {
+          // Map Whop plan to our membership levels
+          const planName = whopUser.plan.name.toLowerCase();
+          if (planName.includes('pro')) {
+            membershipLevel = 'pro';
+          } else if (planName.includes('advanced')) {
+            membershipLevel = 'advanced';
+          } else if (planName.includes('intermediate')) {
+            membershipLevel = 'intermediate';
+          } else if (planName.includes('beginner')) {
+            membershipLevel = 'beginner';
+          } else {
+            membershipLevel = 'paid';
+          }
+        }
+      }
+    } catch (whopError) {
+      console.warn('Failed to check Whop for email match:', whopError);
+      // Continue with registration as a free user
     }
     
-    // Create new user
+    // If the email exists in our database, we won't create a new account
+    if (existingEmail) {
+      if (whopSync) {
+        // If we found a matching Whop account, update the existing user with Whop info
+        await db.update(users)
+          .set({
+            whopId: whopUser.id,
+            whopPlanId: whopUser.plan?.id,
+            membershipLevel: membershipLevel,
+            updatedAt: new Date()
+          })
+          .where(eq(users.id, existingEmail.id));
+          
+        // Set up the session with the existing user
+        req.session.userId = existingEmail.id;
+        
+        // Return the updated user info
+        return res.json({
+          success: true,
+          synced: true,
+          user: {
+            id: existingEmail.id,
+            username: existingEmail.username,
+            email: existingEmail.email,
+            membershipLevel: membershipLevel
+          }
+        });
+      } else {
+        // If no Whop match but email exists in our DB, just return an error
+        return res.status(400).json({ error: 'Email already exists' });
+      }
+    }
+    
+    // Create new user with potential Whop data
     const [newUser] = await db.insert(users)
       .values({
         username,
@@ -176,14 +239,17 @@ router.post('/register', async (req, res) => {
         password, // In production, this should be hashed with bcrypt
         createdAt: new Date(),
         updatedAt: new Date(),
-        membershipLevel: 'free', // Default membership level
+        membershipLevel: membershipLevel,
         thcTokenHolder: false,
-        walletAuthEnabled: false
+        walletAuthEnabled: false,
+        whopId: whopUser?.id,
+        whopPlanId: whopUser?.plan?.id
       })
       .returning({
         id: users.id,
         username: users.username,
-        email: users.email
+        email: users.email,
+        membershipLevel: users.membershipLevel
       });
     
     // Set session
@@ -191,11 +257,12 @@ router.post('/register', async (req, res) => {
     
     return res.json({
       success: true,
+      synced: whopSync,
       user: {
         id: newUser.id,
         username: newUser.username,
         email: newUser.email,
-        membershipLevel: 'free'
+        membershipLevel: newUser.membershipLevel
       }
     });
   } catch (error) {
