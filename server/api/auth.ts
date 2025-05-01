@@ -11,25 +11,49 @@ router.get('/user', async (req, res) => {
   try {
     // Check if user is authenticated through session
     if (req.session && req.session.userId) {
-      // Get user from database
-      const user = await db.query.users.findFirst({
-        where: eq(users.id, req.session.userId)
-      });
-      
-      if (user) {
-        // Return user without sensitive information
-        return res.json({
-          authenticated: true,
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          profileImage: user.profileImage,
-          walletAddress: user.walletAddress,
-          walletAuthEnabled: user.walletAuthEnabled,
-          thcTokenHolder: user.thcTokenHolder,
-          membershipLevel: user.membershipLevel,
-          whopId: user.whopId,
-          favoriteSymbols: user.favoriteSymbols
+      try {
+        // Use direct SQL to avoid column name issues
+        const sql = db.$client;
+        const result = await sql`
+          SELECT 
+            id, 
+            username, 
+            email, 
+            profile_image as "profileImage", 
+            avatar,
+            wallet_address as "walletAddress", 
+            wallet_auth_enabled as "walletAuthEnabled", 
+            thc_token_holder as "thcTokenHolder", 
+            membership_level as "membershipLevel", 
+            whop_id as "whopId",
+            favorite_symbols as "favoriteSymbols"
+          FROM users 
+          WHERE id = ${req.session.userId}
+          LIMIT 1
+        `;
+
+        if (result && result.length > 0) {
+          const user = result[0];
+          // Return user without sensitive information
+          return res.json({
+            authenticated: true,
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            profileImage: user.profileImage || user.avatar,
+            walletAddress: user.walletAddress,
+            walletAuthEnabled: user.walletAuthEnabled,
+            thcTokenHolder: user.thcTokenHolder,
+            membershipLevel: user.membershipLevel,
+            whopId: user.whopId,
+            favoriteSymbols: user.favoriteSymbols
+          });
+        }
+      } catch (dbError) {
+        console.error('Error fetching user data:', dbError);
+        return res.status(500).json({ 
+          authenticated: false, 
+          error: 'Internal server error fetching user data' 
         });
       }
     }
