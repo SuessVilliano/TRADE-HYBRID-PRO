@@ -2,30 +2,58 @@
 import { useAuthStore } from '../stores/useAuthStore';
 
 export const authService = {
-  async login(username: string, password: string) {
+  async login(username: string, password?: string) {
     try {
-      console.log('Logging in with username/password');
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-        credentials: 'include', // Important for sending/receiving cookies
-      });
-      
-      if (!response.ok) {
-        console.error('Login failed with status:', response.status);
-        throw new Error('Login failed');
+      // Direct username/password login
+      if (password !== undefined) {
+        console.log('Logging in with username/password');
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+          credentials: 'include', // Important for sending/receiving cookies
+        });
+        
+        if (!response.ok) {
+          console.error('Login failed with status:', response.status);
+          throw new Error('Login failed');
+        }
+        
+        const userData = await response.json();
+        console.log('Login succeeded, user data:', userData);
+        
+        // Store user data in zustand store
+        useAuthStore.getState().setUser(userData);
+        
+        return userData;
+      } 
+      // Legacy login by username/ID only (for backward compatibility)
+      else {
+        console.log('Legacy login by username/ID only');
+        const response = await fetch('/api/auth/legacy-login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username }),
+          credentials: 'include', // Important for sending/receiving cookies
+        });
+        
+        if (!response.ok) {
+          console.error('Legacy login failed with status:', response.status);
+          throw new Error('Login failed');
+        }
+        
+        const userData = await response.json();
+        console.log('Legacy login succeeded, user data:', userData);
+        
+        // Store user data in zustand store
+        useAuthStore.getState().setUser(userData);
+        
+        return userData;
       }
-      
-      const userData = await response.json();
-      console.log('Login succeeded, user data:', userData);
-      
-      // Store user data in zustand store
-      useAuthStore.getState().setUser(userData);
-      
-      return userData;
     } catch (error) {
       console.error('Login error:', error);
       throw error;

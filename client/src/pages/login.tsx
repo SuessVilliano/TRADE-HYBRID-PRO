@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../lib/context/AuthContext";
 import { Alert, AlertDescription } from "../components/ui/alert";
-import { AlertCircle, Loader2, HelpCircle, KeyRound, UserPlus, LogIn } from "lucide-react";
+import { AlertCircle, Loader2, HelpCircle, KeyRound, UserPlus, LogIn, CheckCircle } from "lucide-react";
 import { authService } from "../lib/services/auth-service";
 
 export default function LoginPage() {
@@ -363,7 +363,7 @@ export default function LoginPage() {
                   type="button"
                   className="w-full bg-purple-600 hover:bg-purple-700 focus:ring-4 focus:ring-purple-800 font-medium rounded-lg px-5 py-2.5 text-white flex items-center justify-center"
                   disabled={!username || isLoggingIn}
-                  onClick={() => username && handleWhopLogin(username)}
+                  onClick={() => username && auth.login(username)}
                 >
                   {isLoggingIn ? (
                     <>

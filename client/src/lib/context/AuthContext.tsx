@@ -48,7 +48,7 @@ interface AuthContextType {
   membershipLevel: string;
   isPaidUser: boolean;
   isProUser: boolean;
-  login: (whopId: string) => Promise<any>;
+  login: (usernameOrWhopId: string, password?: string) => Promise<any>;
   loginWithDemo: () => Promise<any>;
   getCurrentUser: () => Promise<any>;
   logout: () => Promise<void>;
@@ -196,43 +196,70 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isProUser,
     hasAccess,
     
-    login: async (whopId: string) => {
+    login: async (usernameOrWhopId: string, password?: string) => {
       try {
-        console.log('Starting login process with Whop ID:', whopId);
-        
-        // First try direct Whop authentication
-        try {
-          console.log('Attempting direct Whop authentication...');
-          const userData = await Promise.race([
-            authService.loginWithWhop(whopId),
-            // Add a timeout to prevent hanging authentication
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Whop authentication timed out')), 10000)
-            )
-          ]) as User;
+        // If password is provided, use direct username/password login
+        if (password) {
+          console.log('Starting direct login process with username and password');
           
-          console.log('Direct Whop authentication successful');
-          setCurrentUser(userData);
-          setIsAuthenticated(true);
-          return userData;
-        } catch (whopError) {
-          // Detailed logging of the Whop authentication failure
-          console.log('Direct Whop auth failed, error:', whopError);
-          console.log('Falling back to regular login...');
-          
-          // Fallback to regular login if direct auth fails
           const userData = await Promise.race([
-            authService.login(whopId),
+            authService.login(usernameOrWhopId, password),
             // Add a timeout to prevent hanging authentication
             new Promise((_, reject) => 
               setTimeout(() => reject(new Error('Login timed out')), 10000)
             )
           ]) as User;
           
-          console.log('Regular login authentication successful');
+          console.log('Direct login authentication successful');
           setCurrentUser(userData);
           setIsAuthenticated(true);
           return userData;
+        } 
+        // Otherwise, try Whop login flow
+        else {
+          console.log('Starting login process with Whop ID:', usernameOrWhopId);
+          
+          // First try direct Whop authentication
+          try {
+            console.log('Attempting direct Whop authentication...');
+            const userData = await Promise.race([
+              authService.loginWithWhop(usernameOrWhopId),
+              // Add a timeout to prevent hanging authentication
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Whop authentication timed out')), 10000)
+              )
+            ]) as User;
+            
+            console.log('Direct Whop authentication successful');
+            setCurrentUser(userData);
+            setIsAuthenticated(true);
+            return userData;
+          } catch (whopError) {
+            // Detailed logging of the Whop authentication failure
+            console.log('Direct Whop auth failed, error:', whopError);
+            console.log('Falling back to legacy login...');
+            
+            // Legacy fallback - this will eventually be removed
+            // when all users transition to the new system
+            try {
+              // Legacy login without password
+              const userData = await Promise.race([
+                authService.login(usernameOrWhopId, ''),
+                // Add a timeout to prevent hanging authentication
+                new Promise((_, reject) => 
+                  setTimeout(() => reject(new Error('Login timed out')), 10000)
+                )
+              ]) as User;
+              
+              console.log('Legacy login authentication successful');
+              setCurrentUser(userData);
+              setIsAuthenticated(true);
+              return userData;
+            } catch (legacyError) {
+              console.error('Legacy login failed:', legacyError);
+              throw new Error('Login failed. Please check your credentials and try again.');
+            }
+          }
         }
       } catch (error) {
         console.error('All login attempts failed:', error);
