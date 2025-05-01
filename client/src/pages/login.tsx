@@ -197,28 +197,50 @@ export default function LoginPage() {
       setIsRegistering(true);
       setRegistrationStatus("Creating your account...");
       
-      // Call register API
-      const result = await authService.register(regUsername, regEmail, regPassword);
-      
-      console.log("Registration successful:", result);
-      
-      if (result.synced) {
-        setRegistrationStatus("Account created and synced with your Whop membership! Redirecting...");
-      } else {
-        setRegistrationStatus("Account created successfully! Redirecting...");
+      // Call register API with error handling
+      try {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            username: regUsername, 
+            email: regEmail, 
+            password: regPassword 
+          }),
+          credentials: 'include', // Important for sending/receiving cookies
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Registration failed');
+        }
+        
+        const result = await response.json();
+        console.log("Registration successful:", result);
+        
+        if (result.synced) {
+          setRegistrationStatus("Account created and synced with your Whop membership! Redirecting...");
+        } else {
+          setRegistrationStatus("Account created successfully! Redirecting...");
+        }
+        
+        // Update auth context
+        auth.getCurrentUser();
+        
+        // Navigate to dashboard after a brief delay to show the success message
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1500);
+      } catch (apiError: any) {
+        console.error("API registration error:", apiError);
+        setRegistrationStatus(apiError.message || "Registration failed. Please try again.");
+        throw apiError; // Re-throw to be caught by outer catch
       }
-      
-      // Update auth context
-      auth.getCurrentUser();
-      
-      // Navigate to dashboard after a brief delay to show the success message
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 1500);
-      
     } catch (err: any) {
       console.error("Registration failed:", err);
-      setRegistrationStatus(err.message || "Registration failed. Please try again.");
+      setRegistrationStatus(err.message || "Registration failed. Please try a different username or email.");
     } finally {
       setIsRegistering(false);
     }
@@ -363,22 +385,49 @@ export default function LoginPage() {
                   type="button"
                   className="w-full bg-purple-600 hover:bg-purple-700 focus:ring-4 focus:ring-purple-800 font-medium rounded-lg px-5 py-2.5 text-white flex items-center justify-center"
                   disabled={!username || isLoggingIn}
-                  onClick={() => {
+                  onClick={async () => {
                     if (username) {
-                      setLoginStatus('Authenticating with Whop ID...');
-                      setIsLoggingIn(true);
-                      auth.login(username)
-                        .then(() => {
-                          setLoginStatus('Login successful! Redirecting...');
-                          navigate('/dashboard');
-                        })
-                        .catch(error => {
-                          console.error("Whop login error:", error);
-                          setLoginStatus('Login failed. Please check your Whop ID and try again.');
-                        })
-                        .finally(() => {
+                      try {
+                        setLoginStatus('Authenticating with Whop ID...');
+                        setIsLoggingIn(true);
+                        
+                        // Set a timeout to handle potential login hangs
+                        if (loginTimeoutRef.current) {
+                          clearTimeout(loginTimeoutRef.current);
+                        }
+                        
+                        loginTimeoutRef.current = setTimeout(() => {
                           setIsLoggingIn(false);
-                        });
+                          setLoginStatus("Login timed out. Please try again.");
+                        }, 15000); // 15 seconds timeout
+                        
+                        // Direct Whop login
+                        const userData = await authService.loginWithWhop(username);
+                        
+                        // Clear timeout since login succeeded
+                        if (loginTimeoutRef.current) {
+                          clearTimeout(loginTimeoutRef.current);
+                        }
+                        
+                        console.log("Whop login successful:", userData);
+                        setLoginStatus('Login successful! Redirecting...');
+                        
+                        // Update auth context
+                        auth.getCurrentUser();
+                        
+                        // Navigate to dashboard
+                        navigate('/dashboard');
+                      } catch (error) {
+                        console.error("Whop login error:", error);
+                        setLoginStatus('Login failed. Please check your Whop ID and try again.');
+                        
+                        // Clear timeout if it exists
+                        if (loginTimeoutRef.current) {
+                          clearTimeout(loginTimeoutRef.current);
+                        }
+                      } finally {
+                        setIsLoggingIn(false);
+                      }
                     }
                   }}
                 >
