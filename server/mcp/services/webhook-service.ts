@@ -6,6 +6,8 @@
  */
 
 import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
 import { MCPServer } from '../core/mcp-server';
 import { TradeSignal } from '../types/trade-signal';
 import { TradeRecord } from '../services/user-profile-service';
