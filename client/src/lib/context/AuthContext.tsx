@@ -269,57 +269,112 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     loginWithDemo: async () => {
       try {
-        console.log('Starting demo login process...');
+        console.log('Starting demo login process with server...');
         
-        // Simulate a brief network delay for realism
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Create demo user data that matches the User interface
-        const demoUser: User = {
-          id: 1,
-          username: 'demo_user',
-          email: 'demo@trade-hybrid.com',
-          membershipLevel: 'demo',
-          authenticated: true,
-          membershipExpiresAt: '2030-01-01',
-          isAdmin: true,
-          walletAddress: '0xDemoWalletAddress',
-          profileImage: '/images/default-avatar.png',
-          hasConnectedApis: true,
-          isTokenHolder: true,
-          features: {           
-            trade: true,
-            journal: true,
-            metaverse: true,
-            learn: true,
-            signals: true,
-            leaderboard: true,
-            bots: true,
-            news: true,
-            profile: true,
-            settings: true,
-            staking: true,
-            validator: true,
-            aiSignals: true,
-            multiExchange: true,
-            customizableUi: true,
-            advancedAnalytics: true,
-            solarisCrypto: true,
-            paradoxForex: true,
-            tradingWorkspace: true
-          }
-        };
-        
-        // Store in localStorage
-        localStorage.setItem('demoUser', JSON.stringify(demoUser));
-        
-        // Update state
-        setCurrentUser(demoUser);
-        setIsAuthenticated(true);
-        
-        console.log('Demo login successful, user data:', demoUser);
-        
-        return demoUser;
+        // Use the demo login endpoint on the server
+        try {
+          const userData = await Promise.race([
+            authService.loginWithDemo(),
+            // Add a timeout to prevent hanging authentication
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Demo login timed out')), 10000)
+            )
+          ]) as User;
+          
+          // Enhance demo user with additional permissions
+          const enhancedUser = {
+            ...userData,
+            membershipLevel: 'demo',
+            isAdmin: true,
+            membershipExpiresAt: '2030-01-01',
+            hasConnectedApis: true,
+            isTokenHolder: true,
+            features: {           
+              trade: true,
+              journal: true,
+              metaverse: true,
+              learn: true,
+              signals: true,
+              leaderboard: true,
+              bots: true,
+              news: true,
+              profile: true,
+              settings: true,
+              staking: true,
+              validator: true,
+              aiSignals: true,
+              multiExchange: true,
+              customizableUi: true,
+              advancedAnalytics: true,
+              solarisCrypto: true,
+              paradoxForex: true,
+              tradingWorkspace: true
+            }
+          };
+          
+          // Store enhanced user in localStorage (for frontend features)
+          localStorage.setItem('demoUser', JSON.stringify(enhancedUser));
+          
+          // Update state
+          setCurrentUser(enhancedUser);
+          setIsAuthenticated(true);
+          
+          console.log('Demo login successful, user data:', enhancedUser);
+          
+          return enhancedUser;
+        } catch (serverError) {
+          console.error('Server demo login failed:', serverError);
+          
+          // Fallback to client-side demo if server fails
+          console.log('Falling back to client-side demo login...');
+          
+          // Create demo user data that matches the User interface
+          const demoUser: User = {
+            id: -1,
+            username: 'demo_user',
+            email: 'demo@trade-hybrid.com',
+            membershipLevel: 'demo',
+            authenticated: true,
+            membershipExpiresAt: '2030-01-01',
+            isAdmin: true,
+            walletAddress: '0xDemoWalletAddress',
+            profileImage: '/images/default-avatar.png',
+            hasConnectedApis: true,
+            isTokenHolder: true,
+            features: {           
+              trade: true,
+              journal: true,
+              metaverse: true,
+              learn: true,
+              signals: true,
+              leaderboard: true,
+              bots: true,
+              news: true,
+              profile: true,
+              settings: true,
+              staking: true,
+              validator: true,
+              aiSignals: true,
+              multiExchange: true,
+              customizableUi: true,
+              advancedAnalytics: true,
+              solarisCrypto: true,
+              paradoxForex: true,
+              tradingWorkspace: true
+            }
+          };
+          
+          // Store in localStorage
+          localStorage.setItem('demoUser', JSON.stringify(demoUser));
+          
+          // Update state
+          setCurrentUser(demoUser);
+          setIsAuthenticated(true);
+          
+          console.log('Fallback demo login successful, user data:', demoUser);
+          
+          return demoUser;
+        }
       } catch (error) {
         console.error('Demo login process failed:', error);
         throw new Error('Demo login failed unexpectedly');
