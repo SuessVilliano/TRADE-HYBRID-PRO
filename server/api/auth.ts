@@ -383,6 +383,8 @@ router.post('/register', async (req, res) => {
       }
       
       // Create new user with potential Whop data
+      // Note: We're not including whop_product_id since it doesn't exist in the database schema
+      // This fixes the "column whop_product_id does not exist" error
       const insertResult = await sql`
         INSERT INTO users (
           username, 
