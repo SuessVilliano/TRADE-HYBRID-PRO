@@ -29,6 +29,11 @@ class TradeSignalService {
   };
   private notificationsEnabled: boolean = true; // Default to enabled
 
+  private ws: WebSocket | null = null;
+  private reconnectAttempts: number = 0;
+  private reconnectTimeout: any = null;
+  private maxReconnectAttempts: number = 5;
+
   constructor() {
     // Load real signals from the API instead of mock data
     this.fetchRealSignals();
@@ -45,6 +50,149 @@ class TradeSignalService {
     // Removed automatic polling to reduce API calls
     // Users can now manually refresh signals by clicking refresh buttons
     // or by taking actions that specifically require fresh data
+    
+    // Initialize WebSocket connection for real-time signals
+    this.connectToWebSocket();
+  }
+  
+  /**
+   * Connect to WebSocket server for real-time signal updates
+   */
+  private connectToWebSocket(): void {
+    if (typeof window === 'undefined') return; // Skip if running on server-side
+    
+    try {
+      // Close any existing connection
+      if (this.ws) {
+        this.ws.close();
+        this.ws = null;
+      }
+      
+      // Create WebSocket URL from current location
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      
+      console.log(`Connecting to WebSocket at ${wsUrl} for real-time signals...`);
+      
+      // Create new WebSocket connection
+      this.ws = new WebSocket(wsUrl);
+      
+      // Set up event handlers
+      this.ws.onopen = this.handleWebSocketOpen.bind(this);
+      this.ws.onmessage = this.handleWebSocketMessage.bind(this);
+      this.ws.onclose = this.handleWebSocketClose.bind(this);
+      this.ws.onerror = this.handleWebSocketError.bind(this);
+    } catch (error) {
+      console.error('Error connecting to WebSocket:', error);
+      this.scheduleReconnect();
+    }
+  }
+  
+  /**
+   * Handle WebSocket connection opened
+   */
+  private handleWebSocketOpen(event: Event): void {
+    console.log('🟢 WebSocket connected for real-time trading signals');
+    this.reconnectAttempts = 0; // Reset reconnect counter on successful connection
+    
+    // Send a ping to verify the connection
+    try {
+      this.ws?.send(JSON.stringify({
+        type: 'ping',
+        data: {
+          client: 'trade-signal-service',
+          timestamp: Date.now()
+        }
+      }));
+    } catch (error) {
+      console.error('Error sending ping:', error);
+    }
+  }
+  
+  /**
+   * Handle incoming WebSocket message
+   */
+  private handleWebSocketMessage(event: MessageEvent): void {
+    try {
+      const data = JSON.parse(event.data);
+      
+      // Handle different message types
+      if (data.type === 'trading_signal' && data.data && data.data.signal) {
+        console.log('Trading signal received via WebSocket:', data.data);
+        
+        // Convert signal format
+        const signalData = data.data.signal;
+        
+        // Create a new signal object in our format
+        const newSignal: TradeSignal = {
+          id: signalData.id || `ws-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          symbol: signalData.Symbol || signalData.symbol || 'UNKNOWN',
+          type: (signalData.Direction || signalData.type || 'buy').toLowerCase() === 'buy' ? 'buy' : 'sell',
+          entry: signalData['Entry Price'] || signalData.entry || 0,
+          stopLoss: signalData['Stop Loss'] || signalData.stopLoss || 0,
+          takeProfit: signalData['Take Profit'] || signalData.takeProfit || signalData.TP1 || 0,
+          timestamp: new Date(signalData.Date || signalData.timestamp || Date.now()),
+          source: signalData.Provider || signalData.source || 'WebSocket',
+          risk: signalData.risk || 1,
+          notes: signalData.Notes || signalData.notes || 'Signal received via WebSocket',
+          timeframe: signalData.timeframe || '30m',
+          status: 'active'
+        };
+        
+        // Add the signal and trigger notification
+        this.addSignal(newSignal);
+      } else if (data.type === 'pong') {
+        console.log('Received pong from server:', data);
+      }
+    } catch (error) {
+      console.error('Error processing WebSocket message:', error);
+    }
+  }
+  
+  /**
+   * Handle WebSocket connection closed
+   */
+  private handleWebSocketClose(event: CloseEvent): void {
+    console.log(`WebSocket connection closed. Code: ${event.code}, Reason: ${event.reason || 'No reason provided'}`);
+    this.ws = null;
+    
+    // Try to reconnect
+    this.scheduleReconnect();
+  }
+  
+  /**
+   * Handle WebSocket connection error
+   */
+  private handleWebSocketError(event: Event): void {
+    console.error('WebSocket error:', event);
+    // Don't close the connection here - onclose will be called automatically
+  }
+  
+  /**
+   * Schedule a reconnection attempt with exponential backoff
+   */
+  private scheduleReconnect(): void {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.log('Maximum WebSocket reconnect attempts reached');
+      return;
+    }
+    
+    // Clear any existing timeout
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+    }
+    
+    // Calculate backoff delay (exponential with jitter)
+    const baseDelay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+    const jitter = Math.random() * 1000;
+    const delay = baseDelay + jitter;
+    
+    console.log(`Scheduling WebSocket reconnect in ${Math.floor(delay/1000)} seconds (attempt ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts})`);
+    
+    this.reconnectTimeout = setTimeout(() => {
+      this.reconnectAttempts++;
+      this.connectToWebSocket();
+    }, delay);
   }
   
   // Fetch real signals from the API - with option to enrich with current market data

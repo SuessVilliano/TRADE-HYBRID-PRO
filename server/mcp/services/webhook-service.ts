@@ -41,17 +41,90 @@ export class WebhookService {
   // Track if we've already sent an initialization message to Discord
   private static hasInitializedBefore: boolean = false;
   
+  // Store the last initialization time in a file to persist across restarts
+  private readonly INIT_MARKER_FILE = './data/webhook-init-marker.json';
+  private readonly INIT_COOLDOWN_HOURS = 12; // Only send the init message once per 12 hours
+  
+  /**
+   * Check if we've sent an initialization message recently
+   * This uses the filesystem to persist the state across server restarts
+   */
+  private async hasInitializedRecently(): Promise<boolean> {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      
+      // Create directory if it doesn't exist
+      const dir = path.dirname(this.INIT_MARKER_FILE);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
+      // Check if the marker file exists
+      if (fs.existsSync(this.INIT_MARKER_FILE)) {
+        const data = fs.readFileSync(this.INIT_MARKER_FILE, 'utf8');
+        const marker = JSON.parse(data);
+        
+        // Check if the last initialization was within the cooldown period
+        const lastInit = new Date(marker.lastInitTime);
+        const now = new Date();
+        const hoursSinceLastInit = (now.getTime() - lastInit.getTime()) / (1000 * 60 * 60);
+        
+        console.log(`Last webhook initialization was ${hoursSinceLastInit.toFixed(2)} hours ago. Cooldown: ${this.INIT_COOLDOWN_HOURS} hours.`);
+        return hoursSinceLastInit < this.INIT_COOLDOWN_HOURS;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error checking webhook initialization status:', error);
+      // If we can't check, assume we haven't initialized to be safe
+      return false;
+    }
+  }
+  
+  /**
+   * Record that we've sent an initialization message
+   */
+  private async recordInitialization(): Promise<void> {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      
+      // Create directory if it doesn't exist
+      const dir = path.dirname(this.INIT_MARKER_FILE);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
+      // Write the current time to the marker file
+      const marker = {
+        lastInitTime: new Date().toISOString(),
+        serverInstanceId: Math.random().toString(36).substring(2, 15)
+      };
+      
+      fs.writeFileSync(this.INIT_MARKER_FILE, JSON.stringify(marker, null, 2));
+      console.log(`Recorded webhook initialization time: ${marker.lastInitTime}`);
+    } catch (error) {
+      console.error('Error recording webhook initialization:', error);
+    }
+  }
+
   /**
    * Initialize the service
    */
   public async initialize(): Promise<void> {
     try {
-      // Only test Discord webhook if this is the first time initializing
-      if (!WebhookService.hasInitializedBefore) {
+      // Use the file-based check to see if we've initialized recently
+      const recentlyInitialized = await this.hasInitializedRecently();
+      
+      // Only send test message if we haven't initialized recently
+      if (!recentlyInitialized) {
+        console.log('No recent initialization detected, sending Discord initialization message');
         await this.testDiscordWebhook();
         WebhookService.hasInitializedBefore = true;
+        await this.recordInitialization();
       } else {
-        console.log('Webhook Service already initialized before, skipping Discord test message');
+        console.log('Webhook Service already initialized recently, skipping Discord test message');
       }
       
       this.initialized = true;

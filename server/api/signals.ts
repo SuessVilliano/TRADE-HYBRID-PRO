@@ -490,7 +490,7 @@ export const processWebhookSignal = async (payload: any, userId?: string): Promi
       console.error("Error saving signal to database:", error);
     }
     
-    // Try to broadcast the signal via WebSocket
+    // Try to broadcast the signal via WebSocket and send to Discord
     try {
       // Prepare the event that would be sent
       const event = {
@@ -503,9 +503,59 @@ export const processWebhookSignal = async (payload: any, userId?: string): Promi
         }
       };
       
-      console.log('Would broadcast signal via WebSocket:', event.type);
+      // Get the multiplayer server instance to broadcast the signal
+      try {
+        const { MultiplayerServer } = require('../multiplayer');
+        if (MultiplayerServer.instance) {
+          console.log('Broadcasting signal via WebSocket to all clients');
+          MultiplayerServer.instance.broadcast({
+            type: 'trading_signal',
+            data: event.data
+          });
+        } else {
+          console.log('MultiplayerServer instance not available, cannot broadcast signal');
+        }
+      } catch (wsErr) {
+        console.warn('Could not broadcast via WebSocket, continuing with webhook:', wsErr.message);
+      }
       
-      // TODO: Properly integrate WebSocket broadcast after fixing module imports
+      // Send to Discord webhook if possible
+      try {
+        // Import MCP server to access webhook service
+        const { initializeMCPServer } = require('../mcp');
+        const mcp = initializeMCPServer();
+        
+        if (mcp && mcp.webhookService) {
+          console.log('Sending signal to Discord via webhook service');
+          // Convert from UI format to webhook format
+          const webhookSignal = {
+            id: baseSignal.id,
+            symbol: baseSignal.Symbol,
+            type: baseSignal.Direction.toLowerCase() === 'buy' ? 'buy' : 'sell',
+            entry: baseSignal['Entry Price'],
+            stopLoss: baseSignal['Stop Loss'],
+            takeProfit: baseSignal['Take Profit'],
+            source: baseSignal.Provider,
+            timeframe: marketType === 'futures' ? '4h' : marketType === 'forex' ? '1h' : '30m',
+            notes: baseSignal.Notes,
+            timestamp: new Date().toISOString(),
+            risk: 1
+          };
+          
+          // Send the signal alert
+          mcp.webhookService.sendSignalAlert(webhookSignal)
+            .then(success => {
+              console.log(`Discord signal alert ${success ? 'sent successfully' : 'failed'}`);
+            })
+            .catch(err => {
+              console.error('Error sending Discord signal alert:', err);
+            });
+        } else {
+          console.warn('Webhook service not available, cannot send to Discord');
+        }
+      } catch (webhookErr) {
+        console.warn('Could not send to Discord webhook:', webhookErr.message);
+      }
     } catch (err) {
       console.error('Failed to prepare signal for broadcast:', err);
     }
