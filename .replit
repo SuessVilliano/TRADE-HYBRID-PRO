@@ -11,7 +11,7 @@ REPLIT_KEEP_PACKAGE_DEV_DEPENDENCIES = "1"
 [deployment]
 deploymentTarget = "cloudrun"
 run = ["sh", "-c", "npm run start"]
-build = ["sh", "-c", "npm install --legacy-peer-deps && npm run build"]
+build = ["sh", "-c", "npm install --legacy-peer-deps && npm run build && echo Build completed successfully"]
 
 [[ports]]
 localPort = 5000
