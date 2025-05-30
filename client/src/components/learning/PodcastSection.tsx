@@ -33,7 +33,7 @@ const PodcastSection: React.FC = () => {
             <Button 
               size="lg" 
               className="gap-2"
-              onClick={() => window.open('https://tradehousebattles.replit.app/', '_blank')}
+              onClick={() => window.open('https://battles.hybridfunding.co', '_blank')}
             >
               <Trophy className="h-5 w-5" />
               Join Battles Now
@@ -91,7 +91,7 @@ const BattleFeatureCard: React.FC<{ title: string; description: string; icon: Re
         <p className="text-muted-foreground">{description}</p>
       </CardContent>
       <div className="p-4 pt-0 mt-auto">
-        <Button variant="outline" className="w-full" onClick={() => window.open('https://tradehousebattles.replit.app/', '_blank')}>
+        <Button variant="outline" className="w-full" onClick={() => window.open('https://battles.hybridfunding.co', '_blank')}>
           <ExternalLink className="h-4 w-4 mr-2" />
           Enter Battle
         </Button>
