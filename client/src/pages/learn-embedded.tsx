@@ -355,37 +355,36 @@ export default function LearnEmbedded() {
         </TabsContent>
         
         <TabsContent value="podcast">
-          <PopupContainer padding className="bg-gradient-to-r from-blue-900/50 to-indigo-900/50 border border-blue-500/40">
+          <PopupContainer padding className="bg-gradient-to-r from-purple-900/50 to-red-900/50 border border-purple-500/40">
             <div className="flex flex-col md:flex-row gap-8 items-center">
               <div className="flex-1">
-                <h2 className="text-3xl font-bold mb-3">Trading Freedom Podcast</h2>
+                <h2 className="text-3xl font-bold mb-3">Trade House Battles</h2>
                 <p className="text-slate-300 mb-6">
-                  Join us on the Trading Freedom Podcast, where we dive deep into trading strategies, market analysis,
-                  and interviews with successful traders. Get valuable insights to improve your trading skills and
-                  stay updated with the latest trends in the financial markets.
+                  Join our competitive trading platform where traders from around the world compete in real-time battles.
+                  Win cash prizes, climb leaderboards, and showcase your trading skills in exciting competitions.
                 </p>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                  <div className="bg-slate-800/60 p-4 rounded-lg border border-blue-500/30">
-                    <h3 className="text-lg font-semibold mb-2">Latest Episodes</h3>
+                  <div className="bg-slate-800/60 p-4 rounded-lg border border-purple-500/30">
+                    <h3 className="text-lg font-semibold mb-2">Live Competitions</h3>
                     <ul className="space-y-2">
                       <li className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                        <span>Mastering Crypto Market Cycles</span>
+                        <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                        <span>Real-time Trading Battles</span>
                       </li>
                       <li className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                        <span>Risk Management Strategies</span>
+                        <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                        <span>Cash Prize Competitions</span>
                       </li>
                       <li className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                        <span>Trading Psychology Deep Dive</span>
+                        <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                        <span>Skill-Based Matching</span>
                       </li>
                     </ul>
                   </div>
                   
-                  <div className="bg-slate-800/60 p-4 rounded-lg border border-blue-500/30">
-                    <h3 className="text-lg font-semibold mb-2">Featured Topics</h3>
+                  <div className="bg-slate-800/60 p-4 rounded-lg border border-purple-500/30">
+                    <h3 className="text-lg font-semibold mb-2">Battle Features</h3>
                     <ul className="space-y-2">
                       <li className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-purple-400 rounded-full"></div>

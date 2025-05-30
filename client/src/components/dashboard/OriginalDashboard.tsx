@@ -191,10 +191,10 @@ const dashboardItems: DashboardItem[] = [
   },
   {
     id: 'prop-firm-challenge',
-    name: 'Prop Firm Challenge',
+    name: 'HybridFunding.co Challenge',
     icon: <Users className="h-5 w-5" />,
     path: '/prop-firm/challenge',
-    description: 'Apply for funded trading accounts',
+    description: 'Apply for HybridFunding.co funded trading accounts',
     category: 'Services'
   },
   {

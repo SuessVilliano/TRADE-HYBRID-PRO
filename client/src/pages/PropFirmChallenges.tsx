@@ -259,7 +259,7 @@ const PropFirmChallenges: React.FC = () => {
         
         {/* Learn more section */}
         <div className="mt-12 bg-primary/5 p-6 rounded-lg border border-primary/10">
-          <h2 className="text-2xl font-bold mb-4">How Prop Firm Challenges Work</h2>
+          <h2 className="text-2xl font-bold mb-4">How HybridFunding.co Challenges Work</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
@@ -268,7 +268,7 @@ const PropFirmChallenges: React.FC = () => {
                 <h3 className="font-semibold">Complete the Challenge</h3>
               </div>
               <p className="text-sm text-muted-foreground">
-                Pass our trading challenge by reaching the profit target while staying within the drawdown limits.
+                Pass our HybridFunding.co trading challenge by reaching the profit target while staying within the drawdown limits.
               </p>
             </div>
             
@@ -278,7 +278,7 @@ const PropFirmChallenges: React.FC = () => {
                 <h3 className="font-semibold">Get Funded</h3>
               </div>
               <p className="text-sm text-muted-foreground">
-                After passing, you'll receive access to a funded account with our capital to trade with.
+                After passing, you'll receive access to a funded account with HybridFunding.co capital to trade with.
               </p>
             </div>
             
@@ -288,9 +288,18 @@ const PropFirmChallenges: React.FC = () => {
                 <h3 className="font-semibold">Keep the Profits</h3>
               </div>
               <p className="text-sm text-muted-foreground">
-                Keep up to 85% of your trading profits with zero personal capital at risk.
+                Keep up to 85% of your trading profits with zero personal capital at risk through HybridFunding.co.
               </p>
             </div>
+          </div>
+          
+          <div className="mt-6 text-center">
+            <Button 
+              variant="outline" 
+              onClick={() => window.open('https://hybridfunding.co', '_blank')}
+            >
+              Visit HybridFunding.co
+            </Button>
           </div>
         </div>
       </div>

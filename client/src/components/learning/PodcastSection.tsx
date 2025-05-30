@@ -1,90 +1,99 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Podcast, PlayCircle, ExternalLink } from 'lucide-react';
+import { Trophy, Swords, ExternalLink, Users, Award, Target } from 'lucide-react';
 
 const PodcastSection: React.FC = () => {
   return (
     <div className="w-full">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold mb-2">Trading Freedom Podcast</h2>
-        <p className="text-muted-foreground">Expert interviews and insights to improve your trading success.</p>
+        <h2 className="text-3xl font-bold mb-2">Trade House Battles</h2>
+        <p className="text-muted-foreground">Compete with traders worldwide and win exciting prizes in our trading competitions.</p>
       </div>
       
       <Card className="mb-8">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <Podcast className="h-8 w-8 text-primary" />
+            <Trophy className="h-8 w-8 text-primary" />
             <div>
-              <CardTitle>Latest Episodes</CardTitle>
-              <CardDescription>Fresh trading knowledge and market insights</CardDescription>
+              <CardTitle>Trading Competitions</CardTitle>
+              <CardDescription>Join live battles and showcase your trading skills</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center p-8 border rounded-md bg-card">
             <div className="text-center mb-6">
-              <Podcast className="h-20 w-20 mx-auto mb-4 text-primary" />
-              <h3 className="text-xl font-semibold mb-2">Listen on Wattbaa Platform</h3>
+              <Swords className="h-20 w-20 mx-auto mb-4 text-primary" />
+              <h3 className="text-xl font-semibold mb-2">Enter Trade House Battles</h3>
               <p className="text-muted-foreground mb-4">
-                All episodes of the Trading Freedom Podcast are hosted on the Wattbaa platform for an enhanced listening experience.
+                Join our competitive trading platform where traders battle in real-time competitions with cash prizes and recognition.
               </p>
             </div>
             <Button 
               size="lg" 
               className="gap-2"
-              onClick={() => window.open('https://wattbaa.profit-vibe.com/album/17695/meta-sv/trading-for-freedom-podcast-series', '_blank')}
+              onClick={() => window.open('https://tradehousebattles.replit.app/', '_blank')}
             >
-              <PlayCircle className="h-5 w-5" />
-              Listen on Wattbaa
+              <Trophy className="h-5 w-5" />
+              Join Battles Now
             </Button>
           </div>
         </CardContent>
       </Card>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <PodcastFeatureCard 
-          title="Expert Interviews"
-          description="Hear from successful traders, fund managers, and financial experts about their journeys and strategies."
+        <BattleFeatureCard 
+          title="Live Competitions"
+          description="Join real-time trading battles with traders from around the world and compete for top rankings."
+          icon={<Users className="h-6 w-6" />}
         />
-        <PodcastFeatureCard 
-          title="Market Analysis"
-          description="Get deep dives into current market conditions, trends, and potential opportunities across various asset classes."
+        <BattleFeatureCard 
+          title="Cash Prizes"
+          description="Win exciting cash prizes and rewards based on your trading performance in competitions."
+          icon={<Award className="h-6 w-6" />}
         />
-        <PodcastFeatureCard 
-          title="Trading Psychology"
-          description="Learn how to master your emotions and develop the mindset of a successful trader."
+        <BattleFeatureCard 
+          title="Skill-Based Matching"
+          description="Get matched with traders of similar skill levels for fair and competitive battles."
+          icon={<Target className="h-6 w-6" />}
         />
-        <PodcastFeatureCard 
-          title="Risk Management"
-          description="Discover proven strategies to protect your capital and optimize your risk-reward ratios."
+        <BattleFeatureCard 
+          title="Leaderboards"
+          description="Track your progress and climb the global leaderboards to showcase your trading prowess."
+          icon={<Trophy className="h-6 w-6" />}
         />
-        <PodcastFeatureCard 
-          title="Technical Analysis"
-          description="Enhance your charting skills with detailed breakdowns of patterns, indicators, and trading setups."
+        <BattleFeatureCard 
+          title="Multiple Markets"
+          description="Compete across various markets including forex, crypto, stocks, and commodities."
+          icon={<Swords className="h-6 w-6" />}
         />
-        <PodcastFeatureCard 
-          title="Trading Lifestyle"
-          description="Navigate the challenges of trading as a career and building sustainable success."
+        <BattleFeatureCard 
+          title="Community"
+          description="Connect with fellow traders, share strategies, and learn from the trading community."
+          icon={<Users className="h-6 w-6" />}
         />
       </div>
     </div>
   );
 };
 
-const PodcastFeatureCard: React.FC<{ title: string; description: string }> = ({ title, description }) => {
+const BattleFeatureCard: React.FC<{ title: string; description: string; icon: React.ReactNode }> = ({ title, description, icon }) => {
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-2">
-        <CardTitle className="text-xl">{title}</CardTitle>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="text-primary">{icon}</div>
+          <CardTitle className="text-xl">{title}</CardTitle>
+        </div>
       </CardHeader>
       <CardContent className="flex-grow">
         <p className="text-muted-foreground">{description}</p>
       </CardContent>
       <div className="p-4 pt-0 mt-auto">
-        <Button variant="outline" className="w-full" onClick={() => window.open('https://wattbaa.profit-vibe.com/album/17695/meta-sv/trading-for-freedom-podcast-series', '_blank')}>
+        <Button variant="outline" className="w-full" onClick={() => window.open('https://tradehousebattles.replit.app/', '_blank')}>
           <ExternalLink className="h-4 w-4 mr-2" />
-          Explore Episodes
+          Enter Battle
         </Button>
       </div>
     </Card>

@@ -198,7 +198,7 @@ const PropFirmDashboardPage: React.FC = () => {
       <div className="container px-4 mx-auto py-6">
         <div className="flex flex-col space-y-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold">Proprietary Trading Firm</h1>
+            <h1 className="text-3xl font-bold">HybridFunding.co - Prop Trading</h1>
             <Button 
               variant="outline" 
               onClick={() => navigate('/prop-firm/challenges')}
@@ -208,7 +208,7 @@ const PropFirmDashboardPage: React.FC = () => {
           </div>
         
         <p className="text-muted-foreground mb-6">
-          Trade with our capital after proving your skills through trading challenges.
+          Trade with HybridFunding.co capital after proving your skills through trading challenges.
           Successful traders keep up to 80% of profits with no personal risk.
         </p>
 

@@ -204,9 +204,9 @@ const PropFirmChallengeSignup: React.FC = () => {
             Back to Dashboard
           </Button>
           
-          <h1 className="text-3xl font-bold">Sign Up for Challenge</h1>
+          <h1 className="text-3xl font-bold">Sign Up for HybridFunding.co Challenge</h1>
           <p className="text-muted-foreground mt-2">
-            Complete this form to begin your trading challenge
+            Complete this form to begin your HybridFunding.co trading challenge
           </p>
         </div>
         
@@ -402,9 +402,9 @@ const PropFirmChallengeSignup: React.FC = () => {
                     <div className="bg-primary/10 p-3 rounded-full mb-4">
                       <ShieldCheck className="h-6 w-6 text-primary" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">Funded Account</h3>
+                    <h3 className="text-lg font-semibold mb-2">HybridFunding.co Account</h3>
                     <p className="text-muted-foreground">
-                      After passing the challenge, receive a funded account with an 80% profit split.
+                      After passing the challenge, receive a HybridFunding.co funded account with an 80% profit split.
                     </p>
                   </div>
                   
