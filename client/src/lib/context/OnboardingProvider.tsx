@@ -247,13 +247,13 @@ const onboardingFlows: OnboardingFlow[] = [
   },
   {
     id: 'prop-firm',
-    title: 'HybridFunding.co Challenge Guide',
+    title: 'Prop Firm Challenge Guide',
     path: '/prop-firm',
     completed: false,
     steps: [
       {
         id: 'prop-welcome',
-        title: 'Welcome to HybridFunding.co Challenges',
+        title: 'Welcome to Prop Firm Challenges',
         description: 'Here you can take trading challenges to qualify for HybridFunding.co funding.',
         position: 'center',
         actions: [
