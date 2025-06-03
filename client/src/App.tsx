@@ -98,6 +98,9 @@ import MarketDataPage from './pages/MarketDataPage';
 import PropFirmDashboardPage from './pages/PropFirmDashboard';
 import PropFirmAdminDashboardPage from './pages/PropFirmAdminDashboard';
 import PropFirmChallengeSignupPage from './pages/PropFirmChallengeSignup';
+
+// Trading Platforms
+import TradingPlatforms from './pages/TradingPlatforms';
 import PropFirmAccountDetailsPage from './pages/PropFirmAccountDetails';
 
 // Investor Dashboard Pages
@@ -218,6 +221,7 @@ const App: React.FC = () => {
                   <Route path="/broker-connections" element={<ProtectedRoute><BrokerConnectionsView /></ProtectedRoute>} />
                   <Route path="/connections" element={<ProtectedRoute><ConnectionsPage /></ProtectedRoute>} />
                   <Route path="/connections-simple" element={<ProtectedRoute><ConnectionsSimplePage /></ProtectedRoute>} />
+                  <Route path="/trading-platforms" element={<ProtectedRoute><TradingPlatforms /></ProtectedRoute>} />
 
                   {/* Learning & Education */}
                   <Route path="/learning-journey" element={<ProtectedRoute><LearningJourneyPage /></ProtectedRoute>} />

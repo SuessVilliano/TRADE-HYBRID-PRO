@@ -198,6 +198,14 @@ const dashboardItems: DashboardItem[] = [
     category: 'Services'
   },
   {
+    id: 'trading-platforms',
+    name: 'Trading Platforms',
+    icon: <Activity className="h-5 w-5" />,
+    path: '/trading-platforms',
+    description: 'Connect to DX Trade, Match Trader, cTrader, and Rithmic',
+    category: 'Services'
+  },
+  {
     id: 'investor-dashboard',
     name: 'Investor Dashboard',
     icon: <LineChart className="h-5 w-5" />,
