@@ -213,19 +213,23 @@ Provider: ${provider}
       console.error('Error setting up notification WebSocket:', error);
     }
     
-    // Send a test notification on component mount (only in development)
+    // Send a one-time test notification on component mount (only in development)
     if (process.env.NODE_ENV !== 'production') {
-      // Use setTimeout to ensure the listener is registered first
-      setTimeout(() => {
-        // Test notification using the notification service
-        notificationService.showNotification({
-          title: 'Notification System Active',
-          body: 'The notification system is now active and ready to display notifications.',
-          type: 'system',
-          priority: 'normal',
-          dismissable: true
-        });
-      }, 2000);
+      const hasShownTestNotification = sessionStorage.getItem('test-notification-shown');
+      if (!hasShownTestNotification) {
+        // Use setTimeout to ensure the listener is registered first
+        setTimeout(() => {
+          // Test notification using the notification service
+          notificationService.showNotification({
+            title: 'Notification System Ready',
+            body: 'Ready to receive webhook notifications.',
+            type: 'system',
+            priority: 'normal',
+            dismissable: true
+          });
+          sessionStorage.setItem('test-notification-shown', 'true');
+        }, 2000);
+      }
     }
     
     // Clean up when component unmounts

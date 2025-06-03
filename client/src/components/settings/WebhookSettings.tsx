@@ -686,16 +686,20 @@ export function WebhookSettings() {
         </div>
       </CardFooter>
 
-      <CardFooter className="bg-gray-50 border-t p-4">
-        <div className="flex flex-col w-full gap-4">
-          <div className="flex items-center justify-between w-full">
-            <div>
-              <h3 className="text-sm font-medium">Broker API Settings</h3>
-              <p className="text-sm text-muted-foreground">
+      <CardFooter className="bg-gray-50 border-t p-6 mt-4">
+        <div className="flex flex-col w-full gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-4">
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-gray-900">Broker API Settings</h3>
+              <p className="text-sm text-gray-600 mt-1">
                 Connect your broker accounts to enable automated trading via webhooks.
               </p>
             </div>
-            <Button variant="outline" className="flex items-center gap-2" asChild>
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2 min-h-[40px] px-4 border-2 hover:bg-blue-50 hover:border-blue-300 whitespace-nowrap" 
+              asChild
+            >
               <Link to="/broker-api-settings">
                 <Settings className="h-4 w-4" />
                 Configure Broker APIs
@@ -703,18 +707,43 @@ export function WebhookSettings() {
             </Button>
           </div>
           
-          <div className="border-t pt-4">
-            <div className="flex items-center justify-between w-full">
-              <div>
-                <h3 className="text-sm font-medium">NinjaTrader Connection</h3>
-                <p className="text-sm text-muted-foreground">
+          <div className="border-t pt-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-4">
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-gray-900">NinjaTrader Connection</h3>
+                <p className="text-sm text-gray-600 mt-1">
                   Connect to NinjaTrader for automated futures and forex trading.
                 </p>
               </div>
-              <Button variant="outline" className="flex items-center gap-2" asChild>
-                <Link to="/ninjatrader-connection">
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2 min-h-[40px] px-4 border-2 hover:bg-green-50 hover:border-green-300 whitespace-nowrap" 
+                asChild
+              >
+                <Link to="/ninja-trader-connection">
                   <Settings className="h-4 w-4" />
                   Manage NinjaTrader
+                </Link>
+              </Button>
+            </div>
+          </div>
+          
+          <div className="border-t pt-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-4">
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-gray-900">Trading Platforms</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Connect to professional trading platforms (DX Trade, Match Trader, cTrader).
+                </p>
+              </div>
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2 min-h-[40px] px-4 border-2 hover:bg-purple-50 hover:border-purple-300 whitespace-nowrap" 
+                asChild
+              >
+                <Link to="/trading-platforms">
+                  <Settings className="h-4 w-4" />
+                  Trading Platforms
                 </Link>
               </Button>
             </div>
