@@ -48,6 +48,44 @@ export function NotificationListener() {
       
       console.log('In-app notification received:', detail);
       
+      // Handle trading signal notifications with real data
+      if (detail.type === 'signal-entry' && detail.metadata) {
+        const { symbol, type, price, stopLoss, takeProfit, provider } = detail.metadata;
+        
+        // Show notification with actual webhook data
+        const toastType = type === 'buy' ? 'success' : 'error';
+        const title = `${(type || 'unknown').toUpperCase()} Signal: ${symbol || 'UNKNOWN'}`;
+        const description = `Entry: ${price || 0} | SL: ${stopLoss || 0} | TP: ${takeProfit || 0}`;
+        
+        toast[toastType](title, {
+          description: `Signal received via WebSocket\n${description}`,
+          duration: 8000,
+          action: {
+            label: 'View Details',
+            onClick: () => {
+              // Show detailed signal information
+              const signalInfo = `
+Symbol: ${symbol}
+Entry: ${price}
+Stop Loss: ${stopLoss}
+Take Profit: ${takeProfit}
+Provider: ${provider}
+`;
+              
+              // Create browser notification with real data
+              if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, {
+                  body: signalInfo,
+                  icon: '/icon.png'
+                });
+              }
+            }
+          }
+        });
+        
+        return; // Exit early for signal notifications
+      }
+      
       // Determine toast type and duration
       const toastType = notificationTypeToToastType(detail.type);
       const duration = priorityToDuration(detail.priority);
@@ -91,6 +129,90 @@ export function NotificationListener() {
     // Add event listener for in-app notifications
     window.addEventListener('in-app-notification', handleNotification);
     
+    // Connect to WebSocket for real-time webhook notifications
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    
+    let ws: WebSocket | null = null;
+    
+    try {
+      ws = new WebSocket(wsUrl);
+      
+      ws.addEventListener('message', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          // Handle webhook notifications with real data
+          if (data.type === 'webhook_notification' && data.data) {
+            const { title, body, metadata } = data.data;
+            
+            // Create notification event with real webhook data
+            const notificationEvent = new CustomEvent('in-app-notification', {
+              detail: {
+                id: `webhook-${Date.now()}`,
+                title: title,
+                body: body,
+                type: 'signal-entry',
+                priority: 'normal',
+                timestamp: new Date(),
+                dismissable: true,
+                metadata: metadata
+              }
+            });
+            
+            // Dispatch the notification
+            window.dispatchEvent(notificationEvent);
+            
+            console.log('Webhook notification processed with real data:', {
+              title,
+              body,
+              metadata
+            });
+          }
+          
+          // Handle trading signals
+          if (data.type === 'trading_signal' && data.data && data.data.signal) {
+            const { signal, provider, rawPayload } = data.data;
+            
+            console.log('Trading signal received with raw payload:', rawPayload);
+            
+            // Create notification for trading signal
+            const signalNotification = new CustomEvent('in-app-notification', {
+              detail: {
+                id: `signal-${Date.now()}`,
+                title: `${signal.side?.toUpperCase() || 'UNKNOWN'} Signal: ${signal.symbol || 'UNKNOWN'}`,
+                body: `Entry: ${signal.entryPrice || 0} | SL: ${signal.stopLoss || 0} | TP: ${signal.takeProfit || 0}`,
+                type: 'signal-entry',
+                priority: 'normal',
+                timestamp: new Date(),
+                dismissable: true,
+                metadata: {
+                  symbol: signal.symbol,
+                  type: signal.side,
+                  price: signal.entryPrice,
+                  stopLoss: signal.stopLoss,
+                  takeProfit: signal.takeProfit,
+                  provider: provider,
+                  rawPayload: rawPayload
+                }
+              }
+            });
+            
+            window.dispatchEvent(signalNotification);
+          }
+        } catch (error) {
+          console.error('Error processing WebSocket message:', error);
+        }
+      });
+      
+      ws.addEventListener('open', () => {
+        console.log('Notification WebSocket connected');
+      });
+      
+    } catch (error) {
+      console.error('Error setting up notification WebSocket:', error);
+    }
+    
     // Send a test notification on component mount (only in development)
     if (process.env.NODE_ENV !== 'production') {
       // Use setTimeout to ensure the listener is registered first
@@ -109,6 +231,10 @@ export function NotificationListener() {
     // Clean up when component unmounts
     return () => {
       window.removeEventListener('in-app-notification', handleNotification);
+      
+      if (ws) {
+        ws.close();
+      }
     };
   }, []);
   

@@ -187,7 +187,26 @@ export const processTradingViewWebhook = async (req: Request, res: Response) => 
             type: 'trading_signal',
             data: {
               signal: clientSignal,
-              provider: parsedSignal.Provider
+              provider: parsedSignal.Provider,
+              rawPayload: payload // Include raw payload for debugging
+            }
+          });
+          
+          // Also trigger notification service with real data
+          MultiplayerServer.instance.sendToUser(webhook.userId, {
+            type: 'webhook_notification',
+            data: {
+              title: `${parsedSignal.Direction.toUpperCase()} Signal: ${parsedSignal.Symbol}`,
+              body: `Entry: ${parsedSignal['Entry Price']} | SL: ${parsedSignal['Stop Loss']} | TP: ${parsedSignal['Take Profit']}`,
+              metadata: {
+                symbol: parsedSignal.Symbol,
+                type: parsedSignal.Direction.toLowerCase(),
+                price: parsedSignal['Entry Price'],
+                stopLoss: parsedSignal['Stop Loss'],
+                takeProfit: parsedSignal['Take Profit'],
+                provider: parsedSignal.Provider,
+                rawPayload: JSON.stringify(payload)
+              }
             }
           });
           
