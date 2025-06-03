@@ -158,8 +158,14 @@ const TradingPlatforms: React.FC = () => {
     }
   };
 
-  const openWebTrader = (url: string) => {
-    window.open(url, '_blank', 'width=1200,height=800');
+  const [embeddedTrader, setEmbeddedTrader] = useState<string | null>(null);
+
+  const openWebTrader = (url: string, platformName: string) => {
+    setEmbeddedTrader(url);
+  };
+
+  const closeWebTrader = () => {
+    setEmbeddedTrader(null);
   };
 
   const renderConnectionForm = () => {
@@ -268,6 +274,24 @@ const TradingPlatforms: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {embeddedTrader && (
+        <div className="fixed inset-0 z-50 bg-background">
+          <div className="flex items-center justify-between p-4 border-b">
+            <h2 className="text-lg font-semibold">Web Trading Platform</h2>
+            <Button variant="outline" onClick={closeWebTrader}>
+              Close Trader
+            </Button>
+          </div>
+          <iframe
+            src={embeddedTrader}
+            className="w-full h-[calc(100vh-80px)]"
+            frameBorder="0"
+            allow="fullscreen"
+            title="Trading Platform"
+          />
+        </div>
+      )}
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Trading Platforms</h1>
         <p className="text-muted-foreground">
@@ -303,7 +327,10 @@ const TradingPlatforms: React.FC = () => {
                       </CardTitle>
                     </div>
                     <CardDescription>
-                      Professional trading platform with API integration
+                      {platform.name === 'Match Trader' && 'Advanced multi-asset trading platform with web-based interface via GooeY Trade'}
+                      {platform.name === 'DX Trade' && 'Professional trading platform with advanced charting and analysis tools'}
+                      {platform.name === 'cTrader' && 'Institutional-grade trading platform with advanced execution capabilities'}
+                      {platform.name === 'Rithmic' && 'Professional futures trading platform via Quantower interface'}
                     </CardDescription>
                   </CardHeader>
                   
@@ -339,10 +366,10 @@ const TradingPlatforms: React.FC = () => {
                       
                       <Button
                         variant="outline"
-                        onClick={() => openWebTrader(platform.webTradeUrl)}
+                        onClick={() => openWebTrader(platform.webTradeUrl, platform.name)}
                       >
                         <ExternalLink className="h-4 w-4 mr-2" />
-                        Web Trader
+                        Open Trader
                       </Button>
                     </div>
                   </CardContent>
