@@ -116,22 +116,11 @@ export class WebhookService {
    */
   public async initialize(): Promise<void> {
     try {
-      // Use the file-based check to see if we've initialized recently
-      const recentlyInitialized = await this.hasInitializedRecently();
-      
-      // Only send test message if we haven't initialized recently
-      if (!recentlyInitialized) {
-        console.log('No recent initialization detected, sending Discord initialization message');
-        await this.testDiscordWebhook();
-        WebhookService.hasInitializedBefore = true;
-        await this.recordInitialization();
-      } else {
-        console.log('Webhook Service already initialized recently, skipping Discord test message');
-      }
-      
+      // Skip Discord initialization messages completely to prevent spam
+      // Only initialize the service without sending notifications
       this.initialized = true;
       this.errorCount = 0;
-      console.log('Webhook Service fully initialized');
+      console.log('Webhook Service initialized (Discord notifications disabled)');
     } catch (error) {
       console.error('Error initializing Webhook Service:', error);
       this.initialized = false;

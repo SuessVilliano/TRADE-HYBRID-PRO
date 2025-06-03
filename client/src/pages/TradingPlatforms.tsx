@@ -69,9 +69,10 @@ const TradingPlatforms: React.FC = () => {
     try {
       const response = await fetch('/api/trading-platforms/platforms');
       const data = await response.json();
-      setPlatforms(data.platforms);
+      setPlatforms(data.platforms || []);
     } catch (error) {
       console.error('Error fetching platforms:', error);
+      setPlatforms([]);
     }
   };
 
@@ -79,9 +80,10 @@ const TradingPlatforms: React.FC = () => {
     try {
       const response = await fetch('/api/trading-platforms/connections');
       const data = await response.json();
-      setConnections(data.connections);
+      setConnections(data.connections || []);
     } catch (error) {
       console.error('Error fetching connections:', error);
+      setConnections([]);
     } finally {
       setLoading(false);
     }
