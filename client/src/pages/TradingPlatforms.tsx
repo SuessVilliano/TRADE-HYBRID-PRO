@@ -18,8 +18,12 @@ import {
   Eye,
   EyeOff,
   RefreshCw,
-  Plus
+  Plus,
+  Monitor,
+  Zap
 } from 'lucide-react';
+import UnifiedTradingDashboard from '../components/trading/UnifiedTradingDashboard';
+import QuickPlatformSwitcher from '../components/trading/QuickPlatformSwitcher';
 
 interface TradingPlatform {
   id: number;
@@ -59,6 +63,7 @@ const TradingPlatforms: React.FC = () => {
   const [connectionForm, setConnectionForm] = useState<any>({});
   const [selectedPlatform, setSelectedPlatform] = useState<TradingPlatform | null>(null);
   const [showConnectionDialog, setShowConnectionDialog] = useState(false);
+  const [viewMode, setViewMode] = useState<'dashboard' | 'platforms'>('platforms');
 
   useEffect(() => {
     fetchPlatforms();
@@ -293,19 +298,50 @@ const TradingPlatforms: React.FC = () => {
       )}
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Trading Platforms</h1>
-        <p className="text-muted-foreground">
-          Connect your professional trading platforms to sync data and manage accounts.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Trading Platforms</h1>
+            <p className="text-muted-foreground">
+              Connect your professional trading platforms to sync data and manage accounts.
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <QuickPlatformSwitcher
+              onPlatformSelect={(platform) => {
+                setViewMode('dashboard');
+                // The unified dashboard will handle opening the platform
+              }}
+            />
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === 'platforms' ? 'default' : 'outline'}
+                onClick={() => setViewMode('platforms')}
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Platforms
+              </Button>
+              <Button
+                variant={viewMode === 'dashboard' ? 'default' : 'outline'}
+                onClick={() => setViewMode('dashboard')}
+              >
+                <Monitor className="h-4 w-4 mr-2" />
+                Trading Dashboard
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Tabs defaultValue="platforms" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="platforms">Available Platforms</TabsTrigger>
-          <TabsTrigger value="connections">My Connections</TabsTrigger>
-        </TabsList>
+      {viewMode === 'dashboard' ? (
+        <UnifiedTradingDashboard />
+      ) : (
+        <Tabs defaultValue="platforms" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="platforms">Available Platforms</TabsTrigger>
+            <TabsTrigger value="connections">My Connections</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="platforms">
+          <TabsContent value="platforms">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
             {platforms.map((platform) => {
               const isConnected = connections.some(
@@ -475,6 +511,7 @@ const TradingPlatforms: React.FC = () => {
           </div>
         </TabsContent>
       </Tabs>
+      )}
 
       <Dialog open={showConnectionDialog} onOpenChange={setShowConnectionDialog}>
         <DialogContent>
