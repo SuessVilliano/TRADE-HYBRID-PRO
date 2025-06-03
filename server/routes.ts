@@ -10,6 +10,7 @@ import mcpTestRoutes from "./routes/mcp-test-routes";
 import journalRouter from "./api/journal";
 import matrixRouter from "./api/matrix";
 import solscanRouter from "./api/solscan-keys";
+import tradingPlatformRoutes from "./routes/trading-platforms";
 
 // We'll create separate functions to directly use our signals-api
 const getSignals = (req: any, res: any) => {
@@ -346,6 +347,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register Solscan API key management routes
   app.use('/api/solscan', solscanRouter);
+  
+  // Trading platform integration routes
+  app.use('/api/trading-platforms', tradingPlatformRoutes);
   // Market data routes
   app.get("/api/market/data", getMarketData);
   app.get("/api/market/price", getCurrentPrice);
