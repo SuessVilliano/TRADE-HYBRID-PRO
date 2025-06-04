@@ -29,7 +29,7 @@ const MarketDataPage: React.FC = () => {
               onClick={() => setShowInfoPanel(!showInfoPanel)}
               className="flex items-center text-blue-600 hover:text-blue-800"
             >
-              <FiInfo className="mr-1" /> {showInfoPanel ? 'Hide Info' : 'Show Info'}
+              <Info className="mr-1" /> {showInfoPanel ? 'Hide Info' : 'Show Info'}
             </button>
           </div>
           

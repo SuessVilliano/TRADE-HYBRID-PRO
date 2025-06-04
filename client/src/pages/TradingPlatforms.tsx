@@ -256,7 +256,7 @@ const TradingPlatforms: React.FC = () => {
           <input
             type="checkbox"
             id="demo"
-            checked={connectionForm.demo || true}
+            checked={connectionForm.demo ?? false}
             onChange={(e) =>
               setConnectionForm({ ...connectionForm, demo: e.target.checked })
             }
@@ -402,7 +402,18 @@ const TradingPlatforms: React.FC = () => {
                       
                       <Button
                         variant="outline"
-                        onClick={() => openWebTrader(platform.webTradeUrl, platform.name)}
+                        onClick={() => {
+                          const tradingUrls = {
+                            'Match Trader': 'https://platform.gooey.trade/',
+                            'DX Trade': 'https://dx.trade/login',
+                            'cTrader': 'https://ctrader.com/ctrader-web/',
+                            'Rithmic': 'https://yyy3.rithmic.com/'
+                          };
+                          const url = tradingUrls[platform.name as keyof typeof tradingUrls] || platform.url || platform.webTradeUrl;
+                          if (url) {
+                            window.open(url, '_blank', 'noopener,noreferrer');
+                          }
+                        }}
                       >
                         <ExternalLink className="h-4 w-4 mr-2" />
                         Open Trader
