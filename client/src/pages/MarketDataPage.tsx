@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import PageHeader from '../components/common/PageHeader';
 import ContentContainer from '../components/common/ContentContainer';
 import RapidAPIMarketDashboard from '../components/RapidAPIMarketDashboard';
-import { FiInfo } from 'react-icons/fi';
+import { Info } from 'lucide-react';
 
 /**
  * Market Data Page
