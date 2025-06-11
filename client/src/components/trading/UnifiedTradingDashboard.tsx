@@ -117,11 +117,20 @@ const UnifiedTradingDashboard: React.FC = () => {
   };
 
   const openPlatform = (platform: TradingPlatform) => {
+    const tradingUrls = {
+      'Match Trader': 'https://mtr.gooeytrade.com/login',
+      'DX Trade': 'https://trade.gooeytrade.com/',
+      'cTrader': 'https://app.gooeytrade.com/',
+      'Rithmic': 'https://rtraderpro.rithmic.com/rtraderpro-web/'
+    };
+    
+    const url = tradingUrls[platform.name as keyof typeof tradingUrls] || platform.webTradeUrl;
+    
     const newTab: TradingTab = {
       id: `tab-${Date.now()}`,
       platformId: platform.id,
       platformName: platform.name,
-      url: platform.webTradeUrl,
+      url: url,
       title: platform.name,
       isActive: true
     };

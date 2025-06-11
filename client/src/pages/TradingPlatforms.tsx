@@ -404,12 +404,12 @@ const TradingPlatforms: React.FC = () => {
                         variant="outline"
                         onClick={() => {
                           const tradingUrls = {
-                            'Match Trader': 'https://platform.gooey.trade/',
-                            'DX Trade': 'https://dx.trade/login',
-                            'cTrader': 'https://ctrader.com/ctrader-web/',
-                            'Rithmic': 'https://yyy3.rithmic.com/'
+                            'Match Trader': 'https://mtr.gooeytrade.com/login',
+                            'DX Trade': 'https://trade.gooeytrade.com/',
+                            'cTrader': 'https://app.gooeytrade.com/',
+                            'Rithmic': 'https://rtraderpro.rithmic.com/rtraderpro-web/'
                           };
-                          const url = tradingUrls[platform.name as keyof typeof tradingUrls] || platform.url || platform.webTradeUrl;
+                          const url = tradingUrls[platform.name as keyof typeof tradingUrls] || platform.webTradeUrl;
                           if (url) {
                             window.open(url, '_blank', 'noopener,noreferrer');
                           }
