@@ -71,61 +71,8 @@ const PropFirmDashboardPage: React.FC = () => {
           }
         ];
 
-        // Mock challenges data
-        const mockChallenges = [
-          {
-            id: 1,
-            name: "Trader Fast Track",
-            description: "Our accelerated 1-phase crypto trading challenge with an 8% profit target.",
-            marketType: "crypto",
-            brokerModel: "tradehybrid",
-            accountSize: 25000,
-            targetProfitPhase1: 8,
-            maxDailyDrawdown: 5,
-            maxTotalDrawdown: 10,
-            durationDays: 30,
-            active: true,
-            broker_type: {
-              displayName: "Trade Hybrid Broker"
-            }
-          },
-          {
-            id: 2,
-            name: "Forex Evaluation",
-            description: "Two-phase forex trading evaluation with competitive profit targets.",
-            marketType: "forex",
-            brokerModel: "tradehybrid",
-            accountSize: 50000,
-            targetProfitPhase1: 8,
-            targetProfitPhase2: 5,
-            maxDailyDrawdown: 4,
-            maxTotalDrawdown: 8,
-            durationDays: 45,
-            active: true,
-            broker_type: {
-              displayName: "Trade Hybrid Broker"
-            }
-          },
-          {
-            id: 3,
-            name: "Futures Elite",
-            description: "Professional futures trading challenge for experienced traders.",
-            marketType: "futures",
-            brokerModel: "tradehybrid",
-            accountSize: 100000,
-            targetProfitPhase1: 10,
-            maxDailyDrawdown: 3,
-            maxTotalDrawdown: 6,
-            durationDays: 30,
-            active: true,
-            broker_type: {
-              displayName: "Trade Hybrid Broker"
-            }
-          }
-        ];
-
         setAccounts(mockAccounts);
-        setChallenges(mockChallenges);
+        setChallenges([]); // Remove mock challenges - users access real challenges through HybridFunding.co
       } catch (error) {
         console.error('Error setting mock data:', error);
         toast({
@@ -233,9 +180,12 @@ const PropFirmDashboardPage: React.FC = () => {
               </Button>
               <Button 
                 variant="outline" 
-                onClick={() => navigate('/prop-firm/challenges')}
+                onClick={() => {
+                  const hybridFundingUrl = 'https://hybridfundingdashboard.propaccount.com/en/signin';
+                  window.open(hybridFundingUrl, '_blank', 'noopener,noreferrer');
+                }}
               >
-                View All Challenges
+                View Real Challenges
               </Button>
             </div>
           </div>
@@ -333,7 +283,6 @@ const PropFirmDashboardPage: React.FC = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-4">
             <TabsTrigger value="accounts">My Accounts</TabsTrigger>
-            <TabsTrigger value="challenges">Available Challenges</TabsTrigger>
           </TabsList>
           
           <TabsContent value="accounts" className="space-y-4">
@@ -432,93 +381,7 @@ const PropFirmDashboardPage: React.FC = () => {
             )}
           </TabsContent>
           
-          <TabsContent value="challenges" className="space-y-4">
-            {loading ? (
-              <div className="flex justify-center items-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">Loading challenges...</span>
-              </div>
-            ) : challenges.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {challenges.map((challenge) => (
-                  <Card key={challenge.id}>
-                    <CardHeader>
-                      <CardTitle className="text-xl">{challenge.name}</CardTitle>
-                      <CardDescription>{challenge.description}</CardDescription>
-                    </CardHeader>
-                    
-                    <CardContent className="space-y-4">
-                      <div className="flex flex-col space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-muted-foreground">Account Size:</span>
-                          <span className="font-semibold">{formatCurrency(challenge.accountSize)}</span>
-                        </div>
-                        
-                        <div className="flex justify-between items-center">
-                          <span className="text-muted-foreground">Phase 1 Target:</span>
-                          <span className="font-semibold">{formatPercent(challenge.targetProfitPhase1)}</span>
-                        </div>
-                        
-                        {challenge.targetProfitPhase2 && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-muted-foreground">Phase 2 Target:</span>
-                            <span className="font-semibold">{formatPercent(challenge.targetProfitPhase2)}</span>
-                          </div>
-                        )}
-                        
-                        <div className="flex justify-between items-center">
-                          <span className="text-muted-foreground">Max Drawdown:</span>
-                          <span className="font-semibold">{formatPercent(challenge.maxTotalDrawdown)}</span>
-                        </div>
-                        
-                        <div className="flex justify-between items-center">
-                          <span className="text-muted-foreground">Duration:</span>
-                          <span className="font-semibold">{challenge.durationDays} days</span>
-                        </div>
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div className="flex gap-1.5 items-center">
-                        <div className="bg-primary/10 p-2 rounded-full">
-                          <TrendingUp className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">Succeed in both phases to earn a funded account</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-1.5 items-center">
-                        <div className="bg-primary/10 p-2 rounded-full">
-                          <BarChart2 className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">Trade through {challenge.broker_type?.displayName || 'our brokers'}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                    
-                    <CardFooter>
-                      <Button 
-                        className="w-full" 
-                        onClick={() => signUpForChallenge(challenge.id)}
-                      >
-                        Sign Up for Challenge
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center p-8 bg-muted rounded-lg">
-                <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No Challenges Available</h3>
-                <p className="text-muted-foreground">
-                  There are no trading challenges available at the moment. Please check back later.
-                </p>
-              </div>
-            )}
-          </TabsContent>
+
         </Tabs>
       </div>
     </div>
