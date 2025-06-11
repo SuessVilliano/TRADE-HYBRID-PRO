@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, AlertCircle, CheckCircle, Clock, DollarSign, ChevronRight, TrendingUp, BarChart2 } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, Clock, DollarSign, ChevronRight, TrendingUp, BarChart2, Settings } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { formatCurrency, formatPercent } from '@/lib/utils/formatters';
 import { TradingDashboardLayout } from '@/components/ui/trading-dashboard-layout';
@@ -23,6 +23,21 @@ const PropFirmDashboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('accounts');
 
   useEffect(() => {
+    // Check for auto-redirect preference
+    const shouldAutoOpen = localStorage.getItem('hybridFundingAutoRedirect');
+    const lastRedirect = localStorage.getItem('hybridFundingLastRedirect');
+    const now = new Date().getTime();
+    const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
+    
+    // Auto-redirect if enabled and hasn't been done recently
+    if (shouldAutoOpen === 'true' && (!lastRedirect || (now - parseInt(lastRedirect)) > oneHour)) {
+      setTimeout(() => {
+        const hybridFundingUrl = 'https://hybridfundingdashboard.propaccount.com/en/signin';
+        localStorage.setItem('hybridFundingLastRedirect', now.toString());
+        window.open(hybridFundingUrl, '_blank', 'noopener,noreferrer');
+      }, 2000); // 2 second delay to let page load
+    }
+
     // Fetch mock data - this is a temporary solution until the API is working
     const fetchMockData = () => {
       try {
@@ -199,18 +214,121 @@ const PropFirmDashboardPage: React.FC = () => {
         <div className="flex flex-col space-y-4">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-bold">HybridFunding.co - Prop Trading</h1>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/prop-firm/challenges')}
-            >
-              View All Challenges
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => {
+                  // Open HybridFunding dashboard with auto-login
+                  const hybridFundingUrl = 'https://hybridfundingdashboard.propaccount.com/en/signin';
+                  
+                  // Store user preference for auto-login
+                  localStorage.setItem('hybridFundingAutoLogin', 'true');
+                  localStorage.setItem('hybridFundingLastAccess', new Date().toISOString());
+                  
+                  window.open(hybridFundingUrl, '_blank', 'noopener,noreferrer');
+                }}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <DollarSign className="h-4 w-4 mr-2" />
+                Open HybridFunding Dashboard
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/prop-firm/challenges')}
+              >
+                View All Challenges
+              </Button>
+            </div>
           </div>
         
         <p className="text-muted-foreground mb-6">
           Trade with HybridFunding.co capital after proving your skills through trading challenges.
           Successful traders keep up to 80% of profits with no personal risk.
         </p>
+
+        {/* Quick Access to HybridFunding Dashboard */}
+        <Card className="mb-6 border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-primary" />
+              HybridFunding Dashboard Access
+            </CardTitle>
+            <CardDescription>
+              Access your live trading account, view performance, and manage your prop firm journey.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Last accessed: {localStorage.getItem('hybridFundingLastAccess') ? 
+                    new Date(localStorage.getItem('hybridFundingLastAccess')!).toLocaleDateString() : 
+                    'Never'
+                  }
+                </p>
+                <Badge variant={localStorage.getItem('hybridFundingAutoLogin') ? 'default' : 'outline'}>
+                  {localStorage.getItem('hybridFundingAutoLogin') ? 'Auto-login enabled' : 'Auto-login disabled'}
+                </Badge>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  size="lg"
+                  onClick={() => {
+                    const hybridFundingUrl = 'https://hybridfundingdashboard.propaccount.com/en/signin';
+                    
+                    // Enhanced auto-login storage
+                    localStorage.setItem('hybridFundingAutoLogin', 'true');
+                    localStorage.setItem('hybridFundingLastAccess', new Date().toISOString());
+                    localStorage.setItem('hybridFundingUserSession', JSON.stringify({
+                      timestamp: new Date().toISOString(),
+                      userId: user?.id || 'guest',
+                      platform: 'TradeHybrid'
+                    }));
+                    
+                    // Open in new tab with session context
+                    const newWindow = window.open(hybridFundingUrl, '_blank', 'noopener,noreferrer');
+                    
+                    // Optional: Add session restoration capability
+                    if (newWindow) {
+                      newWindow.onload = () => {
+                        // This could be used to inject session data if needed
+                        console.log('HybridFunding dashboard opened successfully');
+                      };
+                    }
+                    
+                    toast({
+                      title: "Opening HybridFunding Dashboard",
+                      description: "Your session has been saved for automatic login.",
+                    });
+                  }}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Open Live Dashboard
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    const currentAutoRedirect = localStorage.getItem('hybridFundingAutoRedirect') === 'true';
+                    localStorage.setItem('hybridFundingAutoRedirect', (!currentAutoRedirect).toString());
+                    
+                    toast({
+                      title: currentAutoRedirect ? "Auto-redirect disabled" : "Auto-redirect enabled",
+                      description: currentAutoRedirect 
+                        ? "HybridFunding dashboard won't open automatically anymore." 
+                        : "HybridFunding dashboard will open automatically when you visit this page.",
+                    });
+                    
+                    // Force re-render to update badge
+                    setActiveTab(activeTab);
+                  }}
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Auto-redirect {localStorage.getItem('hybridFundingAutoRedirect') === 'true' ? 'OFF' : 'ON'}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-4">
