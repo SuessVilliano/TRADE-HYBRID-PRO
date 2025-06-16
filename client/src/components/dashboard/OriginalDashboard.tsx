@@ -43,342 +43,113 @@ const dashboardItems: DashboardItem[] = [
     description: 'Connect to DX Trade, Match Trader, cTrader, and Rithmic',
     category: 'Trading & Markets'
   },
-  
-  // HIDDEN: Trading Tools - Keeping alive in codebase but removing from navigation
-  // {
-  //   id: 'signals',
-  //   name: 'Trading Signals (Beta)',
-  //   icon: <Signal className="h-5 w-5" />,
-  //   path: '/signals',
-  //   description: 'Real-time market signals and alerts - Demo only',
-  //   category: 'Trading Tools'
-  // },
-  // {
-  //   id: 'indicators',
-  //   name: 'Trading Indicators (Beta)',
-  //   icon: <BarChart3 className="h-5 w-5" />,
-  //   path: '/trading/indicators',
-  //   description: 'Library of technical indicators - Beta version',
-  //   category: 'Trading Tools'
-  // },
-  // {
-  //   id: 'smart-trade',
-  //   name: 'Smart Trade Panel (Beta)',
-  //   icon: <Cpu className="h-5 w-5" />,
-  //   path: '/smart-trade-explainer',
-  //   description: 'Advanced trading with AI assistance - Beta version',
-  //   category: 'Trading Tools'
-  // },
-  // {
-  //   id: 'journal',
-  //   name: 'Trading Journal (Beta)',
-  //   icon: <FileText className="h-5 w-5" />,
-  //   path: '/journal',
-  //   description: 'Complete trading journal with analytics - Beta version',
-  //   category: 'Trading Tools'
-  // },
-  // {
-  //   id: 'bots',
-  //   name: 'Trading Bots (Beta)',
-  //   icon: <Bot className="h-5 w-5" />,
-  //   path: '/trading-bots',
-  //   description: 'Automated trading strategies - Mockup only',
-  //   category: 'Trading Tools'
-  // },
   {
-    id: 'ai-insights',
-    name: 'AI Market Analysis',
-    icon: <BrainCircuit className="h-5 w-5" />,
-    path: '/ai-market-analysis',
-    description: 'AI-powered market insights',
-    category: 'Trading Tools'
-  },
-  {
-    id: 'signals-analyzer',
-    name: 'Signals Analyzer',
+    id: 'signals',
+    name: 'Trading Signals',
     icon: <Signal className="h-5 w-5" />,
-    path: '/signals-analyzer',
-    description: 'Analyze and backtest trading signals',
-    category: 'Trading Tools'
-  },
-  {
-    id: 'voice-trade',
-    name: 'Voice Trade Assistant',
-    icon: <MessageSquare className="h-5 w-5" />,
-    path: '/voice-trade',
-    description: 'Trade using voice commands',
-    category: 'Trading Tools'
-  },
-  
-  // News & Education
-  {
-    id: 'news',
-    name: 'Market News',
-    icon: <BookOpen className="h-5 w-5" />,
-    path: '/news',
-    description: 'Latest market news and analysis',
-    category: 'News & Education'
-  },
-  {
-    id: 'economic-calendar',
-    name: 'Events',
-    icon: <Calendar className="h-5 w-5" />,
-    path: '/events',
-    description: 'Important economic events and data releases',
-    category: 'News & Education'
-  },
-  // HIDDEN: Incomplete learning center
-  // {
-  //   id: 'learn',
-  //   name: 'Learning Center',
-  //   icon: <BookOpen className="h-5 w-5" />,
-  //   path: '/learn',
-  //   description: 'Educational resources and structured learning paths for traders',
-  //   category: 'News & Education'
-  // },
-  
-  // Immersive Experiences - Only keep metaverse
-  {
-    id: 'metaverse',
-    name: 'Trading Metaverse',
-    icon: <Activity className="h-5 w-5" />,
-    path: '/metaverse',
-    description: 'Enter the immersive trading experience',
-    category: 'Immersive Experiences'
-  },
-  // HIDDEN: Incomplete games
-  // {
-  //   id: 'trade-runner',
-  //   name: 'Trade Runner Game',
-  //   icon: <Zap className="h-5 w-5" />,
-  //   path: '/game/trade-runner',
-  //   description: 'Fast-paced trading game',
-  //   category: 'Immersive Experiences'
-  // },
-  // {
-  //   id: 'bulls-vs-bears',
-  //   name: 'Bulls vs Bears Game',
-  //   icon: <Zap className="h-5 w-5" />,
-  //   path: '/game/bulls-vs-bears',
-  //   description: 'Multiplayer trading competition',
-  //   category: 'Immersive Experiences'
-  // },
-  // {
-  //   id: 'educational-games',
-  //   name: 'Educational Games',
-  //   icon: <Zap className="h-5 w-5" />,
-  //   path: '/educational-games',
-  //   description: 'Learn trading through games',
-  //   category: 'Immersive Experiences'
-  // },
-  
-  // Crypto & NFTs
-  {
-    id: 'nft-marketplace',
-    name: 'NFT Marketplace',
-    icon: <Activity className="h-5 w-5" />,
-    path: '/nft-marketplace',
-    description: 'Trade unique digital collectibles',
-    category: 'Crypto & NFTs'
-  },
-  {
-    id: 'thc-staking',
-    name: 'THC Staking',
-    icon: <Activity className="h-5 w-5" />,
-    path: '/thc-staking',
-    description: 'Stake your THC tokens for rewards',
-    category: 'Crypto & NFTs'
-  },
-  
-  // Services
-  {
-    id: 'prop-firm',
-    name: 'Prop Firm Dashboard',
-    icon: <Users className="h-5 w-5" />,
-    path: '/prop-firm',
-    description: 'Access HybridFunding.co dashboard',
-    category: 'Services'
-  },
-  {
-    id: 'prop-firm-challenge',
-    name: 'Prop Firm Challenge',
-    icon: <Users className="h-5 w-5" />,
-    path: '/prop-firm/challenge',
-    description: 'Apply for HybridFunding.co funded trading accounts',
-    category: 'Services'
-  },
-  // HIDDEN: Investor dashboards - keeping in codebase but removing from navigation
-  // {
-  //   id: 'investor-dashboard',
-  //   name: 'Investor Dashboard',
-  //   icon: <LineChart className="h-5 w-5" />,
-  //   path: '/investors',
-  //   description: 'Manage your investments and track performance',
-  //   category: 'Services'
-  // },
-  // {
-  //   id: 'investor-admin',
-  //   name: 'Investor Admin',
-  //   icon: <Users className="h-5 w-5" />,
-  //   path: '/investors/admin',
-  //   description: 'Administrative dashboard for managing investors',
-  //   category: 'Services'
-  // },
-  {
-    id: 'affiliate',
-    name: 'Affiliate Program',
-    icon: <Users className="h-5 w-5" />,
-    path: '/affiliate',
-    description: 'Partner with us and earn commissions',
-    category: 'Services'
-  },
-  
-  // User & Settings
-  {
-    id: 'profile',
-    name: 'Profile',
-    icon: <Users className="h-5 w-5" />,
-    path: '/profile',
-    description: 'View and edit your profile',
-    category: 'User & Settings'
-  },
-  {
-    id: 'settings',
-    name: 'Settings',
-    icon: <Settings className="h-5 w-5" />,
-    path: '/settings',
-    description: 'Configure your trading environment',
-    category: 'User & Settings'
+    path: '/signals',
+    description: 'Live trading signals from Paradox, Solaris, and Hybrid providers',
+    category: 'Trading & Markets'
   }
 ];
 
-interface OriginalDashboardProps {
-  className?: string;
-}
+export function OriginalDashboard() {
+  const [showWalletOnboarding, setShowWalletOnboarding] = useState(false);
 
-const OriginalDashboard: React.FC<OriginalDashboardProps> = ({ className = '' }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showWalletModal, setShowWalletModal] = useState(false);
-  
-  // Filter dashboard items based on search term
-  const filteredItems = dashboardItems.filter(item => 
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  
-  // Get unique categories from dashboard items
-  const categories = Array.from(new Set(dashboardItems.map(item => item.category || 'Uncategorized')));
-  
+  // Group items by category for display
+  const groupedItems = dashboardItems.reduce((acc, item) => {
+    if (!acc[item.category]) {
+      acc[item.category] = [];
+    }
+    acc[item.category].push(item);
+    return acc;
+  }, {} as Record<string, DashboardItem[]>);
+
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white ${className}`}>
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col space-y-8">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold">TradeHybrid Dashboard</h1>
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                placeholder="Search features..."
-                className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
+              The Next Generation <span className="text-blue-300">Trading Platform</span>
+            </h1>
+            <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+              A revolutionary trading experience that combines prop firm infrastructure, 
+              real-time market data, advanced AI tools, and immersive learning environments.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                size="lg" 
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold"
+                onClick={() => setShowWalletOnboarding(true)}
+              >
+                Start Trading Now
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                className="border-blue-300 text-blue-300 hover:bg-blue-300 hover:text-blue-900 px-8 py-3 rounded-lg font-semibold"
+              >
+                Explore Features
+              </Button>
             </div>
           </div>
           
-          {searchTerm ? (
-            // Show flat list when searching
-            <div>
-              <h2 className="text-xl font-bold mb-4">Search Results</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredItems.map((item) => (
-                  <Link to={item.path} key={item.id} className="block">
-                    <div className="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg p-4 transition-all duration-200 h-full">
-                      <div className="flex items-center mb-2">
-                        <div className="mr-3 p-2 bg-blue-600 rounded-md">
-                          {item.icon}
-                        </div>
-                        <h3 className="text-lg font-semibold">{item.name}</h3>
-                      </div>
-                      <p className="text-gray-400 text-sm">{item.description}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ) : (
-            // Show categorized layout when not searching
-            <div className="space-y-8">
-              {categories.map(category => {
-                const categoryItems = dashboardItems.filter(item => (item.category || 'Uncategorized') === category);
-                return (
-                  <div key={category}>
-                    <h2 className="text-xl font-bold mb-4 border-b border-gray-700 pb-2">{category}</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                      {categoryItems.map((item) => (
-                        <Link to={item.path} key={item.id} className="block">
-                          <div className="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg p-4 transition-all duration-200 h-full">
-                            <div className="flex items-center mb-2">
-                              <div className="mr-3 p-2 bg-blue-600 rounded-md">
-                                {item.icon}
-                              </div>
-                              <h3 className="text-lg font-semibold">{item.name}</h3>
-                            </div>
-                            <p className="text-gray-400 text-sm">{item.description}</p>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          
-          <div className="mt-8 bg-gray-800 border border-gray-700 rounded-lg p-4">
-            <h2 className="text-xl font-bold mb-2">Quick Actions</h2>
-            <div className="flex flex-wrap gap-2">
-              <Link to="/investors">
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  Investor Dashboard
-                </Button>
-              </Link>
-              <Link to="/broker-connections">
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  Connect Broker
-                </Button>
-              </Link>
-              <Button 
-                variant="outline" 
-                className="border-gray-600 flex items-center gap-2"
-                onClick={() => setShowWalletModal(true)}
-              >
-                <Wallet size={16} />
-                Connect Wallet
-              </Button>
-              <Button variant="outline" className="border-gray-600">
-                View Tutorial
-              </Button>
-              <Button variant="outline" className="border-gray-600">
-                Import Trades
-              </Button>
-              <Link to="/smart-trade-explainer">
-                <Button variant="outline" className="border-gray-600">
-                  Smart Trade
-                </Button>
-              </Link>
-            </div>
+          {/* Hero Image */}
+          <div className="mt-16 text-center">
+            <img 
+              src="/images/trade-hybrid-hero.svg" 
+              alt="TradeHybrid Platform" 
+              className="mx-auto max-w-2xl w-full h-auto opacity-90"
+            />
           </div>
         </div>
       </div>
-      
-      {/* Crypto Wallet Connection Modal */}
-      <CryptoWalletOnboardingModal 
-        isOpen={showWalletModal}
-        onClose={() => setShowWalletModal(false)}
-      />
+
+      {/* Dashboard Grid */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        {Object.entries(groupedItems).map(([category, items]) => (
+          <div key={category} className="mb-12">
+            <h2 className="text-2xl font-bold text-white mb-6 border-b border-blue-500/30 pb-3">
+              {category}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {items.map((item) => (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  className="group block p-6 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl hover:bg-white/10 hover:border-blue-400/50 transition-all duration-300 hover:scale-105"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-blue-500/20 rounded-lg group-hover:bg-blue-500/30 transition-colors">
+                      {item.icon}
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-blue-300 transition-colors">
+                    {item.name}
+                  </h3>
+                  <p className="text-sm text-gray-300 leading-relaxed">
+                    {item.description}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Wallet Onboarding Modal */}
+      {showWalletOnboarding && (
+        <CryptoWalletOnboardingModal
+          isOpen={showWalletOnboarding}
+          onClose={() => setShowWalletOnboarding(false)}
+        />
+      )}
     </div>
   );
-};
-
-export default OriginalDashboard;
+}

@@ -374,6 +374,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Signals routes
   app.get("/api/signals", getSignals);
+  // AI Trading API endpoints
+  app.post("/api/ai/parse-trade-command", async (req: Request, res: Response) => {
+    try {
+      const { command, platform } = req.body;
+      
+      if (!command) {
+        return res.status(400).json({ error: 'Command is required' });
+      }
+
+      const { AITradingService } = await import('./ai-trading-service');
+      const result = await AITradingService.parseTradeCommand(command, platform || 'dxtrade');
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Error parsing trade command:', error);
+      res.status(500).json({ error: 'Failed to parse trade command' });
+    }
+  });
+
+  app.post("/api/trading/execute-trade", async (req: Request, res: Response) => {
+    try {
+      const { platform, trade, commandId } = req.body;
+      
+      if (!platform || !trade) {
+        return res.status(400).json({ error: 'Platform and trade data are required' });
+      }
+
+      const { AITradingService } = await import('./ai-trading-service');
+      
+      // Validate trade parameters
+      const validation = await AITradingService.validateTradeParameters(trade, platform);
+      if (!validation.valid) {
+        return res.status(400).json({ error: 'Invalid trade parameters', details: validation.errors });
+      }
+
+      // Format trade for the specific platform
+      const formattedTrade = AITradingService.formatTradeForPlatform(trade, platform);
+      
+      // In a real implementation, this would connect to the actual platform API
+      // For now, we'll simulate successful execution and provide formatted trade data
+      const tradeResult = {
+        success: true,
+        platform,
+        commandId,
+        formattedTrade,
+        timestamp: new Date().toISOString(),
+        tradeId: `trade_${Date.now()}`
+      };
+
+      // Log the trade execution
+      console.log(`Trade executed on ${platform}:`, formattedTrade);
+      
+      res.json(tradeResult);
+    } catch (error) {
+      console.error('Error executing trade:', error);
+      res.status(500).json({ error: 'Failed to execute trade' });
+    }
+  });
+
   app.post("/api/webhooks/tradingview", async (req: Request, res: Response) => {
     console.log('TradingView webhook endpoint called');
     
