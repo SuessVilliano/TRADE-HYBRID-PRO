@@ -23,7 +23,6 @@ interface BrokerFormValues {
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 export function BrokerConfig() {
-  const [useMockService, setUseMockService] = useState<boolean>(config.USE_MOCK_SERVICE === 'true');
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [brokerService, setBrokerService] = useState<BrokerService | null>(null);
@@ -63,51 +62,20 @@ export function BrokerConfig() {
     }
   };
 
-  // Toggle between mock and real service
-  const toggleMockService = () => {
-    const newValue = !useMockService;
-    setUseMockService(newValue);
-    
-    // Reset connection status
-    setConnectionStatus('disconnected');
-    setBrokerService(null);
-    setAccountBalance(null);
-    
-    // Save to localStorage for persistence
-    localStorage.setItem('useMockService', newValue.toString());
-  };
-
-  // Connect using mock service
-  const connectMockService = async () => {
-    try {
-      setConnectionStatus('connecting');
-      setErrorMessage(null);
-      
-      // Create mock broker service
-      const service = BrokerFactory.createBrokerService('mock');
-      setBrokerService(service);
-      
-      // Connect to the service
-      await service.connect();
-      
-      // Get account balance
-      const balance = await service.getBalance();
-      setAccountBalance(balance);
-      
-      setConnectionStatus('connected');
-    } catch (error) {
-      console.error('Mock service connection error:', error);
-      setConnectionStatus('error');
-      setErrorMessage(error instanceof Error ? error.message : 'Unknown error occurred');
-    }
-  };
-
-  // Auto-connect on component mount if using mock service
+  // Auto-connect using saved credentials if available
   useEffect(() => {
-    if (useMockService) {
-      connectMockService();
+    const savedCredentials = localStorage.getItem('alpacaCredentials');
+    if (savedCredentials) {
+      try {
+        const credentials = JSON.parse(savedCredentials);
+        form.reset(credentials);
+        // Auto-connect with saved credentials
+        onSubmit(credentials);
+      } catch (error) {
+        console.error('Failed to load saved credentials:', error);
+      }
     }
-  }, [useMockService]);
+  }, []);
 
   return (
     <div className="space-y-4">

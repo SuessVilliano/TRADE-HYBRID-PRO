@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useMultiplayer } from "../../lib/stores/useMultiplayer";
 import { cn } from "../../lib/utils";
 import { Activity, MessageSquare, UserPlus, Award, DollarSign, BarChart2, Zap } from "lucide-react";
 
@@ -26,37 +27,57 @@ export function SocialActivityFeed({ className, minimized = false, onToggleMinim
   const [activityFilter, setActivityFilter] = useState<ActivityItem['type'] | 'all'>('all');
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   
-  // HIDDEN: Multiplayer dependencies broken - keeping code alive but commented
-  // const { messages, players, friendRequests, socialActivities } = useMultiplayer();
+  // Connect to real multiplayer data
+  const { messages, players, friendRequests, socialActivities } = useMultiplayer();
   
-  // Load mock activity data since multiplayer is temporarily disabled
+  // Process real multiplayer data into activity feed
   useEffect(() => {
-    const mockActivities: ActivityItem[] = [
-      {
-        id: '1',
-        type: 'chat',
-        timestamp: Date.now() - 300000,
-        content: 'Welcome to Trade Hybrid!',
-        user: { id: 'system', username: 'System' }
-      },
-      {
-        id: '2', 
-        type: 'trade',
-        timestamp: Date.now() - 600000,
-        content: 'New trading signal available',
-        user: { id: 'bot', username: 'Trading Bot' }
-      },
-      {
-        id: '3',
-        type: 'achievement',
-        timestamp: Date.now() - 900000,
-        content: 'Congratulations on your first trade!',
-        user: { id: 'system', username: 'Achievement System' }
-      }
-    ];
-
-    setActivities(mockActivities);
-  }, []);
+    const realActivities: ActivityItem[] = [];
+    
+    // Add recent chat messages
+    if (messages && messages.length > 0) {
+      const chatActivities = messages.slice(-5).map(msg => ({
+        id: `chat-${msg.id}`,
+        type: 'chat' as const,
+        timestamp: msg.timestamp,
+        content: msg.message,
+        user: {
+          id: msg.sender,
+          username: players?.find(p => p.id === msg.sender)?.username || msg.sender
+        }
+      }));
+      realActivities.push(...chatActivities);
+    }
+    
+    // Add friend requests
+    if (friendRequests && friendRequests.length > 0) {
+      const friendActivities = friendRequests.slice(-3).map(req => ({
+        id: `friend-${req.id}`,
+        type: 'friend' as const,
+        timestamp: req.timestamp || Date.now(),
+        content: `New friend request from ${req.from}`,
+        user: { id: req.from, username: req.from }
+      }));
+      realActivities.push(...friendActivities);
+    }
+    
+    // Add social activities
+    if (socialActivities && socialActivities.length > 0) {
+      const activities = socialActivities.slice(-3).map(activity => ({
+        id: `social-${activity.id}`,
+        type: activity.type,
+        timestamp: activity.timestamp,
+        content: activity.content,
+        user: activity.user
+      }));
+      realActivities.push(...activities);
+    }
+    
+    // Sort by timestamp (newest first)
+    realActivities.sort((a, b) => b.timestamp - a.timestamp);
+    
+    setActivities(realActivities);
+  }, [messages, players, friendRequests, socialActivities]);
 
   const filteredActivities = activityFilter === 'all' 
     ? activities 
