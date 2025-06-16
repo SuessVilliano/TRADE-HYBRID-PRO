@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUpDown, TrendingUp, TrendingDown, Zap, DollarSign, BarChart3, RefreshCw } from 'lucide-react';
+import { ArrowUpDown, TrendingUp, TrendingDown, Zap, DollarSign, BarChart3, RefreshCw, ExternalLink } from 'lucide-react';
 import { UniversalHeader } from '../components/ui/universal-header';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -214,6 +214,41 @@ const DEXPlatform: React.FC = () => {
       />
       
       <div className="container mx-auto px-4 py-8">
+        {/* Drift Trade Integration Banner */}
+        <div className="mb-6">
+          <Card className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 border-blue-500/20">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-2">Advanced DEX Trading with Drift</h3>
+                  <p className="text-gray-300 mb-4">
+                    Access professional perpetual futures and spot trading on Solana's most advanced DEX protocol
+                  </p>
+                  <div className="flex items-center space-x-4 text-sm text-gray-400">
+                    <span>• Perpetual Futures</span>
+                    <span>• Cross-margin Trading</span>
+                    <span>• Advanced Order Types</span>
+                    <span>• Deep Liquidity</span>
+                  </div>
+                </div>
+                <div className="flex flex-col space-y-3">
+                  <Button
+                    onClick={() => window.open('https://app.drift.trade/', '_blank')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3"
+                    size="lg"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Launch Drift Trade
+                  </Button>
+                  <div className="text-center text-xs text-gray-400">
+                    Professional Trading Platform
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Token List */}
           <div className="lg:col-span-1">

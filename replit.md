@@ -62,6 +62,13 @@ A comprehensive decentralized trading platform that bridges multiple trading env
   - Maintained existing trade journal functionality
   - Added professional trading journal with prop firm sync capabilities
 
+- **Drift Trade DEX Integration**: Integrated Drift Protocol as primary DEX trading platform
+  - Added prominent Drift Trade banner to DEX platform with direct launch button
+  - Connected to https://app.drift.trade/ for professional perpetual futures trading
+  - Enhanced DEX platform with live Solana token data and Jupiter swap functionality
+  - Fixed wallet authentication using proper Solana auth provider methods
+  - Maintained internal trading features alongside external Drift Trade access
+
 ### June 16, 2025 - Initial
 - **Hidden Broken Components**: Commented out broken features while keeping them alive in codebase:
   - Trading signals (demo only) → Hidden from navigation
