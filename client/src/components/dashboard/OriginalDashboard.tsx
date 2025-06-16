@@ -44,47 +44,47 @@ const dashboardItems: DashboardItem[] = [
     category: 'Trading & Markets'
   },
   
-  // Trading Tools Category
-  {
-    id: 'signals',
-    name: 'Trading Signals (Beta)',
-    icon: <Signal className="h-5 w-5" />,
-    path: '/signals',
-    description: 'Real-time market signals and alerts - Beta version',
-    category: 'Trading Tools'
-  },
-  {
-    id: 'indicators',
-    name: 'Trading Indicators (Beta)',
-    icon: <BarChart3 className="h-5 w-5" />,
-    path: '/trading/indicators',
-    description: 'Library of technical indicators - Beta version',
-    category: 'Trading Tools'
-  },
-  {
-    id: 'smart-trade',
-    name: 'Smart Trade Panel (Beta)',
-    icon: <Cpu className="h-5 w-5" />,
-    path: '/smart-trade-explainer',
-    description: 'Advanced trading with AI assistance - Beta version',
-    category: 'Trading Tools'
-  },
-  {
-    id: 'journal',
-    name: 'Trading Journal (Beta)',
-    icon: <FileText className="h-5 w-5" />,
-    path: '/journal',
-    description: 'Complete trading journal with analytics - Beta version',
-    category: 'Trading Tools'
-  },
-  {
-    id: 'bots',
-    name: 'Trading Bots (Beta)',
-    icon: <Bot className="h-5 w-5" />,
-    path: '/trading-bots',
-    description: 'Automated trading strategies - Beta version',
-    category: 'Trading Tools'
-  },
+  // HIDDEN: Trading Tools - Keeping alive in codebase but removing from navigation
+  // {
+  //   id: 'signals',
+  //   name: 'Trading Signals (Beta)',
+  //   icon: <Signal className="h-5 w-5" />,
+  //   path: '/signals',
+  //   description: 'Real-time market signals and alerts - Demo only',
+  //   category: 'Trading Tools'
+  // },
+  // {
+  //   id: 'indicators',
+  //   name: 'Trading Indicators (Beta)',
+  //   icon: <BarChart3 className="h-5 w-5" />,
+  //   path: '/trading/indicators',
+  //   description: 'Library of technical indicators - Beta version',
+  //   category: 'Trading Tools'
+  // },
+  // {
+  //   id: 'smart-trade',
+  //   name: 'Smart Trade Panel (Beta)',
+  //   icon: <Cpu className="h-5 w-5" />,
+  //   path: '/smart-trade-explainer',
+  //   description: 'Advanced trading with AI assistance - Beta version',
+  //   category: 'Trading Tools'
+  // },
+  // {
+  //   id: 'journal',
+  //   name: 'Trading Journal (Beta)',
+  //   icon: <FileText className="h-5 w-5" />,
+  //   path: '/journal',
+  //   description: 'Complete trading journal with analytics - Beta version',
+  //   category: 'Trading Tools'
+  // },
+  // {
+  //   id: 'bots',
+  //   name: 'Trading Bots (Beta)',
+  //   icon: <Bot className="h-5 w-5" />,
+  //   path: '/trading-bots',
+  //   description: 'Automated trading strategies - Mockup only',
+  //   category: 'Trading Tools'
+  // },
   {
     id: 'ai-insights',
     name: 'AI Market Analysis',
