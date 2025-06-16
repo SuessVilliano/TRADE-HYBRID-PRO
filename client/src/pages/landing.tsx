@@ -82,7 +82,7 @@ const LandingPage: React.FC = () => {
             </div>
             <div className="flex justify-center">
               <img 
-                src="/assets/platform-preview.png" 
+                src="/assets/platform-preview.svg" 
                 alt="TradeHybrid Platform" 
                 className="rounded-lg shadow-2xl max-w-full"
               />
