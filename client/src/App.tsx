@@ -96,6 +96,7 @@ import MarketDataPage from './pages/MarketDataPage';
 
 // Prop Firm
 import PropFirmDashboardPage from './pages/PropFirmDashboard';
+import PropFirmChallengePage from './pages/PropFirmChallenge';
 import PropFirmAdminDashboardPage from './pages/PropFirmAdminDashboard';
 import PropFirmChallengeSignupPage from './pages/PropFirmChallengeSignup';
 
@@ -266,7 +267,7 @@ const App: React.FC = () => {
                   {/* Prop Firm */}
                   <Route path="/prop-firm" element={<ProtectedRoute><PropFirmDashboardPage /></ProtectedRoute>} />
                   <Route path="/prop-firm/admin" element={<ProtectedRoute><PropFirmAdminDashboardPage /></ProtectedRoute>} />
-                  <Route path="/prop-firm/challenge" element={<ProtectedRoute><PropFirmChallengeSignupPage /></ProtectedRoute>} />
+                  <Route path="/prop-firm/challenge" element={<ProtectedRoute><PropFirmChallengePage /></ProtectedRoute>} />
                   <Route path="/prop-firm/account/:accountId" element={<ProtectedRoute><PropFirmAccountDetailsPage /></ProtectedRoute>} />
                   
                   {/* Investor Dashboard */}

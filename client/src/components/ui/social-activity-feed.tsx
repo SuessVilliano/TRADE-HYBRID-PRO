@@ -28,20 +28,21 @@ export function SocialActivityFeed({ className, minimized = false, onToggleMinim
   const [activityFilter, setActivityFilter] = useState<ActivityItem['type'] | 'all'>('all');
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   
-  const { messages, players, friendRequests, socialActivities } = useMultiplayer();
+  // HIDDEN: Multiplayer dependencies broken - keeping code alive but commented
+  // const { messages, players, friendRequests, socialActivities } = useMultiplayer();
   
   // Combine all social activities into a single feed
   useEffect(() => {
-    // Convert chat messages to activity items
-    const chatActivities = messages.slice(-10).map(msg => ({
-      id: msg.id,
-      type: 'chat' as const,
-      timestamp: msg.timestamp,
-      content: msg.message,
-      user: {
-        id: msg.sender,
-        username: players.find(p => p.id === msg.sender)?.username || 'Unknown',
-      },
+    // HIDDEN: Broken multiplayer chat activities - keeping code alive but commented
+    // const chatActivities = messages.slice(-10).map(msg => ({
+    //   id: msg.id,
+    //   type: 'chat' as const,
+    //   timestamp: msg.timestamp,
+    //   content: msg.message,
+    //   user: {
+    //     id: msg.sender,
+    //     username: players.find(p => p.id === msg.sender)?.username || 'Unknown',
+    //   },
       metadata: {
         type: msg.type
       }
