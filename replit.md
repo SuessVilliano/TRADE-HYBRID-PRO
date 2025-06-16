@@ -46,7 +46,23 @@ A comprehensive decentralized trading platform that bridges multiple trading env
 
 ## Recent Changes
 
-### June 16, 2025
+### June 16, 2025 - Evening Update
+- **TradeHybrid Web App URL Correction**: Updated all TradeHybrid Web App references from app.tradehybrid.co to app.tradehybrid.club
+  - Fixed iframe widget URL in TradeHybridAppWidget component
+  - Updated external link handler to use correct domain
+  - Corrected embedded app page URL reference
+  
+- **TradingView Component Enhancement**: Created fully functional TradingView iframe component
+  - Implemented proper iframe-based solution for chart loading
+  - Added maximize/minimize functionality and external link support
+  - Resolved TradingView script loading issues with iframe approach
+  
+- **Prop Firm Journal Integration**: Added prop firm journal to dashboard navigation
+  - Enhanced Trading Tools category with dedicated prop firm journal
+  - Maintained existing trade journal functionality
+  - Added professional trading journal with prop firm sync capabilities
+
+### June 16, 2025 - Initial
 - **Hidden Broken Components**: Commented out broken features while keeping them alive in codebase:
   - Trading signals (demo only) → Hidden from navigation
   - Trading bots (mockup only) → Hidden from navigation  

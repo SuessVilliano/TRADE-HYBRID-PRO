@@ -7,7 +7,7 @@ export default function EmbeddedAppPage() {
     <div className="container mx-auto py-4 px-4 min-h-screen">
       <PopupContainer padding>
         <EmbeddedWebBrowser 
-          initialUrl="https://app.tradehybrid.co" 
+          initialUrl="https://app.tradehybrid.club" 
           title="App"
           height="calc(100vh - 180px)"
         />

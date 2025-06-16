@@ -34,7 +34,7 @@ export function TradeHybridAppWidget({
   };
   
   const handleOpenExternal = () => {
-    window.open('https://app.tradehybrid.co', '_blank', 'noopener,noreferrer');
+    window.open('https://app.tradehybrid.club', '_blank', 'noopener,noreferrer');
   };
   
   const handleIframeLoad = () => {

@@ -102,6 +102,14 @@ const dashboardItems: DashboardItem[] = [
     description: 'Advanced trade analysis and performance metrics',
     category: 'Trading Tools'
   },
+  {
+    id: 'prop-firm-journal',
+    name: 'Prop Firm Journal',
+    icon: <FileText className="h-5 w-5" />,
+    path: '/prop-firm/journal',
+    description: 'Professional trading journal with prop firm account sync and analytics',
+    category: 'Trading Tools'
+  },
 
   // Crypto & DeFi
   {
