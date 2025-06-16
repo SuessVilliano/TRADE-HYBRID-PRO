@@ -18,13 +18,13 @@ interface DashboardItem {
 
 // Define the panel types for our original dashboard
 const dashboardItems: DashboardItem[] = [
-  // Trading & Markets Category
+  // Trading & Markets Category - Restructured as requested
   {
     id: 'trading-dashboard',
     name: 'Trade Dashboard',
     icon: <LineChart className="h-5 w-5" />,
     path: '/trading-dashboard',
-    description: 'Customizable trading dashboard with widgets',
+    description: 'Professional trading tools with prop firm platform integration',
     category: 'Trading & Markets'
   },
   {
@@ -35,46 +35,54 @@ const dashboardItems: DashboardItem[] = [
     description: 'Decentralized exchange for crypto trading',
     category: 'Trading & Markets'
   },
+  {
+    id: 'trading-platforms',
+    name: 'Trading Platforms',
+    icon: <Zap className="h-5 w-5" />,
+    path: '/trading-platforms',
+    description: 'Connect to DX Trade, Match Trader, cTrader, and Rithmic',
+    category: 'Trading & Markets'
+  },
   
   // Trading Tools Category
   {
     id: 'signals',
-    name: 'Trading Signals',
+    name: 'Trading Signals (Beta)',
     icon: <Signal className="h-5 w-5" />,
     path: '/signals',
-    description: 'Real-time market signals and alerts',
+    description: 'Real-time market signals and alerts - Beta version',
     category: 'Trading Tools'
   },
   {
     id: 'indicators',
-    name: 'Trading Indicators',
+    name: 'Trading Indicators (Beta)',
     icon: <BarChart3 className="h-5 w-5" />,
     path: '/trading/indicators',
-    description: 'Library of technical indicators',
+    description: 'Library of technical indicators - Beta version',
     category: 'Trading Tools'
   },
   {
     id: 'smart-trade',
-    name: 'Smart Trade Panel',
+    name: 'Smart Trade Panel (Beta)',
     icon: <Cpu className="h-5 w-5" />,
     path: '/smart-trade-explainer',
-    description: 'Advanced trading with AI assistance',
+    description: 'Advanced trading with AI assistance - Beta version',
     category: 'Trading Tools'
   },
   {
     id: 'journal',
-    name: 'Trading Journal',
+    name: 'Trading Journal (Beta)',
     icon: <FileText className="h-5 w-5" />,
     path: '/journal',
-    description: 'Complete trading journal with analytics, history, and psychology tracking',
+    description: 'Complete trading journal with analytics - Beta version',
     category: 'Trading Tools'
   },
   {
     id: 'bots',
-    name: 'Trading Bots',
+    name: 'Trading Bots (Beta)',
     icon: <Bot className="h-5 w-5" />,
     path: '/trading-bots',
-    description: 'Automated trading strategies',
+    description: 'Automated trading strategies - Beta version',
     category: 'Trading Tools'
   },
   {
@@ -119,16 +127,17 @@ const dashboardItems: DashboardItem[] = [
     description: 'Important economic events and data releases',
     category: 'News & Education'
   },
-  {
-    id: 'learn',
-    name: 'Learning Center',
-    icon: <BookOpen className="h-5 w-5" />,
-    path: '/learn',
-    description: 'Educational resources and structured learning paths for traders',
-    category: 'News & Education'
-  },
+  // HIDDEN: Incomplete learning center
+  // {
+  //   id: 'learn',
+  //   name: 'Learning Center',
+  //   icon: <BookOpen className="h-5 w-5" />,
+  //   path: '/learn',
+  //   description: 'Educational resources and structured learning paths for traders',
+  //   category: 'News & Education'
+  // },
   
-  // Immersive Experiences
+  // Immersive Experiences - Only keep metaverse
   {
     id: 'metaverse',
     name: 'Trading Metaverse',
@@ -137,30 +146,31 @@ const dashboardItems: DashboardItem[] = [
     description: 'Enter the immersive trading experience',
     category: 'Immersive Experiences'
   },
-  {
-    id: 'trade-runner',
-    name: 'Trade Runner Game',
-    icon: <Zap className="h-5 w-5" />,
-    path: '/game/trade-runner',
-    description: 'Fast-paced trading game',
-    category: 'Immersive Experiences'
-  },
-  {
-    id: 'bulls-vs-bears',
-    name: 'Bulls vs Bears Game',
-    icon: <Zap className="h-5 w-5" />,
-    path: '/game/bulls-vs-bears',
-    description: 'Multiplayer trading competition',
-    category: 'Immersive Experiences'
-  },
-  {
-    id: 'educational-games',
-    name: 'Educational Games',
-    icon: <Zap className="h-5 w-5" />,
-    path: '/educational-games',
-    description: 'Learn trading through games',
-    category: 'Immersive Experiences'
-  },
+  // HIDDEN: Incomplete games
+  // {
+  //   id: 'trade-runner',
+  //   name: 'Trade Runner Game',
+  //   icon: <Zap className="h-5 w-5" />,
+  //   path: '/game/trade-runner',
+  //   description: 'Fast-paced trading game',
+  //   category: 'Immersive Experiences'
+  // },
+  // {
+  //   id: 'bulls-vs-bears',
+  //   name: 'Bulls vs Bears Game',
+  //   icon: <Zap className="h-5 w-5" />,
+  //   path: '/game/bulls-vs-bears',
+  //   description: 'Multiplayer trading competition',
+  //   category: 'Immersive Experiences'
+  // },
+  // {
+  //   id: 'educational-games',
+  //   name: 'Educational Games',
+  //   icon: <Zap className="h-5 w-5" />,
+  //   path: '/educational-games',
+  //   description: 'Learn trading through games',
+  //   category: 'Immersive Experiences'
+  // },
   
   // Crypto & NFTs
   {
@@ -186,7 +196,7 @@ const dashboardItems: DashboardItem[] = [
     name: 'Prop Firm Dashboard',
     icon: <Users className="h-5 w-5" />,
     path: '/prop-firm',
-    description: 'Funded trading account management',
+    description: 'Access HybridFunding.co dashboard',
     category: 'Services'
   },
   {
@@ -197,30 +207,23 @@ const dashboardItems: DashboardItem[] = [
     description: 'Apply for HybridFunding.co funded trading accounts',
     category: 'Services'
   },
-  {
-    id: 'trading-platforms',
-    name: 'Trading Platforms',
-    icon: <Activity className="h-5 w-5" />,
-    path: '/trading-platforms',
-    description: 'Connect to DX Trade, Match Trader, cTrader, and Rithmic',
-    category: 'Services'
-  },
-  {
-    id: 'investor-dashboard',
-    name: 'Investor Dashboard',
-    icon: <LineChart className="h-5 w-5" />,
-    path: '/investors',
-    description: 'Manage your investments and track performance',
-    category: 'Services'
-  },
-  {
-    id: 'investor-admin',
-    name: 'Investor Admin',
-    icon: <Users className="h-5 w-5" />,
-    path: '/investors/admin',
-    description: 'Administrative dashboard for managing investors',
-    category: 'Services'
-  },
+  // HIDDEN: Investor dashboards - keeping in codebase but removing from navigation
+  // {
+  //   id: 'investor-dashboard',
+  //   name: 'Investor Dashboard',
+  //   icon: <LineChart className="h-5 w-5" />,
+  //   path: '/investors',
+  //   description: 'Manage your investments and track performance',
+  //   category: 'Services'
+  // },
+  // {
+  //   id: 'investor-admin',
+  //   name: 'Investor Admin',
+  //   icon: <Users className="h-5 w-5" />,
+  //   path: '/investors/admin',
+  //   description: 'Administrative dashboard for managing investors',
+  //   category: 'Services'
+  // },
   {
     id: 'affiliate',
     name: 'Affiliate Program',

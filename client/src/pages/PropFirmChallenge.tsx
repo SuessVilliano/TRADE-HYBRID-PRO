@@ -2,9 +2,9 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, ArrowRight } from 'lucide-react';
 
-const PropFirmDashboardPage: React.FC = () => {
-  const handleDashboardAccess = () => {
-    window.open('https://hybridfundingdashboard.propaccount.com/en/sign-in', '_blank', 'noopener,noreferrer');
+const PropFirmChallengePage: React.FC = () => {
+  const handleChallengeAccess = () => {
+    window.open('https://hybridfunding.co', '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -13,25 +13,25 @@ const PropFirmDashboardPage: React.FC = () => {
         
         {/* Header */}
         <div className="space-y-4">
-          <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto">
+          <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto">
             <ExternalLink className="h-10 w-10 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900">
-            Redirecting to HybridFunding
+            HybridFunding Challenge
           </h1>
           <p className="text-lg text-gray-600">
-            Access your prop trading dashboard
+            Apply for funded trading accounts
           </p>
         </div>
 
         {/* Main Action */}
         <div className="space-y-6">
           <Button 
-            onClick={handleDashboardAccess}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 text-lg font-semibold rounded-lg"
+            onClick={handleChallengeAccess}
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-4 text-lg font-semibold rounded-lg"
             size="lg"
           >
-            Open Dashboard
+            Apply for Challenge
             <ArrowRight className="h-5 w-5 ml-2" />
           </Button>
         </div>
@@ -41,13 +41,13 @@ const PropFirmDashboardPage: React.FC = () => {
           <div className="bg-gray-50 rounded-lg p-4 text-left">
             <h3 className="font-semibold text-gray-900 mb-2">External Service Notice</h3>
             <p className="text-sm text-gray-700 leading-relaxed">
-              You will be redirected to HybridFunding.co, which operates independently from Trade Hybrid. 
-              All trading activities and account management are handled by HybridFunding under their terms of service.
+              You will be redirected to HybridFunding.co to apply for prop trading challenges. 
+              All challenge applications and evaluations are handled by HybridFunding under their terms of service.
             </p>
           </div>
           
           <p className="text-xs text-gray-500">
-            Trade Hybrid is not responsible for activities on external platforms.
+            Trade Hybrid is not responsible for challenge evaluations or funding decisions.
           </p>
         </div>
 
@@ -56,4 +56,4 @@ const PropFirmDashboardPage: React.FC = () => {
   );
 };
 
-export default PropFirmDashboardPage;
+export default PropFirmChallengePage;
