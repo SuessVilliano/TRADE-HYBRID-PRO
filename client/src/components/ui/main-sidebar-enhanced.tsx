@@ -192,43 +192,43 @@ export const MainSidebar: React.FC<{
             href="#" 
             icon={<BarChart2 className="h-5 w-5" />} 
             label="Trading" 
-            active={isActive("/trading") || isActive("/trade") || isActive("/trading-dashboard") || isActive("/signals-performance")}
+            active={isActive("/trading") || isActive("/trade") || isActive("/trading-dashboard") || isActive("/dex") || isActive("/trading-platforms")}
             expanded={expandedSections.trading}
             onExpand={() => toggleSection('trading')}
           >
             <NavItem 
               href="/trading-dashboard" 
               icon={<LayoutDashboard className="h-4 w-4" />} 
-              label="Trading Dashboard" 
+              label="Custom Dashboard" 
               active={isActive("/trading-dashboard")} 
               onClick={mobile ? onClose : undefined}
             />
             <NavItem 
-              href="/trade" 
-              icon={<TrendingUp className="h-4 w-4" />} 
-              label="Chart Trading" 
-              active={isActive("/trade")} 
+              href="/dex" 
+              icon={<Coins className="h-4 w-4" />} 
+              label="DEX Platform" 
+              active={isActive("/dex")} 
+              onClick={mobile ? onClose : undefined}
+            />
+            <NavItem 
+              href="/trading-platforms" 
+              icon={<Globe className="h-4 w-4" />} 
+              label="Prop Firms" 
+              active={isActive("/trading-platforms")} 
               onClick={mobile ? onClose : undefined}
             />
             <NavItem 
               href="/signals" 
               icon={<Signal className="h-4 w-4" />} 
-              label="Signals" 
+              label="Trading Signals" 
               active={isActive("/signals")} 
               onClick={mobile ? onClose : undefined}
             />
             <NavItem 
-              href="/signals-performance" 
-              icon={<BarChart2 className="h-4 w-4" />} 
-              label="Signal Performance" 
-              active={isActive("/signals-performance")} 
-              onClick={mobile ? onClose : undefined}
-            />
-            <NavItem 
-              href="/connections" 
-              icon={<Zap className="h-4 w-4" />} 
-              label="Connections" 
-              active={isActive("/connections")} 
+              href="/voice-trade" 
+              icon={<MessageSquare className="h-4 w-4" />} 
+              label="AI Voice Trader" 
+              active={isActive("/voice-trade")} 
               onClick={mobile ? onClose : undefined}
             />
           </NavItem>

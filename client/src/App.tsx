@@ -36,6 +36,7 @@ import MetaversePage from './pages/metaverse';
 import SignalsView from './pages/trading-signals';
 import { TradingSignals } from './pages/TradingSignals';
 import { VoiceTradeAssistant } from './pages/VoiceTradeAssistant';
+import DEXPlatform from './pages/DEXPlatform';
 import Leaderboard from './pages/leaderboard';
 import ProfileView from './pages/profile';
 import SettingsView from './pages/settings';
@@ -197,6 +198,7 @@ const App: React.FC = () => {
                   <Route path="/learn" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
                   <Route path="/signals" element={<ProtectedRoute><TradingSignals /></ProtectedRoute>} />
                   <Route path="/voice-trade" element={<ProtectedRoute><VoiceTradeAssistant /></ProtectedRoute>} />
+                  <Route path="/dex" element={<ProtectedRoute><DEXPlatform /></ProtectedRoute>} />
                   <Route path="/copy-trading" element={<ProtectedRoute><CopyTradingPage /></ProtectedRoute>} />
                   <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />

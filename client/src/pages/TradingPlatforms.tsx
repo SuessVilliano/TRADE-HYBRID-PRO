@@ -1,562 +1,322 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
 import { Badge } from '../components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
-import { Alert, AlertDescription } from '../components/ui/alert';
+import { UniversalHeader } from '../components/ui/universal-header';
 import { 
   ExternalLink, 
-  Settings, 
-  Wifi, 
-  WifiOff, 
-  Loader2, 
   DollarSign, 
   TrendingUp,
-  Eye,
-  EyeOff,
-  RefreshCw,
-  Plus,
   Monitor,
-  Zap
+  Zap,
+  Globe,
+  ShieldCheck,
+  Trophy,
+  Users,
+  Target,
+  Award
 } from 'lucide-react';
-import UnifiedTradingDashboard from '../components/trading/UnifiedTradingDashboard';
-import QuickPlatformSwitcher from '../components/trading/QuickPlatformSwitcher';
 
-interface TradingPlatform {
-  id: number;
+interface PropFirm {
+  id: string;
   name: string;
-  platformType: string;
-  webTradeUrl: string;
-  authType: string;
-  configuration: any;
-}
-
-interface PlatformConnection {
-  connection: {
-    id: number;
-    isConnected: boolean;
-    lastSyncAt: string;
-  };
-  platform: TradingPlatform;
-  account: {
-    accountNumber: string;
-    accountName: string;
-    accountType: string;
-    currency: string;
-    balance: string;
-    equity: string;
-    margin: string;
-    freeMargin: string;
-    lastUpdated: string;
-  } | null;
+  description: string;
+  website: string;
+  dashboardUrl?: string;
+  platforms: string[];
+  maxCapital: string;
+  profitSplit: string;
+  challenge: boolean;
+  features: string[];
+  status: 'active' | 'featured' | 'popular';
 }
 
 const TradingPlatforms: React.FC = () => {
-  const [platforms, setPlatforms] = useState<TradingPlatform[]>([]);
-  const [connections, setConnections] = useState<PlatformConnection[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [connecting, setConnecting] = useState<number | null>(null);
-  const [showCredentials, setShowCredentials] = useState<{ [key: number]: boolean }>({});
-  const [connectionForm, setConnectionForm] = useState<any>({});
-  const [selectedPlatform, setSelectedPlatform] = useState<TradingPlatform | null>(null);
-  const [showConnectionDialog, setShowConnectionDialog] = useState(false);
-  const [viewMode, setViewMode] = useState<'dashboard' | 'platforms'>('platforms');
+  const propFirms: PropFirm[] = [
+    {
+      id: 'hybrid-funding',
+      name: 'Hybrid Funding',
+      description: 'Premier prop trading firm with flexible funding options and competitive profit splits',
+      website: 'https://hybridfunding.co',
+      dashboardUrl: 'https://hybridfundingdashboard.propaccount.com/en/sign-in',
+      platforms: ['DX Trade', 'Match Trader', 'cTrader', 'MT4', 'MT5'],
+      maxCapital: '$2,000,000',
+      profitSplit: '90%',
+      challenge: true,
+      features: ['Instant Funding', 'No Time Limits', '24/7 Support', 'AI Integration'],
+      status: 'featured'
+    },
+    {
+      id: 'ftmo',
+      name: 'FTMO',
+      description: 'Leading prop trading firm with proven track record and excellent support',
+      website: 'https://ftmo.com',
+      platforms: ['MT4', 'MT5', 'cTrader', 'DXTrade'],
+      maxCapital: '$400,000',
+      profitSplit: '80%',
+      challenge: true,
+      features: ['Free Trial', 'Educational Resources', 'Risk Management'],
+      status: 'popular'
+    },
+    {
+      id: 'the5ers',
+      name: 'The5%ers',
+      description: 'Unique funding model with no evaluation period for experienced traders',
+      website: 'https://the5ers.com',
+      platforms: ['MT4', 'MT5'],
+      maxCapital: '$4,000,000',
+      profitSplit: '50-80%',
+      challenge: false,
+      features: ['No Evaluation', 'Scaling Plan', 'High Leverage'],
+      status: 'active'
+    },
+    {
+      id: 'my-forex-funds',
+      name: 'My Forex Funds',
+      description: 'Fast-growing prop firm with competitive conditions and quick payouts',
+      website: 'https://myforexfunds.com',
+      platforms: ['MT4', 'MT5', 'cTrader'],
+      maxCapital: '$300,000',
+      profitSplit: '85%',
+      challenge: true,
+      features: ['Daily Payouts', 'No Restrictions', 'Swap Free'],
+      status: 'active'
+    }
+  ];
 
-  useEffect(() => {
-    fetchPlatforms();
-    fetchConnections();
-  }, []);
+  const tradingPlatforms = [
+    {
+      name: 'DX Trade',
+      description: 'Advanced web-based trading platform with institutional-grade features',
+      features: ['Advanced Charting', 'Risk Management', 'Multi-Asset Trading'],
+      icon: <Monitor className="h-6 w-6" />
+    },
+    {
+      name: 'Match Trader',
+      description: 'Professional trading platform for forex and CFD trading',
+      features: ['ECN Trading', 'Advanced Orders', 'Market Analysis'],
+      icon: <TrendingUp className="h-6 w-6" />
+    },
+    {
+      name: 'cTrader',
+      description: 'Modern trading platform with advanced charting and automation',
+      features: ['Algorithmic Trading', 'Level II Pricing', 'Advanced Charting'],
+      icon: <Zap className="h-6 w-6" />
+    },
+    {
+      name: 'Rithmic',
+      description: 'High-performance futures trading platform',
+      features: ['Low Latency', 'Direct Market Access', 'Professional Tools'],
+      icon: <Target className="h-6 w-6" />
+    }
+  ];
 
-  const fetchPlatforms = async () => {
-    try {
-      const response = await fetch('/api/trading-platforms/platforms');
-      const data = await response.json();
-      setPlatforms(data.platforms || []);
-    } catch (error) {
-      console.error('Error fetching platforms:', error);
-      setPlatforms([]);
+  const handleVisitWebsite = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleAccessDashboard = (dashboardUrl?: string, website?: string) => {
+    const url = dashboardUrl || website;
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
 
-  const fetchConnections = async () => {
-    try {
-      const response = await fetch('/api/trading-platforms/connections');
-      const data = await response.json();
-      setConnections(data.connections || []);
-    } catch (error) {
-      console.error('Error fetching connections:', error);
-      setConnections([]);
-    } finally {
-      setLoading(false);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'featured':
+        return 'bg-yellow-500';
+      case 'popular':
+        return 'bg-green-500';
+      default:
+        return 'bg-blue-500';
     }
   };
 
-  const handleConnect = async (platform: TradingPlatform) => {
-    setSelectedPlatform(platform);
-    setConnectionForm({});
-    setShowConnectionDialog(true);
-  };
-
-  const submitConnection = async () => {
-    if (!selectedPlatform) return;
-
-    setConnecting(selectedPlatform.id);
-    try {
-      const response = await fetch('/api/trading-platforms/connect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          platformId: selectedPlatform.id,
-          credentials: connectionForm,
-        }),
-      });
-
-      if (response.ok) {
-        setShowConnectionDialog(false);
-        fetchConnections();
-      } else {
-        const error = await response.json();
-        alert(error.error || 'Connection failed');
-      }
-    } catch (error) {
-      console.error('Connection error:', error);
-      alert('Connection failed');
-    } finally {
-      setConnecting(null);
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'featured':
+        return <Trophy className="h-4 w-4" />;
+      case 'popular':
+        return <Users className="h-4 w-4" />;
+      default:
+        return <Award className="h-4 w-4" />;
     }
   };
-
-  const handleDisconnect = async (connectionId: number) => {
-    try {
-      const response = await fetch('/api/trading-platforms/disconnect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ connectionId }),
-      });
-
-      if (response.ok) {
-        fetchConnections();
-      }
-    } catch (error) {
-      console.error('Disconnect error:', error);
-    }
-  };
-
-  const handleSync = async (connectionId: number) => {
-    try {
-      const response = await fetch(`/api/trading-platforms/sync/${connectionId}`, {
-        method: 'POST',
-      });
-
-      if (response.ok) {
-        fetchConnections();
-      }
-    } catch (error) {
-      console.error('Sync error:', error);
-    }
-  };
-
-  const [embeddedTrader, setEmbeddedTrader] = useState<string | null>(null);
-
-  const openWebTrader = (url: string, platformName: string) => {
-    setEmbeddedTrader(url);
-  };
-
-  const closeWebTrader = () => {
-    setEmbeddedTrader(null);
-  };
-
-  const renderConnectionForm = () => {
-    if (!selectedPlatform) return null;
-
-    const { authType, platformType } = selectedPlatform;
-
-    return (
-      <div className="space-y-4">
-        {authType === 'credentials' && (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                type="text"
-                value={connectionForm.username || ''}
-                onChange={(e) =>
-                  setConnectionForm({ ...connectionForm, username: e.target.value })
-                }
-                placeholder="Enter your username"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={connectionForm.password || ''}
-                onChange={(e) =>
-                  setConnectionForm({ ...connectionForm, password: e.target.value })
-                }
-                placeholder="Enter your password"
-              />
-            </div>
-            {platformType === 'rithmic' && (
-              <div className="space-y-2">
-                <Label htmlFor="server">Server</Label>
-                <Input
-                  id="server"
-                  type="text"
-                  value={connectionForm.server || 'Rithmic Test'}
-                  onChange={(e) =>
-                    setConnectionForm({ ...connectionForm, server: e.target.value })
-                  }
-                  placeholder="Rithmic Test"
-                />
-              </div>
-            )}
-          </>
-        )}
-
-        {authType === 'api_key' && (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="apiKey">API Key</Label>
-              <Input
-                id="apiKey"
-                type="text"
-                value={connectionForm.apiKey || ''}
-                onChange={(e) =>
-                  setConnectionForm({ ...connectionForm, apiKey: e.target.value })
-                }
-                placeholder="Enter your API key"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="apiSecret">API Secret</Label>
-              <Input
-                id="apiSecret"
-                type="password"
-                value={connectionForm.apiSecret || ''}
-                onChange={(e) =>
-                  setConnectionForm({ ...connectionForm, apiSecret: e.target.value })
-                }
-                placeholder="Enter your API secret"
-              />
-            </div>
-          </>
-        )}
-
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="demo"
-            checked={connectionForm.demo ?? false}
-            onChange={(e) =>
-              setConnectionForm({ ...connectionForm, demo: e.target.checked })
-            }
-          />
-          <Label htmlFor="demo">Demo Account</Label>
-        </div>
-      </div>
-    );
-  };
-
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {embeddedTrader && (
-        <div className="fixed inset-0 z-50 bg-background">
-          <div className="flex items-center justify-between p-4 border-b">
-            <h2 className="text-lg font-semibold">Web Trading Platform</h2>
-            <Button variant="outline" onClick={closeWebTrader}>
-              Close Trader
-            </Button>
-          </div>
-          <iframe
-            src={embeddedTrader}
-            className="w-full h-[calc(100vh-80px)]"
-            frameBorder="0"
-            allow="fullscreen"
-            title="Trading Platform"
-          />
+    <div className="min-h-screen bg-background">
+      <UniversalHeader 
+        title="Trading Platforms & Prop Firms"
+        showBackButton={true}
+        showHomeButton={true}
+      />
+      
+      <div className="container mx-auto px-4 py-8">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-4">Professional Trading Platforms</h1>
+          <p className="text-muted-foreground text-lg">
+            Connect to leading prop trading firms and access professional trading platforms with institutional-grade tools.
+          </p>
         </div>
-      )}
 
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Trading Platforms</h1>
-            <p className="text-muted-foreground">
-              Connect your professional trading platforms to sync data and manage accounts.
-            </p>
+        {/* Prop Firms Section */}
+        <div className="mb-12">
+          <div className="flex items-center gap-2 mb-6">
+            <DollarSign className="h-6 w-6 text-primary" />
+            <h2 className="text-2xl font-bold">Prop Trading Firms</h2>
           </div>
-          <div className="flex items-center gap-4">
-            <QuickPlatformSwitcher
-              onPlatformSelect={(platform) => {
-                setViewMode('dashboard');
-                // The unified dashboard will handle opening the platform
-              }}
-            />
-            <div className="flex gap-2">
-              <Button
-                variant={viewMode === 'platforms' ? 'default' : 'outline'}
-                onClick={() => setViewMode('platforms')}
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                Platforms
-              </Button>
-              <Button
-                variant={viewMode === 'dashboard' ? 'default' : 'outline'}
-                onClick={() => setViewMode('dashboard')}
-              >
-                <Monitor className="h-4 w-4 mr-2" />
-                Trading Dashboard
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {viewMode === 'dashboard' ? (
-        <UnifiedTradingDashboard />
-      ) : (
-        <Tabs defaultValue="platforms" className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="platforms">Available Platforms</TabsTrigger>
-            <TabsTrigger value="connections">My Connections</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="platforms">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-            {platforms.map((platform) => {
-              const isConnected = connections.some(
-                (conn) => conn.platform?.id === platform.id && conn.connection.isConnected
-              );
-
-              return (
-                <Card key={platform.id} className="relative">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {propFirms.map((firm) => (
+              <Card key={firm.id} className="relative hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
                       <CardTitle className="flex items-center gap-2">
-                        {platform.name}
-                        {isConnected && (
-                          <Badge variant="default" className="bg-green-600">
-                            <Wifi className="h-3 w-3 mr-1" />
-                            Connected
-                          </Badge>
-                        )}
-                      </CardTitle>
-                    </div>
-                    <CardDescription>
-                      {platform.name === 'Match Trader' && 'Advanced multi-asset trading platform with web-based interface via GooeY Trade'}
-                      {platform.name === 'DX Trade' && 'Professional trading platform with advanced charting and analysis tools'}
-                      {platform.name === 'cTrader' && 'Institutional-grade trading platform with advanced execution capabilities'}
-                      {platform.name === 'Rithmic' && 'Professional futures trading platform via Quantower interface'}
-                    </CardDescription>
-                  </CardHeader>
-                  
-                  <CardContent className="space-y-4">
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant="outline">
-                        {platform.authType === 'credentials' ? 'Username/Password' : 
-                         platform.authType === 'api_key' ? 'API Key' : 'OAuth'}
-                      </Badge>
-                      <Badge variant="outline">Demo Available</Badge>
-                      <Badge variant="outline">Web Trading</Badge>
-                    </div>
-
-                    <div className="flex gap-2">
-                      {!isConnected ? (
-                        <Button 
-                          onClick={() => handleConnect(platform)}
-                          disabled={connecting === platform.id}
-                          className="flex-1"
+                        {firm.name}
+                        <Badge 
+                          variant="secondary" 
+                          className={`${getStatusColor(firm.status)} text-white`}
                         >
-                          {connecting === platform.id ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <Plus className="h-4 w-4 mr-2" />
-                          )}
-                          Connect
-                        </Button>
-                      ) : (
-                        <Button variant="outline" className="flex-1" disabled>
-                          Connected
-                        </Button>
-                      )}
-                      
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          const tradingUrls = {
-                            'Match Trader': 'https://mtr.gooeytrade.com/login',
-                            'DX Trade': 'https://trade.gooeytrade.com/',
-                            'cTrader': 'https://app.gooeytrade.com/',
-                            'Rithmic': 'https://rtraderpro.rithmic.com/rtraderpro-web/'
-                          };
-                          const url = tradingUrls[platform.name as keyof typeof tradingUrls] || platform.webTradeUrl;
-                          if (url) {
-                            window.open(url, '_blank', 'noopener,noreferrer');
-                          }
-                        }}
-                      >
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Open Trader
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="connections">
-          <div className="space-y-6">
-            {connections.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <WifiOff className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No Connected Platforms</h3>
-                  <p className="text-muted-foreground text-center mb-4">
-                    Connect to trading platforms to sync your account data and manage trades.
-                  </p>
-                  <Button onClick={() => fetchPlatforms()}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Connect Platform
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              connections.map((conn) => (
-                <Card key={conn.connection.id}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-2">
-                        {conn.platform?.name}
-                        <Badge variant={conn.connection.isConnected ? "default" : "secondary"}>
-                          {conn.connection.isConnected ? (
-                            <><Wifi className="h-3 w-3 mr-1" />Connected</>
-                          ) : (
-                            <><WifiOff className="h-3 w-3 mr-1" />Disconnected</>
-                          )}
+                          {getStatusIcon(firm.status)}
+                          {firm.status}
                         </Badge>
                       </CardTitle>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleSync(conn.connection.id)}
-                        >
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDisconnect(conn.connection.id)}
-                        >
-                          Disconnect
-                        </Button>
-                      </div>
+                      <CardDescription className="mt-2">
+                        {firm.description}
+                      </CardDescription>
                     </div>
-                  </CardHeader>
-                  
-                  {conn.account && (
-                    <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="text-center p-3 bg-muted rounded-lg">
-                          <DollarSign className="h-5 w-5 mx-auto mb-1 text-primary" />
-                          <div className="text-sm text-muted-foreground">Balance</div>
-                          <div className="font-semibold">
-                            {conn.account.currency} {parseFloat(conn.account.balance).toLocaleString()}
-                          </div>
-                        </div>
-                        
-                        <div className="text-center p-3 bg-muted rounded-lg">
-                          <TrendingUp className="h-5 w-5 mx-auto mb-1 text-primary" />
-                          <div className="text-sm text-muted-foreground">Equity</div>
-                          <div className="font-semibold">
-                            {conn.account.currency} {parseFloat(conn.account.equity).toLocaleString()}
-                          </div>
-                        </div>
-                        
-                        <div className="text-center p-3 bg-muted rounded-lg">
-                          <div className="text-sm text-muted-foreground">Account</div>
-                          <div className="font-semibold">{conn.account.accountNumber}</div>
-                          <div className="text-xs text-muted-foreground capitalize">
-                            {conn.account.accountType}
-                          </div>
-                        </div>
-                        
-                        <div className="text-center p-3 bg-muted rounded-lg">
-                          <div className="text-sm text-muted-foreground">Free Margin</div>
-                          <div className="font-semibold">
-                            {conn.account.currency} {parseFloat(conn.account.freeMargin).toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-4 text-xs text-muted-foreground">
-                        Last updated: {new Date(conn.account.lastUpdated).toLocaleString()}
-                      </div>
-                    </CardContent>
-                  )}
-                </Card>
-              ))
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
-      )}
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-semibold">Max Capital:</span>
+                      <div className="text-muted-foreground">{firm.maxCapital}</div>
+                    </div>
+                    <div>
+                      <span className="font-semibold">Profit Split:</span>
+                      <div className="text-muted-foreground">{firm.profitSplit}</div>
+                    </div>
+                  </div>
 
-      <Dialog open={showConnectionDialog} onOpenChange={setShowConnectionDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Connect to {selectedPlatform?.name}</DialogTitle>
-            <DialogDescription>
-              Enter your credentials to connect to {selectedPlatform?.name}. Your credentials are encrypted and stored securely.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            {renderConnectionForm()}
-            
-            <Alert>
-              <AlertDescription>
-                Make sure you're using valid credentials for your {selectedPlatform?.name} account.
-                Demo accounts are recommended for testing.
-              </AlertDescription>
-            </Alert>
-            
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowConnectionDialog(false)}>
-                Cancel
-              </Button>
-              <Button onClick={submitConnection} disabled={connecting !== null}>
-                {connecting ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : null}
-                Connect
-              </Button>
-            </div>
+                  <div>
+                    <span className="font-semibold text-sm">Platforms:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {firm.platforms.map((platform) => (
+                        <Badge key={platform} variant="outline" className="text-xs">
+                          {platform}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="font-semibold text-sm">Features:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {firm.features.map((feature) => (
+                        <Badge key={feature} variant="secondary" className="text-xs">
+                          {feature}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      onClick={() => handleVisitWebsite(firm.website)}
+                      className="flex-1"
+                    >
+                      <Globe className="h-4 w-4 mr-2" />
+                      Visit Website
+                    </Button>
+                    
+                    {firm.dashboardUrl && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleAccessDashboard(firm.dashboardUrl, firm.website)}
+                        className="flex-1"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Dashboard
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+
+        {/* Trading Platforms Section */}
+        <div>
+          <div className="flex items-center gap-2 mb-6">
+            <Monitor className="h-6 w-6 text-primary" />
+            <h2 className="text-2xl font-bold">Trading Platforms</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {tradingPlatforms.map((platform) => (
+              <Card key={platform.name} className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      {platform.icon}
+                    </div>
+                    <CardTitle className="text-lg">{platform.name}</CardTitle>
+                  </div>
+                  <CardDescription className="text-sm">
+                    {platform.description}
+                  </CardDescription>
+                </CardHeader>
+                
+                <CardContent>
+                  <div className="space-y-2">
+                    <span className="font-semibold text-sm">Key Features:</span>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      {platform.features.map((feature) => (
+                        <li key={feature} className="flex items-center gap-2">
+                          <ShieldCheck className="h-3 w-3 text-green-500" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Integration Notice */}
+        <Card className="mt-8 bg-primary/5 border-primary/20">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4">
+              <Zap className="h-6 w-6 text-primary mt-1" />
+              <div>
+                <h3 className="font-semibold mb-2">AI Voice Trading Integration</h3>
+                <p className="text-muted-foreground">
+                  All platforms support our AI Voice Trading Assistant. Use voice commands to generate 
+                  trade signals that can be executed directly on these platforms or copied to your clipboard 
+                  for manual entry.
+                </p>
+                <div className="mt-4">
+                  <Button variant="outline" size="sm" onClick={() => window.location.href = '/voice-trade'}>
+                    <Zap className="h-4 w-4 mr-2" />
+                    Try Voice Trading
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
