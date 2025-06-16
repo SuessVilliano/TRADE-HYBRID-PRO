@@ -50,10 +50,18 @@ const dashboardItems: DashboardItem[] = [
     path: '/signals',
     description: 'Live trading signals from Paradox, Solaris, and Hybrid providers',
     category: 'Trading & Markets'
+  },
+  {
+    id: 'voice-trade',
+    name: 'AI Voice Trader',
+    icon: <Podcast className="h-5 w-5" />,
+    path: '/voice-trade',
+    description: 'Execute trades using voice commands with prop firm integration',
+    category: 'Trading & Markets'
   }
 ];
 
-export function OriginalDashboard() {
+export default function OriginalDashboard() {
   const [showWalletOnboarding, setShowWalletOnboarding] = useState(false);
 
   // Group items by category for display

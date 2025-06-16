@@ -34,6 +34,8 @@ import AdvancedJournalView from './pages/trade-journal-advanced';
 import MetaversePage from './pages/metaverse';
 // import LearnView from './pages/learning-center'; // Using LearningCenterPage instead
 import SignalsView from './pages/trading-signals';
+import { TradingSignals } from './pages/TradingSignals';
+import { VoiceTradeAssistant } from './pages/VoiceTradeAssistant';
 import Leaderboard from './pages/leaderboard';
 import ProfileView from './pages/profile';
 import SettingsView from './pages/settings';
@@ -193,7 +195,8 @@ const App: React.FC = () => {
                   <Route path="/journal/advanced" element={<ProtectedRoute><AdvancedJournalView /></ProtectedRoute>} />
                   <Route path="/metaverse" element={<ProtectedRoute><MetaversePage /></ProtectedRoute>} />
                   <Route path="/learn" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
-                  <Route path="/signals" element={<ProtectedRoute><SignalsView /></ProtectedRoute>} />
+                  <Route path="/signals" element={<ProtectedRoute><TradingSignals /></ProtectedRoute>} />
+                  <Route path="/voice-trade" element={<ProtectedRoute><VoiceTradeAssistant /></ProtectedRoute>} />
                   <Route path="/copy-trading" element={<ProtectedRoute><CopyTradingPage /></ProtectedRoute>} />
                   <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
