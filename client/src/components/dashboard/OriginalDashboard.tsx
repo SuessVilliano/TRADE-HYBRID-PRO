@@ -58,6 +58,144 @@ const dashboardItems: DashboardItem[] = [
     path: '/voice-trade',
     description: 'Execute trades using voice commands with prop firm integration',
     category: 'Trading & Markets'
+  },
+  {
+    id: 'ai-analytics',
+    name: 'AI Platform Analytics',
+    icon: <Activity className="h-5 w-5" />,
+    path: '/ai-analytics',
+    description: 'Advanced AI-powered market analysis and trading insights',
+    category: 'AI & Analytics'
+  },
+  
+  // Trading Tools & Analysis
+  {
+    id: 'trading-bots',
+    name: 'Trading Bots',
+    icon: <Zap className="h-5 w-5" />,
+    path: '/trading-bots',
+    description: 'Automated trading strategies and bot management',
+    category: 'Trading Tools'
+  },
+  {
+    id: 'copy-trading',
+    name: 'Copy Trading',
+    icon: <Signal className="h-5 w-5" />,
+    path: '/copy-trading',
+    description: 'Copy trades from successful traders automatically',
+    category: 'Trading Tools'
+  },
+  {
+    id: 'journal',
+    name: 'Trade Journal',
+    icon: <LineChart className="h-5 w-5" />,
+    path: '/journal',
+    description: 'Track and analyze your trading performance with real prop firm data sync',
+    category: 'Trading Tools'
+  },
+  {
+    id: 'journal-advanced',
+    name: 'Advanced Journal',
+    icon: <LineChart className="h-5 w-5" />,
+    path: '/journal/advanced',
+    description: 'Advanced trade analysis and performance metrics',
+    category: 'Trading Tools'
+  },
+
+  // Crypto & DeFi
+  {
+    id: 'portfolio',
+    name: 'Portfolio Tracker',
+    icon: <Activity className="h-5 w-5" />,
+    path: '/portfolio',
+    description: 'Track your crypto and traditional asset portfolio',
+    category: 'Crypto & DeFi'
+  },
+  {
+    id: 'staking',
+    name: 'Staking Rewards',
+    icon: <Zap className="h-5 w-5" />,
+    path: '/staking',
+    description: 'Earn rewards by staking your crypto assets',
+    category: 'Crypto & DeFi'
+  },
+  {
+    id: 'defi-dashboard',
+    name: 'DeFi Dashboard',
+    icon: <Activity className="h-5 w-5" />,
+    path: '/defi',
+    description: 'Decentralized finance protocols and yield farming',
+    category: 'Crypto & DeFi'
+  },
+
+  // Immersive & Social
+  {
+    id: 'metaverse',
+    name: 'Trading Metaverse',
+    icon: <Activity className="h-5 w-5" />,
+    path: '/metaverse',
+    description: 'Immersive 3D trading environment and social hub',
+    category: 'Immersive & Social'
+  },
+  {
+    id: 'leaderboard',
+    name: 'Leaderboard',
+    icon: <Signal className="h-5 w-5" />,
+    path: '/leaderboard',
+    description: 'Compete with other traders and climb the ranks',
+    category: 'Immersive & Social'
+  },
+  {
+    id: 'social-trading',
+    name: 'Social Trading',
+    icon: <Activity className="h-5 w-5" />,
+    path: '/social',
+    description: 'Connect with traders and share strategies',
+    category: 'Immersive & Social'
+  },
+
+  // Learning & Resources
+  {
+    id: 'learning-center',
+    name: 'Learning Center',
+    icon: <Activity className="h-5 w-5" />,
+    path: '/learn',
+    description: 'Comprehensive trading education and tutorials',
+    category: 'Learning & Resources'
+  },
+  {
+    id: 'news',
+    name: 'Market News',
+    icon: <Signal className="h-5 w-5" />,
+    path: '/news',
+    description: 'Latest market news and analysis',
+    category: 'Learning & Resources'
+  },
+  {
+    id: 'market-data',
+    name: 'Market Data',
+    icon: <LineChart className="h-5 w-5" />,
+    path: '/market-data',
+    description: 'Real-time market data and analytics',
+    category: 'Learning & Resources'
+  },
+
+  // Account & Settings
+  {
+    id: 'profile',
+    name: 'Profile',
+    icon: <Activity className="h-5 w-5" />,
+    path: '/profile',
+    description: 'Manage your trading profile and preferences',
+    category: 'Account & Settings'
+  },
+  {
+    id: 'settings',
+    name: 'Settings',
+    icon: <Activity className="h-5 w-5" />,
+    path: '/settings',
+    description: 'Configure platform settings and preferences',
+    category: 'Account & Settings'
   }
 ];
 

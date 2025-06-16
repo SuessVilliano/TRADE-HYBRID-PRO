@@ -37,6 +37,7 @@ import SignalsView from './pages/trading-signals';
 import { TradingSignals } from './pages/TradingSignals';
 import { VoiceTradeAssistant } from './pages/VoiceTradeAssistant';
 import DEXPlatform from './pages/DEXPlatform';
+import AIAnalytics from './pages/AIAnalytics';
 import Leaderboard from './pages/leaderboard';
 import ProfileView from './pages/profile';
 import SettingsView from './pages/settings';
@@ -199,6 +200,7 @@ const App: React.FC = () => {
                   <Route path="/signals" element={<ProtectedRoute><TradingSignals /></ProtectedRoute>} />
                   <Route path="/voice-trade" element={<ProtectedRoute><VoiceTradeAssistant /></ProtectedRoute>} />
                   <Route path="/dex" element={<ProtectedRoute><DEXPlatform /></ProtectedRoute>} />
+                  <Route path="/ai-analytics" element={<ProtectedRoute><AIAnalytics /></ProtectedRoute>} />
                   <Route path="/copy-trading" element={<ProtectedRoute><CopyTradingPage /></ProtectedRoute>} />
                   <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
