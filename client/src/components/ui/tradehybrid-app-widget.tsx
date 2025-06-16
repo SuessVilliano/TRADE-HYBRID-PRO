@@ -147,7 +147,7 @@ export function TradeHybridAppWidget({
         ) : (
           <iframe
             ref={iframeRef}
-            src="https://app.tradehybrid.co"
+            src="https://app.tradehybrid.club"
             className="w-full h-full border-0"
             onLoad={handleIframeLoad}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

@@ -5,6 +5,7 @@ import { BarChart3, Signal, Bot, BookOpen, Users, FileText,
 import { LineChart } from 'lucide-react';
 import { Button } from '../ui/button';
 import { CryptoWalletOnboardingModal } from '../ui/crypto-wallet-onboarding-modal';
+import { TradingDashboardImage } from '../ui/trading-dashboard-image';
 
 // Define dashboard item type
 interface DashboardItem {
@@ -282,6 +283,12 @@ export default function OriginalDashboard() {
                   <p className="text-sm text-gray-300 leading-relaxed">
                     {item.description}
                   </p>
+                  {/* Special image for trading dashboard */}
+                  {item.id === 'trading-dashboard' && (
+                    <div className="mt-4">
+                      <TradingDashboardImage className="w-full h-48" />
+                    </div>
+                  )}
                 </Link>
               ))}
             </div>

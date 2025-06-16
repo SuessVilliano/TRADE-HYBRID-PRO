@@ -440,7 +440,7 @@ const LandingPage: React.FC = () => {
                 </a>
               </div>
               <p className="text-gray-400">
-                Email: support@tradehybrid.com
+                Email: contact@tradehybrid.co
               </p>
             </div>
           </div>
