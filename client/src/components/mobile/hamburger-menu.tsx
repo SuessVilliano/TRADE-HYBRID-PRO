@@ -60,8 +60,8 @@ export function HamburgerMenu({ onToolSelect }: HamburgerMenuProps) {
   
   // Define available tools and their default states
   const [tools, setTools] = useState<Tool[]>([
-    { id: 'dashboard', name: 'Dashboard', icon: <LayoutDashboard size={18} />, enabled: true, path: '/trading-dashboard/custom' },
-    { id: 'trade', name: 'Trade', icon: <LineChart size={18} />, enabled: true, path: '/trading-dashboard/custom' },
+    { id: 'dashboard', name: 'Dashboard', icon: <LayoutDashboard size={18} />, enabled: true, path: '/trading-dashboard' },
+    { id: 'trade', name: 'Trade', icon: <LineChart size={18} />, enabled: true, path: '/trading-dashboard' },
     { id: 'ai_analysis', name: 'AI Analysis', icon: <BrainCircuit size={18} />, enabled: true, path: '/ai-analysis' },
     { id: 'trading_bots', name: 'Trading Bots', icon: <Bot size={18} />, enabled: true, path: '/trading-bots' },
     { id: 'ai_chat', name: 'AI Chat', icon: <MessageCircle size={18} />, enabled: true, path: '/ai-assistant' },
@@ -115,13 +115,15 @@ export function HamburgerMenu({ onToolSelect }: HamburgerMenuProps) {
     }
   }, []);
 
-  // Save tool preferences when they change
+  // Save tool preferences when they change (exclude icons to prevent circular reference)
   useEffect(() => {
-    localStorage.setItem('tradeHybridMobileTools', JSON.stringify(tools));
+    const toolsToSave = tools.map(({ icon, ...tool }) => tool);
+    localStorage.setItem('tradeHybridMobileTools', JSON.stringify(toolsToSave));
   }, [tools]);
   
   useEffect(() => {
-    localStorage.setItem('tradeHybridQuickTools', JSON.stringify(quickTools));
+    const quickToolsToSave = quickTools.map(({ icon, ...tool }) => tool);
+    localStorage.setItem('tradeHybridQuickTools', JSON.stringify(quickToolsToSave));
   }, [quickTools]);
 
   // Toggle tool enabled state
