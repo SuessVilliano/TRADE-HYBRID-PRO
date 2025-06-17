@@ -261,6 +261,11 @@ export class THCTokenService extends EventEmitter {
       const adapter = new (await import('../adapters/solscan-adapter')).SolscanAdapter();
       const holders = await adapter.getTHCTokenHolders(limit);
       
+      if (!holders || !Array.isArray(holders)) {
+        console.log('No valid holders data received');
+        return [];
+      }
+      
       return holders.map(holder => ({
         address: holder.owner,
         amount: holder.amount,

@@ -46,6 +46,27 @@ A comprehensive decentralized trading platform that bridges multiple trading env
 
 ## Recent Changes
 
+### June 17, 2025 - Platform Cleanup & Feature Consolidation
+- **Removed Broken Features**: Eliminated non-functional components that were causing 404 errors
+  - Removed broken social trading features from navigation
+  - Removed market data page that was causing issues
+  - Cleaned up AI market analysis routes that were crashing
+  
+- **Trade Journal Consolidation**: Streamlined multiple trade journals into one strategic interface
+  - Removed duplicate PropFirm journal route
+  - Consolidated advanced journal functionality into main journal
+  - Simplified navigation structure for better user experience
+  
+- **THC Staking & NFT Restoration**: Fixed critical issues with crypto features
+  - Fixed THC token service error handling for holders data
+  - Ensured THC Staking page is fully functional and accessible
+  - Maintained NFT Marketplace functionality
+  
+- **Learning Center Image Fix**: Removed glitching images from learning center cards
+  - Replaced problematic image displays with clean gradient backgrounds
+  - Used text-only approach for course cards as requested
+  - Improved visual consistency across learning modules
+
 ### June 17, 2025 - Mobile Optimization & Image Cleanup
 - **Mobile Responsive Trading Platforms**: Fixed mobile layout issues on trading platforms page
   - Buttons now stack vertically on mobile devices instead of being cut off

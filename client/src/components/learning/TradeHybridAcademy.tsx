@@ -81,18 +81,8 @@ const CourseCard: React.FC<{
             </span>
           </div>
         )}
-        <div className="h-48 overflow-hidden bg-slate-200 dark:bg-slate-700">
-          {imageUrl ? (
-            <img 
-              src={imageUrl} 
-              alt={title} 
-              className="w-full h-full object-cover" 
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600">
-              <BookOpen className="h-16 w-16 text-white" />
-            </div>
-          )}
+        <div className="h-20 overflow-hidden bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+          <BookOpen className="h-8 w-8 text-white" />
         </div>
       </div>
       

@@ -290,13 +290,7 @@ export const MainSidebar: React.FC<{
               active={isActive("/signals-analyzer")} 
               onClick={mobile ? onClose : undefined}
             />
-            <NavItem 
-              href="/ai-market-analysis" 
-              icon={<Zap className="h-4 w-4" />} 
-              label="AI Analysis" 
-              active={isActive("/ai-market-analysis")} 
-              onClick={mobile ? onClose : undefined}
-            />
+
             <NavItem 
               href="/web-browser" 
               icon={<Globe className="h-4 w-4" />} 
@@ -333,14 +327,7 @@ export const MainSidebar: React.FC<{
             onClick={mobile ? onClose : undefined}
           />
 
-          {/* Social Network */}
-          <NavItem 
-            href="/social-network" 
-            icon={<Users className="h-5 w-5" />} 
-            label="Community" 
-            active={isActive("/social-network")} 
-            onClick={mobile ? onClose : undefined}
-          />
+
 
           {/* Crypto Section */}
           <NavItem 

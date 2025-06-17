@@ -280,10 +280,7 @@ const App: React.FC = () => {
 
                   <Route path="/prop-firm/account/:accountId" element={<ProtectedRoute><PropFirmAccountDetailsPage /></ProtectedRoute>} />
                   
-                  {/* Investor Dashboard */}
-                  <Route path="/investors" element={<ProtectedRoute><InvestorDashboardPage /></ProtectedRoute>} />
-                  <Route path="/investors/admin" element={<ProtectedRoute><InvestorAdminDashboardPage /></ProtectedRoute>} />
-                  <Route path="/investors/investment/:investmentId" element={<ProtectedRoute><InvestmentDetailsPage /></ProtectedRoute>} />
+
                   
                   {/* NFT & Crypto */}
                   <Route path="/nft-marketplace" element={<ProtectedRoute><NftMarketplacePage /></ProtectedRoute>} />
