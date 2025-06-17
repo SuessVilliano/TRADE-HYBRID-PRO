@@ -28,6 +28,7 @@ import { HamburgerMenu } from '../components/mobile/hamburger-menu';
 import { MobileQuickActions } from '../components/mobile/mobile-quick-actions';
 import { TradingViewTickerTape } from '../components/ui/tradingview-ticker-tape';
 import { TradingViewWidgetPanel } from '../components/ui/tradingview-widget-panel';
+import { ErrorBoundary } from 'react-error-boundary';
 
 export default function TradingDashboard() {
   const [selectedTab, setSelectedTab] = useState('trading');
@@ -136,15 +137,32 @@ export default function TradingDashboard() {
 
         </div>
         
-        {/* Add Ticker Tape at the top of the dashboard */}
-        <div className="mb-4">
+        {/* Ticker Tape temporarily disabled to prevent DOM errors */}
+        {/* <div className="mb-4">
           <TradingViewTickerTape className="w-full" />
-        </div>
+        </div> */}
         
         {selectedTab === 'trading' && (
-          <div className="h-[calc(100vh-230px)] md:h-[calc(100vh-260px)] w-full rounded-lg overflow-hidden border border-slate-700">
-            <SmartTradeLayout defaultSymbol="BTCUSDT" />
-          </div>
+          <ErrorBoundary
+            fallback={
+              <div className="h-[calc(100vh-230px)] md:h-[calc(100vh-260px)] w-full rounded-lg overflow-hidden border border-slate-700 flex items-center justify-center bg-slate-800">
+                <div className="text-center">
+                  <h3 className="text-xl font-semibold text-white mb-2">Trading Interface Loading</h3>
+                  <p className="text-slate-400">Initializing prop firm trading platforms...</p>
+                  <Button 
+                    onClick={() => window.location.reload()} 
+                    className="mt-4 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Refresh Dashboard
+                  </Button>
+                </div>
+              </div>
+            }
+          >
+            <div className="h-[calc(100vh-230px)] md:h-[calc(100vh-260px)] w-full rounded-lg overflow-hidden border border-slate-700">
+              <SmartTradeLayout defaultSymbol="BTCUSDT" />
+            </div>
+          </ErrorBoundary>
         )}
         
         {selectedTab === 'journal' && (

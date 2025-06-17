@@ -21,18 +21,29 @@ export function TradingViewTickerTape({
     }
     
     return () => {
-      // Clean up
-      const scriptElements = document.querySelectorAll(`script[src*="tradingview.com"][data-widget-id="${uniqueId.current}"]`);
-      scriptElements.forEach(script => script.remove());
+      // Safe cleanup
+      try {
+        const scriptElements = document.querySelectorAll(`script[src*="tradingview.com"][data-widget-id="${uniqueId.current}"]`);
+        scriptElements.forEach(script => {
+          if (script.parentNode) {
+            script.parentNode.removeChild(script);
+          }
+        });
+      } catch (error) {
+        console.warn('Cleanup error:', error);
+      }
     };
   }, []);
   
   const loadWidget = () => {
     if (!containerRef.current) return;
     
-    // Clear the container
-    while (containerRef.current.firstChild) {
-      containerRef.current.removeChild(containerRef.current.firstChild);
+    // Safe container clearing
+    try {
+      containerRef.current.innerHTML = '';
+    } catch (error) {
+      console.warn('Container clear error:', error);
+      return;
     }
     
     setIsLoading(true);
