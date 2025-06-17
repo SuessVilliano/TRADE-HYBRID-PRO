@@ -93,7 +93,7 @@ export default function TradingDashboard() {
             <div>
               <h1 className="text-2xl font-bold text-white">Trading Dashboard</h1>
               <p className="text-slate-400 text-sm">
-                Customizable trading workspace with drag-and-drop widgets
+                Professional prop firm trading workspace with multi-platform integration
               </p>
             </div>
           </div>
@@ -133,28 +133,7 @@ export default function TradingDashboard() {
             </TabsList>
           </Tabs>
           
-          {selectedTab === 'trading' && (
-            <div className="flex items-center gap-2 ml-auto">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className={`h-9 gap-1.5 ${selectedLayout === 'classic' ? 'bg-slate-800 text-white' : 'bg-transparent text-slate-300'}`}
-                onClick={toggleLayout}
-              >
-                <LayoutGrid className="h-4 w-4" />
-                Classic
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className={`h-9 gap-1.5 ${selectedLayout === 'smart' ? 'bg-slate-800 text-white' : 'bg-transparent text-slate-300'}`}
-                onClick={toggleLayout}
-              >
-                <MonitorPlay className="h-4 w-4" />
-                Smart
-              </Button>
-            </div>
-          )}
+
         </div>
         
         {/* Add Ticker Tape at the top of the dashboard */}
@@ -163,13 +142,9 @@ export default function TradingDashboard() {
         </div>
         
         {selectedTab === 'trading' && (
-          selectedLayout === 'classic' ? (
-            <DraggableTradingDashboard defaultSymbol="BTCUSDT" />
-          ) : (
-            <div className="h-[calc(100vh-230px)] md:h-[calc(100vh-260px)] w-full rounded-lg overflow-hidden border border-slate-700">
-              <SmartTradeLayout defaultSymbol="BTCUSDT" />
-            </div>
-          )
+          <div className="h-[calc(100vh-230px)] md:h-[calc(100vh-260px)] w-full rounded-lg overflow-hidden border border-slate-700">
+            <SmartTradeLayout defaultSymbol="BTCUSDT" />
+          </div>
         )}
         
         {selectedTab === 'journal' && (

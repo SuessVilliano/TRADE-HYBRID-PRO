@@ -50,7 +50,7 @@ export default function AdvancedTradingDashboard({}: AdvancedTradingDashboardPro
             <div>
               <h1 className="text-2xl font-bold">Advanced Trading Dashboard</h1>
               <p className="text-slate-400 text-sm">
-                Customizable multi-chart trading workspace with DEX and CEX integration
+                Professional prop firm trading workspace with multi-platform integration
               </p>
             </div>
             
@@ -86,11 +86,11 @@ export default function AdvancedTradingDashboard({}: AdvancedTradingDashboardPro
                 <LayoutDashboard className="h-4 w-4 mr-2" />
                 Trading Dashboard
               </TabsTrigger>
-              <TabsTrigger value="dex" className="flex items-center">
-                DEX Trading
+              <TabsTrigger value="platforms" className="flex items-center">
+                Prop Firm Platforms
               </TabsTrigger>
-              <TabsTrigger value="cex" className="flex items-center">
-                CEX Trading
+              <TabsTrigger value="analysis" className="flex items-center">
+                Market Analysis
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -120,29 +120,87 @@ export default function AdvancedTradingDashboard({}: AdvancedTradingDashboardPro
             </div>
           )}
           
-          {/* DEX Trading Tab Content */}
-          {selectedTab === 'dex' && (
+          {/* Prop Firm Platforms Tab Content */}
+          {selectedTab === 'platforms' && (
             <div className="grid gap-6">
               <Card className="bg-slate-800 border-slate-700">
                 <CardHeader>
-                  <CardTitle>DEX Trading Coming Soon</CardTitle>
+                  <CardTitle>Prop Firm Trading Platforms</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p>We're working on integrating decentralized exchange trading directly into this dashboard.</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-slate-700 rounded-lg">
+                      <h3 className="font-semibold mb-2">cTrader</h3>
+                      <p className="text-sm text-slate-400 mb-3">Professional ECN trading platform</p>
+                      <Button 
+                        size="sm" 
+                        onClick={() => window.open('https://app.gooeytrade.com/', '_blank')}
+                        className="w-full"
+                      >
+                        Access cTrader
+                      </Button>
+                    </div>
+                    <div className="p-4 bg-slate-700 rounded-lg">
+                      <h3 className="font-semibold mb-2">DX Trade</h3>
+                      <p className="text-sm text-slate-400 mb-3">Multi-asset trading platform</p>
+                      <Button 
+                        size="sm" 
+                        onClick={() => window.open('https://trade.gooeytrade.com/', '_blank')}
+                        className="w-full"
+                      >
+                        Access DX Trade
+                      </Button>
+                    </div>
+                    <div className="p-4 bg-slate-700 rounded-lg">
+                      <h3 className="font-semibold mb-2">Match Trader</h3>
+                      <p className="text-sm text-slate-400 mb-3">Social trading with copy trading</p>
+                      <Button 
+                        size="sm" 
+                        onClick={() => window.open('https://mtr.gooeytrade.com/dashboard', '_blank')}
+                        className="w-full"
+                      >
+                        Access Match Trader
+                      </Button>
+                    </div>
+                    <div className="p-4 bg-slate-700 rounded-lg">
+                      <h3 className="font-semibold mb-2">Rithmic</h3>
+                      <p className="text-sm text-slate-400 mb-3">Ultra-low latency futures trading</p>
+                      <Button 
+                        size="sm" 
+                        onClick={() => window.open('https://rtraderpro.rithmic.com/rtraderpro-web/', '_blank')}
+                        className="w-full"
+                      >
+                        Access RTrader Pro
+                      </Button>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
           )}
           
-          {/* CEX Trading Tab Content */}
-          {selectedTab === 'cex' && (
+          {/* Market Analysis Tab Content */}
+          {selectedTab === 'analysis' && (
             <div className="grid gap-6">
               <Card className="bg-slate-800 border-slate-700">
                 <CardHeader>
-                  <CardTitle>CEX Trading Coming Soon</CardTitle>
+                  <CardTitle>Market Analysis Tools</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p>Centralized exchange trading features will be available in an upcoming update.</p>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-slate-700 rounded-lg">
+                      <h3 className="font-semibold mb-2">Real-time Market Data</h3>
+                      <p className="text-sm text-slate-400">Access live market data and analysis across all prop firm platforms</p>
+                    </div>
+                    <div className="p-4 bg-slate-700 rounded-lg">
+                      <h3 className="font-semibold mb-2">Trading Signals</h3>
+                      <p className="text-sm text-slate-400">AI-powered trading signals from Paradox, Solaris, and Hybrid providers</p>
+                    </div>
+                    <div className="p-4 bg-slate-700 rounded-lg">
+                      <h3 className="font-semibold mb-2">Risk Management</h3>
+                      <p className="text-sm text-slate-400">Advanced risk assessment and position sizing tools</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
