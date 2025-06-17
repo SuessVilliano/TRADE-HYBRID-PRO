@@ -336,31 +336,31 @@ export function SmartTradeLayout({
                     </Button>
                     <Button 
                       variant="ghost" 
-                    size="icon"
-                    className="h-7 w-7 text-slate-400 hover:text-white"
-                    onClick={() => changePanelPosition(panelPosition === 'left' ? 'right' : 'left')}
-                    title={panelPosition === 'left' ? "Move to right" : "Move to left"}
-                  >
-                    {panelPosition === 'left' ? <PanelRight className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="h-7 w-7 text-slate-400 hover:text-white"
-                    onClick={() => changePanelPosition(panelPosition === 'top' ? 'bottom' : 'top')}
-                    title={panelPosition === 'top' ? "Move to bottom" : "Move to top"}
-                  >
-                    {panelPosition === 'top' ? <PanelBottom className="h-4 w-4" /> : <PanelTop className="h-4 w-4" />}
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="h-7 w-7 text-red-400 hover:text-red-300"
-                    onClick={() => changePanelPosition('hidden')}
-                    title="Hide panel"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                      size="icon"
+                      className="h-7 w-7 text-slate-400 hover:text-white"
+                      onClick={() => changePanelPosition(panelPosition === 'left' ? 'right' : 'left')}
+                      title={panelPosition === 'left' ? "Move to right" : "Move to left"}
+                    >
+                      {panelPosition === 'left' ? <PanelRight className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="h-7 w-7 text-slate-400 hover:text-white"
+                      onClick={() => changePanelPosition(panelPosition === 'top' ? 'bottom' : 'top')}
+                      title={panelPosition === 'top' ? "Move to bottom" : "Move to top"}
+                    >
+                      {panelPosition === 'top' ? <PanelBottom className="h-4 w-4" /> : <PanelTop className="h-4 w-4" />}
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="h-7 w-7 text-red-400 hover:text-red-300"
+                      onClick={() => changePanelPosition('hidden')}
+                      title="Hide panel"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                 </>
               )}
               
@@ -375,6 +375,7 @@ export function SmartTradeLayout({
                   <MoveLeft className="h-4 w-4" />
                 </Button>
               )}
+              </div>
             </div>
           </CardHeader>
         )}
