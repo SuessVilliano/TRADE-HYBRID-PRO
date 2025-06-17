@@ -22,6 +22,7 @@ import {
 import TradingViewChart from './trading-view-chart';
 import { SmartTradePanel } from './smart-trade-panel';
 import { TradingPlatformPanel } from '../trading/TradingPlatformPanel';
+import { AITradeAssistant } from '../ai/AITradeAssistant';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 // Define useMediaQuery hook directly here to avoid import issues
@@ -73,7 +74,7 @@ export function SmartTradeLayout({
   const [undockedPosition, setUndockedPosition] = useState({ x: 100, y: 100 });
   
   // Panel content selection
-  const [panelContent, setPanelContent] = useState<'trade' | 'platforms'>('trade');
+  const [panelContent, setPanelContent] = useState<'trade' | 'platforms' | 'ai'>('trade');
   
   // Containers refs for resizing
   const containerRef = useRef<HTMLDivElement>(null);
@@ -321,6 +322,14 @@ export function SmartTradeLayout({
                 >
                   Platforms
                 </Button>
+                <Button
+                  size="sm"
+                  variant={panelContent === 'ai' ? 'default' : 'ghost'}
+                  onClick={() => setPanelContent('ai')}
+                  className="h-7 text-xs bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+                >
+                  AI Assistant
+                </Button>
               </div>
               <div className="flex items-center gap-1">
                 {!forUndocked && (
@@ -382,8 +391,10 @@ export function SmartTradeLayout({
         <CardContent className="p-0 h-full overflow-auto">
           {panelContent === 'trade' ? (
             <SmartTradePanel symbol={symbol} asCard={false} />
-          ) : (
+          ) : panelContent === 'platforms' ? (
             <TradingPlatformPanel />
+          ) : (
+            <AITradeAssistant symbol={symbol} />
           )}
         </CardContent>
       </Card>
