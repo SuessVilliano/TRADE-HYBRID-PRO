@@ -46,7 +46,13 @@ A comprehensive decentralized trading platform that bridges multiple trading env
 
 ## Recent Changes
 
-### June 17, 2025 - Dashboard & Trading Interface Updates
+### June 17, 2025 - Critical Interface Fix & Dashboard Updates
+- **Critical DEX/CEX Interface Fix**: Resolved major routing issue causing wrong interface display
+  - Fixed `/trading-dashboard` route to show proper prop firm platform interface instead of DEX/CEX tabs
+  - Swapped routing: `/trading-dashboard` now shows SmartTradeLayout with prop firm platforms
+  - Updated navigation references throughout platform to use correct dashboard endpoint
+  - Eliminated all DEX/CEX references from main trading dashboard interface
+  
 - **Dashboard Consolidation**: Streamlined dashboard for optimal user experience
   - Changed "Prop Firm Bots" to "Trade Bots" and "Prop Copy Trading" to "Copy Trading" per user request
   - Consolidated three separate journals into one "Ultimate Trade Journal" with comprehensive features

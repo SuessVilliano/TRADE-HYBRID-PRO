@@ -62,12 +62,12 @@ export function CollapsibleTradingSidebar({ collapsed, onToggle }: CollapsibleTr
     {
       icon: <LayoutDashboard size={18} />,
       label: 'Dashboard',
-      path: '/trading-dashboard/custom'
+      path: '/trading-dashboard'
     },
     {
       icon: <LineChart size={18} />,
       label: 'Trade',
-      path: '/trading-dashboard/custom'
+      path: '/trading-dashboard'
     },
     {
       icon: <BrainCircuit size={18} />,

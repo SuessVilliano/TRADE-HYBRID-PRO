@@ -222,8 +222,8 @@ const App: React.FC = () => {
                   <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
                   
                   {/* Trading & Markets */}
-                  <Route path="/trading-dashboard" element={<ProtectedRoute><AdvancedTradingDashboard /></ProtectedRoute>} />
-                  <Route path="/trading-dashboard/custom" element={<ProtectedRoute><TradingDashboard /></ProtectedRoute>} />
+                  <Route path="/trading-dashboard" element={<ProtectedRoute><TradingDashboard /></ProtectedRoute>} />
+                  <Route path="/trading-dashboard/advanced" element={<ProtectedRoute><AdvancedTradingDashboard /></ProtectedRoute>} />
                   <Route path="/advanced-charting" element={<ProtectedRoute><AdvancedChartingDashboard /></ProtectedRoute>} />
                   <Route path="/trading/indicators" element={<ProtectedRoute><TradingIndicatorsPage /></ProtectedRoute>} />
                   <Route path="/trading/solana" element={<ProtectedRoute><SolanaTradingPage /></ProtectedRoute>} />
