@@ -101,7 +101,7 @@ export function OnboardingButton({ className }: OnboardingButtonProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-80 bg-white dark:bg-slate-900 border-2 border-blue-200 dark:border-blue-900 shadow-xl" 
+        className={`${activeAssistant ? 'w-96' : 'w-80'} bg-white dark:bg-slate-900 border-2 border-blue-200 dark:border-blue-900 shadow-xl`} 
         align="end"
         side="top"
         sideOffset={16}
