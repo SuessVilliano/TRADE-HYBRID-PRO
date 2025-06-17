@@ -113,13 +113,6 @@ const TradingPlatforms: React.FC = () => {
       />
       
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-3 mb-8">
-          <Monitor className="h-8 w-8 text-primary" />
-          <div>
-            <h2 className="text-3xl font-bold">Professional WebTrader Platforms</h2>
-            <p className="text-muted-foreground">Direct access to institutional-grade trading platforms</p>
-          </div>
-        </div>
         
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
           {tradingPlatforms.map((platform) => (
