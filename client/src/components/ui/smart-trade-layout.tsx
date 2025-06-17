@@ -76,6 +76,9 @@ export function SmartTradeLayout({
   // Panel content selection
   const [panelContent, setPanelContent] = useState<'trade' | 'platforms' | 'ai'>('trade');
   
+  // Chart/Platform tab selection
+  const [activeTab, setActiveTab] = useState<'tradingview' | 'ctrader' | 'dxtrade' | 'matchtrader' | 'rithmic'>('tradingview');
+  
   // Containers refs for resizing
   const containerRef = useRef<HTMLDivElement>(null);
   const resizeHandleRef = useRef<HTMLDivElement>(null);

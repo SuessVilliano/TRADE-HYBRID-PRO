@@ -9,7 +9,7 @@ export function PropFirmPlatforms() {
       id: 'ctrader',
       name: 'cTrader',
       description: 'Professional ECN trading platform with advanced analytics',
-      url: 'https://ctrader.com/ctrader-web/login',
+      url: 'https://app.gooeytrade.com/',
       status: 'Active',
       features: ['ECN Trading', 'Advanced Charts', 'Copy Trading', 'Algorithmic Trading'],
       color: 'bg-blue-500'
@@ -18,7 +18,7 @@ export function PropFirmPlatforms() {
       id: 'dxtrade',
       name: 'DX Trade',
       description: 'Multi-asset trading platform for forex, commodities, and indices',
-      url: 'https://webtrader.dxtrade.com/login',
+      url: 'https://trade.gooeytrade.com/',
       status: 'Active',
       features: ['Multi-Asset', 'Web-Based', 'Risk Management', 'Real-Time Data'],
       color: 'bg-green-500'
@@ -27,7 +27,7 @@ export function PropFirmPlatforms() {
       id: 'matchtrader',
       name: 'Match Trader',
       description: 'Social trading platform with copy trading capabilities',
-      url: 'https://webtrader.matchtrader.com/login',
+      url: 'https://mtr.gooeytrade.com/dashboard',
       status: 'Active',
       features: ['Social Trading', 'Copy Trading', 'Signal Providers', 'Portfolio Management'],
       color: 'bg-purple-500'
@@ -36,7 +36,7 @@ export function PropFirmPlatforms() {
       id: 'rithmic',
       name: 'Rithmic',
       description: 'Professional futures trading platform with ultra-low latency',
-      url: 'https://rithmic.com/webtrader/login',
+      url: 'https://rithmic.gooeytrade.com/',
       status: 'Active',
       features: ['Futures Trading', 'Ultra-Low Latency', 'Professional Tools', 'Market Data'],
       color: 'bg-orange-500'

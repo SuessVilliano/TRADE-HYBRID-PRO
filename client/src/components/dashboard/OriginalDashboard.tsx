@@ -33,15 +33,7 @@ const dashboardItems: DashboardItem[] = [
     name: 'Prop Firm Platforms',
     icon: <Activity className="h-5 w-5" />,
     path: '/trading-platforms',
-    description: 'Access cTrader, DXTrade, MatchTrader, and Rithmic platforms',
-    category: 'Trading & Markets'
-  },
-  {
-    id: 'trading-platforms',
-    name: 'Trading Platforms',
-    icon: <Zap className="h-5 w-5" />,
-    path: '/trading-platforms',
-    description: 'Connect to DX Trade, Match Trader, cTrader, and Rithmic',
+    description: 'Access cTrader, DXTrade, MatchTrader, and Rithmic platforms via GooeyTrade',
     category: 'Trading & Markets'
   },
   {

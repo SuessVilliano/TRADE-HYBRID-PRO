@@ -18,7 +18,7 @@ const tradingPlatforms: TradingPlatform[] = [
   {
     id: 'ctrader',
     name: 'cTrader',
-    loginUrl: 'https://ctrader.com/ctrader-web/login',
+    loginUrl: 'https://app.gooeytrade.com/',
     features: ['Advanced Charting', 'Algorithmic Trading', 'Level II Pricing', 'Copy Trading'],
     status: 'featured',
     description: 'Professional ECN trading platform with advanced analytics'
@@ -26,7 +26,7 @@ const tradingPlatforms: TradingPlatform[] = [
   {
     id: 'dxtrade', 
     name: 'DX Trade',
-    loginUrl: 'https://webtrader.dxtrade.com/login',
+    loginUrl: 'https://trade.gooeytrade.com/',
     features: ['Multi-Asset Trading', 'Risk Management', 'Real-time Data', 'Mobile Trading'],
     status: 'active',
     description: 'Multi-asset trading platform for forex, commodities, and indices'
@@ -34,7 +34,7 @@ const tradingPlatforms: TradingPlatform[] = [
   {
     id: 'matchtrader',
     name: 'Match Trader',
-    loginUrl: 'https://webtrader.matchtrader.com/login',
+    loginUrl: 'https://mtr.gooeytrade.com/dashboard',
     features: ['Social Trading', 'Expert Advisors', 'Market Analysis', 'Strategy Testing'],
     status: 'active', 
     description: 'Social trading platform with copy trading capabilities'
@@ -42,7 +42,7 @@ const tradingPlatforms: TradingPlatform[] = [
   {
     id: 'rithmic',
     name: 'Rithmic',
-    loginUrl: 'https://rithmic.com/webtrader/login',
+    loginUrl: 'https://rithmic.gooeytrade.com/',
     features: ['Futures Trading', 'Low Latency', 'Advanced Orders', 'Market Data'],
     status: 'standard',
     description: 'Professional futures trading platform with ultra-low latency'
