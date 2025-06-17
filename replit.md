@@ -46,6 +46,16 @@ A comprehensive decentralized trading platform that bridges multiple trading env
 
 ## Recent Changes
 
+### June 17, 2025 - Mobile Optimization & Image Cleanup
+- **Mobile Responsive Trading Platforms**: Fixed mobile layout issues on trading platforms page
+  - Buttons now stack vertically on mobile devices instead of being cut off
+  - Improved responsive typography and spacing for all screen sizes
+  - Feature badges now display properly on mobile with better readability
+  
+- **Dashboard Image Removal**: Removed TradeHybrid Platform hero image from dashboard
+  - Cleaned up dashboard layout by removing large platform preview image
+  - Streamlined dashboard presentation for better user experience
+
 ### June 17, 2025 - Trading Platform Restoration
 - **Removed Other Prop Firms**: Eliminated FTMO, 5%ers, and MyForexFunds from trading platforms page
   - Cleaned up interface to focus only on direct trading platform access

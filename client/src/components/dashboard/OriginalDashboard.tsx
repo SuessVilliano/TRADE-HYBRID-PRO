@@ -252,14 +252,7 @@ export default function OriginalDashboard() {
             </div>
           </div>
           
-          {/* Hero Image */}
-          <div className="mt-16 text-center">
-            <img 
-              src="/images/trade-hybrid-hero.svg" 
-              alt="TradeHybrid Platform" 
-              className="mx-auto max-w-2xl w-full h-auto opacity-90"
-            />
-          </div>
+
         </div>
       </div>
 
