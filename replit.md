@@ -46,6 +46,37 @@ A comprehensive decentralized trading platform that bridges multiple trading env
 
 ## Recent Changes
 
+### June 17, 2025 - Comprehensive AI Integration & Genkit Enhancement
+- **AI-Powered TradingView Chart**: Enhanced chart with intelligent market analysis overlay
+  - Integrated real-time AI insights directly on the chart with Genkit AI agent
+  - Added AI market analysis overlay showing sentiment, confidence, recommendations
+  - Live support/resistance levels and key market insights powered by AI
+  - Toggle-able AI insights panel with Brain and Zap indicators
+  
+- **AI Trade Assistant Integration**: Added comprehensive AI assistant to trade dashboard
+  - Third tab option "AI Assistant" with gradient purple-to-blue styling
+  - Full AI Trade Assistant component integrated into smart trade layout
+  - AI-powered voice trading capabilities with Web Speech API
+  - Real-time market analysis and trading recommendations
+  
+- **Genkit AI Agent Throughout Platform**: Deployed Google's Genkit AI across all tools
+  - AI market analysis endpoint `/api/ai/market-analysis` now operational
+  - TradeHybridAIAgent singleton pattern for consistent AI interactions
+  - Real-time AI insights for BTCUSDT, ETHUSDT, SOLUSDT with live data
+  - AI-powered voice trading with speech recognition and synthesis
+  
+- **AI Market Insights Component**: Created comprehensive AI dashboard widget
+  - Multi-symbol AI analysis with sentiment, confidence, and risk assessment
+  - Live market insights with bullish/bearish sentiment indicators
+  - Support/resistance levels calculated by AI in real-time
+  - Auto-refreshing AI insights every minute with manual refresh option
+  
+- **AI Voice Trading Component**: Revolutionary voice-to-trade functionality
+  - Web Speech API integration for voice command recognition
+  - AI processing of natural language trading commands
+  - Text-to-speech responses for hands-free trading experience
+  - Voice command history with intent recognition and confidence scoring
+
 ### June 17, 2025 - TradingView Chart Fix & Trading Platform Integration
 - **Fixed TradingView Chart Loading Issue**: Resolved the chart stuck/not loading problem
   - Replaced complex widget implementation with reliable iframe approach

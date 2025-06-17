@@ -12,9 +12,7 @@ router.get('/sources', (req, res) => {
   res.json(SIGNAL_SOURCES.map(source => source.name));
 });
 
-// Process signals from a specific source
-// Note: This endpoint is now just a dummy endpoint that returns success
-// It has been replaced by our webhook-based signal processing
+// Process signals from a specific source with AI analysis
 router.post('/process/:source', async (req, res) => {
   try {
     const source = req.params.source.toLowerCase();
@@ -24,10 +22,39 @@ router.post('/process/:source', async (req, res) => {
       return res.status(404).json({ error: 'Signal source not found' });
     }
     
-    // Just return success as we're no longer using Google Sheets
-    res.json({ success: true, message: `Signals from ${source} processed successfully` });
+    // Import Genkit Brain for signal processing
+    const { genkitNexusBrain } = await import('../genkit-nexus-brain');
+    
+    console.log(`🧠 Processing signals from ${source} with Genkit AI Brain`);
+    
+    // Process signal data with AI analysis
+    if (req.body && Object.keys(req.body).length > 0) {
+      const processedSignal = await genkitNexusBrain.processTradeSignal(req.body, source);
+      
+      res.json({ 
+        success: true, 
+        message: `Signals from ${source} processed with AI analysis`,
+        aiAnalysis: processedSignal.analysis,
+        confidence: processedSignal.confidence,
+        signalId: processedSignal.id
+      });
+    } else {
+      res.json({ success: true, message: `Signals from ${source} processed successfully` });
+    }
   } catch (error) {
-    console.error(`Error processing signals from ${req.params.source}:`, error);
+    console.error(`❌ Error processing signals from ${req.params.source}:`, error);
+    
+    // Log error with Genkit Brain
+    try {
+      const { genkitNexusBrain } = await import('../genkit-nexus-brain');
+      await genkitNexusBrain.analyzeSystemError(error, `signal-processing-${req.params.source}`, {
+        source: req.params.source,
+        requestBody: req.body
+      });
+    } catch (brainError) {
+      console.error('Failed to analyze error with Genkit Brain:', brainError);
+    }
+    
     res.status(500).json({ error: 'Failed to process signals' });
   }
 });

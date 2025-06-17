@@ -435,29 +435,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/webhooks/tradingview", async (req: Request, res: Response) => {
-    console.log('TradingView webhook endpoint called');
+    console.log('🔗 TradingView webhook endpoint called - Processing with Genkit AI Brain');
     
     try {
-      // Create a webhook execution log
+      // Import Genkit Brain for AI-powered webhook processing
+      const { genkitNexusBrain } = await import('./genkit-nexus-brain');
       const { logWebhookExecution } = await import('./services/webhook-service');
       
       const source = req.body.source || 'tradingview';
       const userId = 'demo-user-123'; // Fixed user ID for demo
       
-      const webhookId = `webhook-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+      console.log(`🧠 Processing TradingView webhook with Genkit AI Brain from source: ${source}`);
+      
+      // Process webhook with AI analysis
+      const processedWebhook = await genkitNexusBrain.processWebhook(req.body, source);
       
       const result = {
         success: true,
-        message: 'Webhook received and processed successfully'
+        message: 'Webhook received and processed with AI analysis',
+        aiAnalysis: processedWebhook.analysis,
+        actions: processedWebhook.actions,
+        webhookId: processedWebhook.id
       };
       
-      // Ensure the payload is properly stored as a string if needed
-      const payloadToLog = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
-      
-      console.log(`Received TradingView webhook with payload: ${payloadToLog.substring(0, 200)}`);
-      
+      // Log webhook execution with AI insights
       await logWebhookExecution(
-        webhookId,
+        processedWebhook.id,
         userId,
         source,
         req.body,
@@ -465,15 +468,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req
       );
       
-      console.log(`Webhook execution logged with ID: ${webhookId}, broker: ${source}, success: ${result.success}`);
+      console.log(`✅ TradingView webhook processed successfully with AI insights:`, {
+        webhookId: processedWebhook.id,
+        source,
+        aiAnalysis: processedWebhook.analysis?.substring(0, 100) + '...',
+        actions: processedWebhook.actions
+      });
       
       return res.json({
         success: true,
-        message: 'Webhook received',
-        execution: result
+        message: 'Webhook received and analyzed by AI',
+        execution: result,
+        aiInsights: {
+          analysis: processedWebhook.analysis,
+          recommendedActions: processedWebhook.actions,
+          processedAt: processedWebhook.timestamp
+        }
       });
     } catch (error: any) {
-      console.error('Error processing TradingView webhook:', error);
+      console.error('❌ Error processing TradingView webhook:', error);
+      
+      // Log error with Genkit Brain for troubleshooting
+      try {
+        const { genkitNexusBrain } = await import('./genkit-nexus-brain');
+        await genkitNexusBrain.analyzeSystemError(error, 'webhook-tradingview', {
+          requestBody: req.body,
+          source: req.body.source || 'tradingview'
+        });
+      } catch (brainError) {
+        console.error('Failed to analyze error with Genkit Brain:', brainError);
+      }
+      
       return res.status(500).json({
         success: false,
         message: error.message || 'An error occurred processing the webhook',
@@ -481,7 +506,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  app.post("/api/webhooks/signals", receiveWebhook);
+  // Enhanced webhook signals endpoint with AI processing
+  app.post("/api/webhooks/signals", async (req: Request, res: Response) => {
+    console.log('🔗 Signals webhook endpoint called - Processing with Genkit AI Brain');
+    
+    try {
+      // Import Genkit Brain for AI-powered webhook processing
+      const { genkitNexusBrain } = await import('./genkit-nexus-brain');
+      
+      const source = req.body.source || req.headers['user-agent'] || 'external-webhook';
+      console.log(`🧠 Processing signals webhook with Genkit AI Brain from source: ${source}`);
+      
+      // Process webhook with AI analysis
+      const processedWebhook = await genkitNexusBrain.processWebhook(req.body, source);
+      
+      // Also call the original receiveWebhook function for backward compatibility
+      await receiveWebhook(req, res);
+      
+      console.log(`✅ Signals webhook processed with AI analysis:`, {
+        webhookId: processedWebhook.id,
+        source,
+        aiAnalysis: processedWebhook.analysis?.substring(0, 100) + '...'
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Error processing signals webhook:', error);
+      
+      // Log error with Genkit Brain for troubleshooting
+      try {
+        const { genkitNexusBrain } = await import('./genkit-nexus-brain');
+        await genkitNexusBrain.analyzeSystemError(error, 'webhook-signals', {
+          requestBody: req.body,
+          headers: req.headers
+        });
+      } catch (brainError) {
+        console.error('Failed to analyze error with Genkit Brain:', brainError);
+      }
+      
+      // Call original handler as fallback
+      await receiveWebhook(req, res);
+    }
+  });
   
   // GET endpoint to retrieve webhook signals for the signals analyzer
   app.get("/api/webhooks/signals", async (req, res) => {
@@ -508,13 +573,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // New signal webhook endpoints from user
-  // Paradox AI signals
-  app.post("/workflow/sendwebhookdata/IjU3NjUwNTY4MDYzNjA0MzQ1MjZhNTUzMTUxMzci_pc", receiveWebhook); // SOLUSDT - Paradox AI - crypto
-  app.post("/api/v1/webhooks/tUOebm12d8na01WofspmU", receiveWebhook); // BTCUSDT and ETHUSDT - Paradox AI - crypto
+  // Nexus Brain Dashboard API endpoints
+  app.get("/api/nexus/status", async (req: Request, res: Response) => {
+    try {
+      const { genkitNexusBrain } = await import('./genkit-nexus-brain');
+      const systemStatus = genkitNexusBrain.getSystemStatus();
+      
+      res.json({
+        success: true,
+        nexusStatus: systemStatus,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error: any) {
+      console.error('Error fetching Nexus status:', error);
+      res.status(500).json({ error: 'Failed to fetch system status' });
+    }
+  });
 
-  // Other signal sources
-  app.post("/api/v1/webhooks/Ec3lDNCfkpQtHNbWk16mA", receiveWebhook); // MNQ! - Hybrid AI - futures
+  app.get("/api/nexus/logs", async (req: Request, res: Response) => {
+    try {
+      const { genkitNexusBrain } = await import('./genkit-nexus-brain');
+      const { component, timeframe } = req.query;
+      
+      const logs = genkitNexusBrain.getDetailedLogs(
+        component as string,
+        timeframe ? parseInt(timeframe as string) : undefined
+      );
+      
+      res.json({
+        success: true,
+        logs,
+        totalLogs: logs.length,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error: any) {
+      console.error('Error fetching Nexus logs:', error);
+      res.status(500).json({ error: 'Failed to fetch system logs' });
+    }
+  });
+
+  app.get("/api/nexus/webhooks", async (req: Request, res: Response) => {
+    try {
+      const { genkitNexusBrain } = await import('./genkit-nexus-brain');
+      const systemStatus = genkitNexusBrain.getSystemStatus();
+      
+      res.json({
+        success: true,
+        webhooks: systemStatus.webhooks,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error: any) {
+      console.error('Error fetching webhook data:', error);
+      res.status(500).json({ error: 'Failed to fetch webhook data' });
+    }
+  });
+
+  app.get("/api/nexus/errors", async (req: Request, res: Response) => {
+    try {
+      const { genkitNexusBrain } = await import('./genkit-nexus-brain');
+      const systemStatus = genkitNexusBrain.getSystemStatus();
+      
+      res.json({
+        success: true,
+        errors: systemStatus.errors,
+        systemHealth: systemStatus.health,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error: any) {
+      console.error('Error fetching error data:', error);
+      res.status(500).json({ error: 'Failed to fetch error data' });
+    }
+  });
+
+  // Enhanced signal webhook endpoints with AI processing
+  app.post("/workflow/sendwebhookdata/IjU3NjUwNTY4MDYzNjA0MzQ1MjZhNTUzMTUxMzci_pc", async (req: Request, res: Response) => {
+    console.log('🔗 Paradox AI SOLUSDT webhook - Processing with Genkit Brain');
+    
+    try {
+      const { genkitNexusBrain } = await import('./genkit-nexus-brain');
+      await genkitNexusBrain.processWebhook(req.body, 'Paradox-AI-SOLUSDT');
+      await receiveWebhook(req, res);
+    } catch (error: any) {
+      const { genkitNexusBrain } = await import('./genkit-nexus-brain');
+      await genkitNexusBrain.analyzeSystemError(error, 'paradox-webhook', req.body);
+      await receiveWebhook(req, res);
+    }
+  });
+
+  app.post("/api/v1/webhooks/tUOebm12d8na01WofspmU", async (req: Request, res: Response) => {
+    console.log('🔗 Paradox AI BTC/ETH webhook - Processing with Genkit Brain');
+    
+    try {
+      const { genkitNexusBrain } = await import('./genkit-nexus-brain');
+      await genkitNexusBrain.processWebhook(req.body, 'Paradox-AI-BTCETH');
+      await receiveWebhook(req, res);
+    } catch (error: any) {
+      const { genkitNexusBrain } = await import('./genkit-nexus-brain');
+      await genkitNexusBrain.analyzeSystemError(error, 'paradox-webhook-btceth', req.body);
+      await receiveWebhook(req, res);
+    }
+  });
+
+  app.post("/api/v1/webhooks/Ec3lDNCfkpQtHNbWk16mA", async (req: Request, res: Response) => {
+    console.log('🔗 External signal webhook - Processing with Genkit Brain');
+    
+    try {
+      const { genkitNexusBrain } = await import('./genkit-nexus-brain');
+      await genkitNexusBrain.processWebhook(req.body, 'External-Signals');
+      await receiveWebhook(req, res);
+    } catch (error: any) {
+      const { genkitNexusBrain } = await import('./genkit-nexus-brain');
+      await genkitNexusBrain.analyzeSystemError(error, 'external-webhook', req.body);
+      await receiveWebhook(req, res);
+    }
+  });
 
   // Solaris AI forex signals
   app.post("/api/v1/webhooks/OXdqSQ0du1D7gFEEDBUsS", receiveWebhook); // EURUSD & AUDUSD - Solaris AI - forex
