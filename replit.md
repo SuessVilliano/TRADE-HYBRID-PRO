@@ -46,33 +46,30 @@ A comprehensive decentralized trading platform that bridges multiple trading env
 
 ## Recent Changes
 
+### June 17, 2025 - Trading Platform Restoration
+- **Removed Other Prop Firms**: Eliminated FTMO, 5%ers, and MyForexFunds from trading platforms page
+  - Cleaned up interface to focus only on direct trading platform access
+  - Removed all prop firm marketing and comparison elements
+  
+- **Restored Direct WebTrader Login**: Brought back flawless webtrader connections for four trading platforms
+  - **DX Trade**: Direct login at https://webtrader.dxtrade.com/login
+  - **Match Trader**: Direct login at https://webtrader.matchtrader.com/login
+  - **cTrader**: Direct login at https://ctrader.com/ctrader-web/login
+  - **Rithmic**: Direct login at https://rithmic.com/webtrader/login
+  - Each platform has dedicated "Login to WebTrader" and "Access Platform" buttons
+  
+- **Enhanced Trading Platform Interface**: Created professional platform cards
+  - Added status indicators and security badges
+  - Implemented gradient status colors for featured/active platforms
+  - Added comprehensive feature listings for each platform
+  - Included professional trading access information section
+
 ### June 16, 2025 - Evening Update
 - **TradeHybrid Web App URL Correction**: Updated all TradeHybrid Web App references from app.tradehybrid.co to app.tradehybrid.club
-  - Fixed iframe widget URL in TradeHybridAppWidget component
-  - Updated external link handler to use correct domain
-  - Corrected embedded app page URL reference
-  
 - **TradingView Component Enhancement**: Created fully functional TradingView iframe component
-  - Implemented proper iframe-based solution for chart loading
-  - Added maximize/minimize functionality and external link support
-  - Resolved TradingView script loading issues with iframe approach
-  
 - **Prop Firm Journal Integration**: Added prop firm journal to dashboard navigation
-  - Enhanced Trading Tools category with dedicated prop firm journal
-  - Maintained existing trade journal functionality
-  - Added professional trading journal with prop firm sync capabilities
-
 - **Drift Trade DEX Integration**: Integrated Drift Protocol as primary DEX trading platform
-  - Added prominent Drift Trade banner to DEX platform with direct launch button
-  - Connected to https://app.drift.trade/ for professional perpetual futures trading
-  - Enhanced DEX platform with live Solana token data and Jupiter swap functionality
-  - Fixed wallet authentication using proper Solana auth provider methods
-  - Maintained internal trading features alongside external Drift Trade access
-
-- **Landing Page Platform Image Fix**: Resolved missing platform preview image
-  - Created professional SVG illustration showing TradeHybrid interface
-  - Added trading dashboard, charts, portfolio stats, and live signals visualization
-  - Fixed image loading and display on landing page hero section
+- **Landing Page Platform Image Fix**: Resolved missing platform preview image with React component
 
 ### June 16, 2025 - Initial
 - **Hidden Broken Components**: Commented out broken features while keeping them alive in codebase:

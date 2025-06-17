@@ -5,317 +5,205 @@ import { Badge } from '../components/ui/badge';
 import { UniversalHeader } from '../components/ui/universal-header';
 import { 
   ExternalLink, 
-  DollarSign, 
-  TrendingUp,
   Monitor,
+  TrendingUp,
   Zap,
-  Globe,
-  ShieldCheck,
-  Trophy,
-  Users,
   Target,
-  Award
+  Globe,
+  LogIn,
+  ShieldCheck
 } from 'lucide-react';
 
-interface PropFirm {
+interface TradingPlatform {
   id: string;
   name: string;
   description: string;
-  website: string;
-  dashboardUrl?: string;
-  platforms: string[];
-  maxCapital: string;
-  profitSplit: string;
-  challenge: boolean;
+  webtraderUrl: string;
+  loginUrl: string;
   features: string[];
-  status: 'active' | 'featured' | 'popular';
+  icon: React.ReactNode;
+  status: 'active' | 'featured';
+  supported: boolean;
 }
 
 const TradingPlatforms: React.FC = () => {
-  const propFirms: PropFirm[] = [
+  const tradingPlatforms: TradingPlatform[] = [
     {
-      id: 'hybrid-funding',
-      name: 'Hybrid Funding',
-      description: 'Premier prop trading firm with flexible funding options and competitive profit splits',
-      website: 'https://hybridfunding.co',
-      dashboardUrl: 'https://hybridfundingdashboard.propaccount.com/en/sign-in',
-      platforms: ['DX Trade', 'Match Trader', 'cTrader', 'MT4', 'MT5'],
-      maxCapital: '$2,000,000',
-      profitSplit: '90%',
-      challenge: true,
-      features: ['Instant Funding', 'No Time Limits', '24/7 Support', 'AI Integration'],
-      status: 'featured'
-    },
-    {
-      id: 'ftmo',
-      name: 'FTMO',
-      description: 'Leading prop trading firm with proven track record and excellent support',
-      website: 'https://ftmo.com',
-      platforms: ['MT4', 'MT5', 'cTrader', 'DXTrade'],
-      maxCapital: '$400,000',
-      profitSplit: '80%',
-      challenge: true,
-      features: ['Free Trial', 'Educational Resources', 'Risk Management'],
-      status: 'popular'
-    },
-    {
-      id: 'the5ers',
-      name: 'The5%ers',
-      description: 'Unique funding model with no evaluation period for experienced traders',
-      website: 'https://the5ers.com',
-      platforms: ['MT4', 'MT5'],
-      maxCapital: '$4,000,000',
-      profitSplit: '50-80%',
-      challenge: false,
-      features: ['No Evaluation', 'Scaling Plan', 'High Leverage'],
-      status: 'active'
-    },
-    {
-      id: 'my-forex-funds',
-      name: 'My Forex Funds',
-      description: 'Fast-growing prop firm with competitive conditions and quick payouts',
-      website: 'https://myforexfunds.com',
-      platforms: ['MT4', 'MT5', 'cTrader'],
-      maxCapital: '$300,000',
-      profitSplit: '85%',
-      challenge: true,
-      features: ['Daily Payouts', 'No Restrictions', 'Swap Free'],
-      status: 'active'
-    }
-  ];
-
-  const tradingPlatforms = [
-    {
+      id: 'dx-trade',
       name: 'DX Trade',
-      description: 'Advanced web-based trading platform with institutional-grade features',
-      features: ['Advanced Charting', 'Risk Management', 'Multi-Asset Trading'],
-      icon: <Monitor className="h-6 w-6" />
+      description: 'Advanced web-based trading platform with institutional-grade features and real-time execution',
+      webtraderUrl: 'https://webtrader.dxtrade.com',
+      loginUrl: 'https://webtrader.dxtrade.com/login',
+      features: ['Advanced Charting', 'Risk Management', 'Multi-Asset Trading', 'Real-time Data'],
+      icon: <Monitor className="h-6 w-6" />,
+      status: 'featured',
+      supported: true
     },
     {
+      id: 'match-trader',
       name: 'Match Trader',
-      description: 'Professional trading platform for forex and CFD trading',
-      features: ['ECN Trading', 'Advanced Orders', 'Market Analysis'],
-      icon: <TrendingUp className="h-6 w-6" />
+      description: 'Professional ECN trading platform optimized for forex and CFD trading',
+      webtraderUrl: 'https://webtrader.matchtrader.com',
+      loginUrl: 'https://webtrader.matchtrader.com/login',
+      features: ['ECN Trading', 'Advanced Orders', 'Market Analysis', 'Low Spreads'],
+      icon: <TrendingUp className="h-6 w-6" />,
+      status: 'active',
+      supported: true
     },
     {
+      id: 'ctrader',
       name: 'cTrader',
-      description: 'Modern trading platform with advanced charting and automation',
-      features: ['Algorithmic Trading', 'Level II Pricing', 'Advanced Charting'],
-      icon: <Zap className="h-6 w-6" />
+      description: 'Modern trading platform with advanced charting, automation, and algorithmic trading',
+      webtraderUrl: 'https://ctrader.com/ctrader-web',
+      loginUrl: 'https://ctrader.com/ctrader-web/login',
+      features: ['Algorithmic Trading', 'Level II Pricing', 'Advanced Charting', 'Copy Trading'],
+      icon: <Zap className="h-6 w-6" />,
+      status: 'featured',
+      supported: true
     },
     {
+      id: 'rithmic',
       name: 'Rithmic',
-      description: 'High-performance futures trading platform',
-      features: ['Low Latency', 'Direct Market Access', 'Professional Tools'],
-      icon: <Target className="h-6 w-6" />
+      description: 'High-performance futures trading platform with ultra-low latency execution',
+      webtraderUrl: 'https://rithmic.com/webtrader',
+      loginUrl: 'https://rithmic.com/webtrader/login',
+      features: ['Ultra-Low Latency', 'Direct Market Access', 'Professional Tools', 'Futures Trading'],
+      icon: <Target className="h-6 w-6" />,
+      status: 'active',
+      supported: true
     }
   ];
 
-  const handleVisitWebsite = (url: string) => {
-    window.open(url, '_blank', 'noopener,noreferrer');
+  const handleWebtraderLogin = (loginUrl: string) => {
+    window.open(loginUrl, '_blank', 'noopener,noreferrer');
   };
 
-  const handleAccessDashboard = (dashboardUrl?: string, website?: string) => {
-    const url = dashboardUrl || website;
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
+  const handleWebtraderAccess = (webtraderUrl: string) => {
+    window.open(webtraderUrl, '_blank', 'noopener,noreferrer');
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'featured':
-        return 'bg-yellow-500';
-      case 'popular':
-        return 'bg-green-500';
+        return 'bg-gradient-to-r from-yellow-500 to-orange-500';
+      case 'active':
+        return 'bg-gradient-to-r from-green-500 to-blue-500';
       default:
-        return 'bg-blue-500';
+        return 'bg-gradient-to-r from-blue-500 to-purple-500';
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'featured':
-        return <Trophy className="h-4 w-4" />;
-      case 'popular':
-        return <Users className="h-4 w-4" />;
+        return 'Featured';
+      case 'active':
+        return 'Active';
       default:
-        return <Award className="h-4 w-4" />;
+        return 'Available';
     }
   };
 
   return (
     <div className="min-h-screen bg-background">
       <UniversalHeader 
-        title="Trading Platforms & Prop Firms"
+        title="Trading Platforms"
         showBackButton={true}
         showHomeButton={true}
       />
       
       <div className="container mx-auto px-4 py-8">
-        {/* Header Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-4">Professional Trading Platforms</h1>
-          <p className="text-muted-foreground text-lg">
-            Connect to leading prop trading firms and access professional trading platforms with institutional-grade tools.
-          </p>
-        </div>
-
-        {/* Prop Firms Section */}
-        <div className="mb-12">
-          <div className="flex items-center gap-2 mb-6">
-            <DollarSign className="h-6 w-6 text-primary" />
-            <h2 className="text-2xl font-bold">Prop Trading Firms</h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {propFirms.map((firm) => (
-              <Card key={firm.id} className="relative hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        {firm.name}
-                        <Badge 
-                          variant="secondary" 
-                          className={`${getStatusColor(firm.status)} text-white`}
-                        >
-                          {getStatusIcon(firm.status)}
-                          {firm.status}
-                        </Badge>
-                      </CardTitle>
-                      <CardDescription className="mt-2">
-                        {firm.description}
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-semibold">Max Capital:</span>
-                      <div className="text-muted-foreground">{firm.maxCapital}</div>
-                    </div>
-                    <div>
-                      <span className="font-semibold">Profit Split:</span>
-                      <div className="text-muted-foreground">{firm.profitSplit}</div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <span className="font-semibold text-sm">Platforms:</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {firm.platforms.map((platform) => (
-                        <Badge key={platform} variant="outline" className="text-xs">
-                          {platform}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <span className="font-semibold text-sm">Features:</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {firm.features.map((feature) => (
-                        <Badge key={feature} variant="secondary" className="text-xs">
-                          {feature}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 pt-2">
-                    <Button 
-                      variant="default" 
-                      size="sm" 
-                      onClick={() => handleVisitWebsite(firm.website)}
-                      className="flex-1"
-                    >
-                      <Globe className="h-4 w-4 mr-2" />
-                      Visit Website
-                    </Button>
-                    
-                    {firm.dashboardUrl && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleAccessDashboard(firm.dashboardUrl, firm.website)}
-                        className="flex-1"
-                      >
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Dashboard
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+        <div className="flex items-center gap-3 mb-8">
+          <Monitor className="h-8 w-8 text-primary" />
+          <div>
+            <h2 className="text-3xl font-bold">Professional WebTrader Platforms</h2>
+            <p className="text-muted-foreground">Direct access to institutional-grade trading platforms</p>
           </div>
         </div>
-
-        {/* Trading Platforms Section */}
-        <div>
-          <div className="flex items-center gap-2 mb-6">
-            <Monitor className="h-6 w-6 text-primary" />
-            <h2 className="text-2xl font-bold">Trading Platforms</h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {tradingPlatforms.map((platform) => (
-              <Card key={platform.name} className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {tradingPlatforms.map((platform) => (
+            <Card key={platform.id} className="hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/20">
+              <CardHeader className="pb-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-xl ${getStatusColor(platform.status)} text-white shadow-lg`}>
                       {platform.icon}
                     </div>
-                    <CardTitle className="text-lg">{platform.name}</CardTitle>
+                    <div>
+                      <CardTitle className="text-2xl">{platform.name}</CardTitle>
+                      <Badge variant="secondary" className="mt-2">
+                        {getStatusBadge(platform.status)}
+                      </Badge>
+                    </div>
                   </div>
-                  <CardDescription className="text-sm">
-                    {platform.description}
-                  </CardDescription>
-                </CardHeader>
+                  <ShieldCheck className="h-5 w-5 text-green-500" />
+                </div>
+                <CardDescription className="text-base leading-relaxed mt-3">
+                  {platform.description}
+                </CardDescription>
+              </CardHeader>
+              
+              <CardContent className="space-y-6">
+                <div>
+                  <h4 className="font-semibold text-sm text-muted-foreground mb-3">Platform Features:</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {platform.features.map((feature) => (
+                      <Badge key={feature} variant="outline" className="justify-center py-1">
+                        {feature}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
                 
-                <CardContent>
-                  <div className="space-y-2">
-                    <span className="font-semibold text-sm">Key Features:</span>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      {platform.features.map((feature) => (
-                        <li key={feature} className="flex items-center gap-2">
-                          <ShieldCheck className="h-3 w-3 text-green-500" />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Integration Notice */}
-        <Card className="mt-8 bg-primary/5 border-primary/20">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <Zap className="h-6 w-6 text-primary mt-1" />
-              <div>
-                <h3 className="font-semibold mb-2">AI Voice Trading Integration</h3>
-                <p className="text-muted-foreground">
-                  All platforms support our AI Voice Trading Assistant. Use voice commands to generate 
-                  trade signals that can be executed directly on these platforms or copied to your clipboard 
-                  for manual entry.
-                </p>
-                <div className="mt-4">
-                  <Button variant="outline" size="sm" onClick={() => window.location.href = '/voice-trade'}>
-                    <Zap className="h-4 w-4 mr-2" />
-                    Try Voice Trading
+                <div className="flex gap-3 pt-4">
+                  <Button 
+                    onClick={() => handleWebtraderLogin(platform.loginUrl)}
+                    className="flex-1 h-12 text-lg font-semibold"
+                    size="lg"
+                  >
+                    <LogIn className="h-5 w-5 mr-2" />
+                    Login to WebTrader
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleWebtraderAccess(platform.webtraderUrl)}
+                    className="flex-1 h-12 text-lg font-semibold"
+                    size="lg"
+                  >
+                    <Globe className="h-5 w-5 mr-2" />
+                    Access Platform
                   </Button>
                 </div>
+                
+                <div className="text-center text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">
+                  <span className="font-medium">Status:</span> Ready for trading • 
+                  <span className="font-medium ml-1">Connection:</span> Secure
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        
+        <div className="mt-12 text-center">
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            <CardContent className="p-8">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                Professional Trading Access
+              </h3>
+              <p className="text-gray-600 text-lg leading-relaxed mb-6">
+                Each platform provides direct access to professional trading environments with 
+                real-time market data, advanced charting tools, and institutional-grade execution.
+              </p>
+              <div className="flex justify-center gap-6 text-sm text-gray-500">
+                <span>✓ Real-time Market Data</span>
+                <span>✓ Advanced Charting</span>
+                <span>✓ Professional Execution</span>
+                <span>✓ Risk Management Tools</span>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
