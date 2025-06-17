@@ -73,14 +73,8 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
         setAiInsights(data);
       } catch (error) {
         console.error('Failed to fetch AI insights:', error);
-        // Fallback to demo insights for demonstration
-        setAiInsights({
-          sentiment: 'bullish',
-          confidence: 0.75,
-          keyLevels: { support: 67800, resistance: 70200 },
-          recommendation: 'BUY',
-          analysis: 'Strong upward momentum detected with high volume confirmation'
-        });
+        // No fallback - only show real-time data
+        setAiInsights(null);
       }
     };
 

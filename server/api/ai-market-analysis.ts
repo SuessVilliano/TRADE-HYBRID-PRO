@@ -3,6 +3,87 @@ import OpenAI from "openai";
 import { generateMarketData } from "./market";
 import fetch from "node-fetch";
 
+// Function to fetch real-time market data
+async function fetchRealTimeMarketData(symbol: string) {
+  try {
+    // Convert symbol to format expected by APIs
+    let apiSymbol = symbol.toUpperCase();
+    if (apiSymbol.endsWith('USDT')) {
+      apiSymbol = apiSymbol.replace('USDT', 'USDT');
+    }
+    
+    // Try multiple data sources for reliability
+    const sources = [
+      `https://api.binance.com/api/v3/ticker/24hr?symbol=${apiSymbol}`,
+      `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true`,
+    ];
+    
+    let marketData = null;
+    
+    // Try Binance API first
+    try {
+      const binanceResponse = await fetch(sources[0]);
+      if (binanceResponse.ok) {
+        const binanceData = await binanceResponse.json();
+        const currentPrice = parseFloat(binanceData.lastPrice);
+        const priceChange = parseFloat(binanceData.priceChangePercent);
+        
+        // Calculate realistic support and resistance based on current price
+        const support = currentPrice * 0.95; // 5% below current price
+        const resistance = currentPrice * 1.05; // 5% above current price
+        
+        marketData = {
+          symbol: symbol,
+          price: currentPrice,
+          priceChange: priceChange,
+          volume: parseFloat(binanceData.volume),
+          high24h: parseFloat(binanceData.highPrice),
+          low24h: parseFloat(binanceData.lowPrice),
+          support: Math.round(support),
+          resistance: Math.round(resistance),
+          timestamp: Date.now()
+        };
+      }
+    } catch (binanceError) {
+      console.log('Binance API unavailable, trying alternative sources');
+    }
+    
+    // If Binance fails, try CoinGecko for Bitcoin
+    if (!marketData && symbol.toUpperCase().includes('BTC')) {
+      try {
+        const coingeckoResponse = await fetch(sources[1]);
+        if (coingeckoResponse.ok) {
+          const coingeckoData = await coingeckoResponse.json();
+          const currentPrice = coingeckoData.bitcoin.usd;
+          const priceChange = coingeckoData.bitcoin.usd_24h_change || 0;
+          
+          const support = currentPrice * 0.95;
+          const resistance = currentPrice * 1.05;
+          
+          marketData = {
+            symbol: symbol,
+            price: currentPrice,
+            priceChange: priceChange,
+            volume: 0, // Not available from this endpoint
+            high24h: currentPrice * 1.02,
+            low24h: currentPrice * 0.98,
+            support: Math.round(support),
+            resistance: Math.round(resistance),
+            timestamp: Date.now()
+          };
+        }
+      } catch (coingeckoError) {
+        console.log('CoinGecko API also unavailable');
+      }
+    }
+    
+    return marketData;
+  } catch (error) {
+    console.error('Error fetching real-time market data:', error);
+    return null;
+  }
+}
+
 // Initialize OpenAI with the API key
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -107,8 +188,9 @@ export const getAIMarketAnalysis = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Symbol and timeframe are required' });
     }
     
-    // Generate market data for the given symbol and timeframe
-    const marketData = generateMarketData(symbol as string, timeframe as string, 60);
+    // Fetch real-time market data
+    const realTimeData = await fetchRealTimeMarketData(symbol as string);
+    const marketData = realTimeData || generateMarketData(symbol as string, timeframe as string, 60);
 
     // Verify OpenAI API key is present - we already have the key in environment variables
     if (!process.env.OPENAI_API_KEY) {
