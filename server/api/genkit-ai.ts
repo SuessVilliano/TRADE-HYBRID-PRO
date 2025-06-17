@@ -9,7 +9,7 @@ export async function analyzeTrade(req: Request, res: Response) {
   try {
     const { symbol, marketData, signals, userProfile, analysisType } = req.body;
 
-    const analysis = await runFlow(aiAgent.tradingAnalysisFlow, {
+    const analysis = await aiAgent.tradingAnalysisFlow({
       symbol,
       marketData,
       signals,
@@ -38,7 +38,7 @@ export async function processVoiceTrading(req: Request, res: Response) {
   try {
     const { audioInput, userId, context } = req.body;
 
-    const result = await runFlow(aiAgent.voiceTradingFlow, {
+    const result = await aiAgent.voiceTradingFlow({
       audioInput,
       userId,
       context
@@ -63,7 +63,7 @@ export async function monitorMarkets(req: Request, res: Response) {
   try {
     const { watchlist, alertThresholds, userId } = req.body;
 
-    const insights = await runFlow(aiAgent.marketMonitorFlow, {
+    const insights = await aiAgent.marketMonitorFlow({
       watchlist,
       alertThresholds,
       userId
@@ -119,7 +119,7 @@ export async function optimizePortfolio(req: Request, res: Response) {
   try {
     const { currentPortfolio, riskTolerance, investmentGoals, timeHorizon } = req.body;
 
-    const optimization = await runFlow(aiAgent.portfolioOptimizationFlow, {
+    const optimization = await aiAgent.portfolioOptimizationFlow({
       currentPortfolio,
       riskTolerance,
       investmentGoals,
