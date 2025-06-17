@@ -505,13 +505,105 @@ export function SmartTradeLayout({
           </div>
         )}
         
-        {/* TradingView Chart */}
-        <div className="h-full relative overflow-hidden">
-          <TradingViewChart
-            symbol={symbol}
-            timeframe="1d"
-            className="h-full"
-          />
+        {/* Chart/Platform Tabbed Interface */}
+        <div className="h-full relative overflow-hidden bg-slate-900">
+          {/* Tab Navigation */}
+          <div className="absolute top-0 left-0 right-0 z-20 bg-slate-800/95 backdrop-blur-sm border-b border-slate-700">
+            <div className="flex items-center px-4 py-2 gap-2 overflow-x-auto">
+              <Button
+                size="sm"
+                variant={activeTab === 'tradingview' ? 'default' : 'ghost'}
+                onClick={() => setActiveTab('tradingview')}
+                className="h-8 text-xs whitespace-nowrap"
+              >
+                <BarChart className="h-4 w-4 mr-1" />
+                TradingView
+              </Button>
+              <Button
+                size="sm"
+                variant={activeTab === 'ctrader' ? 'default' : 'ghost'}
+                onClick={() => setActiveTab('ctrader')}
+                className="h-8 text-xs whitespace-nowrap"
+              >
+                <ExternalLink className="h-4 w-4 mr-1" />
+                cTrader
+              </Button>
+              <Button
+                size="sm"
+                variant={activeTab === 'dxtrade' ? 'default' : 'ghost'}
+                onClick={() => setActiveTab('dxtrade')}
+                className="h-8 text-xs whitespace-nowrap"
+              >
+                <ExternalLink className="h-4 w-4 mr-1" />
+                DX Trade
+              </Button>
+              <Button
+                size="sm"
+                variant={activeTab === 'matchtrader' ? 'default' : 'ghost'}
+                onClick={() => setActiveTab('matchtrader')}
+                className="h-8 text-xs whitespace-nowrap"
+              >
+                <ExternalLink className="h-4 w-4 mr-1" />
+                Match Trader
+              </Button>
+              <Button
+                size="sm"
+                variant={activeTab === 'rithmic' ? 'default' : 'ghost'}
+                onClick={() => setActiveTab('rithmic')}
+                className="h-8 text-xs whitespace-nowrap"
+              >
+                <ExternalLink className="h-4 w-4 mr-1" />
+                Rithmic
+              </Button>
+            </div>
+          </div>
+          
+          {/* Tab Content */}
+          <div className="h-full pt-12 relative">
+            {activeTab === 'tradingview' && (
+              <TradingViewChart
+                symbol={symbol}
+                timeframe="1d"
+                className="h-full"
+              />
+            )}
+            
+            {activeTab === 'ctrader' && (
+              <iframe
+                src="https://app.gooeytrade.com/"
+                className="w-full h-full border-0"
+                title="cTrader Platform"
+                allow="fullscreen"
+              />
+            )}
+            
+            {activeTab === 'dxtrade' && (
+              <iframe
+                src="https://trade.gooeytrade.com/"
+                className="w-full h-full border-0"
+                title="DX Trade Platform"
+                allow="fullscreen"
+              />
+            )}
+            
+            {activeTab === 'matchtrader' && (
+              <iframe
+                src="https://mtr.gooeytrade.com/dashboard"
+                className="w-full h-full border-0"
+                title="Match Trader Platform"
+                allow="fullscreen"
+              />
+            )}
+            
+            {activeTab === 'rithmic' && (
+              <iframe
+                src="https://rithmic.gooeytrade.com/"
+                className="w-full h-full border-0"
+                title="Rithmic Platform"
+                allow="fullscreen"
+              />
+            )}
+          </div>
         </div>
         
         {/* Panel Last (Right/Bottom) */}
