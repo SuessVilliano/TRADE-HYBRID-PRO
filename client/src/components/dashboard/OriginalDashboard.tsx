@@ -105,12 +105,12 @@ const dashboardItems: DashboardItem[] = [
     category: 'Crypto & NFTs'
   },
   {
-    id: 'prop-firm-analytics',
-    name: 'Prop Firm Analytics',
-    icon: <BarChart3 className="h-5 w-5" />,
-    path: '/prop-firm/analytics',
-    description: 'Advanced analytics for prop firm trading performance',
-    category: 'Crypto & DeFi'
+    id: 'nft-marketplace',
+    name: 'NFT Marketplace',
+    icon: <Activity className="h-5 w-5" />,
+    path: '/nft-marketplace',
+    description: 'Buy, sell, and trade NFTs in the Trade Hybrid ecosystem',
+    category: 'Crypto & NFTs'
   },
 
   // Immersive & Social

@@ -42,7 +42,7 @@ const tradingPlatforms: TradingPlatform[] = [
   {
     id: 'rithmic',
     name: 'Rithmic',
-    loginUrl: 'https://rithmic.gooeytrade.com/',
+    loginUrl: 'https://rtraderpro.rithmic.com/rtraderpro-web/',
     features: ['Futures Trading', 'Low Latency', 'Advanced Orders', 'Market Data'],
     status: 'standard',
     description: 'Professional futures trading platform with ultra-low latency'

@@ -597,7 +597,7 @@ export function SmartTradeLayout({
             
             {activeTab === 'rithmic' && (
               <iframe
-                src="https://rithmic.gooeytrade.com/"
+                src="https://rtraderpro.rithmic.com/rtraderpro-web/"
                 className="w-full h-full border-0"
                 title="Rithmic Platform"
                 allow="fullscreen"
