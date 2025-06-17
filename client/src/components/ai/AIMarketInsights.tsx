@@ -33,25 +33,48 @@ export function AIMarketInsights({ symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'], 
         const response = await fetch('/api/ai/market-analysis', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ symbol, timeframe: '1h' })
+          body: JSON.stringify({ 
+            symbol, 
+            timeframe: '1h',
+            depth: 'advanced',
+            includeTechnicals: true,
+            includeSentiment: true
+          })
         });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data for ${symbol}`);
+        }
+        
         const data = await response.json();
+        
+        // Extract real-time data from the response
+        const analysis = data.analysis || {};
+        const tradingSuggestions = analysis.tradingSuggestions || {};
+        
         return {
           symbol,
-          sentiment: data.sentiment || 'bullish',
-          confidence: data.confidence || 0.75,
-          recommendation: data.recommendation || 'BUY',
-          keyLevels: data.keyLevels || { support: 0, resistance: 0 },
-          analysis: data.analysis || `AI analysis for ${symbol}`,
-          riskLevel: data.confidence > 0.8 ? 'low' : data.confidence > 0.6 ? 'medium' : 'high' as 'low' | 'medium' | 'high'
+          sentiment: tradingSuggestions.direction === 'buy' ? 'bullish' : 
+                    tradingSuggestions.direction === 'sell' ? 'bearish' : 'neutral',
+          confidence: tradingSuggestions.confidence || 0.75,
+          recommendation: tradingSuggestions.direction?.toUpperCase() || 'HOLD',
+          keyLevels: { 
+            support: tradingSuggestions.stopLoss || 0, 
+            resistance: tradingSuggestions.targetPrice || 0 
+          },
+          analysis: analysis.summary || `Real-time AI analysis for ${symbol}`,
+          riskLevel: analysis.riskAssessment?.overallRisk || 'medium' as 'low' | 'medium' | 'high'
         };
       });
       
       const results = await Promise.all(insightPromises);
       setInsights(results);
       setLastUpdate(new Date());
+      console.log('✓ AI insights refreshed with real-time data');
     } catch (error) {
       console.error('Failed to fetch AI insights:', error);
+      // Clear insights if API fails - no fallback data
+      setInsights([]);
     }
     setLoading(false);
   };

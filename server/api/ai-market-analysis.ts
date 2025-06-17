@@ -3,83 +3,109 @@ import OpenAI from "openai";
 import { generateMarketData } from "./market";
 import fetch from "node-fetch";
 
-// Function to fetch real-time market data
+// Function to fetch real-time market data for any symbol
 async function fetchRealTimeMarketData(symbol: string) {
   try {
-    // Convert symbol to format expected by APIs
-    let apiSymbol = symbol.toUpperCase();
-    if (apiSymbol.endsWith('USDT')) {
-      apiSymbol = apiSymbol.replace('USDT', 'USDT');
-    }
-    
-    // Try multiple data sources for reliability
-    const sources = [
-      `https://api.binance.com/api/v3/ticker/24hr?symbol=${apiSymbol}`,
-      `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true`,
-    ];
+    const apiSymbol = symbol.toUpperCase();
+    console.log(`Fetching real-time data for ${apiSymbol}...`);
     
     let marketData = null;
     
-    // Try Binance API first
-    try {
-      const binanceResponse = await fetch(sources[0]);
-      if (binanceResponse.ok) {
-        const binanceData = await binanceResponse.json();
-        const currentPrice = parseFloat(binanceData.lastPrice);
-        const priceChange = parseFloat(binanceData.priceChangePercent);
-        
-        // Calculate realistic support and resistance based on current price
-        const support = currentPrice * 0.95; // 5% below current price
-        const resistance = currentPrice * 1.05; // 5% above current price
-        
-        marketData = {
-          symbol: symbol,
-          price: currentPrice,
-          priceChange: priceChange,
-          volume: parseFloat(binanceData.volume),
-          high24h: parseFloat(binanceData.highPrice),
-          low24h: parseFloat(binanceData.lowPrice),
-          support: Math.round(support),
-          resistance: Math.round(resistance),
-          timestamp: Date.now()
-        };
-      }
-    } catch (binanceError) {
-      console.log('Binance API unavailable, trying alternative sources');
-    }
-    
-    // If Binance fails, try CoinGecko for Bitcoin
-    if (!marketData && symbol.toUpperCase().includes('BTC')) {
+    // Try Binance API for crypto pairs
+    if (apiSymbol.includes('USDT') || apiSymbol.includes('BTC') || apiSymbol.includes('ETH') || apiSymbol.includes('SOL')) {
       try {
-        const coingeckoResponse = await fetch(sources[1]);
-        if (coingeckoResponse.ok) {
-          const coingeckoData = await coingeckoResponse.json();
-          const currentPrice = coingeckoData.bitcoin.usd;
-          const priceChange = coingeckoData.bitcoin.usd_24h_change || 0;
+        const binanceResponse = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${apiSymbol}`, {
+          timeout: 5000
+        });
+        
+        if (binanceResponse.ok) {
+          const binanceData = await binanceResponse.json();
+          const currentPrice = parseFloat(binanceData.lastPrice);
+          const priceChange = parseFloat(binanceData.priceChangePercent);
           
-          const support = currentPrice * 0.95;
-          const resistance = currentPrice * 1.05;
+          // Calculate dynamic support and resistance based on 24h data
+          const high24h = parseFloat(binanceData.highPrice);
+          const low24h = parseFloat(binanceData.lowPrice);
+          const support = Math.round(low24h * 0.995); // Just below 24h low
+          const resistance = Math.round(high24h * 1.005); // Just above 24h high
           
           marketData = {
             symbol: symbol,
             price: currentPrice,
             priceChange: priceChange,
-            volume: 0, // Not available from this endpoint
-            high24h: currentPrice * 1.02,
-            low24h: currentPrice * 0.98,
-            support: Math.round(support),
-            resistance: Math.round(resistance),
-            timestamp: Date.now()
+            volume: parseFloat(binanceData.volume),
+            high24h: high24h,
+            low24h: low24h,
+            support: support,
+            resistance: resistance,
+            timestamp: Date.now(),
+            source: 'Binance'
           };
+          
+          console.log(`✓ Real-time data fetched for ${apiSymbol}: $${currentPrice.toLocaleString()}`);
         }
-      } catch (coingeckoError) {
-        console.log('CoinGecko API also unavailable');
+      } catch (binanceError) {
+        console.log(`Binance API error for ${apiSymbol}:`, binanceError.message);
+      }
+    }
+    
+    // Try CoinGecko for major cryptocurrencies if Binance fails
+    if (!marketData) {
+      const coinGeckoMap = {
+        'BTCUSDT': 'bitcoin',
+        'ETHUSDT': 'ethereum', 
+        'SOLUSDT': 'solana',
+        'ADAUSDT': 'cardano',
+        'DOTUSDT': 'polkadot',
+        'LINKUSDT': 'chainlink',
+        'AVAXUSDT': 'avalanche-2'
+      };
+      
+      const coinId = coinGeckoMap[apiSymbol];
+      if (coinId) {
+        try {
+          const coingeckoResponse = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_24hr_high_low=true`, {
+            timeout: 5000
+          });
+          
+          if (coingeckoResponse.ok) {
+            const coingeckoData = await coingeckoResponse.json();
+            const coinData = coingeckoData[coinId];
+            
+            if (coinData) {
+              const currentPrice = coinData.usd;
+              const priceChange = coinData.usd_24h_change || 0;
+              const high24h = coinData.usd_24h_high || currentPrice * 1.02;
+              const low24h = coinData.usd_24h_low || currentPrice * 0.98;
+              
+              const support = Math.round(low24h * 0.995);
+              const resistance = Math.round(high24h * 1.005);
+              
+              marketData = {
+                symbol: symbol,
+                price: currentPrice,
+                priceChange: priceChange,
+                volume: coinData.usd_24h_vol || 0,
+                high24h: high24h,
+                low24h: low24h,
+                support: support,
+                resistance: resistance,
+                timestamp: Date.now(),
+                source: 'CoinGecko'
+              };
+              
+              console.log(`✓ Real-time data fetched for ${apiSymbol} via CoinGecko: $${currentPrice.toLocaleString()}`);
+            }
+          }
+        } catch (coingeckoError) {
+          console.log(`CoinGecko API error for ${apiSymbol}:`, coingeckoError.message);
+        }
       }
     }
     
     return marketData;
   } catch (error) {
-    console.error('Error fetching real-time market data:', error);
+    console.error(`Error fetching real-time market data for ${symbol}:`, error);
     return null;
   }
 }
@@ -328,17 +354,33 @@ function generateAnalysisPrompt(
 ): string {
   const { symbol, timeframe, depth, includeTechnicals, includeFundamentals, includeSentiment } = requestData;
   
-  let prompt = `Analyze the market data for ${symbol} on a ${timeframe} timeframe in ${depth} detail.
+  // Extract key real-time data points
+  const currentPrice = marketData.price || 'Unknown';
+  const priceChange = marketData.priceChange || 0;
+  const support = marketData.support || 'Unknown';
+  const resistance = marketData.resistance || 'Unknown';
+  const volume = marketData.volume || 'Unknown';
+  const dataSource = marketData.source || 'Live Data';
+  
+  let prompt = `Analyze the real-time market data for ${symbol} on a ${timeframe} timeframe in ${depth} detail.
 
-Current Market Data:
-${JSON.stringify(marketData, null, 2)}
+REAL-TIME MARKET DATA (${dataSource}):
+- Current Price: $${currentPrice}
+- 24h Price Change: ${priceChange}%
+- Support Level: $${support}
+- Resistance Level: $${resistance}
+- 24h Volume: ${volume}
+- Data Timestamp: ${new Date().toISOString()}
+
+CRITICAL: Base your analysis ONLY on the current price of $${currentPrice}. Do NOT use outdated price levels.
+Support and resistance levels MUST be calculated relative to the current price of $${currentPrice}.
 
 Important: You MUST format your response as a valid JSON object with the specified structure below.
 Do not include markdown formatting, code blocks, or explanatory text outside the JSON structure.
 Return ONLY the JSON object.
 
 Please provide:
-1. A concise summary of the current market situation for ${symbol}
+1. A concise summary of the current market situation for ${symbol} at $${currentPrice}
 `;
 
   if (includeTechnicals) {
