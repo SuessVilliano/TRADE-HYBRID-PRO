@@ -29,11 +29,11 @@ const dashboardItems: DashboardItem[] = [
     category: 'Trading & Markets'
   },
   {
-    id: 'dex',
-    name: 'DEX Dashboard',
+    id: 'prop-firm-platforms',
+    name: 'Prop Firm Platforms',
     icon: <Activity className="h-5 w-5" />,
-    path: '/dex',
-    description: 'Decentralized exchange for crypto trading',
+    path: '/trading-platforms',
+    description: 'Access cTrader, DXTrade, MatchTrader, and Rithmic platforms',
     category: 'Trading & Markets'
   },
   {
@@ -71,25 +71,25 @@ const dashboardItems: DashboardItem[] = [
   
   // Trading Tools & Analysis
   {
-    id: 'trading-bots',
-    name: 'Trading Bots',
-    icon: <Zap className="h-5 w-5" />,
+    id: 'prop-firm-bots',
+    name: 'Prop Firm Bots',
+    icon: <Bot className="h-5 w-5" />,
     path: '/trading-bots',
-    description: 'Automated trading strategies and bot management',
+    description: 'Automated trading strategies for prop firm accounts',
     category: 'Trading Tools'
   },
   {
-    id: 'copy-trading',
-    name: 'Copy Trading',
-    icon: <Signal className="h-5 w-5" />,
+    id: 'prop-copy-trading',
+    name: 'Prop Copy Trading',
+    icon: <BarChart3 className="h-5 w-5" />,
     path: '/copy-trading',
-    description: 'Copy trades from successful traders automatically',
+    description: 'Copy trades from successful prop firm traders',
     category: 'Trading Tools'
   },
   {
     id: 'journal',
     name: 'Trade Journal',
-    icon: <LineChart className="h-5 w-5" />,
+    icon: <FileText className="h-5 w-5" />,
     path: '/journal',
     description: 'Track and analyze your trading performance with real prop firm data sync',
     category: 'Trading Tools'
@@ -97,7 +97,7 @@ const dashboardItems: DashboardItem[] = [
   {
     id: 'journal-advanced',
     name: 'Advanced Journal',
-    icon: <LineChart className="h-5 w-5" />,
+    icon: <FileText className="h-5 w-5" />,
     path: '/journal/advanced',
     description: 'Advanced trade analysis and performance metrics',
     category: 'Trading Tools'
@@ -129,11 +129,11 @@ const dashboardItems: DashboardItem[] = [
     category: 'Crypto & DeFi'
   },
   {
-    id: 'defi-dashboard',
-    name: 'DeFi Dashboard',
-    icon: <Activity className="h-5 w-5" />,
-    path: '/defi',
-    description: 'Decentralized finance protocols and yield farming',
+    id: 'prop-firm-analytics',
+    name: 'Prop Firm Analytics',
+    icon: <BarChart3 className="h-5 w-5" />,
+    path: '/prop-firm/analytics',
+    description: 'Advanced analytics for prop firm trading performance',
     category: 'Crypto & DeFi'
   },
 
@@ -185,7 +185,7 @@ const dashboardItems: DashboardItem[] = [
     name: 'Market Data',
     icon: <LineChart className="h-5 w-5" />,
     path: '/market-data',
-    description: 'Real-time market data and analytics',
+    description: 'Real-time market data and analytics for prop firm trading',
     category: 'Learning & Resources'
   },
 

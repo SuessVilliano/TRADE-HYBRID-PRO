@@ -12,32 +12,32 @@ interface ToolItem {
 const TradingToolsPage: React.FC = () => {
   const tools: ToolItem[] = [
     {
-      name: 'Trading Signals',
-      description: 'Real-time market signals and alerts from Google Sheets and our proprietary algorithms',
+      name: 'Prop Firm Signals',
+      description: 'Live trading signals from Paradox, Solaris, and Hybrid providers for prop firm accounts',
       path: '/signals',
       icon: <Signal className="h-8 w-8" />,
     },
     {
-      name: 'Trading Indicators',
-      description: 'Library of technical indicators to enhance your trading strategy',
+      name: 'Prop Trading Indicators',
+      description: 'Professional technical indicators optimized for prop firm trading strategies',
       path: '/trading/indicators',
       icon: <BarChart3 className="h-8 w-8" />,
     },
     {
-      name: 'Smart Trade Panel',
-      description: 'Advanced trading with AI assistance - learn about our cutting-edge trading tools',
+      name: 'AI Trade Assistant',
+      description: 'Advanced AI-powered trading assistant with prop firm platform integration',
       path: '/smart-trade-explainer',
       icon: <Cpu className="h-8 w-8" />,
     },
     {
-      name: 'Trading Journal',
-      description: 'Complete trading journal with analytics, history, and psychology tracking',
+      name: 'Prop Firm Journal',
+      description: 'Professional trading journal with prop firm account sync and performance analytics',
       path: '/journal',
       icon: <FileText className="h-8 w-8" />,
     },
     {
-      name: 'Trading Bots',
-      description: 'Build and run automated trading strategies with our no-code bot builder',
+      name: 'Prop Trading Bots',
+      description: 'Automated trading strategies designed for prop firm account management',
       path: '/trading-bots',
       icon: <Bot className="h-8 w-8" />,
     },

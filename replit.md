@@ -46,6 +46,23 @@ A comprehensive decentralized trading platform that bridges multiple trading env
 
 ## Recent Changes
 
+### June 17, 2025 - Dashboard Prop Firm Integration & Component Updates
+- **Updated Dashboard Cards**: Replaced DEX/CEX references with proper prop firm trading platforms
+  - Trading Tools section now focuses on prop firm bots, copy trading, and journal systems
+  - Updated "DEX Dashboard" to "Prop Firm Platforms" with cTrader, DXTrade, MatchTrader, Rithmic access
+  - Enhanced Trading Tools with prop firm-specific automated strategies and analytics
+  - Market Data section updated to emphasize prop firm trading data and analytics
+  
+- **AI Assistant Help Button**: Successfully integrated streaming AI chat and voice support
+  - Help button (bottom right corner) now provides direct access to AI assistant
+  - Users can click "Chat AI" or "Voice AI" for streaming assistance with prop firm trading
+  - Enhanced PopoverContent to accommodate AI assistant interface
+  
+- **Fixed Custom Dashboard Crashes**: Resolved duplicate PropFirmPlatforms declaration
+  - Removed duplicate component definition from enhanced-draggable-dashboard.tsx
+  - Custom trading dashboard now loads properly with all AI tools and prop firm platforms
+  - Application running successfully with Genkit AI Brain processing webhooks
+
 ### June 17, 2025 - Comprehensive AI Integration & Genkit Enhancement
 - **AI-Powered TradingView Chart**: Enhanced chart with intelligent market analysis overlay
   - Integrated real-time AI insights directly on the chart with Genkit AI agent
