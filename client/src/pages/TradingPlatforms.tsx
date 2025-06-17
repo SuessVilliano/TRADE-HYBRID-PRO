@@ -121,58 +121,58 @@ const TradingPlatforms: React.FC = () => {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
           {tradingPlatforms.map((platform) => (
             <Card key={platform.id} className="hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/20">
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-xl ${getStatusColor(platform.status)} text-white shadow-lg`}>
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                    <div className={`p-2 sm:p-3 rounded-xl ${getStatusColor(platform.status)} text-white shadow-lg flex-shrink-0`}>
                       {platform.icon}
                     </div>
-                    <div>
-                      <CardTitle className="text-2xl">{platform.name}</CardTitle>
-                      <Badge variant="secondary" className="mt-2">
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="text-lg sm:text-xl lg:text-2xl truncate">{platform.name}</CardTitle>
+                      <Badge variant="secondary" className="mt-1 sm:mt-2 text-xs">
                         {getStatusBadge(platform.status)}
                       </Badge>
                     </div>
                   </div>
-                  <ShieldCheck className="h-5 w-5 text-green-500" />
+                  <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 flex-shrink-0" />
                 </div>
-                <CardDescription className="text-base leading-relaxed mt-3">
+                <CardDescription className="text-sm sm:text-base leading-relaxed mt-2 sm:mt-3">
                   {platform.description}
                 </CardDescription>
               </CardHeader>
               
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4 sm:space-y-6">
                 <div>
-                  <h4 className="font-semibold text-sm text-muted-foreground mb-3">Platform Features:</h4>
-                  <div className="grid grid-cols-2 gap-2">
+                  <h4 className="font-semibold text-sm text-muted-foreground mb-2 sm:mb-3">Platform Features:</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {platform.features.map((feature) => (
-                      <Badge key={feature} variant="outline" className="justify-center py-1">
+                      <Badge key={feature} variant="outline" className="justify-center py-1 text-xs sm:text-sm">
                         {feature}
                       </Badge>
                     ))}
                   </div>
                 </div>
                 
-                <div className="flex gap-3 pt-4">
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <Button 
                     onClick={() => handleWebtraderLogin(platform.loginUrl)}
-                    className="flex-1 h-12 text-lg font-semibold"
+                    className="flex-1 h-12 text-base sm:text-lg font-semibold"
                     size="lg"
                   >
-                    <LogIn className="h-5 w-5 mr-2" />
-                    Login to WebTrader
+                    <LogIn className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                    <span className="truncate">Login to WebTrader</span>
                   </Button>
                   <Button 
                     variant="outline" 
                     onClick={() => handleWebtraderAccess(platform.webtraderUrl)}
-                    className="flex-1 h-12 text-lg font-semibold"
+                    className="flex-1 h-12 text-base sm:text-lg font-semibold"
                     size="lg"
                   >
-                    <Globe className="h-5 w-5 mr-2" />
-                    Access Platform
+                    <Globe className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                    <span className="truncate">Access Platform</span>
                   </Button>
                 </div>
                 
