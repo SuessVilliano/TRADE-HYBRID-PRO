@@ -15,7 +15,7 @@
 
 <!-- Header Bar -->
 <rect x="0" y="0" width="1200" height="80" fill="#1f2937" stroke="#374151" stroke-width="1"/>
-<text x="60" y="50" fill="white" font-size="24" font-family="Arial, sans-serif" font-weight="bold">TradeHybrid</text>
+<text x="60" y="50" fill="white" font-size="24" font-family="Arial, sans-serif" font-weight="bold">Trade Hybrid</text>
 
 <!-- Sidebar -->
 <rect x="0" y="80" width="280" height="720" fill="#111827" stroke="#374151" stroke-width="1"/>

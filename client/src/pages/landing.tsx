@@ -4,6 +4,7 @@ import { useAuth } from '../lib/context/AuthContext';
 import { useSolanaAuth } from '../lib/context/SolanaAuthProvider';
 import { Podcast, Zap, BookOpen, BarChart4, Briefcase, Shield, Award, PenTool, CheckCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import { PlatformPreview } from '../components/ui/platform-preview';
 
 const LandingPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -81,11 +82,7 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
             <div className="flex justify-center">
-              <img 
-                src="/assets/platform-preview.svg" 
-                alt="TradeHybrid Platform" 
-                className="rounded-lg shadow-2xl max-w-full"
-              />
+              <PlatformPreview />
             </div>
           </div>
         </div>
