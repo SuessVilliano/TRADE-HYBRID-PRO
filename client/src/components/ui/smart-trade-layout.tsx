@@ -19,8 +19,9 @@ import {
   ExternalLink,
   MoveLeft
 } from 'lucide-react';
-import DexChart from './dex-chart';
+import TradingViewChart from './trading-view-chart';
 import { SmartTradePanel } from './smart-trade-panel';
+import { TradingPlatformPanel } from '../trading/TradingPlatformPanel';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 // Define useMediaQuery hook directly here to avoid import issues
@@ -70,6 +71,9 @@ export function SmartTradeLayout({
   
   // Undocked panel position
   const [undockedPosition, setUndockedPosition] = useState({ x: 100, y: 100 });
+  
+  // Panel content selection
+  const [panelContent, setPanelContent] = useState<'trade' | 'platforms'>('trade');
   
   // Containers refs for resizing
   const containerRef = useRef<HTMLDivElement>(null);
@@ -298,22 +302,40 @@ export function SmartTradeLayout({
     return (
       <Card className={`h-full overflow-hidden bg-slate-800 ${!forUndocked ? 'border-0 rounded-none' : 'border border-slate-700 rounded-lg shadow-xl'}`}>
         {!isMobile && (
-          <CardHeader className="px-3 py-2 bg-slate-800 border-b border-slate-700 flex flex-row justify-between items-center">
-            <CardTitle className="text-sm font-medium">Trading Tools</CardTitle>
-            <div className="flex items-center gap-1">
-              {!forUndocked && (
-                <>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="h-7 w-7 text-slate-400 hover:text-white"
-                    onClick={togglePanelUndock}
-                    title="Undock panel"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
+          <CardHeader className="px-3 py-2 bg-slate-800 border-b border-slate-700">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant={panelContent === 'trade' ? 'default' : 'ghost'}
+                  onClick={() => setPanelContent('trade')}
+                  className="h-7 text-xs"
+                >
+                  Trade Panel
+                </Button>
+                <Button
+                  size="sm"
+                  variant={panelContent === 'platforms' ? 'default' : 'ghost'}
+                  onClick={() => setPanelContent('platforms')}
+                  className="h-7 text-xs"
+                >
+                  Platforms
+                </Button>
+              </div>
+              <div className="flex items-center gap-1">
+                {!forUndocked && (
+                  <>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="h-7 w-7 text-slate-400 hover:text-white"
+                      onClick={togglePanelUndock}
+                      title="Undock panel"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
                     size="icon"
                     className="h-7 w-7 text-slate-400 hover:text-white"
                     onClick={() => changePanelPosition(panelPosition === 'left' ? 'right' : 'left')}
@@ -357,7 +379,11 @@ export function SmartTradeLayout({
           </CardHeader>
         )}
         <CardContent className="p-0 h-full overflow-auto">
-          <SmartTradePanel symbol={symbol} asCard={false} />
+          {panelContent === 'trade' ? (
+            <SmartTradePanel symbol={symbol} asCard={false} />
+          ) : (
+            <TradingPlatformPanel />
+          )}
         </CardContent>
       </Card>
     );
@@ -464,13 +490,12 @@ export function SmartTradeLayout({
           </div>
         )}
         
-        {/* DEX Chart */}
+        {/* TradingView Chart */}
         <div className="h-full relative overflow-hidden">
-          <DexChart
+          <TradingViewChart
             symbol={symbol}
-            height={600}
-            theme="dark"
-            showControls={true}
+            timeframe="1d"
+            className="h-full"
           />
         </div>
         

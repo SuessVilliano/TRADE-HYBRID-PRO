@@ -46,6 +46,26 @@ A comprehensive decentralized trading platform that bridges multiple trading env
 
 ## Recent Changes
 
+### June 17, 2025 - TradingView Chart Fix & Trading Platform Integration
+- **Fixed TradingView Chart Loading Issue**: Resolved the chart stuck/not loading problem
+  - Replaced complex widget implementation with reliable iframe approach
+  - Added working timeframe selector with 1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w, 1M options
+  - Implemented proper loading states and error handling
+  - Chart now loads consistently without getting stuck on "Loading BTCUSDT chart..."
+  
+- **Trading Platform Integration**: Added direct access to all four trading platforms within trade dashboard
+  - **cTrader**: Professional ECN trading platform with advanced analytics
+  - **DX Trade**: Multi-asset trading platform for forex, commodities, and indices  
+  - **Match Trader**: Social trading platform with copy trading capabilities
+  - **Rithmic**: Professional futures trading platform with ultra-low latency
+  - Each platform accessible via "Login to WebTrader" buttons opening in new tabs
+  - Integrated platforms panel alongside trade panel with tab selector
+  
+- **Smart Trade Layout Enhancement**: Enhanced trade dashboard with embedded platform access
+  - Added trading platform panel as switchable content alongside trade panel
+  - Users can now access cTrader, DXTrade, RTrader, and MatchTrader directly from trade dashboard
+  - Platforms display around main TradingView chart as requested for prop firm dashboard customization
+
 ### June 17, 2025 - Platform Cleanup & Feature Consolidation
 - **Removed Broken Features**: Eliminated non-functional components that were causing 404 errors
   - Removed broken social trading features from navigation
