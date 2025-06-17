@@ -11,6 +11,7 @@ import journalRouter from "./api/journal";
 import matrixRouter from "./api/matrix";
 import solscanRouter from "./api/solscan-keys";
 import tradingPlatformRoutes from "./routes/trading-platforms";
+import * as genkitAI from "./api/genkit-ai";
 
 // We'll create separate functions to directly use our signals-api
 const getSignals = (req: any, res: any) => {
@@ -557,6 +558,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // User webhook route for custom integrations
   app.post("/api/webhooks/user/:token", receiveUserWebhook); // Custom user webhooks
+
+  // AI Agent Routes - Genkit powered AI assistant
+  app.post("/api/ai/analyze-screen", genkitAI.analyzeScreen);
+  app.post("/api/ai/voice-command", genkitAI.processVoiceCommand);
+  app.post("/api/ai/chat-stream", genkitAI.streamingChatEndpoint);
+  app.post("/api/ai/trading-analysis", genkitAI.analyzeTrade);
+  app.post("/api/ai/market-monitor", genkitAI.monitorMarkets);
+  app.post("/api/ai/portfolio-optimize", genkitAI.optimizePortfolio);
+  app.post("/api/ai/education", genkitAI.getTradingEducation);
+  app.post("/api/ai/multimodal", genkitAI.multiModalAnalysis);
+  app.post("/api/ai/hybrid-analysis", genkitAI.hybridAnalysis);
+  app.get("/api/ai/status", genkitAI.getAgentStatus);
   
   // Shortened URL format for better UX
   app.post("/api/w/:token", receiveUserWebhook); // Shortened version for custom webhooks
