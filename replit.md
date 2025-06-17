@@ -46,12 +46,19 @@ A comprehensive decentralized trading platform that bridges multiple trading env
 
 ## Recent Changes
 
-### June 17, 2025 - Dashboard Prop Firm Integration & Component Updates
-- **Updated Dashboard Cards**: Replaced DEX/CEX references with proper prop firm trading platforms
-  - Trading Tools section now focuses on prop firm bots, copy trading, and journal systems
+### June 17, 2025 - Dashboard & Trading Interface Updates
+- **Updated Dashboard Cards**: Refined trading tools naming and platform integration
+  - Changed "Prop Firm Bots" to "Trade Bots" and "Prop Copy Trading" to "Copy Trading" per user request
+  - Trading Tools section focuses on universal trading bots, copy trading, and journal systems
   - Updated "DEX Dashboard" to "Prop Firm Platforms" with cTrader, DXTrade, MatchTrader, Rithmic access
-  - Enhanced Trading Tools with prop firm-specific automated strategies and analytics
-  - Market Data section updated to emphasize prop firm trading data and analytics
+  - Enhanced Trading Tools with automated strategies and analytics for all account types
+  - Market Data section updated to emphasize comprehensive trading data and analytics
+  
+- **Tabbed Interface Implementation**: Added seamless platform switching in trading dashboard
+  - Traders can now switch between TradingView charts and four prop firm platforms via tabs
+  - All trading tools and widgets remain available around whichever tab is selected
+  - Integrated GooeyTrade URLs for cTrader, DX Trade, Match Trader, and Rithmic platforms
+  - Mobile-responsive design with horizontal scrolling tabs for optimal user experience
   
 - **AI Assistant Help Button**: Successfully integrated streaming AI chat and voice support
   - Help button (bottom right corner) now provides direct access to AI assistant

@@ -63,62 +63,46 @@ const dashboardItems: DashboardItem[] = [
   
   // Trading Tools & Analysis
   {
-    id: 'prop-firm-bots',
-    name: 'Prop Firm Bots',
+    id: 'trade-bots',
+    name: 'Trade Bots',
     icon: <Bot className="h-5 w-5" />,
     path: '/trading-bots',
-    description: 'Automated trading strategies for prop firm accounts',
+    description: 'Automated trading strategies for all trading accounts',
     category: 'Trading Tools'
   },
   {
-    id: 'prop-copy-trading',
-    name: 'Prop Copy Trading',
+    id: 'copy-trading',
+    name: 'Copy Trading',
     icon: <BarChart3 className="h-5 w-5" />,
     path: '/copy-trading',
-    description: 'Copy trades from successful prop firm traders',
+    description: 'Copy trades from successful traders',
     category: 'Trading Tools'
   },
   {
-    id: 'journal',
-    name: 'Trade Journal',
+    id: 'ultimate-journal',
+    name: 'Ultimate Trade Journal',
     icon: <FileText className="h-5 w-5" />,
     path: '/journal',
-    description: 'Track and analyze your trading performance with real prop firm data sync',
-    category: 'Trading Tools'
-  },
-  {
-    id: 'journal-advanced',
-    name: 'Advanced Journal',
-    icon: <FileText className="h-5 w-5" />,
-    path: '/journal/advanced',
-    description: 'Advanced trade analysis and performance metrics',
-    category: 'Trading Tools'
-  },
-  {
-    id: 'prop-firm-journal',
-    name: 'Prop Firm Journal',
-    icon: <FileText className="h-5 w-5" />,
-    path: '/prop-firm/journal',
-    description: 'Professional trading journal with prop firm account sync and analytics',
+    description: 'Comprehensive trading journal with advanced analytics, prop firm sync, and performance tracking',
     category: 'Trading Tools'
   },
 
-  // Crypto & DeFi
+  // Crypto & NFTs
   {
     id: 'portfolio',
     name: 'Portfolio Tracker',
     icon: <Activity className="h-5 w-5" />,
     path: '/portfolio',
     description: 'Track your crypto and traditional asset portfolio',
-    category: 'Crypto & DeFi'
+    category: 'Crypto & NFTs'
   },
   {
-    id: 'staking',
-    name: 'Staking Rewards',
+    id: 'thc-staking',
+    name: 'THC Staking',
     icon: <Zap className="h-5 w-5" />,
     path: '/staking',
-    description: 'Earn rewards by staking your crypto assets',
-    category: 'Crypto & DeFi'
+    description: 'Stake THC tokens and earn rewards from the Trade Hybrid ecosystem',
+    category: 'Crypto & NFTs'
   },
   {
     id: 'prop-firm-analytics',
@@ -146,14 +130,7 @@ const dashboardItems: DashboardItem[] = [
     description: 'Compete with other traders and climb the ranks',
     category: 'Immersive & Social'
   },
-  {
-    id: 'social-trading',
-    name: 'Social Trading',
-    icon: <Activity className="h-5 w-5" />,
-    path: '/social',
-    description: 'Connect with traders and share strategies',
-    category: 'Immersive & Social'
-  },
+
 
   // Learning & Resources
   {
@@ -172,14 +149,7 @@ const dashboardItems: DashboardItem[] = [
     description: 'Latest market news and analysis',
     category: 'Learning & Resources'
   },
-  {
-    id: 'market-data',
-    name: 'Market Data',
-    icon: <LineChart className="h-5 w-5" />,
-    path: '/market-data',
-    description: 'Real-time market data and analytics for prop firm trading',
-    category: 'Learning & Resources'
-  },
+
 
   // Account & Settings
   {
