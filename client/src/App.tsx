@@ -196,7 +196,6 @@ const App: React.FC = () => {
                   <Route path="/dashboard" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
                   <Route path="/trade" element={<ProtectedRoute><TradeView /></ProtectedRoute>} />
                   <Route path="/journal" element={<ProtectedRoute><JournalView /></ProtectedRoute>} />
-                  <Route path="/journal/advanced" element={<ProtectedRoute><AdvancedJournalView /></ProtectedRoute>} />
                   <Route path="/metaverse" element={<ProtectedRoute><MetaversePage /></ProtectedRoute>} />
                   <Route path="/learn" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
                   <Route path="/signals" element={<ProtectedRoute><TradingSignals /></ProtectedRoute>} />
@@ -269,7 +268,7 @@ const App: React.FC = () => {
                   <Route path="/voice-trade" element={<ProtectedRoute><VoiceTradeDemoPage /></ProtectedRoute>} />
                   <Route path="/smart-trade-explainer" element={<ProtectedRoute><SmartTradeExplainer /></ProtectedRoute>} />
                   <Route path="/api-demo" element={<ProtectedRoute><ApiDemoPage /></ProtectedRoute>} />
-                  <Route path="/market-data" element={<ProtectedRoute><MarketDataPage /></ProtectedRoute>} />
+
                   <Route path="/web-browser" element={<EmbeddedBrowserPage />} />
                   <Route path="/abatev" element={<ProtectedRoute><ABATEVPanelPage /></ProtectedRoute>} />
                   <Route path="/nexus" element={<ProtectedRoute><NexusPanelPage /></ProtectedRoute>} />
@@ -278,7 +277,7 @@ const App: React.FC = () => {
                   <Route path="/prop-firm" element={<ProtectedRoute><PropFirmDashboardPage /></ProtectedRoute>} />
                   <Route path="/prop-firm/admin" element={<ProtectedRoute><PropFirmAdminDashboardPage /></ProtectedRoute>} />
                   <Route path="/prop-firm/challenge" element={<ProtectedRoute><PropFirmChallengePage /></ProtectedRoute>} />
-                  <Route path="/prop-firm/journal" element={<ProtectedRoute><PropFirmJournalPage /></ProtectedRoute>} />
+
                   <Route path="/prop-firm/account/:accountId" element={<ProtectedRoute><PropFirmAccountDetailsPage /></ProtectedRoute>} />
                   
                   {/* Investor Dashboard */}
@@ -308,7 +307,7 @@ const App: React.FC = () => {
                   <Route path="/affiliate-dashboard" element={<React.Suspense fallback={<div>Loading affiliate dashboard...</div>}><ProtectedRoute><AffiliateDashboardPage /></ProtectedRoute></React.Suspense>} />
                   <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
                   <Route path="/live-stream" element={<ProtectedRoute><LiveStreamPage /></ProtectedRoute>} />
-                  <Route path="/social-network" element={<ProtectedRoute><SocialNetworkPage /></ProtectedRoute>} />
+
                   
                   {/* Knowledge Base */}
                   <Route path="/knowledge" element={<ProtectedRoute><KnowledgeBasePage /></ProtectedRoute>} />
