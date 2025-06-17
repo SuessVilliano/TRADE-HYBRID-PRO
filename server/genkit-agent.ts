@@ -1,24 +1,32 @@
-import { configureGenkit } from '@genkit-ai/core';
-import { googleAI } from '@genkit-ai/googleai';
-import { dotprompt } from '@genkit-ai/dotprompt';
-import { flow, runFlow } from '@genkit-ai/flow';
-import { generate } from '@genkit-ai/ai';
 import OpenAI from 'openai';
 
-// Configure Genkit with Google AI
-configureGenkit({
-  plugins: [
-    googleAI({
-      apiKey: process.env.GOOGLE_API_KEY,
-    }),
-    dotprompt(),
-  ],
-  logLevel: 'debug',
-  enableTracingAndMetrics: true,
-});
-
-// OpenAI integration for comparison and fallback
+// Use OpenAI for now until Genkit is properly configured
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// Google AI direct integration for comparison
+async function callGoogleAI(prompt: string) {
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GOOGLE_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }]
+      })
+    });
+    
+    const data = await response.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response from Google AI';
+  } catch (error) {
+    console.error('Google AI error:', error);
+    return 'Google AI unavailable';
+  }
+}
 
 // Trade Hybrid AI Agent with voice, chat, and streaming capabilities
 export class TradeHybridAIAgent {
@@ -31,34 +39,15 @@ export class TradeHybridAIAgent {
     return TradeHybridAIAgent.instance;
   }
 
-  // Main trading analysis flow using Genkit
-  public tradingAnalysisFlow = flow(
-    {
-      name: 'tradingAnalysis',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          symbol: { type: 'string' },
-          marketData: { type: 'object' },
-          signals: { type: 'array' },
-          userProfile: { type: 'object' },
-          analysisType: { type: 'string', enum: ['technical', 'fundamental', 'sentiment', 'comprehensive'] }
-        },
-        required: ['symbol']
-      },
-      outputSchema: {
-        type: 'object',
-        properties: {
-          analysis: { type: 'string' },
-          recommendation: { type: 'string' },
-          riskLevel: { type: 'string' },
-          confidence: { type: 'number' },
-          keyPoints: { type: 'array' }
-        }
-      }
-    },
-    async (input) => {
-      const prompt = `
+  // Main trading analysis using hybrid AI
+  public async tradingAnalysisFlow(input: {
+    symbol: string;
+    marketData?: any;
+    signals?: any[];
+    userProfile?: any;
+    analysisType?: string;
+  }) {
+    const prompt = `
 As Trade Hybrid's AI trading assistant, analyze ${input.symbol} with the following context:
 
 Market Data: ${JSON.stringify(input.marketData || {})}
@@ -74,47 +63,60 @@ Provide a detailed trading analysis including:
 5. Confidence level (0-100)
 
 Format response as JSON with analysis, recommendation, riskLevel, confidence, and keyPoints.
-      `;
+    `;
 
-      const result = await generate({
-        model: 'googleai/gemini-1.5-flash',
-        prompt,
-        config: {
-          temperature: 0.7,
-          maxOutputTokens: 2048,
-        },
+    try {
+      // Try OpenAI first
+      const openaiResult = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: "You are a professional trading analyst. Provide detailed analysis in JSON format."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        response_format: { type: "json_object" }
       });
 
+      const analysis = JSON.parse(openaiResult.choices[0].message.content || '{}');
+      
+      // Add Google AI perspective if available
+      let googlePerspective = '';
       try {
-        return JSON.parse(result.text());
+        googlePerspective = await callGoogleAI(prompt);
       } catch (error) {
-        return {
-          analysis: result.text(),
-          recommendation: 'Unable to parse structured recommendation',
-          riskLevel: 'medium',
-          confidence: 50,
-          keyPoints: []
-        };
+        console.log('Google AI unavailable, using OpenAI only');
       }
-    }
-  );
 
-  // Voice trading assistant flow
-  public voiceTradingFlow = flow(
-    {
-      name: 'voiceTrading',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          audioInput: { type: 'string' },
-          userId: { type: 'string' },
-          context: { type: 'object' }
-        },
-        required: ['audioInput', 'userId']
-      }
-    },
-    async (input) => {
-      // Convert voice to text using Google's speech recognition
+      return {
+        ...analysis,
+        hybridAnalysis: googlePerspective,
+        source: 'hybrid'
+      };
+    } catch (error) {
+      console.error('Trading analysis error:', error);
+      return {
+        analysis: 'Analysis unavailable',
+        recommendation: 'Unable to analyze at this time',
+        riskLevel: 'medium',
+        confidence: 0,
+        keyPoints: ['Please check API configuration']
+      };
+    }
+  }
+
+  // Voice trading assistant
+  public async voiceTradingFlow(input: {
+    audioInput: string;
+    userId: string;
+    context?: any;
+  }) {
+    try {
+      // Convert voice to text using OpenAI Whisper
       const voiceCommand = await this.processVoiceInput(input.audioInput);
       
       // Analyze trading intent
@@ -122,8 +124,15 @@ Format response as JSON with analysis, recommendation, riskLevel, confidence, an
       
       // Execute trading action or provide analysis
       return await this.executeVoiceCommand(intent, input.userId);
+    } catch (error) {
+      console.error('Voice trading flow error:', error);
+      return {
+        action: 'error',
+        result: 'Voice command processing failed',
+        userId: input.userId
+      };
     }
-  );
+  }
 
   // Real-time market monitoring flow
   public marketMonitorFlow = flow(

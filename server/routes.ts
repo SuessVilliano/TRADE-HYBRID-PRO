@@ -562,6 +562,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Agent Routes - Genkit powered AI assistant
   app.post("/api/ai/analyze-screen", genkitAI.analyzeScreen);
   app.post("/api/ai/voice-command", genkitAI.processVoiceCommand);
+  app.post("/api/ai/voice-trading", genkitAI.processVoiceTrading);
   app.post("/api/ai/chat-stream", genkitAI.streamingChatEndpoint);
   app.post("/api/ai/trading-analysis", genkitAI.analyzeTrade);
   app.post("/api/ai/market-monitor", genkitAI.monitorMarkets);

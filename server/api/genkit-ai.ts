@@ -34,7 +34,7 @@ export async function analyzeTrade(req: Request, res: Response) {
 }
 
 // Voice trading endpoint
-export async function processVoiceCommand(req: Request, res: Response) {
+export async function processVoiceTrading(req: Request, res: Response) {
   try {
     const { audioInput, userId, context } = req.body;
 
