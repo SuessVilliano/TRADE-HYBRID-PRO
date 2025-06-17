@@ -9,9 +9,15 @@ import {
   HelpCircle, 
   LightbulbIcon,
   CheckCircle2,
-  PresentationIcon
+  PresentationIcon,
+  Brain,
+  Mic,
+  MessageSquare,
+  Zap
 } from 'lucide-react';
 import { useOnboarding } from '../../lib/context/OnboardingProvider';
+import { AITradeAssistant } from '../ai/AITradeAssistant';
+import { AIVoiceTrading } from '../ai/AIVoiceTrading';
 
 interface OnboardingButtonProps {
   className?: string;
@@ -32,6 +38,7 @@ export function OnboardingButton({ className }: OnboardingButtonProps) {
   console.log("OnboardingButton - currentFlow:", currentFlow);
   
   const [isOpen, setIsOpen] = useState(false);
+  const [activeAssistant, setActiveAssistant] = useState<'chat' | 'voice' | null>(null);
   
   // Determine available tours based on current path
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
@@ -100,6 +107,40 @@ export function OnboardingButton({ className }: OnboardingButtonProps) {
         sideOffset={16}
       >
         <div className="space-y-4">
+          {/* AI Assistant Section */}
+          <div className="space-y-2 border-b border-slate-200 dark:border-slate-700 pb-3">
+            <h4 className="font-medium text-lg flex items-center text-slate-900 dark:text-white">
+              <Brain className="h-5 w-5 mr-2 text-purple-500" />
+              <Zap className="h-3 w-3 text-yellow-400 animate-pulse" />
+              AI Assistant
+            </h4>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              Get instant AI-powered trading help with chat and voice support
+            </p>
+            
+            <div className="flex gap-2 mt-3">
+              <Button
+                variant={activeAssistant === 'chat' ? "default" : "outline"}
+                size="sm"
+                className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                onClick={() => setActiveAssistant(activeAssistant === 'chat' ? null : 'chat')}
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Chat AI
+              </Button>
+              <Button
+                variant={activeAssistant === 'voice' ? "default" : "outline"}
+                size="sm"
+                className="flex-1 bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white"
+                onClick={() => setActiveAssistant(activeAssistant === 'voice' ? null : 'voice')}
+              >
+                <Mic className="h-4 w-4 mr-2" />
+                Voice AI
+              </Button>
+            </div>
+          </div>
+
+          {/* Help & Tours Section */}
           <div className="space-y-2 border-b border-slate-200 dark:border-slate-700 pb-3">
             <h4 className="font-medium text-lg flex items-center text-slate-900 dark:text-white">
               <HelpCircle className="h-5 w-5 mr-2 text-blue-500" />
@@ -142,6 +183,20 @@ export function OnboardingButton({ className }: OnboardingButtonProps) {
             })}
           </div>
           
+          {/* AI Assistant Interface */}
+          {activeAssistant && (
+            <div className="border-t border-slate-200 dark:border-slate-700 pt-3">
+              <div className="h-96 bg-slate-50 dark:bg-slate-800 rounded-lg overflow-hidden">
+                {activeAssistant === 'chat' && (
+                  <AITradeAssistant className="h-full" />
+                )}
+                {activeAssistant === 'voice' && (
+                  <AIVoiceTrading className="h-full" />
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
             <Button
               variant="ghost"

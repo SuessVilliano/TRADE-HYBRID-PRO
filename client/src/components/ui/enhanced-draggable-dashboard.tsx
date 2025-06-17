@@ -17,6 +17,7 @@ import {
 import TradingViewChart from './trading-view-chart';
 import { SmartTradePanel } from './smart-trade-panel';
 import { TradingPlatformPanel } from '../trading/TradingPlatformPanel';
+import { PropFirmPlatforms } from '../trading/PropFirmPlatforms';
 import { AITradeAssistant } from '../ai/AITradeAssistant';
 import { AIMarketInsights } from '../ai/AIMarketInsights';
 import { AIVoiceTrading } from '../ai/AIVoiceTrading';
