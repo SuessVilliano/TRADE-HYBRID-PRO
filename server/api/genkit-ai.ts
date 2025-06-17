@@ -145,7 +145,7 @@ export async function getTradingEducation(req: Request, res: Response) {
   try {
     const { userLevel, topic, learningStyle } = req.body;
 
-    const education = await runFlow(aiAgent.tradingEducationFlow, {
+    const education = await aiAgent.tradingEducationFlow({
       userLevel,
       topic,
       learningStyle
