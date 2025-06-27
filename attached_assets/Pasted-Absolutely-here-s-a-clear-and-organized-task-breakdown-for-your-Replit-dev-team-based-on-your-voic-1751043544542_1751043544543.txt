@@ -1,0 +1,67 @@
+Absolutely — here’s a clear and organized task breakdown for your Replit dev team based on your voice notes. This version avoids jargon, clearly states what’s broken or needs fixing, and tells the devs what outcome you expect:
+
+⸻
+
+🛠️ TRADING DASHBOARD FIXES (HIGH PRIORITY)
+
+1. Remove Unnecessary Image
+	•	Issue: The Trade Dashboard has a EURUSD image and a P/L win ratio graphic.
+	•	Fix: Remove the image and win ratio graphic. Only show the names like the other dashboard tabs (uniform look).
+
+2. TradingView Symbol Selection Not Working
+	•	Issue: The chart is stuck on BTC/USDT. Users can’t change symbols.
+	•	Fix: Make the TradingView widget fully functional:
+	•	Enable dropdown or symbol search (so users can select other symbols).
+	•	Ensure the chart updates based on symbol changes.
+
+3. “Customize Your Dashboard” Section Is Not Scrollable
+	•	Issue: Users cannot scroll past the “Protip” area.
+	•	Fix: Add vertical scroll functionality to that section so all content can be viewed and interacted with.
+
+4. DXTrade Not Loading in Dashboard
+	•	Issue: DXTrade (https://trade.goetrade.com) does not load in the dashboard, even though the URL works when accessed directly.
+	•	Fix:
+	•	Diagnose why the embedded iframe (or webview) isn’t loading this URL.
+	•	Confirm DXTrade loads properly inside the dashboard frame, just like Match Trader and Rhithmic do.
+
+5. AI Assistant Chat Box Is Cut Off
+	•	Issue: The AI chat interface does not scroll or show the “Send” button. Users can’t send messages.
+	•	Fix:
+	•	Expand the AI chatbox height.
+	•	Make it scrollable to allow access to the input area and send button.
+
+6. Missing Trading Tools (Heat Maps, Scripts, etc.)
+	•	Issue: All previous TradingView tools like heat maps, indicators, etc. are missing.
+	•	Fix: Re-integrate or re-embed previously used TradingView tools/scripts.
+	•	If these were embedded widgets or scripts, restore them to a “Tools” section or re-add them under dashboard widgets.
+
+7. Market Analysis Page Loads Blank
+	•	Issue: When clicking “Market Analysis”, it loads a black/blank screen.
+	•	Fix: Debug the page or component so that content loads. Add fallback content if no data is available.
+
+8. Signals Not Coming Through
+	•	Issue: Webhooks were set up, but trading signals still don’t display.
+	•	Fix:
+	•	Check webhook endpoint receiving data.
+	•	Ensure signals are parsed and displayed on the front end.
+	•	Add a fallback message like “No signals available” if empty.
+
+⸻
+
+✅ Platforms Status
+	•	✅ CTrader loads properly.
+	•	✅ Match Trader (mtr.goetrade.com) loads properly.
+	•	✅ Rhithmic works fine.
+	•	🔧 DXTrade only fails in the dashboard (fix needed).
+	•	⚠️ AI Assistant chat scroll + input broken.
+	•	❌ TradingView symbol selection + missing tools.
+
+⸻
+
+📦 Summary for Developers (TL;DR)
+
+We need the trade dashboard to be fully usable and intuitive: no extra images, fully working TradingView charts with all symbols, and the ability to trade from all platform frames (especially fixing DXTrade). Bring back the missing TradingView tools and fix the AI chat box + market analysis page. Let’s get this dashboard trader-ready.
+
+⸻
+
+Let me know if you want this packaged into a task list for Replit or turned into a Trello, Notion, or Taskade board for dev tracking.

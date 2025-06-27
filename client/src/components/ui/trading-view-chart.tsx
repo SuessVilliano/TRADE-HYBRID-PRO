@@ -7,12 +7,14 @@ interface TradingViewChartProps {
   symbol: string;
   timeframe?: string;
   className?: string;
+  onSymbolChange?: (symbol: string) => void;
 }
 
 const TradingViewChart: React.FC<TradingViewChartProps> = ({ 
   symbol, 
   timeframe = '1d', 
-  className = '' 
+  className = '',
+  onSymbolChange
 }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,6 +22,34 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
   const [key, setKey] = useState<number>(0);
   const [aiInsights, setAiInsights] = useState<any>(null);
   const [showAIOverlay, setShowAIOverlay] = useState<boolean>(true);
+  const [selectedSymbol, setSelectedSymbol] = useState<string>(symbol);
+  const [showSymbolSelector, setShowSymbolSelector] = useState<boolean>(false);
+
+  // Popular trading symbols
+  const popularSymbols = [
+    { symbol: 'BTCUSDT', label: 'BTC/USDT', exchange: 'BINANCE' },
+    { symbol: 'ETHUSDT', label: 'ETH/USDT', exchange: 'BINANCE' },
+    { symbol: 'SOLUSDT', label: 'SOL/USDT', exchange: 'BINANCE' },
+    { symbol: 'ADAUSDT', label: 'ADA/USDT', exchange: 'BINANCE' },
+    { symbol: 'DOTUSDT', label: 'DOT/USDT', exchange: 'BINANCE' },
+    { symbol: 'LINKUSDT', label: 'LINK/USDT', exchange: 'BINANCE' },
+    { symbol: 'EURUSD', label: 'EUR/USD', exchange: 'FX' },
+    { symbol: 'GBPUSD', label: 'GBP/USD', exchange: 'FX' },
+    { symbol: 'USDJPY', label: 'USD/JPY', exchange: 'FX' },
+    { symbol: 'XAUUSD', label: 'Gold/USD', exchange: 'TVC' },
+    { symbol: 'SPY', label: 'S&P 500 ETF', exchange: 'AMEX' },
+    { symbol: 'QQQ', label: 'NASDAQ ETF', exchange: 'NASDAQ' }
+  ];
+
+  // Handle symbol change
+  const handleSymbolChange = (newSymbol: string) => {
+    setSelectedSymbol(newSymbol);
+    setShowSymbolSelector(false);
+    refreshChart();
+    if (onSymbolChange) {
+      onSymbolChange(newSymbol);
+    }
+  };
 
   // Convert symbol to TradingView URL format
   const getChartUrl = (symbol: string, interval: string) => {
@@ -47,7 +77,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
     
     const tvInterval = intervalMap[interval] || 'D';
     
-    return `https://www.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=${formattedSymbol}&interval=${tvInterval}&hidesidetoolbar=1&hidetoptoolbar=0&symboledit=1&saveimage=1&toolbarbg=1e293b&studies=[]&hideideas=1&theme=dark&style=1&timezone=Etc%2FUTC&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en`;
+    return `https://www.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=${formattedSymbol}&interval=${tvInterval}&hidesidetoolbar=0&hidetoptoolbar=0&symboledit=1&saveimage=1&toolbarbg=1e293b&studies=[]&hideideas=1&theme=dark&style=1&timezone=Etc%2FUTC&studies_overrides={}&overrides={}&enabled_features=["symbol_search_hot_key","header_symbol_search","symbol_info","header_chart_type","header_settings","header_indicators","header_compare","header_undo_redo","header_screenshot","header_fullscreen_button"]&disabled_features=["use_localstorage_for_settings","volume_force_overlay"]&locale=en`;
   };
 
   const handleLoad = () => {
