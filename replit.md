@@ -116,6 +116,24 @@ A comprehensive decentralized trading platform that bridges multiple trading env
   - Text-to-speech responses for hands-free trading experience
   - Voice command history with intent recognition and confidence scoring
 
+### June 27, 2025 - Enhanced TradingView Chart with Advanced Search
+- **Searchable Symbol Selector**: Added real-time search functionality to eliminate scrolling
+  - Search by symbol, name, or exchange (type "BTC", "Bitcoin", or "BINANCE")
+  - Instant filtering across all trading instruments with auto-focus
+  - Enhanced dropdown positioning to prevent overlap with chart area
+  
+- **Expanded Symbol Coverage**: Added comprehensive trading instruments
+  - Futures contracts (ES1!, NQ1!, CL1!, GC1!, SI1!, NG1!)
+  - Extended crypto pairs (BNB, XRP, DOGE, SHIB)
+  - Additional forex pairs (EURJPY, GBPJPY, AUDJPY)
+  - More indices and popular stocks for prop firm trading
+  
+- **Improved User Experience**: Professional trading interface enhancements
+  - Categorized results with asset type indicators and counts
+  - Visual improvements with backdrop blur and better shadows
+  - Close button (X) for easy dismissal of selector
+  - Smooth animations and hover effects throughout interface
+
 ### June 17, 2025 - TradingView Chart Fix & Trading Platform Integration
 - **Fixed TradingView Chart Loading Issue**: Resolved the chart stuck/not loading problem
   - Replaced complex widget implementation with reliable iframe approach
