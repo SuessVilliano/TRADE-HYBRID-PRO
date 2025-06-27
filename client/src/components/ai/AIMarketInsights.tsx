@@ -30,28 +30,59 @@ export function AIMarketInsights({ symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'], 
     setLoading(true);
     try {
       const insightPromises = symbols.map(async (symbol) => {
-        const response = await fetch('/api/ai/market-analysis', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            symbol, 
-            timeframe: '1h',
-            depth: 'advanced',
-            includeTechnicals: true,
-            includeSentiment: true
-          })
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch data for ${symbol}`);
+        try {
+          const response = await fetch('/api/ai/market-analysis', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              symbol, 
+              timeframe: '1h',
+              depth: 'advanced',
+              includeTechnicals: true,
+              includeSentiment: true
+            })
+          });
+          
+          if (!response.ok) {
+            console.warn(`AI analysis service unavailable for ${symbol}, using fallback`);
+            // Return structured fallback data indicating service unavailable
+            return {
+              symbol,
+              sentiment: 'neutral' as const,
+              confidence: 0,
+              recommendation: 'HOLD' as const,
+              keyLevels: { support: 0, resistance: 0 },
+              analysis: `AI analysis service is currently unavailable for ${symbol}. Please check your connection or try again later.`,
+              riskLevel: 'medium' as const
+            };
+          }
+          
+          const data = await response.json();
+          
+          return {
+            symbol,
+            sentiment: data.sentiment || 'neutral',
+            confidence: data.confidence || 0,
+            recommendation: data.recommendation || 'HOLD',
+            keyLevels: {
+              support: data.support || 0,
+              resistance: data.resistance || 0
+            },
+            analysis: data.analysis || `AI analysis for ${symbol} is being processed.`,
+            riskLevel: data.riskLevel || 'medium'
+          };
+        } catch (error) {
+          console.error(`Error fetching AI insights for ${symbol}:`, error);
+          return {
+            symbol,
+            sentiment: 'neutral' as const,
+            confidence: 0,
+            recommendation: 'HOLD' as const,
+            keyLevels: { support: 0, resistance: 0 },
+            analysis: `Unable to fetch AI analysis for ${symbol}. Please verify your API connection.`,
+            riskLevel: 'medium' as const
+          };
         }
-        
-        const data = await response.json();
-        
-        // Extract real-time data from the response
-        const analysis = data.analysis || {};
-        const tradingSuggestions = analysis.tradingSuggestions || {};
-        
         return {
           symbol,
           sentiment: tradingSuggestions.direction === 'buy' ? 'bullish' : 

@@ -50,6 +50,13 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
+  // Auto-scroll chat to bottom when new messages arrive
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
   // Start screen sharing and AI monitoring
   const startScreenSharing = useCallback(async () => {
     try {

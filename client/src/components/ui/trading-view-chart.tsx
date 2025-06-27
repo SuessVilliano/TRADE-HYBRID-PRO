@@ -25,20 +25,47 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
   const [selectedSymbol, setSelectedSymbol] = useState<string>(symbol);
   const [showSymbolSelector, setShowSymbolSelector] = useState<boolean>(false);
 
-  // Popular trading symbols
+  // Comprehensive trading symbols for prop firm trading
   const popularSymbols = [
-    { symbol: 'BTCUSDT', label: 'BTC/USDT', exchange: 'BINANCE' },
-    { symbol: 'ETHUSDT', label: 'ETH/USDT', exchange: 'BINANCE' },
-    { symbol: 'SOLUSDT', label: 'SOL/USDT', exchange: 'BINANCE' },
-    { symbol: 'ADAUSDT', label: 'ADA/USDT', exchange: 'BINANCE' },
-    { symbol: 'DOTUSDT', label: 'DOT/USDT', exchange: 'BINANCE' },
-    { symbol: 'LINKUSDT', label: 'LINK/USDT', exchange: 'BINANCE' },
-    { symbol: 'EURUSD', label: 'EUR/USD', exchange: 'FX_IDC' },
-    { symbol: 'GBPUSD', label: 'GBP/USD', exchange: 'FX_IDC' },
-    { symbol: 'USDJPY', label: 'USD/JPY', exchange: 'FX_IDC' },
-    { symbol: 'XAUUSD', label: 'Gold/USD', exchange: 'TVC' },
-    { symbol: 'SPY', label: 'S&P 500 ETF', exchange: 'AMEX' },
-    { symbol: 'QQQ', label: 'NASDAQ ETF', exchange: 'NASDAQ' }
+    // Major Cryptocurrencies
+    { symbol: 'BTCUSDT', label: 'Bitcoin/USDT', exchange: 'BINANCE', category: 'Crypto' },
+    { symbol: 'ETHUSDT', label: 'Ethereum/USDT', exchange: 'BINANCE', category: 'Crypto' },
+    { symbol: 'SOLUSDT', label: 'Solana/USDT', exchange: 'BINANCE', category: 'Crypto' },
+    { symbol: 'ADAUSDT', label: 'Cardano/USDT', exchange: 'BINANCE', category: 'Crypto' },
+    { symbol: 'DOTUSDT', label: 'Polkadot/USDT', exchange: 'BINANCE', category: 'Crypto' },
+    { symbol: 'LINKUSDT', label: 'Chainlink/USDT', exchange: 'BINANCE', category: 'Crypto' },
+    { symbol: 'AVAXUSDT', label: 'Avalanche/USDT', exchange: 'BINANCE', category: 'Crypto' },
+    { symbol: 'MATICUSDT', label: 'Polygon/USDT', exchange: 'BINANCE', category: 'Crypto' },
+    
+    // Major Forex Pairs
+    { symbol: 'EURUSD', label: 'EUR/USD', exchange: 'FX_IDC', category: 'Forex' },
+    { symbol: 'GBPUSD', label: 'GBP/USD', exchange: 'FX_IDC', category: 'Forex' },
+    { symbol: 'USDJPY', label: 'USD/JPY', exchange: 'FX_IDC', category: 'Forex' },
+    { symbol: 'AUDUSD', label: 'AUD/USD', exchange: 'FX_IDC', category: 'Forex' },
+    { symbol: 'USDCAD', label: 'USD/CAD', exchange: 'FX_IDC', category: 'Forex' },
+    { symbol: 'NZDUSD', label: 'NZD/USD', exchange: 'FX_IDC', category: 'Forex' },
+    { symbol: 'USDCHF', label: 'USD/CHF', exchange: 'FX_IDC', category: 'Forex' },
+    
+    // Commodities
+    { symbol: 'XAUUSD', label: 'Gold/USD', exchange: 'TVC', category: 'Commodities' },
+    { symbol: 'XAGUSD', label: 'Silver/USD', exchange: 'TVC', category: 'Commodities' },
+    { symbol: 'USOIL', label: 'Crude Oil', exchange: 'TVC', category: 'Commodities' },
+    { symbol: 'NATGAS', label: 'Natural Gas', exchange: 'TVC', category: 'Commodities' },
+    
+    // Major Indices
+    { symbol: 'SPX', label: 'S&P 500', exchange: 'TVC', category: 'Indices' },
+    { symbol: 'NAS100', label: 'NASDAQ 100', exchange: 'TVC', category: 'Indices' },
+    { symbol: 'DJI', label: 'Dow Jones', exchange: 'TVC', category: 'Indices' },
+    { symbol: 'UK100', label: 'FTSE 100', exchange: 'TVC', category: 'Indices' },
+    { symbol: 'GER40', label: 'DAX 40', exchange: 'TVC', category: 'Indices' },
+    
+    // Popular Stocks
+    { symbol: 'AAPL', label: 'Apple Inc.', exchange: 'NASDAQ', category: 'Stocks' },
+    { symbol: 'TSLA', label: 'Tesla Inc.', exchange: 'NASDAQ', category: 'Stocks' },
+    { symbol: 'GOOGL', label: 'Alphabet Inc.', exchange: 'NASDAQ', category: 'Stocks' },
+    { symbol: 'MSFT', label: 'Microsoft Corp.', exchange: 'NASDAQ', category: 'Stocks' },
+    { symbol: 'AMZN', label: 'Amazon.com Inc.', exchange: 'NASDAQ', category: 'Stocks' },
+    { symbol: 'NVDA', label: 'NVIDIA Corp.', exchange: 'NASDAQ', category: 'Stocks' }
   ];
 
   // Handle symbol change
@@ -159,16 +186,25 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
           </button>
           
           {showSymbolSelector && (
-            <div className="absolute top-full mt-1 left-0 bg-slate-900 border border-slate-700 rounded-md shadow-lg min-w-48 max-h-60 overflow-y-auto">
-              {popularSymbols.map((item) => (
-                <button
-                  key={item.symbol}
-                  onClick={() => handleSymbolChange(item.symbol)}
-                  className="w-full text-left px-3 py-2 text-sm text-white hover:bg-slate-700 flex justify-between items-center"
-                >
-                  <span>{item.label}</span>
-                  <span className="text-xs text-slate-400">{item.exchange}</span>
-                </button>
+            <div className="absolute top-full mt-1 left-0 bg-slate-900 border border-slate-700 rounded-md shadow-lg min-w-64 max-h-80 overflow-y-auto z-50">
+              {['Crypto', 'Forex', 'Indices', 'Commodities', 'Stocks'].map((category) => (
+                <div key={category}>
+                  <div className="px-3 py-2 text-xs font-semibold text-slate-300 bg-slate-800 border-b border-slate-700">
+                    {category}
+                  </div>
+                  {popularSymbols
+                    .filter(item => item.category === category)
+                    .map((item) => (
+                      <button
+                        key={item.symbol}
+                        onClick={() => handleSymbolChange(item.symbol)}
+                        className="w-full text-left px-3 py-2 text-sm text-white hover:bg-slate-700 flex justify-between items-center border-b border-slate-800 last:border-b-0"
+                      >
+                        <span>{item.label}</span>
+                        <span className="text-xs text-slate-400">{item.exchange}</span>
+                      </button>
+                    ))}
+                </div>
               ))}
             </div>
           )}

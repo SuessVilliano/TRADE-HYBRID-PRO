@@ -53,7 +53,23 @@ export function TradingPlatformPanel() {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
 
   const handlePlatformAccess = (platform: TradingPlatform) => {
-    window.open(platform.loginUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+    // Enhanced platform access with error handling
+    try {
+      const popup = window.open(
+        platform.loginUrl, 
+        `${platform.id}_platform`,
+        'width=1400,height=900,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,status=no'
+      );
+      
+      if (!popup) {
+        // Fallback if popup blocked
+        window.location.href = platform.loginUrl;
+      }
+    } catch (error) {
+      console.error(`Failed to open ${platform.name}:`, error);
+      // Direct navigation fallback
+      window.location.href = platform.loginUrl;
+    }
   };
 
   const getStatusColor = (status: string) => {
