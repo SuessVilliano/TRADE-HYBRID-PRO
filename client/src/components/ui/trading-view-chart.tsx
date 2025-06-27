@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, RefreshCcw, Bot, TrendingUp, Brain, Zap } from 'lucide-react';
+import { AlertTriangle, RefreshCcw, Bot, TrendingUp, Brain, Zap, ChevronDown } from 'lucide-react';
 import { Button } from './button';
 import { Card } from './card';
 
@@ -146,24 +146,53 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
 
   return (
     <div className={`relative w-full h-full bg-slate-800 rounded-lg overflow-hidden ${className}`}>
-      {/* Timeframe selector */}
-      <div className="absolute top-2 left-2 z-10 flex gap-1 bg-slate-900/80 rounded-md p-1">
-        {timeframeOptions.map((option) => (
+      {/* Symbol and Timeframe selector */}
+      <div className="absolute top-2 left-2 z-10 space-y-2">
+        {/* Symbol Selector */}
+        <div className="relative">
           <button
-            key={option.value}
-            onClick={() => {
-              setSelectedTimeframe(option.value);
-              refreshChart();
-            }}
-            className={`px-2 py-1 text-xs rounded transition-colors ${
-              selectedTimeframe === option.value
-                ? 'bg-blue-600 text-white'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700'
-            }`}
+            onClick={() => setShowSymbolSelector(!showSymbolSelector)}
+            className="bg-slate-900/80 text-white px-3 py-1 text-sm rounded-md hover:bg-slate-700 flex items-center gap-2"
           >
-            {option.label}
+            {selectedSymbol}
+            <ChevronDown className="h-3 w-3" />
           </button>
-        ))}
+          
+          {showSymbolSelector && (
+            <div className="absolute top-full mt-1 left-0 bg-slate-900 border border-slate-700 rounded-md shadow-lg min-w-48 max-h-60 overflow-y-auto">
+              {popularSymbols.map((item) => (
+                <button
+                  key={item.symbol}
+                  onClick={() => handleSymbolChange(item.symbol)}
+                  className="w-full text-left px-3 py-2 text-sm text-white hover:bg-slate-700 flex justify-between items-center"
+                >
+                  <span>{item.label}</span>
+                  <span className="text-xs text-slate-400">{item.exchange}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        {/* Timeframe Selector */}
+        <div className="flex gap-1 bg-slate-900/80 rounded-md p-1">
+          {timeframeOptions.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => {
+                setSelectedTimeframe(option.value);
+                refreshChart();
+              }}
+              className={`px-2 py-1 text-xs rounded transition-colors ${
+                selectedTimeframe === option.value
+                  ? 'bg-blue-600 text-white'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-700'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Refresh button */}

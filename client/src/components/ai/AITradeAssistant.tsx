@@ -425,19 +425,20 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
         </Card>
       )}
 
-      {/* Chat Interface */}
-      <Card className="h-96">
-        <CardHeader>
+      {/* Chat Interface - Fixed Height and Scrolling */}
+      <Card className="flex flex-col h-[500px]">
+        <CardHeader className="flex-shrink-0 pb-3">
           <CardTitle className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-blue-500" />
             AI Chat
             {isStreaming && <Badge variant="secondary" className="animate-pulse">Typing...</Badge>}
           </CardTitle>
         </CardHeader>
-        <CardContent className="h-full flex flex-col">
+        <CardContent className="flex flex-col flex-1 overflow-hidden">
           <div 
             ref={chatContainerRef}
-            className="flex-1 overflow-y-auto space-y-3 mb-4 p-2 border rounded-lg bg-muted/20"
+            className="flex-1 overflow-y-auto space-y-3 p-3 border rounded-lg bg-slate-900/50 mb-4"
+            style={{ minHeight: '300px', maxHeight: '350px' }}
           >
             {chatMessages.map((msg) => (
               <div
