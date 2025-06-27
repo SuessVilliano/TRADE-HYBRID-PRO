@@ -1,10 +1,7 @@
 
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import { neon, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import * as schema from '../../shared/schema';
-
-// Configure neon
-neonConfig.fetchConnectionCache = true;
 
 // Initialize the database connection
 const connectionString = process.env.DATABASE_URL;
@@ -13,8 +10,12 @@ if (!connectionString) {
   throw new Error('DATABASE_URL environment variable is required');
 }
 
-// Create neon SQL instance
-const sql = neon(connectionString);
+// Create postgres client
+const sql = postgres(connectionString, {
+  max: 10,
+  idle_timeout: 20,
+  connect_timeout: 60,
+});
 
 // Create drizzle database instance with schema
 export const db = drizzle(sql, { schema });

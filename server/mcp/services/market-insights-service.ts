@@ -56,13 +56,9 @@ export class MarketInsightsService {
    * Initialize the service
    */
   public async initialize(): Promise<void> {
-    // Start periodic updates
-    this.startPeriodicUpdates();
-    
-    // Initial loading of insights
-    await this.updateAllInsights();
-    
-    console.log('Market Insights Service fully initialized');
+    console.log('Market Insights Service initialized (minimal mode)');
+    // Skip data loading during startup to prevent crashes
+    // Data will be loaded on-demand when requested
   }
   
   /**
@@ -681,8 +677,9 @@ export class MarketInsightsService {
    * Update technical analysis
    */
   private async updateTechnicalAnalysis(): Promise<void> {
-    const majorAssets = ['BTCUSDT', 'ETHUSDT', 'SPY', 'QQQ'];
-    const timeframes = [TimeInterval.ONE_HOUR, TimeInterval.FOUR_HOURS, TimeInterval.ONE_DAY];
+    // Only use crypto pairs that we know work with our data providers
+    const majorAssets = ['BTCUSDT', 'ETHUSDT'];
+    const timeframes = [TimeInterval.ONE_HOUR, TimeInterval.ONE_DAY];
     
     for (const asset of majorAssets) {
       for (const timeframe of timeframes) {
