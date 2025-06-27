@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { AlertTriangle, RefreshCcw, Bot, TrendingUp, Brain, Zap, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { AlertTriangle, RefreshCcw, Bot, TrendingUp, Brain, Zap, ChevronDown, Search, X } from 'lucide-react';
 import { Button } from './button';
 import { Card } from './card';
+import { Input } from './input';
 
 interface TradingViewChartProps {
   symbol: string;
@@ -22,9 +23,6 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
   const [key, setKey] = useState<number>(0);
   const [aiInsights, setAiInsights] = useState<any>(null);
   const [showAIOverlay, setShowAIOverlay] = useState<boolean>(true);
-  const [selectedSymbol, setSelectedSymbol] = useState<string>(symbol);
-  const [showSymbolSelector, setShowSymbolSelector] = useState<boolean>(false);
-
   // Comprehensive trading symbols for prop firm trading
   const popularSymbols = [
     // Major Cryptocurrencies
@@ -36,6 +34,10 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
     { symbol: 'LINKUSDT', label: 'Chainlink/USDT', exchange: 'BINANCE', category: 'Crypto' },
     { symbol: 'AVAXUSDT', label: 'Avalanche/USDT', exchange: 'BINANCE', category: 'Crypto' },
     { symbol: 'MATICUSDT', label: 'Polygon/USDT', exchange: 'BINANCE', category: 'Crypto' },
+    { symbol: 'BNBUSDT', label: 'BNB/USDT', exchange: 'BINANCE', category: 'Crypto' },
+    { symbol: 'XRPUSDT', label: 'XRP/USDT', exchange: 'BINANCE', category: 'Crypto' },
+    { symbol: 'DOGEUSDT', label: 'Dogecoin/USDT', exchange: 'BINANCE', category: 'Crypto' },
+    { symbol: 'SHIBUSDT', label: 'Shiba Inu/USDT', exchange: 'BINANCE', category: 'Crypto' },
     
     // Major Forex Pairs
     { symbol: 'EURUSD', label: 'EUR/USD', exchange: 'FX_IDC', category: 'Forex' },
@@ -45,6 +47,19 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
     { symbol: 'USDCAD', label: 'USD/CAD', exchange: 'FX_IDC', category: 'Forex' },
     { symbol: 'NZDUSD', label: 'NZD/USD', exchange: 'FX_IDC', category: 'Forex' },
     { symbol: 'USDCHF', label: 'USD/CHF', exchange: 'FX_IDC', category: 'Forex' },
+    { symbol: 'EURJPY', label: 'EUR/JPY', exchange: 'FX_IDC', category: 'Forex' },
+    { symbol: 'GBPJPY', label: 'GBP/JPY', exchange: 'FX_IDC', category: 'Forex' },
+    { symbol: 'AUDJPY', label: 'AUD/JPY', exchange: 'FX_IDC', category: 'Forex' },
+    
+    // Futures
+    { symbol: 'ES1!', label: 'E-mini S&P 500', exchange: 'CME', category: 'Futures' },
+    { symbol: 'NQ1!', label: 'E-mini NASDAQ', exchange: 'CME', category: 'Futures' },
+    { symbol: 'YM1!', label: 'E-mini Dow', exchange: 'CBOT', category: 'Futures' },
+    { symbol: 'RTY1!', label: 'E-mini Russell 2000', exchange: 'CME', category: 'Futures' },
+    { symbol: 'CL1!', label: 'Crude Oil Futures', exchange: 'NYMEX', category: 'Futures' },
+    { symbol: 'GC1!', label: 'Gold Futures', exchange: 'COMEX', category: 'Futures' },
+    { symbol: 'SI1!', label: 'Silver Futures', exchange: 'COMEX', category: 'Futures' },
+    { symbol: 'NG1!', label: 'Natural Gas Futures', exchange: 'NYMEX', category: 'Futures' },
     
     // Commodities
     { symbol: 'XAUUSD', label: 'Gold/USD', exchange: 'TVC', category: 'Commodities' },
@@ -58,6 +73,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
     { symbol: 'DJI', label: 'Dow Jones', exchange: 'TVC', category: 'Indices' },
     { symbol: 'UK100', label: 'FTSE 100', exchange: 'TVC', category: 'Indices' },
     { symbol: 'GER40', label: 'DAX 40', exchange: 'TVC', category: 'Indices' },
+    { symbol: 'JPN225', label: 'Nikkei 225', exchange: 'TVC', category: 'Indices' },
     
     // Popular Stocks
     { symbol: 'AAPL', label: 'Apple Inc.', exchange: 'NASDAQ', category: 'Stocks' },
@@ -65,18 +81,55 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
     { symbol: 'GOOGL', label: 'Alphabet Inc.', exchange: 'NASDAQ', category: 'Stocks' },
     { symbol: 'MSFT', label: 'Microsoft Corp.', exchange: 'NASDAQ', category: 'Stocks' },
     { symbol: 'AMZN', label: 'Amazon.com Inc.', exchange: 'NASDAQ', category: 'Stocks' },
-    { symbol: 'NVDA', label: 'NVIDIA Corp.', exchange: 'NASDAQ', category: 'Stocks' }
+    { symbol: 'NVDA', label: 'NVIDIA Corp.', exchange: 'NASDAQ', category: 'Stocks' },
+    { symbol: 'META', label: 'Meta Platforms Inc.', exchange: 'NASDAQ', category: 'Stocks' },
+    { symbol: 'NFLX', label: 'Netflix Inc.', exchange: 'NASDAQ', category: 'Stocks' }
   ];
+
+  const [selectedSymbol, setSelectedSymbol] = useState<string>(symbol);
+  const [showSymbolSelector, setShowSymbolSelector] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [filteredSymbols, setFilteredSymbols] = useState(popularSymbols);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Filter symbols based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredSymbols(popularSymbols);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = popularSymbols.filter(item => 
+        item.symbol.toLowerCase().includes(query) ||
+        item.label.toLowerCase().includes(query) ||
+        item.exchange.toLowerCase().includes(query)
+      );
+      setFilteredSymbols(filtered);
+    }
+  }, [searchQuery]);
+
+  // Focus search input when selector opens
+  useEffect(() => {
+    if (showSymbolSelector && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [showSymbolSelector]);
 
   // Handle symbol change
   const handleSymbolChange = (newSymbol: string) => {
     setSelectedSymbol(newSymbol);
     setShowSymbolSelector(false);
+    setSearchQuery('');
     setKey(prev => prev + 1);
     refreshChart();
     if (onSymbolChange) {
       onSymbolChange(newSymbol);
     }
+  };
+
+  // Clear search and close selector
+  const handleCloseSelector = () => {
+    setShowSymbolSelector(false);
+    setSearchQuery('');
   };
 
   // Convert symbol to TradingView URL format
@@ -179,33 +232,95 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
         <div className="relative">
           <button
             onClick={() => setShowSymbolSelector(!showSymbolSelector)}
-            className="bg-slate-900/80 text-white px-3 py-1 text-sm rounded-md hover:bg-slate-700 flex items-center gap-2"
+            className="bg-slate-900/95 backdrop-blur-sm text-white px-3 py-2 text-sm rounded-md hover:bg-slate-700 flex items-center gap-2 shadow-lg border border-slate-600"
           >
-            {selectedSymbol}
-            <ChevronDown className="h-3 w-3" />
+            <span className="font-medium">{selectedSymbol}</span>
+            <ChevronDown className={`h-3 w-3 transition-transform ${showSymbolSelector ? 'rotate-180' : ''}`} />
           </button>
           
           {showSymbolSelector && (
-            <div className="absolute top-full mt-1 left-0 bg-slate-900 border border-slate-700 rounded-md shadow-lg min-w-64 max-h-80 overflow-y-auto z-50">
-              {['Crypto', 'Forex', 'Indices', 'Commodities', 'Stocks'].map((category) => (
-                <div key={category}>
-                  <div className="px-3 py-2 text-xs font-semibold text-slate-300 bg-slate-800 border-b border-slate-700">
-                    {category}
-                  </div>
-                  {popularSymbols
-                    .filter(item => item.category === category)
-                    .map((item) => (
-                      <button
-                        key={item.symbol}
-                        onClick={() => handleSymbolChange(item.symbol)}
-                        className="w-full text-left px-3 py-2 text-sm text-white hover:bg-slate-700 flex justify-between items-center border-b border-slate-800 last:border-b-0"
-                      >
-                        <span>{item.label}</span>
-                        <span className="text-xs text-slate-400">{item.exchange}</span>
-                      </button>
-                    ))}
+            <div className="absolute top-full mt-2 left-0 bg-slate-900/95 backdrop-blur-sm border border-slate-600 rounded-lg shadow-xl min-w-80 max-h-96 z-50">
+              {/* Search Header */}
+              <div className="p-3 border-b border-slate-700">
+                <div className="flex items-center gap-2 mb-2">
+                  <Search className="h-4 w-4 text-slate-400" />
+                  <span className="text-sm font-medium text-slate-300">Search Trading Symbols</span>
+                  <button 
+                    onClick={handleCloseSelector}
+                    className="ml-auto text-slate-400 hover:text-white"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
-              ))}
+                <Input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Type symbol, name, or exchange..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-slate-800 border-slate-600 text-white placeholder-slate-400 text-sm"
+                />
+              </div>
+              
+              {/* Results */}
+              <div className="max-h-64 overflow-y-auto">
+                {searchQuery.trim() ? (
+                  // Show filtered results when searching
+                  filteredSymbols.length > 0 ? (
+                    <div className="p-1">
+                      {filteredSymbols.map((item) => (
+                        <button
+                          key={item.symbol}
+                          onClick={() => handleSymbolChange(item.symbol)}
+                          className="w-full text-left px-3 py-2 text-sm text-white hover:bg-slate-700 rounded flex justify-between items-center group"
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-medium">{item.symbol}</span>
+                            <span className="text-xs text-slate-400">{item.label}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs px-2 py-1 bg-slate-800 rounded text-slate-300">{item.category}</span>
+                            <span className="text-xs text-slate-400">{item.exchange}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center text-slate-400 text-sm">
+                      No symbols found matching "{searchQuery}"
+                    </div>
+                  )
+                ) : (
+                  // Show categorized results when not searching
+                  ['Crypto', 'Forex', 'Futures', 'Indices', 'Commodities', 'Stocks'].map((category) => {
+                    const categorySymbols = popularSymbols.filter(item => item.category === category);
+                    if (categorySymbols.length === 0) return null;
+                    
+                    return (
+                      <div key={category}>
+                        <div className="px-3 py-2 text-xs font-semibold text-slate-300 bg-slate-800/50 border-b border-slate-700 sticky top-0">
+                          {category} ({categorySymbols.length})
+                        </div>
+                        <div className="p-1">
+                          {categorySymbols.map((item) => (
+                            <button
+                              key={item.symbol}
+                              onClick={() => handleSymbolChange(item.symbol)}
+                              className="w-full text-left px-3 py-2 text-sm text-white hover:bg-slate-700 rounded flex justify-between items-center group"
+                            >
+                              <div className="flex flex-col">
+                                <span className="font-medium">{item.symbol}</span>
+                                <span className="text-xs text-slate-400">{item.label}</span>
+                              </div>
+                              <span className="text-xs text-slate-400">{item.exchange}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
           )}
         </div>
