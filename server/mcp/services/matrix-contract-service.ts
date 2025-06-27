@@ -88,7 +88,7 @@ export class MatrixContractService {
       console.log('Loading matrix referral data from blockchain...');
       
       // Import database for persistent storage
-      const { storage } = await import('../../../storage');
+      const { storage } = await import('../../storage');
       
       try {
         // First check if we have cached referral data in database
@@ -284,7 +284,7 @@ export class MatrixContractService {
       console.log(`Analyzing ${transactions.length} transactions for wallet ${walletAddress} to determine slots`);
       
       // Import database for persistent storage
-      const { storage } = await import('../../../storage');
+      const { storage } = await import('../../storage');
       
       // First check if we have cached slot data in database
       try {
@@ -714,7 +714,7 @@ export class MatrixContractService {
       }
       
       // Import database for persistent storage
-      const { storage } = await import('../../../storage');
+      const { storage } = await import('../../storage');
       
       // Check if we have referral data in the database
       try {
@@ -768,7 +768,7 @@ export class MatrixContractService {
   private async getRegistrationTime(walletAddress: string): Promise<number> {
     try {
       // Import database for persistent storage
-      const { storage } = await import('../../../storage');
+      const { storage } = await import('../../storage');
       
       // Check if we have registration data in the database
       try {
