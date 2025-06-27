@@ -104,8 +104,8 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Cloud Run expects single port 5000
-  const port = process.env.PORT || 5000;
+  // Use port 3000 for development to avoid conflicts
+  const port = process.env.PORT || 3000;
 
   // Start server directly on port 5000 for Cloud Run
   const startServer = async (): Promise<void> => {

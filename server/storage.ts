@@ -10,15 +10,8 @@ import {
   type InsertUser,
   type TradeSignal
 } from '../shared/schema';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import { neon } from '@neondatabase/serverless';
+import { db, sql } from './lib/db';
 import { eq, and } from 'drizzle-orm';
-
-// Database connection setup
-// This assumes DATABASE_URL environment variable is set
-const sql = neon(process.env.DATABASE_URL!);
-// Define schema to make TypeScript happy
-const db = drizzle(sql, { schema });
 
 // Drizzle ORM storage implementation
 export const storage = {

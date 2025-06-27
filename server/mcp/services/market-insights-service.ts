@@ -681,7 +681,7 @@ export class MarketInsightsService {
    * Update technical analysis
    */
   private async updateTechnicalAnalysis(): Promise<void> {
-    const majorAssets = ['BTCUSDT', 'ETHUSDT', 'SPY', 'QQQ', 'EURUSD', 'GBPUSD'];
+    const majorAssets = ['BTCUSDT', 'ETHUSDT', 'SPY', 'QQQ'];
     const timeframes = [TimeInterval.ONE_HOUR, TimeInterval.FOUR_HOURS, TimeInterval.ONE_DAY];
     
     for (const asset of majorAssets) {
