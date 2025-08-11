@@ -5,7 +5,10 @@ import { LoginForm } from '@/components/auth/LoginForm';
 import { useAuthStore } from '@/lib/stores/useAuthStore';
 
 export function AuthPage() {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  // Check URL to determine initial mode
+  const [mode, setMode] = useState<'login' | 'register'>(() => {
+    return window.location.pathname === '/register' ? 'register' : 'login';
+  });
   const { user, login } = useAuthStore();
 
   // Redirect if already authenticated

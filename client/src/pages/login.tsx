@@ -57,31 +57,46 @@ export default function LoginPage() {
         setLoginStatus("Login timed out. Please try again later.");
       }, 15000); // 15 seconds timeout
       
-      // Call the auth service directly
-      const userData = await authService.login(username, password);
+      // Use the new user management API
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          identifier: username, // Can be username or email
+          password: password
+        })
+      });
+      
+      const data = await response.json();
       
       // Clear the timeout since login succeeded
       if (loginTimeoutRef.current) {
         clearTimeout(loginTimeoutRef.current);
       }
       
-      console.log("Login successful with user data:", userData);
-      setLoginStatus("Login successful! Redirecting...");
+      if (response.ok && data.success) {
+        console.log("Login successful with user data:", data.user);
+        setLoginStatus("Login successful! Redirecting...");
+        
+        // Update auth context
+        auth.getCurrentUser();
+        
+        // Navigate to dashboard
+        navigate("/dashboard");
+      } else {
+        throw new Error(data.error || 'Login failed');
+      }
       
-      // Update auth context
-      auth.getCurrentUser();
-      
-      // Navigate to dashboard
-      navigate("/dashboard");
-      
-    } catch (err) {
+    } catch (err: any) {
       // Clear the timeout since login failed with an error
       if (loginTimeoutRef.current) {
         clearTimeout(loginTimeoutRef.current);
       }
       
       console.error("Login failed:", err);
-      setLoginStatus("Login failed. Please check your credentials and try again.");
+      setLoginStatus(err.message || "Login failed. Please check your credentials and try again.");
     } finally {
       setIsLoggingIn(false);
     }

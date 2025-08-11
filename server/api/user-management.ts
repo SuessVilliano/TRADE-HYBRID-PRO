@@ -64,9 +64,11 @@ router.post('/register', async (req, res) => {
       }
     }
 
-    // Hash password
-    const saltRounds = 12;
+    // Hash password with bcrypt
+    const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
+    
+    console.log(`Creating user with hashed password: ${hashedPassword.substring(0, 15)}...`);
 
     // Create new user
     const newUser = await sql`
@@ -159,8 +161,13 @@ router.post('/login', async (req, res) => {
 
     const user = users[0];
 
-    // Verify password
+    // Verify password with bcrypt
+    console.log(`Attempting login for user: ${user.username}`);
+    console.log(`Password hash in DB: ${user.password.substring(0, 15)}...`);
+    
     const passwordMatch = await bcrypt.compare(password, user.password);
+    console.log(`Password match result: ${passwordMatch}`);
+    
     if (!passwordMatch) {
       return res.status(401).json({ 
         error: 'Invalid credentials' 

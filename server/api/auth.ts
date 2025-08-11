@@ -89,12 +89,22 @@ router.post('/login', async (req, res) => {
     // Compare password using bcrypt for secure authentication
     try {
       const bcrypt = await import('bcrypt');
-      const passwordMatch = await bcrypt.compare(password, user.password);
-      if (!passwordMatch) {
-        return res.status(401).json({ error: 'Invalid username or password' });
+      
+      // Check if password is already hashed (starts with $2b$)
+      if (user.password.startsWith('$2b$')) {
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+          return res.status(401).json({ error: 'Invalid username or password' });
+        }
+      } else {
+        // Fallback to plain text comparison for legacy users
+        if (user.password !== password) {
+          return res.status(401).json({ error: 'Invalid username or password' });
+        }
       }
     } catch (bcryptError) {
-      // Fallback to plain text comparison for legacy users
+      console.error('BCrypt error:', bcryptError);
+      // Fallback to plain text comparison
       if (user.password !== password) {
         return res.status(401).json({ error: 'Invalid username or password' });
       }
