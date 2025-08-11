@@ -272,30 +272,30 @@ export default function TradeJournalAdvanced() {
       headers.join(','),
       ...trades.map(trade => [
         trade.id,
-        trade.symbol,
-        trade.type,
+        `"${trade.symbol}"`,
+        `"${trade.type}"`,
         trade.entryPrice,
         trade.exitPrice || '',
         trade.quantity,
         trade.pnl || '',
         trade.pnlPercent || '',
-        trade.date,
-        trade.time,
-        trade.status,
-        `"${trade.notes.replace(/"/g, '""')}"`,
+        `"${trade.date}"`,
+        `"${trade.time}"`,
+        `"${trade.status}"`,
+        `"${(trade.notes || '').replace(/"/g, '""')}"`,
         `"${trade.tags.join(', ')}"`,
-        trade.strategy || '',
-        trade.timeframe || '',
+        `"${trade.strategy || ''}"`,
+        `"${trade.timeframe || ''}"`,
         trade.risk || '',
         trade.riskReward || '',
-        trade.emotions || '',
-        trade.marketConditions || '',
-        trade.performance || '',
-        trade.learnings ? `"${trade.learnings.replace(/"/g, '""')}"` : ''
+        `"${trade.emotions || ''}"`,
+        `"${trade.marketConditions || ''}"`,
+        `"${trade.performance || ''}"`,
+        trade.learnings ? `"${trade.learnings.replace(/"/g, '""')}"` : '""'
       ].join(','))
     ];
     
-    const csvString = csvRows.join('\\n');
+    const csvString = csvRows.join('\n');
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
