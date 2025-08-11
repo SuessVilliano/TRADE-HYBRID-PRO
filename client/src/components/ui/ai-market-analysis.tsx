@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Button } from './button';
 import { BrainCircuit, BarChart3, TrendingUp, Calculator, Clock, RefreshCw, AlertCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
-import { useAIAnalysis } from '../../lib/stores/useAIAnalysis';
+// Remove the useAIAnalysis import since the store has issues
+// import { useAIAnalysis } from '../../lib/stores/useAIAnalysis';
 import { AIMarketAnalysis as AIAnalysisData } from '../../lib/services/ai-market-analysis-service';
 
 interface AIMarketAnalysisProps {
@@ -18,28 +19,28 @@ export function AIMarketAnalysis({ className }: AIMarketAnalysisProps) {
   const [hybridScore, setHybridScore] = useState<number>(72);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
-  // Get the AI analysis functions from the store
-  const { 
-    analyzeMarket, 
-    currentAnalysis, 
-    loadingAnalysis, 
-    error 
-  } = useAIAnalysis();
+  // Temporarily disable the AI analysis store until we fix import issues
+  // const { 
+  //   analyzeMarket, 
+  //   currentAnalysis, 
+  //   loadingAnalysis, 
+  //   error 
+  // } = useAIAnalysis();
   
-  // Update local state when analysis is loaded
-  useEffect(() => {
-    if (currentAnalysis) {
-      setAnalysisData(currentAnalysis);
-      // Generate a realistic hybrid score between 50-95
-      setHybridScore(Math.floor(Math.random() * 45) + 50);
-    }
-    
-    if (error) {
-      setErrorMessage(error);
-    }
-    
-    setIsAnalyzing(loadingAnalysis);
-  }, [currentAnalysis, loadingAnalysis, error]);
+  // Update local state when analysis is loaded - temporarily disabled
+  // useEffect(() => {
+  //   if (currentAnalysis) {
+  //     setAnalysisData(currentAnalysis);
+  //     // Generate a realistic hybrid score between 50-95
+  //     setHybridScore(Math.floor(Math.random() * 45) + 50);
+  //   }
+  //   
+  //   if (error) {
+  //     setErrorMessage(error);
+  //   }
+  //   
+  //   setIsAnalyzing(loadingAnalysis);
+  // }, [currentAnalysis, loadingAnalysis, error]);
   
   const handleRunAnalysis = async () => {
     setIsAnalyzing(true);
@@ -49,8 +50,38 @@ export function AIMarketAnalysis({ className }: AIMarketAnalysisProps) {
       // Get mock market data for the selected symbol
       const marketData = await fetchMarketData(symbol, timeframe);
       
-      // Call the AI analysis service
-      await analyzeMarket(symbol, marketData, timeframe);
+      // Mock AI analysis for now until we fix the store
+      const mockAnalysis: AIAnalysisData = {
+        symbol,
+        prediction: {
+          direction: Math.random() > 0.5 ? 'bullish' : 'bearish',
+          confidence: Math.floor(Math.random() * 30) + 65,
+          priceTarget: 31500,
+          timeframe: 'medium-term'
+        },
+        patterns: [
+          {
+            name: 'Bull Flag',
+            type: 'bullish',
+            confidence: 78,
+            description: 'Strong bullish continuation pattern detected'
+          }
+        ],
+        signals: [],
+        insights: [
+          'Strong upward momentum detected in the last 24 hours',
+          'Volume profile suggests institutional buying interest',
+          'Technical indicators align for potential breakout'
+        ],
+        riskAssessment: {
+          level: 'medium',
+          factors: ['Market volatility', 'Economic uncertainty']
+        },
+        lastUpdated: new Date()
+      };
+      
+      setAnalysisData(mockAnalysis);
+      setHybridScore(Math.floor(Math.random() * 30) + 65);
     } catch (error) {
       console.error('Error running analysis:', error);
       setErrorMessage('Failed to analyze market data. Please try again.');

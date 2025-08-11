@@ -728,5 +728,25 @@ export type InvestmentPerformance = typeof investmentPerformance.$inferSelect;
 export type CompanyRevenue = typeof companyRevenue.$inferSelect;
 export type FeeSetting = typeof feeSettings.$inferSelect;
 
+// User webhooks table (for user-created webhooks)
+export const userWebhooks = pgTable("user_webhooks", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  token: text("token").notNull().unique(), // Unique webhook token
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  lastUsedAt: timestamp("last_used_at"),
+  signalCount: integer("signal_count").default(0),
+  isActive: boolean("is_active").default(true),
+});
+
+export type UserWebhook = typeof userWebhooks.$inferSelect;
+export const insertUserWebhookSchema = createInsertSchema(userWebhooks).pick({
+  userId: true,
+  name: true,
+  token: true,
+  isActive: true,
+});
+
 // Import wallet-related schemas to ensure they're included in the DB
 import "./wallet-schema";

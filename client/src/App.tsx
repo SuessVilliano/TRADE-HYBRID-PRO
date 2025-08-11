@@ -261,6 +261,8 @@ const App: React.FC = () => {
                   <Route path="/ai-market-analysis" element={<ProtectedRoute><AiMarketAnalysisPage /></ProtectedRoute>} />
                   <Route path="/market-overview" element={<ProtectedRoute><TradingToolsPage /></ProtectedRoute>} />
                   <Route path="/portfolio-dashboard" element={<ProtectedRoute><InvestorDashboardPage /></ProtectedRoute>} />
+                  <Route path="/portfolio" element={<ProtectedRoute><InvestorDashboardPage /></ProtectedRoute>} />
+                  <Route path="/market-analysis" element={<ProtectedRoute><AiMarketAnalysisPage /></ProtectedRoute>} />
                   <Route path="/user-settings" element={<ProtectedRoute><SettingsView /></ProtectedRoute>} />
                   <Route path="/help-center" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
                   <Route path="/signals-analyzer" element={<ProtectedRoute><SignalsAnalyzerPage /></ProtectedRoute>} />
@@ -286,6 +288,7 @@ const App: React.FC = () => {
                   <Route path="/nft-marketplace" element={<ProtectedRoute><NftMarketplacePage /></ProtectedRoute>} />
                   <Route path="/nft-marketplace/simple" element={<ProtectedRoute><NftMarketplaceSimplePage /></ProtectedRoute>} />
                   <Route path="/thc-staking" element={<ProtectedRoute><ThcStakingPage /></ProtectedRoute>} />
+                  <Route path="/staking" element={<ProtectedRoute><ThcStakingPage /></ProtectedRoute>} />
                   <Route path="/thc-staking/enhanced" element={<React.Suspense fallback={<div>Loading staking...</div>}>
                     <ProtectedRoute>
                       <div className="container max-w-4xl mx-auto px-4 py-8">

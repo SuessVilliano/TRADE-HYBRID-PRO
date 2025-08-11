@@ -104,15 +104,12 @@ router.post('/', async (req, res) => {
     // Fix potential SQL injection by using parameterized queries
     // Include all required columns based on actual table schema
     const query = `
-      INSERT INTO user_webhooks (user_id, name, token, broker, broker_config, created_at, last_used_at, signal_count, is_active)
-      VALUES ($1, $2, $3, $4, $5, $6, NULL, 0, TRUE)
-      RETURNING id, user_id, name, token, broker, created_at, last_used_at, signal_count, is_active;
+      INSERT INTO user_webhooks (user_id, name, token, created_at, signal_count, is_active)
+      VALUES ($1, $2, $3, $4, 0, TRUE)
+      RETURNING id, user_id, name, token, created_at, last_used_at, signal_count, is_active;
     `;
     
-    // Add default broker and empty config
-    const defaultBroker = 'webhook';
-    const emptyConfig = '{}';
-    const params = [userId, name, token, defaultBroker, emptyConfig, now];
+    const params = [userId, name, token, now];
     
     console.log('Creating webhook with params:', JSON.stringify(params));
     const result = await executeQueryFromFile(query, params);
