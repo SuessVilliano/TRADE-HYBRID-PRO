@@ -79,6 +79,10 @@ app.use((req, res, next) => {
   // Register our API router for the validator endpoints
   app.use('/api', apiRouter);
   
+  // Import and use the user management routes
+  const userManagementRouter = (await import("./api/user-management")).default;
+  app.use("/api/auth", userManagementRouter);
+  
   const server = await registerRoutes(app);
   
   // Initialize and register MCP routes

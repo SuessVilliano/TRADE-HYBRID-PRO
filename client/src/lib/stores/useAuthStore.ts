@@ -8,13 +8,21 @@ interface UserData {
   email: string;
   avatar?: string;
   balance: number;
+  walletAddress?: string;
+  membershipLevel?: string;
+  thcTokenHolder?: boolean;
+  hasConnectedApis?: boolean;
 }
 
 interface AuthState {
   user: UserData | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
   setUser: (user: UserData | null) => void;
+  login: (user: UserData) => void;
   logout: () => void;
+  clearError: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -22,8 +30,12 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       isAuthenticated: false,
+      isLoading: false,
+      error: null,
       setUser: (user) => set({ user, isAuthenticated: !!user }),
-      logout: () => set({ user: null, isAuthenticated: false }),
+      login: (user) => set({ user, isAuthenticated: true, error: null }),
+      logout: () => set({ user: null, isAuthenticated: false, error: null }),
+      clearError: () => set({ error: null }),
     }),
     {
       name: 'auth-storage',

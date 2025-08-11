@@ -28,6 +28,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import LoginPage from './pages/login';
 import HomePage from './pages/home';
 import SignupPage from './pages/signup';
+import { AuthPage } from './pages/AuthPage';
 import TradeView from './pages/trading-space';
 import JournalView from './pages/trade-journal';
 import AdvancedJournalView from './pages/trade-journal-advanced';
@@ -189,6 +190,7 @@ const App: React.FC = () => {
                   {/* Auth routes */}
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/signup" element={<SignupPage />} />
+                  <Route path="/auth" element={<AuthPage />} />
                   <Route path="/wallet" element={<WalletConnectOnboarding />} />
                   <Route path="/wallet-connection" element={<ProtectedRoute><WalletConnectionPage /></ProtectedRoute>} />
                   

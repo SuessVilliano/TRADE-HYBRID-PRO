@@ -86,9 +86,18 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
     
-    // In production, we should use bcrypt to compare passwords
-    if (user.password !== password) {
-      return res.status(401).json({ error: 'Invalid username or password' });
+    // Compare password using bcrypt for secure authentication
+    try {
+      const bcrypt = await import('bcrypt');
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      if (!passwordMatch) {
+        return res.status(401).json({ error: 'Invalid username or password' });
+      }
+    } catch (bcryptError) {
+      // Fallback to plain text comparison for legacy users
+      if (user.password !== password) {
+        return res.status(401).json({ error: 'Invalid username or password' });
+      }
     }
     
     // Set user ID in session

@@ -23,12 +23,15 @@ router.get('/', async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
     
-    // For demo purposes, let's use a demo user if not authenticated
-    let userId = authReq.session.userId || 2; // Using ID 2 for demo user (integer)
+    // Get authenticated user ID, or use demo user (ID 2) for non-authenticated users
+    let userId = authReq.session.userId;
     
-    // If we're using the demo user, log it
-    if (!authReq.session.userId) {
+    // If no authenticated user, use demo user
+    if (!userId) {
+      userId = 2;
       console.log('Using demo user ID for fetching webhooks: 2');
+    } else {
+      console.log(`Fetching webhooks for authenticated user ID: ${userId}`);
     }
     
     // Get webhooks from database using parameterized query
@@ -81,12 +84,15 @@ router.post('/', async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
     
-    // For demo purposes, let's use a demo user if not authenticated
-    let userId = authReq.session.userId || 2; // Using ID 2 for demo user (integer) since we have a user with ID 2
+    // Get authenticated user ID, or use demo user (ID 2) for non-authenticated users
+    let userId = authReq.session.userId;
     
-    // If we're using the demo user, log it
-    if (!authReq.session.userId) {
+    // If no authenticated user, use demo user
+    if (!userId) {
+      userId = 2;
       console.log('Using demo user ID for webhook creation: 2');
+    } else {
+      console.log(`Creating webhook for authenticated user ID: ${userId}`);
     }
     const { name } = req.body;
     
