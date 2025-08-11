@@ -1,12 +1,17 @@
 // Types for Phantom Wallet
+interface PhantomSolana {
+  isPhantom?: boolean;
+  connect: () => Promise<{ publicKey: { toString: () => string } }>;
+  disconnect: () => Promise<void>;
+  isConnected: boolean;
+  publicKey?: { toString: () => string };
+}
+
 interface PhantomWindow extends Window {
   phantom?: {
-    solana?: {
-      isPhantom?: boolean;
-      connect: () => Promise<{ publicKey: { toString: () => string } }>;
-      disconnect: () => Promise<void>;
-    };
+    solana?: PhantomSolana;
   };
+  solana?: PhantomSolana;
 }
 
 declare global {

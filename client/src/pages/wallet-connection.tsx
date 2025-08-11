@@ -69,7 +69,40 @@ export default function WalletConnectionPage() {
                       <Button
                         variant="default"
                         className="w-full gap-2"
-                        disabled={activeTab !== 'phantom'}
+                        onClick={async () => {
+                          try {
+                            // Check if Phantom is installed
+                            if (typeof window !== 'undefined' && window.phantom?.solana) {
+                              console.log('Phantom wallet detected, connecting...');
+                              const response = await window.phantom.solana.connect();
+                              console.log('Phantom connected:', response.publicKey.toString());
+                              alert(`Phantom wallet connected successfully!\nAddress: ${response.publicKey.toString()}`);
+                            } else if (typeof window !== 'undefined' && window.solana?.isPhantom) {
+                              // Alternative detection method
+                              console.log('Phantom wallet detected (alternative method), connecting...');
+                              const response = await window.solana.connect();
+                              console.log('Phantom connected:', response.publicKey.toString());
+                              alert(`Phantom wallet connected successfully!\nAddress: ${response.publicKey.toString()}`);
+                            } else {
+                              // Phantom not detected - redirect to install or mobile
+                              const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                              if (isMobile) {
+                                // Mobile - open deep link to Phantom app
+                                window.open('https://phantom.app/ul/browse/https://tradehybrid.club?ref=tradehybrid', '_blank');
+                                alert('Opening Phantom mobile app. Please connect your wallet there and return to this page.');
+                              } else {
+                                // Desktop - prompt to install extension
+                                const install = confirm('Phantom wallet extension not detected. Would you like to install it?');
+                                if (install) {
+                                  window.open('https://phantom.app/', '_blank');
+                                }
+                              }
+                            }
+                          } catch (error) {
+                            console.error('Phantom connection error:', error);
+                            alert('Failed to connect Phantom wallet. Please try again.');
+                          }
+                        }}
                       >
                         <img src="https://phantom.app/favicon.ico" className="w-4 h-4" alt="Phantom" />
                         Connect Phantom Wallet

@@ -485,7 +485,19 @@ export const SettingsPanel = () => {
                     <Label className="text-lg">TradingView</Label>
                     <p className="text-sm text-gray-500">Connect to your TradingView account</p>
                   </div>
-                  <Button variant="outline">Connect</Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      // Open TradingView integration in new window
+                      window.open('https://www.tradingview.com/account/connections/', '_blank');
+                      // Show success message
+                      setTimeout(() => {
+                        alert('TradingView connection initiated! Please follow the authorization steps in the new window.');
+                      }, 1000);
+                    }}
+                  >
+                    Connect
+                  </Button>
                 </div>
               </div>
               <Separator />
@@ -495,7 +507,15 @@ export const SettingsPanel = () => {
                     <Label className="text-lg">Broker APIs</Label>
                     <p className="text-sm text-gray-500">Connect to your trading accounts</p>
                   </div>
-                  <Button variant="outline">Manage</Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      // Navigate to broker connections page
+                      window.location.href = '/broker-connections';
+                    }}
+                  >
+                    Manage
+                  </Button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <Card>
@@ -541,7 +561,15 @@ export const SettingsPanel = () => {
                     <Label className="text-lg">Wallet Connections</Label>
                     <p className="text-sm text-gray-500">Connect your crypto wallets</p>
                   </div>
-                  <Button variant="outline">Connect</Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      // Navigate to wallet connection page
+                      window.location.href = '/wallet-connection';
+                    }}
+                  >
+                    Connect
+                  </Button>
                 </div>
               </div>
             </CardContent>

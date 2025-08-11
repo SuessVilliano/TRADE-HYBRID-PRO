@@ -83,6 +83,12 @@ app.use((req, res, next) => {
   const userManagementRouter = (await import("./api/user-management")).default;
   app.use("/api/auth", userManagementRouter);
   
+  // Add broker API routes
+  const { getBrokerStatus } = await import("./api/broker-status.js");
+  const { getBrokerAccount } = await import("./api/broker-account.js");
+  app.get('/api/broker-status', getBrokerStatus);
+  app.get('/api/broker-account', getBrokerAccount);
+  
   const server = await registerRoutes(app);
   
   // Initialize and register MCP routes
