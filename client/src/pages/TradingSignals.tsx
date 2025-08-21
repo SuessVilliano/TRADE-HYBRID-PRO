@@ -46,7 +46,30 @@ export function TradingSignals() {
       if (!response.ok) throw new Error('Failed to fetch signals');
       
       const data = await response.json();
-      setSignals(data.signals || []);
+      console.log('Raw API response:', data);
+      
+      // Transform the API response format to frontend format
+      const transformedSignals = (data.signals || []).map((apiSignal: any) => ({
+        id: apiSignal.id,
+        symbol: apiSignal.Symbol || apiSignal.symbol,
+        type: (apiSignal.Direction || apiSignal.type || 'buy').toLowerCase() as 'buy' | 'sell',
+        entry: apiSignal['Entry Price'] || apiSignal.entry || 0,
+        stopLoss: apiSignal['Stop Loss'] || apiSignal.stopLoss || 0,
+        takeProfit: apiSignal['Take Profit'] || apiSignal.takeProfit || apiSignal.TP1 || 0,
+        timestamp: apiSignal.Date || apiSignal.timestamp || new Date().toISOString(),
+        source: apiSignal.Provider || apiSignal.source || 'Unknown',
+        risk: 1,
+        notes: apiSignal.Notes || apiSignal.notes || '',
+        timeframe: apiSignal.timeframe || (
+          apiSignal.Provider?.includes('Hybrid') ? '10m' :
+          apiSignal.Provider?.includes('Paradox') ? '30m' :
+          apiSignal.Provider?.includes('Solaris') ? '5m' : '1h'
+        ),
+        status: (apiSignal.Status || apiSignal.status || 'active').toLowerCase() as 'active' | 'closed' | 'cancelled'
+      }));
+      
+      console.log('Transformed signals:', transformedSignals);
+      setSignals(transformedSignals);
       setError(null);
     } catch (err) {
       console.error('Error fetching signals:', err);
