@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Signal, TrendingUp, TrendingDown, Clock, AlertCircle, Copy, ExternalLink } from 'lucide-react';
+import { Signal, TrendingUp, TrendingDown, Clock, AlertCircle, Copy, ExternalLink, Bell, BellOff, Settings } from 'lucide-react';
+import { notificationService, SignalNotification } from '../lib/notifications';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,8 @@ export function TradingSignals() {
   const [error, setError] = useState<string | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('active');
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [previousSignals, setPreviousSignals] = useState<TradingSignal[]>([]);
 
   const providers = ['all', 'Paradox', 'Solaris', 'Hybrid'];
   const statusOptions = ['active', 'all', 'closed', 'cancelled'];
@@ -34,11 +37,42 @@ export function TradingSignals() {
   useEffect(() => {
     fetchSignals();
     
+    // Initialize notification settings
+    setNotificationsEnabled(notificationService.isEnabled());
+    
     // Set up real-time updates every 30 seconds
     const interval = setInterval(fetchSignals, 30000);
     
     return () => clearInterval(interval);
   }, []);
+
+  // Check for new signals and send notifications
+  useEffect(() => {
+    if (previousSignals.length > 0 && signals.length > 0) {
+      const newSignals = signals.filter(signal => 
+        !previousSignals.some(prev => prev.id === signal.id)
+      );
+
+      // Send notifications for new signals
+      newSignals.forEach(signal => {
+        const signalNotification: SignalNotification = {
+          id: signal.id,
+          symbol: signal.symbol,
+          type: signal.type,
+          entry: signal.entry,
+          source: signal.source,
+          timestamp: signal.timestamp
+        };
+        
+        notificationService.showSignalNotification(signalNotification);
+      });
+    }
+    
+    // Update previous signals
+    if (signals.length > 0) {
+      setPreviousSignals(signals);
+    }
+  }, [signals, previousSignals]);
 
   const fetchSignals = async () => {
     try {
@@ -47,6 +81,14 @@ export function TradingSignals() {
       
       const data = await response.json();
       console.log('Raw API response:', data);
+      
+      // If no signals returned, show message that only real webhook data is displayed
+      if (!data.signals || data.signals.length === 0) {
+        console.log('No signals returned - only real webhook data from TradingView is displayed');
+        setSignals([]);
+        setError(null);
+        return;
+      }
       
       // Transform the API response format to frontend format
       const transformedSignals = (data.signals || []).map((apiSignal: any) => ({
@@ -137,6 +179,15 @@ Time: ${new Date(signal.timestamp).toLocaleString()}`;
     return colors[status as keyof typeof colors] || 'bg-gray-600';
   };
 
+  const toggleNotifications = () => {
+    if (notificationsEnabled) {
+      notificationService.muteAll();
+    } else {
+      notificationService.unmuteAll();
+    }
+    setNotificationsEnabled(!notificationsEnabled);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 p-6">
@@ -211,6 +262,17 @@ Time: ${new Date(signal.timestamp).toLocaleString()}`;
           >
             Refresh Signals
           </Button>
+
+          <Button
+            onClick={toggleNotifications}
+            variant="outline"
+            className={`flex items-center gap-2 ${notificationsEnabled 
+              ? 'border-green-400 text-green-400 hover:bg-green-400' 
+              : 'border-gray-400 text-gray-400 hover:bg-gray-400'} hover:text-white`}
+          >
+            {notificationsEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+            {notificationsEnabled ? 'Notifications On' : 'Notifications Off'}
+          </Button>
         </div>
 
         {/* Statistics */}
@@ -263,9 +325,13 @@ Time: ${new Date(signal.timestamp).toLocaleString()}`;
           {filteredSignals.length === 0 ? (
             <div className="col-span-full text-center py-12">
               <Signal className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg">No signals found for the selected filters</p>
+              <p className="text-gray-400 text-lg">No trading signals available</p>
               <p className="text-gray-500 text-sm mt-2">
-                Try adjusting your filter settings or refresh the signals
+                This page displays only real signals from TradingView webhooks (Paradox AI, Solaris AI, Hybrid AI).
+                <br />
+                Demo signals have been removed to ensure data integrity.
+                <br />
+                New signals will appear automatically when webhooks are triggered.
               </p>
             </div>
           ) : (
