@@ -1,274 +1,298 @@
-
 import { useAuthStore } from '../stores/useAuthStore';
 
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || 'https://uqtluroceakqtlvlzatt.supabase.co').replace(/\/$/, '');
+const SUPABASE_PUBLISHABLE_KEY =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  'sb_publishable_YjXHHnoRXE4pvn6ezLdU5w_O03Q62W_';
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
-const apiUrl = (path: string) => `${API_BASE_URL}${path}`;
+const SESSION_KEY = 'trade-hybrid-club-auth';
+
+type ClubSession = {
+  access_token: string;
+  refresh_token: string;
+  expires_at?: number;
+  expires_in?: number;
+  user?: any;
+};
+
+function authHeaders(accessToken?: string) {
+  return {
+    apikey: SUPABASE_PUBLISHABLE_KEY,
+    'Content-Type': 'application/json',
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  };
+}
+
+function saveSession(session: ClubSession) {
+  const expiresAt =
+    session.expires_at ||
+    (session.expires_in ? Math.floor(Date.now() / 1000) + session.expires_in : undefined);
+
+  localStorage.setItem(
+    SESSION_KEY,
+    JSON.stringify({
+      ...session,
+      expires_at: expiresAt,
+    }),
+  );
+}
+
+function readSession(): ClubSession | null {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    localStorage.removeItem(SESSION_KEY);
+    return null;
+  }
+}
+
+function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+  useAuthStore.getState().logout();
+}
+
+async function refreshSession(session: ClubSession): Promise<ClubSession | null> {
+  if (!session.refresh_token) return null;
+
+  const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ refresh_token: session.refresh_token }),
+  });
+
+  if (!response.ok) {
+    clearSession();
+    return null;
+  }
+
+  const refreshed = await response.json();
+  saveSession(refreshed);
+  return refreshed;
+}
+
+async function getValidSession(): Promise<ClubSession | null> {
+  let session = readSession();
+  if (!session?.access_token) return null;
+
+  const now = Math.floor(Date.now() / 1000);
+  if (session.expires_at && session.expires_at <= now + 60) {
+    session = await refreshSession(session);
+  }
+
+  return session;
+}
+
+async function fetchProfile(accessToken: string, userId: string) {
+  const response = await fetch(
+    `${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=id,username,display_name,avatar_url,created_at,updated_at`,
+    { headers: authHeaders(accessToken) },
+  );
+
+  if (!response.ok) return null;
+  const rows = await response.json();
+  return Array.isArray(rows) ? rows[0] || null : null;
+}
+
+async function fetchEntitlements(accessToken: string, userId: string) {
+  const response = await fetch(
+    `${SUPABASE_URL}/rest/v1/product_entitlements?user_id=eq.${encodeURIComponent(userId)}&select=product_key,status,source,starts_at,ends_at`,
+    { headers: authHeaders(accessToken) },
+  );
+
+  if (!response.ok) return [];
+  const rows = await response.json();
+  return Array.isArray(rows) ? rows : [];
+}
+
+function membershipFromEntitlements(entitlements: any[]) {
+  const active = entitlements.filter((item) => ['active', 'trialing'].includes(item.status));
+  if (active.some((item) => item.product_key !== 'club_free')) return 'paid';
+  return 'free';
+}
+
+async function mapSupabaseUser(user: any, accessToken: string) {
+  const [profile, entitlements] = await Promise.all([
+    fetchProfile(accessToken, user.id),
+    fetchEntitlements(accessToken, user.id),
+  ]);
+
+  const mapped = {
+    id: user.id,
+    username:
+      profile?.username ||
+      user.user_metadata?.username ||
+      user.email?.split('@')[0] ||
+      'trader',
+    email: user.email || '',
+    profileImage: profile?.avatar_url || null,
+    displayName: profile?.display_name || user.user_metadata?.display_name || null,
+    authenticated: true,
+    membershipLevel: membershipFromEntitlements(entitlements),
+    entitlements,
+    balance: 0,
+  };
+
+  useAuthStore.getState().setUser(mapped as any);
+  return mapped;
+}
 
 export const authService = {
-  async login(username: string, password?: string) {
-    try {
-      // Direct username/password login
-      if (password !== undefined) {
-        console.log('Logging in with username/password');
-        const response = await fetch(apiUrl('/api/auth/login'), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ identifier: username, password }),
-          credentials: 'include', // Important for sending/receiving cookies
-        });
-        
-        if (!response.ok) {
-          console.error('Login failed with status:', response.status);
-          throw new Error('Login failed');
-        }
-        
-        const userData = await response.json();
-        console.log('Login succeeded, user data:', userData);
-        
-        // Store user data in zustand store
-        useAuthStore.getState().setUser(userData);
-        
-        return userData;
-      } 
-      // Legacy login by username/ID only (for backward compatibility)
-      else {
-        console.log('Legacy login by username/ID only');
-        const response = await fetch(apiUrl('/api/auth/legacy-login'), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ username }),
-          credentials: 'include', // Important for sending/receiving cookies
-        });
-        
-        if (!response.ok) {
-          console.error('Legacy login failed with status:', response.status);
-          throw new Error('Login failed');
-        }
-        
-        const userData = await response.json();
-        console.log('Legacy login succeeded, user data:', userData);
-        
-        // Store user data in zustand store
-        useAuthStore.getState().setUser(userData);
-        
-        return userData;
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+  async login(identifier: string, password?: string) {
+    if (!password) {
+      throw new Error('Password is required');
     }
+
+    if (!identifier.includes('@')) {
+      throw new Error('Use the email address for your Trade Hybrid account.');
+    }
+
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        email: identifier.trim().toLowerCase(),
+        password,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result?.msg || result?.error_description || result?.message || 'Login failed');
+    }
+
+    saveSession(result);
+    return mapSupabaseUser(result.user, result.access_token);
   },
-  
+
   async register(username: string, email: string, password: string) {
-    try {
-      console.log('Registering new user account');
-      const response = await fetch(apiUrl('/api/auth/register'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        password,
+        data: {
+          username: username.trim(),
+          display_name: username.trim(),
         },
-        body: JSON.stringify({ username, email, password }),
-        credentials: 'include', // Important for sending/receiving cookies
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Registration failed:', errorData);
-        throw new Error(errorData.error || 'Registration failed');
-      }
-      
-      const userData = await response.json();
-      console.log('Registration succeeded, user data:', userData);
-      
-      // Store user data in zustand store
-      useAuthStore.getState().setUser(userData.user);
-      
-      return userData;
-    } catch (error) {
-      console.error('Registration error:', error);
-      throw error;
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result?.msg || result?.error_description || result?.message || 'Registration failed',
+      );
     }
+
+    if (!result.access_token) {
+      return {
+        success: true,
+        requiresEmailConfirmation: true,
+        user: {
+          id: result.user?.id,
+          username,
+          email,
+          authenticated: false,
+          membershipLevel: 'free',
+          balance: 0,
+        },
+      };
+    }
+
+    saveSession(result);
+    const user = await mapSupabaseUser(result.user, result.access_token);
+
+    return {
+      success: true,
+      requiresEmailConfirmation: false,
+      user,
+    };
   },
-  
+
   async loginWithWhop(whopId: string) {
-    try {
-      console.log('Attempting Whop ID login with:', whopId);
-      
-      // First try the direct legacy login which is simplest
-      try {
-        console.log('Trying legacy login with Whop ID');
-        const legacyResponse = await fetch(apiUrl('/api/auth/legacy-login'), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ username: whopId }),
-          credentials: 'include', // Important for sending/receiving cookies
-        });
-        
-        if (legacyResponse.ok) {
-          const userData = await legacyResponse.json();
-          console.log('Legacy login with Whop ID succeeded, user data:', userData);
-          
-          // Store user data in zustand store
-          useAuthStore.getState().setUser({
-            ...userData,
-            authenticated: true // Ensure authenticated flag is set
-          });
-          
-          return userData;
-        }
-        
-        console.warn('Legacy login failed, trying direct auth...');
-      } catch (legacyError) {
-        console.warn('Legacy login attempt failed:', legacyError);
-      }
-      
-      // Fallback to direct Whop auth
-      try {
-        console.log('Attempting direct Whop auth with ID:', whopId);
-        const response = await fetch(apiUrl('/api/auth/whop-login'), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ whopId }),
-          credentials: 'include', // Important for sending/receiving cookies
-        });
-        
-        if (!response.ok) {
-          console.error('Whop login failed with status:', response.status);
-          throw new Error('Whop login failed');
-        }
-        
-        const userData = await response.json();
-        console.log('Whop login succeeded, user data:', userData);
-        
-        // Store user data in zustand store
-        useAuthStore.getState().setUser({
-          ...userData,
-          authenticated: true // Ensure authenticated flag is set
-        });
-        
-        return userData;
-      } catch (whopAuthError) {
-        console.error('Whop auth failed:', whopAuthError);
-        
-        // Last resort - try demo login
-        console.log('All Whop methods failed, trying demo login as fallback');
-        return this.loginWithDemo();
-      }
-    } catch (error) {
-      console.error('All Whop login methods failed:', error);
-      throw error;
+    if (!API_BASE_URL) {
+      throw new Error('Whop sign-in is not enabled on the Club backend yet.');
     }
+
+    const response = await fetch(`${API_BASE_URL}/api/whop/direct-auth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ whopId }),
+    });
+
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result?.error || 'Whop login failed');
+    }
+
+    return result;
   },
-  
-  // Demo login for testing
+
   async loginWithDemo() {
-    try {
-      console.log('Logging in with demo account');
-      const response = await fetch(apiUrl('/api/auth/demo-login'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Important for sending/receiving cookies
-      });
-      
-      if (!response.ok) {
-        console.error('Demo login failed with status:', response.status);
-        throw new Error('Demo login failed');
-      }
-      
-      const userData = await response.json();
-      console.log('Demo login succeeded, user data:', userData);
-      
-      // Store user data in zustand store
-      useAuthStore.getState().setUser({
-        ...userData,
-        authenticated: true, // Ensure authenticated flag is set
-        isDemo: true
-      });
-      
-      // Also store in localStorage for persistence
-      localStorage.setItem('demoUser', 'true');
-      
-      return userData;
-    } catch (error) {
-      console.error('Demo login error:', error);
-      throw error;
+    if (!import.meta.env.DEV) {
+      throw new Error('Demo login is disabled in production.');
     }
+
+    const demoUser = {
+      id: 'demo',
+      username: 'demo_user',
+      email: 'demo@trade-hybrid.com',
+      membershipLevel: 'demo',
+      authenticated: true,
+      isDemo: true,
+      balance: 0,
+    };
+
+    localStorage.setItem('demoUser', JSON.stringify(demoUser));
+    useAuthStore.getState().setUser(demoUser as any);
+    return demoUser;
   },
 
   async getCurrentUser() {
-    try {
-      console.log('Checking current user authentication status');
-      const response = await fetch(apiUrl('/api/auth/user'), {
-        credentials: 'include', // Important for sending/receiving cookies
-      });
-      
-      if (!response.ok) {
-        console.error('Failed to get user with status:', response.status);
-        throw new Error('Failed to get user');
-      }
-      
-      const userData = await response.json();
-      console.log('Current user data:', userData);
-      
-      if (userData.authenticated) {
-        // Update zustand store with authenticated user data
-        useAuthStore.getState().setUser(userData);
-      } else {
-        // Clear user data in store if not authenticated
-        useAuthStore.getState().logout();
-      }
-      
-      return userData;
-    } catch (error) {
-      console.error('Get user error:', error);
-      // Don't update the store on error to prevent clearing valid user data
-      throw error;
+    const session = await getValidSession();
+    if (!session?.access_token) {
+      return { authenticated: false };
     }
+
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: authHeaders(session.access_token),
+    });
+
+    if (!response.ok) {
+      clearSession();
+      return { authenticated: false };
+    }
+
+    const user = await response.json();
+    return mapSupabaseUser(user, session.access_token);
   },
-  
+
   async logout() {
-    try {
-      console.log('Logging out user');
-      const response = await fetch(apiUrl('/api/auth/logout'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Important for sending/receiving cookies
-      });
-      
-      if (!response.ok) {
-        console.error('Logout failed with status:', response.status);
-        throw new Error('Logout failed');
+    const session = readSession();
+
+    if (session?.access_token) {
+      try {
+        await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
+          method: 'POST',
+          headers: authHeaders(session.access_token),
+        });
+      } catch {
+        // Local logout should still complete if the network request fails.
       }
-      
-      // Clear user data in zustand store
-      useAuthStore.getState().logout();
-      
-      // Also remove demo user if present
-      localStorage.removeItem('demoUser');
-      
-      console.log('Logout successful');
-      return true;
-    } catch (error) {
-      console.error('Logout error:', error);
-      throw error;
     }
+
+    localStorage.removeItem('demoUser');
+    clearSession();
+    return true;
   },
-  
-  // Helper method to determine if user is currently authenticated
+
   isAuthenticated() {
     const store = useAuthStore.getState();
     return store.isAuthenticated && store.user !== null;
-  }
+  },
 };
