@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { ArrowUpRight, Bot, BookOpen, Clapperboard, Gamepad2, Gift, LineChart, Radio, Trophy, WalletCards, Zap } from 'lucide-react';
 
 const products = [
-  { title: 'Hybrid Journal', label: 'Track and improve', description: 'Turn every trade into a clearer next decision.', href: 'https://journal.tradehybrid.co', icon: BookOpen, tone: 'from-cyan-500/20 to-blue-500/5' },
-  { title: 'ABATEV', label: 'AI market radar', description: 'Find signals, context, and opportunities in one workspace.', href: 'https://abatev.tradehybrid.co', icon: Bot, tone: 'from-violet-500/20 to-fuchsia-500/5' },
-  { title: 'Trade House Battles', label: 'Compete live', description: 'Join a room, show your process, and build a public record.', href: 'https://battles.tradehybrid.co', icon: Trophy, tone: 'from-rose-500/20 to-orange-500/5' },
-  { title: 'Hybrid TV', label: 'Watch and learn', description: 'Live battles, market updates, interviews, and shows.', href: 'https://tv.tradehybrid.club', icon: Radio, tone: 'from-blue-500/20 to-indigo-500/5' },
+  { title: 'Hybrid Journal', label: 'Track and improve', description: 'Turn every trade into a clearer next decision.', href: import.meta.env.VITE_JOURNAL_URL || '/journal', icon: BookOpen, tone: 'from-cyan-500/20 to-blue-500/5' },
+  { title: 'ABATEV', label: 'AI market radar', description: 'Find signals, context, and opportunities in one workspace.', href: import.meta.env.VITE_ABATEV_URL || '/ai-assistant', icon: Bot, tone: 'from-violet-500/20 to-fuchsia-500/5' },
+  { title: 'Trade House Battles', label: 'Compete live', description: 'Join a room, show your process, and build a public record.', href: import.meta.env.VITE_BATTLES_URL || 'https://battles.tradehybrid.co', icon: Trophy, tone: 'from-rose-500/20 to-orange-500/5' },
+  { title: 'Hybrid TV', label: 'Watch and learn', description: 'Live battles, market updates, interviews, and shows.', href: import.meta.env.VITE_TV_URL || 'https://tv.tradehybrid.club', icon: Radio, tone: 'from-blue-500/20 to-indigo-500/5' },
 ];
 const quick = [
   ['Trader DNA', 'Find your next step', '/profile/unified', Zap],
