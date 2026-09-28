@@ -5,6 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, User, Mail, Lock, Wallet } from 'lucide-react';
 import axios from 'axios';
+import { config } from '@/lib/config';
+
+const apiUrl = (path: string) => `${(config.API_BASE_URL || '').replace(/\/$/, '')}${path}`;
 
 interface RegisterFormProps {
   onSuccess?: (user: any) => void;
@@ -86,12 +89,12 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
     setError('');
 
     try {
-      const response = await axios.post('/api/auth/register', {
+      const response = await axios.post(apiUrl('/api/auth/register'), {
         username: formData.username.trim(),
         email: formData.email.trim(),
         password: formData.password,
         walletAddress: formData.walletAddress.trim() || undefined
-      });
+      }, { withCredentials: true });
 
       if (response.data.success) {
         setSuccess('Account created successfully! You are now logged in.');
