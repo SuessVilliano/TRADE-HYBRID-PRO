@@ -17,7 +17,7 @@ export const CLUB_LINKS = {
   abatev: env.VITE_ABATEV_URL || 'https://abatev.tradehybrid.co',
   ai: env.VITE_ABATEV_URL || 'https://abatev.tradehybrid.co',
   zone: env.VITE_ZONE_URL || 'https://thehybridzone.club',
-  battles: env.VITE_BATTLES_URL || 'https://tradehouse-91io.onrender.com',
+  battles: env.VITE_BATTLES_URL || 'https://hybridfunding.co/tradehouse',
   funding: env.VITE_FUNDING_URL || 'https://hybridfunding.co',
 
   // Keep TV inside the Club shell, but source the real white-labelled channel.
