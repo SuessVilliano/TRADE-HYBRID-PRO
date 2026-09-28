@@ -4,10 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, User, Lock } from 'lucide-react';
-import axios from 'axios';
-import { config } from '@/lib/config';
-
-const apiUrl = (path: string) => `${(config.API_BASE_URL || '').replace(/\/$/, '')}${path}`;
+import { authService } from '@/lib/services/auth-service';
 
 interface LoginFormProps {
   onSuccess?: (user: any) => void;
@@ -16,7 +13,7 @@ interface LoginFormProps {
 
 export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
   const [formData, setFormData] = useState({
-    identifier: '', // Can be username or email
+    identifier: ''
     password: ''
   });
   const [loading, setLoading] = useState(false);
@@ -33,7 +30,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
     e.preventDefault();
     
     if (!formData.identifier.trim()) {
-      setError('Username or email is required');
+      setError('Email is required');
       return;
     }
 
@@ -46,32 +43,24 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
     setError('');
 
     try {
-      const response = await axios.post(apiUrl('/api/auth/login'), {
-        identifier: formData.identifier.trim(),
-        password: formData.password
-      }, { withCredentials: true });
+      const user = await authService.login(
+        formData.identifier.trim(),
+        formData.password
+      );
 
-      if (response.data.success && response.data.user) {
-        // Call onSuccess callback with user data
-        if (onSuccess) {
-          onSuccess(response.data.user);
-        }
-
-        // Clear form
-        setFormData({
-          identifier: '',
-          password: ''
-        });
+      if (onSuccess) {
+        onSuccess(user);
       }
+
+      setFormData({
+        identifier: '',
+        password: ''
+      });
 
     } catch (error: any) {
       console.error('Login error:', error);
       
-      if (error.response?.data?.error) {
-        setError(error.response.data.error);
-      } else {
-        setError('Login failed. Please try again.');
-      }
+      setError(error?.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -101,12 +90,12 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
             <Input
               type="text"
               name="identifier"
-              placeholder="Username or Email"
+              placeholder="Email address"
               value={formData.identifier}
               onChange={handleInputChange}
               className="pl-10"
               required
-              autoComplete="username"
+              autoComplete="email"
             />
           </div>
 
