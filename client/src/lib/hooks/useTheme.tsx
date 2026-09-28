@@ -9,6 +9,9 @@ interface ThemeContextType {
   toggleTheme: () => void;
 }
 
+const CLUB_THEME_VERSION = '2-light-default';
+const CLUB_THEME_VERSION_KEY = 'trade-hybrid-theme-version';
+
 const ThemeContext = createContext<ThemeContextType>({
   theme: 'dark',
   resolvedTheme: 'dark',
@@ -34,8 +37,13 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   defaultTheme = 'dark',
 }) => {
   const [theme, setThemeState] = useState<ThemeType>(() => {
-    // Try to get the theme from localStorage
-    const savedTheme = typeof window !== 'undefined' ? localStorage.getItem('theme') as ThemeType : null;
+    if (typeof window === 'undefined') return defaultTheme;
+    const version = localStorage.getItem(CLUB_THEME_VERSION_KEY);
+    const savedTheme = localStorage.getItem('theme') as ThemeType | null;
+
+    // Migrate the old dark-by-default Club once. After this migration,
+    // explicit member choices continue to persist normally.
+    if (version !== CLUB_THEME_VERSION) return defaultTheme;
     return savedTheme || defaultTheme;
   });
   
@@ -76,6 +84,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   useEffect(() => {
     if (typeof window === 'undefined') return;
     localStorage.setItem('theme', theme);
+    localStorage.setItem(CLUB_THEME_VERSION_KEY, CLUB_THEME_VERSION);
   }, [theme]);
 
   // Update resolvedTheme when theme changes
