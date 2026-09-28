@@ -16,8 +16,8 @@ import { LoadingScreenProvider } from './lib/context/LoadingScreenContext';
 import { ThemeProvider } from './lib/hooks/useTheme';
 import { OnboardingTooltip } from './components/ui/onboarding-tooltip';
 import { OnboardingButton } from './components/ui/onboarding-button';
-import { BottomNav } from './components/ui/bottom-nav';
 import { UniversalHeader } from './components/ui/universal-header';
+import { ClubHeader } from './components/ui/club-header';
 import { NotificationListener } from './components/ui/notification-listener';
 // TestNotificationButton temporarily disabled
 // import { TestNotificationButton } from './components/ui/test-notification-button';
@@ -134,21 +134,51 @@ import KnowledgeBasePage from './pages/KnowledgeBasePage';
 
 const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { pathname } = useLocation();
-  const standaloneRoutes = ['/', '/login', '/signup', '/register', '/auth'];
-  const isStandalone = standaloneRoutes.includes(pathname);
+
+  const isPublicClubRoute =
+    pathname === '/' ||
+    ['/login', '/signup', '/register', '/auth'].some(
+      (route) => pathname === route || pathname.startsWith(`${route}/`),
+    );
+
+  const clubRoutePrefixes = [
+    '/dashboard',
+    '/journal',
+    '/ai-assistant',
+    '/learning-center',
+    '/copy-trading',
+    '/live-stream',
+    '/events',
+    '/profile',
+    '/settings',
+    '/trading-tools',
+    '/knowledge',
+  ];
+
+  const isClubRoute = clubRoutePrefixes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+
+  if (isPublicClubRoute) {
+    return <>{children}</>;
+  }
+
+  if (isClubRoute) {
+    return (
+      <>
+        <ClubHeader />
+        {children}
+      </>
+    );
+  }
 
   return (
     <>
-      {!isStandalone && (
-        <>
-          <OnboardingTooltip />
-          <OnboardingButton />
-          <UniversalHeader />
-          <BottomNav />
-          <NotificationListener />
-        </>
-      )}
-      <div className={isStandalone ? '' : 'mt-14'}>{children}</div>
+      <OnboardingTooltip />
+      <OnboardingButton />
+      <UniversalHeader />
+      <NotificationListener />
+      {children}
     </>
   );
 };
