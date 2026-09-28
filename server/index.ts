@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { encryptionService } from "./lib/services/encryption-service";
@@ -13,11 +14,19 @@ import { registerMCPRoutes, initializeMCPServer, shutdownMCPServer } from "./mcp
 // import { propFirmService } from "./lib/services/prop-firm-service";
 
 const app = express();
+const PostgresSessionStore = connectPgSimple(session);
 app.use(express.json({ verify: (req, _res, buf) => { (req as any).rawBody = Buffer.from(buf); } }));
 app.use(express.urlencoded({ extended: false }));
 
 // Configure session middleware with secure cookies and extended persistence
 app.use(session({
+  store: process.env.DATABASE_URL
+    ? new PostgresSessionStore({
+        conString: process.env.DATABASE_URL,
+        createTableIfMissing: true,
+        tableName: 'user_sessions'
+      })
+    : undefined,
   secret: process.env.SESSION_SECRET || 'trade-hybrid-session-secret',
   resave: false,
   saveUninitialized: false,
