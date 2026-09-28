@@ -15,8 +15,8 @@ const pillars = [
 
 const bundles = [
   { name: 'Club Access', price: 'Free', text: 'Community, events, news, starter tools', action: 'Create account', href: '/register' },
-  { name: 'Journal + Academy', price: 'Membership', text: 'Journal workflows, learning paths, help center', action: 'Explore membership', href: '/register?plan=monthly' },
-  { name: 'Battle Ready', price: 'Upgrade', text: 'Live rooms, profile cards, public performance', action: 'Enter dashboard', href: '/dashboard' },
+  { name: 'Journal + Academy', price: 'Membership', text: 'Journal workflows, learning paths, help center', action: 'Explore membership', href: import.meta.env.VITE_CLUB_CHECKOUT_URL || import.meta.env.VITE_JOURNAL_SALES_URL || '/register?plan=monthly' },
+  { name: 'Battle Ready', price: 'Upgrade', text: 'Live rooms, profile cards, public performance', action: 'Enter battles', href: import.meta.env.VITE_BATTLE_SALES_URL || import.meta.env.VITE_BATTLES_URL || '/dashboard' },
 ];
 
 function OpenLink({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) {
