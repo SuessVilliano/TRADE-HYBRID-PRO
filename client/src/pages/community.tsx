@@ -6,7 +6,7 @@ export default function CommunityPage() {
   const communityUrl =
     import.meta.env.VITE_GHL_COMMUNITY_URL ||
     import.meta.env.VITE_COMMUNITY_URL ||
-    'https://community.tradehybrid.club';
+    'https://tradehybridclub.app.clientclub.net/communities/groups/trade-hybid-club/home';
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
