@@ -210,6 +210,52 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Get current authenticated user in the shape expected by the Club frontend
+router.get('/user', async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.json({ authenticated: false });
+    }
+
+    const sql = getDbConnection();
+    const users = await sql`
+      SELECT
+        id, username, email, wallet_address,
+        membership_level, balance, thc_token_holder,
+        has_connected_apis, whop_id, whop_plan_id,
+        profile_image, last_login
+      FROM users
+      WHERE id = ${req.session.userId}
+      LIMIT 1
+    `;
+
+    if (users.length === 0) {
+      req.session.destroy(() => {});
+      return res.json({ authenticated: false });
+    }
+
+    const user = users[0];
+    return res.json({
+      authenticated: true,
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      walletAddress: user.wallet_address,
+      membershipLevel: user.membership_level || 'free',
+      balance: user.balance,
+      thcTokenHolder: user.thc_token_holder,
+      hasConnectedApis: user.has_connected_apis,
+      whopId: user.whop_id,
+      whopPlanId: user.whop_plan_id,
+      profileImage: user.profile_image,
+      lastLogin: user.last_login
+    });
+  } catch (error) {
+    console.error('Current user fetch error:', error);
+    return res.status(500).json({ error: 'Failed to fetch current user' });
+  }
+});
+
 // Get user profile
 router.get('/profile', async (req, res) => {
   try {
