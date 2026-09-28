@@ -45,7 +45,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return () => {
       cancelled = true;
     };
-  }, [contextAuthenticated, solanaAuthenticated, getCurrentUser]);
+  }, [contextAuthenticated, solanaAuthenticated]);
 
   const authenticated = contextAuthenticated || solanaAuthenticated;
   const checking = isAuthenticating || (!authenticated && !sessionCheckComplete);
