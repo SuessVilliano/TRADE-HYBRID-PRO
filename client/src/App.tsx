@@ -47,6 +47,8 @@ import NewsSimpleView from './pages/news-dashboard-simple';
 import LandingPage from './pages/landing';
 import ClubHome from './pages/club-home';
 import ClubDashboard from './pages/club-dashboard';
+import CommunityPage from './pages/community';
+import MemberOnboardingPage from './pages/member-onboarding';
 import EventsPage from './pages/events';
 import NotFoundPage from './pages/not-found';
 import SocialNetworkPage from './pages/social-network';
@@ -149,6 +151,8 @@ const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }
     '/copy-trading',
     '/live-stream',
     '/events',
+    '/community',
+    '/onboarding',
     '/profile',
     '/settings',
     '/trading-tools',
@@ -233,6 +237,8 @@ const App: React.FC = () => {
                   
                   {/* Core Platform Routes */}
                   <Route path="/dashboard" element={<ProtectedRoute><ClubDashboard /></ProtectedRoute>} />
+                  <Route path="/onboarding" element={<ProtectedRoute><MemberOnboardingPage /></ProtectedRoute>} />
+                  <Route path="/community" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
                   <Route path="/trade" element={<ProtectedRoute><TradeView /></ProtectedRoute>} />
                   <Route path="/journal" element={<ProtectedRoute><JournalView /></ProtectedRoute>} />
                   <Route path="/metaverse" element={<ProtectedRoute><MetaversePage /></ProtectedRoute>} />
