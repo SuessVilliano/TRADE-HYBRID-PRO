@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { CLUB_LINKS } from '@/lib/club-links';
 import memberJourneyService from '@/lib/services/member-journey-service';
+import ClubRoadmapSection from '@/components/club/club-roadmap-section';
 
 type IconType = React.ComponentType<{ className?: string }>;
 type Product = {
@@ -331,6 +332,10 @@ export default function ClubDashboard() {
               <Link to={CLUB_LINKS.onboarding} className="rounded-lg border border-violet-300 bg-white px-3 py-2 text-sm font-bold text-violet-800 dark:border-white/15 dark:bg-transparent dark:text-white">Update context</Link>
             </div>
           </div>
+        </section>
+
+        <section className="mt-12">
+          <ClubRoadmapSection />
         </section>
 
         <section className="mt-10">
