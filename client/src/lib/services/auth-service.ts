@@ -1,5 +1,3 @@
-import { useAuthStore } from '../stores/useAuthStore';
-
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || 'https://uqtluroceakqtlvlzatt.supabase.co').replace(/\/$/, '');
 const SUPABASE_PUBLISHABLE_KEY =
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
@@ -53,7 +51,6 @@ function readSession(): ClubSession | null {
 
 function clearSession() {
   localStorage.removeItem(SESSION_KEY);
-  useAuthStore.getState().logout();
 }
 
 async function refreshSession(session: ClubSession): Promise<ClubSession | null> {
@@ -166,7 +163,6 @@ async function mapSupabaseUser(user: any, accessToken: string) {
     balance: 0,
   };
 
-  useAuthStore.getState().setUser(mapped as any);
   return mapped;
 }
 
@@ -286,7 +282,6 @@ export const authService = {
     };
 
     localStorage.setItem('demoUser', JSON.stringify(demoUser));
-    useAuthStore.getState().setUser(demoUser as any);
     return demoUser;
   },
 
