@@ -12,6 +12,9 @@ import { AlertCircle, CheckCircle, Info } from 'lucide-react';
 import { whopService } from '@/lib/services/whop-service';
 import { authService } from '@/lib/services/auth-service';
 import { useAuth } from '@/lib/context/AuthContext';
+import { config } from '@/lib/config';
+
+const apiUrl = (path: string) => `${(config.API_BASE_URL || '').replace(/\/$/, '')}${path}`;
 
 interface WhopAuthProps {
   onStatusChange?: (isAuthenticated: boolean) => void;
@@ -177,7 +180,7 @@ export function WhopAuth({ onStatusChange }: WhopAuthProps) {
               type="button"
               variant="secondary"
               className="w-full bg-[#FF640A] hover:bg-[#FF640A]/90 text-white"
-              onClick={() => window.location.href = '/api/whop/login'}
+              onClick={() => window.location.href = apiUrl('/api/whop/login')}
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 24C18.6274 24 24 18.6274 24 12C24 5.37258 18.6274 0 12 0C5.37258 0 0 5.37258 0 12C0 18.6274 5.37258 24 12 24Z" fill="white"/>
