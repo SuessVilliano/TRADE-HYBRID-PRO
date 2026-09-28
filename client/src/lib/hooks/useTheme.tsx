@@ -83,7 +83,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   // Save theme preference to localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    localStorage.setItem('theme', theme);
+    localStorage.setItem('trade-hybrid-club-theme', theme);
     localStorage.setItem(CLUB_THEME_VERSION_KEY, CLUB_THEME_VERSION);
   }, [theme]);
 
