@@ -5,6 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, User, Lock } from 'lucide-react';
 import axios from 'axios';
+import { config } from '@/lib/config';
+
+const apiUrl = (path: string) => `${(config.API_BASE_URL || '').replace(/\/$/, '')}${path}`;
 
 interface LoginFormProps {
   onSuccess?: (user: any) => void;
@@ -43,10 +46,10 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
     setError('');
 
     try {
-      const response = await axios.post('/api/auth/login', {
+      const response = await axios.post(apiUrl('/api/auth/login'), {
         identifier: formData.identifier.trim(),
         password: formData.password
-      });
+      }, { withCredentials: true });
 
       if (response.data.success && response.data.user) {
         // Call onSuccess callback with user data
