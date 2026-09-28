@@ -4,3 +4,11 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Local credentials and browser sessions
+*.cookie
+*.cookies
+cookies.txt
+cookies_auth.txt
+session_cookies.txt
+test_session.txt
