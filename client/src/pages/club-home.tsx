@@ -21,7 +21,6 @@ import { CLUB_LINKS } from '@/lib/club-links';
 import { useTheme } from '@/lib/hooks/useTheme';
 import ClubAIAgentsSection from '@/components/club/club-ai-agents-section';
 import ClubPricingSection from '@/components/club/club-pricing-section';
-import ClubRoadmapSection from '@/components/club/club-roadmap-section';
 
 const ecosystem = [
   {
@@ -303,7 +302,6 @@ export default function ClubHome() {
       </section>
 
       <ClubAIAgentsSection />
-      <ClubRoadmapSection />
       <ClubPricingSection />
 
       <footer className="border-t border-slate-200 px-5 py-8 dark:border-white/10">
