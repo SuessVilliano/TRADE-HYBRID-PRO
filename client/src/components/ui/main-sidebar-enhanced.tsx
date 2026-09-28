@@ -1,7 +1,6 @@
 import React, { createContext, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  BellRing,
   BookOpen,
   Bot,
   CircleUserRound,
@@ -105,7 +104,6 @@ export const MainSidebar: React.FC<{
       icon: <Home className="h-4 w-4" />,
     },
     { label: 'Hybrid Journal', href: CLUB_LINKS.journal, icon: <BookOpen className="h-4 w-4" /> },
-    { label: 'Alerts Hub', href: CLUB_LINKS.alerts, icon: <BellRing className="h-4 w-4" /> },
     { label: 'Trade House Battles', href: CLUB_LINKS.battles, icon: <Trophy className="h-4 w-4" /> },
     { label: 'Hybrid Funding', href: CLUB_LINKS.funding, icon: <WalletCards className="h-4 w-4" /> },
   ];
