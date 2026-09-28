@@ -5,6 +5,7 @@ import { ArrowRight, ArrowUpRight, Bot, BookOpen, Gift, LineChart, Radio, Sparkl
 const photoDesk = 'https://www.moneytimes.com.br/uploads/2025/10/leo-nonato-brasileiro-cria-robo-que-transformou-r-3.000-em-r-17.000-em-3-meses.jpg';
 const photoAnalysis = 'https://a.c-dn.net/c/content/dam/publicsites/igcom/uk/images/news-article-image-folder/BB_trading_analysis_1_251121.jpg/jcr%3Acontent/renditions/cq5dam.web.1280.1280.jpeg';
 const photoClassroom = 'https://marketsarthi.com/images/trading-classroom.jpg';
+const defaultClubCheckout = 'https://whop.com/checkout/plan_N7GQvjEjCOB0k';
 
 const pillars = [
   { title: 'Hybrid Journal', text: 'Turn every trade into a repeatable process.', icon: BookOpen, href: import.meta.env.VITE_JOURNAL_URL || '/journal', accent: 'cyan' },
@@ -15,7 +16,7 @@ const pillars = [
 
 const bundles = [
   { name: 'Club Access', price: 'Free', text: 'Community, events, news, starter tools', action: 'Create account', href: '/register' },
-  { name: 'Journal + Academy', price: 'Membership', text: 'Journal workflows, learning paths, help center', action: 'Explore membership', href: import.meta.env.VITE_CLUB_CHECKOUT_URL || import.meta.env.VITE_JOURNAL_SALES_URL || '/register?plan=monthly' },
+  { name: 'Journal + Academy', price: 'Membership', text: 'Journal workflows, learning paths, help center', action: 'Explore membership', href: import.meta.env.VITE_CLUB_CHECKOUT_URL || import.meta.env.VITE_JOURNAL_SALES_URL || defaultClubCheckout },
   { name: 'Battle Ready', price: 'Upgrade', text: 'Live rooms, profile cards, public performance', action: 'Enter battles', href: import.meta.env.VITE_BATTLE_SALES_URL || import.meta.env.VITE_BATTLES_URL || '/dashboard' },
 ];
 
