@@ -15,6 +15,9 @@ import {
   X,
   Zap,
   CalendarDays,
+  Info,
+  Network,
+  Workflow,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './button';
@@ -112,11 +115,13 @@ export const MainSidebar: React.FC<{
   ];
 
   const build = [
-    { label: 'Trade Hybrid AI', href: CLUB_LINKS.ai, icon: <Bot className="h-4 w-4" /> },
-    { label: 'Academy', href: CLUB_LINKS.academy, icon: <BookOpen className="h-4 w-4" /> },
+    { label: 'ABATEV', href: CLUB_LINKS.abatev, icon: <Bot className="h-4 w-4" /> },
     { label: 'Hybrid Copy', href: CLUB_LINKS.copy, icon: <Copy className="h-4 w-4" /> },
+    { label: 'Hybrid Zone', href: CLUB_LINKS.zone, icon: <Network className="h-4 w-4" /> },
     { label: 'Hybrid TV', href: CLUB_LINKS.tv, icon: <Radio className="h-4 w-4" /> },
-    { label: 'Events', href: CLUB_LINKS.events, icon: <CalendarDays className="h-4 w-4" /> },
+    { label: 'Academy', href: CLUB_LINKS.academy, icon: <BookOpen className="h-4 w-4" /> },
+    { label: 'Webhooks & Alerts', href: CLUB_LINKS.hooks, icon: <Workflow className="h-4 w-4" /> },
+    { label: 'About Us', href: CLUB_LINKS.about, icon: <Info className="h-4 w-4" /> },
   ];
 
   const handleLogout = async () => {
