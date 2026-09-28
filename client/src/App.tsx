@@ -47,6 +47,7 @@ import BotsView from './pages/trading-bots';
 import NewsView from './pages/NewsView';
 import NewsSimpleView from './pages/news-dashboard-simple';
 import LandingPage from './pages/landing';
+import ClubHome from './pages/club-home';
 import ClubDashboard from './pages/club-dashboard';
 import EventsPage from './pages/events';
 import NotFoundPage from './pages/not-found';
@@ -160,7 +161,7 @@ const App: React.FC = () => {
               <div className="mt-14"> {/* Add margin to account for fixed header */}
                   <Routes>
                   {/* Public routes */}
-                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/" element={<ClubHome />} />
                   <Route path="/trading-freedom-podcast" element={<TradingFreedomPodcast />} />
                   <Route path="/simple-charting" element={<React.Suspense fallback={<div>Loading chart...</div>}><SimpleChartingDashboard /></React.Suspense>} />
                   <Route path="/test-page" element={<React.Suspense fallback={<div>Loading test page...</div>}><TestPage /></React.Suspense>} />
