@@ -7,6 +7,7 @@ import {
   Clapperboard,
   Gift,
   LineChart,
+  Network,
   Radio,
   Trophy,
   Users,
@@ -52,21 +53,21 @@ const products: Product[] = [
     state: 'Compete live',
   },
   {
-    key: 'ai',
-    title: 'Trade Hybrid AI',
-    desc: 'Use your goals, Journal, and journey context to help decide the next move.',
-    href: CLUB_LINKS.ai,
+    key: 'abatev',
+    title: 'ABATEV',
+    desc: 'Use your goals, Journal, and journey context inside the conversational trading assistant.',
+    href: CLUB_LINKS.abatev,
     icon: Bot,
     state: 'Personal AI',
   },
 ];
 
 const exploreProducts: Product[] = [
+  { key: 'copy', title: 'Hybrid Copy', desc: 'Base44 copy trading and signal routing', href: CLUB_LINKS.copy, icon: LineChart, state: 'Live product' },
+  { key: 'zone', title: 'Hybrid Zone', desc: 'Execution and control layer', href: CLUB_LINKS.zone, icon: Network, state: 'Live product' },
+  { key: 'tv', title: 'Hybrid TV', desc: 'Shows, battles, and market content', href: CLUB_LINKS.tv, icon: Radio, state: 'Live channel' },
   { key: 'funding', title: 'Hybrid Funding', desc: 'Explore funding', href: CLUB_LINKS.funding, icon: WalletCards, state: 'Open' },
   { key: 'academy', title: 'Academy', desc: 'Build your process', href: CLUB_LINKS.academy, icon: BookOpen, state: 'Member' },
-  { key: 'copy', title: 'Hybrid Copy', desc: 'Follow strategies', href: CLUB_LINKS.copy, icon: LineChart, state: 'Upgrade' },
-  { key: 'tv', title: 'Hybrid TV', desc: 'Shows, battles, and market content', href: CLUB_LINKS.tv, icon: Radio, state: 'Open' },
-  { key: 'events', title: 'Events', desc: 'Live sessions and meetups', href: CLUB_LINKS.events, icon: Clapperboard, state: 'Open' },
 ];
 
 const quick = [
@@ -96,6 +97,19 @@ export default function ClubDashboard() {
   const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
   const [journeyReady, setJourneyReady] = useState(false);
+  const [dashboardStyle, setDashboardStyle] = useState(() =>
+    typeof window !== 'undefined' ? localStorage.getItem('club-dashboard-style') || 'flat' : 'flat'
+  );
+  const isFuturistic = dashboardStyle === 'futuristic';
+
+  useEffect(() => {
+    const handleStyle = (event: Event) => {
+      const next = (event as CustomEvent<string>).detail;
+      if (next) setDashboardStyle(next);
+    };
+    window.addEventListener('club-dashboard-style-change', handleStyle);
+    return () => window.removeEventListener('club-dashboard-style-change', handleStyle);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -131,7 +145,14 @@ export default function ClubDashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 pb-16 pt-8 text-slate-950 dark:bg-[#070b14] dark:text-white sm:px-8 lg:px-12">
+    <main
+      className={`min-h-screen px-4 pb-16 pt-8 sm:px-8 lg:px-12 ${
+        isFuturistic
+          ? 'bg-[radial-gradient(circle_at_top,_#e0f7ff_0%,_#f7f7ff_34%,_#eef2ff_100%)] text-slate-950 dark:bg-[radial-gradient(circle_at_top,_#10243c_0%,_#070b14_42%,_#03050a_100%)] dark:text-white'
+          : 'bg-slate-50 text-slate-950 dark:bg-[#070b14] dark:text-white'
+      }`}
+      style={isFuturistic ? { perspective: '1200px' } : undefined}
+    >
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -141,13 +162,15 @@ export default function ClubDashboard() {
               One place to learn, track, connect, compete, and use the tools that fit your actual game plan.
             </p>
           </div>
-          <Link
-            to={CLUB_LINKS.ai}
-            onClick={() => memberJourneyService.markAccess('ai', true).catch(() => null)}
+          <a
+            href={CLUB_LINKS.abatev}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => memberJourneyService.markAccess('abatev', true).catch(() => null)}
             className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-violet-500 px-5 py-3 font-black text-slate-950 shadow-lg shadow-cyan-500/15"
           >
-            <Bot className="h-5 w-5" /> Ask Trade Hybrid AI
-          </Link>
+            <Bot className="h-5 w-5" /> Open ABATEV
+          </a>
         </div>
 
         <section className="mb-8 grid gap-4 lg:grid-cols-[1.4fr_.8fr_.8fr]">
@@ -210,7 +233,11 @@ export default function ClubDashboard() {
 
               return (
                 <ProductLink key={product.title} product={product}>
-                  <div className={`group h-full rounded-2xl border ${tones[index]} p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md`}>
+                  <div className={`group h-full rounded-2xl border ${tones[index]} p-5 transition ${
+                    isFuturistic
+                      ? 'shadow-[0_18px_50px_rgba(15,23,42,.14)] hover:-translate-y-2 hover:rotate-[0.35deg] hover:shadow-[0_24px_70px_rgba(14,165,233,.20)]'
+                      : 'shadow-sm hover:-translate-y-1 hover:shadow-md'
+                  }`}>
                     <div className="mb-8 flex items-center justify-between">
                       <Icon className="h-6 w-6 text-cyan-700 dark:text-cyan-200" />
                       <ArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:text-slate-900 dark:group-hover:text-white" />
@@ -286,10 +313,10 @@ export default function ClubDashboard() {
             <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-700 dark:text-violet-200">Your AI context</p>
             <h2 className="mt-2 text-xl font-black">Your AI should know your WHY.</h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Your onboarding profile is now the base context we can feed into Trade Hybrid AI instead of treating every member the same.
+              Your onboarding profile is now the base context we can feed into Trade Hybrid AI inside ABATEV instead of treating every member the same.
             </p>
             <div className="mt-4 flex gap-3">
-              <Link to={CLUB_LINKS.ai} className="rounded-lg bg-violet-600 px-3 py-2 text-sm font-black text-white">Open AI</Link>
+              <a href={CLUB_LINKS.abatev} target="_blank" rel="noreferrer" className="rounded-lg bg-violet-600 px-3 py-2 text-sm font-black text-white">Open ABATEV</a>
               <Link to={CLUB_LINKS.onboarding} className="rounded-lg border border-violet-300 bg-white px-3 py-2 text-sm font-bold text-violet-800 dark:border-white/15 dark:bg-transparent dark:text-white">Update context</Link>
             </div>
           </div>
