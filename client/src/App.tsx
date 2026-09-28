@@ -2,7 +2,7 @@
 import '@/lib/polyfills';
 
 import * as React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 const SimpleChartingDashboard = React.lazy(() => import('./pages/simple-charting'));
 const TestPage = React.lazy(() => import('./pages/test-page'));
 const TradingViewWidgetsTest = React.lazy(() => import('./pages/tradingview-widgets-test'));
@@ -132,6 +132,27 @@ import LiveStreamPage from './pages/live-stream';
 import NotificationSettingsPage from './pages/notification-settings';
 import KnowledgeBasePage from './pages/KnowledgeBasePage';
 
+const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { pathname } = useLocation();
+  const standaloneRoutes = ['/', '/login', '/signup', '/register', '/auth'];
+  const isStandalone = standaloneRoutes.includes(pathname);
+
+  return (
+    <>
+      {!isStandalone && (
+        <>
+          <OnboardingTooltip />
+          <OnboardingButton />
+          <UniversalHeader />
+          <BottomNav />
+          <NotificationListener />
+        </>
+      )}
+      <div className={isStandalone ? '' : 'mt-14'}>{children}</div>
+    </>
+  );
+};
+
 const App: React.FC = () => {
   console.log("App component rendering");
   return (
@@ -141,23 +162,8 @@ const App: React.FC = () => {
           <OnboardingProvider>
             <LoadingScreenProvider>
               <Router>
-              {/* Onboarding Components */}
-              <OnboardingTooltip />
-              <OnboardingButton />
-              
-              {/* Universal Header for consistent navigation */}
-              <UniversalHeader />
-              
-              {/* Bottom Nav Bar (optional based on user preferences) */}
-              <BottomNav />
-              
-              {/* Notification System */}
-              <NotificationListener />
-              
-              {/* Test Notification Button temporarily disabled during development */}
-              
-              <div className="mt-14"> {/* Add margin to account for fixed header */}
-                  <Routes>
+              <ChromeAwareLayout>
+                <Routes>
                   {/* Public routes */}
                   <Route path="/" element={<ClubHome />} />
                   <Route path="/trading-freedom-podcast" element={<TradingFreedomPodcast />} />
@@ -328,7 +334,7 @@ const App: React.FC = () => {
                   {/* Fallback route */}
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
-                </div>
+              </ChromeAwareLayout>
               </Router>
             </LoadingScreenProvider>
           </OnboardingProvider>
