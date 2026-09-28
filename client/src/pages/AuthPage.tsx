@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { RegisterForm } from '@/components/auth/RegisterForm';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { useAuthStore } from '@/lib/stores/useAuthStore';
@@ -10,11 +10,12 @@ export function AuthPage() {
   const [mode, setMode] = useState<'login' | 'register'>(() => {
     return ['/register', '/signup'].includes(window.location.pathname) ? 'register' : 'login';
   });
-  const { user, login } = useAuthStore();
+  const { login } = useAuthStore();
   const auth = useAuth();
+  const navigate = useNavigate();
 
-  // Redirect if already authenticated
-  if (user) {
+  // Only the authoritative AuthContext may decide that the user is signed in.
+  if (auth.isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -24,8 +25,10 @@ export function AuthPage() {
     // ProtectedRoute sees the authenticated session immediately.
     await auth.getCurrentUser();
 
-    // Keep the persisted Zustand store in sync for components that use it.
+    // Keep the legacy UI store in sync only after the real Supabase session
+    // has been confirmed by AuthContext.
     login(userData);
+    navigate('/dashboard', { replace: true });
   };
 
   const handleSwitchMode = () => {
