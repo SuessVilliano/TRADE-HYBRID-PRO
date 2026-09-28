@@ -13,7 +13,7 @@ import { registerMCPRoutes, initializeMCPServer, shutdownMCPServer } from "./mcp
 // import { propFirmService } from "./lib/services/prop-firm-service";
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ verify: (req, _res, buf) => { (req as any).rawBody = Buffer.from(buf); } }));
 app.use(express.urlencoded({ extended: false }));
 
 // Configure session middleware with secure cookies and extended persistence
