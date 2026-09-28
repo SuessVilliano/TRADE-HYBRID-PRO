@@ -63,6 +63,7 @@ const products: Product[] = [
 ];
 
 const exploreProducts: Product[] = [
+  { key: 'tradehouse-beta', title: 'Trade House Arena', desc: 'Standalone Arena beta with one-click Club sign-in', href: CLUB_LINKS.tradehouseArena, icon: Trophy, state: 'Beta' },
   { key: 'copy', title: 'Hybrid Copy', desc: 'Base44 copy trading and signal routing', href: CLUB_LINKS.copy, icon: LineChart, state: 'Live product' },
   { key: 'zone', title: 'Hybrid Zone', desc: 'Execution and control layer', href: CLUB_LINKS.zone, icon: Network, state: 'Live product' },
   { key: 'tv', title: 'Hybrid TV', desc: 'Shows, battles, and market content', href: CLUB_LINKS.tv, icon: Radio, state: 'Live channel' },
