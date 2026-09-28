@@ -5,6 +5,10 @@ const SUPABASE_PUBLISHABLE_KEY =
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   'sb_publishable_YjXHHnoRXE4pvn6ezLdU5w_O03Q62W_';
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+const CLUB_SITE_URL = (
+  import.meta.env.VITE_SITE_URL ||
+  (typeof window !== 'undefined' ? window.location.origin : 'https://pro.tradehybrid.co')
+).replace(/\/$/, '');
 const SESSION_KEY = 'trade-hybrid-club-auth';
 
 type ClubSession = {
@@ -71,8 +75,37 @@ async function refreshSession(session: ClubSession): Promise<ClubSession | null>
   return refreshed;
 }
 
+function captureRedirectSession(): ClubSession | null {
+  if (typeof window === 'undefined' || !window.location.hash) return null;
+
+  const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const accessToken = params.get('access_token');
+  const refreshToken = params.get('refresh_token');
+
+  if (!accessToken || !refreshToken) return null;
+
+  const expiresIn = Number(params.get('expires_in') || 3600);
+  const session: ClubSession = {
+    access_token: accessToken,
+    refresh_token: refreshToken,
+    expires_in: expiresIn,
+    expires_at: Math.floor(Date.now() / 1000) + expiresIn,
+  };
+
+  saveSession(session);
+
+  // Remove tokens from the visible URL immediately after capturing them.
+  window.history.replaceState(
+    {},
+    document.title,
+    window.location.pathname + window.location.search,
+  );
+
+  return session;
+}
+
 async function getValidSession(): Promise<ClubSession | null> {
-  let session = readSession();
+  let session = readSession() || captureRedirectSession();
   if (!session?.access_token) return null;
 
   const now = Math.floor(Date.now() / 1000);
@@ -167,7 +200,10 @@ export const authService = {
   },
 
   async register(username: string, email: string, password: string) {
-    const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+    const confirmRedirect = `${CLUB_SITE_URL}/login?confirmed=1`;
+    const response = await fetch(
+      `${SUPABASE_URL}/auth/v1/signup?redirect_to=${encodeURIComponent(confirmRedirect)}`,
+      {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify({
@@ -178,7 +214,7 @@ export const authService = {
           display_name: username.trim(),
         },
       }),
-    });
+    );
 
     const result = await response.json();
 
