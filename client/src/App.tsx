@@ -192,7 +192,7 @@ const App: React.FC = () => {
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/signup" element={<SignupPage />} />
                   <Route path="/auth" element={<AuthPage />} />
-                  <Route path="/register" element={<AuthPage />} />
+                  <Route path="/register" element={<SignupPage />} />
                   <Route path="/wallet" element={<WalletConnectOnboarding />} />
                   <Route path="/wallet-connection" element={<ProtectedRoute><WalletConnectionPage /></ProtectedRoute>} />
                   
