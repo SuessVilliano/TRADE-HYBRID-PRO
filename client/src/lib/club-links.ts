@@ -10,7 +10,7 @@ export const CLUB_LINKS = {
   home: '/',
   dashboard: '/dashboard',
   journal: env.VITE_JOURNAL_URL || '/journal',
-  alerts: env.VITE_ALERTS_URL || 'https://alerts.tradehybrid.co',
+  alerts: env.VITE_ALERTS_URL || '/journal',
   battles: env.VITE_BATTLES_URL || 'https://battles.tradehybrid.co',
   funding: env.VITE_FUNDING_URL || 'https://hybridfunding.co',
   ai: env.VITE_ABATEV_URL || '/ai-assistant',
