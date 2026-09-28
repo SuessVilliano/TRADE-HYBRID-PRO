@@ -1,5 +1,4 @@
 import React from 'react';
-import WebhookSettings from '../components/settings/WebhookSettings';
 import { SettingsPanel } from '../components/ui/settings-panel';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -9,9 +8,9 @@ const LayoutWithNavigation: React.FC<{ children: React.ReactNode }> = ({ childre
   const navigate = useNavigate();
   
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-900 p-6">
+    <div className="min-h-screen bg-slate-50 p-3 dark:bg-slate-900 sm:p-6">
       <div className="max-w-6xl mx-auto">
-        <header className="mb-6 p-4 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
+        <header className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:mb-6">
           <div className="flex items-center">
             <button 
               onClick={() => navigate(-1)} 
@@ -20,10 +19,10 @@ const LayoutWithNavigation: React.FC<{ children: React.ReactNode }> = ({ childre
             >
               <ArrowLeft className="h-5 w-5 text-slate-600 dark:text-slate-300" />
             </button>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Trade Hybrid Platform</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Club Settings</h1>
           </div>
         </header>
-        <main className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-6 border border-slate-200 dark:border-slate-700">
+        <main className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-6">
           {children}
         </main>
       </div>
