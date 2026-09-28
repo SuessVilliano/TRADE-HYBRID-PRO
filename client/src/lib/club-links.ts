@@ -18,6 +18,8 @@ export const CLUB_LINKS = {
   copy: env.VITE_COPY_URL || '/copy-trading',
   tv: env.VITE_TV_URL || '/live-stream',
   events: env.VITE_EVENTS_URL || '/events',
+  community: '/community',
+  onboarding: '/onboarding',
   profile: '/profile',
   settings: '/settings',
   help: '/knowledge',
