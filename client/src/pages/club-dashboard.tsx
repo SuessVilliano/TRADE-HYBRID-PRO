@@ -37,6 +37,22 @@ const products: Product[] = [
     state: 'Journal + Alerts',
   },
   {
+    key: 'ai',
+    title: 'Market Buddy AI',
+    desc: 'Your Trade Hybrid AI companion for goals, Journal context, review, planning, and your next move.',
+    href: CLUB_LINKS.ai,
+    icon: Bot,
+    state: 'Trade Hybrid AI',
+  },
+  {
+    key: 'battles',
+    title: 'Trade House Battles',
+    desc: 'Practice, compete with verified proof, and build a public record.',
+    href: CLUB_LINKS.battles,
+    icon: Trophy,
+    state: 'Compete live',
+  },
+  {
     key: 'community',
     title: 'Community',
     desc: 'Discussion, learning, events, accountability, members, and Club updates.',
@@ -44,25 +60,10 @@ const products: Product[] = [
     icon: Users,
     state: 'Stay plugged in',
   },
-  {
-    key: 'battles',
-    title: 'Trade House Battles',
-    desc: 'Join a room, show your process, and build a public record.',
-    href: CLUB_LINKS.battles,
-    icon: Trophy,
-    state: 'Compete live',
-  },
-  {
-    key: 'abatev',
-    title: 'ABATEV',
-    desc: 'Use your goals, Journal, and journey context inside the conversational trading assistant.',
-    href: CLUB_LINKS.abatev,
-    icon: Bot,
-    state: 'Personal AI',
-  },
 ];
 
 const exploreProducts: Product[] = [
+  { key: 'terminal', title: 'ABATEV Terminal', desc: 'Trading cockpit and future broker-agnostic execution surface', href: CLUB_LINKS.terminal, icon: Bot, state: 'Terminal' },
   { key: 'tradehouse-beta', title: 'Trade House Arena', desc: 'Standalone Arena beta with one-click Club sign-in', href: CLUB_LINKS.tradehouseArena, icon: Trophy, state: 'Beta' },
   { key: 'copy', title: 'Hybrid Copy', desc: 'Base44 copy trading and signal routing', href: CLUB_LINKS.copy, icon: LineChart, state: 'Live product' },
   { key: 'zone', title: 'Hybrid Zone', desc: 'Execution and control layer', href: CLUB_LINKS.zone, icon: Network, state: 'Live product' },
@@ -163,15 +164,24 @@ export default function ClubDashboard() {
               One place to learn, track, connect, compete, and use the tools that fit your actual game plan.
             </p>
           </div>
-          <a
-            href={CLUB_LINKS.abatev}
-            target="_blank"
-            rel="noreferrer"
-            onClick={() => memberJourneyService.markAccess('abatev', true).catch(() => null)}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-violet-500 px-5 py-3 font-black text-slate-950 shadow-lg shadow-cyan-500/15"
-          >
-            <Bot className="h-5 w-5" /> Open ABATEV
-          </a>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              to={CLUB_LINKS.ai}
+              onClick={() => memberJourneyService.markAccess('ai', true).catch(() => null)}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-blue-500 to-cyan-500 px-5 py-3 font-black text-white shadow-lg shadow-violet-500/15"
+            >
+              <Bot className="h-5 w-5" /> Ask Market Buddy
+            </Link>
+            <a
+              href={CLUB_LINKS.terminal}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => memberJourneyService.markAccess('terminal', true).catch(() => null)}
+              className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-3 text-sm font-black text-violet-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-white"
+            >
+              Open Terminal
+            </a>
+          </div>
         </div>
 
         <section className="mb-8 grid gap-4 lg:grid-cols-[1.4fr_.8fr_.8fr]">
@@ -314,10 +324,10 @@ export default function ClubDashboard() {
             <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-700 dark:text-violet-200">Your AI context</p>
             <h2 className="mt-2 text-xl font-black">Your AI should know your WHY.</h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Your onboarding profile is now the base context we can feed into Trade Hybrid AI inside ABATEV instead of treating every member the same.
+              Your onboarding profile is the base context for Market Buddy, so your AI can work from your WHY, goals, and journey instead of treating every member the same.
             </p>
             <div className="mt-4 flex gap-3">
-              <a href={CLUB_LINKS.abatev} target="_blank" rel="noreferrer" className="rounded-lg bg-violet-600 px-3 py-2 text-sm font-black text-white">Open ABATEV</a>
+              <Link to={CLUB_LINKS.ai} className="rounded-lg bg-gradient-to-r from-violet-600 to-cyan-500 px-3 py-2 text-sm font-black text-white">Open Market Buddy</Link>
               <Link to={CLUB_LINKS.onboarding} className="rounded-lg border border-violet-300 bg-white px-3 py-2 text-sm font-bold text-violet-800 dark:border-white/15 dark:bg-transparent dark:text-white">Update context</Link>
             </div>
           </div>
