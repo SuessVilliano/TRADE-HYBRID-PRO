@@ -214,6 +214,7 @@ export const authService = {
           display_name: username.trim(),
         },
       }),
+      },
     );
 
     const result = await response.json();
