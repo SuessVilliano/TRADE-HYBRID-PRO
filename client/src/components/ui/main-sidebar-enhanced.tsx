@@ -1,36 +1,27 @@
-import React, { useState, createContext, useContext } from 'react';
+import React, { createContext, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  BarChart2, 
-  BookOpen, 
-  DollarSign, 
-  Home, 
-  LayoutDashboard, 
-  TrendingUp, // Changed from LineChart to TrendingUp
-  MessageSquare, 
-  Newspaper, 
-  PenTool, 
-  Settings, 
-  ShoppingCart,
-  Signal, 
-  Trophy, 
-  Users, 
-  Wallet, 
-  Zap,
-  Menu,
+import {
+  BellRing,
+  BookOpen,
+  Bot,
+  CircleUserRound,
+  Copy,
+  ExternalLink,
+  Home,
+  Radio,
+  Settings,
+  Trophy,
+  WalletCards,
   X,
-  ChevronDown,
-  ChevronRight,
-  Coins,
-  Globe
+  Zap,
+  CalendarDays,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './button';
-import { useAuth } from '@/lib/context/AuthContext';
-import { useSolanaAuth } from '@/lib/context/SolanaAuthProvider';
 import { Separator } from './separator';
+import { useAuth } from '@/lib/context/AuthContext';
+import { CLUB_LINKS, isExternalClubLink } from '@/lib/club-links';
 
-// Context for passing the onNavItemClick function to nested NavItems
 interface NavItemContextType {
   onNavItemClick?: () => void;
 }
@@ -42,417 +33,223 @@ type NavItemProps = {
   icon: React.ReactNode;
   label: string;
   active?: boolean;
-  onClick?: () => void;
-  children?: React.ReactNode;
-  expanded?: boolean;
-  onExpand?: () => void;
+  external?: boolean;
 };
 
-const NavItem: React.FC<NavItemProps> = ({ 
-  href, 
-  icon, 
-  label, 
-  active, 
-  onClick,
-  children,
-  expanded,
-  onExpand
+const NavItem: React.FC<NavItemProps> = ({
+  href,
+  icon,
+  label,
+  active = false,
+  external = isExternalClubLink(href),
 }) => {
-  // Get the outer component's onNavItemClick if it exists
   const { onNavItemClick } = useContext(NavItemContext);
-  const hasChildren = !!children;
+  const className = cn(
+    'flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition',
+    active
+      ? 'bg-cyan-300/10 text-cyan-200 ring-1 ring-cyan-300/25'
+      : 'text-slate-300 hover:bg-white/5 hover:text-white',
+  );
 
-  // Combined onClick handler for both local onClick and context onNavItemClick
-  const handleClick = () => {
-    if (onClick) onClick();
-    if (onNavItemClick) onNavItemClick();
-  };
+  const body = (
+    <>
+      <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/[0.05]">{icon}</span>
+      <span className="flex-1">{label}</span>
+      {external && <ExternalLink className="h-3.5 w-3.5 text-slate-500" />}
+    </>
+  );
+
+  if (external) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        className={className}
+        onClick={onNavItemClick}
+      >
+        {body}
+      </a>
+    );
+  }
 
   return (
-    <div className="relative">
-      {hasChildren ? (
-        <div className="flex flex-col w-full">
-          <button
-            onClick={onExpand}
-            className={cn(
-              "flex items-center gap-3 py-2 px-3 rounded-md w-full text-left",
-              active 
-                ? "bg-primary/10 text-primary font-medium" 
-                : "text-muted-foreground hover:bg-primary/5 hover:text-foreground"
-            )}
-          >
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-3">
-                {icon}
-                <span>{label}</span>
-              </div>
-              {expanded ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-            </div>
-          </button>
-          {expanded && (
-            <div className="ml-10 mt-1 border-l border-border pl-2 space-y-1">
-              {children}
-            </div>
-          )}
-        </div>
-      ) : (
-        <Link
-          to={href}
-          className={cn(
-            "flex items-center gap-3 py-2 px-3 rounded-md",
-            active 
-              ? "bg-primary/10 text-primary font-medium" 
-              : "text-muted-foreground hover:bg-primary/5 hover:text-foreground"
-          )}
-          onClick={handleClick}
-        >
-          {icon}
-          <span>{label}</span>
-        </Link>
-      )}
-    </div>
+    <Link to={href} className={className} onClick={onNavItemClick}>
+      {body}
+    </Link>
   );
 };
 
-export const MainSidebar: React.FC<{ 
-  onClose?: () => void, 
-  mobile?: boolean,
-  className?: string,
-  onNavItemClick?: () => void
-}> = ({ 
-  onClose, 
+export const MainSidebar: React.FC<{
+  onClose?: () => void;
+  mobile?: boolean;
+  className?: string;
+  onNavItemClick?: () => void;
+}> = ({
+  onClose,
   mobile = false,
-  className = "",
-  onNavItemClick
+  className = '',
+  onNavItemClick,
 }) => {
-  const location = useLocation();
-  const { isAuthenticated } = useAuth();
-  const solanaAuth = useSolanaAuth();
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    trading: false,
-    learning: false,
-    tools: false,
-    crypto: false
-  });
+  const { pathname } = useLocation();
+  const { isAuthenticated, currentUser, logout } = useAuth();
 
-  const isLoggedIn = isAuthenticated || solanaAuth.walletConnected;
+  const isActive = (href: string) =>
+    !isExternalClubLink(href) &&
+    (href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`));
 
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
+  const primary = [
+    {
+      label: isAuthenticated ? 'Club Dashboard' : 'Club Home',
+      href: isAuthenticated ? CLUB_LINKS.dashboard : CLUB_LINKS.home,
+      icon: <Home className="h-4 w-4" />,
+    },
+    { label: 'Hybrid Journal', href: CLUB_LINKS.journal, icon: <BookOpen className="h-4 w-4" /> },
+    { label: 'Alerts Hub', href: CLUB_LINKS.alerts, icon: <BellRing className="h-4 w-4" /> },
+    { label: 'Trade House Battles', href: CLUB_LINKS.battles, icon: <Trophy className="h-4 w-4" /> },
+    { label: 'Hybrid Funding', href: CLUB_LINKS.funding, icon: <WalletCards className="h-4 w-4" /> },
+  ];
 
-  const isActive = (path: string) => {
-    if (path === '/') {
-      return location.pathname === '/';
-    }
-    return location.pathname.startsWith(path);
+  const build = [
+    { label: 'Trade Hybrid AI', href: CLUB_LINKS.ai, icon: <Bot className="h-4 w-4" /> },
+    { label: 'Academy', href: CLUB_LINKS.academy, icon: <BookOpen className="h-4 w-4" /> },
+    { label: 'Hybrid Copy', href: CLUB_LINKS.copy, icon: <Copy className="h-4 w-4" /> },
+    { label: 'Hybrid TV', href: CLUB_LINKS.tv, icon: <Radio className="h-4 w-4" /> },
+    { label: 'Events', href: CLUB_LINKS.events, icon: <CalendarDays className="h-4 w-4" /> },
+  ];
+
+  const handleLogout = async () => {
+    await logout();
+    onNavItemClick?.();
   };
 
   return (
     <NavItemContext.Provider value={{ onNavItemClick }}>
-      <div className={cn(
-        "flex flex-col h-full bg-background border-r border-border",
-        mobile ? "w-full" : "w-64",
-        className
-      )}>
-        {/* Header with Title */}
-        <div className="flex items-center justify-between p-4">
-          <Link to="/" className="flex items-center">
-            <span className="font-bold text-xl">TradeHybrid</span>
+      <aside
+        className={cn(
+          'flex h-full flex-col border-r border-white/10 bg-[#060a14] text-white',
+          mobile ? 'w-full' : 'w-72',
+          className,
+        )}
+      >
+        <div className="flex items-center justify-between px-4 py-5">
+          <Link to={CLUB_LINKS.home} className="flex items-center gap-3" onClick={onNavItemClick}>
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-cyan-300 to-violet-500 text-slate-950">
+              <Zap className="h-5 w-5" />
+            </span>
+            <span>
+              <span className="block text-sm font-black tracking-[0.18em]">TRADE HYBRID</span>
+              <span className="block text-[10px] uppercase tracking-[0.28em] text-cyan-300">Club</span>
+            </span>
           </Link>
           {mobile && (
-            <Button variant="ghost" size="icon" onClick={onClose}>
+            <Button variant="ghost" size="icon" onClick={onClose} className="text-slate-300">
               <X className="h-5 w-5" />
             </Button>
           )}
         </div>
-        
-        <Separator />
 
-        {/* Navigation Links */}
-        <div className="flex-1 overflow-auto py-2 px-2 space-y-1">
-          {/* Home/Dashboard */}
-          <NavItem 
-            href={isLoggedIn ? "/dashboard" : "/"} 
-            icon={<Home className="h-5 w-5" />} 
-            label={isLoggedIn ? "Dashboard" : "Home"} 
-            active={isActive(isLoggedIn ? "/dashboard" : "/")} 
-            onClick={mobile ? onClose : undefined}
-          />
+        <Separator className="bg-white/10" />
 
-          {/* Trading Section */}
-          <NavItem 
-            href="#" 
-            icon={<BarChart2 className="h-5 w-5" />} 
-            label="Trading" 
-            active={isActive("/trading") || isActive("/trade") || isActive("/trading-dashboard") || isActive("/dex") || isActive("/trading-platforms")}
-            expanded={expandedSections.trading}
-            onExpand={() => toggleSection('trading')}
-          >
-            <NavItem 
-              href="/trading-dashboard" 
-              icon={<LayoutDashboard className="h-4 w-4" />} 
-              label="Custom Dashboard" 
-              active={isActive("/trading-dashboard")} 
-              onClick={mobile ? onClose : undefined}
-            />
-            <NavItem 
-              href="/dex" 
-              icon={<Coins className="h-4 w-4" />} 
-              label="DEX Platform" 
-              active={isActive("/dex")} 
-              onClick={mobile ? onClose : undefined}
-            />
-            <NavItem 
-              href="/trading-platforms" 
-              icon={<Globe className="h-4 w-4" />} 
-              label="Prop Firms" 
-              active={isActive("/trading-platforms")} 
-              onClick={mobile ? onClose : undefined}
-            />
-            <NavItem 
-              href="/signals" 
-              icon={<Signal className="h-4 w-4" />} 
-              label="Trading Signals" 
-              active={isActive("/signals")} 
-              onClick={mobile ? onClose : undefined}
-            />
-            <NavItem 
-              href="/voice-trade" 
-              icon={<MessageSquare className="h-4 w-4" />} 
-              label="AI Voice Trader" 
-              active={isActive("/voice-trade")} 
-              onClick={mobile ? onClose : undefined}
-            />
-          </NavItem>
+        <div className="flex-1 overflow-y-auto px-3 py-4">
+          <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+            Club
+          </p>
+          <div className="space-y-1">
+            {primary.map((item) => (
+              <NavItem key={item.label} {...item} active={isActive(item.href)} />
+            ))}
+          </div>
 
-          {/* Learning/Education */}
-          <NavItem 
-            href="#" 
-            icon={<BookOpen className="h-5 w-5" />} 
-            label="Education" 
-            active={isActive("/learn") || isActive("/learning") || isActive("/learning-center")}
-            expanded={expandedSections.learning}
-            onExpand={() => toggleSection('learning')}
-          >
-            <NavItem 
-              href="/learning-center/courses" 
-              icon={<BookOpen className="h-4 w-4" />} 
-              label="Learning Center" 
-              active={isActive("/learning-center")} 
-              onClick={mobile ? onClose : undefined}
-            />
-            <NavItem 
-              href="/educational-games" 
-              icon={<Trophy className="h-4 w-4" />} 
-              label="Trading Games" 
-              active={isActive("/educational-games")} 
-              onClick={mobile ? onClose : undefined}
-            />
-          </NavItem>
+          <p className="px-3 pb-2 pt-6 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+            Tools & access
+          </p>
+          <div className="space-y-1">
+            {build.map((item) => (
+              <NavItem key={item.label} {...item} active={isActive(item.href)} />
+            ))}
+          </div>
 
-          {/* News */}
-          <NavItem 
-            href="/news" 
-            icon={<Newspaper className="h-5 w-5" />} 
-            label="Market News" 
-            active={isActive("/news")} 
-            onClick={mobile ? onClose : undefined}
-          />
-
-          {/* Tools */}
-          <NavItem 
-            href="#" 
-            icon={<PenTool className="h-5 w-5" />} 
-            label="Tools" 
-            active={isActive("/trading-tools") || isActive("/signals-analyzer")}
-            expanded={expandedSections.tools}
-            onExpand={() => toggleSection('tools')}
-          >
-            <NavItem 
-              href="/trading-tools" 
-              icon={<PenTool className="h-4 w-4" />} 
-              label="Trading Tools" 
-              active={isActive("/trading-tools")} 
-              onClick={mobile ? onClose : undefined}
-            />
-            <NavItem 
-              href="/signals-analyzer" 
-              icon={<Signal className="h-4 w-4" />} 
-              label="Signal Analyzer" 
-              active={isActive("/signals-analyzer")} 
-              onClick={mobile ? onClose : undefined}
-            />
-
-            <NavItem 
-              href="/web-browser" 
-              icon={<Globe className="h-4 w-4" />} 
-              label="Trading Browser" 
-              active={isActive("/web-browser")} 
-              onClick={mobile ? onClose : undefined}
-            />
-          </NavItem>
-
-          {/* Journal */}
-          <NavItem 
-            href="/journal" 
-            icon={<MessageSquare className="h-5 w-5" />} 
-            label="Trading Journal" 
-            active={isActive("/journal")} 
-            onClick={mobile ? onClose : undefined}
-          />
-
-          {/* Prop Firm */}
-          <NavItem 
-            href="/prop-firm" 
-            icon={<DollarSign className="h-5 w-5" />} 
-            label="Prop Firm" 
-            active={isActive("/prop-firm")} 
-            onClick={mobile ? onClose : undefined}
-          />
-          
-          {/* Leaderboard */}
-          <NavItem 
-            href="/leaderboard" 
-            icon={<Trophy className="h-5 w-5" />} 
-            label="Leaderboard" 
-            active={isActive("/leaderboard")} 
-            onClick={mobile ? onClose : undefined}
-          />
-
-
-
-          {/* Crypto Section */}
-          <NavItem 
-            href="#" 
-            icon={<Coins className="h-5 w-5" />} 
-            label="Crypto" 
-            active={isActive("/thc-staking") || isActive("/nft-marketplace") || isActive("/affiliate-dashboard")}
-            expanded={expandedSections.crypto}
-            onExpand={() => toggleSection('crypto')}
-          >
-            <NavItem 
-              href="/thc-staking" 
-              icon={<Coins className="h-4 w-4" />} 
-              label="THC Staking" 
-              active={isActive("/thc-staking")} 
-              onClick={mobile ? onClose : undefined}
-            />
-            <NavItem 
-              href="/nft-marketplace" 
-              icon={<Wallet className="h-4 w-4" />} 
-              label="NFT Marketplace" 
-              active={isActive("/nft-marketplace")} 
-              onClick={mobile ? onClose : undefined}
-            />
-            <NavItem 
-              href="/affiliate-dashboard" 
-              icon={<DollarSign className="h-4 w-4" />} 
-              label="Affiliate Matrix" 
-              active={isActive("/affiliate-dashboard")} 
-              onClick={mobile ? onClose : undefined}
-            />
-          </NavItem>
-          
-          {/* Shop */}
-          <NavItem 
-            href="/shop" 
-            icon={<ShoppingCart className="h-5 w-5" />} 
-            label="Shop" 
-            active={isActive("/shop")} 
-            onClick={mobile ? onClose : undefined}
-          />
-          
-          {/* Knowledge Base */}
-          <NavItem 
-            href="/knowledge" 
-            icon={<BookOpen className="h-5 w-5" />} 
-            label="Knowledge Base" 
-            active={isActive("/knowledge")} 
-            onClick={mobile ? onClose : undefined}
-          />
+          {isAuthenticated && (
+            <>
+              <p className="px-3 pb-2 pt-6 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+                Account
+              </p>
+              <div className="space-y-1">
+                <NavItem
+                  label="Profile"
+                  href={CLUB_LINKS.profile}
+                  icon={<CircleUserRound className="h-4 w-4" />}
+                  active={isActive(CLUB_LINKS.profile)}
+                />
+                <NavItem
+                  label="Settings"
+                  href={CLUB_LINKS.settings}
+                  icon={<Settings className="h-4 w-4" />}
+                  active={isActive(CLUB_LINKS.settings)}
+                />
+              </div>
+            </>
+          )}
         </div>
 
-        <Separator />
+        <Separator className="bg-white/10" />
 
-        <div className="p-4 space-y-2">
-          {isLoggedIn ? (
-            <>
-              <NavItem 
-                href="/wallet-connection" 
-                icon={<Wallet className="h-5 w-5" />} 
-                label={solanaAuth.walletConnected ? "Wallet Connected" : "Connect Wallet"} 
-                active={isActive("/wallet-connection") || isActive("/wallet")} 
-                onClick={mobile ? onClose : undefined}
-              />
-              <NavItem 
-                href="/settings" 
-                icon={<Settings className="h-5 w-5" />} 
-                label="Settings" 
-                active={isActive("/settings")} 
-                onClick={mobile ? onClose : undefined}
-              />
-            </>
+        <div className="p-4">
+          {isAuthenticated ? (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+              <p className="truncate text-sm font-bold">{currentUser?.username || 'Club member'}</p>
+              <p className="truncate text-xs text-slate-500">{currentUser?.email || 'Trade Hybrid Club'}</p>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="mt-3 w-full rounded-xl border border-white/10 px-3 py-2 text-sm font-bold text-slate-300 hover:bg-white/5 hover:text-white"
+              >
+                Log out
+              </button>
+            </div>
           ) : (
-            <div className="space-y-2">
-              <Link to="/login" className="w-full">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-center"
-                  onClick={mobile ? onClose : undefined}
-                >
-                  Login
-                </Button>
+            <div className="grid gap-2">
+              <Link
+                to={CLUB_LINKS.login}
+                onClick={onNavItemClick}
+                className="rounded-xl border border-white/15 px-4 py-3 text-center text-sm font-bold text-white"
+              >
+                Log in
               </Link>
-              <Link to="/register" className="w-full">
-                <Button 
-                  className="w-full justify-center"
-                  onClick={mobile ? onClose : undefined}
-                >
-                  Register
-                </Button>
-              </Link>
-              <Link to="/wallet-connection" className="w-full">
-                <Button 
-                  variant="outline"
-                  className="w-full justify-center"
-                  onClick={mobile ? onClose : undefined}
-                >
-                  <Wallet className="h-4 w-4 mr-2" />
-                  Connect Wallet
-                </Button>
+              <Link
+                to={CLUB_LINKS.register}
+                onClick={onNavItemClick}
+                className="rounded-xl bg-gradient-to-r from-cyan-300 to-violet-500 px-4 py-3 text-center text-sm font-black text-slate-950"
+              >
+                Join the Club
               </Link>
             </div>
           )}
         </div>
-      </div>
+      </aside>
     </NavItemContext.Provider>
   );
 };
 
-export const MobileSidebarToggle: React.FC<{ onClick: () => void }> = ({ onClick }) => {
-  return (
-    <Button variant="ghost" size="icon" onClick={onClick} className="lg:hidden">
-      <Menu className="h-5 w-5" />
-    </Button>
-  );
-};
+export const MobileSidebarToggle: React.FC<{ onClick: () => void }> = ({ onClick }) => (
+  <Button variant="ghost" size="icon" onClick={onClick} className="lg:hidden">
+    <span className="sr-only">Open Club menu</span>
+    <Zap className="h-5 w-5" />
+  </Button>
+);
 
-export const MobileSidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+export const MobileSidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
+  isOpen,
+  onClose,
+}) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="fixed left-0 top-0 h-full w-3/4 max-w-xs">
-        <MainSidebar onClose={onClose} mobile={true} />
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed left-0 top-0 h-full w-[86%] max-w-sm">
+        <MainSidebar onClose={onClose} mobile />
       </div>
     </div>
   );
