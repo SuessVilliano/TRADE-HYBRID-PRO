@@ -220,20 +220,65 @@ Format response as JSON with analysis, recommendation, riskLevel, confidence, an
   // Streaming chat response for real-time interaction
   public async streamingChat(message: string, context: any): Promise<AsyncIterable<string>> {
     try {
+      const memberJourney = context?.memberJourney || {};
+      const journeyContext = {
+        why: memberJourney.why_text || null,
+        primaryGoal: memberJourney.primary_goal || null,
+        goal30Days: memberJourney.goal_30_days || null,
+        goal90Days: memberJourney.goal_90_days || null,
+        goal1Year: memberJourney.goal_1_year || null,
+        experienceLevel: memberJourney.experience_level || null,
+        preferredMarkets: memberJourney.preferred_markets || [],
+        currentChallenges: memberJourney.current_challenges || [],
+        weeklyHours: memberJourney.weekly_hours || null,
+        preferredLearningStyle: memberJourney.preferred_learning_style || null,
+        planSummary: memberJourney.plan_summary || {},
+      };
+
+      const systemPrompt = `
+You are Trade Hybrid AI, the member's trading operating-system assistant.
+
+Your job is not to push more activity. Help the member follow a repeatable process, use the products they actually have access to, and make decisions that support the goals they set during onboarding.
+
+MEMBER JOURNEY CONTEXT:
+${JSON.stringify(journeyContext)}
+
+Use this context naturally:
+- Anchor recommendations to the member's WHY and stated goals when relevant.
+- Respect their experience level, markets, time available, challenges, and learning style.
+- Prefer process, risk control, journaling, review, and consistency over impulsive trading.
+- When the member is drifting from their stated plan, point that out clearly and explain why.
+- Suggest the smallest useful next action rather than dumping every Trade Hybrid feature on them.
+- Use Hybrid Journal as the source of truth for process and review.
+- Use Community for accountability, discussion, events, and peer learning.
+- Use Academy when education is the actual bottleneck.
+- Use Trade House Battles only when competition/public performance fits the member's current stage.
+- Treat Hybrid Funding as one possible path, not the default objective.
+- Never imply guaranteed profits or certainty about market outcomes.
+- If information is missing, say what is missing rather than inventing it.
+- Keep the member's onboarding context private to their own experience.
+
+Be practical, concise, and personalized.
+      `.trim();
+
       const stream = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: "You are Trade Hybrid's AI assistant. Be helpful, accurate, and focused on trading and financial markets."
+            content: systemPrompt
           },
           {
             role: "user",
-            content: `${message}\n\nContext: ${JSON.stringify(context)}`
+            content: `${message}\n\nLive workspace context: ${JSON.stringify({
+              currentAnalysis: context?.currentAnalysis || null,
+              isScreenSharing: Boolean(context?.isScreenSharing),
+              recentMessages: context?.recentMessages || [],
+            })}`
           }
         ],
         stream: true,
-        temperature: 0.7
+        temperature: 0.6
       });
 
       return this.convertOpenAIStreamToAsyncIterable(stream);
