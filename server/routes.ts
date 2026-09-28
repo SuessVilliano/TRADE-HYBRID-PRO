@@ -1,4 +1,6 @@
 import type { Express } from "express";
+import crypto from "node:crypto";
+import { neon } from "@neondatabase/serverless";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { getMarketData, getCurrentPrice, getSymbols } from "./api/market";
@@ -335,7 +337,86 @@ import walletApiRoutes from './api/wallet'; // Import for our new wallet API rou
 import enhancedMarketDataRoutes from './api/market-data'; // Import for enhanced market data API routes
 import testEnhancedMarketDataRoutes from './routes/test-enhanced-market-data'; // Import for testing enhanced market data
 
+const processedWhopEvents = new Set<string>();
+
+function verifyWhopSignature(req: any): Record<string, any> {
+  const secret = process.env.WHOP_WEBHOOK_SECRET;
+  const rawBody = req.rawBody as Buffer | undefined;
+  const webhookId = String(req.headers["webhook-id"] || "");
+  const timestamp = String(req.headers["webhook-timestamp"] || "");
+  const signatureHeader = String(req.headers["webhook-signature"] || "");
+  if (!secret || !rawBody || !webhookId || !timestamp || !signatureHeader) {
+    throw new Error("Missing Whop webhook verification material");
+  }
+  const timestampSeconds = Number(timestamp);
+  if (!Number.isFinite(timestampSeconds) || Math.abs(Date.now() / 1000 - timestampSeconds) > 300) {
+    throw new Error("Whop webhook timestamp outside replay window");
+  }
+  const signedPayload = Buffer.from(webhookId + "." + timestamp + "." + rawBody.toString("utf8"));
+  const secretBody = secret.startsWith("ws_") ? secret.slice(3) : secret;
+  const keys = [Buffer.from(secretBody, "base64"), Buffer.from(secret)];
+  const expected = keys.map(key => crypto.createHmac("sha256", key).update(signedPayload).digest("base64"));
+  const candidates = signatureHeader.split(/[ ,]+/).map(value => value.replace(/^v1,/, ""));
+  if (!candidates.some(candidate => expected.some(value => {
+    const a = Buffer.from(candidate);
+    const b = Buffer.from(value);
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+  }))) {
+    throw new Error("Invalid Whop webhook signature");
+  }
+  return JSON.parse(rawBody.toString("utf8"));
+}
+
+async function applyWhopEntitlement(event: Record<string, any>) {
+  const type = String(event.type || "");
+  const data = (event.data || {}) as Record<string, any>;
+  if (!["payment.succeeded", "membership.activated", "membership.deactivated"].includes(type)) return;
+  const userId = data.user_id || data.member_id || data.user?.id || data.member?.user_id || null;
+  const email = data.email || data.user?.email || data.member?.email || null;
+  const planId = data.plan_id || data.plan?.id || null;
+  if (!userId && !email) {
+    console.warn("[WHOP] Event has no user identifier", { type, eventId: event.id });
+    return;
+  }
+  const sql = neon(process.env.DATABASE_URL || "");
+  const matches = await sql`
+    SELECT id FROM users
+    WHERE (${userId} IS NOT NULL AND whop_id = ${userId})
+       OR (${email} IS NOT NULL AND LOWER(email) = LOWER(${email}))
+    LIMIT 1
+  `;
+  if (!matches.length) {
+    console.warn("[WHOP] No matching Trade Hybrid user", { type, userId, email });
+    return;
+  }
+  const membershipLevel = type === "membership.deactivated" ? "free" : "paid";
+  await sql`
+    UPDATE users
+    SET membership_level = ${membershipLevel},
+        whop_id = COALESCE(${userId}, whop_id),
+        whop_plan_id = COALESCE(${planId}, whop_plan_id),
+        updated_at = NOW()
+    WHERE id = ${matches[0].id}
+  `;
+  console.log("[WHOP] Entitlement updated", { type, userId, email, membershipLevel });
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Whop signed webhook receiver. Acknowledge quickly and apply only known entitlement events.
+  app.post("/api/billing/whop/webhook", async (req: Request, res: Response) => {
+    try {
+      const event = verifyWhopSignature(req);
+      const eventId = String(event.id || req.headers["webhook-id"] || "");
+      if (eventId && processedWhopEvents.has(eventId)) return res.status(200).json({ received: true, duplicate: true });
+      if (eventId) processedWhopEvents.add(eventId);
+      await applyWhopEntitlement(event);
+      return res.status(200).json({ received: true });
+    } catch (error) {
+      console.error("[WHOP] Webhook rejected or failed:", error);
+      return res.status(400).json({ received: false });
+    }
+  });
+
   // Add route to serve Solana RPC URL from environment variables
   app.get("/api/config/rpc-url", (req: Request, res: Response) => {
     const rpcUrl = process.env.SOLANA_RPC_URL || '';
