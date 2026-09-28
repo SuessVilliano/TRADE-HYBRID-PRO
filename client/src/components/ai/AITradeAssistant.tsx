@@ -16,6 +16,10 @@ import {
   ScreenShare,
   ScreenShareOff
 } from 'lucide-react';
+import { config } from '@/lib/config';
+import memberJourneyService, { type MemberOnboarding } from '@/lib/services/member-journey-service';
+
+const apiUrl = (path: string) => `${(config.API_BASE_URL || '').replace(/\/$/, '')}${path}`;
 
 interface TradeAnalysis {
   sentiment: 'bullish' | 'bearish' | 'neutral';
@@ -43,12 +47,33 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
   }>>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
+  const [memberJourney, setMemberJourney] = useState<MemberOnboarding | null>(null);
 
   const screenStreamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Load the member's WHY, goals, markets, challenges, and game plan once.
+  useEffect(() => {
+    let active = true;
+    memberJourneyService
+      .getOnboarding()
+      .then((journey) => {
+        if (!active || !journey) return;
+        setMemberJourney(journey);
+        if (journey.primary_goal || journey.why_text) {
+          addAIMessage(
+            `I have your Trade Hybrid game plan loaded${journey.primary_goal ? `: ${journey.primary_goal}` : ''}. I’ll use your WHY, goals, markets, and current challenges as context when I help you.`
+          );
+        }
+      })
+      .catch(() => null);
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Auto-scroll chat to bottom when new messages arrive
   useEffect(() => {
@@ -155,12 +180,13 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
   // Analyze screen content with AI
   const analyzeScreenContent = async (imageData: string) => {
     try {
-      const response = await fetch('/api/ai/analyze-screen', {
+      const response = await fetch(apiUrl('/api/ai/analyze-screen'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           image: imageData,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          memberJourney
         })
       });
 
@@ -222,10 +248,11 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
       formData.append('context', JSON.stringify({
         currentAnalysis,
         isTrading: isScreenSharing,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        memberJourney
       }));
 
-      const response = await fetch('/api/ai/voice-command', {
+      const response = await fetch(apiUrl('/api/ai/voice-command'), {
         method: 'POST',
         body: formData
       });
@@ -256,7 +283,7 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
     setIsStreaming(true);
 
     try {
-      const response = await fetch('/api/ai/chat-stream', {
+      const response = await fetch(apiUrl('/api/ai/chat-stream'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -264,6 +291,7 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
           context: {
             currentAnalysis,
             isScreenSharing,
+            memberJourney,
             recentMessages: chatMessages.slice(-5)
           }
         })
@@ -349,6 +377,7 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
           <CardTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-blue-500" />
             AI Trade Assistant
+            {memberJourney?.completed_at && <Badge variant="secondary">Game plan loaded</Badge>}
             {isAnalyzing && <Badge variant="secondary" className="animate-pulse">Analyzing</Badge>}
           </CardTitle>
         </CardHeader>
