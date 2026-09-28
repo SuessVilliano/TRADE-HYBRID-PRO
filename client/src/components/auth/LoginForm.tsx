@@ -13,7 +13,7 @@ interface LoginFormProps {
 
 export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
   const [formData, setFormData] = useState({
-    identifier: ''
+    identifier: '',
     password: ''
   });
   const [loading, setLoading] = useState(false);
