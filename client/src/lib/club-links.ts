@@ -9,19 +9,29 @@ const env = import.meta.env;
 export const CLUB_LINKS = {
   home: '/',
   dashboard: '/dashboard',
-  journal: env.VITE_JOURNAL_URL || '/journal',
-  alerts: env.VITE_ALERTS_URL || '/journal',
-  battles: env.VITE_BATTLES_URL || 'https://battles.tradehybrid.co',
+
+  // Real Trade Hybrid products — do not fall back to legacy Pro pages.
+  journal: env.VITE_JOURNAL_URL || 'https://hybridjournal.co',
+  alerts: env.VITE_ALERTS_URL || 'https://hybridjournal.co',
+  copy: env.VITE_COPY_URL || 'https://copy.tradehybrid.co',
+  abatev: env.VITE_ABATEV_URL || 'https://abatev.tradehybrid.co',
+  ai: env.VITE_ABATEV_URL || 'https://abatev.tradehybrid.co',
+  zone: env.VITE_ZONE_URL || 'https://thehybridzone.club',
+  battles: env.VITE_BATTLES_URL || 'https://tradehouse-91io.onrender.com',
   funding: env.VITE_FUNDING_URL || 'https://hybridfunding.co',
-  ai: env.VITE_ABATEV_URL || '/ai-assistant',
+
+  // Keep TV inside the Club shell, but source the real white-labelled channel.
+  tv: '/tv',
+  tvExternal: env.VITE_TV_URL || 'https://tv.tradehybrid.club',
+
   academy: env.VITE_ACADEMY_URL || '/learning-center',
-  copy: env.VITE_COPY_URL || '/copy-trading',
-  tv: env.VITE_TV_URL || '/live-stream',
-  events: env.VITE_EVENTS_URL || '/events',
   community: '/community',
+  events: '/community',
   onboarding: '/onboarding',
+  about: '/about',
   profile: '/profile',
   settings: '/settings',
+  hooks: '/settings?section=hooks',
   help: '/knowledge',
   login: '/login',
   register: '/register',
