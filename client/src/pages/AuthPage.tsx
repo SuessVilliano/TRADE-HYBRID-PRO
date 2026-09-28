@@ -3,25 +3,29 @@ import { Navigate } from 'react-router-dom';
 import { RegisterForm } from '@/components/auth/RegisterForm';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { useAuthStore } from '@/lib/stores/useAuthStore';
+import { useAuth } from '@/lib/context/AuthContext';
 
 export function AuthPage() {
   // Check URL to determine initial mode
   const [mode, setMode] = useState<'login' | 'register'>(() => {
-    return window.location.pathname === '/register' ? 'register' : 'login';
+    return ['/register', '/signup'].includes(window.location.pathname) ? 'register' : 'login';
   });
   const { user, login } = useAuthStore();
+  const auth = useAuth();
 
   // Redirect if already authenticated
   if (user) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const handleAuthSuccess = (userData: any) => {
-    // Update the auth store with the new user data
+  const handleAuthSuccess = async (userData: any) => {
+    // The API has already created the server session at this point.
+    // Refresh AuthContext before triggering the dashboard redirect so
+    // ProtectedRoute sees the authenticated session immediately.
+    await auth.getCurrentUser();
+
+    // Keep the persisted Zustand store in sync for components that use it.
     login(userData);
-    
-    // Navigation will happen automatically via the Navigate component above
-    // since user will no longer be null
   };
 
   const handleSwitchMode = () => {
