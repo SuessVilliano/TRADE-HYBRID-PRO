@@ -1,18 +1,21 @@
 
 import { useAuthStore } from '../stores/useAuthStore';
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+const apiUrl = (path: string) => `${API_BASE_URL}${path}`;
+
 export const authService = {
   async login(username: string, password?: string) {
     try {
       // Direct username/password login
       if (password !== undefined) {
         console.log('Logging in with username/password');
-        const response = await fetch('/api/auth/login', {
+        const response = await fetch(apiUrl('/api/auth/login'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({ identifier: username, password }),
           credentials: 'include', // Important for sending/receiving cookies
         });
         
@@ -32,7 +35,7 @@ export const authService = {
       // Legacy login by username/ID only (for backward compatibility)
       else {
         console.log('Legacy login by username/ID only');
-        const response = await fetch('/api/auth/legacy-login', {
+        const response = await fetch(apiUrl('/api/auth/legacy-login'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -63,7 +66,7 @@ export const authService = {
   async register(username: string, email: string, password: string) {
     try {
       console.log('Registering new user account');
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(apiUrl('/api/auth/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -98,7 +101,7 @@ export const authService = {
       // First try the direct legacy login which is simplest
       try {
         console.log('Trying legacy login with Whop ID');
-        const legacyResponse = await fetch('/api/auth/legacy-login', {
+        const legacyResponse = await fetch(apiUrl('/api/auth/legacy-login'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -128,7 +131,7 @@ export const authService = {
       // Fallback to direct Whop auth
       try {
         console.log('Attempting direct Whop auth with ID:', whopId);
-        const response = await fetch('/api/auth/whop-login', {
+        const response = await fetch(apiUrl('/api/auth/whop-login'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -169,7 +172,7 @@ export const authService = {
   async loginWithDemo() {
     try {
       console.log('Logging in with demo account');
-      const response = await fetch('/api/auth/demo-login', {
+      const response = await fetch(apiUrl('/api/auth/demo-login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -205,7 +208,7 @@ export const authService = {
   async getCurrentUser() {
     try {
       console.log('Checking current user authentication status');
-      const response = await fetch('/api/auth/user', {
+      const response = await fetch(apiUrl('/api/auth/user'), {
         credentials: 'include', // Important for sending/receiving cookies
       });
       
@@ -236,7 +239,7 @@ export const authService = {
   async logout() {
     try {
       console.log('Logging out user');
-      const response = await fetch('/api/auth/logout', {
+      const response = await fetch(apiUrl('/api/auth/logout'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
