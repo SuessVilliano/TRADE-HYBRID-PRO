@@ -216,12 +216,27 @@ export async function hybridAnalysis(req: Request, res: Response) {
 // Screen analysis endpoint for real-time monitoring
 export async function analyzeScreen(req: Request, res: Response) {
   try {
-    const { image, timestamp } = req.body;
+    const { image, timestamp, memberJourney } = req.body;
+
+    const journeyContext = memberJourney ? {
+      why: memberJourney.why_text || null,
+      primaryGoal: memberJourney.primary_goal || null,
+      goal30Days: memberJourney.goal_30_days || null,
+      goal90Days: memberJourney.goal_90_days || null,
+      experienceLevel: memberJourney.experience_level || null,
+      preferredMarkets: memberJourney.preferred_markets || [],
+      currentChallenges: memberJourney.current_challenges || [],
+      weeklyHours: memberJourney.weekly_hours || null,
+      planSummary: memberJourney.plan_summary || {},
+    } : null;
 
     const analysis = await aiAgent.multiModalAnalysis({
       charts: [image],
-      text: "Analyze this trading screen for chart patterns, trade opportunities, risk management, and trade plan compliance",
-      marketData: {}
+      text: `Analyze this trading screen for chart patterns, risk management, and trade-plan compliance.
+Do not push a trade just because a setup may exist. Evaluate what is visible against the member's stated plan, goals, experience, preferred markets, time available, and known challenges.
+If the screen behavior appears inconsistent with their plan, say so explicitly.
+Member journey context: ${JSON.stringify(journeyContext)}`,
+      marketData: { timestamp }
     });
 
     // Parse AI response to extract structured data
