@@ -51,6 +51,7 @@ import CommunityPage from './pages/community';
 import HybridTVPage from './pages/hybrid-tv';
 import AboutTradeHybridPage from './pages/about-trade-hybrid';
 import MemberOnboardingPage from './pages/member-onboarding';
+import TradeHouseLaunchPage from './pages/tradehouse-launch';
 import EventsPage from './pages/events';
 import NotFoundPage from './pages/not-found';
 import SocialNetworkPage from './pages/social-network';
@@ -157,6 +158,7 @@ const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }
     '/tv',
     '/about',
     '/onboarding',
+    '/launch/tradehouse',
     '/profile',
     '/settings',
     '/trading-tools',
@@ -243,6 +245,7 @@ const App: React.FC = () => {
                   <Route path="/dashboard" element={<ProtectedRoute><ClubDashboard /></ProtectedRoute>} />
                   <Route path="/onboarding" element={<ProtectedRoute><MemberOnboardingPage /></ProtectedRoute>} />
                   <Route path="/community" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
+                  <Route path="/launch/tradehouse" element={<ProtectedRoute><TradeHouseLaunchPage /></ProtectedRoute>} />
                   <Route path="/tv" element={<ProtectedRoute><HybridTVPage /></ProtectedRoute>} />
                   <Route path="/about" element={<AboutTradeHybridPage />} />
                   <Route path="/trade" element={<ProtectedRoute><TradeView /></ProtectedRoute>} />
