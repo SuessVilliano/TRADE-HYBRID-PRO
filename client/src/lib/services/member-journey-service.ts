@@ -99,25 +99,13 @@ export const memberJourneyService = {
   },
 
   async markAccess(productKey: string, entitled = true) {
-    const { accessToken, userId } = await sessionContext();
-    const now = new Date().toISOString();
+    const { accessToken } = await sessionContext();
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/member_access_checklist?on_conflict=user_id,product_key`,
+      `${SUPABASE_URL}/rest/v1/rpc/record_member_product_access`,
       {
         method: 'POST',
-        headers: headers(accessToken, {
-          Prefer: 'resolution=merge-duplicates,return=representation',
-        }),
-        body: JSON.stringify({
-          user_id: userId,
-          product_key: productKey,
-          entitled,
-          first_accessed_at: now,
-          last_accessed_at: now,
-          access_count: 1,
-          verified_at: now,
-          updated_at: now,
-        }),
+        headers: headers(accessToken),
+        body: JSON.stringify({ p_product_key: productKey }),
       },
     );
     if (!response.ok) throw new Error('Could not update product access.');
