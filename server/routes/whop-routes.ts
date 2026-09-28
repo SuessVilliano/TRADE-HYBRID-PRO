@@ -20,6 +20,7 @@ declare module 'express-session' {
 
 // Create express router
 const router = Router();
+const frontendUrl = (process.env.FRONTEND_URL || process.env.APP_URL || '').replace(/\/$/, '');
 
 /**
  * Login redirect to Whop for OAuth
@@ -41,7 +42,8 @@ router.get('/login', (req, res) => {
   }
   
   // Redirect URL (callback URL registered with Whop)
-  const redirectUri = encodeURIComponent(`${req.protocol}://${req.get('host')}/api/whop/callback`);
+  const backendOrigin = process.env.API_PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
+  const redirectUri = encodeURIComponent(`${backendOrigin.replace(/\/$/, '')}/api/whop/callback`);
   
   // Redirect to the actual Whop OAuth URL
   const whopOAuthUrl = `https://app.whop.com/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&response_type=code`;
@@ -85,7 +87,7 @@ router.get('/callback', async (req, res) => {
         client_secret: clientSecret,
         code,
         grant_type: 'authorization_code',
-        redirect_uri: `${req.protocol}://${req.get('host')}/api/whop/callback`
+        redirect_uri: `${(process.env.API_PUBLIC_URL || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '')}/api/whop/callback`
       });
 
       const accessToken = tokenResponse.data.access_token;
@@ -121,7 +123,7 @@ router.get('/callback', async (req, res) => {
       }
       
       // Redirect to dashboard
-      res.redirect('/dashboard');
+      res.redirect(frontendUrl ? `${frontendUrl}/dashboard` : '/dashboard');
     } catch (oauthError) {
       console.error('Error exchanging code for token:', oauthError);
       
@@ -151,7 +153,7 @@ router.get('/callback', async (req, res) => {
       }
       
       // Redirect to dashboard
-      res.redirect('/dashboard');
+      res.redirect(frontendUrl ? `${frontendUrl}/dashboard` : '/dashboard');
     }
   } catch (error) {
     console.error('Whop callback error:', error);
