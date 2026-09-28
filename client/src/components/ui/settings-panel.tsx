@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
@@ -8,16 +8,49 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Bell, Lock, Palette, MonitorSmartphone, Volume2, Database, Globe, Cpu, Settings } from 'lucide-react';
+import { Bell, Lock, Palette, MonitorSmartphone, Volume2, Database, Cpu, Settings, Webhook, BookOpen, Copy, Bot, Network, Menu } from 'lucide-react';
 import useLocalStorage from '@/lib/hooks/useLocalStorage';
 import { useTheme } from '@/lib/hooks/useTheme';
 import { useAudio } from '@/lib/stores/useAudio';
 import { BottomNavCustomizer } from './bottom-nav-customizer';
 import { useUserPreferences } from '@/lib/stores/useUserPreferences';
+import { CLUB_LINKS } from '@/lib/club-links';
+
+const SETTINGS_SECTIONS = [
+  ['account', 'Account'],
+  ['interface', 'Interface'],
+  ['navigation', 'Navigation'],
+  ['notifications', 'Notifications'],
+  ['audio', 'Audio'],
+  ['performance', 'Performance'],
+  ['integrations', 'Integrations'],
+  ['hooks', 'Webhooks & Alerts'],
+] as const;
 
 export const SettingsPanel = () => {
   const { theme, setTheme } = useTheme();
-  const [activeTab, setActiveTab] = useState('account');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSection = searchParams.get('section');
+  const [activeTab, setActiveTab] = useState(
+    SETTINGS_SECTIONS.some(([value]) => value === initialSection) ? initialSection! : 'account'
+  );
+  const [dashboardStyle, setDashboardStyle] = useState(() =>
+    typeof window !== 'undefined' ? localStorage.getItem('club-dashboard-style') || 'flat' : 'flat'
+  );
+
+  const changeSection = (value: string) => {
+    setActiveTab(value);
+    const next = new URLSearchParams(searchParams);
+    if (value === 'account') next.delete('section');
+    else next.set('section', value);
+    setSearchParams(next, { replace: true });
+  };
+
+  const changeDashboardStyle = (value: string) => {
+    setDashboardStyle(value);
+    localStorage.setItem('club-dashboard-style', value);
+    window.dispatchEvent(new CustomEvent('club-dashboard-style-change', { detail: value }));
+  };
   
   // Account settings
   const [username, setUsername] = useState('');
@@ -63,8 +96,27 @@ export const SettingsPanel = () => {
   
   return (
     <div className="w-full max-w-5xl mx-auto">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-7 mb-6">
+      <Tabs value={activeTab} onValueChange={changeSection} className="w-full">
+        <div className="mb-6 md:hidden">
+          <Label className="mb-2 block text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+            Settings section
+          </Label>
+          <Select value={activeTab} onValueChange={changeSection}>
+            <SelectTrigger className="h-12 w-full rounded-xl">
+              <div className="flex items-center gap-2">
+                <Menu className="h-4 w-4" />
+                <SelectValue />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              {SETTINGS_SECTIONS.map(([value, label]) => (
+                <SelectItem key={value} value={value}>{label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <TabsList className="mb-6 hidden grid-cols-8 md:grid">
           <TabsTrigger value="account" className="flex items-center gap-1.5">
             <Lock className="h-4 w-4" />
             Account
@@ -92,6 +144,10 @@ export const SettingsPanel = () => {
           <TabsTrigger value="integrations" className="flex items-center gap-1.5">
             <Database className="h-4 w-4" />
             Integrations
+          </TabsTrigger>
+          <TabsTrigger value="hooks" className="flex items-center gap-1.5">
+            <Webhook className="h-4 w-4" />
+            Hooks
           </TabsTrigger>
         </TabsList>
         
@@ -170,6 +226,19 @@ export const SettingsPanel = () => {
                     <SelectItem value="system">System</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dashboardStyle">Club Dashboard Style</Label>
+                <Select value={dashboardStyle} onValueChange={changeDashboardStyle}>
+                  <SelectTrigger id="dashboardStyle">
+                    <SelectValue placeholder="Choose dashboard style" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="flat">Flat — clean and simple</SelectItem>
+                    <SelectItem value="futuristic">Futuristic — 3D depth and glow</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-slate-500">Flat stays the default. Futuristic changes the Club dashboard presentation without changing your data.</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="chartType">Default Chart Type</Label>
@@ -473,109 +542,66 @@ export const SettingsPanel = () => {
         <TabsContent value="integrations">
           <Card>
             <CardHeader>
-              <CardTitle>API Integrations</CardTitle>
+              <CardTitle>Connected Trade Hybrid Products</CardTitle>
               <CardDescription>
-                Connect with external trading services
+                Open the real product that owns each connection instead of duplicating old integration screens inside Pro.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-lg">TradingView</Label>
-                    <p className="text-sm text-gray-500">Connect to your TradingView account</p>
-                  </div>
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      // Open TradingView integration in new window
-                      window.open('https://www.tradingview.com/account/connections/', '_blank');
-                      // Show success message
-                      setTimeout(() => {
-                        alert('TradingView connection initiated! Please follow the authorization steps in the new window.');
-                      }, 1000);
-                    }}
-                  >
-                    Connect
-                  </Button>
-                </div>
-              </div>
-              <Separator />
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-lg">Broker APIs</Label>
-                    <p className="text-sm text-gray-500">Connect to your trading accounts</p>
-                  </div>
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      // Navigate to broker connections page
-                      window.location.href = '/broker-connections';
-                    }}
-                  >
-                    Manage
-                  </Button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <Card>
-                    <CardHeader className="p-4">
-                      <CardTitle className="text-base">Alpaca</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Status</span>
-                        <span className="text-xs bg-green-500/20 text-green-500 px-2 py-1 rounded-full">Connected</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="p-4">
-                      <CardTitle className="text-base">ABATEV Protocol</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Status</span>
-                        <span className="text-xs bg-red-500/20 text-red-500 px-2 py-1 rounded-full">Disconnected</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-              <Separator />
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-lg">Webhook Management</Label>
-                    <p className="text-sm text-gray-500">Create and manage webhooks for trading signals</p>
-                  </div>
-                  <Button variant="outline" asChild>
-                    <Link to="/webhook-settings">Manage</Link>
-                  </Button>
-                </div>
-              </div>
-              <Separator />
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-lg">Wallet Connections</Label>
-                    <p className="text-sm text-gray-500">Connect your crypto wallets</p>
-                  </div>
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      // Navigate to wallet connection page
-                      window.location.href = '/wallet-connection';
-                    }}
-                  >
-                    Connect
-                  </Button>
-                </div>
-              </div>
+            <CardContent className="grid gap-3 sm:grid-cols-2">
+              {[
+                [BookOpen, 'Hybrid Journal', 'Journal, broker sync, trade history, analytics and alerts.', CLUB_LINKS.journal],
+                [Copy, 'Hybrid Copy', 'Copy relationships, broker connections and execution routing.', CLUB_LINKS.copy],
+                [Bot, 'ABATEV', 'Conversational trading assistant and automation interface.', CLUB_LINKS.abatev],
+                [Network, 'Hybrid Zone', 'Execution/control layer for connected trading services.', CLUB_LINKS.zone],
+              ].map(([Icon, title, description, href]: any) => (
+                <a
+                  key={title}
+                  href={href}
+                  target={/^https?:/i.test(href) ? '_blank' : undefined}
+                  rel={/^https?:/i.test(href) ? 'noreferrer' : undefined}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-cyan-300 hover:bg-white dark:border-white/10 dark:bg-white/[0.03]"
+                >
+                  <Icon className="h-5 w-5 text-cyan-600 dark:text-cyan-300" />
+                  <p className="mt-3 font-black">{title}</p>
+                  <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
+                  <p className="mt-3 text-xs font-black uppercase tracking-wider text-cyan-700 dark:text-cyan-300">Open product →</p>
+                </a>
+              ))}
             </CardContent>
-            <CardFooter>
-              <Button onClick={saveSettings}>Save Changes</Button>
-            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="hooks">
+          <Card>
+            <CardHeader>
+              <CardTitle>Webhooks, Alerts & Signal Routing</CardTitle>
+              <CardDescription>
+                Hooks belong to the products that receive, journal, copy, and execute them. This page routes you to the live systems instead of maintaining a second legacy webhook stack.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <a href={CLUB_LINKS.journal} target="_blank" rel="noreferrer" className="flex items-start gap-3 rounded-2xl border border-slate-200 p-4 hover:border-cyan-300 dark:border-white/10">
+                <BookOpen className="mt-0.5 h-5 w-5 text-cyan-600 dark:text-cyan-300" />
+                <div>
+                  <p className="font-black">Hybrid Journal — Alerts & Webhooks</p>
+                  <p className="mt-1 text-sm text-slate-500">Create or manage the webhook that feeds your Journal and alert history.</p>
+                </div>
+              </a>
+              <a href={CLUB_LINKS.copy} target="_blank" rel="noreferrer" className="flex items-start gap-3 rounded-2xl border border-slate-200 p-4 hover:border-cyan-300 dark:border-white/10">
+                <Copy className="mt-0.5 h-5 w-5 text-violet-600 dark:text-violet-300" />
+                <div>
+                  <p className="font-black">Hybrid Copy — Signal Routing</p>
+                  <p className="mt-1 text-sm text-slate-500">Turn incoming signals into copy relationships and execution jobs.</p>
+                </div>
+              </a>
+              <a href={CLUB_LINKS.zone} target="_blank" rel="noreferrer" className="flex items-start gap-3 rounded-2xl border border-slate-200 p-4 hover:border-cyan-300 dark:border-white/10">
+                <Network className="mt-0.5 h-5 w-5 text-emerald-600 dark:text-emerald-300" />
+                <div>
+                  <p className="font-black">Hybrid Zone — Execution Control</p>
+                  <p className="mt-1 text-sm text-slate-500">Manage the execution/control layer behind connected trading services.</p>
+                </div>
+              </a>
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
