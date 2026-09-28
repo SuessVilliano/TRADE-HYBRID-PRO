@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Bot, BookOpen, Gift, LineChart, Radio, Sparkles, Trophy, Users, WalletCards, Zap } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Bot, BookOpen, Gift, LineChart, Radio, Sparkles, Trophy, Users, WalletCards, Zap } from 'lucide-react';
 
 const photoDesk = 'https://www.moneytimes.com.br/uploads/2025/10/leo-nonato-brasileiro-cria-robo-que-transformou-r-3.000-em-r-17.000-em-3-meses.jpg';
 const photoAnalysis = 'https://a.c-dn.net/c/content/dam/publicsites/igcom/uk/images/news-article-image-folder/BB_trading_analysis_1_251121.jpg/jcr%3Acontent/renditions/cq5dam.web.1280.1280.jpeg';
