@@ -4,10 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, User, Mail, Lock, Wallet } from 'lucide-react';
-import axios from 'axios';
-import { config } from '@/lib/config';
-
-const apiUrl = (path: string) => `${(config.API_BASE_URL || '').replace(/\/$/, '')}${path}`;
+import { authService } from '@/lib/services/auth-service';
 
 interface RegisterFormProps {
   onSuccess?: (user: any) => void;
@@ -89,39 +86,33 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
     setError('');
 
     try {
-      const response = await axios.post(apiUrl('/api/auth/register'), {
-        username: formData.username.trim(),
-        email: formData.email.trim(),
-        password: formData.password,
-        walletAddress: formData.walletAddress.trim() || undefined
-      }, { withCredentials: true });
+      const result = await authService.register(
+        formData.username.trim(),
+        formData.email.trim(),
+        formData.password
+      );
 
-      if (response.data.success) {
+      if (result.requiresEmailConfirmation) {
+        setSuccess('Account created. Check your email to confirm your account, then sign in.');
+      } else {
         setSuccess('Account created successfully! You are now logged in.');
-        
-        // Call onSuccess callback with user data
         if (onSuccess) {
-          onSuccess(response.data.user);
+          onSuccess(result.user);
         }
-
-        // Clear form
-        setFormData({
-          username: '',
-          email: '',
-          password: '',
-          confirmPassword: '',
-          walletAddress: ''
-        });
       }
+
+      setFormData({
+        username: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        walletAddress: ''
+      });
 
     } catch (error: any) {
       console.error('Registration error:', error);
       
-      if (error.response?.data?.error) {
-        setError(error.response.data.error);
-      } else {
-        setError('Registration failed. Please try again.');
-      }
+      setError(error?.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
