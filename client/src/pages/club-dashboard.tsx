@@ -1,0 +1,35 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowUpRight, Bot, BookOpen, Clapperboard, Gamepad2, Gift, LineChart, Radio, Trophy, WalletCards, Zap } from 'lucide-react';
+
+const products = [
+  { title: 'Hybrid Journal', label: 'Track and improve', description: 'Turn every trade into a clearer next decision.', href: 'https://journal.tradehybrid.co', icon: BookOpen, tone: 'from-cyan-500/20 to-blue-500/5' },
+  { title: 'ABATEV', label: 'AI market radar', description: 'Find signals, context, and opportunities in one workspace.', href: 'https://abatev.tradehybrid.co', icon: Bot, tone: 'from-violet-500/20 to-fuchsia-500/5' },
+  { title: 'Trade House Battles', label: 'Compete live', description: 'Join a room, show your process, and build a public record.', href: 'https://battles.tradehybrid.co', icon: Trophy, tone: 'from-rose-500/20 to-orange-500/5' },
+  { title: 'Hybrid TV', label: 'Watch and learn', description: 'Live battles, market updates, interviews, and shows.', href: 'https://tv.tradehybrid.club', icon: Radio, tone: 'from-blue-500/20 to-indigo-500/5' },
+];
+const quick = [
+  ['Trader DNA', 'Find your next step', '/profile/unified', Zap],
+  ['Academy', 'Build your process', '/learning-center', BookOpen],
+  ['Hybrid Runner', 'Practice through play', '/game/trade-runner', Gamepad2],
+  ['Rewards', 'See your Club progress', '/affiliate-dashboard', Gift],
+];
+
+export default function ClubDashboard() {
+  return <main className="min-h-screen bg-[#070b14] px-4 pb-16 pt-8 text-white sm:px-8 lg:px-12">
+    <div className="mx-auto max-w-7xl">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+        <div><p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-cyan-300">Trade Hybrid Club</p><h1 className="text-3xl font-black tracking-tight sm:text-5xl">Your trading journey, connected.</h1><p className="mt-3 max-w-2xl text-slate-400">One place to learn, track, compete, and find the tools that fit your next move.</p></div>
+        <Link to="/ai-assistant" className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-violet-500 px-5 py-3 font-bold text-slate-950 shadow-lg shadow-cyan-500/20"><Bot className="h-5 w-5" /> Ask Trade Hybrid AI</Link>
+      </div>
+      <section className="mb-8 grid gap-4 lg:grid-cols-[1.4fr_.8fr_.8fr]">
+        <div className="rounded-3xl border border-cyan-300/20 bg-gradient-to-br from-cyan-400/15 via-[#111a2a] to-violet-500/10 p-6"><p className="text-sm font-semibold text-cyan-200">Your next move</p><h2 className="mt-3 text-2xl font-bold">Build a track record you can trust.</h2><p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">Start with your Trader DNA, connect your Journal, then enter a live battle when you are ready to be seen.</p><div className="mt-6 flex flex-wrap gap-3"><Link to="/profile/unified" className="rounded-lg bg-cyan-300 px-4 py-2 text-sm font-bold text-slate-950">Take Trader DNA</Link><Link to="/events" className="rounded-lg border border-white/15 px-4 py-2 text-sm font-bold text-white">View events</Link></div></div>
+        <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><p className="text-xs uppercase tracking-[0.18em] text-slate-500">Club progress</p><p className="mt-5 text-4xl font-black text-white">1 / 5</p><p className="mt-1 text-sm text-slate-400">first steps completed</p><div className="mt-5 h-2 rounded-full bg-white/10"><div className="h-2 w-1/5 rounded-full bg-gradient-to-r from-cyan-300 to-violet-400" /></div></div>
+        <div className="rounded-3xl border border-violet-300/15 bg-violet-400/[0.06] p-6"><p className="text-xs uppercase tracking-[0.18em] text-violet-200">Club rewards</p><p className="mt-5 text-4xl font-black text-white">0</p><p className="mt-1 text-sm text-slate-400">points available</p><Link to="/affiliate-dashboard" className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-violet-200">View rewards <ArrowUpRight className="h-4 w-4" /></Link></div>
+      </section>
+      <section><div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Your toolkit</p><h2 className="mt-1 text-2xl font-bold">Choose where to go</h2></div><Link to="/trading-tools" className="text-sm font-semibold text-cyan-300">View all tools</Link></div><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{products.map(({title,label,description,href,icon:Icon,tone})=><a key={title} href={href} target="_blank" rel="noreferrer" className={'group rounded-2xl border border-white/10 bg-gradient-to-br '+tone+' p-5 transition hover:-translate-y-1 hover:border-cyan-300/40'}><div className="mb-8 flex items-center justify-between"><Icon className="h-6 w-6 text-cyan-200" /><ArrowUpRight className="h-4 w-4 text-slate-500 transition group-hover:text-white" /></div><p className="text-xs font-bold uppercase tracking-[0.15em] text-cyan-200">{label}</p><h3 className="mt-2 text-xl font-bold">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-400">{description}</p></a>)}</div></section>
+      <section className="mt-10"><p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Keep moving</p><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{quick.map(([title,desc,href,Icon])=><Link key={title} to={href} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 hover:bg-white/[0.07]"><Icon className="h-5 w-5 text-violet-300" /><span><span className="block font-semibold">{title}</span><span className="text-xs text-slate-500">{desc}</span></span></Link>)}</div></section>
+      <section className="mt-10 rounded-2xl border border-cyan-300/10 bg-[#0c1422] p-5 text-sm text-slate-400"><span className="font-semibold text-white">Hybrid Funding</span> is one path inside the Club. Prepare with the tools, build your process, and explore funding when it is the right next step. <a className="font-bold text-cyan-300" href="https://hybridfunding.co" target="_blank" rel="noreferrer">Explore funding <ArrowUpRight className="inline h-4 w-4" /></a></section>
+    </div>
+  </main>;
+}

@@ -47,6 +47,7 @@ import BotsView from './pages/trading-bots';
 import NewsView from './pages/NewsView';
 import NewsSimpleView from './pages/news-dashboard-simple';
 import LandingPage from './pages/landing';
+import ClubDashboard from './pages/club-dashboard';
 import EventsPage from './pages/events';
 import NotFoundPage from './pages/not-found';
 import SocialNetworkPage from './pages/social-network';
@@ -196,7 +197,7 @@ const App: React.FC = () => {
                   <Route path="/wallet-connection" element={<ProtectedRoute><WalletConnectionPage /></ProtectedRoute>} />
                   
                   {/* Core Platform Routes */}
-                  <Route path="/dashboard" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+                  <Route path="/dashboard" element={<ProtectedRoute><ClubDashboard /></ProtectedRoute>} />
                   <Route path="/trade" element={<ProtectedRoute><TradeView /></ProtectedRoute>} />
                   <Route path="/journal" element={<ProtectedRoute><JournalView /></ProtectedRoute>} />
                   <Route path="/metaverse" element={<ProtectedRoute><MetaversePage /></ProtectedRoute>} />
