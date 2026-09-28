@@ -338,6 +338,57 @@ import enhancedMarketDataRoutes from './api/market-data'; // Import for enhanced
 import testEnhancedMarketDataRoutes from './routes/test-enhanced-market-data'; // Import for testing enhanced market data
 
 const processedWhopEvents = new Set<string>();
+const usedSsoTickets = new Set<string>();
+const ssoOrigins = new Set([
+  "https://tradehybrid.co",
+  "https://www.tradehybrid.co",
+  "https://tradehybrid.club",
+  "https://www.tradehybrid.club",
+  "https://tv.tradehybrid.club",
+  "https://battles.tradehybrid.co",
+  "https://hybridjournal.co",
+  "https://www.hybridjournal.co",
+  ...(process.env.TH_SSO_ALLOWED_ORIGINS || "").split(",").map(value => value.trim()).filter(Boolean),
+]);
+
+function encodeSsoPart(value: string) {
+  return Buffer.from(value).toString("base64url");
+}
+
+function decodeSsoPart(value: string) {
+  return Buffer.from(value, "base64url").toString("utf8");
+}
+
+function signSsoPayload(payload: string) {
+  const secret = process.env.TH_SSO_SECRET || process.env.SESSION_SECRET;
+  if (!secret) throw new Error("TH_SSO_SECRET is not configured");
+  return crypto.createHmac("sha256", secret).update(payload).digest("base64url");
+}
+
+function issueSsoTicket(userId: number, returnTo: string) {
+  const origin = new URL(returnTo).origin;
+  if (!ssoOrigins.has(origin)) throw new Error("SSO return URL is not allowlisted");
+  const payload = JSON.stringify({
+    sub: String(userId),
+    aud: origin,
+    nonce: crypto.randomBytes(18).toString("hex"),
+    exp: Math.floor(Date.now() / 1000) + 120,
+  });
+  const encoded = encodeSsoPart(payload);
+  return encoded + "." + signSsoPayload(encoded);
+}
+
+function verifySsoTicket(ticket: string) {
+  const [encoded, signature] = String(ticket || "").split(".");
+  if (!encoded || !signature || signSsoPayload(encoded) !== signature) throw new Error("Invalid SSO ticket");
+  const payload = JSON.parse(decodeSsoPart(encoded));
+  if (!payload.exp || payload.exp < Math.floor(Date.now() / 1000)) throw new Error("Expired SSO ticket");
+  if (!payload.nonce || usedSsoTickets.has(payload.nonce)) throw new Error("SSO ticket already used");
+  usedSsoTickets.add(payload.nonce);
+  return payload as { sub: string; aud: string; nonce: string; exp: number };
+}
+
+
 
 function verifyWhopSignature(req: any): Record<string, any> {
   const secret = process.env.WHOP_WEBHOOK_SECRET;
@@ -402,6 +453,38 @@ async function applyWhopEntitlement(event: Record<string, any>) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Cross-domain Club SSO: issue a short-lived ticket, then exchange it server-to-server.
+  app.get("/api/sso/ticket", (req: Request, res: Response) => {
+    try {
+      if (!req.session?.userId || !req.session.authenticated) return res.status(401).json({ error: "Authentication required" });
+      const returnTo = String(req.query.return_to || "");
+      if (!returnTo) return res.status(400).json({ error: "return_to is required" });
+      const ticket = issueSsoTicket(Number(req.session.userId), returnTo);
+      return res.json({ ticket, expiresIn: 120 });
+    } catch (error) {
+      console.error("[SSO] Ticket issue failed:", error);
+      return res.status(400).json({ error: "Invalid SSO destination" });
+    }
+  });
+
+  app.post("/api/sso/exchange", async (req: Request, res: Response) => {
+    try {
+      const payload = verifySsoTicket(String(req.body?.ticket || ""));
+      const sql = neon(process.env.DATABASE_URL || "");
+      const users = await sql`
+        SELECT id, username, email, membership_level, whop_id, whop_plan_id
+        FROM users
+        WHERE id = ${Number(payload.sub)}
+        LIMIT 1
+      `;
+      if (!users.length) return res.status(404).json({ error: "User not found" });
+      return res.json({ user: users[0], audience: payload.aud });
+    } catch (error) {
+      console.error("[SSO] Ticket exchange failed:", error);
+      return res.status(401).json({ error: "Invalid or expired SSO ticket" });
+    }
+  });
+
   // Whop signed webhook receiver. Acknowledge quickly and apply only known entitlement events.
   app.post("/api/billing/whop/webhook", async (req: Request, res: Response) => {
     try {
