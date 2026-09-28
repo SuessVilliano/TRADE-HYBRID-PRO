@@ -167,6 +167,19 @@ async function mapSupabaseUser(user: any, accessToken: string) {
 }
 
 export const authService = {
+  async getAccessToken() {
+    const session = await getValidSession();
+    return session?.access_token || null;
+  },
+
+  async getSessionUserId() {
+    const session = await getValidSession();
+    const sub = session?.access_token
+      ? JSON.parse(atob(session.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub
+      : null;
+    return sub || session?.user?.id || null;
+  },
+
   async login(identifier: string, password?: string) {
     if (!password) {
       throw new Error('Password is required');
