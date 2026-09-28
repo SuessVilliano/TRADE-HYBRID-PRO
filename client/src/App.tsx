@@ -48,6 +48,8 @@ import LandingPage from './pages/landing';
 import ClubHome from './pages/club-home';
 import ClubDashboard from './pages/club-dashboard';
 import CommunityPage from './pages/community';
+import HybridTVPage from './pages/hybrid-tv';
+import AboutTradeHybridPage from './pages/about-trade-hybrid';
 import MemberOnboardingPage from './pages/member-onboarding';
 import EventsPage from './pages/events';
 import NotFoundPage from './pages/not-found';
@@ -152,6 +154,8 @@ const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }
     '/live-stream',
     '/events',
     '/community',
+    '/tv',
+    '/about',
     '/onboarding',
     '/profile',
     '/settings',
@@ -239,6 +243,8 @@ const App: React.FC = () => {
                   <Route path="/dashboard" element={<ProtectedRoute><ClubDashboard /></ProtectedRoute>} />
                   <Route path="/onboarding" element={<ProtectedRoute><MemberOnboardingPage /></ProtectedRoute>} />
                   <Route path="/community" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
+                  <Route path="/tv" element={<ProtectedRoute><HybridTVPage /></ProtectedRoute>} />
+                  <Route path="/about" element={<AboutTradeHybridPage />} />
                   <Route path="/trade" element={<ProtectedRoute><TradeView /></ProtectedRoute>} />
                   <Route path="/journal" element={<ProtectedRoute><JournalView /></ProtectedRoute>} />
                   <Route path="/metaverse" element={<ProtectedRoute><MetaversePage /></ProtectedRoute>} />
@@ -264,7 +270,7 @@ const App: React.FC = () => {
                   <Route path="/bots" element={<Navigate to="/trading-bots" replace />} />
                   <Route path="/news" element={<ProtectedRoute><NewsView /></ProtectedRoute>} />
                   <Route path="/news/simple" element={<ProtectedRoute><NewsSimpleView /></ProtectedRoute>} />
-                  <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
+                  <Route path="/events" element={<Navigate to="/community" replace />} />
                   
                   {/* Trading & Markets */}
                   <Route path="/trading-dashboard" element={<ProtectedRoute><TradingDashboard /></ProtectedRoute>} />
