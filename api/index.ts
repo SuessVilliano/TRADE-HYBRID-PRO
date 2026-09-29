@@ -301,6 +301,28 @@ export default async function handler(req: any, res: any) {
     });
   }
 
+  if (req.method === "GET" && path === "integration-health") {
+    try {
+      const response = await fetch(
+        SUPABASE_URL + "/functions/v1/integration-health",
+        { headers: { apikey: "sb_publishable_YjXHHnoRXE4pvn6ezLdU5w_O03Q62W_" } },
+      );
+      const supabase = await response.json();
+      return res.status(response.ok ? 200 : 502).json({
+        ok: response.ok,
+        vercel: {
+          whopWebhookSecret: Boolean(process.env.WHOP_WEBHOOK_SECRET),
+          supabaseServiceRole: Boolean(serviceKey()),
+          streamKey: Boolean(process.env.STREAM_KEY),
+          streamSecret: Boolean(process.env.STREAM_SECRET),
+        },
+        supabase: supabase?.configured || null,
+      });
+    } catch {
+      return res.status(502).json({ ok: false, error: "Integration health unavailable." });
+    }
+  }
+
   if (
     req.method === "POST" &&
     path === "billing/whop/webhook"
