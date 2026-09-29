@@ -20,6 +20,7 @@ import {
 import { CLUB_LINKS } from '@/lib/club-links';
 import { useTheme } from '@/lib/hooks/useTheme';
 import ClubAIAgentsSection from '@/components/club/club-ai-agents-section';
+import ClubAboutSection from '@/components/club/club-about-section';
 import ClubPricingSection from '@/components/club/club-pricing-section';
 import ClubTestimonialsSection from '@/components/club/club-testimonials-section';
 import ClubContactSection from '@/components/club/club-contact-section';
@@ -134,6 +135,7 @@ export default function ClubHome() {
           </Link>
 
           <div className="hidden items-center gap-5 lg:flex">
+            <a href="#about" className="text-sm font-bold text-slate-600 hover:text-violet-600 dark:text-slate-300 dark:hover:text-violet-300">About</a>
             <a href="#ecosystem" className="text-sm font-bold text-slate-600 hover:text-violet-600 dark:text-slate-300 dark:hover:text-violet-300">Ecosystem</a>
             <a href="#ai-team" className="text-sm font-bold text-slate-600 hover:text-violet-600 dark:text-slate-300 dark:hover:text-violet-300">Market Buddy</a>
             <a href="#members" className="text-sm font-bold text-slate-600 hover:text-violet-600 dark:text-slate-300 dark:hover:text-violet-300">Members</a>
@@ -256,6 +258,8 @@ export default function ClubHome() {
           </div>
         </div>
       </section>
+
+      <ClubAboutSection />
 
       <section id="ecosystem" className="mx-auto max-w-7xl px-5 py-20 sm:px-8">
         <div className="max-w-3xl">
