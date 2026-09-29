@@ -21,6 +21,9 @@ import { CLUB_LINKS } from '@/lib/club-links';
 import { useTheme } from '@/lib/hooks/useTheme';
 import ClubAIAgentsSection from '@/components/club/club-ai-agents-section';
 import ClubPricingSection from '@/components/club/club-pricing-section';
+import ClubTestimonialsSection from '@/components/club/club-testimonials-section';
+import ClubContactSection from '@/components/club/club-contact-section';
+import ClubFooter from '@/components/club/club-footer';
 
 const ecosystem = [
   {
@@ -129,6 +132,14 @@ export default function ClubHome() {
               <p className="text-[9px] font-black uppercase tracking-[0.28em] text-cyan-600 dark:text-cyan-300">Club</p>
             </div>
           </Link>
+
+          <div className="hidden items-center gap-5 lg:flex">
+            <a href="#ecosystem" className="text-sm font-bold text-slate-600 hover:text-violet-600 dark:text-slate-300 dark:hover:text-violet-300">Ecosystem</a>
+            <a href="#ai-team" className="text-sm font-bold text-slate-600 hover:text-violet-600 dark:text-slate-300 dark:hover:text-violet-300">Market Buddy</a>
+            <a href="#members" className="text-sm font-bold text-slate-600 hover:text-violet-600 dark:text-slate-300 dark:hover:text-violet-300">Members</a>
+            <a href="#membership" className="text-sm font-bold text-slate-600 hover:text-violet-600 dark:text-slate-300 dark:hover:text-violet-300">Membership</a>
+            <a href="#contact" className="text-sm font-bold text-slate-600 hover:text-violet-600 dark:text-slate-300 dark:hover:text-violet-300">Contact</a>
+          </div>
 
           <div className="flex items-center gap-2">
             <button
@@ -246,7 +257,7 @@ export default function ClubHome() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8">
+      <section id="ecosystem" className="mx-auto max-w-7xl px-5 py-20 sm:px-8">
         <div className="max-w-3xl">
           <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-600 dark:text-violet-300">The ecosystem</p>
           <h2 className="mt-3 text-4xl font-black tracking-[-0.04em] sm:text-5xl">Everything has a job.</h2>
@@ -302,14 +313,10 @@ export default function ClubHome() {
       </section>
 
       <ClubAIAgentsSection />
+      <ClubTestimonialsSection />
       <ClubPricingSection />
-
-      <footer className="border-t border-slate-200 px-5 py-8 dark:border-white/10">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 text-center text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:text-left">
-          <span>Trade Hybrid Club · Journal · Market Buddy · Terminal · Copy · Trade House · Funding · Community · TV</span>
-          <Link to={CLUB_LINKS.about} className="font-bold text-violet-600 dark:text-violet-300">About Trade Hybrid</Link>
-        </div>
-      </footer>
+      <ClubContactSection />
+      <ClubFooter />
     </main>
   );
 }
