@@ -13,61 +13,53 @@ import {
   Users,
 } from 'lucide-react';
 
-const agents = [
+const capabilities = [
   {
-    name: 'Market Buddy',
-    role: 'Trade Hybrid AI',
-    description: 'Your primary Trade Hybrid companion. It uses your WHY, game plan, Journal context, alerts, and Club journey to help you think through the next move.',
-    icon: TrendingUp,
-    tone: 'from-violet-500 to-cyan-400',
-    primary: true,
-  },
-  {
-    name: 'Psyche Master',
-    role: 'Mindset Coach',
-    description: 'Reflection, discipline, emotional-awareness, and process prompts designed to help you stay aligned with your plan.',
+    name: 'Mindset & Discipline',
+    role: 'Stay aligned',
+    description: 'Reflection, emotional-awareness, accountability, and process prompts that reconnect decisions to your actual plan.',
     icon: Brain,
     tone: 'from-cyan-400 to-sky-500',
   },
   {
-    name: 'Algo Visionary',
-    role: 'Strategy Research',
-    description: 'A research-focused mode for testing ideas, comparing setups, and understanding quantitative strategy logic.',
+    name: 'Strategy Research',
+    role: 'Study the setup',
+    description: 'Compare ideas, review setups, organize research, and reason through strategy logic without turning Market Buddy into a signal-chaser.',
     icon: Bot,
     tone: 'from-violet-500 to-fuchsia-500',
   },
   {
-    name: 'RegGuard',
-    role: 'Risk & Rules',
-    description: 'Keeps risk limits, battle rules, prop constraints, and the trader’s own guardrails visible when reviewing decisions.',
+    name: 'Risk & Rules',
+    role: 'Protect the process',
+    description: 'Keep risk limits, prop constraints, battle rules, and your personal guardrails visible while reviewing a decision.',
     icon: Shield,
     tone: 'from-cyan-400 to-blue-500',
   },
   {
-    name: 'TradeSense',
-    role: 'Trader Companion',
-    description: 'Connects your day-to-day questions back to your Journal, habits, progress, and personal trading plan.',
+    name: 'Trader Companion',
+    role: 'Connect the dots',
+    description: 'Tie day-to-day questions back to your Journal, alerts, habits, progress, and the plan you said you wanted to follow.',
     icon: Users,
     tone: 'from-violet-500 to-indigo-500',
   },
   {
-    name: 'VantagePro',
-    role: 'Plan Builder',
-    description: 'Turns goals, available time, market focus, and current challenges into a practical trading game plan.',
+    name: 'Plan Builder',
+    role: 'Turn goals into action',
+    description: 'Use your goals, available time, markets, experience, and current challenges to build a practical next-step plan.',
     icon: BarChart3,
     tone: 'from-cyan-400 to-teal-500',
   },
   {
-    name: 'ClientSphere',
-    role: 'Relationship Mode',
-    description: 'A specialist mode for members using Trade Hybrid around clients, communities, partnerships, or trader teams.',
+    name: 'Community & Team Support',
+    role: 'Use the network',
+    description: 'Help you prepare questions, sessions, accountability check-ins, team workflows, and community participation around your journey.',
     icon: UserCheck,
     tone: 'from-violet-500 to-purple-500',
   },
   {
-    name: 'FinPulse',
-    role: 'Financial Ops',
-    description: 'Organizes performance summaries, operating context, and financial reporting questions without replacing your source-of-truth systems.',
+    name: 'Performance & Ops',
+    role: 'Summarize the work',
+    description: 'Organize performance summaries, operating context, reports, and follow-up questions from your connected Trade Hybrid data.',
     icon: DollarSign,
     tone: 'from-cyan-400 to-emerald-500',
   },
@@ -80,13 +72,13 @@ export default function ClubAIAgentsSection() {
         <div className="grid gap-8 lg:grid-cols-[.9fr_1.1fr] lg:items-center">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-black uppercase tracking-[0.18em] text-violet-700 dark:border-violet-300/20 dark:bg-violet-300/[0.08] dark:text-violet-200">
-              <Sparkles className="h-3.5 w-3.5" /> The AI team is back
+              <Sparkles className="h-3.5 w-3.5" /> One AI. More capability.
             </div>
             <h2 className="mt-5 text-4xl font-black tracking-[-0.04em] text-slate-950 dark:text-white sm:text-5xl">
               Market Buddy is the face of Trade Hybrid AI.
             </h2>
             <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300">
-              The original specialist-agent idea still makes sense. The difference now is that Market Buddy becomes the member’s front door, while the other personalities act as focused modes that share the same Club context instead of feeling like eight disconnected bots.
+              Market Buddy is one persistent Trade Hybrid AI. Instead of making members learn seven different bots, the original specialist ideas now become capabilities Market Buddy can use when the situation calls for them.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
@@ -134,7 +126,7 @@ export default function ClubAIAgentsSection() {
         </div>
 
         <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {agents.slice(1).map(({ name, role, description, icon: Icon, tone }) => (
+          {capabilities.map(({ name, role, description, icon: Icon, tone }) => (
             <article
               key={name}
               className="group rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-1 hover:border-violet-200 hover:bg-white hover:shadow-lg dark:border-white/10 dark:bg-black/20 dark:hover:border-violet-300/30 dark:hover:bg-white/[0.04]"
