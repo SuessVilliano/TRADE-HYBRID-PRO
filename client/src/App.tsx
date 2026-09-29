@@ -50,6 +50,7 @@ import ClubDashboard from './pages/club-dashboard';
 import CommunityPage from './pages/community';
 import HybridTVPage from './pages/hybrid-tv';
 import AboutTradeHybridPage from './pages/about-trade-hybrid';
+import MarketBuddyPage from './pages/market-buddy';
 import MemberOnboardingPage from './pages/member-onboarding';
 import TradeHouseLaunchPage from './pages/tradehouse-launch';
 import EventsPage from './pages/events';
@@ -142,6 +143,7 @@ const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
   const isPublicClubRoute =
     pathname === '/' ||
+    pathname === '/about' ||
     ['/login', '/signup', '/register', '/auth'].some(
       (route) => pathname === route || pathname.startsWith(`${route}/`),
     );
@@ -150,13 +152,13 @@ const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }
     '/dashboard',
     '/journal',
     '/ai-assistant',
+    '/market-buddy',
     '/learning-center',
     '/copy-trading',
     '/live-stream',
     '/events',
     '/community',
     '/tv',
-    '/about',
     '/onboarding',
     '/launch/tradehouse',
     '/profile',
@@ -248,14 +250,15 @@ const App: React.FC = () => {
                   <Route path="/community" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
                   <Route path="/launch/tradehouse" element={<ProtectedRoute><TradeHouseLaunchPage /></ProtectedRoute>} />
                   <Route path="/tv" element={<ProtectedRoute><HybridTVPage /></ProtectedRoute>} />
-                  <Route path="/about" element={<AboutTradeHybridPage />} />
+                  <Route path="/about" element={<Navigate to="/#about" replace />} />
                   <Route path="/trade" element={<ProtectedRoute><TradeView /></ProtectedRoute>} />
                   <Route path="/journal" element={<ProtectedRoute><JournalView /></ProtectedRoute>} />
                   <Route path="/metaverse" element={<ProtectedRoute><MetaversePage /></ProtectedRoute>} />
                   <Route path="/learn" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
                   <Route path="/signals" element={<ProtectedRoute><TradingSignals /></ProtectedRoute>} />
                   <Route path="/voice-trade" element={<ProtectedRoute><VoiceTradeAssistant /></ProtectedRoute>} />
-                  <Route path="/ai-assistant" element={<ProtectedRoute><AITradeAssistantPage /></ProtectedRoute>} />
+                  <Route path="/market-buddy" element={<ProtectedRoute><MarketBuddyPage /></ProtectedRoute>} />
+                  <Route path="/ai-assistant" element={<Navigate to="/market-buddy" replace />} />
                   <Route path="/dex-platform" element={<ProtectedRoute><DEXPlatform /></ProtectedRoute>} />
                   <Route path="/ai-analytics" element={<ProtectedRoute><AIAnalytics /></ProtectedRoute>} />
                   <Route path="/copy-trading" element={<ProtectedRoute><CopyTradingPage /></ProtectedRoute>} />
@@ -313,7 +316,7 @@ const App: React.FC = () => {
                   {/* Tools & Analysis */}
                   <Route path="/trading-tools" element={<ProtectedRoute><TradingToolsPage /></ProtectedRoute>} />
                   <Route path="/ai-analysis" element={<ProtectedRoute><AiMarketAnalysisPage /></ProtectedRoute>} />
-                  <Route path="/ai-market-analysis" element={<ProtectedRoute><AiMarketAnalysisPage /></ProtectedRoute>} />
+                  <Route path="/ai-market-analysis" element={<Navigate to="/market-buddy" replace />} />
                   <Route path="/market-overview" element={<ProtectedRoute><TradingToolsPage /></ProtectedRoute>} />
                   <Route path="/portfolio-dashboard" element={<ProtectedRoute><InvestorDashboardPage /></ProtectedRoute>} />
                   <Route path="/portfolio" element={<ProtectedRoute><InvestorDashboardPage /></ProtectedRoute>} />
