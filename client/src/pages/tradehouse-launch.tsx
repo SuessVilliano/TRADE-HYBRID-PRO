@@ -43,7 +43,7 @@ export default function TradeHouseLaunchPage() {
 
         const destination = new URL(body.returnTo);
         destination.searchParams.set('code', body.code);
-        destination.searchParams.set('next', '/');
+        destination.searchParams.set('next', '/tradehouse');
 
         window.location.replace(destination.toString());
       } catch (e) {
