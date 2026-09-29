@@ -1,3 +1,4 @@
+import { activeEntitlements } from '../active-entitlements';
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || 'https://uqtluroceakqtlvlzatt.supabase.co').replace(/\/$/, '');
 const SUPABASE_PUBLISHABLE_KEY =
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
@@ -136,7 +137,7 @@ async function fetchEntitlements(accessToken: string, userId: string) {
 }
 
 function membershipFromEntitlements(entitlements: any[]) {
-  const active = entitlements.filter((item) => ['active', 'trialing'].includes(item.status));
+  const active = activeEntitlements(entitlements);
   if (active.some((item) => item.product_key !== 'club_free')) return 'paid';
   return 'free';
 }
@@ -159,7 +160,7 @@ async function mapSupabaseUser(user: any, accessToken: string) {
     displayName: profile?.display_name || user.user_metadata?.display_name || null,
     authenticated: true,
     membershipLevel: membershipFromEntitlements(entitlements),
-    entitlements,
+    entitlements: activeEntitlements(entitlements),
     balance: 0,
   };
 

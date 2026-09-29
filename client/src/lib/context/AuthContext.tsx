@@ -131,7 +131,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const checkAuth = async () => {
       try {
         // Check for demo user in localStorage
-        const demoUser = localStorage.getItem('demoUser');
+        const demoUser = import.meta.env.DEV ? localStorage.getItem('demoUser') : null;
         if (demoUser) {
           try {
             const parsedUser = JSON.parse(demoUser);
@@ -280,7 +280,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     getCurrentUser: async () => {
       // Check for demo user in localStorage first
-      const demoUser = localStorage.getItem('demoUser');
+      const demoUser = import.meta.env.DEV ? localStorage.getItem('demoUser') : null;
       if (demoUser) {
         try {
           const parsedUser = JSON.parse(demoUser) as User;
