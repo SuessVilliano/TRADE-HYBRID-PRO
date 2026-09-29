@@ -315,6 +315,7 @@ export default async function handler(req: any, res: any) {
           supabaseServiceRole: Boolean(serviceKey()),
           streamKey: Boolean(process.env.STREAM_KEY),
           streamSecret: Boolean(process.env.STREAM_SECRET),
+          vercelOidc: Boolean(process.env.VERCEL_OIDC_TOKEN),
         },
         supabase: supabase?.configured || null,
       });
