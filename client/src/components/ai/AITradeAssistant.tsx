@@ -113,7 +113,7 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
       });
 
       // Send initial message
-      addAIMessage("I'm now monitoring your screen and ready to assist with your trading decisions. I can see your charts, trades, and will help you stick to your trade plan!");
+      addAIMessage("Market Buddy is now monitoring the screen you chose to share. I’ll use what you share together with your game plan to help you review the setup and stay aligned with your process.");
 
     } catch (error) {
       console.error('Screen sharing failed:', error);
@@ -376,7 +376,7 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-blue-500" />
-            AI Trade Assistant
+            Market Buddy
             {memberJourney?.completed_at && <Badge variant="secondary">Game plan loaded</Badge>}
             {isAnalyzing && <Badge variant="secondary" className="animate-pulse">Analyzing</Badge>}
           </CardTitle>
@@ -466,7 +466,7 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
         <CardHeader className="flex-shrink-0 pb-3">
           <CardTitle className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-blue-500" />
-            AI Chat
+            Chat with Market Buddy
             {isStreaming && <Badge variant="secondary" className="animate-pulse">Typing...</Badge>}
           </CardTitle>
         </CardHeader>
@@ -503,7 +503,7 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
               value={currentMessage}
               onChange={(e) => setCurrentMessage(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-              placeholder="Ask me about your trades, charts, or strategy..."
+              placeholder="Ask Market Buddy about your plan, trades, Journal, alerts, or strategy..."
               className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               disabled={isStreaming}
             />
