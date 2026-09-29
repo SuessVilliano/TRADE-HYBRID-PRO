@@ -178,6 +178,7 @@ const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }
       <>
         <ClubHeader />
         {children}
+        <OnboardingButton />
       </>
     );
   }
