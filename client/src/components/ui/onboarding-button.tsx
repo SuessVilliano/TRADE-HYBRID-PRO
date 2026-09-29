@@ -6,7 +6,8 @@ import {
   PopoverTrigger 
 } from './popover';
 import { 
-  HelpCircle, 
+  HelpCircle,
+  Bot,
   LightbulbIcon,
   CheckCircle2,
   PresentationIcon,
@@ -38,7 +39,7 @@ export function OnboardingButton({ className }: OnboardingButtonProps) {
   console.log("OnboardingButton - currentFlow:", currentFlow);
   
   const [isOpen, setIsOpen] = useState(false);
-  const [activeAssistant, setActiveAssistant] = useState<'chat' | 'voice' | null>(null);
+  const [activeAssistant, setActiveAssistant] = useState<'chat' | 'voice' | null>('chat');
   
   // Determine available tours based on current path
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
@@ -91,17 +92,20 @@ export function OnboardingButton({ className }: OnboardingButtonProps) {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className={`fixed bottom-6 right-6 h-10 w-10 rounded-full shadow-xl z-40 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg border-2 border-blue-400 dark:border-blue-800 ${className}`}
-          title="Help & Tours"
+        <Button
+          variant="outline"
+          className={`fixed bottom-5 right-4 z-50 h-12 rounded-full border border-violet-300 bg-gradient-to-r from-violet-600 via-blue-500 to-cyan-500 px-3 text-white shadow-[0_12px_36px_rgba(79,70,229,.28)] hover:brightness-105 sm:bottom-6 sm:right-6 sm:px-4 ${className}`}
+          title="Open Market Buddy"
         >
-          <HelpCircle className="h-5 w-5" />
+          <span className="relative mr-0 sm:mr-2">
+            <Bot className="h-5 w-5" />
+            <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-emerald-300 ring-2 ring-violet-600" />
+          </span>
+          <span className="hidden text-sm font-black sm:inline">Market Buddy</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className={`${activeAssistant ? 'w-96' : 'w-80'} bg-white dark:bg-slate-900 border-2 border-blue-200 dark:border-blue-900 shadow-xl`} 
+        className="max-h-[82vh] w-[calc(100vw-2rem)] overflow-y-auto border border-violet-200 bg-white shadow-2xl dark:border-violet-400/20 dark:bg-[#0b1020] sm:w-[440px]" 
         align="end"
         side="top"
         sideOffset={16}
@@ -112,10 +116,10 @@ export function OnboardingButton({ className }: OnboardingButtonProps) {
             <h4 className="font-medium text-lg flex items-center text-slate-900 dark:text-white">
               <Brain className="h-5 w-5 mr-2 text-purple-500" />
               <Zap className="h-3 w-3 text-yellow-400 animate-pulse" />
-              AI Assistant
+              Market Buddy
             </h4>
             <p className="text-sm text-slate-600 dark:text-slate-300">
-              Get instant AI-powered trading help with chat and voice support
+              Your Trade Hybrid AI companion with your WHY, goals, Journal context, chat, voice, and platform guidance.
             </p>
             
             <div className="flex gap-2 mt-3">
@@ -126,7 +130,7 @@ export function OnboardingButton({ className }: OnboardingButtonProps) {
                 onClick={() => setActiveAssistant(activeAssistant === 'chat' ? null : 'chat')}
               >
                 <MessageSquare className="h-4 w-4 mr-2" />
-                Chat AI
+                Chat
               </Button>
               <Button
                 variant={activeAssistant === 'voice' ? "default" : "outline"}
@@ -135,7 +139,7 @@ export function OnboardingButton({ className }: OnboardingButtonProps) {
                 onClick={() => setActiveAssistant(activeAssistant === 'voice' ? null : 'voice')}
               >
                 <Mic className="h-4 w-4 mr-2" />
-                Voice AI
+                Voice
               </Button>
             </div>
           </div>
