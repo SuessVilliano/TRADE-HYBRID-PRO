@@ -8,6 +8,30 @@ const SUPABASE_KEY =
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   'sb_publishable_YjXHHnoRXE4pvn6ezLdU5w_O03Q62W_';
 
+const PREFERRED_TRADEHOUSE_ORIGIN = 'https://battles.tradehybrid.co';
+const FALLBACK_TRADEHOUSE_ORIGIN = 'https://tradehouse-91io.onrender.com';
+
+async function resolveTradeHouseOrigin() {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 1800);
+
+  try {
+    const response = await fetch(PREFERRED_TRADEHOUSE_ORIGIN + '/api/health', {
+      method: 'GET',
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+
+    if (response.ok) return PREFERRED_TRADEHOUSE_ORIGIN;
+  } catch {
+    // The custom domain is not live yet; keep using Render.
+  } finally {
+    window.clearTimeout(timeout);
+  }
+
+  return FALLBACK_TRADEHOUSE_ORIGIN;
+}
+
 export default function TradeHouseLaunchPage() {
   const [error, setError] = useState('');
 
@@ -22,6 +46,8 @@ export default function TradeHouseLaunchPage() {
           throw new Error('Your Club session expired. Sign in again and reopen Trade House.');
         }
 
+        const tradehouseOrigin = await resolveTradeHouseOrigin();
+
         const response = await fetch(
           SUPABASE_URL + '/functions/v1/tradehouse-sso-start',
           {
@@ -31,7 +57,7 @@ export default function TradeHouseLaunchPage() {
               apikey: SUPABASE_KEY,
               Authorization: 'Bearer ' + accessToken,
             },
-            body: JSON.stringify({}),
+            body: JSON.stringify({ returnOrigin: tradehouseOrigin }),
           },
         );
 
