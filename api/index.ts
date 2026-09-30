@@ -302,6 +302,14 @@ export default async function handler(req: any, res: any) {
   }
 
   if (req.method === "GET" && path === "integration-health") {
+    if (String(req.query?.bridgeFingerprint || "") === "1" && process.env.WHOP_WEBHOOK_SECRET) {
+      const fingerprint = crypto
+        .createHash("sha256")
+        .update(process.env.WHOP_WEBHOOK_SECRET)
+        .digest("hex");
+      console.info("[whop-bridge-fingerprint]", fingerprint);
+    }
+
     try {
       const response = await fetch(
         SUPABASE_URL + "/functions/v1/integration-health",
