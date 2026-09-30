@@ -162,7 +162,7 @@ export const CLUB_PRODUCTS: ClubProduct[] = [
     name: 'Hybrid Zone',
     category: 'Automation',
     summary: 'The control layer connecting supported services and execution workflows across the ecosystem.',
-    destination: 'https://thehybridzone.club',
+    destination: 'https://hybridzone-v2.onrender.com',
     public: false,
     plans: ['lifetime','pro_lifetime'],
     features: ['Connected execution layer', 'Automation control', 'Service routing', 'Trade Hybrid integrations'],

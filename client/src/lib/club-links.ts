@@ -17,7 +17,7 @@ export const CLUB_LINKS = {
   abatev: env.VITE_ABATEV_URL || 'https://abatev.tradehybrid.co',
   terminal: env.VITE_ABATEV_URL || 'https://abatev.tradehybrid.co',
   ai: '/market-buddy',
-  zone: env.VITE_ZONE_URL || 'https://thehybridzone.club',
+  zone: env.VITE_ZONE_URL || 'https://hybridzone-v2.onrender.com',
   battles: '/launch/tradehouse',
   tradehouseArena: '/launch/tradehouse',
   battlesProof: 'https://hybridfunding.co/tradehouse',
