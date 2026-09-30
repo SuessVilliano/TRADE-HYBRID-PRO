@@ -22,6 +22,7 @@ import { NotificationListener } from './components/ui/notification-listener';
 // TestNotificationButton temporarily disabled
 // import { TestNotificationButton } from './components/ui/test-notification-button';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import ProductEntitlementRoute from './components/auth/ProductEntitlementRoute';
 
 // Pages
 // Core Platform Pages
@@ -45,6 +46,9 @@ import NewsView from './pages/NewsView';
 import NewsSimpleView from './pages/news-dashboard-simple';
 import LandingPage from './pages/landing';
 import ClubHome from './pages/club-home';
+import ClubProductPage from './pages/club-product';
+import ClubProductsPage from './pages/club-products';
+import ClubProductAccessPage from './pages/club-product-access';
 import ClubDashboard from './pages/club-dashboard';
 import CommunityPage from './pages/community';
 import HybridTVPage from './pages/hybrid-tv';
@@ -141,6 +145,8 @@ const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }
   const isPublicClubRoute =
     pathname === '/' ||
     pathname === '/about' ||
+    pathname === '/products' ||
+    pathname.startsWith('/products/') ||
     ['/login', '/signup', '/register', '/auth'].some(
       (route) => pathname === route || pathname.startsWith(`${route}/`),
     );
@@ -158,6 +164,7 @@ const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }
     '/tv',
     '/onboarding',
     '/launch/tradehouse',
+    '/access',
     '/profile',
     '/settings',
     '/trading-tools',
@@ -206,6 +213,8 @@ const App: React.FC = () => {
                 <Routes>
                   {/* Public routes */}
                   <Route path="/" element={<ClubHome />} />
+                  <Route path="/products" element={<ClubProductsPage />} />
+                  <Route path="/products/:slug" element={<ClubProductPage />} />
                   <Route path="/trading-freedom-podcast" element={<TradingFreedomPodcast />} />
                   <Route path="/simple-charting" element={<React.Suspense fallback={<div>Loading chart...</div>}><SimpleChartingDashboard /></React.Suspense>} />
                   <Route path="/test-page" element={<React.Suspense fallback={<div>Loading test page...</div>}><TestPage /></React.Suspense>} />
@@ -243,10 +252,11 @@ const App: React.FC = () => {
                   
                   {/* Core Platform Routes */}
                   <Route path="/dashboard" element={<ProtectedRoute><ClubDashboard /></ProtectedRoute>} />
+                  <Route path="/access/:slug" element={<ClubProductAccessPage />} />
                   <Route path="/onboarding" element={<ProtectedRoute><MemberOnboardingPage /></ProtectedRoute>} />
-                  <Route path="/community" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
-                  <Route path="/launch/tradehouse" element={<TradeHouseLaunchPage />} />
-                  <Route path="/tv" element={<ProtectedRoute><HybridTVPage /></ProtectedRoute>} />
+                  <Route path="/community" element={<ProtectedRoute><ProductEntitlementRoute productKey="community"><CommunityPage /></ProductEntitlementRoute></ProtectedRoute>} />
+                  <Route path="/launch/tradehouse" element={<ProtectedRoute><ProductEntitlementRoute productKey="battles"><TradeHouseLaunchPage /></ProductEntitlementRoute></ProtectedRoute>} />
+                  <Route path="/tv" element={<ProtectedRoute><ProductEntitlementRoute productKey="tv"><HybridTVPage /></ProductEntitlementRoute></ProtectedRoute>} />
                   <Route path="/about" element={<Navigate to="/#about" replace />} />
                   <Route path="/trade" element={<ProtectedRoute><TradeView /></ProtectedRoute>} />
                   <Route path="/journal" element={<ProtectedRoute><JournalView /></ProtectedRoute>} />
@@ -254,7 +264,7 @@ const App: React.FC = () => {
                   <Route path="/learn" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
                   <Route path="/signals" element={<ProtectedRoute><TradingSignals /></ProtectedRoute>} />
                   <Route path="/voice-trade" element={<ProtectedRoute><VoiceTradeAssistant /></ProtectedRoute>} />
-                  <Route path="/market-buddy" element={<ProtectedRoute><MarketBuddyPage /></ProtectedRoute>} />
+                  <Route path="/market-buddy" element={<ProtectedRoute><ProductEntitlementRoute productKey="ai"><MarketBuddyPage /></ProductEntitlementRoute></ProtectedRoute>} />
                   <Route path="/ai-assistant" element={<Navigate to="/market-buddy" replace />} />
                   <Route path="/dex-platform" element={<ProtectedRoute><DEXPlatform /></ProtectedRoute>} />
                   <Route path="/ai-analytics" element={<ProtectedRoute><AIAnalytics /></ProtectedRoute>} />
@@ -295,8 +305,8 @@ const App: React.FC = () => {
                   <Route path="/educational-games" element={<ProtectedRoute><EducationalGamesPage /></ProtectedRoute>} />
                   
                   {/* Learning Center Routes - Pro Trader Academy */}
-                  <Route path="/learning-center" element={<ProtectedRoute><LearningCenterNewPage /></ProtectedRoute>} />
-                  <Route path="/learning-center/:view/:id" element={<ProtectedRoute><LearningCenterNewPage /></ProtectedRoute>} />
+                  <Route path="/learning-center" element={<ProtectedRoute><ProductEntitlementRoute productKey="academy"><LearningCenterNewPage /></ProductEntitlementRoute></ProtectedRoute>} />
+                  <Route path="/learning-center/:view/:id" element={<ProtectedRoute><ProductEntitlementRoute productKey="academy"><LearningCenterNewPage /></ProductEntitlementRoute></ProtectedRoute>} />
                   
                   {/* Legacy Learning Center Routes - Keeping for backward compatibility */}
                   <Route path="/learning-center/old" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
@@ -311,7 +321,7 @@ const App: React.FC = () => {
                   <Route path="/game/trade-runner-browser" element={<ProtectedRoute><TradeRunnerBrowserPage /></ProtectedRoute>} />
                   
                   {/* Tools & Analysis */}
-                  <Route path="/trading-tools" element={<ProtectedRoute><TradingToolsPage /></ProtectedRoute>} />
+                  <Route path="/trading-tools" element={<ProtectedRoute><ProductEntitlementRoute productKey="tools"><TradingToolsPage /></ProductEntitlementRoute></ProtectedRoute>} />
                   <Route path="/ai-analysis" element={<ProtectedRoute><AiMarketAnalysisPage /></ProtectedRoute>} />
                   <Route path="/ai-market-analysis" element={<Navigate to="/market-buddy" replace />} />
                   <Route path="/market-overview" element={<ProtectedRoute><TradingToolsPage /></ProtectedRoute>} />

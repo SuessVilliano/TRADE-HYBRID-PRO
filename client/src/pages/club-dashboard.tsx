@@ -33,7 +33,7 @@ const products: Product[] = [
     key: 'journal',
     title: 'Hybrid Journal',
     desc: 'Track every trade and receive connected webhook alerts in the same workflow.',
-    href: CLUB_LINKS.journal,
+    href: '/access/hybrid-journal',
     icon: BookOpen,
     state: 'Journal + Alerts',
   },
@@ -41,7 +41,7 @@ const products: Product[] = [
     key: 'ai',
     title: 'Market Buddy AI',
     desc: 'Your Trade Hybrid AI companion for goals, Journal context, review, planning, and your next move.',
-    href: CLUB_LINKS.ai,
+    href: '/access/market-buddy',
     icon: Bot,
     state: 'Trade Hybrid AI',
   },
@@ -49,7 +49,7 @@ const products: Product[] = [
     key: 'battles',
     title: 'Trade House Battles',
     desc: 'Launch the standalone Arena with your Club identity, practice, compete with verified Hybrid Funding proof, and build a public record.',
-    href: CLUB_LINKS.battles,
+    href: '/access/trade-house',
     icon: Trophy,
     state: 'Standalone Arena',
   },
@@ -57,26 +57,26 @@ const products: Product[] = [
     key: 'community',
     title: 'Community',
     desc: 'Discussion, learning, events, accountability, members, and Club updates.',
-    href: CLUB_LINKS.community,
+    href: '/access/community',
     icon: Users,
     state: 'Stay plugged in',
   },
 ];
 
 const exploreProducts: Product[] = [
-  { key: 'terminal', title: 'ABATEV Terminal', desc: 'Trading cockpit and future broker-agnostic execution surface', href: CLUB_LINKS.terminal, icon: Bot, state: 'Terminal' },
+  { key: 'terminal', title: 'ABATEV Terminal', desc: 'Trading cockpit and future broker-agnostic execution surface', href: '/access/abatev-terminal', icon: Bot, state: 'Terminal' },
   { key: 'battle-proof', title: 'Trade House Proof & Rules', desc: 'Open the Hybrid Funding Trade House page for verified public-dashboard proof, funding context, and rules.', href: CLUB_LINKS.battlesProof, icon: Trophy, state: 'Hybrid Funding' },
-  { key: 'copy', title: 'Hybrid Copy', desc: 'Base44 copy trading and signal routing', href: CLUB_LINKS.copy, icon: LineChart, state: 'Live product' },
-  { key: 'zone', title: 'Hybrid Zone', desc: 'Execution and control layer', href: CLUB_LINKS.zone, icon: Network, state: 'Live product' },
-  { key: 'tv', title: 'Hybrid TV', desc: 'Shows, battles, and market content', href: CLUB_LINKS.tv, icon: Radio, state: 'Live channel' },
+  { key: 'copy', title: 'Hybrid Copy', desc: 'Base44 copy trading and signal routing', href: '/access/hybrid-copy', icon: LineChart, state: 'Live product' },
+  { key: 'zone', title: 'Hybrid Zone', desc: 'Execution and control layer', href: '/access/hybrid-zone', icon: Network, state: 'Live product' },
+  { key: 'tv', title: 'Hybrid TV', desc: 'Shows, battles, and market content', href: '/access/trade-hybrid-tv', icon: Radio, state: 'Live channel' },
   { key: 'funding', title: 'Hybrid Funding', desc: 'Explore funding', href: CLUB_LINKS.funding, icon: WalletCards, state: 'Open' },
-  { key: 'academy', title: 'Academy', desc: 'Build your process', href: CLUB_LINKS.academy, icon: BookOpen, state: 'Member' },
+  { key: 'academy', title: 'Academy', desc: 'Build your process', href: '/access/academy', icon: BookOpen, state: 'Member' },
 ];
 
 const quick = [
   { title: 'Your Game Plan', desc: 'Update your WHY and goals', href: CLUB_LINKS.onboarding, icon: Zap },
-  { title: 'Academy', desc: 'Build your process', href: CLUB_LINKS.academy, icon: BookOpen },
-  { title: 'Community', desc: 'Get plugged in', href: CLUB_LINKS.community, icon: Users },
+  { title: 'Academy', desc: 'Build your process', href: '/access/academy', icon: BookOpen },
+  { title: 'Community', desc: 'Get plugged in', href: '/access/community', icon: Users },
   { title: 'Help Center', desc: 'Find product and account answers', href: CLUB_LINKS.help, icon: Gift },
 ];
 
@@ -167,14 +167,14 @@ export default function ClubDashboard() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Link
-              to={CLUB_LINKS.ai}
+              to="/access/market-buddy"
               onClick={() => memberJourneyService.markAccess('ai', true).catch(() => null)}
               className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-blue-500 to-cyan-500 px-5 py-3 font-black text-white shadow-lg shadow-violet-500/15"
             >
               <Bot className="h-5 w-5" /> Ask Market Buddy
             </Link>
             <a
-              href={CLUB_LINKS.terminal}
+              href="/access/abatev-terminal"
               target="_blank"
               rel="noreferrer"
               onClick={() => memberJourneyService.markAccess('terminal', true).catch(() => null)}
