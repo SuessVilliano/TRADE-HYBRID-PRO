@@ -65,6 +65,7 @@ const products: Product[] = [
 
 const exploreProducts: Product[] = [
   { key: 'terminal', title: 'ABATEV Terminal', desc: 'Trading cockpit and future broker-agnostic execution surface', href: CLUB_LINKS.terminal, icon: Bot, state: 'Terminal' },
+  { key: 'battle-proof', title: 'Trade House Proof & Rules', desc: 'Open the Hybrid Funding Trade House page for verified public-dashboard proof, funding context, and rules.', href: CLUB_LINKS.battlesProof, icon: Trophy, state: 'Hybrid Funding' },
   { key: 'copy', title: 'Hybrid Copy', desc: 'Base44 copy trading and signal routing', href: CLUB_LINKS.copy, icon: LineChart, state: 'Live product' },
   { key: 'zone', title: 'Hybrid Zone', desc: 'Execution and control layer', href: CLUB_LINKS.zone, icon: Network, state: 'Live product' },
   { key: 'tv', title: 'Hybrid TV', desc: 'Shows, battles, and market content', href: CLUB_LINKS.tv, icon: Radio, state: 'Live channel' },
