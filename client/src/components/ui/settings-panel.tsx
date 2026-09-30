@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Bell, Lock, Palette, MonitorSmartphone, Volume2, Database, Cpu, Settings, Webhook, BookOpen, Copy, Bot, Network, Menu } from 'lucide-react';
+import { Bell, Lock, Palette, MonitorSmartphone, Volume2, Database, Cpu, Settings, Webhook, BookOpen, Copy, Bot, Network, Menu, Activity, CheckCircle2, AlertTriangle, Radio, Trophy, WalletCards } from 'lucide-react';
 import useLocalStorage from '@/lib/hooks/useLocalStorage';
 import { useTheme } from '@/lib/hooks/useTheme';
 import { useAudio } from '@/lib/stores/useAudio';
@@ -25,6 +25,7 @@ const SETTINGS_SECTIONS = [
   ['performance', 'Performance'],
   ['integrations', 'Integrations'],
   ['hooks', 'Webhooks & Alerts'],
+  ['status', 'Ecosystem Status'],
 ] as const;
 
 export const SettingsPanel = () => {
@@ -116,7 +117,7 @@ export const SettingsPanel = () => {
           </Select>
         </div>
 
-        <TabsList className="mb-6 hidden grid-cols-8 md:grid">
+        <TabsList className="mb-6 hidden grid-cols-9 md:grid">
           <TabsTrigger value="account" className="flex items-center gap-1.5">
             <Lock className="h-4 w-4" />
             Account
@@ -148,6 +149,10 @@ export const SettingsPanel = () => {
           <TabsTrigger value="hooks" className="flex items-center gap-1.5">
             <Webhook className="h-4 w-4" />
             Hooks
+          </TabsTrigger>
+          <TabsTrigger value="status" className="flex items-center gap-1.5">
+            <Activity className="h-4 w-4" />
+            Status
           </TabsTrigger>
         </TabsList>
         
@@ -601,6 +606,60 @@ export const SettingsPanel = () => {
                   <p className="mt-1 text-sm text-slate-500">Manage the execution/control layer behind connected trading services.</p>
                 </div>
               </a>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="status">
+          <Card>
+            <CardHeader>
+              <CardTitle>Trade Hybrid Ecosystem Status</CardTitle>
+              <CardDescription>
+                A launch-truth view of the current product surfaces. “Verified” means we have confirmed the production runtime or source-of-truth integration; it is separate from whether your subscription unlocks the product.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {[
+                [CheckCircle2, 'Trade Hybrid Club', 'Verified', 'Production on pro.tradehybrid.co with shared auth, plan entitlements, pay-first activation and Whop sync.', 'https://pro.tradehybrid.co'],
+                [Trophy, 'Trade House', 'Verified', 'Standalone Render arena with LiveKit, persistent rooms, Producer Studio and Hybrid Funding proof feeds.', 'https://tradehouse-91io.onrender.com'],
+                [BookOpen, 'Hybrid Journal + Alerts', 'Verified', 'Public Hybrid Journal runtime is reachable; alerts remain part of the Journal workflow.', CLUB_LINKS.journal],
+                [WalletCards, 'Hybrid Funding', 'Verified', 'Public funding site and competition proof/rules companion.', CLUB_LINKS.funding],
+                [Network, 'Hybrid Zone', 'Verified', 'Active hybridzone-v2 Render execution/control service.', CLUB_LINKS.zone],
+                [Radio, 'Trade Hybrid TV', 'Verified', 'VILoud white-label channel is embedded in TV and Community.', CLUB_LINKS.tv],
+                [Users, 'GHL Community', 'Embedded', 'Community is embedded in Club. CRM API automation still needs the Trade Hybrid HighLevel private integration/location authorization.', CLUB_LINKS.community],
+                [Copy, 'Hybrid Copy', 'Endpoint check', 'Base44 app source is connected in GitHub, but the deployment URL is injected by Base44 and still needs direct Base44 verification.', CLUB_LINKS.copy],
+                [Bot, 'ABATEV Terminal', 'Endpoint check', 'ABATEV source expects the branded Trade Hybrid terminal domain; the deployed Base44 runtime still needs direct Base44 verification.', CLUB_LINKS.terminal],
+              ].map(([Icon, title, status, description, href]: any) => {
+                const verified = status === 'Verified';
+                const embedded = status === 'Embedded';
+                return (
+                  <a
+                    key={title}
+                    href={href}
+                    target={/^https?:/i.test(href) ? '_blank' : undefined}
+                    rel={/^https?:/i.test(href) ? 'noreferrer' : undefined}
+                    className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-cyan-300 hover:bg-white dark:border-white/10 dark:bg-white/[0.03]"
+                  >
+                    <Icon className="mt-0.5 h-5 w-5 flex-shrink-0 text-violet-600 dark:text-violet-300" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-black">{title}</p>
+                        <span className={`rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-wider ${
+                          verified
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-300/20 dark:bg-emerald-300/10 dark:text-emerald-200'
+                            : embedded
+                              ? 'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-300/20 dark:bg-cyan-300/10 dark:text-cyan-200'
+                              : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-300/20 dark:bg-amber-300/10 dark:text-amber-200'
+                        }`}>
+                          {status}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
+                    </div>
+                    {!verified && status === 'Endpoint check' && <AlertTriangle className="h-4 w-4 flex-shrink-0 text-amber-500" />}
+                  </a>
+                );
+              })}
             </CardContent>
           </Card>
         </TabsContent>
