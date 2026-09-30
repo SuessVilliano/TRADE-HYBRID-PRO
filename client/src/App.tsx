@@ -258,7 +258,7 @@ const App: React.FC = () => {
                   <Route path="/access/:slug" element={<ClubProductAccessPage />} />
                   <Route path="/onboarding" element={<ProtectedRoute><MemberOnboardingPage /></ProtectedRoute>} />
                   <Route path="/community" element={<ProtectedRoute><ProductEntitlementRoute productKey="community"><CommunityPage /></ProductEntitlementRoute></ProtectedRoute>} />
-                  <Route path="/launch/tradehouse" element={<ProtectedRoute><ProductEntitlementRoute productKey="battles"><TradeHouseLaunchPage /></ProductEntitlementRoute></ProtectedRoute>} />
+                  <Route path="/launch/tradehouse" element={<TradeHouseLaunchPage />} />
                   <Route path="/tv" element={<ProtectedRoute><ProductEntitlementRoute productKey="tv"><HybridTVPage /></ProductEntitlementRoute></ProtectedRoute>} />
                   <Route path="/about" element={<Navigate to="/#about" replace />} />
                   <Route path="/trade" element={<ProtectedRoute><TradeView /></ProtectedRoute>} />
