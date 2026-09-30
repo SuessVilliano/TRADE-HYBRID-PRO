@@ -120,7 +120,7 @@ export const CLUB_PRODUCTS: ClubProduct[] = [
     summary: 'The source of truth for trades, notes, review, reports and the trader’s long-term record.',
     destination: 'https://hybridjournal.co',
     public: false,
-    plans: ['yearly','lifetime','pro_lifetime'],
+    plans: ['monthly','yearly','lifetime','pro_lifetime'],
     features: ['Trade journaling', 'Performance review', 'Reports and notes', 'Connected alert history'],
   },
   {
@@ -131,7 +131,7 @@ export const CLUB_PRODUCTS: ClubProduct[] = [
     summary: 'Persistent alerts and signals feeding the Journal and reporting layer instead of disappearing in a browser tab.',
     destination: 'https://hybridjournal.co',
     public: false,
-    plans: ['yearly','lifetime','pro_lifetime'],
+    plans: ['monthly','yearly','lifetime','pro_lifetime'],
     features: ['Persistent signal intake', 'Webhook alerts', 'History and reporting', 'Journal integration'],
   },
   {
@@ -199,10 +199,40 @@ export function plansForProduct(product: ClubProduct) {
   return CLUB_PLANS.filter((plan) => product.plans.includes(plan.key));
 }
 
+const PLAN_RANK: Record<ClubPlanKey, number> = {
+  monthly: 1,
+  yearly: 2,
+  lifetime: 3,
+  pro_lifetime: 4,
+};
+
+function activePlanFromEntitlements(entitlements: any[]): ClubPlanKey | null {
+  const keys = new Set(
+    entitlements
+      .filter((item: any) => item?.status === 'active' || !item?.status)
+      .map((item: any) => String(item?.product_key || '')),
+  );
+
+  if (keys.has('plan_pro_lifetime')) return 'pro_lifetime';
+  if (keys.has('plan_lifetime')) return 'lifetime';
+  if (keys.has('plan_yearly')) return 'yearly';
+  if (keys.has('plan_monthly') || keys.has('club_paid')) return 'monthly';
+  return null;
+}
+
 export function userHasProductAccess(user: any, product: ClubProduct) {
   if (product.public) return true;
   if (!user) return false;
   if (user.isAdmin || user.membershipLevel === 'demo') return true;
+
   const active = Array.isArray(user.entitlements) ? user.entitlements : [];
-  return active.some((item: any) => item?.product_key === product.key || item?.product_key === 'plan_pro_lifetime');
+
+  if (active.some((item: any) => item?.product_key === product.key && item?.status !== 'inactive')) {
+    return true;
+  }
+
+  const plan = activePlanFromEntitlements(active);
+  if (!plan) return false;
+
+  return product.plans.some((allowedPlan) => PLAN_RANK[plan] >= PLAN_RANK[allowedPlan]);
 }
