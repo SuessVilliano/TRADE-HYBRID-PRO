@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Bell, Lock, Palette, MonitorSmartphone, Volume2, Database, Cpu, Settings, Webhook, BookOpen, Copy, Bot, Network, Menu, Activity, CheckCircle2, AlertTriangle, Radio, Trophy, WalletCards } from 'lucide-react';
+import { Bell, Lock, Palette, MonitorSmartphone, Volume2, Database, Cpu, Settings, Webhook, BookOpen, Copy, Bot, Network, Menu, Activity, CheckCircle2, AlertTriangle, Radio, Trophy, WalletCards, Users } from 'lucide-react';
 import useLocalStorage from '@/lib/hooks/useLocalStorage';
 import { useTheme } from '@/lib/hooks/useTheme';
 import { useAudio } from '@/lib/stores/useAudio';
