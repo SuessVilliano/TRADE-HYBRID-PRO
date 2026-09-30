@@ -15,7 +15,9 @@ import {
   Zap,
 } from 'lucide-react';
 import { CLUB_LINKS } from '@/lib/club-links';
-import memberJourneyService from '@/lib/services/member-journey-service';
+import memberJourneyService, { type MemberAccessItem, type MemberOnboarding } from '@/lib/services/member-journey-service';
+import { useAuth } from '@/lib/context/AuthContext';
+import { getClubProduct, userHasProductAccess } from '@/lib/product-catalog';
 import ClubRoadmapSection from '@/components/club/club-roadmap-section';
 
 type IconType = React.ComponentType<{ className?: string }>;
@@ -98,8 +100,11 @@ function ProductLink({ product, children }: { product: Product; children: React.
 
 export default function ClubDashboard() {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [showAll, setShowAll] = useState(false);
   const [journeyReady, setJourneyReady] = useState(false);
+  const [journey, setJourney] = useState<MemberOnboarding | null>(null);
+  const [accessItems, setAccessItems] = useState<MemberAccessItem[]>([]);
   const [dashboardStyle, setDashboardStyle] = useState(() =>
     typeof window !== 'undefined' ? localStorage.getItem('club-dashboard-style') || 'flat' : 'flat'
   );
@@ -116,14 +121,18 @@ export default function ClubDashboard() {
 
   useEffect(() => {
     let active = true;
-    memberJourneyService
-      .getOnboarding()
-      .then((journey) => {
+    Promise.all([
+      memberJourneyService.getOnboarding(),
+      memberJourneyService.getAccessChecklist().catch(() => [] as MemberAccessItem[]),
+    ])
+      .then(([nextJourney, checklist]) => {
         if (!active) return;
-        if (!journey?.completed_at) {
+        if (!nextJourney?.completed_at) {
           navigate(CLUB_LINKS.onboarding, { replace: true });
           return;
         }
+        setJourney(nextJourney);
+        setAccessItems(checklist);
         setJourneyReady(true);
       })
       .catch(() => {
@@ -135,6 +144,33 @@ export default function ClubDashboard() {
       active = false;
     };
   }, [navigate]);
+
+  const accessed = (key: string) =>
+    accessItems.some((item) => item.product_key === key && Number(item.access_count || 0) > 0);
+
+  const checkpoints = [
+    { label: 'Why + Plan', complete: Boolean(journey?.completed_at) },
+    { label: 'Journal', complete: accessed('journal') },
+    { label: 'Community', complete: accessed('community') },
+    { label: 'Practice', complete: accessed('battles') },
+    { label: 'Review', complete: accessed('ai') },
+  ];
+
+  const completedCheckpoints = checkpoints.filter((item) => item.complete).length;
+  const progressPct = Math.round((completedCheckpoints / checkpoints.length) * 100);
+
+  const accessLabel = (product: Product) => {
+    const catalogProduct = getClubProduct(product.key);
+    if (!catalogProduct) return 'Public';
+    if (catalogProduct.public) return 'Public';
+    return userHasProductAccess(currentUser, catalogProduct) ? 'Unlocked' : 'Upgrade required';
+  };
+
+  const accessTone = (label: string) => {
+    if (label === 'Unlocked') return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-300/20 dark:bg-emerald-300/10 dark:text-emerald-200';
+    if (label === 'Public') return 'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-300/20 dark:bg-cyan-300/10 dark:text-cyan-200';
+    return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-300/20 dark:bg-amber-300/10 dark:text-amber-200';
+  };
 
   if (!journeyReady) {
     return (
@@ -207,10 +243,13 @@ export default function ClubDashboard() {
 
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Club progress</p>
-            <p className="mt-5 text-4xl font-black">1 / 5</p>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">journey checkpoints started</p>
+            <p className="mt-5 text-4xl font-black">{completedCheckpoints} / 5</p>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">journey checkpoints completed</p>
             <div className="mt-5 h-2 rounded-full bg-slate-100 dark:bg-white/10">
-              <div className="h-2 w-1/5 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500" />
+              <div
+                className="h-2 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 transition-all duration-500"
+                style={{ width: progressPct + '%' }}
+              />
             </div>
           </div>
 
@@ -254,7 +293,12 @@ export default function ClubDashboard() {
                       <Icon className="h-6 w-6 text-cyan-700 dark:text-cyan-200" />
                       <ArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:text-slate-900 dark:group-hover:text-white" />
                     </div>
-                    <p className="text-xs font-black uppercase tracking-[0.15em] text-cyan-700 dark:text-cyan-200">{product.state}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs font-black uppercase tracking-[0.15em] text-cyan-700 dark:text-cyan-200">{product.state}</p>
+                      <span className={`rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] ${accessTone(accessLabel(product))}`}>
+                        {accessLabel(product)}
+                      </span>
+                    </div>
                     <h3 className="mt-2 text-xl font-black">{product.title}</h3>
                     <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{product.desc}</p>
                   </div>
@@ -290,9 +334,14 @@ export default function ClubDashboard() {
                       <Icon className="mb-5 h-5 w-5 text-violet-600 dark:text-violet-300" />
                       <p className="font-bold">{product.title}</p>
                       <p className="mt-1 text-xs text-slate-500">{product.desc}</p>
-                      <span className="mt-4 inline-flex rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:border-white/10 dark:bg-transparent dark:text-slate-400">
-                        {product.state}
-                      </span>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <span className="inline-flex rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:border-white/10 dark:bg-transparent dark:text-slate-400">
+                          {product.state}
+                        </span>
+                        <span className={`inline-flex rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-wider ${accessTone(accessLabel(product))}`}>
+                          {accessLabel(product)}
+                        </span>
+                      </div>
                     </div>
                   </ProductLink>
                 );
@@ -311,11 +360,13 @@ export default function ClubDashboard() {
               <Link to={CLUB_LINKS.onboarding} className="text-xs font-black text-cyan-700 dark:text-cyan-300">Edit game plan</Link>
             </div>
             <div className="mt-5 grid gap-2 sm:grid-cols-5">
-              {['Why + Plan', 'Journal', 'Community', 'Practice', 'Review'].map((step, index) => (
-                <div key={step} className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center dark:border-white/10 dark:bg-black/20">
-                  <div className={`mx-auto mb-2 h-2 w-2 rounded-full ${index === 0 ? 'bg-cyan-500' : 'bg-slate-300 dark:bg-white/20'}`} />
-                  <p className="text-xs font-bold">{step}</p>
-                  <p className="mt-1 text-[10px] text-slate-500">{index === 0 ? 'Complete' : 'Next'}</p>
+              {checkpoints.map((step, index) => (
+                <div key={step.label} className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center dark:border-white/10 dark:bg-black/20">
+                  <div className={`mx-auto mb-2 h-2 w-2 rounded-full ${step.complete ? 'bg-cyan-500' : 'bg-slate-300 dark:bg-white/20'}`} />
+                  <p className="text-xs font-bold">{step.label}</p>
+                  <p className="mt-1 text-[10px] text-slate-500">
+                    {step.complete ? 'Complete' : index === completedCheckpoints ? 'Next' : 'Open'}
+                  </p>
                 </div>
               ))}
             </div>
