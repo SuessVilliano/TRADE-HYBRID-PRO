@@ -7,6 +7,9 @@ export const config = {
 };
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || "https://uqtluroceakqtlvlzatt.supabase.co").replace(/\/$/, "");
+const SUPABASE_PUBLISHABLE_KEY =
+  process.env.SUPABASE_PUBLISHABLE_KEY ||
+  "sb_publishable_YjXHHnoRXE4pvn6ezLdU5w_O03Q62W_";
 
 function serviceKey() {
   const direct =
@@ -89,6 +92,31 @@ function verifyWhopSignature(req: any, rawBody: Buffer) {
   if (!valid) throw new Error("Invalid Whop webhook signature");
 
   return JSON.parse(rawBody.toString("utf8"));
+}
+
+async function callWhopBridge(action: "health" | "event", payload: Record<string, any> = {}) {
+  const secret = process.env.WHOP_WEBHOOK_SECRET || "";
+  if (!secret) throw new Error("WHOP_WEBHOOK_SECRET is not configured");
+
+  const response = await fetch(
+    SUPABASE_URL + "/functions/v1/whop-entitlement-sync",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        "x-tradehybrid-bridge-secret": secret,
+      },
+      body: JSON.stringify({ action, ...payload }),
+    },
+  );
+
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || body?.ok === false) {
+    throw new Error(body?.error || "Whop entitlement bridge is unavailable");
+  }
+
+  return body;
 }
 
 function adminHeaders(key: string, prefer?: string) {
@@ -290,37 +318,36 @@ export default async function handler(req: any, res: any) {
     : String(pathValue || "");
 
   if (req.method === "GET" && path === "health") {
-    const key = serviceKey();
     return res.status(200).json({
       ok: true,
       service: "trade-hybrid-club-api",
       configured: {
         whopWebhookSecret: Boolean(process.env.WHOP_WEBHOOK_SECRET),
-        supabaseServiceRole: Boolean(key),
+        whopEntitlementBridge: true,
       },
     });
   }
 
   if (req.method === "GET" && path === "integration-health") {
-    if (String(req.query?.bridgeFingerprint || "") === "1" && process.env.WHOP_WEBHOOK_SECRET) {
-      const fingerprint = crypto
-        .createHash("sha256")
-        .update(process.env.WHOP_WEBHOOK_SECRET)
-        .digest("hex");
-      console.info("[whop-bridge-fingerprint]", fingerprint);
-    }
-
     try {
-      const response = await fetch(
-        SUPABASE_URL + "/functions/v1/integration-health",
-        { headers: { apikey: "sb_publishable_YjXHHnoRXE4pvn6ezLdU5w_O03Q62W_" } },
-      );
-      const supabase = await response.json();
-      return res.status(response.ok ? 200 : 502).json({
-        ok: response.ok,
+      const [supabaseResponse, whopBridge] = await Promise.all([
+        fetch(
+          SUPABASE_URL + "/functions/v1/integration-health",
+          { headers: { apikey: SUPABASE_PUBLISHABLE_KEY } },
+        ),
+        process.env.WHOP_WEBHOOK_SECRET
+          ? callWhopBridge("health").then(() => true).catch(() => false)
+          : Promise.resolve(false),
+      ]);
+
+      const supabase = await supabaseResponse.json().catch(() => ({}));
+      const coreOk = supabaseResponse.ok && Boolean(process.env.WHOP_WEBHOOK_SECRET) && whopBridge;
+
+      return res.status(coreOk ? 200 : 502).json({
+        ok: coreOk,
         vercel: {
           whopWebhookSecret: Boolean(process.env.WHOP_WEBHOOK_SECRET),
-          supabaseServiceRole: Boolean(serviceKey()),
+          whopEntitlementBridge: whopBridge,
           streamKey: Boolean(process.env.STREAM_KEY),
           streamSecret: Boolean(process.env.STREAM_SECRET),
           vercelOidc: Boolean(process.env.VERCEL_OIDC_TOKEN),
@@ -336,45 +363,36 @@ export default async function handler(req: any, res: any) {
     req.method === "POST" &&
     path === "billing/whop/webhook"
   ) {
-    const key = serviceKey();
-    if (!process.env.WHOP_WEBHOOK_SECRET || !key) {
+    if (!process.env.WHOP_WEBHOOK_SECRET) {
       return res.status(503).json({
         received: false,
-        error: "Whop webhook backend is not fully configured.",
+        error: "Whop webhook verification is not configured.",
       });
     }
 
-    let eventId = "";
+    let event: any;
 
     try {
       const rawBody = await readRawBody(req);
-      const event = verifyWhopSignature(req, rawBody);
-      const recorded = await recordWhopEvent(event, key);
-      eventId = recorded.eventId;
-
-      if (recorded.duplicate) {
-        return res.status(200).json({ received: true, duplicate: true });
-      }
-
-      try {
-        await syncWhopEntitlement(event, key);
-        await finishWhopEvent(eventId, key, null);
-        return res.status(200).json({ received: true });
-      } catch (syncError) {
-        const message =
-          syncError instanceof Error
-            ? syncError.message
-            : "Entitlement sync failed";
-        await finishWhopEvent(eventId, key, message);
-        console.error("[whop] entitlement sync failed", message);
-        return res.status(200).json({
-          received: true,
-          processed: false,
-        });
-      }
+      event = verifyWhopSignature(req, rawBody);
     } catch (error) {
       console.error("[whop] webhook rejected", error);
       return res.status(400).json({ received: false });
+    }
+
+    try {
+      const result = await callWhopBridge("event", { event });
+      return res.status(200).json({
+        received: true,
+        processed: result?.processed !== false,
+        duplicate: Boolean(result?.duplicate),
+      });
+    } catch (error) {
+      console.error("[whop] entitlement bridge unavailable", error);
+      return res.status(503).json({
+        received: false,
+        error: "Entitlement sync temporarily unavailable.",
+      });
     }
   }
 
