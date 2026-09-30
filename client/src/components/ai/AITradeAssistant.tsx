@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { config } from '@/lib/config';
 import memberJourneyService, { type MemberOnboarding } from '@/lib/services/member-journey-service';
+import { authService } from '@/lib/services/auth-service';
 
 const apiUrl = (path: string) => `${(config.API_BASE_URL || '').replace(/\/$/, '')}${path}`;
 
@@ -32,9 +33,10 @@ interface TradeAnalysis {
 
 interface AITradeAssistantProps {
   className?: string;
+  initialPrompt?: string;
 }
 
-export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
+export function AITradeAssistant({ className = "", initialPrompt = "" }: AITradeAssistantProps) {
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -74,6 +76,12 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (initialPrompt.trim()) {
+      setCurrentMessage((current) => current || initialPrompt.trim());
+    }
+  }, [initialPrompt]);
 
   // Auto-scroll chat to bottom when new messages arrive
   useEffect(() => {
@@ -283,9 +291,17 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
     setIsStreaming(true);
 
     try {
+      const accessToken = await authService.getAccessToken();
+      if (!accessToken) {
+        throw new Error('Your Trade Hybrid Club session expired.');
+      }
+
       const response = await fetch(apiUrl('/api/ai/chat-stream'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({
           message: currentMessage,
           context: {
