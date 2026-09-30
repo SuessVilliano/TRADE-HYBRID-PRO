@@ -138,6 +138,7 @@ import ShopPage from './pages/shop';
 import LiveStreamPage from './pages/live-stream';
 import NotificationSettingsPage from './pages/notification-settings';
 import KnowledgeBasePage from './pages/KnowledgeBasePage';
+import ActivateClubAccountPage from './pages/activate-club-account';
 
 const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { pathname } = useLocation();
@@ -146,6 +147,7 @@ const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }
     pathname === '/' ||
     pathname === '/about' ||
     pathname === '/products' ||
+    pathname === '/activate' ||
     pathname.startsWith('/products/') ||
     ['/login', '/signup', '/register', '/auth'].some(
       (route) => pathname === route || pathname.startsWith(`${route}/`),
@@ -215,6 +217,7 @@ const App: React.FC = () => {
                   <Route path="/" element={<ClubHome />} />
                   <Route path="/products" element={<ClubProductsPage />} />
                   <Route path="/products/:slug" element={<ClubProductPage />} />
+                  <Route path="/activate" element={<ActivateClubAccountPage />} />
                   <Route path="/trading-freedom-podcast" element={<TradingFreedomPodcast />} />
                   <Route path="/simple-charting" element={<React.Suspense fallback={<div>Loading chart...</div>}><SimpleChartingDashboard /></React.Suspense>} />
                   <Route path="/test-page" element={<React.Suspense fallback={<div>Loading test page...</div>}><TestPage /></React.Suspense>} />
