@@ -32,7 +32,7 @@ const ecosystem = [
     label: 'Memory layer',
     text: 'Trades, notes, reports, alerts, review, and the long-term record of how you actually trade.',
     icon: BookOpen,
-    href: '/products/hybrid-journal',
+    href: CLUB_LINKS.journal,
     tone: 'from-violet-600 to-purple-500',
   },
   {
@@ -40,7 +40,7 @@ const ecosystem = [
     label: 'Trade Hybrid AI',
     text: 'Your primary AI companion, grounded in your WHY, goals, Club journey, Journal, and access.',
     icon: Bot,
-    href: '/products/market-buddy',
+    href: CLUB_LINKS.ai,
     tone: 'from-violet-600 via-blue-500 to-cyan-500',
   },
   {
@@ -48,7 +48,7 @@ const ecosystem = [
     label: 'Trading cockpit',
     text: 'The terminal/control surface that can grow into broker-agnostic execution, routing, and connected market tools.',
     icon: TerminalSquare,
-    href: '/products/abatev-terminal',
+    href: CLUB_LINKS.terminal,
     tone: 'from-slate-700 via-blue-600 to-cyan-500',
   },
   {
@@ -56,7 +56,7 @@ const ecosystem = [
     label: 'Compete',
     text: 'Practice battles, verified Hybrid Funding proof, live rooms, producer tools, leaderboards, and broadcast.',
     icon: Trophy,
-    href: '/products/trade-house',
+    href: CLUB_LINKS.battles,
     tone: 'from-fuchsia-500 to-violet-600',
   },
   {
@@ -64,7 +64,7 @@ const ecosystem = [
     label: 'Copy + routing',
     text: 'Copy relationships, broker connections, risk rules, and signal-to-execution workflows.',
     icon: Copy,
-    href: '/products/hybrid-copy',
+    href: CLUB_LINKS.copy,
     tone: 'from-blue-600 to-cyan-500',
   },
   {
@@ -72,7 +72,7 @@ const ecosystem = [
     label: 'Control layer',
     text: 'The execution and control layer connecting services across the Trade Hybrid ecosystem.',
     icon: Network,
-    href: '/products/hybrid-zone',
+    href: CLUB_LINKS.zone,
     tone: 'from-cyan-500 to-emerald-500',
   },
   {
@@ -80,7 +80,7 @@ const ecosystem = [
     label: 'Funding',
     text: 'Funding paths plus the verified public-dashboard proof that powers Trade House competition.',
     icon: WalletCards,
-    href: '/products/hybrid-funding',
+    href: CLUB_LINKS.funding,
     tone: 'from-violet-600 to-blue-500',
   },
   {
@@ -88,7 +88,7 @@ const ecosystem = [
     label: 'People + media',
     text: 'Community, education, live sessions, events, shows, battles, and the content layer around the traders.',
     icon: Radio,
-    href: '/products/community',
+    href: CLUB_LINKS.community,
     tone: 'from-purple-600 to-cyan-500',
   },
 ];
@@ -135,7 +135,6 @@ export default function ClubHome() {
           </Link>
 
           <div className="hidden items-center gap-5 lg:flex">
-            <Link to="/products" className="text-sm font-bold text-slate-600 hover:text-violet-600 dark:text-slate-300 dark:hover:text-violet-300">Products</Link>
             <a href="#about" className="text-sm font-bold text-slate-600 hover:text-violet-600 dark:text-slate-300 dark:hover:text-violet-300">About</a>
             <a href="#ecosystem" className="text-sm font-bold text-slate-600 hover:text-violet-600 dark:text-slate-300 dark:hover:text-violet-300">Ecosystem</a>
             <a href="#ai-team" className="text-sm font-bold text-slate-600 hover:text-violet-600 dark:text-slate-300 dark:hover:text-violet-300">Market Buddy</a>
@@ -161,12 +160,12 @@ export default function ClubHome() {
               Log in
             </Link>
 
-            <a
-              href="#membership"
+            <Link
+              to={CLUB_LINKS.register}
               className="rounded-xl bg-gradient-to-r from-violet-600 via-blue-500 to-cyan-500 px-4 py-2 text-sm font-black text-white shadow-lg shadow-violet-500/15"
             >
-              Choose Membership
-            </a>
+              Get Started
+            </Link>
           </div>
         </div>
       </nav>
@@ -192,12 +191,12 @@ export default function ClubHome() {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <a
-                href="#membership"
+              <Link
+                to={CLUB_LINKS.register}
                 className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-blue-500 to-cyan-500 px-6 py-3 font-black text-white shadow-xl shadow-violet-500/20"
               >
-                Choose your plan <ArrowRight className="h-5 w-5" />
-              </a>
+                Start your journey <ArrowRight className="h-5 w-5" />
+              </Link>
 
               <a
                 href="#membership"

@@ -18,13 +18,6 @@ interface User {
   whopProductId?: string;
   hasConnectedApis?: boolean;
   isTokenHolder?: boolean;
-  entitlements?: Array<{
-    product_key: string;
-    status?: string;
-    source?: string;
-    starts_at?: string | null;
-    ends_at?: string | null;
-  }>;
   features?: {
     trade: boolean;
     journal: boolean;

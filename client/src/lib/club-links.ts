@@ -17,7 +17,7 @@ export const CLUB_LINKS = {
   abatev: env.VITE_ABATEV_URL || 'https://abatev.tradehybrid.co',
   terminal: env.VITE_ABATEV_URL || 'https://abatev.tradehybrid.co',
   ai: '/market-buddy',
-  zone: env.VITE_ZONE_URL || 'https://hybridzone-v2.onrender.com',
+  zone: env.VITE_ZONE_URL || 'https://thehybridzone.club',
   battles: '/launch/tradehouse',
   tradehouseArena: '/launch/tradehouse',
   battlesProof: 'https://hybridfunding.co/tradehouse',
@@ -25,7 +25,7 @@ export const CLUB_LINKS = {
 
   // Keep TV inside the Club shell, but source the real white-labelled channel.
   tv: '/tv',
-  tvExternal: env.VITE_TV_URL || 'https://player.viloud.tv/embed/channel/6b3e6d6696fb33d051c1ca4b341d21cf?autoplay=1&volume=1&controls=1&title=1&share=1&open_playlist=0&random=0',
+  tvExternal: env.VITE_TV_URL || 'https://tv.tradehybrid.club',
 
   academy: env.VITE_ACADEMY_URL || '/learning-center',
   community: '/community',

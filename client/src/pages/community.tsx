@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ExternalLink, MessageCircle, Users, GraduationCap, CalendarDays, Trophy, Radio } from 'lucide-react';
+import { ExternalLink, MessageCircle, Users, GraduationCap, CalendarDays, Trophy } from 'lucide-react';
 import memberJourneyService from '@/lib/services/member-journey-service';
-
-const TV_EMBED = 'https://player.viloud.tv/embed/channel/6b3e6d6696fb33d051c1ca4b341d21cf?autoplay=1&volume=1&controls=1&title=1&share=1&open_playlist=0&random=0';
 
 export default function CommunityPage() {
   const communityUrl =
@@ -56,30 +54,6 @@ export default function CommunityPage() {
             </div>
           ))}
         </div>
-
-        <section className="mb-5 overflow-hidden rounded-3xl border border-violet-200 bg-white shadow-sm dark:border-violet-300/15 dark:bg-[#0c1322]">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 dark:border-white/10">
-            <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-violet-600 to-cyan-500 text-white">
-                <Radio className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300">Live inside the Club</p>
-                <p className="font-black">Trade Hybrid TV + Community</p>
-              </div>
-            </div>
-            <a href="/access/trade-hybrid-tv" className="text-sm font-black text-violet-600 dark:text-violet-300">Open full TV</a>
-          </div>
-          <div className="aspect-video max-h-[520px] bg-black">
-            <iframe
-              src={TV_EMBED}
-              title="Trade Hybrid TV inside Community"
-              className="h-full w-full border-0"
-              allow="autoplay; fullscreen; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        </section>
 
         <section className="relative min-h-[70vh] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-[#0c1322]">
           {!loaded && (

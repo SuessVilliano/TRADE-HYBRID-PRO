@@ -1,5 +1,4 @@
 import crypto from "node:crypto";
-import OpenAI from "openai";
 
 export const config = {
   api: {
@@ -118,104 +117,6 @@ async function callWhopBridge(action: "health" | "event", payload: Record<string
   }
 
   return body;
-}
-
-async function getSupabaseUserFromBearer(req: any) {
-  const authorization = getHeader(req, "authorization");
-  const token = authorization.replace(/^Bearer\s+/i, "").trim();
-  if (!token) return null;
-
-  const response = await fetch(SUPABASE_URL + "/auth/v1/user", {
-    headers: {
-      apikey: SUPABASE_PUBLISHABLE_KEY,
-      Authorization: "Bearer " + token,
-    },
-  });
-
-  if (!response.ok) return null;
-  return await response.json();
-}
-
-function marketBuddySystemPrompt(context: any) {
-  const journey = context?.memberJourney || {};
-  const why = journey?.why_text || journey?.why || null;
-  const primaryGoal = journey?.primary_goal || journey?.primaryGoal || null;
-  const markets = journey?.preferred_markets || journey?.preferredMarkets || [];
-  const challenges = journey?.current_challenges || journey?.currentChallenges || [];
-  const recentMessages = Array.isArray(context?.recentMessages) ? context.recentMessages : [];
-
-  return [
-    "You are Market Buddy, the Trade Hybrid Club AI companion.",
-    "Help the member think through their trading process, goals, journaling, risk rules, learning path, alerts, and connected Trade Hybrid tools.",
-    "Do not promise profits, certainty, or guaranteed trade outcomes. Distinguish observations from assumptions and encourage the member to follow their own defined risk plan.",
-    why ? "Member WHY: " + why : "",
-    primaryGoal ? "Primary goal: " + primaryGoal : "",
-    markets.length ? "Preferred markets: " + markets.join(", ") : "",
-    challenges.length ? "Current challenges: " + challenges.join(", ") : "",
-    recentMessages.length ? "Recent context: " + JSON.stringify(recentMessages.slice(-5)) : "",
-  ].filter(Boolean).join("\n");
-}
-
-async function handleMarketBuddyChat(req: any, res: any) {
-  const user = await getSupabaseUserFromBearer(req);
-  if (!user?.id) {
-    return res.status(401).json({ error: "Trade Hybrid Club authentication required." });
-  }
-
-  if (!process.env.OPENAI_API_KEY) {
-    return res.status(503).json({ error: "Market Buddy model is not configured." });
-  }
-
-  let body: any = {};
-  try {
-    const raw = await readRawBody(req);
-    body = JSON.parse(raw.toString("utf8") || "{}");
-  } catch {
-    return res.status(400).json({ error: "Invalid request body." });
-  }
-
-  const message = String(body?.message || "").trim();
-  const context = body?.context || {};
-  if (!message) return res.status(400).json({ error: "Message is required." });
-
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache, no-transform",
-    "Connection": "keep-alive",
-    "X-Accel-Buffering": "no",
-  });
-
-  try {
-    const stream = await openai.chat.completions.create({
-      model: process.env.MARKET_BUDDY_MODEL || "gpt-4o-mini",
-      stream: true,
-      temperature: 0.35,
-      messages: [
-        { role: "system", content: marketBuddySystemPrompt(context) },
-        { role: "user", content: message },
-      ],
-    });
-
-    for await (const part of stream) {
-      const chunk = part.choices?.[0]?.delta?.content || "";
-      if (chunk) {
-        res.write("data: " + JSON.stringify({ chunk, timestamp: new Date().toISOString() }) + "\n\n");
-      }
-    }
-
-    res.write("data: [DONE]\n\n");
-    res.end();
-  } catch (error) {
-    console.error("[market-buddy] chat failed", error);
-    if (!res.headersSent) {
-      return res.status(500).json({ error: "Market Buddy chat failed." });
-    }
-    res.write("data: " + JSON.stringify({ chunk: "\nMarket Buddy hit a temporary error. Please try again." }) + "\n\n");
-    res.write("data: [DONE]\n\n");
-    res.end();
-  }
 }
 
 function adminHeaders(key: string, prefer?: string) {
@@ -415,19 +316,6 @@ export default async function handler(req: any, res: any) {
   const path = Array.isArray(pathValue)
     ? pathValue.join("/")
     : String(pathValue || "");
-
-  if (req.method === "POST" && path === "ai/chat-stream") {
-    return handleMarketBuddyChat(req, res);
-  }
-
-  if (req.method === "GET" && path === "ai/status") {
-    return res.status(200).json({
-      ok: Boolean(process.env.OPENAI_API_KEY),
-      service: "market-buddy",
-      configured: Boolean(process.env.OPENAI_API_KEY),
-      model: process.env.MARKET_BUDDY_MODEL || "gpt-4o-mini",
-    });
-  }
 
   if (req.method === "GET" && path === "health") {
     return res.status(200).json({

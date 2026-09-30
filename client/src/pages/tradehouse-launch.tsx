@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertCircle, Loader2, Swords } from 'lucide-react';
 import { authService } from '@/lib/services/auth-service';
-import { getClubProduct, userHasProductAccess } from '@/lib/product-catalog';
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || 'https://uqtluroceakqtlvlzatt.supabase.co').replace(/\/$/, '');
 const SUPABASE_KEY =
@@ -21,17 +20,10 @@ export default function TradeHouseLaunchPage() {
 
     const launch = async () => {
       try {
-        const currentUser = await authService.getCurrentUser();
         const accessToken = await authService.getAccessToken();
 
-        if (!currentUser?.authenticated || !accessToken) {
+        if (!accessToken) {
           window.location.replace('/login?next=/launch/tradehouse');
-          return;
-        }
-
-        const battlesProduct = getClubProduct('battles');
-        if (battlesProduct && !userHasProductAccess(currentUser, battlesProduct)) {
-          window.location.replace('/products/trade-house?locked=1');
           return;
         }
 

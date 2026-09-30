@@ -1,5 +1,4 @@
 import React from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { Brain, BookOpen, Shield, Sparkles, Target, TrendingUp, Users } from 'lucide-react';
 import { AITradeAssistant } from '@/components/ai/AITradeAssistant';
 
@@ -13,9 +12,6 @@ const capabilities = [
 ] as const;
 
 export default function MarketBuddyPage() {
-  const [params] = useSearchParams();
-  const initialPrompt = params.get('q') || '';
-
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-950 dark:bg-[#070b14] dark:text-white sm:px-8">
       <div className="mx-auto max-w-7xl">
@@ -51,7 +47,7 @@ export default function MarketBuddyPage() {
             </aside>
 
             <div className="p-4 sm:p-6 lg:p-8">
-              <AITradeAssistant initialPrompt={initialPrompt} />
+              <AITradeAssistant />
             </div>
           </div>
         </section>

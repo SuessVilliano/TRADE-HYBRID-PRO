@@ -4,12 +4,11 @@ import { BookOpen, Bot, Mail, Swords, TerminalSquare, Users } from 'lucide-react
 import { CLUB_LINKS } from '@/lib/club-links';
 
 const productLinks = [
-  ['All Products', '/products', BookOpen],
-  ['Hybrid Journal', '/products/hybrid-journal', BookOpen],
-  ['Market Buddy', '/products/market-buddy', Bot],
-  ['ABATEV Terminal', '/products/abatev-terminal', TerminalSquare],
-  ['Trade House', '/products/trade-house', Swords],
-  ['Community', '/products/community', Users],
+  ['Hybrid Journal', CLUB_LINKS.journal, BookOpen],
+  ['Market Buddy', CLUB_LINKS.ai, Bot],
+  ['ABATEV Terminal', CLUB_LINKS.terminal, TerminalSquare],
+  ['Trade House', CLUB_LINKS.battles, Swords],
+  ['Community', CLUB_LINKS.community, Users],
 ] as const;
 
 function SmartLink({ href, children }: { href: string; children: React.ReactNode }) {
