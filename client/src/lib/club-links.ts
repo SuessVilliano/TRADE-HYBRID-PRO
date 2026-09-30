@@ -25,7 +25,7 @@ export const CLUB_LINKS = {
 
   // Keep TV inside the Club shell, but source the real white-labelled channel.
   tv: '/tv',
-  tvExternal: env.VITE_TV_URL || 'https://tv.tradehybrid.club',
+  tvExternal: env.VITE_TV_URL || 'https://player.viloud.tv/embed/channel/6b3e6d6696fb33d051c1ca4b341d21cf?autoplay=1&volume=1&controls=1&title=1&share=1&open_playlist=0&random=0',
 
   academy: env.VITE_ACADEMY_URL || '/learning-center',
   community: '/community',
