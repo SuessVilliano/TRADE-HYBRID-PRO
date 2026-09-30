@@ -48,10 +48,10 @@ const products: Product[] = [
   {
     key: 'battles',
     title: 'Trade House Battles',
-    desc: 'Practice, compete with verified proof, and build a public record.',
+    desc: 'Launch the standalone Arena with your Club identity, practice, compete with verified Hybrid Funding proof, and build a public record.',
     href: CLUB_LINKS.battles,
     icon: Trophy,
-    state: 'Compete live',
+    state: 'Standalone Arena',
   },
   {
     key: 'community',
@@ -65,7 +65,6 @@ const products: Product[] = [
 
 const exploreProducts: Product[] = [
   { key: 'terminal', title: 'ABATEV Terminal', desc: 'Trading cockpit and future broker-agnostic execution surface', href: CLUB_LINKS.terminal, icon: Bot, state: 'Terminal' },
-  { key: 'tradehouse-beta', title: 'Trade House Arena', desc: 'Standalone Arena beta with one-click Club sign-in', href: CLUB_LINKS.tradehouseArena, icon: Trophy, state: 'Beta' },
   { key: 'copy', title: 'Hybrid Copy', desc: 'Base44 copy trading and signal routing', href: CLUB_LINKS.copy, icon: LineChart, state: 'Live product' },
   { key: 'zone', title: 'Hybrid Zone', desc: 'Execution and control layer', href: CLUB_LINKS.zone, icon: Network, state: 'Live product' },
   { key: 'tv', title: 'Hybrid TV', desc: 'Shows, battles, and market content', href: CLUB_LINKS.tv, icon: Radio, state: 'Live channel' },
