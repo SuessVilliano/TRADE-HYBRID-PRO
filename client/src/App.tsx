@@ -102,6 +102,7 @@ import EmbeddedBrowserPage from './pages/embedded-browser-page';
 import ABATEVPanelPage from './pages/abatev-panel';
 import NexusPanelPage from './pages/nexus-panel';
 import MarketDataPage from './pages/MarketDataPage';
+import AiMarketAnalysisPage from './pages/ai-market-analysis-page';
 
 // Prop Firm
 import PropFirmDashboardPage from './pages/PropFirmDashboard';
