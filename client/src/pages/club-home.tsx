@@ -161,12 +161,12 @@ export default function ClubHome() {
               Log in
             </Link>
 
-            <Link
-              to={CLUB_LINKS.register}
+            <a
+              href="#membership"
               className="rounded-xl bg-gradient-to-r from-violet-600 via-blue-500 to-cyan-500 px-4 py-2 text-sm font-black text-white shadow-lg shadow-violet-500/15"
             >
-              Get Started
-            </Link>
+              Choose Membership
+            </a>
           </div>
         </div>
       </nav>
@@ -192,12 +192,12 @@ export default function ClubHome() {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                to={CLUB_LINKS.register}
+              <a
+                href="#membership"
                 className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-blue-500 to-cyan-500 px-6 py-3 font-black text-white shadow-xl shadow-violet-500/20"
               >
-                Start your journey <ArrowRight className="h-5 w-5" />
-              </Link>
+                Choose your plan <ArrowRight className="h-5 w-5" />
+              </a>
 
               <a
                 href="#membership"

@@ -43,9 +43,9 @@ export default function ClubProductPage() {
                 Open {product.name} <ArrowRight className="h-4 w-4" />
               </a>
             ) : (
-              <Link to="/register" className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-blue-500 to-cyan-500 px-6 py-3 font-black text-white">
-                Join Trade Hybrid Club <ArrowRight className="h-4 w-4" />
-              </Link>
+              <a href="#product-pricing" className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-blue-500 to-cyan-500 px-6 py-3 font-black text-white">
+                View access plans <ArrowRight className="h-4 w-4" />
+              </a>
             )}
             <Link to="/login" className="rounded-xl border border-slate-200 bg-white px-6 py-3 font-black text-slate-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-white">
               Member login
@@ -54,7 +54,7 @@ export default function ClubProductPage() {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-8 px-5 py-16 sm:px-8 lg:grid-cols-[.8fr_1.2fr]">
+      <section id="product-pricing" className="mx-auto grid max-w-6xl gap-8 px-5 py-16 sm:px-8 lg:grid-cols-[.8fr_1.2fr]">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-600 dark:text-violet-300">What it does</p>
           <h2 className="mt-3 text-3xl font-black">A real part of the Trade Hybrid stack.</h2>
