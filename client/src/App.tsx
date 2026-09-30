@@ -245,7 +245,7 @@ const App: React.FC = () => {
                   <Route path="/dashboard" element={<ProtectedRoute><ClubDashboard /></ProtectedRoute>} />
                   <Route path="/onboarding" element={<ProtectedRoute><MemberOnboardingPage /></ProtectedRoute>} />
                   <Route path="/community" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
-                  <Route path="/launch/tradehouse" element={<ProtectedRoute><TradeHouseLaunchPage /></ProtectedRoute>} />
+                  <Route path="/launch/tradehouse" element={<TradeHouseLaunchPage />} />
                   <Route path="/tv" element={<ProtectedRoute><HybridTVPage /></ProtectedRoute>} />
                   <Route path="/about" element={<Navigate to="/#about" replace />} />
                   <Route path="/trade" element={<ProtectedRoute><TradeView /></ProtectedRoute>} />

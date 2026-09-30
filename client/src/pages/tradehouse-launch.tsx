@@ -8,29 +8,9 @@ const SUPABASE_KEY =
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   'sb_publishable_YjXHHnoRXE4pvn6ezLdU5w_O03Q62W_';
 
-const PREFERRED_TRADEHOUSE_ORIGIN = 'https://battles.tradehybrid.co';
-const FALLBACK_TRADEHOUSE_ORIGIN = 'https://tradehouse-91io.onrender.com';
-
-async function resolveTradeHouseOrigin() {
-  const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), 1800);
-
-  try {
-    const response = await fetch(PREFERRED_TRADEHOUSE_ORIGIN + '/api/health', {
-      method: 'GET',
-      cache: 'no-store',
-      signal: controller.signal,
-    });
-
-    if (response.ok) return PREFERRED_TRADEHOUSE_ORIGIN;
-  } catch {
-    // The custom domain is not live yet; keep using Render.
-  } finally {
-    window.clearTimeout(timeout);
-  }
-
-  return FALLBACK_TRADEHOUSE_ORIGIN;
-}
+const TRADEHOUSE_ORIGIN =
+  import.meta.env.VITE_TRADEHOUSE_URL ||
+  'https://tradehouse-91io.onrender.com';
 
 export default function TradeHouseLaunchPage() {
   const [error, setError] = useState('');
@@ -43,10 +23,11 @@ export default function TradeHouseLaunchPage() {
         const accessToken = await authService.getAccessToken();
 
         if (!accessToken) {
-          throw new Error('Your Club session expired. Sign in again and reopen Trade House.');
+          window.location.replace('/login?next=/launch/tradehouse');
+          return;
         }
 
-        const tradehouseOrigin = await resolveTradeHouseOrigin();
+        const tradehouseOrigin = TRADEHOUSE_ORIGIN;
 
         const response = await fetch(
           SUPABASE_URL + '/functions/v1/tradehouse-sso-start',
@@ -88,7 +69,7 @@ export default function TradeHouseLaunchPage() {
 
   if (error) {
     return (
-      <main className="grid min-h-[75vh] place-items-center bg-slate-50 px-5 text-slate-950 dark:bg-[#070b14] dark:text-white">
+      <main className="fixed inset-0 z-40 grid min-h-screen place-items-center bg-slate-50 px-5 text-slate-950 dark:bg-[#070b14] dark:text-white">
         <div className="w-full max-w-md rounded-3xl border border-rose-200 bg-white p-7 text-center shadow-sm dark:border-rose-400/20 dark:bg-[#0c1322]">
           <AlertCircle className="mx-auto h-10 w-10 text-rose-500" />
           <h1 className="mt-5 text-2xl font-black">Trade House did not open.</h1>
@@ -111,7 +92,7 @@ export default function TradeHouseLaunchPage() {
   }
 
   return (
-    <main className="grid min-h-[75vh] place-items-center bg-slate-50 px-5 text-slate-950 dark:bg-[#070b14] dark:text-white">
+    <main className="fixed inset-0 z-40 grid min-h-screen place-items-center bg-slate-50 px-5 text-slate-950 dark:bg-[#070b14] dark:text-white">
       <div className="w-full max-w-md rounded-3xl border border-cyan-200 bg-white p-7 text-center shadow-sm dark:border-cyan-400/20 dark:bg-[#0c1322]">
         <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-cyan-300 to-violet-500 text-slate-950">
           <Swords className="h-6 w-6" />
