@@ -1,0 +1,315 @@
+{
+  "version": 1,
+  "platform": "Trade Hybrid Club",
+  "source_of_truth": {
+    "auth": "Supabase",
+    "entitlements": "Supabase product_entitlements",
+    "automation": "HighLevel Trade Hybrid sub-account",
+    "commerce": "Whop"
+  },
+  "sender": {
+    "preferred_name": "Trade Hybrid Club",
+    "preferred_email": "contact@tradehybrid.co",
+    "alternate_email": "contact@tradehybrid.club"
+  },
+  "custom_fields": [
+    {
+      "key": "trade_hybrid_user_id",
+      "name": "Trade Hybrid User ID",
+      "type": "TEXT"
+    },
+    {
+      "key": "trade_hybrid_plan",
+      "name": "Trade Hybrid Plan",
+      "type": "TEXT"
+    },
+    {
+      "key": "trade_hybrid_activation_url",
+      "name": "Trade Hybrid Activation URL",
+      "type": "TEXT"
+    },
+    {
+      "key": "trade_hybrid_activation_expires",
+      "name": "Trade Hybrid Activation Expires",
+      "type": "DATE"
+    },
+    {
+      "key": "trade_hybrid_login_url",
+      "name": "Trade Hybrid Login URL",
+      "type": "TEXT"
+    },
+    {
+      "key": "trade_hybrid_dashboard_url",
+      "name": "Trade Hybrid Dashboard URL",
+      "type": "TEXT"
+    },
+    {
+      "key": "trade_hybrid_onboarding_url",
+      "name": "Trade Hybrid Onboarding URL",
+      "type": "TEXT"
+    },
+    {
+      "key": "trade_hybrid_why",
+      "name": "Trade Hybrid WHY",
+      "type": "LARGE_TEXT"
+    },
+    {
+      "key": "trade_hybrid_primary_goal",
+      "name": "Trade Hybrid Primary Goal",
+      "type": "TEXT"
+    },
+    {
+      "key": "trade_hybrid_30_day_goal",
+      "name": "Trade Hybrid 30 Day Goal",
+      "type": "TEXT"
+    },
+    {
+      "key": "trade_hybrid_90_day_goal",
+      "name": "Trade Hybrid 90 Day Goal",
+      "type": "TEXT"
+    },
+    {
+      "key": "trade_hybrid_1_year_goal",
+      "name": "Trade Hybrid 1 Year Goal",
+      "type": "TEXT"
+    },
+    {
+      "key": "trade_hybrid_experience",
+      "name": "Trade Hybrid Experience Level",
+      "type": "TEXT"
+    },
+    {
+      "key": "trade_hybrid_markets",
+      "name": "Trade Hybrid Preferred Markets",
+      "type": "TEXT"
+    },
+    {
+      "key": "trade_hybrid_challenges",
+      "name": "Trade Hybrid Current Challenges",
+      "type": "LARGE_TEXT"
+    },
+    {
+      "key": "trade_hybrid_onboarding_stage",
+      "name": "Trade Hybrid Onboarding Stage",
+      "type": "TEXT"
+    },
+    {
+      "key": "trade_hybrid_entitlements",
+      "name": "Trade Hybrid Active Products",
+      "type": "LARGE_TEXT"
+    }
+  ],
+  "tags": [
+    "TH | Customer | Paid",
+    "TH | Account | Activation Pending",
+    "TH | Account | Activated",
+    "TH | Plan | Monthly",
+    "TH | Plan | Yearly",
+    "TH | Plan | Lifetime",
+    "TH | Plan | Pro Lifetime",
+    "TH | Stage | Welcome",
+    "TH | Stage | 72H",
+    "TH | Stage | Day 7",
+    "TH | Stage | Day 15",
+    "TH | Stage | Day 30",
+    "TH | Access | Rescue",
+    "TH | Interest | Trade House",
+    "TH | Interest | Academy",
+    "TH | Interest | Funding",
+    "TH | Interest | Events",
+    "TH | Reengage"
+  ],
+  "pipeline": {
+    "name": "Trade Hybrid Member Journey",
+    "stages": [
+      "Purchased",
+      "Activation Pending",
+      "Active Member",
+      "Onboarding In Progress",
+      "Access Rescue",
+      "Engaged",
+      "30-Day Review",
+      "Re-engagement"
+    ]
+  },
+  "event_map": [
+    {
+      "event": "purchase.received",
+      "actions": [
+        "upsert_contact",
+        "tag_paid",
+        "tag_plan",
+        "stage_purchased"
+      ]
+    },
+    {
+      "event": "member.created",
+      "actions": [
+        "upsert_contact",
+        "set_user_id"
+      ]
+    },
+    {
+      "event": "purchase.claimed",
+      "actions": [
+        "set_plan",
+        "sync_entitlements"
+      ]
+    },
+    {
+      "event": "purchase.synced",
+      "actions": [
+        "set_plan",
+        "sync_entitlements"
+      ]
+    },
+    {
+      "event": "entitlement.changed",
+      "actions": [
+        "sync_entitlements"
+      ]
+    },
+    {
+      "event": "onboarding.changed",
+      "actions": [
+        "sync_onboarding_fields",
+        "sync_stage"
+      ]
+    },
+    {
+      "event": "account.activation_ready",
+      "actions": [
+        "set_activation_fields",
+        "tag_activation_pending",
+        "stage_activation_pending",
+        "start_activation_workflow"
+      ]
+    },
+    {
+      "event": "account.activated",
+      "actions": [
+        "remove_activation_pending",
+        "tag_activated",
+        "stage_active_member",
+        "start_welcome_workflow"
+      ]
+    }
+  ],
+  "workflows": [
+    {
+      "name": "TH | Account Activation",
+      "trigger": "tag added: TH | Account | Activation Pending",
+      "steps": [
+        "send branded activation email",
+        "send activation SMS",
+        "wait 24 hours",
+        "if not activated: resend short activation email + SMS",
+        "wait until 72 hours from purchase",
+        "if not activated: stage Access Rescue + create internal task"
+      ]
+    },
+    {
+      "name": "TH | Welcome",
+      "trigger": "tag added: TH | Account | Activated",
+      "steps": [
+        "send branded welcome email",
+        "tag TH | Stage | Welcome",
+        "wait 72 hours",
+        "start TH | 72H Access Check"
+      ]
+    },
+    {
+      "name": "TH | 72H Access Check",
+      "trigger": "workflow handoff",
+      "steps": [
+        "send access checklist email + SMS",
+        "tag TH | Stage | 72H",
+        "wait until day 7",
+        "start TH | Day 7"
+      ]
+    },
+    {
+      "name": "TH | Day 7",
+      "trigger": "workflow handoff",
+      "steps": [
+        "send usage + WHY follow-up",
+        "tag TH | Stage | Day 7",
+        "wait until day 15",
+        "start TH | Day 15"
+      ]
+    },
+    {
+      "name": "TH | Day 15",
+      "trigger": "workflow handoff",
+      "steps": [
+        "send friction/access follow-up",
+        "tag TH | Stage | Day 15",
+        "wait until day 30",
+        "start TH | Day 30"
+      ]
+    },
+    {
+      "name": "TH | Day 30",
+      "trigger": "workflow handoff",
+      "steps": [
+        "send 30-day review + next plan",
+        "tag TH | Stage | Day 30",
+        "stage 30-Day Review"
+      ]
+    },
+    {
+      "name": "TH | Trade House Interest",
+      "trigger": "tag added: TH | Interest | Trade House",
+      "steps": [
+        "send battle overview",
+        "send how to join",
+        "invite to current battle/show"
+      ]
+    },
+    {
+      "name": "TH | Academy Nurture",
+      "trigger": "tag added: TH | Interest | Academy",
+      "steps": [
+        "send Academy learning path",
+        "invite to Wednesday Live / Super Saturday"
+      ]
+    },
+    {
+      "name": "TH | Funding Interest",
+      "trigger": "tag added: TH | Interest | Funding",
+      "steps": [
+        "send Hybrid Funding information",
+        "explain separate funding terms",
+        "route qualified interest"
+      ]
+    },
+    {
+      "name": "TH | Event Follow-up",
+      "trigger": "tag added: TH | Interest | Events",
+      "steps": [
+        "send event reminders",
+        "day-of SMS",
+        "post-event replay/next-action"
+      ]
+    },
+    {
+      "name": "TH | Re-engagement",
+      "trigger": "tag added: TH | Reengage",
+      "steps": [
+        "ask what is blocking usage",
+        "surface unused entitled products",
+        "invite to community/live session"
+      ]
+    }
+  ],
+  "links": {
+    "login": "https://pro.tradehybrid.co/login",
+    "dashboard": "https://pro.tradehybrid.co/dashboard",
+    "onboarding": "https://pro.tradehybrid.co/onboarding",
+    "products": "https://pro.tradehybrid.co/products",
+    "community": "https://pro.tradehybrid.co/community",
+    "tv": "https://pro.tradehybrid.co/tv",
+    "battles": "https://pro.tradehybrid.co/launch/tradehouse",
+    "journal": "https://hybridjournal.co"
+  }
+}
