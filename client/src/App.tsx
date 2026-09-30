@@ -264,7 +264,7 @@ const App: React.FC = () => {
                   <Route path="/trade" element={<ProtectedRoute><TradeView /></ProtectedRoute>} />
                   <Route path="/journal" element={<ProtectedRoute><JournalView /></ProtectedRoute>} />
                   <Route path="/metaverse" element={<ProtectedRoute><MetaversePage /></ProtectedRoute>} />
-                  <Route path="/learn" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
+                  <Route path="/learn" element={<Navigate to="/learning-center" replace />} />
                   <Route path="/signals" element={<ProtectedRoute><TradingSignals /></ProtectedRoute>} />
                   <Route path="/voice-trade" element={<ProtectedRoute><VoiceTradeAssistant /></ProtectedRoute>} />
                   <Route path="/market-buddy" element={<ProtectedRoute><ProductEntitlementRoute productKey="ai"><MarketBuddyPage /></ProductEntitlementRoute></ProtectedRoute>} />
@@ -374,7 +374,7 @@ const App: React.FC = () => {
                   <Route path="/affiliate/*" element={<ProtectedRoute><AffiliatePage /></ProtectedRoute>} />
                   <Route path="/affiliate-dashboard" element={<React.Suspense fallback={<div>Loading affiliate dashboard...</div>}><ProtectedRoute><AffiliateDashboardPage /></ProtectedRoute></React.Suspense>} />
                   <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
-                  <Route path="/live-stream" element={<ProtectedRoute><LiveStreamPage /></ProtectedRoute>} />
+                  <Route path="/live-stream" element={<Navigate to="/tv" replace />} />
 
                   
                   {/* Knowledge Base */}
