@@ -74,7 +74,7 @@ app.use((req, res, next) => {
   console.log('Updating API credentials...');
   updateApiCredentials();
   console.log('API credentials updated successfully');
-  console.log(`Using ALPACA_API_KEY: ${process.env.ALPACA_API_KEY}`);
+  console.log(`ALPACA_API_KEY configured: ${Boolean(process.env.ALPACA_API_KEY)}`);
   
   // Initialize services that need initialization
   // encryptionService is self-initializing in its constructor
