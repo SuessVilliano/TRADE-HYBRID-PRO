@@ -178,6 +178,7 @@
     "@opentelemetry/sdk-node": "^0.217.0",
     "@remix-run/router": "^1.23.2",
     "@xmldom/xmldom": "^0.8.15",
+    "axios": "^1.12.0",
     "brace-expansion": "^2.1.6",
     "browserslist": "^4.28.7",
     "defu": "^6.1.5",
@@ -197,10 +198,12 @@
     "picomatch": "^2.3.2",
     "preact": "^10.26.10",
     "protobufjs": "^7.5.5",
+    "rollup": "^4.64.0",
     "sha.js": "^2.4.12",
     "shell-quote": "^1.8.4",
     "socket.io-parser": "^4.2.7",
     "toml": "^4.2.0",
-    "websocket-driver": "^0.7.5"
+    "websocket-driver": "^0.7.5",
+    "ws": "^8.22.0"
   }
 }

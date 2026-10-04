@@ -23,7 +23,7 @@
     "helmet": "^7.0.0",
     "jsonwebtoken": "^9.0.1",
     "pg": "^8.11.3",
-    "drizzle-orm": "^0.28.6",
+    "drizzle-orm": "^0.45.3",
     "uuid": "^9.0.0",
     "winston": "^3.10.0",
     "node-fetch": "^3.3.2"
