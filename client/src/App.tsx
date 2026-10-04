@@ -45,6 +45,10 @@ import NewsView from './pages/NewsView';
 import NewsSimpleView from './pages/news-dashboard-simple';
 import LandingPage from './pages/landing';
 import ClubHome from './pages/club-home';
+import PrivacyPolicyPage from './pages/privacy-policy';
+import TermsOfServicePage from './pages/terms-of-service';
+import ForgotPasswordPage from './pages/forgot-password';
+import { ClubLoader } from './components/club/club-loader';
 import ClubDashboard from './pages/club-dashboard';
 import CommunityPage from './pages/community';
 import HybridTVPage from './pages/hybrid-tv';
@@ -208,16 +212,16 @@ const App: React.FC = () => {
                   {/* Public routes */}
                   <Route path="/" element={<ClubHome />} />
                   <Route path="/trading-freedom-podcast" element={<TradingFreedomPodcast />} />
-                  <Route path="/simple-charting" element={<React.Suspense fallback={<div>Loading chart...</div>}><SimpleChartingDashboard /></React.Suspense>} />
-                  <Route path="/test-page" element={<React.Suspense fallback={<div>Loading test page...</div>}><TestPage /></React.Suspense>} />
-                  <Route path="/tv-widgets" element={<React.Suspense fallback={<div>Loading TradingView widgets...</div>}><TradingViewWidgetsTest /></React.Suspense>} />
+                  <Route path="/simple-charting" element={<React.Suspense fallback={<ClubLoader label="Loading chart…" />}><SimpleChartingDashboard /></React.Suspense>} />
+                  <Route path="/test-page" element={<React.Suspense fallback={<ClubLoader label="Loading…" />}><TestPage /></React.Suspense>} />
+                  <Route path="/tv-widgets" element={<React.Suspense fallback={<ClubLoader label="Loading TradingView…" />}><TradingViewWidgetsTest /></React.Suspense>} />
                   <Route path="/tv-simple" element={<iframe 
                     src="https://www.tradingview.com/chart/GtJVbpFg/" 
                     style={{ width: '100%', height: '90vh', border: 'none' }}
                     title="TradingView Chart"
                     allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                   />} />
-                  <Route path="/tv-direct" element={<React.Suspense fallback={<div>Loading chart...</div>}>
+                  <Route path="/tv-direct" element={<React.Suspense fallback={<ClubLoader label="Loading chart…" />}>
                     {React.createElement(React.lazy(() => import('./pages/tradingview-direct-chart')))}
                   </React.Suspense>} />
                   <Route path="/tv-calendar" element={<iframe 
@@ -239,6 +243,10 @@ const App: React.FC = () => {
                   <Route path="/signup" element={<AuthPage />} />
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/register" element={<AuthPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  {/* Legal */}
+                  <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                  <Route path="/terms" element={<TermsOfServicePage />} />
                   <Route path="/wallet" element={<WalletConnectOnboarding />} />
                   <Route path="/wallet-connection" element={<ProtectedRoute><WalletConnectionPage /></ProtectedRoute>} />
                   
@@ -262,7 +270,7 @@ const App: React.FC = () => {
                   <Route path="/copy-trading" element={<ProtectedRoute><CopyTradingPage /></ProtectedRoute>} />
                   <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
-                  <Route path="/profile/unified" element={<React.Suspense fallback={<div>Loading profile...</div>}><ProtectedRoute><UnifiedProfilePage /></ProtectedRoute></React.Suspense>} />
+                  <Route path="/profile/unified" element={<React.Suspense fallback={<ClubLoader label="Loading profile…" />}><ProtectedRoute><UnifiedProfilePage /></ProtectedRoute></React.Suspense>} />
                   <Route path="/settings" element={<ProtectedRoute><SettingsView /></ProtectedRoute>} />
                   <Route path="/notification-settings" element={<ProtectedRoute><NotificationSettingsPage /></ProtectedRoute>} />
                   <Route path="/webhook-settings" element={<ProtectedRoute><WebhookSettingsPage /></ProtectedRoute>} />
@@ -345,7 +353,7 @@ const App: React.FC = () => {
                   <Route path="/nft-marketplace/simple" element={<ProtectedRoute><NftMarketplaceSimplePage /></ProtectedRoute>} />
                   <Route path="/thc-staking" element={<ProtectedRoute><ThcStakingPage /></ProtectedRoute>} />
                   <Route path="/staking" element={<ProtectedRoute><ThcStakingPage /></ProtectedRoute>} />
-                  <Route path="/thc-staking/enhanced" element={<React.Suspense fallback={<div>Loading staking...</div>}>
+                  <Route path="/thc-staking/enhanced" element={<React.Suspense fallback={<ClubLoader label="Loading staking…" />}>
                     <ProtectedRoute>
                       <div className="container max-w-4xl mx-auto px-4 py-8">
                         <h1 className="text-3xl font-bold mb-6">THC Staking</h1>
@@ -360,7 +368,7 @@ const App: React.FC = () => {
                   
                   {/* Other Pages */}
                   <Route path="/affiliate/*" element={<ProtectedRoute><AffiliatePage /></ProtectedRoute>} />
-                  <Route path="/affiliate-dashboard" element={<React.Suspense fallback={<div>Loading affiliate dashboard...</div>}><ProtectedRoute><AffiliateDashboardPage /></ProtectedRoute></React.Suspense>} />
+                  <Route path="/affiliate-dashboard" element={<React.Suspense fallback={<ClubLoader label="Loading dashboard…" />}><ProtectedRoute><AffiliateDashboardPage /></ProtectedRoute></React.Suspense>} />
                   <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
                   <Route path="/live-stream" element={<ProtectedRoute><LiveStreamPage /></ProtectedRoute>} />
 
@@ -372,7 +380,7 @@ const App: React.FC = () => {
                   {/* Admin Pages */}
                   <Route path="/admin/notifications" element={
                     <ProtectedRoute>
-                      <React.Suspense fallback={<div>Loading notifications manager...</div>}>
+                      <React.Suspense fallback={<ClubLoader label="Loading…" />}>
                         {React.createElement(React.lazy(() => import('./pages/admin/notifications')))}
                       </React.Suspense>
                     </ProtectedRoute>

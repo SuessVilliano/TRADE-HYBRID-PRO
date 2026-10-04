@@ -260,6 +260,32 @@ export const authService = {
     };
   },
 
+  async requestPasswordReset(email: string) {
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      throw new Error('Please enter a valid email address.');
+    }
+
+    const resetRedirect = `${CLUB_SITE_URL}/login?reset=1`;
+    const response = await fetch(
+      `${SUPABASE_URL}/auth/v1/recover?redirect_to=${encodeURIComponent(resetRedirect)}`,
+      {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ email: trimmed }),
+      },
+    );
+
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      throw new Error(
+        result?.msg || result?.error_description || result?.message || 'Could not send the reset link. Please try again.',
+      );
+    }
+
+    return { success: true };
+  },
+
   async loginWithWhop(whopId: string) {
     if (!API_BASE_URL) {
       throw new Error('Whop sign-in is not enabled on the Club backend yet.');

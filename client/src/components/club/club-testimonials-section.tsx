@@ -20,8 +20,8 @@ export default function ClubTestimonialsSection() {
   return (
     <section id="members" className="mx-auto max-w-7xl px-5 py-20 sm:px-8">
       <div className="text-center">
-        <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-600 dark:text-violet-300">Member feedback</p>
-        <h2 className="mt-3 text-4xl font-black tracking-[-0.04em] text-slate-950 dark:text-white sm:text-5xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-300">Member feedback</p>
+        <h2 className="font-display mt-3 text-4xl font-medium tracking-tight text-slate-950 dark:text-white sm:text-5xl">
           What members are saying.
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-400">
@@ -33,7 +33,7 @@ export default function ClubTestimonialsSection() {
         {feedback.map(({ name, quote }) => (
           <article
             key={name}
-            className="rounded-[1.5rem] border border-violet-100 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/[0.035]"
+            className="rounded-[1.5rem] border border-violet-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-white/10 dark:bg-white/[0.035]"
           >
             <div className="flex items-center justify-between">
               <Quote className="h-8 w-8 text-violet-500" />
@@ -43,13 +43,13 @@ export default function ClubTestimonialsSection() {
                 ))}
               </div>
             </div>
-            <p className="mt-6 text-base leading-7 text-slate-700 dark:text-slate-300">“{quote}”</p>
+            <p className="font-display mt-6 text-lg leading-7 text-slate-700 dark:text-slate-300">“{quote}”</p>
             <div className="mt-6 flex items-center gap-3 border-t border-slate-100 pt-5 dark:border-white/10">
-              <div className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-violet-600 to-cyan-500 text-sm font-black text-white">
+              <div className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-violet-600 to-cyan-500 text-sm font-bold text-white">
                 {name.split(' ').map((part) => part[0]).join('')}
               </div>
               <div>
-                <p className="font-black text-slate-950 dark:text-white">{name}</p>
+                <p className="font-bold text-slate-950 dark:text-white">{name}</p>
                 <p className="text-xs text-slate-500">Trade Hybrid member</p>
               </div>
             </div>

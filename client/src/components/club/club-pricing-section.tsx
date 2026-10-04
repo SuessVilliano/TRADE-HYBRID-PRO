@@ -49,8 +49,8 @@ export default function ClubPricingSection() {
   return (
     <section id="membership" className="mx-auto max-w-7xl px-5 pb-24 sm:px-8">
       <div className="text-center">
-        <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-600 dark:text-violet-300">Membership</p>
-        <h2 className="mt-3 text-4xl font-black tracking-[-0.04em] text-slate-950 dark:text-white sm:text-5xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-300">Membership</p>
+        <h2 className="font-display mx-auto mt-3 max-w-3xl text-4xl font-medium tracking-tight text-slate-950 dark:text-white sm:text-5xl">
           The original Trade Hybrid tiers, rebuilt around today’s ecosystem.
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-400">
@@ -71,7 +71,7 @@ export default function ClubPricingSection() {
               }`}
             >
               {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-violet-600 to-cyan-500 px-4 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-white">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-violet-600 to-cyan-500 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white">
                   Most popular
                 </div>
               )}
@@ -80,9 +80,9 @@ export default function ClubPricingSection() {
                 <Icon className="h-5 w-5" />
               </div>
 
-              <h3 className="mt-5 text-2xl font-black text-slate-950 dark:text-white">{plan.name}</h3>
+              <h3 className="mt-5 text-2xl font-bold text-slate-950 dark:text-white">{plan.name}</h3>
               <div className="mt-3 flex items-end gap-1">
-                <span className="text-4xl font-black tracking-tight text-slate-950 dark:text-white">{plan.price}</span>
+                <span className="font-display text-4xl font-medium tracking-tight text-slate-950 dark:text-white">{plan.price}</span>
                 <span className="pb-1 text-sm text-slate-500">{plan.period}</span>
               </div>
               <p className="mt-3 min-h-12 text-sm leading-6 text-slate-600 dark:text-slate-400">{plan.description}</p>
@@ -100,7 +100,7 @@ export default function ClubPricingSection() {
                 href={plan.checkout}
                 target="_blank"
                 rel="noreferrer"
-                className={`mt-7 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r ${plan.gradient} px-4 py-3 text-sm font-black text-white shadow-md transition hover:opacity-90`}
+                className={`mt-7 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r ${plan.gradient} px-4 py-3 text-sm font-bold text-white shadow-md transition hover:opacity-90`}
               >
                 Choose {plan.name}
               </a>

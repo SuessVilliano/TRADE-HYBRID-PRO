@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +20,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
     confirmPassword: '',
     walletAddress: ''
   });
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -74,6 +76,11 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
       return false;
     }
 
+    if (!acceptedTerms) {
+      setError('Please accept the Terms of Service and Privacy Policy to create your account.');
+      return false;
+    }
+
     return true;
   };
 
@@ -108,6 +115,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
         confirmPassword: '',
         walletAddress: ''
       });
+      setAcceptedTerms(false);
 
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -121,7 +129,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="space-y-2">
-        <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
+        <CardTitle className="text-center text-2xl font-bold">Create Account</CardTitle>
         <CardDescription className="text-center">
           Join Trade Hybrid to access advanced trading tools and features
         </CardDescription>
@@ -227,6 +235,29 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
               autoComplete="off"
             />
           </div>
+
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => {
+                setAcceptedTerms(e.target.checked);
+                if (error) setError('');
+              }}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-violet-600"
+            />
+            <span className="text-xs leading-5 text-slate-600 dark:text-slate-400">
+              I agree to the{' '}
+              <Link to="/terms" target="_blank" rel="noreferrer" className="font-semibold text-violet-600 hover:text-violet-700 dark:text-violet-300">
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link to="/privacy" target="_blank" rel="noreferrer" className="font-semibold text-violet-600 hover:text-violet-700 dark:text-violet-300">
+                Privacy Policy
+              </Link>
+              , and I understand that trading involves risk and nothing in the Club is financial advice.
+            </span>
+          </label>
 
           <Button
             type="submit"

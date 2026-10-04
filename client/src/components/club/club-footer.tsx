@@ -30,30 +30,29 @@ export default function ClubFooter() {
                 <img src="https://tradehybrid.co/trade-hybrid-logo.png" alt="Trade Hybrid" className="h-9 w-9 object-contain" />
               </div>
               <div>
-                <p className="text-sm font-black tracking-[0.18em]">TRADE HYBRID</p>
-                <p className="text-[9px] font-black uppercase tracking-[0.28em] text-cyan-300">Club</p>
+                <p className="text-sm font-bold tracking-[0.14em]">TRADE HYBRID</p>
+                <p className="text-[9px] font-semibold uppercase tracking-[0.3em] text-cyan-300">Club</p>
               </div>
             </div>
             <p className="mt-5 max-w-xl text-sm leading-6 text-slate-400">
               One connected trader identity across learning, journaling, AI, alerts, competition, community, tools, and funding.
             </p>
-            <a href="mailto:support@tradehybrid.club" className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-cyan-300">
+            <a href="mailto:support@tradehybrid.club" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-cyan-300">
               <Mail className="h-4 w-4" /> support@tradehybrid.club
             </a>
           </div>
 
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-white">Products</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white">Products</p>
             <div className="mt-4 space-y-3">
               {productLinks.map(([label, href]) => <div key={label}><SmartLink href={href}>{label}</SmartLink></div>)}
             </div>
           </div>
 
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-white">Club</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white">Club</p>
             <div className="mt-4 space-y-3">
               <div><a href="#ecosystem" className="text-sm text-slate-400 hover:text-white">Ecosystem</a></div>
-              <div><a href="#ai-team" className="text-sm text-slate-400 hover:text-white">Market Buddy</a></div>
               <div><a href="#members" className="text-sm text-slate-400 hover:text-white">Member feedback</a></div>
               <div><a href="#membership" className="text-sm text-slate-400 hover:text-white">Membership</a></div>
               <div><a href="#contact" className="text-sm text-slate-400 hover:text-white">Contact</a></div>
@@ -69,7 +68,10 @@ export default function ClubFooter() {
           </p>
           <div className="mt-4 flex flex-col gap-2 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
             <span>© {new Date().getFullYear()} Trade Hybrid. All rights reserved.</span>
-            <span>Humans · Market Buddy · Automation</span>
+            <div className="flex items-center gap-4">
+              <Link to="/privacy" className="transition hover:text-slate-300">Privacy Policy</Link>
+              <Link to="/terms" className="transition hover:text-slate-300">Terms of Service</Link>
+            </div>
           </div>
         </div>
       </div>

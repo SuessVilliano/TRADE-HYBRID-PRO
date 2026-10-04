@@ -24,11 +24,11 @@ export default function ClubAboutSection() {
     <section id="about" className="mx-auto max-w-7xl px-5 py-20 sm:px-8">
       <div className="grid gap-8 lg:grid-cols-[.85fr_1.15fr] lg:items-center">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-black uppercase tracking-[0.18em] text-violet-700 dark:border-violet-300/20 dark:bg-violet-300/[0.08] dark:text-violet-200">
+          <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-violet-700 dark:border-violet-300/20 dark:bg-violet-300/[0.08] dark:text-violet-200">
             <Sparkles className="h-3.5 w-3.5" /> About Trade Hybrid
           </div>
 
-          <h2 className="mt-5 text-4xl font-black tracking-[-0.045em] text-slate-950 dark:text-white sm:text-5xl">
+          <h2 className="font-display mt-5 text-4xl font-medium tracking-tight text-slate-950 dark:text-white sm:text-5xl">
             One trading ecosystem. Each product has a job.
           </h2>
 
@@ -45,12 +45,12 @@ export default function ClubAboutSection() {
           {pillars.map(({ title, text, icon: Icon }) => (
             <article
               key={title}
-              className="rounded-[1.5rem] border border-violet-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.035]"
+              className="group rounded-[1.5rem] border border-violet-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-white/10 dark:bg-white/[0.035]"
             >
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-violet-600 via-blue-500 to-cyan-500 text-white">
+              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-violet-600 via-blue-500 to-cyan-500 text-white transition group-hover:scale-105">
                 <Icon className="h-5 w-5" />
               </div>
-              <h3 className="mt-5 text-lg font-black text-slate-950 dark:text-white">{title}</h3>
+              <h3 className="mt-5 text-lg font-bold text-slate-950 dark:text-white">{title}</h3>
               <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{text}</p>
             </article>
           ))}

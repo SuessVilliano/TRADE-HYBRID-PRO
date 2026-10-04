@@ -71,10 +71,10 @@ export default function ClubAIAgentsSection() {
       <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_20px_70px_rgba(76,29,149,.08)] dark:border-white/10 dark:bg-white/[0.03] sm:p-8">
         <div className="grid gap-8 lg:grid-cols-[.9fr_1.1fr] lg:items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-black uppercase tracking-[0.18em] text-violet-700 dark:border-violet-300/20 dark:bg-violet-300/[0.08] dark:text-violet-200">
+            <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-violet-700 dark:border-violet-300/20 dark:bg-violet-300/[0.08] dark:text-violet-200">
               <Sparkles className="h-3.5 w-3.5" /> One AI. More capability.
             </div>
-            <h2 className="mt-5 text-4xl font-black tracking-[-0.04em] text-slate-950 dark:text-white sm:text-5xl">
+            <h2 className="font-display mt-5 text-4xl font-medium tracking-tight text-slate-950 dark:text-white sm:text-5xl">
               Market Buddy is the face of Trade Hybrid AI.
             </h2>
             <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300">
@@ -84,13 +84,13 @@ export default function ClubAIAgentsSection() {
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 to="/ai-market-analysis"
-                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-blue-500 to-cyan-500 px-5 py-3 text-sm font-black text-white shadow-lg shadow-violet-500/20"
+                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-blue-500 to-cyan-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-violet-500/20 transition hover:shadow-xl"
               >
                 Open Market Buddy <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 to="/onboarding"
-                className="rounded-2xl border border-violet-200 bg-white px-5 py-3 text-sm font-black text-slate-800 hover:bg-violet-50 dark:border-white/10 dark:bg-transparent dark:text-white"
+                className="rounded-2xl border border-violet-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 hover:bg-violet-50 dark:border-white/10 dark:bg-transparent dark:text-white"
               >
                 Update my AI context
               </Link>
@@ -108,8 +108,8 @@ export default function ClubAIAgentsSection() {
                 />
               </div>
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-100">Primary AI</p>
-                <h3 className="mt-1 text-3xl font-black">Market Buddy</h3>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-100">Primary AI</p>
+                <h3 className="font-display mt-1 text-3xl font-medium">Market Buddy</h3>
                 <p className="mt-2 text-sm leading-6 text-white/80">
                   One companion that knows why you trade, what you are working on, which tools you have access to, and what your Journal says—not another generic chat box.
                 </p>
@@ -117,7 +117,7 @@ export default function ClubAIAgentsSection() {
             </div>
             <div className="relative mt-6 grid grid-cols-3 gap-2 text-center">
               {['WHY + goals', 'Journal context', 'Club access'].map((label) => (
-                <div key={label} className="rounded-2xl border border-white/15 bg-black/10 px-3 py-3 text-xs font-bold backdrop-blur">
+                <div key={label} className="rounded-2xl border border-white/15 bg-black/10 px-3 py-3 text-xs font-semibold backdrop-blur">
                   {label}
                 </div>
               ))}
@@ -131,11 +131,11 @@ export default function ClubAIAgentsSection() {
               key={name}
               className="group rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-1 hover:border-violet-200 hover:bg-white hover:shadow-lg dark:border-white/10 dark:bg-black/20 dark:hover:border-violet-300/30 dark:hover:bg-white/[0.04]"
             >
-              <div className={`grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br ${tone} text-white shadow-sm`}>
+              <div className={`grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br ${tone} text-white shadow-sm transition group-hover:scale-105`}>
                 <Icon className="h-5 w-5" />
               </div>
-              <h3 className="mt-5 text-lg font-black text-slate-950 dark:text-white">{name}</h3>
-              <p className="mt-1 text-xs font-black uppercase tracking-[0.14em] text-violet-600 dark:text-violet-300">{role}</p>
+              <h3 className="mt-5 text-lg font-bold text-slate-950 dark:text-white">{name}</h3>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-violet-600 dark:text-violet-300">{role}</p>
               <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">{description}</p>
             </article>
           ))}
