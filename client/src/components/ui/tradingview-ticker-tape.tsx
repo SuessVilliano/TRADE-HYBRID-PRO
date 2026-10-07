@@ -84,24 +84,32 @@ export function TradingViewTickerTape({
     script.innerHTML = JSON.stringify({
       "symbols": [
         {
-          "proName": "FOREXCOM:SPXUSD",
-          "title": "S&P 500"
+          "proName": "CME_MINI:NQ1!",
+          "title": "NQ"
         },
         {
-          "proName": "FOREXCOM:NSXUSD",
-          "title": "Nasdaq 100"
+          "proName": "CME_MINI:ES1!",
+          "title": "ES"
         },
         {
-          "proName": "FX_IDC:EURUSD",
-          "title": "EUR/USD"
+          "proName": "COMEX:GC1!",
+          "title": "GOLD"
+        },
+        {
+          "proName": "TVC:DXY",
+          "title": "DXY"
         },
         {
           "proName": "BITSTAMP:BTCUSD",
-          "title": "BTC/USD"
+          "title": "BTC"
         },
         {
-          "proName": "BITSTAMP:ETHUSD",
-          "title": "ETH/USD"
+          "proName": "COINBASE:ETHUSD",
+          "title": "ETH"
+        },
+        {
+          "proName": "FX:EURUSD",
+          "title": "EUR/USD"
         }
       ],
       "showSymbolLogo": true,
