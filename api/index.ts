@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import Parser from "rss-parser";
 
 export const config = {
   api: {
@@ -10,6 +11,128 @@ const SUPABASE_URL = (process.env.SUPABASE_URL || "https://uqtluroceakqtlvlzatt.
 const SUPABASE_PUBLISHABLE_KEY =
   process.env.SUPABASE_PUBLISHABLE_KEY ||
   "sb_publishable_YjXHHnoRXE4pvn6ezLdU5w_O03Q62W_";
+
+type PublicNewsSource = {
+  id: string;
+  name: string;
+  rssUrls: string[];
+};
+
+const PUBLIC_NEWS_SOURCES: PublicNewsSource[] = [
+  {
+    id: "cnbc",
+    name: "CNBC",
+    rssUrls: [
+      "https://www.cnbc.com/id/10000664/device/rss/rss.html",
+      "https://www.cnbc.com/id/15837362/device/rss/rss.html",
+    ],
+  },
+  {
+    id: "marketwatch",
+    name: "MarketWatch",
+    rssUrls: ["https://www.marketwatch.com/rss/topstories"],
+  },
+  {
+    id: "yahoo_finance",
+    name: "Yahoo Finance",
+    rssUrls: ["https://finance.yahoo.com/news/rssindex"],
+  },
+  {
+    id: "coindesk",
+    name: "CoinDesk",
+    rssUrls: ["https://www.coindesk.com/arc/outboundfeeds/rss/"],
+  },
+  {
+    id: "cointelegraph",
+    name: "CoinTelegraph",
+    rssUrls: ["https://cointelegraph.com/rss"],
+  },
+  {
+    id: "investing",
+    name: "Investing.com",
+    rssUrls: ["https://www.investing.com/rss/news.rss"],
+  },
+  {
+    id: "nasdaq",
+    name: "Nasdaq",
+    rssUrls: ["https://www.nasdaq.com/feed/rssoutbound"],
+  },
+];
+
+const publicNewsParser = new Parser();
+
+function cleanNewsText(value: unknown) {
+  return String(value || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function toNewsTimestamp(item: any) {
+  const candidate = item?.isoDate || item?.pubDate || item?.published || "";
+  const timestamp = Date.parse(candidate);
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+async function fetchPublicNewsSource(source: PublicNewsSource, requestedLimit = 20) {
+  const limit = Math.min(Math.max(Number(requestedLimit) || 20, 1), 50);
+  const collected: any[] = [];
+
+  for (const url of source.rssUrls) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6500);
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          "User-Agent": "TradeHybridNews/1.0 (+https://tradehybrid.co)",
+          Accept: "application/rss+xml, application/xml, text/xml, */*",
+        },
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        console.warn("[news] feed request failed", source.id, response.status, url);
+        continue;
+      }
+
+      const xml = await response.text();
+      const feed = await publicNewsParser.parseString(xml);
+      const items = Array.isArray(feed?.items) ? feed.items : [];
+
+      for (const item of items) {
+        const title = cleanNewsText(item?.title);
+        const link = String(item?.link || "").trim();
+        if (!title || !link) continue;
+
+        collected.push({
+          id: source.id + "-" + (item?.guid || item?.id || link),
+          title,
+          description: cleanNewsText(item?.contentSnippet || item?.content || item?.summary || item?.description),
+          link,
+          pubDate: item?.isoDate || item?.pubDate || new Date().toISOString(),
+          source: source.name,
+          sourceId: source.id,
+        });
+      }
+    } catch (error) {
+      console.warn("[news] feed unavailable", source.id, url, error);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  const seen = new Set<string>();
+  return collected
+    .sort((a, b) => toNewsTimestamp(b) - toNewsTimestamp(a))
+    .filter((item) => {
+      const key = item.link || item.title;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, limit);
+}
 
 function serviceKey() {
   const direct =
@@ -316,6 +439,62 @@ export default async function handler(req: any, res: any) {
   const path = Array.isArray(pathValue)
     ? pathValue.join("/")
     : String(pathValue || "");
+
+  if (req.method === "GET" && path === "rss-feeds/sources") {
+    res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=900");
+    return res.status(200).json({
+      sources: PUBLIC_NEWS_SOURCES.map(({ id, name }) => ({ id, name })),
+      asOf: new Date().toISOString(),
+    });
+  }
+
+  if (req.method === "GET" && path.startsWith("rss-feeds/source/")) {
+    const sourceId = decodeURIComponent(path.slice("rss-feeds/source/".length));
+    const source = PUBLIC_NEWS_SOURCES.find((candidate) => candidate.id === sourceId);
+
+    if (!source) {
+      return res.status(404).json({ error: "Unknown news source." });
+    }
+
+    const limit = Math.min(Math.max(Number(req.query?.limit) || 20, 1), 50);
+    const items = await fetchPublicNewsSource(source, limit);
+
+    res.setHeader("Cache-Control", "s-maxage=120, stale-while-revalidate=600");
+    return res.status(200).json({
+      items,
+      source: { id: source.id, name: source.name },
+      asOf: new Date().toISOString(),
+      stale: items.length === 0,
+    });
+  }
+
+  if (req.method === "GET" && path === "rss-feeds/news") {
+    const limit = Math.min(Math.max(Number(req.query?.limit) || 30, 1), 50);
+    const batches = await Promise.all(
+      PUBLIC_NEWS_SOURCES.slice(0, 5).map((source) =>
+        fetchPublicNewsSource(source, Math.min(limit, 12)),
+      ),
+    );
+
+    const seen = new Set<string>();
+    const items = batches
+      .flat()
+      .sort((a, b) => toNewsTimestamp(b) - toNewsTimestamp(a))
+      .filter((item) => {
+        const key = item.link || item.title;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, limit);
+
+    res.setHeader("Cache-Control", "s-maxage=120, stale-while-revalidate=600");
+    return res.status(200).json({
+      items,
+      asOf: new Date().toISOString(),
+      stale: items.length === 0,
+    });
+  }
 
   if (req.method === "GET" && path === "health") {
     return res.status(200).json({

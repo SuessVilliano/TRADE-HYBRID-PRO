@@ -43,6 +43,7 @@ import SettingsView from './pages/settings';
 import BotsView from './pages/trading-bots';
 import NewsView from './pages/NewsView';
 import NewsSimpleView from './pages/news-dashboard-simple';
+import PublicNewsPage from './pages/public-news';
 import LandingPage from './pages/landing';
 import ClubHome from './pages/club-home';
 import PrivacyPolicyPage from './pages/privacy-policy';
@@ -200,6 +201,9 @@ const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
 const App: React.FC = () => {
   console.log("App component rendering");
+  const isPublicNewsHost =
+    typeof window !== "undefined" &&
+    window.location.hostname.toLowerCase() === "news.tradehybrid.co";
   return (
     <AuthProvider>
       <SolanaWalletProvider>
@@ -207,11 +211,17 @@ const App: React.FC = () => {
           <OnboardingProvider>
             <LoadingScreenProvider>
               <Router>
+              {isPublicNewsHost ? (
+                <Routes>
+                  <Route path="*" element={<PublicNewsPage />} />
+                </Routes>
+              ) : (
               <ChromeAwareLayout>
                 <Routes>
                   {/* Public routes */}
                   <Route path="/" element={<ClubHome />} />
                   <Route path="/trading-freedom-podcast" element={<TradingFreedomPodcast />} />
+                  <Route path="/news-public" element={<PublicNewsPage />} />
                   <Route path="/simple-charting" element={<React.Suspense fallback={<ClubLoader label="Loading chart…" />}><SimpleChartingDashboard /></React.Suspense>} />
                   <Route path="/test-page" element={<React.Suspense fallback={<ClubLoader label="Loading…" />}><TestPage /></React.Suspense>} />
                   <Route path="/tv-widgets" element={<React.Suspense fallback={<ClubLoader label="Loading TradingView…" />}><TradingViewWidgetsTest /></React.Suspense>} />
@@ -390,6 +400,7 @@ const App: React.FC = () => {
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </ChromeAwareLayout>
+              )}
               </Router>
             </LoadingScreenProvider>
           </OnboardingProvider>
