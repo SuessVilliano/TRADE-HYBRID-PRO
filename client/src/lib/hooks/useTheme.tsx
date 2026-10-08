@@ -9,12 +9,13 @@ interface ThemeContextType {
   toggleTheme: () => void;
 }
 
-const CLUB_THEME_VERSION = '2-light-default';
+const CLUB_THEME_VERSION = '3-light-default';
 const CLUB_THEME_VERSION_KEY = 'trade-hybrid-theme-version';
+const CLUB_THEME_KEY = 'trade-hybrid-club-theme';
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: 'dark',
-  resolvedTheme: 'dark',
+  theme: 'light',
+  resolvedTheme: 'light',
   setTheme: () => {},
   toggleTheme: () => {},
 });
@@ -28,22 +29,26 @@ interface ThemeProviderProps {
 
 // Helper function to get system preference
 const getSystemTheme = (): 'light' | 'dark' => {
-  if (typeof window === 'undefined') return 'dark';
+  if (typeof window === 'undefined') return 'light';
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 };
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   children,
-  defaultTheme = 'dark',
+  defaultTheme = 'light',
 }) => {
   const [theme, setThemeState] = useState<ThemeType>(() => {
     if (typeof window === 'undefined') return defaultTheme;
     const version = localStorage.getItem(CLUB_THEME_VERSION_KEY);
-    const savedTheme = localStorage.getItem('theme') as ThemeType | null;
+    const savedTheme = localStorage.getItem(CLUB_THEME_KEY) as ThemeType | null;
 
-    // Migrate the old dark-by-default Club once. After this migration,
-    // explicit member choices continue to persist normally.
-    if (version !== CLUB_THEME_VERSION) return defaultTheme;
+    // The legacy app stored its preference under "theme", which could force
+    // old dark-mode state back on after the light-default migration. Ignore
+    // that legacy key and migrate every member once to the Club-specific key.
+    if (version !== CLUB_THEME_VERSION) {
+      localStorage.removeItem('theme');
+      return defaultTheme;
+    }
     return savedTheme || defaultTheme;
   });
   
@@ -83,7 +88,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   // Save theme preference to localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    localStorage.setItem('trade-hybrid-club-theme', theme);
+    localStorage.setItem(CLUB_THEME_KEY, theme);
     localStorage.setItem(CLUB_THEME_VERSION_KEY, CLUB_THEME_VERSION);
   }, [theme]);
 
