@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Signal, TrendingUp, TrendingDown, Clock, AlertCircle, Copy, ExternalLink, Bell, BellOff, Settings } from 'lucide-react';
 import { notificationService, SignalNotification } from '../lib/notifications';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { authService } from '@/lib/services/auth-service';
+
+const SIGNAL_FEED_URL =
+  import.meta.env.VITE_SIGNALS_FEED_URL ||
+  'https://szcnpugeztcawwjcopob.supabase.co/functions/v1/club-signals-feed';
 
 interface TradingSignal {
   id: string;
@@ -31,7 +36,10 @@ export function TradingSignals() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [previousSignals, setPreviousSignals] = useState<TradingSignal[]>([]);
 
-  const providers = ['all', 'Paradox', 'Solaris', 'Hybrid'];
+  const providers = useMemo(
+    () => ['all', ...Array.from(new Set(signals.map((signal) => signal.source).filter(Boolean))).sort()],
+    [signals],
+  );
   const statusOptions = ['active', 'all', 'closed', 'cancelled'];
 
   useEffect(() => {
@@ -76,46 +84,59 @@ export function TradingSignals() {
 
   const fetchSignals = async () => {
     try {
-      const response = await fetch('/api/signals/trading-signals');
-      if (!response.ok) throw new Error('Failed to fetch signals');
-      
-      const data = await response.json();
-      console.log('Raw API response:', data);
-      
-      // If no signals returned, show message that only real webhook data is displayed
-      if (!data.signals || data.signals.length === 0) {
-        console.log('No signals returned - only real webhook data from TradingView is displayed');
+      const accessToken = await authService.getAccessToken();
+      if (!accessToken) {
         setSignals([]);
-        setError(null);
+        setError('Sign in to Trade Hybrid Club to view signals.');
         return;
       }
-      
-      // Transform the API response format to frontend format
-      const transformedSignals = (data.signals || []).map((apiSignal: any) => ({
-        id: apiSignal.id,
-        symbol: apiSignal.Symbol || apiSignal.symbol,
-        type: (apiSignal.Direction || apiSignal.type || 'buy').toLowerCase() as 'buy' | 'sell',
-        entry: apiSignal['Entry Price'] || apiSignal.entry || 0,
-        stopLoss: apiSignal['Stop Loss'] || apiSignal.stopLoss || 0,
-        takeProfit: apiSignal['Take Profit'] || apiSignal.takeProfit || apiSignal.TP1 || 0,
-        timestamp: apiSignal.Date || apiSignal.timestamp || new Date().toISOString(),
-        source: apiSignal.Provider || apiSignal.source || 'Unknown',
-        risk: 1,
-        notes: apiSignal.Notes || apiSignal.notes || '',
-        timeframe: apiSignal.timeframe || (
-          apiSignal.Provider?.includes('Hybrid') ? '10m' :
-          apiSignal.Provider?.includes('Paradox') ? '30m' :
-          apiSignal.Provider?.includes('Solaris') ? '5m' : '1h'
-        ),
-        status: (apiSignal.Status || apiSignal.status || 'active').toLowerCase() as 'active' | 'closed' | 'cancelled'
-      }));
-      
-      console.log('Transformed signals:', transformedSignals);
+
+      const response = await fetch(`${SIGNAL_FEED_URL}?limit=150`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 403) {
+        setSignals([]);
+        setError('An active Trade Hybrid membership is required to view live signals.');
+        return;
+      }
+      if (!response.ok) {
+        throw new Error(data?.error || 'Failed to fetch canonical signals');
+      }
+
+      const transformedSignals = (data.signals || []).map((apiSignal: any) => {
+        const rawStatus = String(apiSignal.status || 'PENDING').toUpperCase();
+        const status: TradingSignal['status'] =
+          ['SL_HIT', 'TP3_HIT', 'CLOSED'].includes(rawStatus)
+            ? 'closed'
+            : rawStatus === 'INVALID'
+              ? 'cancelled'
+              : 'active';
+
+        return {
+          id: apiSignal.id,
+          symbol: apiSignal.symbol || 'UNKNOWN',
+          type: String(apiSignal.direction || 'LONG').toUpperCase() === 'SHORT' ? 'sell' : 'buy',
+          entry: Number(apiSignal.entryPrice || 0),
+          stopLoss: Number(apiSignal.stopLoss || 0),
+          takeProfit: Number(apiSignal.takeProfit || 0),
+          timestamp: apiSignal.entryTime || new Date().toISOString(),
+          source: apiSignal.provider || 'Unknown',
+          risk: apiSignal.riskDistance ? Number(apiSignal.riskDistance) : 0,
+          notes: apiSignal.strategyName
+            ? `${apiSignal.strategyName} · ${rawStatus}`
+            : `${apiSignal.assetClass || 'Market'} · ${rawStatus}`,
+          timeframe: apiSignal.assetClass || 'LIVE',
+          status,
+        } satisfies TradingSignal;
+      });
+
       setSignals(transformedSignals);
       setError(null);
-    } catch (err) {
-      console.error('Error fetching signals:', err);
-      setError('Failed to load trading signals. Please check your connection.');
+    } catch (err: any) {
+      console.error('Error fetching canonical signals:', err);
+      setError(err?.message || 'Failed to load trading signals. Please check your connection.');
     } finally {
       setLoading(false);
     }
@@ -327,7 +348,7 @@ Time: ${new Date(signal.timestamp).toLocaleString()}`;
               <Signal className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-400 text-lg">No trading signals available</p>
               <p className="text-gray-500 text-sm mt-2">
-                This page displays only real signals from TradingView webhooks (Paradox AI, Solaris AI, Hybrid AI).
+                This page displays the canonical Trade Hybrid Signals Network feed — the same source used by the Hybrid Wall.
                 <br />
                 Demo signals have been removed to ensure data integrity.
                 <br />
@@ -445,7 +466,7 @@ Time: ${new Date(signal.timestamp).toLocaleString()}`;
           <CardHeader>
             <CardTitle className="text-white">Signal Providers</CardTitle>
             <CardDescription className="text-gray-300">
-              Our signals come from verified professional trading providers
+              Live signals are sourced from the canonical Trade Hybrid Signals Network
             </CardDescription>
           </CardHeader>
           <CardContent>
