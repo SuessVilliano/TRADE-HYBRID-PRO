@@ -36,6 +36,7 @@ export function TradingViewEconomicCalendar({
     
     setLoading(true);
     setError(null);
+    let scriptLoaded = false;
     
     try {
       // Create widget container
@@ -79,6 +80,7 @@ export function TradingViewEconomicCalendar({
       
       // Success and error handling
       script.onload = () => {
+        scriptLoaded = true;
         setLoading(false);
       };
       
@@ -94,7 +96,7 @@ export function TradingViewEconomicCalendar({
       
       // Set a timeout to detect if the widget doesn't load properly
       const loadTimeout = setTimeout(() => {
-        if (loading) {
+        if (!scriptLoaded) {
           setError('The calendar is taking longer than expected to load. Please try refreshing.');
         }
       }, 8000);
@@ -175,8 +177,8 @@ export function TradingViewEconomicCalendar({
   };
 
   return (
-    <div className={`w-full h-full bg-slate-800 rounded-md flex flex-col ${className}`}>
-      <div className="p-2 border-b border-slate-700 flex justify-between items-center">
+    <div className={`w-full h-full bg-white text-slate-950 dark:bg-slate-800 dark:text-white rounded-md flex flex-col ${className}`}>
+      <div className="p-2 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
         <div className="font-medium text-sm">Economic Calendar</div>
         <Button variant="outline" size="sm" className="text-xs" onClick={handleReload}>
           <RefreshCcw className="h-3 w-3 mr-1" />
@@ -193,17 +195,17 @@ export function TradingViewEconomicCalendar({
         
         {/* Loading indicator */}
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-800 bg-opacity-75 z-10">
+          <div className="absolute inset-0 flex items-center justify-center bg-white/90 dark:bg-slate-800/90 z-10">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-              <p className="text-sm text-slate-300">Loading economic calendar...</p>
+              <p className="text-sm text-slate-600 dark:text-slate-300">Loading economic calendar...</p>
             </div>
           </div>
         )}
         
         {/* Error message */}
         {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-800 bg-opacity-90 z-10">
+          <div className="absolute inset-0 flex items-center justify-center bg-white/95 dark:bg-slate-800/95 z-10">
             <div className="text-center p-6 max-w-md">
               <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-500" />
               <p className="text-sm text-red-400 mb-4">{error}</p>
