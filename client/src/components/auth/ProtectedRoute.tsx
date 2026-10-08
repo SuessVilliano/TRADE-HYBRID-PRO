@@ -17,7 +17,7 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const location = useLocation();
   const { isAuthenticated: solanaAuthenticated, isAuthenticating } = useSolanaAuth();
-  const { isAuthenticated: contextAuthenticated, getCurrentUser } = useAuth();
+  const { isAuthenticated: contextAuthenticated, isPaidUser, getCurrentUser } = useAuth();
   const [sessionCheckComplete, setSessionCheckComplete] = useState(false);
 
   useEffect(() => {
@@ -62,7 +62,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   if (!authenticated) {
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    const next = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?next=${next}`} state={{ from: location.pathname }} replace />;
+  }
+
+  if (!isPaidUser) {
+    const next = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/access-required?next=${next}`} replace />;
   }
 
   return children;
