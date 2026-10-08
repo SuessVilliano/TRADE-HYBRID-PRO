@@ -140,13 +140,13 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
         </form>
 
         <div className="text-center text-sm text-gray-600">
-          Don't have an account?{' '}
-          <button
-            onClick={onSwitchToRegister}
+          Need member access?{' '}
+          <a
+            href="https://tradehybrid.co/#pricing"
             className="text-blue-600 hover:text-blue-800 font-medium"
           >
-            Create one
-          </button>
+            Choose a membership
+          </a>
         </div>
       </CardContent>
     </Card>
