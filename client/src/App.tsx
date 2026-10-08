@@ -290,7 +290,7 @@ const App: React.FC = () => {
                   <Route path="/journal" element={<ProtectedRoute><ExternalAppRedirect href="https://hybridjournal.co" label="Opening Hybrid Journal…" /></ProtectedRoute>} />
                   <Route path="/metaverse" element={<ProtectedRoute><MetaversePage /></ProtectedRoute>} />
                   <Route path="/learn" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
-                  <Route path="/signals" element={<ProtectedRoute><TradingSignals /></ProtectedRoute>} />
+                  <Route path="/signals" element={<ProtectedRoute><ExternalAppRedirect href="https://hybrid-wall.onrender.com" label="Opening Hybrid Signals…" /></ProtectedRoute>} />
                   <Route path="/voice-trade" element={<ProtectedRoute><VoiceTradeAssistant /></ProtectedRoute>} />
                   <Route path="/market-buddy" element={<ProtectedRoute><MarketBuddyPage /></ProtectedRoute>} />
                   <Route path="/ai-assistant" element={<Navigate to="/market-buddy" replace />} />
