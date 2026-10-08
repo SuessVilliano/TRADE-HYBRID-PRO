@@ -9,7 +9,7 @@ const sections = ['account','interface','notifications','audio','integrations'] 
 export function SettingsPanel() {
   const [params,setParams] = useSearchParams();
   const wanted = params.get('section') || 'account';
-  const section = sections.includes(wanted as any) ? wanted : 'interface';
+  const section = wanted === 'hooks' ? 'integrations' : sections.includes(wanted as any) ? wanted : 'interface';
   const { resolvedTheme,setTheme } = useTheme();
   const audio = useAudio();
   const [notifications,setNotifications] = useState(notificationService.getSettings());

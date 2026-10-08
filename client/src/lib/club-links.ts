@@ -46,7 +46,7 @@ export const CLUB_LINKS = {
   profile: '/profile',
   settings: '/settings',
   connections: '/connections',
-  hooks: '/settings?section=hooks',
+  hooks: '/connections',
   help: '/knowledge',
   login: '/login',
   register: '/register',
