@@ -33,7 +33,7 @@ export const CLUB_LINKS = {
 
   // Culture / acquisition products.
   coin: 'https://tradehybrid.co/coin',
-  runner: 'https://tradehybrid.co/runner',
+  runner: 'https://sqr.co/HybridRunnerGame/',
   music: 'https://tradehybrid.co/music',
 
   // Keep TV inside the Club shell, but source the real white-labelled channel.

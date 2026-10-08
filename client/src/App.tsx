@@ -344,7 +344,7 @@ const App: React.FC = () => {
                   <Route path="/learning-center/courses/:courseId/lessons/:lessonId" element={<ProtectedRoute><LessonDetail /></ProtectedRoute>} />
                   
                   {/* Game Center */}
-                  <Route path="/game" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
+                  <Route path="/game" element={<ProtectedRoute><ExternalProductRedirect to={CLUB_LINKS.runner} label="Opening Hybrid Runner…" /></ProtectedRoute>} />
                   {/* Bulls vs Bears game routes removed */}
                   <Route path="/game/trade-runner" element={<ProtectedRoute><ExternalProductRedirect to={CLUB_LINKS.runner} label="Opening Hybrid Runner…" /></ProtectedRoute>} />
                   <Route path="/game/trade-runner-browser" element={<ProtectedRoute><ExternalProductRedirect to={CLUB_LINKS.runner} label="Opening Hybrid Runner…" /></ProtectedRoute>} />
