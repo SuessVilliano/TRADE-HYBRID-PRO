@@ -39,7 +39,7 @@ export function OnboardingButton({ className }: OnboardingButtonProps) {
   console.log("OnboardingButton - currentFlow:", currentFlow);
   
   const [isOpen, setIsOpen] = useState(false);
-  const [activeAssistant, setActiveAssistant] = useState<'chat' | 'voice' | null>('chat');
+  const [activeAssistant, setActiveAssistant] = useState<'chat' | 'voice' | null>(null);
   
   // Determine available tours based on current path
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
@@ -105,7 +105,7 @@ export function OnboardingButton({ className }: OnboardingButtonProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="max-h-[82vh] w-[calc(100vw-2rem)] overflow-y-auto border border-violet-200 bg-white shadow-2xl dark:border-violet-400/20 dark:bg-[#0b1020] sm:w-[440px]" 
+        className="max-h-[72dvh] w-[calc(100vw-2rem)] overflow-y-auto border border-violet-200 bg-white shadow-2xl dark:border-violet-400/20 dark:bg-[#0b1020] sm:w-[440px]" 
         align="end"
         side="top"
         sideOffset={16}
@@ -190,7 +190,7 @@ export function OnboardingButton({ className }: OnboardingButtonProps) {
           {/* AI Assistant Interface */}
           {activeAssistant && (
             <div className="border-t border-slate-200 dark:border-slate-700 pt-3">
-              <div className="h-96 bg-slate-50 dark:bg-slate-800 rounded-lg overflow-hidden">
+              <div className="max-h-[52dvh] min-h-[320px] bg-slate-50 dark:bg-slate-800 rounded-lg overflow-y-auto">
                 {activeAssistant === 'chat' && (
                   <AITradeAssistant className="h-full" />
                 )}
