@@ -29,7 +29,8 @@ export const CLUB_LINKS = {
   copy: env.VITE_COPY_URL || 'https://copy.tradehybrid.co',
   abatev: env.VITE_ABATEV_URL || 'https://abatev.tradehybrid.co',
   terminal: env.VITE_ABATEV_URL || 'https://abatev.tradehybrid.co',
-  zone: env.VITE_ZONE_URL || 'https://thehybridzone.club',
+  zone: '/launch/zone',
+  zoneDirect: env.VITE_ZONE_URL || 'https://thehybridzone.club',
 
   // Culture / acquisition products
   publicSite: 'https://tradehybrid.co',
