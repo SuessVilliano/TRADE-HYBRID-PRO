@@ -59,6 +59,7 @@ import MemberOnboardingPage from './pages/member-onboarding';
 import TradeHouseLaunchPage from './pages/tradehouse-launch';
 import EventsPage from './pages/events';
 import NotFoundPage from './pages/not-found';
+import AccessRequiredPage from './pages/access-required';
 import SocialNetworkPage from './pages/social-network';
 import CopyTradingPage from './pages/copy-trading';
 import WalletConnectOnboarding from './pages/wallet-connect-onboarding';
@@ -156,6 +157,7 @@ const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }
   const isPublicClubRoute =
     pathname === '/' ||
     pathname === '/about' ||
+    pathname === '/access-required' ||
     ['/login', '/signup', '/register', '/auth'].some(
       (route) => pathname === route || pathname.startsWith(`${route}/`),
     );
@@ -263,6 +265,7 @@ const App: React.FC = () => {
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/register" element={<AuthPage />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/access-required" element={<AccessRequiredPage />} />
                   {/* Legal */}
                   <Route path="/privacy" element={<PrivacyPolicyPage />} />
                   <Route path="/terms" element={<TermsOfServicePage />} />
