@@ -9,6 +9,7 @@ const TradingViewWidgetsTest = React.lazy(() => import('./pages/tradingview-widg
 const UnifiedProfilePage = React.lazy(() => import('./pages/unified-profile'));
 const AffiliateDashboardPage = React.lazy(() => import('./pages/affiliate-dashboard'));
 import { AuthProvider } from './lib/context/AuthContext';
+import { CLUB_LINKS } from './lib/club-links';
 import { SolanaAuthProvider } from './lib/context/SolanaAuthProvider';
 import { SolanaWalletProvider } from './lib/context/SolanaWalletProvider';
 import OnboardingProvider from './lib/context/OnboardingProvider';
@@ -141,6 +142,14 @@ import LiveStreamPage from './pages/live-stream';
 import NotificationSettingsPage from './pages/notification-settings';
 import KnowledgeBasePage from './pages/KnowledgeBasePage';
 
+const ExternalProductRedirect: React.FC<{ to: string; label?: string }> = ({ to, label = 'Opening Trade Hybrid product…' }) => {
+  React.useEffect(() => {
+    window.location.replace(to);
+  }, [to]);
+
+  return <ClubLoader label={label} />;
+};
+
 const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { pathname } = useLocation();
 
@@ -267,9 +276,9 @@ const App: React.FC = () => {
                   <Route path="/launch/tradehouse" element={<TradeHouseLaunchPage />} />
                   <Route path="/tv" element={<ProtectedRoute><HybridTVPage /></ProtectedRoute>} />
                   <Route path="/about" element={<Navigate to="/#about" replace />} />
-                  <Route path="/trade" element={<ProtectedRoute><TradeView /></ProtectedRoute>} />
-                  <Route path="/journal" element={<ProtectedRoute><JournalView /></ProtectedRoute>} />
-                  <Route path="/metaverse" element={<ProtectedRoute><MetaversePage /></ProtectedRoute>} />
+                  <Route path="/trade" element={<ProtectedRoute><ExternalProductRedirect to={CLUB_LINKS.terminal} label="Opening Trading Terminal…" /></ProtectedRoute>} />
+                  <Route path="/journal" element={<ProtectedRoute><ExternalProductRedirect to={CLUB_LINKS.journal} label="Opening Hybrid Journal…" /></ProtectedRoute>} />
+                  <Route path="/metaverse" element={<ProtectedRoute><ExternalProductRedirect to={CLUB_LINKS.zone} label="Entering The Hybrid Zone…" /></ProtectedRoute>} />
                   <Route path="/learn" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
                   <Route path="/signals" element={<ProtectedRoute><TradingSignals /></ProtectedRoute>} />
                   <Route path="/voice-trade" element={<ProtectedRoute><VoiceTradeAssistant /></ProtectedRoute>} />
@@ -277,7 +286,7 @@ const App: React.FC = () => {
                   <Route path="/ai-assistant" element={<Navigate to="/market-buddy" replace />} />
                   <Route path="/dex-platform" element={<ProtectedRoute><DEXPlatform /></ProtectedRoute>} />
                   <Route path="/ai-analytics" element={<ProtectedRoute><AIAnalytics /></ProtectedRoute>} />
-                  <Route path="/copy-trading" element={<ProtectedRoute><CopyTradingPage /></ProtectedRoute>} />
+                  <Route path="/copy-trading" element={<ProtectedRoute><ExternalProductRedirect to={CLUB_LINKS.copy} label="Opening Hybrid Copy…" /></ProtectedRoute>} />
                   <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
                   <Route path="/profile/unified" element={<React.Suspense fallback={<ClubLoader label="Loading profile…" />}><ProtectedRoute><UnifiedProfilePage /></ProtectedRoute></React.Suspense>} />
@@ -326,8 +335,8 @@ const App: React.FC = () => {
                   {/* Game Center */}
                   <Route path="/game" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
                   {/* Bulls vs Bears game routes removed */}
-                  <Route path="/game/trade-runner" element={<ProtectedRoute><TradeRunnerPage /></ProtectedRoute>} />
-                  <Route path="/game/trade-runner-browser" element={<ProtectedRoute><TradeRunnerBrowserPage /></ProtectedRoute>} />
+                  <Route path="/game/trade-runner" element={<ProtectedRoute><ExternalProductRedirect to={CLUB_LINKS.runner} label="Opening Hybrid Runner…" /></ProtectedRoute>} />
+                  <Route path="/game/trade-runner-browser" element={<ProtectedRoute><ExternalProductRedirect to={CLUB_LINKS.runner} label="Opening Hybrid Runner…" /></ProtectedRoute>} />
                   
                   {/* Tools & Analysis */}
                   <Route path="/trading-tools" element={<ProtectedRoute><TradingToolsPage /></ProtectedRoute>} />
@@ -350,9 +359,9 @@ const App: React.FC = () => {
                   <Route path="/nexus" element={<ProtectedRoute><NexusPanelPage /></ProtectedRoute>} />
                   
                   {/* Prop Firm */}
-                  <Route path="/prop-firm" element={<ProtectedRoute><PropFirmDashboardPage /></ProtectedRoute>} />
+                  <Route path="/prop-firm" element={<ProtectedRoute><ExternalProductRedirect to={CLUB_LINKS.funding} label="Opening Hybrid Funding…" /></ProtectedRoute>} />
                   <Route path="/prop-firm/admin" element={<ProtectedRoute><PropFirmAdminDashboardPage /></ProtectedRoute>} />
-                  <Route path="/prop-firm/challenge" element={<ProtectedRoute><PropFirmChallengePage /></ProtectedRoute>} />
+                  <Route path="/prop-firm/challenge" element={<ProtectedRoute><ExternalProductRedirect to={CLUB_LINKS.funding} label="Opening Hybrid Funding…" /></ProtectedRoute>} />
 
                   <Route path="/prop-firm/account/:accountId" element={<ProtectedRoute><PropFirmAccountDetailsPage /></ProtectedRoute>} />
                   
