@@ -55,6 +55,7 @@ export function AITradeAssistant({ className = "", focusMode = false }: AITradeA
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const lastScreenAnalysisAtRef = useRef(0);
 
   // Load the member's WHY, goals, markets, challenges, and game plan once.
   useEffect(() => {
@@ -161,8 +162,12 @@ export function AITradeAssistant({ className = "", focusMode = false }: AITradeA
       // Convert canvas to base64 image
       const imageData = canvas.toDataURL('image/jpeg', 0.8);
 
-      // Send frame for AI analysis every 5 seconds to avoid overwhelming
-      if (Math.random() < 0.1) { // 10% chance each frame (roughly every 3 seconds at 30fps)
+      // Keep screen analysis intentionally bounded. The old implementation used
+      // a random chance on every animation frame, which could generate multiple
+      // AI calls per second on a 30fps stream.
+      const now = Date.now();
+      if (now - lastScreenAnalysisAtRef.current >= 10_000) {
+        lastScreenAnalysisAtRef.current = now;
         await analyzeScreenContent(imageData);
       }
 
