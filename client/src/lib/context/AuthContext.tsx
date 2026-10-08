@@ -154,7 +154,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         // Otherwise check for server-side auth with a timeout
         try {
-          const userData = await Promise.race([
+          const userData: any = await Promise.race([
             authService.getCurrentUser(),
             new Promise((_, reject) => 
               setTimeout(() => reject(new Error('Auth check timed out')), 10000)
@@ -206,7 +206,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (password) {
           console.log('Starting direct login process with username and password');
           
-          const userData = await Promise.race([
+          const userData: any = await Promise.race([
             authService.login(usernameOrWhopId, password),
             // Add a timeout to prevent hanging authentication
             new Promise((_, reject) => 
@@ -226,7 +226,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // First try direct Whop authentication
           try {
             console.log('Attempting direct Whop authentication...');
-            const userData = await Promise.race([
+            const userData: any = await Promise.race([
               authService.loginWithWhop(usernameOrWhopId),
               // Add a timeout to prevent hanging authentication
               new Promise((_, reject) => 
@@ -247,7 +247,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             // when all users transition to the new system
             try {
               // Legacy login without password
-              const userData = await Promise.race([
+              const userData: any = await Promise.race([
                 authService.login(usernameOrWhopId, ''),
                 // Add a timeout to prevent hanging authentication
                 new Promise((_, reject) => 
@@ -305,10 +305,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         const userData = await authService.getCurrentUser();
         if (userData && userData.authenticated) {
-          // Ensure required fields for User interface
-          if (!userData.membershipLevel) {
-            userData.membershipLevel = userData.membership || 'free';
-          }
           setCurrentUser(userData as User);
           setIsAuthenticated(true);
           return userData;

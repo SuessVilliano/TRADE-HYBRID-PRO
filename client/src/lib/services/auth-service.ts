@@ -160,7 +160,7 @@ async function mapSupabaseUser(user: any, accessToken: string) {
     displayName: profile?.display_name || user.user_metadata?.display_name || null,
     createdAt: user.created_at || profile?.created_at || null,
     contact: user.user_metadata?.club_contact || {},
-    authenticated: true,
+    authenticated: true as const,
     membershipLevel: membershipFromEntitlements(entitlements),
     entitlements: activeEntitlements(entitlements),
     balance: 0,
@@ -339,7 +339,7 @@ export const authService = {
   async getCurrentUser() {
     const session = await getValidSession();
     if (!session?.access_token) {
-      return { authenticated: false };
+      return { authenticated: false as const };
     }
 
     const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
@@ -348,7 +348,7 @@ export const authService = {
 
     if (!response.ok) {
       clearSession();
-      return { authenticated: false };
+      return { authenticated: false as const };
     }
 
     const user = await response.json();
@@ -375,7 +375,7 @@ export const authService = {
   },
 
   isAuthenticated() {
-    const store = useAuthStore.getState();
-    return store.isAuthenticated && store.user !== null;
+    const session = readSession();
+    return Boolean(session?.access_token && (!session.expires_at || session.expires_at > Date.now() / 1000));
   },
 };

@@ -167,6 +167,9 @@ const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
   const clubRoutePrefixes = [
     '/dashboard',
+    '/signals',
+    '/connections',
+    '/market-overview',
     '/journal',
     '/ai-assistant',
     '/market-buddy',
