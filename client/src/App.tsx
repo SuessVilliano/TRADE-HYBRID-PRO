@@ -57,6 +57,7 @@ import HybridTVPage from './pages/hybrid-tv';
 import MarketBuddyPage from './pages/market-buddy';
 import MemberOnboardingPage from './pages/member-onboarding';
 import TradeHouseLaunchPage from './pages/tradehouse-launch';
+import ZoneLaunchPage from './pages/zone-launch';
 import EventsPage from './pages/events';
 import NotFoundPage from './pages/not-found';
 import SocialNetworkPage from './pages/social-network';
@@ -182,6 +183,7 @@ const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }
     '/tv',
     '/onboarding',
     '/launch/tradehouse',
+    '/launch/zone',
     '/profile',
     '/settings',
     '/trading-tools',
@@ -284,6 +286,7 @@ const App: React.FC = () => {
                   <Route path="/onboarding" element={<ProtectedRoute><MemberOnboardingPage /></ProtectedRoute>} />
                   <Route path="/community" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
                   <Route path="/launch/tradehouse" element={<TradeHouseLaunchPage />} />
+                  <Route path="/launch/zone" element={<ProtectedRoute><ZoneLaunchPage /></ProtectedRoute>} />
                   <Route path="/tv" element={<ProtectedRoute><HybridTVPage /></ProtectedRoute>} />
                   <Route path="/about" element={<Navigate to="/#about" replace />} />
                   <Route path="/trade" element={<ProtectedRoute><ExternalAppRedirect href="https://abatev.tradehybrid.co" label="Opening ABATEV Terminal…" /></ProtectedRoute>} />
