@@ -25,8 +25,6 @@ interface OnboardingButtonProps {
 }
 
 export function OnboardingButton({ className }: OnboardingButtonProps) {
-  console.log("OnboardingButton component rendering");
-  
   const { 
     startOnboarding, 
     isFlowCompleted,
@@ -34,9 +32,6 @@ export function OnboardingButton({ className }: OnboardingButtonProps) {
     isOnboarding,
     resetOnboarding
   } = useOnboarding();
-  
-  console.log("OnboardingButton - isOnboarding:", isOnboarding);
-  console.log("OnboardingButton - currentFlow:", currentFlow);
   
   const [isOpen, setIsOpen] = useState(false);
   const [activeAssistant, setActiveAssistant] = useState<'chat' | 'voice' | null>(null);
@@ -192,7 +187,7 @@ export function OnboardingButton({ className }: OnboardingButtonProps) {
             <div className="border-t border-slate-200 dark:border-slate-700 pt-3">
               <div className="max-h-[52dvh] min-h-[320px] bg-slate-50 dark:bg-slate-800 rounded-lg overflow-y-auto">
                 {activeAssistant === 'chat' && (
-                  <AITradeAssistant className="h-full" />
+                  <AITradeAssistant className="h-full" focusMode />
                 )}
                 {activeAssistant === 'voice' && (
                   <AIVoiceTrading className="h-full" />
