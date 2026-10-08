@@ -76,7 +76,7 @@ export function TradingSignals() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedProvider, setSelectedProvider] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('active');
+  const [selectedStatus, setSelectedStatus] = useState('all');
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [previousSignals, setPreviousSignals] = useState<TradingSignal[]>([]);
 
