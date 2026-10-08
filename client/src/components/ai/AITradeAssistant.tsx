@@ -305,7 +305,9 @@ export function AITradeAssistant({ className = "", focusMode = false }: AITradeA
 
       if (response.ok && response.body) {
         const reader = response.body.getReader();
+        const decoder = new TextDecoder();
         let aiResponseMessage = '';
+        let sseBuffer = '';
 
         const aiMessage = {
           id: (Date.now() + 1).toString(),
@@ -316,38 +318,52 @@ export function AITradeAssistant({ className = "", focusMode = false }: AITradeA
 
         setChatMessages(prev => [...prev, aiMessage]);
 
+        const applyEvent = (eventBlock: string) => {
+          const dataLine = eventBlock
+            .split('\n')
+            .find((line) => line.startsWith('data: '));
+          if (!dataLine) return false;
+
+          const data = dataLine.slice(6);
+          if (data === '[DONE]') return true;
+
+          try {
+            const parsed = JSON.parse(data);
+            aiResponseMessage += String(parsed.chunk || '');
+            setChatMessages(prev =>
+              prev.map(msg =>
+                msg.id === aiMessage.id
+                  ? { ...msg, message: aiResponseMessage }
+                  : msg
+              )
+            );
+          } catch {
+            // Keep malformed/incomplete network data out of the visible chat.
+          }
+          return false;
+        };
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          const chunk = new TextDecoder().decode(value);
-          const lines = chunk.split('\n');
+          sseBuffer += decoder.decode(value, { stream: true });
+          const events = sseBuffer.split('\n\n');
+          sseBuffer = events.pop() || '';
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') {
-                setIsStreaming(false);
-                return;
-              }
-
-              try {
-                const parsed = JSON.parse(data);
-                aiResponseMessage += parsed.chunk;
-                
-                setChatMessages(prev => 
-                  prev.map(msg => 
-                    msg.id === aiMessage.id 
-                      ? { ...msg, message: aiResponseMessage }
-                      : msg
-                  )
-                );
-              } catch (e) {
-                // Skip invalid JSON
-              }
+          for (const eventBlock of events) {
+            if (applyEvent(eventBlock)) {
+              setIsStreaming(false);
+              return;
             }
           }
         }
+
+        sseBuffer += decoder.decode();
+        if (sseBuffer.trim()) applyEvent(sseBuffer);
+      } else {
+        const failure = await response.json().catch(() => ({}));
+        addAIMessage(failure?.error || 'Market Buddy is temporarily unavailable.');
       }
     } catch (error) {
       console.error('Chat error:', error);
