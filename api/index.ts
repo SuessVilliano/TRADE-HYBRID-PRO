@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import Parser from "rss-parser";
 import OpenAI from "openai";
+import { getVercelOidcToken } from "@vercel/oidc";
 
 export const config = {
   api: {
@@ -168,8 +169,19 @@ function marketBuddyModel() {
   return process.env.MARKET_BUDDY_MODEL || "openai/gpt-5.6-sol";
 }
 
-function marketBuddyClient() {
-  const apiKey = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || "";
+async function marketBuddyToken() {
+  if (process.env.AI_GATEWAY_API_KEY) return process.env.AI_GATEWAY_API_KEY;
+  if (process.env.VERCEL_OIDC_TOKEN) return process.env.VERCEL_OIDC_TOKEN;
+  try {
+    return await getVercelOidcToken();
+  } catch (error) {
+    console.warn("[market-buddy] Vercel OIDC token unavailable", error);
+    return "";
+  }
+}
+
+async function marketBuddyClient() {
+  const apiKey = await marketBuddyToken();
   if (!apiKey) throw new Error("Market Buddy AI Gateway authentication is unavailable");
   return new OpenAI({
     apiKey,
@@ -489,6 +501,16 @@ export default async function handler(req: any, res: any) {
     ? pathValue.join("/")
     : String(pathValue || "");
 
+  if (req.method === "GET" && path === "ai/health") {
+    const token = await marketBuddyToken();
+    return res.status(token ? 200 : 503).json({
+      ok: Boolean(token),
+      service: "market-buddy",
+      auth: token ? "vercel-oidc" : "unavailable",
+      model: marketBuddyModel(),
+    });
+  }
+
   if (req.method === "POST" && path === "ai/chat-stream") {
     try {
       const body = await readJsonBody(req);
@@ -508,7 +530,8 @@ export default async function handler(req: any, res: any) {
         (journey ? "\nMember journey context: " + JSON.stringify(journey) : "") +
         (context?.currentAnalysis ? "\nCurrent screen-analysis context: " + JSON.stringify(context.currentAnalysis) : "");
 
-      const stream = await marketBuddyClient().chat.completions.create({
+      const client = await marketBuddyClient();
+      const stream = await client.chat.completions.create({
         model: marketBuddyModel(),
         messages: [
           { role: "system", content: system },
@@ -545,7 +568,8 @@ export default async function handler(req: any, res: any) {
       const command = String(body?.command || "").trim();
       if (!command) return res.status(400).json({ error: "Voice transcript is required." });
 
-      const completion = await marketBuddyClient().chat.completions.create({
+      const client = await marketBuddyClient();
+      const completion = await client.chat.completions.create({
         model: marketBuddyModel(),
         messages: [
           {
@@ -590,7 +614,8 @@ Never claim a trade was executed and do not return a tradeCommand object.`,
       }
 
       const journey = body?.memberJourney || null;
-      const completion = await marketBuddyClient().chat.completions.create({
+      const client = await marketBuddyClient();
+      const completion = await client.chat.completions.create({
         model: marketBuddyModel(),
         messages: [
           {
