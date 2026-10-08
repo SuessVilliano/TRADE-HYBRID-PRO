@@ -32,9 +32,10 @@ interface TradeAnalysis {
 
 interface AITradeAssistantProps {
   className?: string;
+  focusMode?: boolean;
 }
 
-export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
+export function AITradeAssistant({ className = "", focusMode = false }: AITradeAssistantProps) {
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -370,9 +371,13 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
   }, [chatMessages]);
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={focusMode ? `flex flex-col gap-3 ${className}` : `space-y-4 ${className}`}>
       {/* Control Panel */}
-      <Card>
+      <details open={!focusMode} className={focusMode ? "order-2 rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-white/10 dark:bg-white/5" : ""}>
+        <summary className={focusMode ? "cursor-pointer list-none px-2 py-1 text-sm font-bold text-slate-700 dark:text-slate-200" : "hidden"}>
+          Screen & voice tools
+        </summary>
+        <Card className={focusMode ? "mt-2 border-0 bg-transparent shadow-none" : ""}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-blue-500" />
@@ -403,7 +408,9 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
             </Button>
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      </details>
+
 
       {/* Analysis Display */}
       {currentAnalysis && (
@@ -462,7 +469,7 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
       )}
 
       {/* Chat Interface - Fixed Height and Scrolling */}
-      <Card className="flex flex-col h-[500px]">
+      <Card className={`flex flex-col ${focusMode ? 'order-1 h-[calc(100dvh-11.5rem)] min-h-[520px] max-h-[760px]' : 'h-[500px]'}`}>
         <CardHeader className="flex-shrink-0 pb-3">
           <CardTitle className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-blue-500" />
@@ -473,8 +480,7 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
         <CardContent className="flex flex-col flex-1 overflow-hidden">
           <div 
             ref={chatContainerRef}
-            className="flex-1 overflow-y-auto space-y-3 p-3 border rounded-lg bg-slate-900/50 mb-4"
-            style={{ minHeight: '300px', maxHeight: '350px' }}
+            className="min-h-0 flex-1 space-y-3 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-slate-950/50"
           >
             {chatMessages.map((msg) => (
               <div
@@ -497,17 +503,18 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
             ))}
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex items-end gap-2">
             <input
               type="text"
               value={currentMessage}
               onChange={(e) => setCurrentMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-              placeholder="Ask Market Buddy about your plan, trades, Journal, alerts, or strategy..."
-              className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+              placeholder="Ask Market Buddy..."
+              aria-label="Ask Market Buddy"
+              className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-950 focus:outline-none focus:ring-2 focus:ring-primary dark:border-white/10 dark:bg-slate-950 dark:text-white"
               disabled={isStreaming}
             />
-            <Button onClick={sendMessage} disabled={isStreaming || !currentMessage.trim()}>
+            <Button className="shrink-0 px-4" onClick={sendMessage} disabled={isStreaming || !currentMessage.trim()}>
               Send
             </Button>
           </div>
