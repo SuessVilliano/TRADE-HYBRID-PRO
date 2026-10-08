@@ -22,7 +22,7 @@ export const CLUB_LINKS = {
   ai: '/market-buddy',
 
   // Immersive world and growth paths.
-  zone: env.VITE_ZONE_URL || 'https://thehybridzone.club',
+  zone: new URL('/dashboard', env.VITE_ZONE_URL || 'https://thehybridzone.club').href,
   battles: '/launch/tradehouse',
   tradehouseArena: '/launch/tradehouse',
   battlesProof: 'https://hybridfunding.co/tradehouse',

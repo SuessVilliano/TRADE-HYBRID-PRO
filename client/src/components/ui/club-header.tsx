@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, Moon, Network, Sun, UserRound, Zap } from 'lucide-react';
+import { Menu, Moon, Network, Sun, UserRound, Wallet, Zap } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from './sheet';
 import { Button } from './button';
 import { MainSidebar } from './main-sidebar-enhanced';
@@ -49,6 +49,8 @@ export function ClubHeader() {
           >
             <Network className="h-4 w-4" /> Zone Mode
           </a>
+
+          <Link to="/wallet" className="flex items-center gap-2 rounded-xl border border-cyan-300/20 px-3 py-2 text-sm font-semibold" aria-label="Open Solana wallet"><Wallet className="h-4 w-4 text-cyan-600"/><span className="hidden sm:inline">Wallet</span></Link>
 
           <Button
             type="button"

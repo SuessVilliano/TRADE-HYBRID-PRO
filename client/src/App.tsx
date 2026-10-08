@@ -64,7 +64,7 @@ import AccessRequiredPage from './pages/access-required';
 import ActivateAccountPage from './pages/activate-account';
 import SocialNetworkPage from './pages/social-network';
 import CopyTradingPage from './pages/copy-trading';
-import WalletConnectOnboarding from './pages/wallet-connect-onboarding';
+import { ClubWallet } from './components/ui/club-wallet';
 import WalletConnectionPage from './pages/wallet-connection';
 import WebhookSettingsPage from './pages/webhook-settings';
 import { WebhookLogsPage } from './pages/WebhookLogsPage';
@@ -276,7 +276,7 @@ const App: React.FC = () => {
                   {/* Legal */}
                   <Route path="/privacy" element={<PrivacyPolicyPage />} />
                   <Route path="/terms" element={<TermsOfServicePage />} />
-                  <Route path="/wallet" element={<WalletConnectOnboarding />} />
+                  <Route path="/wallet" element={<main className="min-h-screen bg-slate-50 p-4 text-slate-950 dark:bg-slate-950 dark:text-white sm:p-8"><div className="mx-auto max-w-3xl"><ClubWallet /></div></main>} />
                   <Route path="/wallet-connection" element={<ProtectedRoute><WalletConnectionPage /></ProtectedRoute>} />
                   
                   {/* Core Platform Routes */}
