@@ -3,6 +3,7 @@ import '@/lib/polyfills';
 
 import * as React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+const AcademyNativeLaunchPage = React.lazy(() => import('./pages/academy-native-launch'));
 const SimpleChartingDashboard = React.lazy(() => import('./pages/simple-charting'));
 const TestPage = React.lazy(() => import('./pages/test-page'));
 const TradingViewWidgetsTest = React.lazy(() => import('./pages/tradingview-widgets-test'));
@@ -279,6 +280,7 @@ const App: React.FC = () => {
                   <Route path="/dashboard" element={<ProtectedRoute><ClubDashboard /></ProtectedRoute>} />
                   <Route path="/onboarding" element={<ProtectedRoute><MemberOnboardingPage /></ProtectedRoute>} />
                   <Route path="/community" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
+                  <Route path="/launch/academy-native" element={<React.Suspense fallback={<ClubLoader label="Opening Academy…" />}><AcademyNativeLaunchPage /></React.Suspense>} />
                   <Route path="/launch/tradehouse" element={<TradeHouseLaunchPage />} />
                   <Route path="/tv" element={<ProtectedRoute><HybridTVPage /></ProtectedRoute>} />
                   <Route path="/about" element={<Navigate to="/#about" replace />} />
