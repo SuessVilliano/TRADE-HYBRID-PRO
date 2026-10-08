@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import Parser from "rss-parser";
+import { getVercelOidcToken } from "@vercel/oidc";
 
 export const config = {
   api: {
@@ -460,7 +461,10 @@ export async function marketBuddy(req: any, res: any, readBody: (req: any) => Pr
     if ((cooldown.get(user.id) || 0)>now) return res.status(429).json({error:'Please wait a moment before sending another message.'});
     cooldown.forEach((until,id) => { if (until<now) cooldown.delete(id); });
     cooldown.set(user.id,now+5000);
-    const gatewayKey = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
+    let gatewayKey = process.env.AI_GATEWAY_API_KEY;
+    if (!gatewayKey) {
+      try { gatewayKey = await getVercelOidcToken(); } catch { /* OIDC is unavailable outside a configured Vercel project. */ }
+    }
     if (!gatewayKey) return res.status(503).json({error:'Market Buddy’s AI service is not configured yet.'});
     const planResponse = await fetch(CLUB_URL + '/rest/v1/member_onboarding?user_id=eq.' + encodeURIComponent(user.id) + '&select=why_text,primary_goal,preferred_markets,current_challenges,plan_summary&limit=1',{headers,signal:AbortSignal.timeout(8000)});
     const plan = planResponse.ok ? (await planResponse.json())[0] || null : null;
