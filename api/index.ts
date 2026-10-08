@@ -162,6 +162,155 @@ function getHeader(req: any, name: string) {
   return Array.isArray(value) ? String(value[0] || "") : String(value || "");
 }
 
+
+const CLUB_SSO_ORIGINS = new Set([
+  "https://thehybridzone.club",
+  "https://www.thehybridzone.club",
+  "https://hybridjournal.co",
+  "https://www.hybridjournal.co",
+  "https://copy.tradehybrid.co",
+  "https://abatev.tradehybrid.co",
+  "https://tv.tradehybrid.club",
+  "https://hybrid-wall.onrender.com",
+  "https://tradehouse-91io.onrender.com",
+]);
+
+const usedClubSsoNonces = new Map<string, number>();
+
+function pruneClubSsoNonces() {
+  const now = Math.floor(Date.now() / 1000);
+  for (const [nonce, exp] of usedClubSsoNonces.entries()) {
+    if (exp < now) usedClubSsoNonces.delete(nonce);
+  }
+}
+
+function clubSsoSecret() {
+  const secret = process.env.TH_SSO_SECRET || "";
+  if (!secret) throw new Error("TH_SSO_SECRET is not configured");
+  return secret;
+}
+
+function signClubSsoPart(encoded: string) {
+  return crypto.createHmac("sha256", clubSsoSecret()).update(encoded).digest("base64url");
+}
+
+function issueClubSsoTicket(identity: Record<string, any>, returnTo: string) {
+  const origin = new URL(returnTo).origin;
+  if (!CLUB_SSO_ORIGINS.has(origin)) {
+    throw new Error("SSO destination is not allowlisted");
+  }
+
+  const payload = {
+    iss: "https://pro.tradehybrid.co",
+    aud: origin,
+    sub: String(identity.id),
+    email: identity.email || "",
+    username: identity.username || "trader",
+    membershipLevel: identity.membershipLevel || "free",
+    entitlements: Array.isArray(identity.entitlements) ? identity.entitlements : [],
+    nonce: crypto.randomBytes(18).toString("hex"),
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 120,
+  };
+
+  const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  return encoded + "." + signClubSsoPart(encoded);
+}
+
+function verifyClubSsoTicket(ticket: string, expectedAudience?: string) {
+  const [encoded, signature] = String(ticket || "").split(".");
+  if (!encoded || !signature) throw new Error("Malformed SSO ticket");
+
+  const expected = signClubSsoPart(encoded);
+  const a = Buffer.from(signature);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    throw new Error("Invalid SSO ticket signature");
+  }
+
+  const payload = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8"));
+  const now = Math.floor(Date.now() / 1000);
+
+  if (!payload.exp || payload.exp < now) throw new Error("Expired SSO ticket");
+  if (!payload.nonce) throw new Error("SSO ticket is missing nonce");
+  if (expectedAudience && payload.aud !== expectedAudience) {
+    throw new Error("SSO audience mismatch");
+  }
+
+  pruneClubSsoNonces();
+  if (usedClubSsoNonces.has(payload.nonce)) throw new Error("SSO ticket already used");
+  usedClubSsoNonces.set(payload.nonce, payload.exp);
+
+  return payload;
+}
+
+function isActiveEntitlement(item: any) {
+  if (!item || String(item.status || "").toLowerCase() !== "active") return false;
+  if (!item.ends_at) return true;
+  const endsAt = Date.parse(String(item.ends_at));
+  return !Number.isFinite(endsAt) || endsAt > Date.now();
+}
+
+async function resolveClubSsoIdentity(req: any) {
+  const authorization = getHeader(req, "authorization");
+  const accessToken = authorization.replace(/^Bearer\s+/i, "").trim();
+  if (!accessToken) throw new Error("Authentication required");
+
+  const userResponse = await fetch(SUPABASE_URL + "/auth/v1/user", {
+    headers: {
+      apikey: SUPABASE_PUBLISHABLE_KEY,
+      Authorization: "Bearer " + accessToken,
+    },
+  });
+
+  if (!userResponse.ok) throw new Error("Invalid Club session");
+  const user: any = await userResponse.json();
+
+  const authHeaders = {
+    apikey: SUPABASE_PUBLISHABLE_KEY,
+    Authorization: "Bearer " + accessToken,
+    "Content-Type": "application/json",
+  };
+
+  const [profileResponse, entitlementResponse] = await Promise.all([
+    fetch(
+      SUPABASE_URL +
+        "/rest/v1/profiles?id=eq." +
+        encodeURIComponent(user.id) +
+        "&select=id,username,display_name,avatar_url",
+      { headers: authHeaders },
+    ),
+    fetch(
+      SUPABASE_URL +
+        "/rest/v1/product_entitlements?user_id=eq." +
+        encodeURIComponent(user.id) +
+        "&select=product_key,status,source,starts_at,ends_at",
+      { headers: authHeaders },
+    ),
+  ]);
+
+  const profiles = profileResponse.ok ? await profileResponse.json() : [];
+  const entitlements = entitlementResponse.ok ? await entitlementResponse.json() : [];
+  const active = Array.isArray(entitlements)
+    ? entitlements.filter(isActiveEntitlement)
+    : [];
+  const profile = Array.isArray(profiles) ? profiles[0] || null : null;
+
+  return {
+    id: user.id,
+    email: user.email || "",
+    username:
+      profile?.username ||
+      user.user_metadata?.username ||
+      user.email?.split("@")[0] ||
+      "trader",
+    membershipLevel: active.some((item: any) => item.product_key !== "club_free")
+      ? "paid"
+      : "free",
+    entitlements: active,
+  };
+}
+
 function verifyWhopSignature(req: any, rawBody: Buffer) {
   const secret = process.env.WHOP_WEBHOOK_SECRET || "";
   const webhookId = getHeader(req, "webhook-id");
@@ -535,6 +684,65 @@ export default async function handler(req: any, res: any) {
       });
     } catch {
       return res.status(502).json({ ok: false, error: "Integration health unavailable." });
+    }
+  }
+
+  if (req.method === "GET" && path === "sso/ticket") {
+    try {
+      const returnTo = String(req.query?.return_to || "");
+      if (!returnTo) {
+        return res.status(400).json({ error: "return_to is required" });
+      }
+
+      const identity = await resolveClubSsoIdentity(req);
+      const ticket = issueClubSsoTicket(identity, returnTo);
+
+      res.setHeader("Cache-Control", "no-store");
+      return res.status(200).json({
+        ticket,
+        expiresIn: 120,
+        audience: new URL(returnTo).origin,
+      });
+    } catch (error) {
+      console.error("[sso] ticket issue failed", error);
+      return res.status(401).json({
+        error: error instanceof Error ? error.message : "Could not issue SSO ticket",
+      });
+    }
+  }
+
+  if (req.method === "POST" && path === "sso/exchange") {
+    try {
+      const rawBody = await readRawBody(req);
+      const body = rawBody.length ? JSON.parse(rawBody.toString("utf8")) : {};
+      const ticket = String(body?.ticket || "");
+      const audience = String(body?.audience || "");
+
+      if (!ticket || !audience) {
+        return res.status(400).json({ error: "ticket and audience are required" });
+      }
+
+      const payload = verifyClubSsoTicket(ticket, audience);
+      res.setHeader("Cache-Control", "no-store");
+
+      return res.status(200).json({
+        user: {
+          id: payload.sub,
+          email: payload.email,
+          username: payload.username,
+          membershipLevel: payload.membershipLevel,
+          entitlements: payload.entitlements || [],
+          authenticated: true,
+          authSource: "trade-hybrid-club",
+        },
+        audience: payload.aud,
+        expiresAt: payload.exp,
+      });
+    } catch (error) {
+      console.error("[sso] exchange failed", error);
+      return res.status(401).json({
+        error: error instanceof Error ? error.message : "Invalid or expired SSO ticket",
+      });
     }
   }
 
