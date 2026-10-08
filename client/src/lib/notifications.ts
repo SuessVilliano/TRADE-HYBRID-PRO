@@ -26,7 +26,7 @@ class NotificationService {
   constructor() {
     // Load settings from localStorage
     this.settings = this.loadSettings();
-    this.requestPermission();
+    this.permissionGranted = typeof Notification !== 'undefined' && Notification.permission === 'granted';
   }
 
   private loadSettings(): NotificationSettings {

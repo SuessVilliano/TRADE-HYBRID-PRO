@@ -4,7 +4,7 @@ import { AITradeAssistant } from '@/components/ai/AITradeAssistant';
 
 const capabilities = [
   ['Plan Builder', 'Turn your WHY and goals into a practical trading game plan.', Target],
-  ['Journal Context', 'Use your recorded trades, notes, alerts, and reviews as context.', BookOpen],
+  ['Journal Context', 'Bring trade notes and reviews into this conversation.', BookOpen],
   ['Risk & Rules', 'Keep risk limits, prop rules, and your own guardrails visible.', Shield],
   ['Strategy Research', 'Work through setups, ideas, and research without chasing every signal.', TrendingUp],
   ['Mindset', 'Reflect on discipline, habits, and whether your decisions match the plan.', Brain],
@@ -24,7 +24,7 @@ export default function MarketBuddyPage() {
 
               <h1 className="mt-5 text-4xl font-black tracking-[-0.04em]">Market Buddy</h1>
               <p className="mt-3 text-sm leading-6 text-white/80">
-                One persistent AI companion for your Trade Hybrid journey—not a collection of disconnected bots.
+                Your Trade Hybrid trading companion, grounded in your Club game plan.
               </p>
 
               <div className="mt-7 space-y-3">

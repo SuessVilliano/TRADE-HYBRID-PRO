@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { marketBuddy } from "../server/club-market-buddy";
 import Parser from "rss-parser";
 
 export const config = {
@@ -439,6 +440,8 @@ export default async function handler(req: any, res: any) {
   const path = Array.isArray(pathValue)
     ? pathValue.join("/")
     : String(pathValue || "");
+
+  if (req.method === "POST" && path === "market-buddy/chat") return marketBuddy(req, res, readRawBody);
 
   if (req.method === "GET" && path === "rss-feeds/sources") {
     res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=900");

@@ -27,7 +27,7 @@ export const CLUB_LINKS = {
   tradehouseArena: '/launch/tradehouse',
   battlesProof: 'https://hybridfunding.co/tradehouse',
   funding: env.VITE_FUNDING_URL || 'https://hybridfunding.co',
-  academy: env.VITE_ACADEMY_URL || '/learning-center',
+  academy: env.VITE_ACADEMY_URL || 'https://academy.tradehybrid.co',
   community: '/community',
   events: '/community',
 
@@ -38,6 +38,7 @@ export const CLUB_LINKS = {
 
   // Keep TV inside the Club shell, but source the real white-labelled channel.
   tv: '/tv',
+  news: 'https://news.tradehybrid.co',
   tvExternal: env.VITE_TV_URL || 'https://tv.tradehybrid.club',
 
   onboarding: '/onboarding',

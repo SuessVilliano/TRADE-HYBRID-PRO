@@ -25,7 +25,7 @@ export function ClubHeader() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="pro-theme-surface w-[88vw] max-w-sm border-white/[0.06] bg-[#07090f] p-0">
-              <MainSidebar mobile onClose={() => setOpen(false)} onNavItemClick={() => setOpen(false)} />
+              <MainSidebar mobile showClose={false} onClose={() => setOpen(false)} onNavItemClick={() => setOpen(false)} />
             </SheetContent>
           </Sheet>
 

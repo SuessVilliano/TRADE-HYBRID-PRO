@@ -90,7 +90,7 @@ import LearnEmbeddedPage from './pages/learn-embedded';
 import EducationalGamesPage from './pages/educational-games';
 import TradingFreedomPodcast from './pages/trading-freedom-podcast';
 import LearningCenterPage from './pages/learning-center';
-import LearningCenterNewPage from './pages/learning-center-new';
+import LearningCenterNewPage from './pages/academy-redirect';
 import CourseDetail from './components/learning/CourseDetail';
 import LessonDetail from './components/learning/LessonDetail';
 

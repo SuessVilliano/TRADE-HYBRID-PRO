@@ -1,498 +1,76 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Signal, TrendingUp, TrendingDown, Clock, AlertCircle, Copy, ExternalLink, Bell, BellOff, Settings } from 'lucide-react';
-import { notificationService, SignalNotification } from '../lib/notifications';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useEffect, useRef, useState } from 'react';
+import { Copy, RefreshCw, Signal } from 'lucide-react';
+import { notificationService } from '@/lib/notifications';
 import { authService } from '@/lib/services/auth-service';
-
-const SIGNAL_FEED_URL =
-  import.meta.env.VITE_SIGNALS_FEED_URL ||
-  'https://szcnpugeztcawwjcopob.supabase.co/functions/v1/club-signals-feed';
-
-interface TradingSignal {
-  id: string;
-  symbol: string;
-  type: 'buy' | 'sell';
-  entry: number;
-  stopLoss: number;
-  takeProfit: number;
-  timestamp: string;
-  source: string;
-  risk: number;
-  notes: string;
-  timeframe: string;
-  status: 'active' | 'closed' | 'cancelled';
-}
-
+import { CLUB_LINKS } from '@/lib/club-links';
+import { normalizeSignal, signalTimestamp, signalStatusLabel } from '@/lib/signal-model';
+const FEED = import.meta.env.VITE_SIGNALS_FEED_URL || 'https://szcnpugeztcawwjcopob.supabase.co/functions/v1/club-signals-feed';
+type FeedSignal = ReturnType<typeof normalizeSignal>;
 export function TradingSignals() {
-  const [signals, setSignals] = useState<TradingSignal[]>([]);
+  const [signals, setSignals] = useState<FeedSignal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedProvider, setSelectedProvider] = useState<string>('all');
-  const [selectedStatus, setSelectedStatus] = useState<string>('active');
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [previousSignals, setPreviousSignals] = useState<TradingSignal[]>([]);
-
-  const providers = useMemo(
-    () => ['all', ...Array.from(new Set(signals.map((signal) => signal.source).filter(Boolean))).sort()],
-    [signals],
-  );
-  const statusOptions = ['active', 'all', 'closed', 'cancelled'];
-
-  useEffect(() => {
-    fetchSignals();
-    
-    // Initialize notification settings
-    setNotificationsEnabled(notificationService.isEnabled());
-    
-    // Set up real-time updates every 30 seconds
-    const interval = setInterval(fetchSignals, 30000);
-    
-    return () => clearInterval(interval);
-  }, []);
-
-  // Check for new signals and send notifications
-  useEffect(() => {
-    if (previousSignals.length > 0 && signals.length > 0) {
-      const newSignals = signals.filter(signal => 
-        !previousSignals.some(prev => prev.id === signal.id)
-      );
-
-      // Send notifications for new signals
-      newSignals.forEach(signal => {
-        const signalNotification: SignalNotification = {
-          id: signal.id,
-          symbol: signal.symbol,
-          type: signal.type,
-          entry: signal.entry,
-          source: signal.source,
-          timestamp: signal.timestamp
-        };
-        
-        notificationService.showSignalNotification(signalNotification);
-      });
-    }
-    
-    // Update previous signals
-    if (signals.length > 0) {
-      setPreviousSignals(signals);
-    }
-  }, [signals, previousSignals]);
-
-  const fetchSignals = async () => {
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [provider, setProvider] = useState('all');
+  const [status, setStatus] = useState('all');
+  const [asOf, setAsOf] = useState<string | null>(null);
+  const active = useRef(true);
+  const busy = useRef(false);
+  const seen = useRef<Set<string> | null>(null);
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  async function refresh() {
+    if (busy.current) return;
+    busy.current = true;
+    setRefreshing(true);
     try {
-      const accessToken = await authService.getAccessToken();
-      if (!accessToken) {
-        setSignals([]);
-        setError('Sign in to Trade Hybrid Club to view signals.');
-        return;
-      }
-
-      const response = await fetch(`${SIGNAL_FEED_URL}?limit=150`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (response.status === 403) {
-        setSignals([]);
-        setError('An active Trade Hybrid membership is required to view live signals.');
-        return;
-      }
+      const token = await authService.getAccessToken();
+      if (!token) throw new Error('Sign in to Trade Hybrid Club to view signals.');
+      const [response, resultsResponse] = await Promise.all([
+        fetch(FEED + '?limit=250', { headers: { Authorization: 'Bearer ' + token }, signal: AbortSignal.timeout(15000) }),
+        fetch(FEED + '?limit=100&status=results', { headers: { Authorization: 'Bearer ' + token }, signal: AbortSignal.timeout(15000) })
+      ]);
+      const body = await response.json();
       if (!response.ok) {
-        throw new Error(data?.error || 'Failed to fetch canonical signals');
+        if ([401,403].includes(response.status) && active.current) setSignals([]);
+        throw new Error(response.status === 403 ? 'An active membership is required to view signals.' : body.error || 'Signal feed unavailable.');
       }
-
-      const transformedSignals = (data.signals || []).map((apiSignal: any) => {
-        const rawStatus = String(apiSignal.status || 'PENDING').toUpperCase();
-        const status: TradingSignal['status'] =
-          ['SL_HIT', 'TP3_HIT', 'CLOSED'].includes(rawStatus)
-            ? 'closed'
-            : rawStatus === 'INVALID'
-              ? 'cancelled'
-              : 'active';
-
-        return {
-          id: apiSignal.id,
-          symbol: apiSignal.symbol || 'UNKNOWN',
-          type: String(apiSignal.direction || 'LONG').toUpperCase() === 'SHORT' ? 'sell' : 'buy',
-          entry: Number(apiSignal.entryPrice || 0),
-          stopLoss: Number(apiSignal.stopLoss || 0),
-          takeProfit: Number(apiSignal.takeProfit || 0),
-          timestamp: apiSignal.entryTime || new Date().toISOString(),
-          source: apiSignal.provider || 'Unknown',
-          risk: apiSignal.riskDistance ? Number(apiSignal.riskDistance) : 0,
-          notes: apiSignal.strategyName
-            ? `${apiSignal.strategyName} · ${rawStatus}`
-            : `${apiSignal.assetClass || 'Market'} · ${rawStatus}`,
-          timeframe: apiSignal.assetClass || 'LIVE',
-          status,
-        } satisfies TradingSignal;
-      });
-
-      setSignals(transformedSignals);
-      setError(null);
-    } catch (err: any) {
-      console.error('Error fetching canonical signals:', err);
-      setError(err?.message || 'Failed to load trading signals. Please check your connection.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredSignals = signals.filter(signal => {
-    const providerMatch = selectedProvider === 'all' || signal.source === selectedProvider;
-    const statusMatch = selectedStatus === 'all' || signal.status === selectedStatus;
-    return providerMatch && statusMatch;
-  });
-
-  const copySignalToClipboard = async (signal: TradingSignal) => {
-    const signalText = `${signal.type.toUpperCase()} ${signal.symbol}
-Entry: ${signal.entry}
-Stop Loss: ${signal.stopLoss}
-Take Profit: ${signal.takeProfit}
-Risk: ${signal.risk}%
-Provider: ${signal.source}
-Notes: ${signal.notes}
-Time: ${new Date(signal.timestamp).toLocaleString()}`;
-
-    try {
-      await navigator.clipboard.writeText(signalText);
-      alert('Signal copied to clipboard!');
-    } catch (err) {
-      console.error('Failed to copy signal:', err);
-    }
-  };
-
-  const openInTradingPlatform = (signal: TradingSignal, platform: string) => {
-    // Open the trading platform with the signal data
-    const platforms = {
-      dxtrade: 'https://demo.dx.trade',
-      matchtrader: 'https://www.matchtrader.com',
-      ctrader: 'https://ctrader.com',
-      rithmic: 'https://rithmic.com'
-    };
-    
-    const url = platforms[platform as keyof typeof platforms];
-    if (url) {
-      window.open(url, '_blank');
-      // Copy signal data to clipboard for easy pasting
-      copySignalToClipboard(signal);
-    }
-  };
-
-  const getSignalColor = (type: 'buy' | 'sell') => {
-    return type === 'buy' ? 'text-green-400' : 'text-red-400';
-  };
-
-  const getSignalIcon = (type: 'buy' | 'sell') => {
-    return type === 'buy' ? TrendingUp : TrendingDown;
-  };
-
-  const getStatusBadge = (status: string) => {
-    const colors = {
-      active: 'bg-green-600',
-      closed: 'bg-blue-600',
-      cancelled: 'bg-red-600'
-    };
-    return colors[status as keyof typeof colors] || 'bg-gray-600';
-  };
-
-  const toggleNotifications = () => {
-    if (notificationsEnabled) {
-      notificationService.muteAll();
-    } else {
-      notificationService.unmuteAll();
-    }
-    setNotificationsEnabled(!notificationsEnabled);
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto"></div>
-            <p className="text-white mt-4">Loading trading signals...</p>
-          </div>
-        </div>
-      </div>
-    );
+      if (!resultsResponse.ok) throw new Error('Outcome history is unavailable. Please retry.');
+      const results = await resultsResponse.json();
+      const merged = Array.from(new Map([...(body.signals || []), ...(results.signals || [])].map(s => [s.id,s])).values()).sort((a:any,b:any)=>Date.parse(b.entryTime || '')-Date.parse(a.entryTime || ''));
+      const normalized = merged.map(normalizeSignal);
+      if (active.current && seen.current) normalized.filter(s => !seen.current!.has(s.id) && s.group !== 'closed' && s.entryPrice !== null && s.entryTime && Date.now() - Date.parse(s.entryTime) < 120000).forEach(s => notificationService.showSignalNotification({id:s.id,symbol:s.symbol,type:s.direction==='SHORT'?'sell':'buy',entry:s.entryPrice!,source:s.provider,timestamp:s.entryTime}));
+      seen.current = new Set(normalized.map(s => s.id));
+      if (active.current) { setSignals(normalized); setAsOf(new Date().toISOString()); setError(''); }
+    } catch (e) { if (active.current) setError(e instanceof Error ? e.message : 'Unable to refresh signals.'); }
+    finally { busy.current = false; if (active.current) { setLoading(false); setRefreshing(false); } }
   }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4 flex items-center justify-center gap-3">
-            <Signal className="h-10 w-10 text-blue-400" />
-            Live Trading Signals
-          </h1>
-          <p className="text-blue-200 text-lg">
-            Real-time trading signals from professional providers
-          </p>
-        </div>
-
-        {error && (
-          <Alert className="mb-6 bg-red-900/20 border-red-500/50">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="text-red-200">
-              {error}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Filters */}
-        <div className="flex flex-wrap gap-4 mb-6">
-          <div className="flex items-center gap-2">
-            <label className="text-white text-sm">Provider:</label>
-            <select
-              value={selectedProvider}
-              onChange={(e) => setSelectedProvider(e.target.value)}
-              className="bg-white/10 border border-white/20 rounded px-3 py-1 text-white"
-            >
-              {providers.map(provider => (
-                <option key={provider} value={provider} className="bg-gray-800">
-                  {provider === 'all' ? 'All Providers' : provider}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <label className="text-white text-sm">Status:</label>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="bg-white/10 border border-white/20 rounded px-3 py-1 text-white"
-            >
-              {statusOptions.map(status => (
-                <option key={status} value={status} className="bg-gray-800">
-                  {status === 'all' ? 'All Status' : status.charAt(0).toUpperCase() + status.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <Button
-            onClick={fetchSignals}
-            variant="outline"
-            className="border-blue-400 text-blue-400 hover:bg-blue-400 hover:text-white"
-          >
-            Refresh Signals
-          </Button>
-
-          <Button
-            onClick={toggleNotifications}
-            variant="outline"
-            className={`flex items-center gap-2 ${notificationsEnabled 
-              ? 'border-green-400 text-green-400 hover:bg-green-400' 
-              : 'border-gray-400 text-gray-400 hover:bg-gray-400'} hover:text-white`}
-          >
-            {notificationsEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
-            {notificationsEnabled ? 'Notifications On' : 'Notifications Off'}
-          </Button>
-        </div>
-
-        {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-white/5 border-white/10">
-            <CardContent className="p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-white">{signals.length}</p>
-                <p className="text-gray-300 text-sm">Total Signals</p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white/5 border-white/10">
-            <CardContent className="p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-400">
-                  {signals.filter(s => s.status === 'active').length}
-                </p>
-                <p className="text-gray-300 text-sm">Active Signals</p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white/5 border-white/10">
-            <CardContent className="p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-blue-400">
-                  {signals.filter(s => s.type === 'buy').length}
-                </p>
-                <p className="text-gray-300 text-sm">Buy Signals</p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white/5 border-white/10">
-            <CardContent className="p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-red-400">
-                  {signals.filter(s => s.type === 'sell').length}
-                </p>
-                <p className="text-gray-300 text-sm">Sell Signals</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Signals Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredSignals.length === 0 ? (
-            <div className="col-span-full text-center py-12">
-              <Signal className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg">No trading signals available</p>
-              <p className="text-gray-500 text-sm mt-2">
-                This page displays the canonical Trade Hybrid Signals Network feed — the same source used by the Hybrid Wall.
-                <br />
-                Demo signals have been removed to ensure data integrity.
-                <br />
-                New signals will appear automatically when webhooks are triggered.
-              </p>
-            </div>
-          ) : (
-            filteredSignals.map((signal) => {
-              const SignalIcon = getSignalIcon(signal.type);
-              
-              return (
-                <Card key={signal.id} className="bg-white/5 border-white/10 hover:bg-white/10 transition-colors">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <SignalIcon className={`h-5 w-5 ${getSignalColor(signal.type)}`} />
-                        <CardTitle className="text-white text-lg">{signal.symbol}</CardTitle>
-                      </div>
-                      <Badge className={getStatusBadge(signal.status)}>
-                        {signal.status}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="border-blue-400 text-blue-400">
-                        {signal.source}
-                      </Badge>
-                      <span className="text-gray-400 text-sm flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {signal.timeframe}
-                      </span>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <p className="text-gray-400">Action</p>
-                        <p className={`font-semibold ${getSignalColor(signal.type)}`}>
-                          {signal.type.toUpperCase()}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-400">Entry</p>
-                        <p className="text-white font-semibold">{signal.entry}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-400">Stop Loss</p>
-                        <p className="text-red-400 font-semibold">{signal.stopLoss}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-400">Take Profit</p>
-                        <p className="text-green-400 font-semibold">{signal.takeProfit}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="border-t border-white/10 pt-3">
-                      <p className="text-gray-400 text-sm mb-1">Notes</p>
-                      <p className="text-white text-sm">{signal.notes}</p>
-                    </div>
-                    
-                    <div className="text-gray-400 text-xs">
-                      {new Date(signal.timestamp).toLocaleString()}
-                    </div>
-                    
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        size="sm"
-                        onClick={() => copySignalToClipboard(signal)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
-                      >
-                        <Copy className="h-3 w-3 mr-1" />
-                        Copy
-                      </Button>
-                      
-                      <div className="relative group">
-                        <Button
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1" />
-                          Trade
-                        </Button>
-                        
-                        <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 rounded p-2 space-y-1 min-w-32 z-10">
-                          <button
-                            onClick={() => openInTradingPlatform(signal, 'dxtrade')}
-                            className="block w-full text-left text-white text-xs hover:bg-gray-700 p-1 rounded"
-                          >
-                            DX Trade
-                          </button>
-                          <button
-                            onClick={() => openInTradingPlatform(signal, 'matchtrader')}
-                            className="block w-full text-left text-white text-xs hover:bg-gray-700 p-1 rounded"
-                          >
-                            Match Trader
-                          </button>
-                          <button
-                            onClick={() => openInTradingPlatform(signal, 'ctrader')}
-                            className="block w-full text-left text-white text-xs hover:bg-gray-700 p-1 rounded"
-                          >
-                            cTrader
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
-        </div>
-        
-        {/* Provider Information */}
-        <Card className="mt-8 bg-white/5 border-white/10">
-          <CardHeader>
-            <CardTitle className="text-white">Signal Providers</CardTitle>
-            <CardDescription className="text-gray-300">
-              Live signals are sourced from the canonical Trade Hybrid Signals Network
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 bg-white/5 rounded-lg">
-                <h3 className="text-white font-semibold mb-2">Paradox</h3>
-                <p className="text-gray-300 text-sm">
-                  Specialized in momentum-based trading strategies with high accuracy rates
-                </p>
-              </div>
-              <div className="p-4 bg-white/5 rounded-lg">
-                <h3 className="text-white font-semibold mb-2">Solaris</h3>
-                <p className="text-gray-300 text-sm">
-                  Technical analysis experts focusing on chart patterns and key levels
-                </p>
-              </div>
-              <div className="p-4 bg-white/5 rounded-lg">
-                <h3 className="text-white font-semibold mb-2">Hybrid</h3>
-                <p className="text-gray-300 text-sm">
-                  Combines fundamental and technical analysis for comprehensive signals
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
+  useEffect(() => { active.current = true; refresh(); const timer = setInterval(refresh, 30000); return () => { active.current = false; clearInterval(timer); }; }, []);
+  async function copy(value: string, label: string) {
+    try { await navigator.clipboard.writeText(value); setFeedback(label + ' copied'); }
+    catch { setFeedback('Clipboard unavailable. Select the price and copy it manually.'); }
+  }
+  function price(signal: FeedSignal, label: string, value: number | null, hit = false) {
+    return <div key={label} className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+      <div className="text-xs text-slate-500 dark:text-slate-400">{label}{hit && <span className="ml-2 font-bold text-emerald-600 dark:text-emerald-400">Hit</span>}</div>
+      <div className="mt-1 flex items-center justify-between gap-2"><span className="font-semibold tabular-nums">{value ?? 'Not supplied'}</span>{value !== null && <button type="button" aria-label={'Copy ' + label + ' for ' + signal.symbol} title={'Copy ' + label} onClick={() => copy(String(value), label)} className="rounded-lg p-2 text-violet-700 hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-slate-800"><Copy size={15}/></button>}</div>
+    </div>;
+  }
+  const visible = signals.filter(s => (provider === 'all' || s.provider === provider) && (status === 'all' || s.group === status));
+  return <main className="min-h-screen bg-slate-50 p-4 text-slate-950 dark:bg-[#070b14] dark:text-white sm:p-8"><div className="mx-auto max-w-7xl">
+    <header className="mb-6"><div className="flex items-center gap-3"><Signal className="text-cyan-600"/><h1 className="text-3xl font-black">Hybrid Signals</h1></div><p className="mt-2 text-slate-500 dark:text-slate-400">Canonical provider signals and reported outcomes. Updates every 30 seconds.</p></header>
+    <div className="mb-4 flex flex-wrap items-center gap-3"><label>Provider <select aria-label="Signal provider" value={provider} onChange={e => setProvider(e.target.value)} className="ml-2 rounded-lg border bg-white p-2 dark:bg-slate-900"><option value="all">All providers</option>{Array.from(new Set(signals.map(s => s.provider).filter(Boolean))).map(p => <option key={p} value={p}>{p}</option>)}</select></label><label>Status <select aria-label="Signal status" value={status} onChange={e => setStatus(e.target.value)} className="ml-2 rounded-lg border bg-white p-2 dark:bg-slate-900">{['all','pending','active','closed','cancelled','unknown'].map(s => <option key={s} value={s}>{s === 'all' ? 'All signals' : s.charAt(0).toUpperCase() + s.slice(1)}</option>)}</select></label><button type="button" disabled={refreshing} onClick={refresh} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2"><RefreshCw size={16} className={refreshing ? 'animate-spin' : ''}/>Refresh</button></div>
+    <p className="mb-4 text-xs text-slate-500">Times shown in {timezone}, with UTC below each signal. {asOf && 'Last refresh: ' + signalTimestamp(asOf)}</p>
+    {error && <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">{error} {signals.length > 0 && 'Showing the last successful feed; results may be stale.'}</p>}
+    <p role="status" aria-live="polite" className="mb-3 min-h-5 text-sm text-violet-700 dark:text-violet-300">{feedback}</p>
+    <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">{[['Loaded',signals.length],['Pending',signals.filter(s=>s.group==='pending').length],['Active',signals.filter(s=>s.group==='active').length],['Results',signals.filter(s=>s.group==='closed').length]].map(([label,count])=><div key={label} className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"><p className="text-2xl font-bold">{count}</p><p className="text-sm text-slate-500">{label}</p></div>)}</div>
+    {loading ? <p>Loading signals…</p> : !visible.length ? <p className="rounded-xl border p-6">No signals match this filter.</p> : <div className="grid gap-5 lg:grid-cols-2">{visible.map(s => <article key={s.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex items-start justify-between gap-3"><div><h2 className="text-xl font-bold">{s.symbol} <span className={s.direction === 'SHORT' ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}>{s.direction === 'SHORT' ? 'SELL' : s.direction === 'LONG' ? 'BUY' : s.direction}</span></h2><p className="mt-1 text-sm text-slate-500">{s.provider} · {s.timeframe || 'Timeframe unavailable'}</p></div><span className={'rounded-full px-3 py-1 text-xs font-bold ' + (s.group === 'closed' ? 'bg-violet-100 text-violet-800' : s.group === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700')}>{signalStatusLabel(s.status)}</span></div>
+      <div className="mt-4 grid grid-cols-2 gap-2">{price(s,'Entry',s.entryPrice)}{price(s,'Stop loss',s.stopLoss,s.status==='SL_HIT')}{s.targets.map((v,i)=> price(s,'Take profit ' + (i+1),v, /^TP[123]_HIT$/.test(s.status) && Number(s.status[2]) >= i+1))}</div>
+      <p className="mt-4 text-sm text-slate-500">{s.strategyName || s.assetClass}</p>
+      <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm dark:bg-slate-800"><strong>Reported result: </strong>{s.group === 'closed' ? <>{s.closeReason || signalStatusLabel(s.status)}{s.exitPrice !== null && ' · Exit ' + s.exitPrice}{s.rValue !== null && ' · ' + s.rValue + 'R'}{s.pnlPct !== null && ' · ' + s.pnlPct + '%'}</> : s.status.startsWith('TP') ? signalStatusLabel(s.status) : 'Awaiting an outcome update'}{s.lastPrice !== null && <p className="mt-1">Last price: {s.lastPrice} · {signalTimestamp(s.lastPriceAt)}</p>}{s.closedAt && <p className="mt-1">Closed: {signalTimestamp(s.closedAt)}</p>}</div>
+      <div className="mt-4 text-xs leading-5 text-slate-500"><p>Signal: {signalTimestamp(s.entryTime)} · {timezone}</p><p>{signalTimestamp(s.entryTime,'UTC')} (UTC)</p></div>
+      <div className="mt-4 flex gap-3"><button type="button" className="flex-1 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-2 font-bold text-white" onClick={() => copy([s.direction + ' ' + s.symbol,'Entry: ' + (s.entryPrice ?? 'Not supplied'),'Stop loss: ' + (s.stopLoss ?? 'Not supplied'),...s.targets.map((v,i) => 'TP' + (i+1) + ': ' + (v ?? 'Not supplied')),signalStatusLabel(s.status),'Signal: ' + signalTimestamp(s.entryTime,'UTC')].join('\n'),'Signal')}>Copy signal</button><a href={CLUB_LINKS.abatev} target="_blank" rel="noreferrer" className="rounded-xl border px-4 py-2 font-bold">Open ABATEV ↗</a></div>
+    </article>)}</div>}
+  </div></main>;
 }

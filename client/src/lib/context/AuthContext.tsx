@@ -4,7 +4,11 @@ import { authService } from '../services/auth-service';
 
 // Define a more structured user type
 interface User {
-  id: number;
+  id: string | number;
+  displayName?: string | null;
+  createdAt?: string | null;
+  contact?: Record<string, string>;
+  entitlements?: { product_key: string; status: string; source: string; starts_at?: string | null; ends_at?: string | null }[];
   username: string;
   email: string;
   walletAddress?: string | null;

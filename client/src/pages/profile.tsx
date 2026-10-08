@@ -1,175 +1,21 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../lib/context/AuthContext';
-import { Button } from '../components/ui/button';
-import { Alert, AlertDescription } from '../components/ui/alert';
-import { LogOut, AlertCircle } from 'lucide-react';
-
-// Simple placeholder component until we implement the full layout
-const LayoutPlaceholder: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="min-h-screen bg-slate-900 p-6">
-    <div className="max-w-6xl mx-auto">
-      <header className="mb-6 p-4 bg-slate-800 rounded-lg shadow-sm">
-        <h1 className="text-2xl font-bold text-white">Trade Hybrid Platform</h1>
-      </header>
-      <main className="bg-slate-800 rounded-lg shadow-sm p-4 text-white">
-        {children}
-      </main>
-    </div>
-  </div>
-);
-
-// ProfileDashboard with real user data from context
-const ProfileDashboard: React.FC = () => {
-  const { currentUser, logout, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
-  
-  // Fallback user data if not authenticated
-  const userData = {
-    name: currentUser?.username || "Demo Trader",
-    accountType: currentUser?.membershipLevel || "Free",
-    joinDate: currentUser?.membershipExpiresAt 
-      ? new Date(currentUser.membershipExpiresAt).toISOString().split('T')[0] 
-      : new Date().toISOString().split('T')[0],
-    email: currentUser?.email || "user@example.com",
-    walletAddress: currentUser?.walletAddress || null,
-  };
-  
-  const handleSignOut = async () => {
-    try {
-      setIsLoggingOut(true);
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-  
-  return (
-    <div className="space-y-6">
-      {/* Profile Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 border-b border-slate-700 pb-6">
-        <div className="w-24 h-24 rounded-full bg-blue-900 flex items-center justify-center text-blue-300 text-2xl font-bold">
-          {userData.name.split(' ').map(n => n[0]).join('')}
-        </div>
-        <div className="flex-grow">
-          <h2 className="text-2xl font-bold text-white">{userData.name}</h2>
-          <div className="flex flex-wrap gap-2 mt-2">
-            <span className="bg-blue-900/50 text-blue-300 px-2 py-1 rounded text-xs">
-              {userData.accountType} Account
-            </span>
-            <span className="bg-slate-700 text-slate-300 px-2 py-1 rounded text-xs">
-              Member since {userData.joinDate}
-            </span>
-          </div>
-          {userData.email && (
-            <div className="text-sm text-slate-300 mt-2">{userData.email}</div>
-          )}
-          {userData.walletAddress && (
-            <div className="text-xs text-slate-400 mt-1 font-mono">
-              Wallet: {userData.walletAddress.substring(0, 6)}...{userData.walletAddress.substring(userData.walletAddress.length - 4)}
-            </div>
-          )}
-        </div>
-        <div>
-          <Button 
-            variant="destructive" 
-            onClick={handleSignOut}
-            disabled={isLoggingOut}
-            className="flex items-center gap-2"
-          >
-            <LogOut className="h-4 w-4" />
-            {isLoggingOut ? "Signing Out..." : "Sign Out"}
-          </Button>
-        </div>
-      </div>
-      
-      {!isAuthenticated && (
-        <Alert variant="destructive" className="bg-red-900/20 border-red-800 mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            You are not logged in. Please sign in to access all features.
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-slate-700 p-4 rounded-lg border border-slate-600">
-          <h3 className="text-lg font-medium mb-2 text-white">Trading Stats</h3>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-slate-300">Total Trades:</span>
-              <span className="text-white font-medium">{userData?.balance ? Math.floor(userData.balance / 1000) : 0}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-300">Success Rate:</span>
-              <span className="text-green-400 font-medium">72%</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-300">Total P&L:</span>
-              <span className="text-green-400 font-medium">+${userData?.balance?.toLocaleString() || '10,000'}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-slate-700 p-4 rounded-lg border border-slate-600">
-          <h3 className="text-lg font-medium mb-2 text-white">Achievement Progress</h3>
-          <div className="space-y-3">
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-slate-300 text-sm">Trading Veteran</span>
-                <span className="text-slate-300 text-sm">85%</span>
-              </div>
-              <div className="w-full bg-slate-600 rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: '85%' }}></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-slate-300 text-sm">Risk Manager</span>
-                <span className="text-slate-300 text-sm">92%</span>
-              </div>
-              <div className="w-full bg-slate-600 rounded-full h-2">
-                <div className="bg-green-600 h-2 rounded-full" style={{ width: '92%' }}></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-slate-700 p-4 rounded-lg border border-slate-600">
-          <h3 className="text-lg font-medium mb-2 text-white">Recent Activity</h3>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-300">BTCUSDT Trade</span>
-              <span className="text-green-400">+$245</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-300">Signal Followed</span>
-              <span className="text-blue-400">Solaris</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-300">Account Connected</span>
-              <span className="text-yellow-400">Alpaca</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-300">Webhook Created</span>
-              <span className="text-purple-400">SV</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default function ProfileView() {
-  return (
-    <LayoutPlaceholder>
-      <ProfileDashboard />
-    </LayoutPlaceholder>
-  );
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '@/lib/context/AuthContext';
+import { authService } from '@/lib/services/auth-service';
+import { ClubWallet } from '@/components/ui/club-wallet';
+import { CLUB_LINKS } from '@/lib/club-links';
+const fields = [['fullName','Full name'],['phone','Phone'],['addressLine1','Address'],['addressLine2','Apartment / suite'],['city','City'],['region','State / region'],['postalCode','Postal code'],['country','Country'],['timezone','Timezone']] as const;
+export function ClubAccount() {
+  const { currentUser, getCurrentUser, logout } = useAuth();
+  const [contact,setContact] = useState<Record<string,string>>({});
+  const [busy,setBusy] = useState(false);
+  const [feedback,setFeedback] = useState('');
+  useEffect(()=>{setContact(currentUser?.contact || {});},[currentUser]);
+  async function save(e: React.FormEvent) { e.preventDefault();setBusy(true);setFeedback('');try {await authService.updateContact(contact);await getCurrentUser();setFeedback('Your contact details have been saved.');}catch(e){setFeedback(e instanceof Error ? e.message : 'Unable to save details.');}finally{setBusy(false);}}
+  return <div className="space-y-5"><section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"><div className="flex flex-wrap items-start justify-between gap-4"><div><h2 className="text-2xl font-black">{currentUser?.displayName || currentUser?.username || 'Your account'}</h2><p className="mt-2">{currentUser?.email}</p><p className="mt-1 text-sm text-slate-500">{currentUser?.membershipLevel} access{currentUser?.createdAt && ' · Member since ' + new Date(currentUser.createdAt).toLocaleDateString()}</p></div><button onClick={()=>logout()} className="rounded-xl border px-4 py-2 font-semibold">Sign out</button></div><p className="mt-4 break-all text-xs text-slate-500">Club identity: {currentUser?.id}</p></section>
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"><h2 className="text-xl font-bold">Membership & billing</h2><p className="my-3 text-sm text-slate-500">Your verified Club access is shown below. Payment methods, invoices, and subscription changes are managed securely in Whop.</p><ul className="mb-4 space-y-2">{currentUser?.entitlements?.length ? currentUser.entitlements.map((e,i)=><li key={i} className="flex flex-wrap gap-2 rounded-lg bg-slate-50 p-3 text-sm dark:bg-slate-800"><strong>{e.product_key.replaceAll('_',' ')}</strong><span>{e.status} · {e.source}</span>{e.ends_at && <span>Until {new Date(e.ends_at).toLocaleDateString()}</span>}</li>) : <li>No active product access found.</li>}</ul><a href="https://whop.com/hub/" target="_blank" rel="noreferrer" className="inline-block rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-2 font-bold text-white">Manage Whop membership ↗</a></section>
+    <form onSubmit={save} className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"><h2 className="text-xl font-bold">Personal details</h2><p className="my-3 text-sm text-slate-500">Saved to your Club account. Your sign-in email is {currentUser?.email}. Contact details are not automatically shared with legacy apps.</p><div className="grid gap-4 sm:grid-cols-2">{fields.map(([key,label])=><label key={key} className="text-sm font-medium">{label}<input autoComplete={key==='fullName'?'name':key==='phone'?'tel':key==='addressLine1'?'address-line1':key==='addressLine2'?'address-line2':key==='city'?'address-level2':key==='region'?'address-level1':key==='postalCode'?'postal-code':key==='country'?'country-name':'off'} maxLength={200} value={contact[key] || ''} onChange={e=>setContact({...contact,[key]:e.target.value})} className="mt-1 block w-full rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-950"/></label>)}</div><button type="submit" disabled={busy} className="mt-4 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 px-5 py-3 font-bold text-white disabled:opacity-50">{busy ? 'Saving…' : 'Save personal details'}</button><p role="status" aria-live="polite" className="mt-3 text-sm">{feedback}</p></form>
+    <ClubWallet/>
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"><h2 className="text-xl font-bold">Your apps</h2><div className="mt-4 flex flex-wrap gap-3">{[['Academy',CLUB_LINKS.academy],['Hybrid Journal',CLUB_LINKS.journal],['Hybrid Copy',CLUB_LINKS.copy],['ABATEV',CLUB_LINKS.abatev]].map(([name,url])=><a key={name} href={url} target="_blank" rel="noreferrer" className="rounded-xl border px-4 py-2 text-sm font-semibold">{name} ↗</a>)}</div></section>
+  </div>;
 }
+export default function ProfileView() {return <main className="min-h-screen bg-slate-50 p-4 text-slate-950 dark:bg-[#070b14] dark:text-white sm:p-8"><div className="mx-auto max-w-5xl"><h1 className="mb-6 text-3xl font-black">Your Club profile</h1><ClubAccount/></div></main>;}

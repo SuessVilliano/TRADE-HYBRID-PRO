@@ -14,6 +14,7 @@ import {
   Music2,
   Network,
   Radio,
+  Newspaper,
   Settings,
   Swords,
   Target,
@@ -100,9 +101,10 @@ function Group({ title, items, isActive }: {
 export const MainSidebar: React.FC<{
   onClose?: () => void;
   mobile?: boolean;
+  showClose?: boolean;
   className?: string;
   onNavItemClick?: () => void;
-}> = ({ onClose, mobile = false, className = '', onNavItemClick }) => {
+}> = ({ onClose, mobile = false, showClose = true, className = '', onNavItemClick }) => {
   const { pathname } = useLocation();
   const { isAuthenticated, currentUser, logout } = useAuth();
 
@@ -146,7 +148,8 @@ export const MainSidebar: React.FC<{
       title: 'Club',
       items: [
         { label: 'Community', href: CLUB_LINKS.community, icon: <Users className="h-4 w-4" /> },
-        { label: 'Hybrid TV', href: CLUB_LINKS.tv, icon: <Radio className="h-4 w-4" /> },
+        { label: 'TH TV', href: CLUB_LINKS.tv, icon: <Radio className="h-4 w-4" /> },
+        { label: 'News', href: CLUB_LINKS.news, icon: <Newspaper className="h-4 w-4" /> },
       ],
     },
     {
@@ -183,7 +186,7 @@ export const MainSidebar: React.FC<{
                 <span className="block text-[9px] font-bold uppercase tracking-[0.28em] text-cyan-400">Club OS</span>
               </span>
             </Link>
-            {mobile && (
+            {mobile && showClose && (
               <Button variant="ghost" size="icon" onClick={onClose} className="text-slate-500">
                 <X className="h-5 w-5" />
               </Button>

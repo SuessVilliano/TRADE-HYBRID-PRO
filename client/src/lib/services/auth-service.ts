@@ -158,6 +158,8 @@ async function mapSupabaseUser(user: any, accessToken: string) {
     email: user.email || '',
     profileImage: profile?.avatar_url || null,
     displayName: profile?.display_name || user.user_metadata?.display_name || null,
+    createdAt: user.created_at || profile?.created_at || null,
+    contact: user.user_metadata?.club_contact || {},
     authenticated: true,
     membershipLevel: membershipFromEntitlements(entitlements),
     entitlements: activeEntitlements(entitlements),
@@ -168,6 +170,15 @@ async function mapSupabaseUser(user: any, accessToken: string) {
 }
 
 export const authService = {
+  async updateContact(contact: Record<string, string>) {
+    const session = await getValidSession();
+    if (!session?.access_token) throw new Error('Please sign in again.');
+    const allowed = ['fullName','phone','addressLine1','addressLine2','city','region','postalCode','country','timezone'];
+    const clean = Object.fromEntries(allowed.map(key => [key, String(contact[key] || '').trim().slice(0,200)]));
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, { method: 'PUT', headers: authHeaders(session.access_token), body: JSON.stringify({ data: { club_contact: clean } }) });
+    if (!response.ok) throw new Error('Your contact details could not be saved. Please retry.');
+    return mapSupabaseUser(await response.json(), session.access_token);
+  },
   async getAccessToken() {
     const session = await getValidSession();
     return session?.access_token || null;
