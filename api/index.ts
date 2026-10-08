@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import Parser from "rss-parser";
+import OpenAI from "openai";
 
 export const config = {
   api: {
@@ -155,6 +156,54 @@ async function readRawBody(req: any) {
     chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
   }
   return Buffer.concat(chunks);
+}
+
+const MARKET_BUDDY_SYSTEM_PROMPT = `You are Market Buddy, the Trade Hybrid Club AI companion.
+Help members think through trading plans, journal context, market questions, risk rules, platform navigation, and learning.
+Use the member's supplied WHY, goals, preferred markets, challenges, and recent conversation when relevant.
+Be concise and practical. Do not promise outcomes, manufacture live market data, or claim that an order was placed.
+For trade requests, discuss the request and risk considerations, but require the member to use the platform's explicit Trade flow for execution.`;
+
+function marketBuddyModel() {
+  return process.env.MARKET_BUDDY_MODEL || "openai/gpt-5.6-sol";
+}
+
+function marketBuddyClient() {
+  const apiKey = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || "";
+  if (!apiKey) throw new Error("Market Buddy AI Gateway authentication is unavailable");
+  return new OpenAI({
+    apiKey,
+    baseURL: "https://ai-gateway.vercel.sh/v1",
+  });
+}
+
+async function readJsonBody(req: any) {
+  const raw = await readRawBody(req);
+  if (!raw.length) return {};
+  return JSON.parse(raw.toString("utf8"));
+}
+
+function assistantText(value: unknown) {
+  return String(value || "").replace(/^\`\`\`(?:json)?\s*/i, "").replace(/\s*\`\`\`$/, "").trim();
+}
+
+function parseAssistantJson(value: unknown) {
+  const text = assistantText(value);
+  try {
+    return JSON.parse(text);
+  } catch {
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      try { return JSON.parse(text.slice(start, end + 1)); } catch {}
+    }
+  }
+  return {};
+}
+
+function clampNumber(value: unknown, min: number, max: number, fallback: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
 }
 
 function getHeader(req: any, name: string) {
@@ -439,6 +488,157 @@ export default async function handler(req: any, res: any) {
   const path = Array.isArray(pathValue)
     ? pathValue.join("/")
     : String(pathValue || "");
+
+  if (req.method === "POST" && path === "ai/chat-stream") {
+    try {
+      const body = await readJsonBody(req);
+      const message = String(body?.message || "").trim();
+      if (!message) return res.status(400).json({ error: "Message is required." });
+
+      const context = body?.context || {};
+      const recent = Array.isArray(context?.recentMessages)
+        ? context.recentMessages.slice(-8).map((item: any) => ({
+            role: item?.type === "ai" ? "assistant" : "user",
+            content: String(item?.message || ""),
+          })).filter((item: any) => item.content)
+        : [];
+
+      const journey = context?.memberJourney || null;
+      const system = MARKET_BUDDY_SYSTEM_PROMPT +
+        (journey ? "\nMember journey context: " + JSON.stringify(journey) : "") +
+        (context?.currentAnalysis ? "\nCurrent screen-analysis context: " + JSON.stringify(context.currentAnalysis) : "");
+
+      const stream = await marketBuddyClient().chat.completions.create({
+        model: marketBuddyModel(),
+        messages: [
+          { role: "system", content: system },
+          ...recent,
+          { role: "user", content: message },
+        ] as any,
+        stream: true,
+      });
+
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+      res.setHeader("Cache-Control", "no-cache, no-transform");
+      res.setHeader("Connection", "keep-alive");
+
+      for await (const chunk of stream) {
+        const delta = chunk.choices?.[0]?.delta?.content;
+        if (delta) res.write("data: " + JSON.stringify({ chunk: delta }) + "\n\n");
+      }
+      res.write("data: [DONE]\n\n");
+      return res.end();
+    } catch (error) {
+      console.error("[market-buddy] chat failed", error);
+      if (!res.headersSent) {
+        return res.status(503).json({ error: "Market Buddy is temporarily unavailable." });
+      }
+      try { res.write("data: " + JSON.stringify({ chunk: "\nMarket Buddy is temporarily unavailable." }) + "\n\n"); } catch {}
+      return res.end();
+    }
+  }
+
+  if (req.method === "POST" && path === "ai/voice-trading") {
+    try {
+      const body = await readJsonBody(req);
+      const command = String(body?.command || "").trim();
+      if (!command) return res.status(400).json({ error: "Voice transcript is required." });
+
+      const completion = await marketBuddyClient().chat.completions.create({
+        model: marketBuddyModel(),
+        messages: [
+          {
+            role: "system",
+            content: MARKET_BUDDY_SYSTEM_PROMPT + `
+You are responding to a speech-to-text transcript.
+Return JSON only with: intent, confidence, response, action.
+intent must be one of assistant, analysis, price, trade_request.
+confidence is 0 to 1. action is null unless a non-execution UI action is appropriate.
+Never claim a trade was executed and do not return a tradeCommand object.`,
+          },
+          {
+            role: "user",
+            content: "Transcript: " + command + "\nContext: " + JSON.stringify(body?.context || {}),
+          },
+        ],
+      });
+
+      const parsed: any = parseAssistantJson(completion.choices?.[0]?.message?.content);
+      return res.status(200).json({
+        success: true,
+        intent: ["assistant", "analysis", "price", "trade_request"].includes(parsed?.intent) ? parsed.intent : "assistant",
+        confidence: clampNumber(parsed?.confidence, 0, 1, 0.85),
+        response: String(parsed?.response || "I heard you. What would you like Market Buddy to help you work through?"),
+        action: parsed?.action || null,
+      });
+    } catch (error) {
+      console.error("[market-buddy] voice transcript failed", error);
+      return res.status(503).json({
+        success: false,
+        error: "Market Buddy voice is temporarily unavailable.",
+      });
+    }
+  }
+
+  if (req.method === "POST" && path === "ai/analyze-screen") {
+    try {
+      const body = await readJsonBody(req);
+      const image = String(body?.image || "");
+      if (!image.startsWith("data:image/")) {
+        return res.status(400).json({ error: "A shared-screen image is required." });
+      }
+
+      const journey = body?.memberJourney || null;
+      const completion = await marketBuddyClient().chat.completions.create({
+        model: marketBuddyModel(),
+        messages: [
+          {
+            role: "system",
+            content: MARKET_BUDDY_SYSTEM_PROMPT + `
+Analyze only what is visible in the shared trading screen.
+Return JSON only with sentiment, confidence, riskLevel, suggestions, tradePlanCompliance, alerts.
+sentiment: bullish|bearish|neutral. confidence and tradePlanCompliance: 0-100.
+riskLevel: low|medium|high. suggestions and alerts: short string arrays.
+Do not invent prices, positions, indicators, or signals that are not visible.`,
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Review this screen against the member journey context: " + JSON.stringify(journey),
+              },
+              {
+                type: "image_url",
+                image_url: { url: image, detail: "low" },
+              },
+            ],
+          } as any,
+        ],
+      });
+
+      const parsed: any = parseAssistantJson(completion.choices?.[0]?.message?.content);
+      const sentiment = ["bullish", "bearish", "neutral"].includes(parsed?.sentiment) ? parsed.sentiment : "neutral";
+      const riskLevel = ["low", "medium", "high"].includes(parsed?.riskLevel) ? parsed.riskLevel : "medium";
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          sentiment,
+          confidence: clampNumber(parsed?.confidence, 0, 100, 50),
+          riskLevel,
+          suggestions: Array.isArray(parsed?.suggestions) ? parsed.suggestions.slice(0, 5).map(String) : [],
+          tradePlanCompliance: clampNumber(parsed?.tradePlanCompliance, 0, 100, 75),
+          alerts: Array.isArray(parsed?.alerts) ? parsed.alerts.slice(0, 3).map(String) : [],
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("[market-buddy] screen analysis failed", error);
+      return res.status(503).json({ error: "Market Buddy screen analysis is temporarily unavailable." });
+    }
+  }
 
   if (req.method === "GET" && path === "rss-feeds/sources") {
     res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=900");

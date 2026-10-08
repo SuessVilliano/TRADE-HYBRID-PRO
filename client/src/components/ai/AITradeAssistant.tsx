@@ -32,9 +32,10 @@ interface TradeAnalysis {
 
 interface AITradeAssistantProps {
   className?: string;
+  focusMode?: boolean;
 }
 
-export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
+export function AITradeAssistant({ className = "", focusMode = false }: AITradeAssistantProps) {
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -54,6 +55,7 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const lastScreenAnalysisAtRef = useRef(0);
 
   // Load the member's WHY, goals, markets, challenges, and game plan once.
   useEffect(() => {
@@ -160,8 +162,12 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
       // Convert canvas to base64 image
       const imageData = canvas.toDataURL('image/jpeg', 0.8);
 
-      // Send frame for AI analysis every 5 seconds to avoid overwhelming
-      if (Math.random() < 0.1) { // 10% chance each frame (roughly every 3 seconds at 30fps)
+      // Keep screen analysis intentionally bounded. The old implementation used
+      // a random chance on every animation frame, which could generate multiple
+      // AI calls per second on a 30fps stream.
+      const now = Date.now();
+      if (now - lastScreenAnalysisAtRef.current >= 10_000) {
+        lastScreenAnalysisAtRef.current = now;
         await analyzeScreenContent(imageData);
       }
 
@@ -299,7 +305,9 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
 
       if (response.ok && response.body) {
         const reader = response.body.getReader();
+        const decoder = new TextDecoder();
         let aiResponseMessage = '';
+        let sseBuffer = '';
 
         const aiMessage = {
           id: (Date.now() + 1).toString(),
@@ -310,38 +318,52 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
 
         setChatMessages(prev => [...prev, aiMessage]);
 
+        const applyEvent = (eventBlock: string) => {
+          const dataLine = eventBlock
+            .split('\n')
+            .find((line) => line.startsWith('data: '));
+          if (!dataLine) return false;
+
+          const data = dataLine.slice(6);
+          if (data === '[DONE]') return true;
+
+          try {
+            const parsed = JSON.parse(data);
+            aiResponseMessage += String(parsed.chunk || '');
+            setChatMessages(prev =>
+              prev.map(msg =>
+                msg.id === aiMessage.id
+                  ? { ...msg, message: aiResponseMessage }
+                  : msg
+              )
+            );
+          } catch {
+            // Keep malformed/incomplete network data out of the visible chat.
+          }
+          return false;
+        };
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          const chunk = new TextDecoder().decode(value);
-          const lines = chunk.split('\n');
+          sseBuffer += decoder.decode(value, { stream: true });
+          const events = sseBuffer.split('\n\n');
+          sseBuffer = events.pop() || '';
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') {
-                setIsStreaming(false);
-                return;
-              }
-
-              try {
-                const parsed = JSON.parse(data);
-                aiResponseMessage += parsed.chunk;
-                
-                setChatMessages(prev => 
-                  prev.map(msg => 
-                    msg.id === aiMessage.id 
-                      ? { ...msg, message: aiResponseMessage }
-                      : msg
-                  )
-                );
-              } catch (e) {
-                // Skip invalid JSON
-              }
+          for (const eventBlock of events) {
+            if (applyEvent(eventBlock)) {
+              setIsStreaming(false);
+              return;
             }
           }
         }
+
+        sseBuffer += decoder.decode();
+        if (sseBuffer.trim()) applyEvent(sseBuffer);
+      } else {
+        const failure = await response.json().catch(() => ({}));
+        addAIMessage(failure?.error || 'Market Buddy is temporarily unavailable.');
       }
     } catch (error) {
       console.error('Chat error:', error);
@@ -370,9 +392,13 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
   }, [chatMessages]);
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={focusMode ? `flex flex-col gap-3 ${className}` : `space-y-4 ${className}`}>
       {/* Control Panel */}
-      <Card>
+      <details open={!focusMode} className={focusMode ? "order-2 rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-white/10 dark:bg-white/5" : ""}>
+        <summary className={focusMode ? "cursor-pointer list-none px-2 py-1 text-sm font-bold text-slate-700 dark:text-slate-200" : "hidden"}>
+          Screen & voice tools
+        </summary>
+        <Card className={focusMode ? "mt-2 border-0 bg-transparent shadow-none" : ""}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-blue-500" />
@@ -403,7 +429,9 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
             </Button>
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      </details>
+
 
       {/* Analysis Display */}
       {currentAnalysis && (
@@ -462,7 +490,7 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
       )}
 
       {/* Chat Interface - Fixed Height and Scrolling */}
-      <Card className="flex flex-col h-[500px]">
+      <Card className={`flex flex-col ${focusMode ? 'order-1 h-[calc(100dvh-11.5rem)] min-h-[520px] max-h-[760px]' : 'h-[500px]'}`}>
         <CardHeader className="flex-shrink-0 pb-3">
           <CardTitle className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-blue-500" />
@@ -473,8 +501,7 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
         <CardContent className="flex flex-col flex-1 overflow-hidden">
           <div 
             ref={chatContainerRef}
-            className="flex-1 overflow-y-auto space-y-3 p-3 border rounded-lg bg-slate-900/50 mb-4"
-            style={{ minHeight: '300px', maxHeight: '350px' }}
+            className="min-h-0 flex-1 space-y-3 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-slate-950/50"
           >
             {chatMessages.map((msg) => (
               <div
@@ -497,17 +524,18 @@ export function AITradeAssistant({ className = "" }: AITradeAssistantProps) {
             ))}
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex items-end gap-2">
             <input
               type="text"
               value={currentMessage}
               onChange={(e) => setCurrentMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-              placeholder="Ask Market Buddy about your plan, trades, Journal, alerts, or strategy..."
-              className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+              placeholder="Ask Market Buddy..."
+              aria-label="Ask Market Buddy"
+              className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-950 focus:outline-none focus:ring-2 focus:ring-primary dark:border-white/10 dark:bg-slate-950 dark:text-white"
               disabled={isStreaming}
             />
-            <Button onClick={sendMessage} disabled={isStreaming || !currentMessage.trim()}>
+            <Button className="shrink-0 px-4" onClick={sendMessage} disabled={isStreaming || !currentMessage.trim()}>
               Send
             </Button>
           </div>

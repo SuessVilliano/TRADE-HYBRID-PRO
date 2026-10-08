@@ -1,38 +1,82 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Signal, TrendingUp, TrendingDown, Clock, AlertCircle, Copy, ExternalLink, Bell, BellOff, Settings } from 'lucide-react';
-import { notificationService, SignalNotification } from '../lib/notifications';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  AlertCircle,
+  Bell,
+  BellOff,
+  Clock,
+  Copy,
+  ExternalLink,
+  Signal,
+  TrendingDown,
+  TrendingUp,
+} from 'lucide-react';
+import { notificationService, type SignalNotification } from '../lib/notifications';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { authService } from '@/lib/services/auth-service';
 
 const SIGNAL_FEED_URL =
   import.meta.env.VITE_SIGNALS_FEED_URL ||
   'https://szcnpugeztcawwjcopob.supabase.co/functions/v1/club-signals-feed';
 
+type DisplayStatus = 'pending' | 'active' | 'closed' | 'cancelled';
+
 interface TradingSignal {
   id: string;
   symbol: string;
   type: 'buy' | 'sell';
-  entry: number;
-  stopLoss: number;
-  takeProfit: number;
+  entry: number | null;
+  stopLoss: number | null;
+  tp1: number | null;
+  tp2: number | null;
+  tp3: number | null;
   timestamp: string;
   source: string;
-  risk: number;
-  notes: string;
+  risk: number | null;
+  assetClass: string;
   timeframe: string;
-  status: 'active' | 'closed' | 'cancelled';
+  canonicalStatus: string;
+  strategyName: string | null;
+  status: DisplayStatus;
 }
+
+const providerTimeframe = (provider: string) => {
+  const normalized = provider.toLowerCase();
+  if (normalized.includes('solaris')) return '5m';
+  if (normalized.includes('hybrid')) return '10m';
+  if (normalized.includes('paradox')) return '30m';
+  return 'Live';
+};
+
+const displayStatus = (rawStatus: string): DisplayStatus => {
+  if (rawStatus === 'PENDING') return 'pending';
+  if (rawStatus === 'INVALID') return 'cancelled';
+  if (['SL_HIT', 'TP3_HIT', 'CLOSED'].includes(rawStatus)) return 'closed';
+  return 'active';
+};
+
+const formatStatus = (status: string) => status.replaceAll('_', ' ');
+
+const numberOrNull = (value: unknown): number | null => {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const formatPrice = (value: number | null) => {
+  if (value === null) return '—';
+  if (Math.abs(value) < 10) return value.toFixed(5).replace(/0+$/, '').replace(/.$/, '');
+  return value.toLocaleString(undefined, { maximumFractionDigits: 4 });
+};
 
 export function TradingSignals() {
   const [signals, setSignals] = useState<TradingSignal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedProvider, setSelectedProvider] = useState<string>('all');
-  const [selectedStatus, setSelectedStatus] = useState<string>('active');
+  const [selectedProvider, setSelectedProvider] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('active');
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [previousSignals, setPreviousSignals] = useState<TradingSignal[]>([]);
 
@@ -40,47 +84,8 @@ export function TradingSignals() {
     () => ['all', ...Array.from(new Set(signals.map((signal) => signal.source).filter(Boolean))).sort()],
     [signals],
   );
-  const statusOptions = ['active', 'all', 'closed', 'cancelled'];
 
-  useEffect(() => {
-    fetchSignals();
-    
-    // Initialize notification settings
-    setNotificationsEnabled(notificationService.isEnabled());
-    
-    // Set up real-time updates every 30 seconds
-    const interval = setInterval(fetchSignals, 30000);
-    
-    return () => clearInterval(interval);
-  }, []);
-
-  // Check for new signals and send notifications
-  useEffect(() => {
-    if (previousSignals.length > 0 && signals.length > 0) {
-      const newSignals = signals.filter(signal => 
-        !previousSignals.some(prev => prev.id === signal.id)
-      );
-
-      // Send notifications for new signals
-      newSignals.forEach(signal => {
-        const signalNotification: SignalNotification = {
-          id: signal.id,
-          symbol: signal.symbol,
-          type: signal.type,
-          entry: signal.entry,
-          source: signal.source,
-          timestamp: signal.timestamp
-        };
-        
-        notificationService.showSignalNotification(signalNotification);
-      });
-    }
-    
-    // Update previous signals
-    if (signals.length > 0) {
-      setPreviousSignals(signals);
-    }
-  }, [signals, previousSignals]);
+  const statusOptions = ['active', 'pending', 'all', 'closed', 'cancelled'];
 
   const fetchSignals = async () => {
     try {
@@ -105,31 +110,29 @@ export function TradingSignals() {
         throw new Error(data?.error || 'Failed to fetch canonical signals');
       }
 
-      const transformedSignals = (data.signals || []).map((apiSignal: any) => {
-        const rawStatus = String(apiSignal.status || 'PENDING').toUpperCase();
-        const status: TradingSignal['status'] =
-          ['SL_HIT', 'TP3_HIT', 'CLOSED'].includes(rawStatus)
-            ? 'closed'
-            : rawStatus === 'INVALID'
-              ? 'cancelled'
-              : 'active';
+      const transformedSignals: TradingSignal[] = (data.signals || []).map((apiSignal: any) => {
+        const canonicalStatus = String(apiSignal.status || 'PENDING').toUpperCase();
+        const source = String(apiSignal.provider || 'Unknown');
+        const tp1 = numberOrNull(apiSignal.tp1 ?? apiSignal.takeProfit);
 
         return {
-          id: apiSignal.id,
-          symbol: apiSignal.symbol || 'UNKNOWN',
+          id: String(apiSignal.id),
+          symbol: String(apiSignal.symbol || 'UNKNOWN'),
           type: String(apiSignal.direction || 'LONG').toUpperCase() === 'SHORT' ? 'sell' : 'buy',
-          entry: Number(apiSignal.entryPrice || 0),
-          stopLoss: Number(apiSignal.stopLoss || 0),
-          takeProfit: Number(apiSignal.takeProfit || 0),
+          entry: numberOrNull(apiSignal.entryPrice),
+          stopLoss: numberOrNull(apiSignal.stopLoss),
+          tp1,
+          tp2: numberOrNull(apiSignal.tp2),
+          tp3: numberOrNull(apiSignal.tp3),
           timestamp: apiSignal.entryTime || new Date().toISOString(),
-          source: apiSignal.provider || 'Unknown',
-          risk: apiSignal.riskDistance ? Number(apiSignal.riskDistance) : 0,
-          notes: apiSignal.strategyName
-            ? `${apiSignal.strategyName} · ${rawStatus}`
-            : `${apiSignal.assetClass || 'Market'} · ${rawStatus}`,
-          timeframe: apiSignal.assetClass || 'LIVE',
-          status,
-        } satisfies TradingSignal;
+          source,
+          risk: numberOrNull(apiSignal.riskDistance),
+          assetClass: String(apiSignal.assetClass || 'OTHER').toUpperCase(),
+          timeframe: String(apiSignal.timeframe || providerTimeframe(source)),
+          canonicalStatus,
+          strategyName: apiSignal.strategyName ? String(apiSignal.strategyName) : null,
+          status: displayStatus(canonicalStatus),
+        };
       });
 
       setSignals(transformedSignals);
@@ -142,315 +145,304 @@ export function TradingSignals() {
     }
   };
 
-  const filteredSignals = signals.filter(signal => {
-    const providerMatch = selectedProvider === 'all' || signal.source === selectedProvider;
-    const statusMatch = selectedStatus === 'all' || signal.status === selectedStatus;
-    return providerMatch && statusMatch;
-  });
+  useEffect(() => {
+    fetchSignals();
+    setNotificationsEnabled(notificationService.isEnabled());
+    const interval = window.setInterval(fetchSignals, 30000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (previousSignals.length > 0 && signals.length > 0) {
+      const newSignals = signals.filter(
+        (signal) => !previousSignals.some((previous) => previous.id === signal.id),
+      );
+
+      newSignals.forEach((signal) => {
+        const notification: SignalNotification = {
+          id: signal.id,
+          symbol: signal.symbol,
+          type: signal.type,
+          entry: signal.entry ?? 0,
+          source: signal.source,
+          timestamp: signal.timestamp,
+        };
+        notificationService.showSignalNotification(notification);
+      });
+    }
+
+    if (signals.length > 0) setPreviousSignals(signals);
+  }, [signals, previousSignals]);
+
+  const filteredSignals = useMemo(
+    () =>
+      signals.filter((signal) => {
+        const providerMatch = selectedProvider === 'all' || signal.source === selectedProvider;
+        const statusMatch = selectedStatus === 'all' || signal.status === selectedStatus;
+        return providerMatch && statusMatch;
+      }),
+    [signals, selectedProvider, selectedStatus],
+  );
 
   const copySignalToClipboard = async (signal: TradingSignal) => {
+    const targets = [
+      signal.tp1 !== null ? `TP1: ${formatPrice(signal.tp1)}` : null,
+      signal.tp2 !== null ? `TP2: ${formatPrice(signal.tp2)}` : null,
+      signal.tp3 !== null ? `TP3: ${formatPrice(signal.tp3)}` : null,
+    ].filter(Boolean);
+
     const signalText = `${signal.type.toUpperCase()} ${signal.symbol}
-Entry: ${signal.entry}
-Stop Loss: ${signal.stopLoss}
-Take Profit: ${signal.takeProfit}
-Risk: ${signal.risk}%
 Provider: ${signal.source}
-Notes: ${signal.notes}
-Time: ${new Date(signal.timestamp).toLocaleString()}`;
+Asset: ${signal.assetClass}
+Timeframe: ${signal.timeframe}
+Entry: ${formatPrice(signal.entry)}
+Stop Loss: ${formatPrice(signal.stopLoss)}
+${targets.join('\n')}
+Status: ${formatStatus(signal.canonicalStatus)}
+${signal.strategyName ? `Strategy: ${signal.strategyName}\n` : ''}Time: ${new Date(signal.timestamp).toLocaleString()}`;
 
     try {
       await navigator.clipboard.writeText(signalText);
-      alert('Signal copied to clipboard!');
     } catch (err) {
       console.error('Failed to copy signal:', err);
     }
   };
 
   const openInTradingPlatform = (signal: TradingSignal, platform: string) => {
-    // Open the trading platform with the signal data
     const platforms = {
       dxtrade: 'https://demo.dx.trade',
       matchtrader: 'https://www.matchtrader.com',
       ctrader: 'https://ctrader.com',
-      rithmic: 'https://rithmic.com'
+      rithmic: 'https://rithmic.com',
     };
-    
+
     const url = platforms[platform as keyof typeof platforms];
-    if (url) {
-      window.open(url, '_blank');
-      // Copy signal data to clipboard for easy pasting
-      copySignalToClipboard(signal);
-    }
-  };
-
-  const getSignalColor = (type: 'buy' | 'sell') => {
-    return type === 'buy' ? 'text-green-400' : 'text-red-400';
-  };
-
-  const getSignalIcon = (type: 'buy' | 'sell') => {
-    return type === 'buy' ? TrendingUp : TrendingDown;
-  };
-
-  const getStatusBadge = (status: string) => {
-    const colors = {
-      active: 'bg-green-600',
-      closed: 'bg-blue-600',
-      cancelled: 'bg-red-600'
-    };
-    return colors[status as keyof typeof colors] || 'bg-gray-600';
+    if (!url) return;
+    window.open(url, '_blank', 'noopener,noreferrer');
+    copySignalToClipboard(signal);
   };
 
   const toggleNotifications = () => {
-    if (notificationsEnabled) {
-      notificationService.muteAll();
-    } else {
-      notificationService.unmuteAll();
-    }
-    setNotificationsEnabled(!notificationsEnabled);
+    if (notificationsEnabled) notificationService.muteAll();
+    else notificationService.unmuteAll();
+    setNotificationsEnabled((enabled) => !enabled);
+  };
+
+  const signalColor = (type: 'buy' | 'sell') =>
+    type === 'buy' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400';
+
+  const statusClass = (status: DisplayStatus) => {
+    const classes: Record<DisplayStatus, string> = {
+      pending: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200',
+      active: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200',
+      closed: 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-200',
+      cancelled: 'bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-200',
+    };
+    return classes[status];
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto"></div>
-            <p className="text-white mt-4">Loading trading signals...</p>
-          </div>
+      <div className="min-h-screen bg-slate-50 p-6 text-slate-950 dark:bg-[#070b14] dark:text-white">
+        <div className="mx-auto max-w-7xl text-center">
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-2 border-slate-200 border-b-blue-500 dark:border-white/10 dark:border-b-blue-400" />
+          <p className="mt-4 text-slate-600 dark:text-slate-300">Loading canonical signals...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4 flex items-center justify-center gap-3">
-            <Signal className="h-10 w-10 text-blue-400" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-white p-3 text-slate-950 dark:from-gray-900 dark:via-blue-950 dark:to-gray-950 dark:text-white sm:p-6">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-6 text-center sm:mb-8">
+          <h1 className="flex items-center justify-center gap-3 text-3xl font-black sm:text-4xl">
+            <Signal className="h-8 w-8 text-blue-500 sm:h-10 sm:w-10" />
             Live Trading Signals
           </h1>
-          <p className="text-blue-200 text-lg">
-            Real-time trading signals from professional providers
+          <p className="mt-2 text-sm text-slate-600 dark:text-blue-200 sm:text-lg">
+            Canonical Trade Hybrid Signals Network
           </p>
         </div>
 
         {error && (
-          <Alert className="mb-6 bg-red-900/20 border-red-500/50">
+          <Alert className="mb-6 border-rose-200 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-950/20">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="text-red-200">
-              {error}
-            </AlertDescription>
+            <AlertDescription className="text-rose-700 dark:text-rose-200">{error}</AlertDescription>
           </Alert>
         )}
 
-        {/* Filters */}
-        <div className="flex flex-wrap gap-4 mb-6">
-          <div className="flex items-center gap-2">
-            <label className="text-white text-sm">Provider:</label>
+        <div className="mb-6 flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-white/5">
+          <label className="min-w-[145px] flex-1 sm:flex-none">
+            <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Provider</span>
             <select
               value={selectedProvider}
-              onChange={(e) => setSelectedProvider(e.target.value)}
-              className="bg-white/10 border border-white/20 rounded px-3 py-1 text-white"
+              onChange={(event) => setSelectedProvider(event.target.value)}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-slate-900 dark:text-white"
             >
-              {providers.map(provider => (
-                <option key={provider} value={provider} className="bg-gray-800">
+              {providers.map((provider) => (
+                <option key={provider} value={provider}>
                   {provider === 'all' ? 'All Providers' : provider}
                 </option>
               ))}
             </select>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <label className="text-white text-sm">Status:</label>
+          </label>
+
+          <label className="min-w-[135px] flex-1 sm:flex-none">
+            <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Status</span>
             <select
               value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="bg-white/10 border border-white/20 rounded px-3 py-1 text-white"
+              onChange={(event) => setSelectedStatus(event.target.value)}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-slate-900 dark:text-white"
             >
-              {statusOptions.map(status => (
-                <option key={status} value={status} className="bg-gray-800">
-                  {status === 'all' ? 'All Status' : status.charAt(0).toUpperCase() + status.slice(1)}
+              {statusOptions.map((status) => (
+                <option key={status} value={status}>
+                  {status === 'all' ? 'All Statuses' : status.charAt(0).toUpperCase() + status.slice(1)}
                 </option>
               ))}
             </select>
-          </div>
+          </label>
 
-          <Button
-            onClick={fetchSignals}
-            variant="outline"
-            className="border-blue-400 text-blue-400 hover:bg-blue-400 hover:text-white"
-          >
-            Refresh Signals
+          <Button onClick={fetchSignals} variant="outline" className="border-blue-300 text-blue-700 dark:border-blue-400 dark:text-blue-300">
+            Refresh
           </Button>
 
           <Button
             onClick={toggleNotifications}
             variant="outline"
-            className={`flex items-center gap-2 ${notificationsEnabled 
-              ? 'border-green-400 text-green-400 hover:bg-green-400' 
-              : 'border-gray-400 text-gray-400 hover:bg-gray-400'} hover:text-white`}
+            className={notificationsEnabled ? 'border-emerald-300 text-emerald-700 dark:border-emerald-400 dark:text-emerald-300' : ''}
           >
-            {notificationsEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
-            {notificationsEnabled ? 'Notifications On' : 'Notifications Off'}
+            {notificationsEnabled ? <Bell className="mr-2 h-4 w-4" /> : <BellOff className="mr-2 h-4 w-4" />}
+            {notificationsEnabled ? 'Alerts on' : 'Alerts off'}
           </Button>
         </div>
 
-        {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-white/5 border-white/10">
-            <CardContent className="p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-white">{signals.length}</p>
-                <p className="text-gray-300 text-sm">Total Signals</p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white/5 border-white/10">
-            <CardContent className="p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-400">
-                  {signals.filter(s => s.status === 'active').length}
-                </p>
-                <p className="text-gray-300 text-sm">Active Signals</p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white/5 border-white/10">
-            <CardContent className="p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-blue-400">
-                  {signals.filter(s => s.type === 'buy').length}
-                </p>
-                <p className="text-gray-300 text-sm">Buy Signals</p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white/5 border-white/10">
-            <CardContent className="p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-red-400">
-                  {signals.filter(s => s.type === 'sell').length}
-                </p>
-                <p className="text-gray-300 text-sm">Sell Signals</p>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:mb-8 md:grid-cols-4">
+          {[
+            ['Total', signals.length],
+            ['Active', signals.filter((signal) => signal.status === 'active').length],
+            ['Pending', signals.filter((signal) => signal.status === 'pending').length],
+            ['Closed', signals.filter((signal) => signal.status === 'closed').length],
+          ].map(([label, value]) => (
+            <Card key={String(label)} className="border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
+              <CardContent className="p-4 text-center">
+                <p className="text-2xl font-black">{value}</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {/* Signals Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
           {filteredSignals.length === 0 ? (
-            <div className="col-span-full text-center py-12">
-              <Signal className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg">No trading signals available</p>
-              <p className="text-gray-500 text-sm mt-2">
-                This page displays the canonical Trade Hybrid Signals Network feed — the same source used by the Hybrid Wall.
-                <br />
-                Demo signals have been removed to ensure data integrity.
-                <br />
-                New signals will appear automatically when webhooks are triggered.
+            <div className="col-span-full py-12 text-center">
+              <Signal className="mx-auto mb-4 h-14 w-14 text-slate-300 dark:text-slate-600" />
+              <p className="text-lg font-bold text-slate-600 dark:text-slate-300">No signals match these filters.</p>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                This screen reads the same canonical signal source used by the Hybrid Wall.
               </p>
             </div>
           ) : (
             filteredSignals.map((signal) => {
-              const SignalIcon = getSignalIcon(signal.type);
-              
+              const SignalIcon = signal.type === 'buy' ? TrendingUp : TrendingDown;
+              const targets = [
+                ['TP1', signal.tp1],
+                ['TP2', signal.tp2],
+                ['TP3', signal.tp3],
+              ].filter(([, value]) => value !== null) as Array<[string, number]>;
+
               return (
-                <Card key={signal.id} className="bg-white/5 border-white/10 hover:bg-white/10 transition-colors">
+                <Card key={signal.id} className="overflow-hidden border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-white/5">
                   <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <SignalIcon className={`h-5 w-5 ${getSignalColor(signal.type)}`} />
-                        <CardTitle className="text-white text-lg">{signal.symbol}</CardTitle>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <SignalIcon className={`h-5 w-5 shrink-0 ${signalColor(signal.type)}`} />
+                        <CardTitle className="truncate text-xl">{signal.symbol}</CardTitle>
                       </div>
-                      <Badge className={getStatusBadge(signal.status)}>
-                        {signal.status}
-                      </Badge>
+                      <Badge className={statusClass(signal.status)}>{formatStatus(signal.canonicalStatus)}</Badge>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="border-blue-400 text-blue-400">
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                      <Badge variant="outline" className="border-blue-300 text-blue-700 dark:border-blue-400 dark:text-blue-300">
                         {signal.source}
                       </Badge>
-                      <span className="text-gray-400 text-sm flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {signal.timeframe}
+                      <span className="flex items-center gap-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        <Clock className="h-3.5 w-3.5" />
+                        {signal.assetClass} · {signal.timeframe}
                       </span>
                     </div>
                   </CardHeader>
-                  
-                  <CardContent className="space-y-3">
+
+                  <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div>
-                        <p className="text-gray-400">Action</p>
-                        <p className={`font-semibold ${getSignalColor(signal.type)}`}>
-                          {signal.type.toUpperCase()}
-                        </p>
+                        <p className="text-slate-500 dark:text-slate-400">Action</p>
+                        <p className={`font-black ${signalColor(signal.type)}`}>{signal.type.toUpperCase()}</p>
                       </div>
                       <div>
-                        <p className="text-gray-400">Entry</p>
-                        <p className="text-white font-semibold">{signal.entry}</p>
+                        <p className="text-slate-500 dark:text-slate-400">Entry</p>
+                        <p className="font-bold">{formatPrice(signal.entry)}</p>
                       </div>
                       <div>
-                        <p className="text-gray-400">Stop Loss</p>
-                        <p className="text-red-400 font-semibold">{signal.stopLoss}</p>
+                        <p className="text-slate-500 dark:text-slate-400">Stop Loss</p>
+                        <p className="font-bold text-rose-600 dark:text-rose-400">{formatPrice(signal.stopLoss)}</p>
                       </div>
                       <div>
-                        <p className="text-gray-400">Take Profit</p>
-                        <p className="text-green-400 font-semibold">{signal.takeProfit}</p>
+                        <p className="text-slate-500 dark:text-slate-400">Risk distance</p>
+                        <p className="font-bold">{signal.risk === null ? '—' : formatPrice(signal.risk)}</p>
                       </div>
                     </div>
-                    
-                    <div className="border-t border-white/10 pt-3">
-                      <p className="text-gray-400 text-sm mb-1">Notes</p>
-                      <p className="text-white text-sm">{signal.notes}</p>
+
+                    <div className="border-t border-slate-200 pt-3 dark:border-white/10">
+                      <p className="mb-2 text-xs font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">Targets</p>
+                      {targets.length > 0 ? (
+                        <div className="grid grid-cols-3 gap-2">
+                          {targets.map(([label, value]) => (
+                            <div key={label} className="rounded-xl bg-emerald-50 px-2 py-2 dark:bg-emerald-500/10">
+                              <p className="text-[10px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">{label}</p>
+                              <p className="truncate text-sm font-black text-emerald-700 dark:text-emerald-300">{formatPrice(value)}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-slate-500 dark:text-slate-400">No target supplied.</p>
+                      )}
                     </div>
-                    
-                    <div className="text-gray-400 text-xs">
-                      {new Date(signal.timestamp).toLocaleString()}
+
+                    <div className="border-t border-slate-200 pt-3 dark:border-white/10">
+                      <p className="text-sm font-semibold">
+                        {signal.strategyName || `${signal.source} signal`}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {new Date(signal.timestamp).toLocaleString()}
+                      </p>
                     </div>
-                    
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        size="sm"
-                        onClick={() => copySignalToClipboard(signal)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
-                      >
-                        <Copy className="h-3 w-3 mr-1" />
+
+                    <div className="flex gap-2 pt-1">
+                      <Button size="sm" onClick={() => copySignalToClipboard(signal)} className="flex-1 bg-blue-600 text-white hover:bg-blue-700">
+                        <Copy className="mr-1 h-3.5 w-3.5" />
                         Copy
                       </Button>
-                      
-                      <div className="relative group">
-                        <Button
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1" />
+
+                      <div className="group relative">
+                        <Button size="sm" className="bg-emerald-600 text-white hover:bg-emerald-700">
+                          <ExternalLink className="mr-1 h-3.5 w-3.5" />
                           Trade
                         </Button>
-                        
-                        <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 rounded p-2 space-y-1 min-w-32 z-10">
-                          <button
-                            onClick={() => openInTradingPlatform(signal, 'dxtrade')}
-                            className="block w-full text-left text-white text-xs hover:bg-gray-700 p-1 rounded"
-                          >
-                            DX Trade
-                          </button>
-                          <button
-                            onClick={() => openInTradingPlatform(signal, 'matchtrader')}
-                            className="block w-full text-left text-white text-xs hover:bg-gray-700 p-1 rounded"
-                          >
-                            Match Trader
-                          </button>
-                          <button
-                            onClick={() => openInTradingPlatform(signal, 'ctrader')}
-                            className="block w-full text-left text-white text-xs hover:bg-gray-700 p-1 rounded"
-                          >
-                            cTrader
-                          </button>
+                        <div className="absolute bottom-full right-0 z-20 mb-2 hidden min-w-36 rounded-xl border border-slate-200 bg-white p-2 shadow-xl group-hover:block dark:border-white/10 dark:bg-slate-900">
+                          {[
+                            ['DX Trade', 'dxtrade'],
+                            ['Match Trader', 'matchtrader'],
+                            ['cTrader', 'ctrader'],
+                          ].map(([label, platform]) => (
+                            <button
+                              key={platform}
+                              onClick={() => openInTradingPlatform(signal, platform)}
+                              className="block w-full rounded-lg px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
+                            >
+                              {label}
+                            </button>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -460,37 +452,14 @@ Time: ${new Date(signal.timestamp).toLocaleString()}`;
             })
           )}
         </div>
-        
-        {/* Provider Information */}
-        <Card className="mt-8 bg-white/5 border-white/10">
+
+        <Card className="mt-8 border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
           <CardHeader>
-            <CardTitle className="text-white">Signal Providers</CardTitle>
-            <CardDescription className="text-gray-300">
-              Live signals are sourced from the canonical Trade Hybrid Signals Network
+            <CardTitle>Signal source of truth</CardTitle>
+            <CardDescription>
+              Provider, asset class, status, entry, stop and all available targets come from the canonical Trade Hybrid Signals Network.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 bg-white/5 rounded-lg">
-                <h3 className="text-white font-semibold mb-2">Paradox</h3>
-                <p className="text-gray-300 text-sm">
-                  Specialized in momentum-based trading strategies with high accuracy rates
-                </p>
-              </div>
-              <div className="p-4 bg-white/5 rounded-lg">
-                <h3 className="text-white font-semibold mb-2">Solaris</h3>
-                <p className="text-gray-300 text-sm">
-                  Technical analysis experts focusing on chart patterns and key levels
-                </p>
-              </div>
-              <div className="p-4 bg-white/5 rounded-lg">
-                <h3 className="text-white font-semibold mb-2">Hybrid</h3>
-                <p className="text-gray-300 text-sm">
-                  Combines fundamental and technical analysis for comprehensive signals
-                </p>
-              </div>
-            </div>
-          </CardContent>
         </Card>
       </div>
     </div>
