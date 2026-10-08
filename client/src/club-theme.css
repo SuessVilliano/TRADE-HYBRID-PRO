@@ -1,0 +1,14 @@
+/* Club login/dashboard retain their layout and accents in both themes. */
+.light .pro-theme-surface{background:#f8fafc;color:#0f172a;color-scheme:light}
+.light .pro-theme-surface [class*="bg-white/"],.light .pro-theme-surface [class*="bg-black/"],.light .pro-theme-surface [class*="bg-[#"]{background-color:#fff}
+.light .pro-theme-surface [class*="border-white/"]{border-color:#e2e8f0}
+.light .pro-theme-surface [class*="text-white"]{color:#0f172a}
+.light .pro-theme-surface [class*="text-slate-"]{color:#475569}
+.light .pro-theme-surface [class*="text-cyan-"]{color:#0891b2}
+.light .pro-theme-surface [class*="text-emerald-"]{color:#047857}
+.light .pro-theme-surface [class*="text-purple-"],.light .pro-theme-surface [class*="text-violet-"]{color:#7c3aed}
+.light .pro-theme-surface input{background:#fff;color:#0f172a;border-color:#cbd5e1}
+.light .pro-theme-surface input::placeholder{color:#64748b}
+.light .pro-theme-surface [class*="bg-gradient-to-"][class*="text-white"],.light .pro-theme-surface button[class*="bg-cyan-"],.light .pro-theme-surface a[class*="bg-cyan-"]{color:#fff}
+.light .pro-theme-surface [class*="hover:bg-white/"]:hover{background-color:#f1f5f9}
+.light .pro-theme-surface [class*="hover:text-white"]:hover{color:#0f172a}

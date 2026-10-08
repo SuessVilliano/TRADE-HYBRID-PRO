@@ -5,6 +5,7 @@ import { ThemeProvider } from './lib/hooks/useTheme';
 import { MarketMoodProvider } from './lib/context/MarketMoodContext';
 import App from './App';
 import './index.css';
+import './club-theme.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

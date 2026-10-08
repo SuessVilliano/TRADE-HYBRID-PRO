@@ -14,7 +14,7 @@ export function ClubHeader() {
   const { resolvedTheme, toggleTheme } = useTheme();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#07090f]/95 text-white backdrop-blur-2xl">
+    <header className="pro-theme-surface sticky top-0 z-40 border-b border-white/[0.06] bg-[#07090f]/95 text-white backdrop-blur-2xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-8">
         <div className="flex items-center gap-3">
           <Sheet open={open} onOpenChange={setOpen}>
@@ -24,7 +24,7 @@ export function ClubHeader() {
                 <span className="sr-only">Open Club menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[88vw] max-w-sm border-white/[0.06] bg-[#07090f] p-0">
+            <SheetContent side="left" className="pro-theme-surface w-[88vw] max-w-sm border-white/[0.06] bg-[#07090f] p-0">
               <MainSidebar mobile onClose={() => setOpen(false)} onNavItemClick={() => setOpen(false)} />
             </SheetContent>
           </Sheet>

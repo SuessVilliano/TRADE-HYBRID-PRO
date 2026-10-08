@@ -13,8 +13,8 @@ const CLUB_THEME_VERSION = '2-light-default';
 const CLUB_THEME_VERSION_KEY = 'trade-hybrid-theme-version';
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: 'dark',
-  resolvedTheme: 'dark',
+  theme: 'light',
+  resolvedTheme: 'light',
   setTheme: () => {},
   toggleTheme: () => {},
 });
@@ -28,24 +28,16 @@ interface ThemeProviderProps {
 
 // Helper function to get system preference
 const getSystemTheme = (): 'light' | 'dark' => {
-  if (typeof window === 'undefined') return 'dark';
+  if (typeof window === 'undefined') return 'light';
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 };
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   children,
-  defaultTheme = 'dark',
+  defaultTheme = 'light',
 }) => {
-  const [theme, setThemeState] = useState<ThemeType>(() => {
-    if (typeof window === 'undefined') return defaultTheme;
-    const version = localStorage.getItem(CLUB_THEME_VERSION_KEY);
-    const savedTheme = localStorage.getItem('theme') as ThemeType | null;
-
-    // Migrate the old dark-by-default Club once. After this migration,
-    // explicit member choices continue to persist normally.
-    if (version !== CLUB_THEME_VERSION) return defaultTheme;
-    return savedTheme || defaultTheme;
-  });
+  // Start every visit in light mode; toggles apply for this visit.
+  const [theme, setThemeState] = useState<ThemeType>(defaultTheme);
   
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(
     theme === 'system' ? getSystemTheme() : (theme as 'light' | 'dark')

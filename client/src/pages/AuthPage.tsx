@@ -41,7 +41,7 @@ export function AuthPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#080a10] p-4 text-white">
+    <div className="pro-theme-surface relative flex min-h-screen items-center justify-center overflow-hidden bg-[#080a10] p-4 text-white">
       <div className="pointer-events-none absolute inset-0 opacity-60 [background-image:linear-gradient(rgba(255,255,255,.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.018)_1px,transparent_1px)] [background-size:40px_40px]" />
       <div className="pointer-events-none absolute left-1/2 top-[-180px] h-[520px] w-[820px] -translate-x-1/2 rounded-full bg-cyan-500/[0.08] blur-[140px]" />
 

@@ -195,7 +195,7 @@ export default function ClubDashboard() {
   ];
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#080a10] px-4 pb-20 pt-8 text-white sm:px-8 lg:px-10">
+    <main className="pro-theme-surface relative min-h-screen overflow-hidden bg-[#080a10] px-4 pb-20 pt-8 text-white sm:px-8 lg:px-10">
       <div className="pointer-events-none absolute inset-0 opacity-50 [background-image:linear-gradient(rgba(255,255,255,.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.018)_1px,transparent_1px)] [background-size:40px_40px]" />
       <div className="pointer-events-none absolute left-1/2 top-0 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-cyan-500/[0.045] blur-[120px]" />
       <div className="pointer-events-none absolute right-[-120px] top-[260px] h-[420px] w-[420px] rounded-full bg-violet-500/[0.055] blur-[110px]" />
