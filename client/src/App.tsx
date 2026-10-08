@@ -48,6 +48,7 @@ import LandingPage from './pages/landing';
 import ClubHome from './pages/club-home';
 import PrivacyPolicyPage from './pages/privacy-policy';
 import TermsOfServicePage from './pages/terms-of-service';
+import CheckoutCompletePage from './pages/checkout-complete';
 import ForgotPasswordPage from './pages/forgot-password';
 import { ClubLoader } from './components/club/club-loader';
 import ClubDashboard from './pages/club-dashboard';
@@ -109,6 +110,22 @@ import NexusPanelPage from './pages/nexus-panel';
 import MarketDataPage from './pages/MarketDataPage';
 import AiMarketAnalysisPage from './pages/ai-market-analysis-page';
 
+const ExternalAppRedirect: React.FC<{ href: string; label?: string }> = ({ href, label = 'Opening Trade Hybrid product…' }) => {
+  React.useEffect(() => {
+    window.location.replace(href);
+  }, [href]);
+
+  return (
+    <main className="grid min-h-[70vh] place-items-center bg-[#07090f] px-5 text-center text-white">
+      <div>
+        <div className="mx-auto h-9 w-9 animate-spin rounded-full border-2 border-white/10 border-t-cyan-300" />
+        <p className="mt-4 text-sm text-slate-400">{label}</p>
+        <a href={href} className="mt-3 inline-block text-sm font-black text-cyan-300 underline">Continue</a>
+      </div>
+    </main>
+  );
+};
+
 // Prop Firm
 import PropFirmDashboardPage from './pages/PropFirmDashboard';
 import PropFirmChallengePage from './pages/PropFirmChallenge';
@@ -147,6 +164,7 @@ const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }
   const isPublicClubRoute =
     pathname === '/' ||
     pathname === '/about' ||
+    pathname === '/checkout/complete' ||
     ['/login', '/signup', '/register', '/auth'].some(
       (route) => pathname === route || pathname.startsWith(`${route}/`),
     );
@@ -257,6 +275,7 @@ const App: React.FC = () => {
                   {/* Legal */}
                   <Route path="/privacy" element={<PrivacyPolicyPage />} />
                   <Route path="/terms" element={<TermsOfServicePage />} />
+                  <Route path="/checkout/complete" element={<CheckoutCompletePage />} />
                   <Route path="/wallet" element={<WalletConnectOnboarding />} />
                   <Route path="/wallet-connection" element={<ProtectedRoute><WalletConnectionPage /></ProtectedRoute>} />
                   
@@ -267,8 +286,8 @@ const App: React.FC = () => {
                   <Route path="/launch/tradehouse" element={<TradeHouseLaunchPage />} />
                   <Route path="/tv" element={<ProtectedRoute><HybridTVPage /></ProtectedRoute>} />
                   <Route path="/about" element={<Navigate to="/#about" replace />} />
-                  <Route path="/trade" element={<ProtectedRoute><TradeView /></ProtectedRoute>} />
-                  <Route path="/journal" element={<ProtectedRoute><JournalView /></ProtectedRoute>} />
+                  <Route path="/trade" element={<ProtectedRoute><ExternalAppRedirect href="https://abatev.tradehybrid.co" label="Opening ABATEV Terminal…" /></ProtectedRoute>} />
+                  <Route path="/journal" element={<ProtectedRoute><ExternalAppRedirect href="https://hybridjournal.co" label="Opening Hybrid Journal…" /></ProtectedRoute>} />
                   <Route path="/metaverse" element={<ProtectedRoute><MetaversePage /></ProtectedRoute>} />
                   <Route path="/learn" element={<ProtectedRoute><LearningCenterPage /></ProtectedRoute>} />
                   <Route path="/signals" element={<ProtectedRoute><TradingSignals /></ProtectedRoute>} />
@@ -277,7 +296,7 @@ const App: React.FC = () => {
                   <Route path="/ai-assistant" element={<Navigate to="/market-buddy" replace />} />
                   <Route path="/dex-platform" element={<ProtectedRoute><DEXPlatform /></ProtectedRoute>} />
                   <Route path="/ai-analytics" element={<ProtectedRoute><AIAnalytics /></ProtectedRoute>} />
-                  <Route path="/copy-trading" element={<ProtectedRoute><CopyTradingPage /></ProtectedRoute>} />
+                  <Route path="/copy-trading" element={<ProtectedRoute><ExternalAppRedirect href="https://copy.tradehybrid.co" label="Opening Hybrid Copy…" /></ProtectedRoute>} />
                   <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
                   <Route path="/profile/unified" element={<React.Suspense fallback={<ClubLoader label="Loading profile…" />}><ProtectedRoute><UnifiedProfilePage /></ProtectedRoute></React.Suspense>} />
@@ -296,8 +315,8 @@ const App: React.FC = () => {
                   <Route path="/events" element={<Navigate to="/community" replace />} />
                   
                   {/* Trading & Markets */}
-                  <Route path="/trading-dashboard" element={<ProtectedRoute><TradingDashboard /></ProtectedRoute>} />
-                  <Route path="/trading-dashboard/advanced" element={<ProtectedRoute><AdvancedTradingDashboard /></ProtectedRoute>} />
+                  <Route path="/trading-dashboard" element={<ProtectedRoute><ExternalAppRedirect href="https://abatev.tradehybrid.co" label="Opening ABATEV Terminal…" /></ProtectedRoute>} />
+                  <Route path="/trading-dashboard/advanced" element={<ProtectedRoute><ExternalAppRedirect href="https://abatev.tradehybrid.co" label="Opening ABATEV Terminal…" /></ProtectedRoute>} />
                   <Route path="/advanced-charting" element={<ProtectedRoute><AdvancedChartingDashboard /></ProtectedRoute>} />
                   <Route path="/trading/indicators" element={<ProtectedRoute><TradingIndicatorsPage /></ProtectedRoute>} />
                   <Route path="/trading/solana" element={<ProtectedRoute><SolanaTradingPage /></ProtectedRoute>} />
@@ -326,8 +345,8 @@ const App: React.FC = () => {
                   {/* Game Center */}
                   <Route path="/game" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
                   {/* Bulls vs Bears game routes removed */}
-                  <Route path="/game/trade-runner" element={<ProtectedRoute><TradeRunnerPage /></ProtectedRoute>} />
-                  <Route path="/game/trade-runner-browser" element={<ProtectedRoute><TradeRunnerBrowserPage /></ProtectedRoute>} />
+                  <Route path="/game/trade-runner" element={<ProtectedRoute><ExternalAppRedirect href="https://tradehybrid.co/runner" label="Opening Hybrid Runner…" /></ProtectedRoute>} />
+                  <Route path="/game/trade-runner-browser" element={<ProtectedRoute><ExternalAppRedirect href="https://tradehybrid.co/runner" label="Opening Hybrid Runner…" /></ProtectedRoute>} />
                   
                   {/* Tools & Analysis */}
                   <Route path="/trading-tools" element={<ProtectedRoute><TradingToolsPage /></ProtectedRoute>} />
@@ -346,7 +365,7 @@ const App: React.FC = () => {
                   <Route path="/api-demo" element={<ProtectedRoute><ApiDemoPage /></ProtectedRoute>} />
 
                   <Route path="/web-browser" element={<EmbeddedBrowserPage />} />
-                  <Route path="/abatev" element={<ProtectedRoute><ABATEVPanelPage /></ProtectedRoute>} />
+                  <Route path="/abatev" element={<ProtectedRoute><ExternalAppRedirect href="https://abatev.tradehybrid.co" label="Opening ABATEV Terminal…" /></ProtectedRoute>} />
                   <Route path="/nexus" element={<ProtectedRoute><NexusPanelPage /></ProtectedRoute>} />
                   
                   {/* Prop Firm */}
