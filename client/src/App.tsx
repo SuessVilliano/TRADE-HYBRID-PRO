@@ -60,6 +60,7 @@ import TradeHouseLaunchPage from './pages/tradehouse-launch';
 import EventsPage from './pages/events';
 import NotFoundPage from './pages/not-found';
 import AccessRequiredPage from './pages/access-required';
+import ActivateAccountPage from './pages/activate-account';
 import SocialNetworkPage from './pages/social-network';
 import CopyTradingPage from './pages/copy-trading';
 import WalletConnectOnboarding from './pages/wallet-connect-onboarding';
@@ -158,6 +159,7 @@ const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }
     pathname === '/' ||
     pathname === '/about' ||
     pathname === '/access-required' ||
+    pathname === '/activate' ||
     ['/login', '/signup', '/register', '/auth'].some(
       (route) => pathname === route || pathname.startsWith(`${route}/`),
     );
@@ -261,9 +263,10 @@ const App: React.FC = () => {
                   
                   {/* Auth routes */}
                   <Route path="/login" element={<AuthPage />} />
-                  <Route path="/signup" element={<AuthPage />} />
                   <Route path="/auth" element={<AuthPage />} />
-                  <Route path="/register" element={<AuthPage />} />
+                  <Route path="/activate" element={<ActivateAccountPage />} />
+                  <Route path="/signup" element={<ExternalProductRedirect to={`${CLUB_LINKS.publicSite}/#pricing`} label="Opening Trade Hybrid memberships…" />} />
+                  <Route path="/register" element={<ExternalProductRedirect to={`${CLUB_LINKS.publicSite}/#pricing`} label="Opening Trade Hybrid memberships…" />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/access-required" element={<AccessRequiredPage />} />
                   {/* Legal */}
