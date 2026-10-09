@@ -79,6 +79,22 @@ export function TradingSignals() {
       <div className="mt-4 grid grid-cols-2 gap-2">{price(s,'Entry',s.entryPrice)}{price(s,'Stop loss',s.stopLoss,s.status==='SL_HIT')}{s.targets.map((v: number | null,i: number)=> price(s,'Take profit ' + (i+1),v, /^TP[123]_HIT$/.test(s.status) && Number(s.status[2]) >= i+1))}</div>
       <p className="mt-4 text-sm text-slate-500">{s.strategyName || s.assetClass}</p>
       <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm dark:bg-slate-800"><strong>Reported result: </strong>{trackingIssue(s) ? <span className="text-amber-700 dark:text-amber-300">{trackingIssue(s)}. Status remains unverified until a matching market-data source confirms the outcome.</span> : s.group === 'closed' ? <>{s.closeReason || signalStatusLabel(s.status)}{s.exitPrice !== null && ' · Exit ' + s.exitPrice}{s.rValue !== null && ' · ' + s.rValue + 'R'}{s.pnlPct !== null && ' · ' + s.pnlPct + '%'}</> : s.status.startsWith('TP') ? signalStatusLabel(s.status) : 'Awaiting an outcome update'}{s.lastPrice !== null && <p className="mt-1">Last price: {s.lastPrice} · {signalTimestamp(s.lastPriceAt)}</p>}{s.closedAt && <p className="mt-1">Closed: {signalTimestamp(s.closedAt)}</p>}</div>
+      {s.recovery && <div className="mt-3 rounded-xl border border-cyan-200 bg-cyan-50 p-3 text-sm text-slate-800 dark:border-cyan-900 dark:bg-cyan-950/30 dark:text-slate-200">
+        <strong>OANDA historical price evidence (not a trade fill): </strong>
+        <span className="font-medium">{({
+          SL_LEVEL_OBSERVED: 'Stop-loss level observed',
+          TARGETS_OBSERVED: 'Take-profit level(s) observed',
+          ENTRY_LEVEL_OBSERVED: 'Entry level observed, exit unconfirmed',
+          NO_ENTRY_OBSERVED: 'No entry-level touch observed within the tracked window',
+          AMBIGUOUS_ENTRY_BAR: 'Entry/exit order ambiguous within one minute',
+          AMBIGUOUS_TP_SL: 'TP and SL order ambiguous within one minute',
+          EVIDENCE_GAP: 'Incomplete candle history — no result assigned',
+          LEVELS_INVALID: 'Signal price levels need verification',
+        } as Record<string,string>)[s.recovery.classification] || 'Evidence under review'}</span>
+        <p className="mt-1 text-xs">Source: {s.recovery.source} · {s.recovery.candleCount} completed candles · Reviewed {signalTimestamp(s.recovery.checkedAt)}</p>
+        {s.recovery.events.length > 0 && <p className="mt-2 text-xs">{s.recovery.events.slice(0,5).map(e => e.event.replace(/_/g, ' ') + ' @ ' + e.level + ' (' + signalTimestamp(e.time,'UTC') + ' UTC)').join(' → ')}</p>}
+        <p className="mt-1 text-xs font-medium">Price-level observations only. The provider's trade execution and official result have not been verified.</p>
+      </div>}
       <div className="mt-4 text-xs leading-5 text-slate-500"><p>Signal: {signalTimestamp(s.entryTime)} · {timezone}</p><p>{signalTimestamp(s.entryTime,'UTC')} (UTC)</p><p>Last confirmed price check: {s.lastPriceAt ? signalTimestamp(s.lastPriceAt) : 'None recorded'}</p></div>
       <div className="mt-4 flex gap-3"><button type="button" className="flex-1 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-2 font-bold text-white" onClick={() => copy([s.direction + ' ' + s.symbol,'Entry: ' + (s.entryPrice ?? 'Not supplied'),'Stop loss: ' + (s.stopLoss ?? 'Not supplied'),...s.targets.map((v: number | null,i: number) => 'TP' + (i+1) + ': ' + (v ?? 'Not supplied')),signalStatusLabel(s.status),'Signal: ' + signalTimestamp(s.entryTime,'UTC')].join('\n'),'Signal')}>Copy signal</button><a href={CLUB_LINKS.abatev} target="_blank" rel="noreferrer" className="rounded-xl border px-4 py-2 font-bold">Open ABATEV ↗</a></div>
     </article>)}</div>}
