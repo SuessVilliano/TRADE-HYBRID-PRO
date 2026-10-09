@@ -44,6 +44,7 @@ export const CLUB_LINKS = {
   onboarding: '/onboarding',
   about: '/#about',
   profile: '/profile',
+  rewards: '/rewards',
   settings: '/settings',
   connections: '/connections',
   hooks: '/connections',

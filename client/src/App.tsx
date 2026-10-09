@@ -53,6 +53,7 @@ import TermsOfServicePage from './pages/terms-of-service';
 import ForgotPasswordPage from './pages/forgot-password';
 import { ClubLoader } from './components/club/club-loader';
 import ClubDashboard from './pages/club-dashboard';
+import MemberRewards, { RewardInvitePage } from './pages/member-rewards';
 import CommunityPage from './pages/community';
 import HybridTVPage from './pages/hybrid-tv';
 import MarketBuddyPage from './pages/market-buddy';
@@ -182,6 +183,9 @@ const ChromeAwareLayout: React.FC<{ children: React.ReactNode }> = ({ children }
     '/onboarding',
     '/launch/tradehouse',
     '/profile',
+    '/rewards',
+    '/invite',
+    '/wallet',
     '/settings',
     '/trading-tools',
     '/knowledge',
@@ -280,6 +284,8 @@ const App: React.FC = () => {
                   <Route path="/wallet-connection" element={<ProtectedRoute><WalletConnectionPage /></ProtectedRoute>} />
                   
                   {/* Core Platform Routes */}
+                  <Route path="/rewards" element={<MemberRewards />} />
+                  <Route path="/invite/:code" element={<RewardInvitePage />} />
                   <Route path="/dashboard" element={<ProtectedRoute><ClubDashboard /></ProtectedRoute>} />
                   <Route path="/onboarding" element={<ProtectedRoute><MemberOnboardingPage /></ProtectedRoute>} />
                   <Route path="/community" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />

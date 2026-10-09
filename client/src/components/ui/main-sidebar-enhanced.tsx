@@ -148,6 +148,7 @@ export const MainSidebar: React.FC<{
       title: 'Club',
       items: [
         { label: 'Community', href: CLUB_LINKS.community, icon: <Users className="h-4 w-4" /> },
+        { label: 'Member Rewards', href: CLUB_LINKS.rewards, icon: <Coins className="h-4 w-4" /> },
         { label: 'TH TV', href: CLUB_LINKS.tv, icon: <Radio className="h-4 w-4" /> },
         { label: 'News', href: CLUB_LINKS.news, icon: <Newspaper className="h-4 w-4" /> },
       ],
