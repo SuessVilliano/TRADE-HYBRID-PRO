@@ -4,11 +4,19 @@ export function signalNumber(value: unknown): number | null {
   return Number.isFinite(number) ? number : null;
 }
 export function normalizeSignal(raw: any) {
+  const recovery = raw.recovery && typeof raw.recovery.classification === 'string' ? {
+    classification: String(raw.recovery.classification),
+    source: String(raw.recovery.source || ''),
+    checkedAt: String(raw.recovery.checked_at || ''),
+    candleCount: Number(raw.recovery.candle_count) || 0,
+    coverage: String(raw.recovery.evidence?.coverage || ''),
+    events: (Array.isArray(raw.recovery.evidence?.events) ? raw.recovery.evidence.events : []) as Array<{event:string,time:string,level:number,target?:number}>,
+  } : null;
   const status = String(raw.status || 'UNKNOWN').toUpperCase();
   const group = ['SL_HIT', 'TP3_HIT', 'CLOSED'].includes(status) ? 'closed'
     : ['INVALID', 'CANCELLED', 'CANCELED'].includes(status) ? 'cancelled'
     : status === 'PENDING' ? 'pending' : ['ACTIVE', 'ACTIVATED', 'TP1_HIT', 'TP2_HIT'].includes(status) ? 'active' : 'unknown';
-  return { ...raw, id: String(raw.id), status, group,
+  return { ...raw, recovery, id: String(raw.id), status, group,
     direction: String(raw.direction || '').toUpperCase(),
     entryPrice: signalNumber(raw.entryPrice), stopLoss: signalNumber(raw.stopLoss),
     targets: [raw.tp1 ?? raw.takeProfit, raw.tp2, raw.tp3].map(signalNumber),
