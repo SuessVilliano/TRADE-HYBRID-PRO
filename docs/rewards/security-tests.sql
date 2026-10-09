@@ -18,12 +18,17 @@ do $$declare own_code uuid; again uuid; snapshot jsonb; begin
  if jsonb_array_length(snapshot->'ledger')<>1 then raise exception 'Snapshot leaks another member ledger'; end if;
 end$$;
 reset role;
+select set_config('rewards.test_invite_code',(select code::text from public.member_reward_invites where user_id=(select id from reward_test_members where n=1)),true);
 select set_config('request.jwt.claim.sub',(select id::text from reward_test_members where n=2),true);
 set local role authenticated;
 do $$begin
  if exists(select 1 from public.member_reward_invites) then raise exception 'Invite codes leak across users'; end if;
  perform public.rewards_invite_code();
+ perform public.rewards_accept_invite(current_setting('rewards.test_invite_code')::uuid);
+ perform public.rewards_accept_invite(current_setting('rewards.test_invite_code')::uuid);
 end$$;
+reset role;
+do $$begin if (select count(*) from public.member_reward_referrals where referred_id=(select id from reward_test_members where n=2))<>1 then raise exception 'Duplicate referral created'; end if; end$$;
 reset role;
 select set_config('request.jwt.claim.sub','',true);
 set local role anon;
