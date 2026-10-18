@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 /**
  * Whop integration routes for authentication and membership verification
  */
@@ -27,7 +28,7 @@ const frontendUrl = (process.env.FRONTEND_URL || process.env.APP_URL || '').repl
  */
 router.get('/login', (req, res) => {
   // Generate a state parameter to prevent CSRF
-  const state = Math.random().toString(36).substring(2, 15);
+  const state = randomBytes(32).toString('hex');
   
   // Store state in the session
   if (req.session) {
@@ -127,33 +128,8 @@ router.get('/callback', async (req, res) => {
     } catch (oauthError) {
       console.error('Error exchanging code for token:', oauthError);
       
-      // Fall back to demo user for development if OAuth exchange fails
-      console.log('Falling back to demo user authentication');
-      const demoWhopUserId = 'demo';
-      
-      // Find or create user based on demo Whop ID
-      const result = await whopService.findOrCreateUser(demoWhopUserId);
-      
-      if (!result.success) {
-        console.error('Failed to create/find demo user:', result.message);
-        return res.status(401).json({ error: result.message });
-      }
-      
-      console.log('Successfully authenticated with demo user, User ID:', result.userId);
-      
-      // Set user in session with complete information
-      if (req.session) {
-        req.session.userId = result.userId;
-        req.session.username = result.username;
-        req.session.whopId = demoWhopUserId;
-        req.session.membershipLevel = result.membershipLevel;
-        
-        // Set the session cookie to expire in 30 days for persistent login
-        req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
-      }
-      
-      // Redirect to dashboard
-      res.redirect(frontendUrl ? `${frontendUrl}/dashboard` : '/dashboard');
+      // Fail closed: never authenticate a demo identity when Whop OAuth fails.
+      return res.status(401).json({ error: 'Whop authentication failed' });
     }
   } catch (error) {
     console.error('Whop callback error:', error);
