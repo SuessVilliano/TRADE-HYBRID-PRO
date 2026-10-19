@@ -12,3 +12,8 @@ cookies.txt
 cookies_auth.txt
 session_cookies.txt
 test_session.txt
+
+# Local env files (real values live in Vercel/Replit env settings)
+.env
+.env.*
+!.env.example

@@ -20,10 +20,17 @@ export class IronBeamService implements BrokerService {
     try {
       console.log('Connecting to IronBeam API...');
       
-      // Using the demo credentials from the provided API information
-      const apiUsername = this.isDemo ? '51364392' : '51364396';
-      const apiPassword = this.isDemo ? '854911' : '271264';
-      const apiKey = '136bdde6773045ef86aa4026e6edddb4';
+      // SECURITY: no credentials are hardcoded here. This file ships in the public
+      // browser bundle, so brokerage logins/API keys must never be embedded (and must
+      // not come from VITE_* env vars either). Credentials are only those passed to the
+      // constructor at runtime (e.g. entered by the user).
+      // TODO: move IronBeam auth to a server-side proxy that reads IRONBEAM_USERNAME /
+      // IRONBEAM_API_KEY from the server environment.
+      if (!this.username || !this.password) {
+        throw new Error('IronBeam credentials not configured');
+      }
+      const apiUsername = this.username;
+      const apiKey = this.password;
       
       const response = await fetch(`${this.baseUrl}/auth`, {
         method: 'POST',
