@@ -93,6 +93,8 @@ function buildPlan(form: FormState) {
   const goal = form.primary_goal.toLowerCase();
   if (goal.includes('funded') || goal.includes('prop')) priorities.push('Hybrid Funding', 'Academy');
   if (goal.includes('learn')) priorities.push('Academy', 'Community');
+  // Every member starts with a learning path and a place to connect, not only a journal.
+  priorities.push('Academy', 'Community');
   if (goal.includes('track record')) priorities.push('Trade House Battles', 'Community');
   if (goal.includes('risk') || goal.includes('consistency') || goal.includes('plan')) {
     priorities.push('Trade Hybrid AI', 'Community');
