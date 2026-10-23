@@ -262,9 +262,9 @@ export default function LoginPage() {
   };
   
   return (
-    <div className="flex min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      <div className="w-full max-w-md m-auto bg-gray-800 rounded-lg border border-gray-700 shadow-lg p-8">
-        <div className="text-center mb-6">
+    <div className="flex min-h-screen bg-gradient-to-b from-slate-50 to-cyan-50 text-slate-950 dark:from-gray-900 dark:to-gray-800 dark:text-white">
+      <div className="w-full max-w-md m-auto bg-white rounded-2xl border border-slate-200 shadow-xl p-8 dark:bg-gray-800 dark:border-gray-700">
+        <a href="https://tradehybrid.co" className="mb-5 inline-flex text-sm font-semibold text-cyan-700 hover:underline dark:text-cyan-300">← Back to Trade Hybrid Club</a>\n        <div className="text-center mb-6">
           {/* Platform Logo with Proper Fallback */}
           <div className="relative h-16 mx-auto mb-4 flex items-center justify-center">
             <img 
