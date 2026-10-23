@@ -553,17 +553,8 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
         !completedFlows.includes(flow.id)
       );
       
-      // If this is a user's first visit, suggest onboarding
-      const isFirstVisit = localStorage.getItem('onboarding_first_visit') !== 'completed';
-      
-      if (isFirstVisit && matchingFlow) {
-        // Ask user if they want to see the tour
-        const wantsTour = confirm(`Would you like to see a quick tour of the ${matchingFlow.title}?`);
-        if (wantsTour) {
-          startOnboarding(matchingFlow.id);
-        }
-        localStorage.setItem('onboarding_first_visit', 'completed');
-      }
+      // Do not block the landing page with a native confirm dialog.
+      // The guided tour remains available through startOnboarding(flowId).
     }
   }, []);
 
