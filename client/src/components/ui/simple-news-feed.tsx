@@ -16,9 +16,11 @@ interface NewsItem {
 
 interface SimpleNewsFeedProps {
   sourceId?: string;
+  light?: boolean;
 }
 
-export function SimpleNewsFeed({ sourceId = 'investing' }: SimpleNewsFeedProps) {
+export function SimpleNewsFeed({ sourceId = 'investing', light = false }: SimpleNewsFeedProps) {
+  const [search, setSearch] = useState("");
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,9 +92,11 @@ export function SimpleNewsFeed({ sourceId = 'investing' }: SimpleNewsFeedProps) 
     );
   }
 
+  const filteredItems = newsItems.filter(item => [item.title, item.description, item.source].some(value => (value || "").toLowerCase().includes(search.trim().toLowerCase())));
   return (
     <div>
-      <div className="flex justify-end mb-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <label className="min-w-[200px] flex-1"><span className="sr-only">Search news headlines</span><input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search headlines, markets, publishers…" className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none focus:border-cyan-500 ${light ? "border-slate-300 bg-white text-slate-900 placeholder:text-slate-500" : "border-slate-700 bg-slate-950 text-white placeholder:text-slate-400"}`} /></label>
         <Button 
           variant="outline" 
           size="sm" 
@@ -105,6 +109,7 @@ export function SimpleNewsFeed({ sourceId = 'investing' }: SimpleNewsFeedProps) 
         </Button>
       </div>
       
+      <p className="mb-3 text-xs text-muted-foreground" role="status">{filteredItems.length} of {newsItems.length} articles · {newsItems.length ? "Publisher feed loaded" : "Awaiting feed"}</p>
       {error && (
         <div className="p-4 text-red-400 bg-red-950/20 rounded-md mb-4">
           <p>{error}</p>
@@ -112,13 +117,13 @@ export function SimpleNewsFeed({ sourceId = 'investing' }: SimpleNewsFeedProps) 
       )}
       
       <div className="space-y-4">
-        {newsItems.length === 0 ? (
+        {filteredItems.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-muted-foreground">No news articles available at the moment.</p>
+            <p className="text-muted-foreground">No matching headlines in this feed. Try another search or source.</p>
           </div>
         ) : (
-          newsItems.map((item) => (
-            <Card key={item.id} className="overflow-hidden border-slate-700 hover:border-slate-600 transition-colors">
+          filteredItems.map((item) => (
+            <Card key={item.id} className={`overflow-hidden transition-colors ${light ? "border-slate-200 bg-white text-slate-950 hover:border-cyan-400" : "border-slate-700 bg-slate-900 text-slate-100 hover:border-slate-500"}`}>
               <CardContent className="p-4">
                 <h3 className="text-lg font-semibold mb-2 leading-tight">
                   <a 
