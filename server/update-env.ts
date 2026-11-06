@@ -51,23 +51,13 @@ export function updateEnvironmentVariables(): void {
 
 // Export a function to update specific variables
 export function updateApiCredentials(): void {
-  try {
-    // Update Alpaca credentials with the new values
-    process.env.ALPACA_API_KEY = 'PKCBXRXBYIZ100B87CO0';
-    process.env.ALPACA_API_SECRET = '4tZAchGqy3EWSdAycUeywGcjgaGsBOz9LNKnkOJL';
-    
-    // Update client-side variables too
-    process.env.VITE_ALPACA_API_KEY = 'PKCBXRXBYIZ100B87CO0';
-    process.env.VITE_ALPACA_API_SECRET = '4tZAchGqy3EWSdAycUeywGcjgaGsBOz9LNKnkOJL';
-    
-    // Disable mock services
-    process.env.USE_MOCK_SERVICE = 'false';
-    process.env.VITE_USE_MOCK_SERVICE = 'false';
-    
-    console.log('API credentials updated manually with new values:');
-    console.log(`ALPACA_API_KEY: ${process.env.ALPACA_API_KEY.substring(0, 4)}...${process.env.ALPACA_API_KEY.substring(process.env.ALPACA_API_KEY.length - 4)}`);
-    console.log(`ALPACA_API_SECRET: ${process.env.ALPACA_API_SECRET.substring(0, 4)}...${process.env.ALPACA_API_SECRET.substring(process.env.ALPACA_API_SECRET.length - 4)}`);
-  } catch (error) {
-    console.error('Error updating API credentials:', error);
-  }
+  // SECURITY: credentials are no longer hardcoded here. Set ALPACA_API_KEY and
+  // ALPACA_API_SECRET in the host's environment (Vercel / Replit Secrets).
+  // Never copy them into VITE_* variables: Vite inlines those into the browser bundle.
+  const hasKey = Boolean(process.env.ALPACA_API_KEY);
+  const hasSecret = Boolean(process.env.ALPACA_API_SECRET);
+  // Disable mock services (unchanged behaviour)
+  process.env.USE_MOCK_SERVICE = 'false';
+  process.env.VITE_USE_MOCK_SERVICE = 'false';
+  console.log(`Alpaca credentials from environment: key ${hasKey ? 'set' : 'MISSING'}, secret ${hasSecret ? 'set' : 'MISSING'}`);
 }

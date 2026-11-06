@@ -4,10 +4,12 @@ import { apiRequest } from "@/lib/queryClient";
 import { IronBeamService } from "@/lib/services/ironbeam-service";
 import { MarketData as BrokerMarketData } from "@/lib/services/broker-service";
 
-// Initialize the IronBeam service with API credentials
+// IronBeam credentials must never ship in the browser bundle. With no credentials,
+// connect() throws and this store falls back to the existing mock-data path.
+// TODO: serve IronBeam data through a server-side proxy (IRONBEAM_* server env vars).
 const ironBeamService = new IronBeamService(
-  "51364392", // Demo username
-  "136bdde6773045ef86aa4026e6edddb4", // API key
+  "", // username: not embedded in client code
+  "", // API key: not embedded in client code
   true // Use demo environment
 );
 

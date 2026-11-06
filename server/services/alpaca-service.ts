@@ -31,10 +31,9 @@ let isRealApiAvailable: boolean = false;
  * Uses environment variables for API credentials
  */
 export function createAlpacaClient(): AlpacaClient {
-  // Hard-coded new credentials for now to ensure they're picked up
-  // These should be moved back to environment variables in production
-  const apiKey = "PKCBXRXBYIZ100B87CO0";
-  const apiSecret = "4tZAchGqy3EWSdAycUeywGcjgaGsBOz9LNKnkOJL";
+  // Credentials come from server-side environment variables only (never hardcode them).
+  const apiKey = process.env.ALPACA_API_KEY || '';
+  const apiSecret = process.env.ALPACA_API_SECRET || '';
   
   if (!apiKey || !apiSecret) {
     throw new AlpacaApiError('Alpaca API credentials not found in environment variables');
@@ -63,8 +62,8 @@ export function createAlpacaClient(): AlpacaClient {
   // Add request interceptor to ensure credentials are always correct
   tradeApi.interceptors.request.use(config => {
     // Force override headers with the correct credentials on every request
-    config.headers['APCA-API-KEY-ID'] = 'PKCBXRXBYIZ100B87CO0';
-    config.headers['APCA-API-SECRET-KEY'] = '4tZAchGqy3EWSdAycUeywGcjgaGsBOz9LNKnkOJL';
+    config.headers['APCA-API-KEY-ID'] = apiKey;
+    config.headers['APCA-API-SECRET-KEY'] = apiSecret;
     console.log('Alpaca API Request with credentials:', 
       config.headers['APCA-API-KEY-ID'].substring(0, 4) + '...' + 
       config.headers['APCA-API-KEY-ID'].substring(config.headers['APCA-API-KEY-ID'].length - 4));
@@ -83,8 +82,8 @@ export function createAlpacaClient(): AlpacaClient {
   // Add request interceptor to ensure credentials are always correct for data API
   dataApi.interceptors.request.use(config => {
     // Force override headers with the correct credentials on every request
-    config.headers['APCA-API-KEY-ID'] = 'PKCBXRXBYIZ100B87CO0';
-    config.headers['APCA-API-SECRET-KEY'] = '4tZAchGqy3EWSdAycUeywGcjgaGsBOz9LNKnkOJL';
+    config.headers['APCA-API-KEY-ID'] = apiKey;
+    config.headers['APCA-API-SECRET-KEY'] = apiSecret;
     return config;
   });
   

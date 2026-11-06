@@ -304,7 +304,7 @@ export function BrokerApiSettings() {
                     <Label htmlFor="alpaca-api-key">API Key</Label>
                     <Input 
                       id="alpaca-api-key" 
-                      placeholder="PKMFCA9UAO6C7DKDNP4Y" 
+                      placeholder="Your API Key ID (PK...)" 
                       {...register('apiKey', { required: true })}
                     />
                     {errors.apiKey && (

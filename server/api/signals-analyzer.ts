@@ -12,7 +12,10 @@ const router = Router();
 async function setupGoogleSheetsWithAPIKey() {
   try {
     // Create a new JWT client using the environment variable API key
-    const apiKey = process.env.GOOGLE_API_KEY || 'AIzaSyCDN90ALGhGtRSfw3kGRMrbGGkyLRDhVKI';
+    const apiKey = process.env.GOOGLE_API_KEY;
+    if (!apiKey) {
+      throw new Error('GOOGLE_API_KEY not configured');
+    }
     
     // Initialize the Google Sheets API with API key
     const sheets = google.sheets({
