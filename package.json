@@ -68,7 +68,7 @@
     "@web3-react/injected-connector": "^6.0.7",
     "@web3-react/walletconnect-connector": "^6.2.13",
     "@web3auth/base": "^9.7.0",
-    "@web3auth/modal": "^9.7.0",
+    "@web3auth/modal": "^11.4.3",
     "@web3auth/solana-provider": "^9.7.0",
     "@whop-apps/sdk": "^0.0.1-canary.109",
     "axios": "^1.12.0",
